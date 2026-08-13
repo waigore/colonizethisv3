@@ -178,13 +178,14 @@ void main() {
       final colonial = File(
         p.join(planningDir.path, 'colonial_phase_planner.dart'),
       ).readAsStringSync();
+      // Slice A (#4365): colonial barrel is a thin re-export host.
       expect(
         colonial,
-        contains("import 'colonial_phase_planner_naval.dart';"),
+        contains("export 'colonial_phase_planner_naval.dart';"),
       );
       expect(
         colonial,
-        contains("import 'colonial_phase_planner_lite.dart';"),
+        contains("export 'colonial_phase_planner_lite.dart';"),
       );
       expect(
         colonial,
@@ -218,11 +219,19 @@ void main() {
       final diplomacy = File(
         p.join(planningDir.path, 'diplomacy_planner.dart'),
       ).readAsStringSync();
+      // Slice A (#4365): diplomacy barrel re-exports run; helpers stay in run.
       expect(
         diplomacy,
-        contains("import 'diplomacy_planner_pass_helpers.dart';"),
+        contains("export 'diplomacy_planner_run.dart'"),
       );
       expect(diplomacy, isNot(contains("part '")));
+      final diplomacyRun = File(
+        p.join(planningDir.path, 'diplomacy_planner_run.dart'),
+      ).readAsStringSync();
+      expect(
+        diplomacyRun,
+        contains("import 'diplomacy_planner_pass_helpers.dart';"),
+      );
 
       final orchestrator = File(
         p.join(planningDir.path, 'domain_planner_orchestrator.dart'),

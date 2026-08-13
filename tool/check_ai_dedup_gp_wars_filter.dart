@@ -14,9 +14,10 @@ import 'package:path/path.dart' as p;
 /// `snapshot.threats.atWarWith.any/where((id) => game.playerById(id) != null)`
 /// form.
 ///
-/// The single canonical home (`lib/src/planning/planning_peace_collectors.dart`) is
-/// the only file allowed to contain the filter; every other inline copy is
-/// rejected so the deterministic GP filter lives in one place.
+/// The canonical home (`lib/src/planning/planning_peace_collectors.dart` barrel
+/// plus `planning_peace_collectors_filter.dart` implementation) is the only
+/// place allowed to contain the filter; every other inline copy is rejected so
+/// the deterministic GP filter lives in one place.
 ///
 /// Detection is structural. Two patterns are rejected:
 ///   1. A `for (final … in <expr>.atWarWith)` comprehension header followed
@@ -47,6 +48,7 @@ const _aiLibRelative = 'packages/colonizethis_ai/lib';
 /// Canonical home of `gpFactionIdsAtWarWith` — the only allowed comprehension.
 const _allowedRelatives = <String>{
   'packages/colonizethis_ai/lib/src/planning/planning_peace_collectors.dart',
+  'packages/colonizethis_ai/lib/src/planning/planning_peace_collectors_filter.dart',
 };
 
 /// `for (final <id> in <expr>.atWarWith)` … `playerById(<...>) != null`.

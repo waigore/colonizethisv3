@@ -1,0 +1,7 @@
+import 'colonial_phase_planner_acquisition_join_empire_part_a_cases.dart';
+import 'colonial_phase_planner_acquisition_join_empire_part_b_cases.dart';
+
+void registerColonialPhasePlannerAcquisitionJoinEmpireCases() {
+  registerColonialPhasePlannerAcquisitionJoinEmpireCasesPartA();
+  registerColonialPhasePlannerAcquisitionJoinEmpireCasesPartB();
+}

@@ -7,8 +7,9 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Physical-line ceiling for COLONIAL military / naval `*_test.dart`
 /// contracts after Phase-6 case extraction (Refs #3977).
 /// Phase 8 extends the same ≤750-or-cases pattern to COLONIAL-lite naval
-/// (Refs #3997).
-const int colonialMilitaryNavalPinSuitePhysicalLineCeiling = 750;
+/// (Refs #3997). Phase 14 aligns the ceiling with peer suite gates at
+/// **400**-or-cases (Refs #4365 Slice C).
+const int colonialMilitaryNavalPinSuitePhysicalLineCeiling = 400;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 
