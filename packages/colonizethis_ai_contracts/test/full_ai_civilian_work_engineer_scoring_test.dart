@@ -4,6 +4,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/civilian_work_scoring_game_fixture.dart';
+
 /// Engineer civilian-work scoring (Refs #3794 § Engineer, AC11..AC17).
 ///
 /// Verifies the unified Engineer scored pool (`build_road` / `build_port` /
@@ -12,27 +14,14 @@ import 'package:colonizethis_test/test.dart';
 /// bonuses steer selection, ties break by province id, and the other per-type
 /// paths are unaffected.
 void main() {
-  const playerId = 'gp1';
+  const playerId = civilianWorkScoringPlayerId;
 
   Game gameWith({
     Map<String, String> resourceByTileKey = const {},
     String? capitalProvinceId,
-  }) => Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey,
-    ),
-    players: [
-      Player(
-        id: playerId,
-        displayName: 'GP',
-        isHuman: false,
-        capitalProvinceId: capitalProvinceId,
-      ),
-    ],
+  }) => civilianWorkScoringGame(
+    resourceByTileKey: resourceByTileKey,
+    capitalProvinceId: capitalProvinceId,
   );
 
   PlayerView engineerViewFor(
@@ -109,18 +98,21 @@ void main() {
       expect(r.workOrders.single.targetTileKey, fortCapital);
     });
 
-    test('AC14: single plain fort candidate is selected (non-zero baseline)', () {
-      const tile = 'oldWorld|p1|0|0';
-      final game = gameWith();
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: [eng(kWorkTargetBuildFort, tile)],
-        view: engineerViewFor(game),
-        game: game,
-      );
-      expect(r.workOrders.single.target, kWorkTargetBuildFort);
-      expect(r.workOrders.single.targetTileKey, tile);
-      expect(r.idleEvents, isEmpty);
-    });
+    test(
+      'AC14: single plain fort candidate is selected (non-zero baseline)',
+      () {
+        const tile = 'oldWorld|p1|0|0';
+        final game = gameWith();
+        final r = selectFullAiCivilianWorkOrders(
+          workSuggestions: [eng(kWorkTargetBuildFort, tile)],
+          view: engineerViewFor(game),
+          game: game,
+        );
+        expect(r.workOrders.single.target, kWorkTargetBuildFort);
+        expect(r.workOrders.single.targetTileKey, tile);
+        expect(r.idleEvents, isEmpty);
+      },
+    );
 
     test('AC15: idle Engineer with no candidates logs no_suggestions', () {
       final game = gameWith();

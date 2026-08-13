@@ -7,162 +7,14 @@ import '../constants.dart';
 import 'full_ai_civilian_work_selection.dart' show FullAiCivilianWorkIdle;
 import 'full_ai_civilian_work_selection_build_purchase.dart';
 import 'full_ai_civilian_work_selection_engineer.dart';
-import 'full_ai_civilian_work_selection_explore_prospect.dart';
 import 'full_ai_civilian_work_selection_rail.dart';
 import 'full_ai_civilian_work_selection_shared.dart';
 import 'full_ai_civilian_work_selection_spy.dart';
-import 'full_ai_civilian_work_selection_upgrade_town.dart';
+import 'full_ai_civilian_work_selection_unit_path_appenders.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 
-// Per-unit civilian-work path selection: the Builder / Merchant / Explorer /
-// lexicographic appenders and the per-unit dispatcher that routes each unit's
-// candidate set to the right path. Split out of
-// full_ai_civilian_work_selection.dart by concern to keep each library file
-// small.
-
-void _appendBuilderPathResult({
-  required Unit? unit,
-  required List<WorkOrder> w,
-  required Game game,
-  required String playerId,
-  required List<WorkOrder> workOrders,
-  required List<FullAiCivilianWorkIdle> idleEvents,
-  Set<String> feedstockExtractionResourceIds = const <String>{},
-  Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
-  Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
-  ConnectivityDevSnapshot? connectivityDev,
-}) {
-  final chosen =
-      bestBuilderRow(
-        w,
-        game,
-        playerId: playerId,
-        feedstockExtractionResourceIds: feedstockExtractionResourceIds,
-        growthStageFabricFeedstockResourceIds:
-            growthStageFabricFeedstockResourceIds,
-        growthStageInfraFeedstockResourceIds:
-            growthStageInfraFeedstockResourceIds,
-        connectivityDev: connectivityDev,
-      ) ??
-      pickLexicographic(w);
-  if (chosen != null) {
-    workOrders.add(chosen);
-    return;
-  }
-  if (unit == null) return;
-  idleEvents.add(
-    FullAiCivilianWorkIdle(
-      unitId: unit.id,
-      unitType: unit.type,
-      reason: 'no_suggestions',
-    ),
-  );
-}
-
-void _appendMerchantPathResult({
-  required Unit? unit,
-  required List<WorkOrder> w,
-  required Game game,
-  required DiplomacyFactionMembership factionMembership,
-  required List<WorkOrder> workOrders,
-  required List<FullAiCivilianWorkIdle> idleEvents,
-}) {
-  final chosen =
-      bestPurchaseLandRow(w, game, factionMembership) ?? pickLexicographic(w);
-  if (chosen != null) {
-    workOrders.add(chosen);
-    return;
-  }
-  if (unit == null) return;
-  idleEvents.add(
-    FullAiCivilianWorkIdle(
-      unitId: unit.id,
-      unitType: unit.type,
-      reason: 'no_suggestions',
-    ),
-  );
-}
-
-bool _explorerOnlySuggestions(List<WorkOrder> w) {
-  if (w.isEmpty) return false;
-  return w.every(
-    (o) => o.target == kWorkTargetExplore || o.target == kWorkTargetProspect,
-  );
-}
-
-void _appendExplorerPathResult({
-  required Unit? unit,
-  required List<WorkOrder> w,
-  required Game game,
-  required PlayerView view,
-  required String playerId,
-  Map<String, TileMapResult>? tileMapByRegion,
-  required DiplomacyFactionMembership factionMembership,
-  required List<WorkOrder> workOrders,
-  required List<FullAiCivilianWorkIdle> idleEvents,
-  Set<String> feedstockExtractionResourceIds = const <String>{},
-}) {
-  final c = w
-      .where(
-        (o) =>
-            o.target == kWorkTargetExplore || o.target == kWorkTargetProspect,
-      )
-      .toList();
-  if (c.isEmpty) {
-    if (unit == null) return;
-    idleEvents.add(
-      FullAiCivilianWorkIdle(
-        unitId: unit.id,
-        unitType: unit.type,
-        reason: 'no_suggestions',
-      ),
-    );
-    return;
-  }
-  final chosen = pickExplorerCandidateSet(
-    c,
-    game,
-    view,
-    playerId,
-    tileMapByRegion,
-    factionMembership,
-    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
-  );
-  if (chosen != null) {
-    workOrders.add(chosen);
-    return;
-  }
-  if (unit == null) return;
-  idleEvents.add(
-    FullAiCivilianWorkIdle(
-      unitId: unit.id,
-      unitType: unit.type,
-      reason: 'no_suggestions',
-    ),
-  );
-}
-
-void _appendLexicographicPathResult({
-  required Unit? unit,
-  required List<WorkOrder> w,
-  required List<WorkOrder> workOrders,
-  required List<FullAiCivilianWorkIdle> idleEvents,
-}) {
-  if (w.isEmpty) {
-    if (unit == null) return;
-    idleEvents.add(
-      FullAiCivilianWorkIdle(
-        unitId: unit.id,
-        unitType: unit.type,
-        reason: 'no_suggestions',
-      ),
-    );
-    return;
-  }
-  final chosen = pickLexicographic(w);
-  if (chosen == null) return;
-  workOrders.add(chosen);
-}
+// Per-unit civilian-work path selection dispatcher for Full AI selection
+// (Refs #4368 Slice B). Appenders live in unit_path_appenders.dart.
 
 void appendSelectionForUnitId({
   required String unitId,
@@ -199,10 +51,10 @@ void appendSelectionForUnitId({
 
   final isExplorerCase = unit != null && isExplorerUnit(unit.type);
   final orphanExplorerScoring =
-      unit == null && W.isNotEmpty && _explorerOnlySuggestions(W);
+      unit == null && W.isNotEmpty && explorerOnlySuggestions(W);
 
   if (isExplorerCase || orphanExplorerScoring) {
-    _appendExplorerPathResult(
+    appendExplorerPathResult(
       unit: unit,
       w: W,
       game: game,
@@ -218,7 +70,7 @@ void appendSelectionForUnitId({
   }
 
   if (unit != null && unit.type == kUnitTypeBuilder) {
-    _appendBuilderPathResult(
+    appendBuilderPathResult(
       unit: unit,
       w: W,
       game: game,
@@ -275,7 +127,7 @@ void appendSelectionForUnitId({
   }
 
   if (unit != null && isMerchantUnit(unit.type)) {
-    _appendMerchantPathResult(
+    appendMerchantPathResult(
       unit: unit,
       w: W,
       game: game,
@@ -286,7 +138,7 @@ void appendSelectionForUnitId({
     return;
   }
 
-  _appendLexicographicPathResult(
+  appendLexicographicPathResult(
     unit: unit,
     w: W,
     workOrders: workOrders,

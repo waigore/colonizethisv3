@@ -128,30 +128,7 @@ void main() {
     );
 
     test('does not mutate game', () {
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 7),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(
-                id: 'P1',
-                regionId: simpleAiOw,
-                ownerId: simpleAiPlayerId,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: {
-            simpleAiPlayerId: {'$simpleAiOw|P1|0|0': 'fullyVisible'},
-          },
-        ),
-        players: const [
-          Player(id: simpleAiPlayerId, displayName: 'AI', isHuman: false),
-        ],
-        globalGameSeed: 0,
-        aiSeedByGpId: const {simpleAiPlayerId: 1},
-      );
+      final game = simpleAiLocalProvinceIdOwGame();
       final turnBefore = game.worldState.turnState.turnNumber;
       final playersLengthBefore = game.players.length;
       generateOrdersWithSimpleHeuristics(
@@ -166,34 +143,7 @@ void main() {
 
     test('includes newWorld provinces in province owner map', () {
       const nw = 'newWorld';
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
-            provinces: const [
-              Province(id: '$nw|N1', regionId: nw, ownerId: simpleAiPlayerId),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'grenadiers',
-                ownerId: simpleAiPlayerId,
-                locationProvinceId: '$nw|N1',
-              ),
-            ],
-          ),
-          playerVisibilityByTile: const {
-            simpleAiPlayerId: {'$nw|N1|0|0': 'fullyVisible'},
-          },
-        ),
-        players: const [
-          Player(id: simpleAiPlayerId, displayName: 'AI', isHuman: false),
-        ],
-        globalGameSeed: 0,
-        aiSeedByGpId: const {simpleAiPlayerId: 1},
-      );
+      final game = simpleAiNewWorldHomeGame(regionId: nw);
       final orders = generateOrdersWithSimpleHeuristics(
         game,
         simpleAiSingleProvinceTopology(localId: 'N1', regionId: nw),
