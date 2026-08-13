@@ -49,7 +49,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
-        name: 'Standalone — tile capital-link disconnected',
+        name: 'Standalone — tile stranded capital-link default (Refs #4369)',
         builder: (context) {
           final game = demoGameForOverlay;
           final region = demoRegionForOverlay;
