@@ -40,6 +40,7 @@ import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
+import 'check_app_catalog_widgets_file_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
 import 'check_economy_dedup_credit_aggregation.dart';
@@ -855,6 +856,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugHandlerOnePerFile(repoRoot);
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
+    case 'repo.app_catalog_widgets_file_size':
+      return runCheckAppCatalogWidgetsFileSize(repoRoot);
     case 'repo.world_no_logic_deps':
       return runCheckWorldNoLogicDeps(repoRoot);
     case 'repo.logic_no_map_deps':

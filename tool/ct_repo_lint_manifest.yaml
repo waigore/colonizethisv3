@@ -1091,10 +1091,18 @@ rules:
 
   - rule_id: repo.game_widgets_file_size
     group: structure
-    title: app/lib/features/game/widgets files must stay at or below 400 physical lines
+    title: app/lib/features/game/widgets files must stay at or below 300 physical lines
     spec: SPEC/program/game-widgets-file-size.md
     runner: dart
     script: tool/check_game_widgets_file_size.dart
+
+  - rule_id: repo.app_catalog_widgets_file_size
+    group: structure
+    title: app/lib/widgets catalog files must stay at or below 300 physical lines (Refs #4352)
+    spec: SPEC/program/app-catalog-widgets-file-size.md
+    runner: dart
+    script: tool/check_app_catalog_widgets_file_size.dart
+    pr_incremental: true
 
   - rule_id: repo.logic_diplomatic_sub_validator_size
     group: architecture
