@@ -93,8 +93,8 @@ class ProvinceActionStateCalculator {
   }) {
     final topology = mapData?.combinedTopology;
     final explore = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenExplorerInlineActionState
-        : GameMapAreaStateLogic.provinceExploreActionState(
+        ? GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -102,8 +102,8 @@ class ProvinceActionStateCalculator {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     final prospect = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenExplorerInlineActionState
-        : GameMapAreaStateLogic.provinceProspectActionState(
+        ? GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -116,8 +116,8 @@ class ProvinceActionStateCalculator {
     // with only the unit/selection inputs, leaving `topology`/`currentOrders`/
     // `tileMapByRegion` at their defaults. Do not widen this call.
     final buildImprovement = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenBuilderInlineActionState
-        : GameMapAreaStateLogic.provinceBuildImprovementActionState(
+        ? GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -125,8 +125,8 @@ class ProvinceActionStateCalculator {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     final buildRoad = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
-        : GameMapAreaStateLogic.provinceBuildRoadActionState(
+        ? GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provinceBuildRoadActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -134,8 +134,8 @@ class ProvinceActionStateCalculator {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     final buildFort = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
-        : GameMapAreaStateLogic.provinceBuildFortActionState(
+        ? GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provinceBuildFortActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -143,8 +143,8 @@ class ProvinceActionStateCalculator {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     final buildPort = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
-        : GameMapAreaStateLogic.provinceBuildPortActionState(
+        ? GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provinceBuildPortActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -155,8 +155,8 @@ class ProvinceActionStateCalculator {
             tileMapByRegion: mapData?.tileMapByRegion,
           );
     final purchaseLand = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenMerchantInlineActionState
-        : GameMapAreaStateLogic.provincePurchaseLandActionState(
+        ? GameMapAreaProvinceActionStates.kHiddenMerchantInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,

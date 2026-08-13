@@ -13,7 +13,7 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 ///
 /// Extracted from `GameMapAreaStateLogic` (#2575 work item 11) so the
 /// civilian projection pipeline lives in a single, separately testable
-/// module. `GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft`
+/// module. `GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft`
 /// remains as a thin forwarder for backward compatibility with call sites
 /// and existing tests.
 class GameMapAreaCivilianDraftProjection {

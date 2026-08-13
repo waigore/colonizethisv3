@@ -20,7 +20,7 @@ void main() {
         required Map<String, TileMapResult> tm,
         required Map<String, MapTopology> tr,
       }) {
-        return GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+        return GameMapAreaStateLogicDraftProjection.projectFleetMarkersForHumanDraft(
           region: region,
           game: game,
           orders: orders,

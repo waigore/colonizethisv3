@@ -367,7 +367,7 @@ rules:
 
   - rule_id: repo.colonizethis_diplomacy_lib_file_size
     group: structure
-    title: colonizethis_diplomacy lib files must stay at or below the wave-5 400 physical-line ceiling (Refs #4130)
+    title: colonizethis_diplomacy lib files must stay at or below the wave-6 300 physical-line ceiling (Refs #4130, #4341)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_lib_file_size.dart
@@ -618,7 +618,7 @@ rules:
 
   - rule_id: repo.app_flame_lib_physical_file_size
     group: structure
-    title: app/lib/features/game/flame files must stay at or below 400 physical lines (shrink-only grandfather)
+    title: app/lib/features/game/flame files must stay at or below 300 physical lines (shrink-only grandfather)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_flame_lib_physical_file_size.dart
@@ -626,7 +626,7 @@ rules:
 
   - rule_id: repo.app_features_screens_lib_physical_file_size
     group: structure
-    title: app/lib/features/game/screens files must stay at or below 400 physical lines (shrink-only grandfather)
+    title: app/lib/features/game/screens files must stay at or below 300 physical lines (shrink-only grandfather)
     spec: SPEC/program/app-features-screens-file-size.md
     runner: dart
     script: tool/check_app_features_screens_lib_physical_file_size.dart
@@ -1091,10 +1091,18 @@ rules:
 
   - rule_id: repo.game_widgets_file_size
     group: structure
-    title: app/lib/features/game/widgets files must stay at or below 400 physical lines
+    title: app/lib/features/game/widgets files must stay at or below 300 physical lines
     spec: SPEC/program/game-widgets-file-size.md
     runner: dart
     script: tool/check_game_widgets_file_size.dart
+
+  - rule_id: repo.app_catalog_widgets_file_size
+    group: structure
+    title: app/lib/widgets catalog files must stay at or below 300 physical lines (Refs #4352)
+    spec: SPEC/program/app-catalog-widgets-file-size.md
+    runner: dart
+    script: tool/check_app_catalog_widgets_file_size.dart
+    pr_incremental: true
 
   - rule_id: repo.logic_diplomatic_sub_validator_size
     group: architecture

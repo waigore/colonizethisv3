@@ -191,7 +191,7 @@ void main() {
   test('purchase land action state fixture is enabled for host wiring', () {
     final game = _buildGame(withMerchant: true);
     final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    final state = GameMapAreaStateLogic.provincePurchaseLandActionState(
+    final state = GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
       game: game,
       humanPlayerId: _kHumanPlayerId,
       selectedTileKey: _kTileKey,

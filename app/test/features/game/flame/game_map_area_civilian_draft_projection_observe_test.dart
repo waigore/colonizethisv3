@@ -120,7 +120,7 @@ void main() {
           const orders = ct_models.Orders();
 
           final viaForwarder =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+              GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft(
                 region: region,
                 game: game,
                 orders: orders,

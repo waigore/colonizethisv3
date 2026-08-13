@@ -1,8 +1,8 @@
 // Physical line ratchet for colonizethis_diplomacy lib source (repo rule:
 // `repo.colonizethis_diplomacy_lib_file_size`).
 //
-// Wave 5 (#4130) splits near-cap diplomacy modules so lib files stay below a
-// peer-aligned 400 physical-line ceiling. Generated suffixes are excluded.
+// Wave 6 (#4341) lowers the peer-aligned physical-line ceiling from wave-5's
+// 400 to 300. Generated suffixes are excluded.
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,13 +10,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-5 post-split target (≤400 physical lines).
-const int diplomacyLibFileSizeCeiling = 400;
+/// Ratchet ceiling for wave-6 post-split target (≤300 physical lines).
+const int diplomacyLibFileSizeCeiling = 300;
 
 const String _diplomacyLibRelativePath = 'packages/colonizethis_diplomacy/lib';
 
-/// Hot files still above the wave-5 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land. Cleared after slice F (#4130).
+/// Hot files still above the wave-6 ceiling during transition slices. Shrink-only
+/// allowlist; remove entries as splits land. Empty when wave-6 completes (#4341).
 const List<String> diplomacyLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -33,7 +33,9 @@ int runCheckDiplomacyLibFileSize(
   final logE = err ?? stderr.writeln;
   final libDir = Directory(p.join(repoRoot, _diplomacyLibRelativePath));
   if (!libDir.existsSync()) {
-    logE('check_diplomacy_lib_file_size: $_diplomacyLibRelativePath not found.');
+    logE(
+      'check_diplomacy_lib_file_size: $_diplomacyLibRelativePath not found.',
+    );
     return 1;
   }
 
@@ -80,7 +82,7 @@ int runCheckDiplomacyLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_diplomacy_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4130).',
+      '(ceiling $ceiling; Refs #4130, #4341).',
     );
     return 0;
   }
@@ -88,7 +90,7 @@ int runCheckDiplomacyLibFileSize(
   violations.sort();
   logE(
     'check_diplomacy_lib_file_size: found ${violations.length} violation(s) '
-    'under $_diplomacyLibRelativePath (wave-5 ceiling $ceiling; Refs #4130):',
+    'under $_diplomacyLibRelativePath (wave-6 ceiling $ceiling; Refs #4130, #4341):',
   );
   for (final violation in violations) {
     logE(' - $violation');
