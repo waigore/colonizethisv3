@@ -153,6 +153,7 @@ void main() {
           mission: FleetMission.blockade,
           fleet: fleet,
           targetProvinceIds: availability.blockadeTargetProvinceIds,
+          humanPlayerId: navalMissionGoldenHumanId,
         ),
       );
 
@@ -166,6 +167,7 @@ void main() {
       );
       expect(find.text('Enemy Port'), findsOneWidget);
       expect(find.text('Hostile Coast'), findsOneWidget);
+      expect(find.text('Harbor status unknown'), findsNWidgets(2));
 
       await expectLater(
         find.byKey(boundaryKey),
@@ -196,6 +198,7 @@ void main() {
           mission: FleetMission.beachhead,
           fleet: fleet,
           targetProvinceIds: availability.beachheadTargetProvinceIds,
+          humanPlayerId: navalMissionGoldenHumanId,
         ),
       );
 
@@ -207,6 +210,7 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(find.text('Defenders unknown'), findsWidgets);
 
       await expectLater(
         find.byKey(boundaryKey),
@@ -231,6 +235,7 @@ void main() {
           mission: FleetMission.beachhead,
           fleet: fleet,
           targetProvinceIds: const [],
+          humanPlayerId: navalMissionGoldenHumanId,
         ),
       );
 

@@ -583,6 +583,20 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
       'Landing site supports invasion on the following turn and expires after that turn if unused.';
 
   @override
+  String get naval_mission_targetIntel_harborUnknown => 'Harbor status unknown';
+
+  @override
+  String get naval_mission_targetIntel_noPort => 'No port';
+
+  @override
+  String get naval_mission_targetIntel_emptyHarbor => 'Empty harbor';
+
+  @override
+  String naval_mission_targetIntel_fleetsInPort(int count) {
+    return '$count fleets in port';
+  }
+
+  @override
   String get naval_units_noShipsInFleet => 'No ships in this fleet';
 
   @override

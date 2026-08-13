@@ -24,8 +24,11 @@ Future<void> showNavalMissionFlow({
   required AppEventBus bus,
   required List<String> fleetIds,
   String? preselectedFleetId,
+  PlayerView? playerView,
 }) async {
   if (fleetIds.isEmpty) return;
+  final resolvedPlayerView =
+      playerView ?? buildPlayerView(game, topology, humanPlayerId);
 
   var selectedFleetId = preselectedFleetId;
   if (fleetIds.length > 1) {
@@ -88,6 +91,8 @@ Future<void> showNavalMissionFlow({
             mission: mission,
             fleet: fleet,
             targetProvinceIds: targets,
+            humanPlayerId: humanPlayerId,
+            playerView: resolvedPlayerView,
           ),
         );
         if (targetId == null || !context.mounted) return;
