@@ -20,8 +20,8 @@
 //    lumber → 60 per SPEC/game/commodity-catalog.md § Manufactured base
 //    prices). The em-dash glyph is reserved as a defensive fallback for
 //    future commodity additions that ship without a catalog default.
-//  * previous-turn aggregate volume line `Bids X / Offers Y` sourced
-//    from `Game.worldMarketState.lastTurnActivity`.
+//  * previous-turn aggregate volume line `Last turn: bids X · offers Y`
+//    sourced from `Game.worldMarketState.lastTurnActivity`.
 //
 // The interactive Market controls (bid/offer toggle, quantity stepper,
 // priority dropdown, cargo indicator) ship in follow-up slices and are
@@ -349,8 +349,9 @@ void main() {
     );
 
     testWidgets(
-      'renders the previous-turn aggregate volume line `Bids X / Offers Y` '
-      'from WorldMarketState.lastTurnActivity (with zero-default for '
+      'renders the previous-turn aggregate volume line '
+      '`Last turn: bids X · offers Y` from '
+      'WorldMarketState.lastTurnActivity (with zero-default for '
       'commodities absent from the activity map)',
       (tester) async {
         await pumpTradeScreen(
@@ -374,7 +375,7 @@ void main() {
           find.descendant(
             of: timberRow,
             // ignore: avoid_hardcoded_strings_in_widgets
-            matching: find.text('Bids 12 / Offers 8'),
+            matching: find.text('Last turn: bids 12 · offers 8'),
           ),
           findsOneWidget,
           reason:
@@ -392,7 +393,7 @@ void main() {
           find.descendant(
             of: fabricRow,
             // ignore: avoid_hardcoded_strings_in_widgets
-            matching: find.text('Bids 0 / Offers 0'),
+            matching: find.text('Last turn: bids 0 · offers 0'),
           ),
           findsOneWidget,
           reason:

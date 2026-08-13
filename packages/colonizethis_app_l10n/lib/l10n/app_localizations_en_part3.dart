@@ -219,6 +219,14 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'before rivals, and you earn overseas profit when another power buys here.';
 
   @override
+  String tradeMarket_lastTurnVolume(int bids, int offers) =>
+      'Last turn: bids $bids · offers $offers';
+
+  @override
+  String get tradeMarket_priceMovedTooltip =>
+      "Last market moved this price. This turn's deals use the price shown.";
+
+  @override
   String get tradeDealBook_matchTagFirstRight => 'First right';
 
   @override

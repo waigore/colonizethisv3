@@ -9,11 +9,10 @@ Game _tradeScreenStoryGame({
   Map<String, bool>? techUnlocked,
 }) {
   const humanId = 'gp_human';
-  // Seed the world market state so the Refs #2993 E5a read-only
-  // commodity table renders representative prices + previous-turn
-  // aggregate volumes for a handful of commodities — the remaining
-  // rows render the em-dash price glyph + `Bids 0 / Offers 0` zero
-  // default so reviewers can see both code paths at a glance.
+  // Seed the world market state so the Refs #2993 E5a / #4345 Market
+  // commodity table renders representative prices, last-turn volume, and
+  // signed price deltas for a handful of commodities — remaining rows
+  // default to last-turn zeros with no delta.
   // Post-#3093: WorldMarketState.prices is `Map<CommodityId, int>` (floored at
   // persistence boundary per SPEC/game/world-market.md § Price discovery).
   const Map<CommodityId, int> prices = <CommodityId, int>{
@@ -25,8 +24,18 @@ Game _tradeScreenStoryGame({
   };
   const Map<CommodityId, MarketActivity> activity =
       <CommodityId, MarketActivity>{
-        'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8),
-        'iron': MarketActivity(totalBidQuantity: 5, totalOfferQuantity: 14),
+        'timber': MarketActivity(
+          totalBidQuantity: 12,
+          totalOfferQuantity: 8,
+          // 25 → 30 ⇒ +£5
+          priceChangePercent: 0.2,
+        ),
+        'iron': MarketActivity(
+          totalBidQuantity: 5,
+          totalOfferQuantity: 14,
+          // 89 → 80 ⇒ −£9
+          priceChangePercent: -0.1,
+        ),
         'grain': MarketActivity(totalBidQuantity: 18, totalOfferQuantity: 18),
       };
   return Game(
