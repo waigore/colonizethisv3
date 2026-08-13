@@ -1,7 +1,6 @@
 // Pins MAP20001 Political Establish Consulate action state + UI (Refs #4346).
 //
 // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md — Political Consulate shortcut.
-
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_establish_consulate.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_state_logic.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_shortcuts.dart';
@@ -17,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'province_overlay_test_harness.dart';
-
 const String _kGameId = 'g_consulate_shortcut';
 const String _kHumanPlayerId = 'gp1';
 const String _kMinorId = 'minor1';
