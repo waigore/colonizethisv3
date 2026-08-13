@@ -2278,6 +2278,24 @@ abstract class AppLocalizations {
     String shortfall,
   );
 
+  /// MAP20001 Military Move control label. Refs #4350.
+  String get provinceOverlay_moveArmyAction;
+
+  /// MAP20001 Military Invade control label. Refs #4350.
+  String provinceOverlay_invadeArmyAction(String provinceName);
+
+  /// Disabled Move — Home Army cannot leave capital. Refs #4350.
+  String get provinceOverlay_moveArmyDisabledHomeArmyTooltip;
+
+  /// Disabled Move — no legal destinations for stationed field armies. Refs #4350.
+  String get provinceOverlay_moveArmyDisabledNoDestinationsTooltip;
+
+  /// Disabled Invade — no field army can reach this province (cache). Refs #4350.
+  String get provinceOverlay_invadeArmyDisabledCannotReachTooltip;
+
+  /// Multi-army picker title for overlay Move/Invade. Refs #4350.
+  String get provinceOverlay_selectArmyTitle;
+
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
 

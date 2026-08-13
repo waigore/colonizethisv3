@@ -11,7 +11,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | Decree | Entry point and control | Cost / chief refusal | Result appears | See |
 |---|---|---|---|---|
 | Civilian move (`MoveOrder`) | **Spy:** `UNIT10001` → idle Spy **Relocate** → map destination (soft warn if last Spy leaves foreign intel). Other civilians: implicit leg of `WorkOrder` only (Chs. 4, 6). | Civilian must be yours; destination land, visible, occupiable; xor with `WorkOrder` on same unit. | **Movement** | Chs. 4–5 |
-| Army move / invasion (`ArmyMoveOrder`) | `UNIT20001` **Military Units** → **Move** on a non-Home Army → `DLG20001` **Move army** → destination; invasion confirmation may add Declare War. | Free. Home Army cannot leave capital; own destinations or adjacent valid foreign targets only; war must exist or be declared in the same draft. | **Diplomacy**, then **Movement**; battle follows if contested. | Chs. 11–12 |
+| Army move / invasion (`ArmyMoveOrder`) | `UNIT20001` **Military Units** → **Move** on a non-Home Army → `DLG20001` **Move army** → destination; or `MAP20001` Military **Move** / **Invade** (optional `DLG20002` when several armies qualify; Invade preselects the viewed province). Invasion confirmation may add Declare War. | Free. Home Army cannot leave capital; own destinations or adjacent valid foreign targets only; war must exist or be declared in the same draft. | **Diplomacy**, then **Movement**; battle follows if contested. | Chs. 11–12 |
 | Civilian work (`WorkOrder`) | `UNIT10001` **Civilian Units** → idle unit **Assign** → target → highlighted valid map tile; `MAP20001` shortcuts may open filtered assignment. | One pending work per unit; target, occupancy, terrain, ownership, technology, materials, and tile reservation must pass. | Implicit move: **Movement**; assignment/progress: **Build / work**. | Chs. 4, 6 |
 | Recruit / train worker (`RecruitWorkerOrder`) | `GAME20001` **Production** → **Labour Controls** → tier **+**. | Peasant: fabric ×2. Higher tiers consume one peasant, need paper/treasury and required technologies; queued military/naval builds share the peasant reserve. | **Build / work** | Ch. 5 |
 | Research (`ResearchOrder`) | `GAME40001` **Technology** → **Slots** → choose technology and funding. **Cancel** clears the slot and forfeits its progress. | Funding is paid from treasury; technology must be researchable, not complete, and fit an available slot. | **Research** | Ch. 9 |
@@ -103,6 +103,9 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/game/diplomacy.md`
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/military-units-army-management.md`
+- `SPEC/ui/move-army-dialog.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/overlay-army-move-picker-dialog.md`
 - `SPEC/ui/naval-units-fleet-management.md`
 - `SPEC/ui/naval-mission-menu-dialog.md`
 - `SPEC/ui/naval-mission-target-dialog.md`
