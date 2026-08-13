@@ -1,11 +1,8 @@
 // Dark editorial-monocle visual ACs for TechnologyPanel.
-// Shared pump + table-driven slot/heading cases densify mid-size suite
 // (Refs #4021).
-//
 // Refs #2864 — S0 locked-slot rule + S2 researched-chip grid + S3 slot
 // cards with locked slot 4 dim. SPEC/ui/technology-panel.md § Slot
 // behaviour + § Layout / wireframe.
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

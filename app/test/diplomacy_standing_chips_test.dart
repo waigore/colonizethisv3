@@ -1,11 +1,5 @@
 // Tests for the diplomatic standing chip cluster (Refs #3753 R12 / S13).
-//
 // Covers SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster:
-//  - `diplomaticStandingChips` derivation (treaty/colony/boycott/overseas),
-//  - the `DiplomacyStandingChipCluster` rendering,
-//  - the empty-cluster negative case (no chips, zero footprint),
-//  - the panel-row integration for a colony Tribe.
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

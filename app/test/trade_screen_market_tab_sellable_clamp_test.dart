@@ -1,20 +1,7 @@
 // Widget tests for the Trade Market tab sellable-headroom display and
 // Offer clamp (Refs #3093 Slice 2 — sellable clamp).
-//
 // SPEC/ui/trade-screen.md § Market tab — Sellable + offer clamp,
 // SPEC/game/world-market.md § Trade orders § Validation rules.
-//
-// Pins:
-//   * The `(N)` text rendered next to each commodity name reflects
-//     `sellableHeadroomByCommodityId` (offer cap minus the player's
-//     own staged offer quantity).
-//   * Tapping `Offer` on a commodity with sellable headroom = 0 is a
-//     silent no-op (the chip is disabled).
-//   * Tapping `+` on an Offer-staged row that is already at the cap
-//     is a silent no-op.
-//   * Decrement on a saturated offer row still works and refreshes
-//     the headroom display.
-
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

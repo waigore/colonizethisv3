@@ -1,30 +1,10 @@
 // Pin the 320 dp minimum-viewport contract for SPEC/ui/mobile-adaptation.md
 // § 7 (Minimum-viewport pin) and `Refs #2870` § Acceptance criteria
-// (320 dp no horizontal overflow + 44 dp touch targets).
-//
-// These widget tests:
-//
-//  * Render `CtMainMenu` (`plain` + `pixelArt` variants, default state and
-//    `noSaves` state) at exactly `kMinViewportWidth × 640` (320 × 640 dp) and
-//    assert no `RenderFlex` overflow exceptions surface and every visible
-//    `CtNinePatchButton` reports a rendered height ≥ `kMinTouchTargetSize`.
-//  * Render `NewGameLeaderSelectionDialog` (DLG10001) at the same minimum
-//    viewport. At 320 dp the dialog uses stacked slot rows per
 //    `SPEC/ui/new-game-leader-selection-dialog.md` § Narrow-viewport slot
 //    pickers stacking and `SPEC/ui/mobile-adaptation.md` § 4.
-//  * Include negative pins that intentionally render at a wide viewport so a
-//    regression in the host overflow detection itself would be caught.
-//
-// Touch-target verification covers the **main interactive controls** of the
-// rendered screen — `CtNinePatchButton` instances. Smaller decorative chrome
-// (e.g. `CtBackButton` chevron, dropdown chevron) is intentionally out of
 // scope here per the existing `SPEC/ui/mobile-adaptation.md` § 1 carve-out
-// ("Buttons in Main Menu and Game Setup use 48 dp height; keep that or
-// larger") which targets the primary action buttons.
-//
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // Refs #2870 S10. Shared pumps densify residual mid-500 cases (Refs #4021).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

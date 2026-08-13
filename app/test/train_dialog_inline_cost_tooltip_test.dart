@@ -1,20 +1,8 @@
 // Pins the resource-icon tooltip convention for the shared
-// `TrainDialogInlineCost` cost segment and its application in the Train
-// Military (`UNIT50001`) and Train Naval (`UNIT60001`) dialogs.
-//
 // SPEC: `SPEC/ui/components/resource-icon-tooltip.md`,
 // `SPEC/ui/components/train-dialog-chrome.md`,
 // `SPEC/ui/train-military-dialog.md`, `SPEC/ui/train-naval-dialog.md`.
 // Refs #3631.
-//
-// The convention requires every icon-only resource glyph (commodity,
-// treasury coin, peasant worker) in a per-unit-row cost summary to:
-//
-//  * carry a `Tooltip` (`TooltipTriggerMode.tap` — hover on desktop, tap on
-//    mobile) whose message names the resource;
-//  * expose a `>= kMinTouchTargetSize` (44 dp) trigger region so it is
-//    reachable on narrow mobile viewports.
-
 import 'dart:io' show File;
 
 import 'package:colonizethis_app/config/constants.dart';

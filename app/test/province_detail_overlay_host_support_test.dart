@@ -1,15 +1,5 @@
 // Unit pins for the shared province-detail overlay host support extracted in
 // Refs #3594 (work item 7 — resolve flame-host ↔ widget duplication/coupling).
-//
-// The wide side panel (`GameMapProvinceDetailSidePanel`) and the narrow
-// bottom-sheet slot (`GameMapNarrowDetailOverlaySlot`) previously duplicated
-// the `displayId` resolution and the explore/prospect/build-improvement
-// shortcut callback gating verbatim. These pins assert the extracted helper
-// keeps the same gating contract (null tile key → no callbacks; disabled
-// actions → null callback; enabled action → non-null callback). The full
-// runtime tap/emit behavior remains pinned by the host-level tests
-// (`province_*_shortcut_host_emit_event_test.dart`).
-
 import 'package:colonizethis_app/core/services/game_service/game_service.dart'
     show GameMapData;
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
