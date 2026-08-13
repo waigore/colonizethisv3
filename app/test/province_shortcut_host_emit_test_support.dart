@@ -57,7 +57,7 @@ ProvinceShortcutHostCase provinceShortcutHostCaseWithoutTileTab(
       hostType: host.hostType,
       surfaceSize: host.surfaceSize,
       selectTileTab: false,
-      wide: false,
+      wide: host.wide,
     );
 
 GameService provinceShortcutHostEmitGameService({

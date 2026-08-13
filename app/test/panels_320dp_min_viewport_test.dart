@@ -1,30 +1,8 @@
 // Pin the 320 dp minimum-viewport contract for the in-game panels covered by
 // SPEC/ui/mobile-adaptation.md § 7 (Minimum-viewport pin) — extending the
-// existing `mobile_320dp_min_viewport_test.dart` screen-level pins
-// (CtMainMenu / NewGameLeaderSelectionDialog) to ProductionPanel, DiplomacyPanel,
-// TechnologyPanel, and ProvinceSeaZoneDetailOverlay — the
 // additional surfaces called out in #2870 § Acceptance criteria
-// ("no horizontal overflow at 320 dp on every covered screen").
-//
-// These widget tests render the panels at exactly
-// `kMinViewportWidth × 640` (320 × 640 dp) and assert:
-//
-//  * `WidgetTester.takeException()` is `null` so no `RenderFlex` overflow
-//    exception (which Flutter surfaces via `FlutterError.onError`) escapes
-//    the framework — the contract the existing screen-level pin file
-//    relies on for CtMainMenu / NewGameLeaderSelectionDialog.
-//  * Each panel's narrow-layout marker content still renders end-to-end
-//    so the responsive `MediaQuery.sizeOf(context).width` thresholds
-//    (`< kNarrowBreakpoint` for ProductionPanel; `<=
-//    kDiplomacyRowNarrowMaxWidth` for DiplomacyPanel) executed without
-//    dropping content.
-//  * A wide negative control at 1024 × 768 dp pumps without exception
-//    against the same fixture so a regression in the overflow contract
-//    upstream of the panel itself would be caught.
-//
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // Refs #2870 S10.
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

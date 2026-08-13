@@ -41,7 +41,6 @@ void main() {
       expect(find.textContaining('captured'), findsOneWidget);
       expect(find.text('OK'), findsOneWidget);
     });
-
     testWidgets('defender holds suppresses captured banner', (
       WidgetTester tester,
     ) async {
@@ -62,7 +61,6 @@ void main() {
 
       expect(find.textContaining('captured'), findsNothing);
     });
-
     testWidgets('mutual exhaustion suppresses captured banner', (
       WidgetTester tester,
     ) async {
@@ -82,7 +80,6 @@ void main() {
       expect(find.textContaining('captured'), findsNothing);
       expect(find.text('OK'), findsOneWidget);
     });
-
     testWidgets('OK button pops the dialog route', (WidgetTester tester) async {
       await tester.pumpWidget(
         combatUiSpecsFrame(
@@ -228,51 +225,19 @@ void main() {
   });
 
   group('QuickBattleScreen inline _ResultView color parity (Refs #2869 R18)', () {
-    // The screen's non-interactive path auto-resolves on first frame and
-    // unmounts the round-phase widgets, swapping in the private `_ResultView`.
-    // These tests pin that the inline view applies the same color contract
-    // as the standalone `QuickBattleResultDialog`.
-    QuickBattleInput buildInput() {
-      return const QuickBattleInput(
-        attackerFactionId: 'gp1',
-        defenderFactionId: 'gp2',
-        attackerDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['a1', 'a2', 'a3'],
-              cohesion: 3,
-            ),
-          ],
-        ),
-        defenderDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['d1'],
-              cohesion: 3,
-            ),
-          ],
-        ),
-        provinceId: 'oldWorld|p1',
-        regionId: 'oldWorld',
-        maxRounds: 3,
-      );
-    }
-
     testWidgets(
       'dark editorial-monocle: inline winner title resolves to --accent',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           combatUiSpecsDarkFrame(
-            QuickBattleScreen(input: buildInput(), onComplete: (_) {}),
+            QuickBattleScreen(
+              input: combatUiSpecsStandardQuickBattleInput(),
+              onComplete: (_) {},
+            ),
           ),
         );
         await tester.pump();
 
-        // The inline result view always renders a `Battle Result:` title.
         final Finder titleFinder = find.textContaining('Battle Result:');
         expect(titleFinder, findsOneWidget);
         final Text title = tester.widget<Text>(titleFinder);
@@ -285,14 +250,14 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(
           combatUiSpecsDarkFrame(
-            QuickBattleScreen(input: buildInput(), onComplete: (_) {}),
+            QuickBattleScreen(
+              input: combatUiSpecsStandardQuickBattleInput(),
+              onComplete: (_) {},
+            ),
           ),
         );
         await tester.pump();
 
-        // Casualty rows render with `Attacker casualties: N` / `Defender
-        // casualties: N` (default l10n names because the inline view does
-        // not thread custom names through).
         final Finder attackerRowFinder = find.textContaining(
           'Attacker casualties:',
         );
@@ -314,7 +279,10 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(
           combatUiSpecsDarkFrame(
-            QuickBattleScreen(input: buildInput(), onComplete: (_) {}),
+            QuickBattleScreen(
+              input: combatUiSpecsStandardQuickBattleInput(),
+              onComplete: (_) {},
+            ),
           ),
         );
         await tester.pump();
@@ -328,48 +296,14 @@ void main() {
     );
   });
 
-  // Refs #2869 R7 + SPEC/ui/quick-battle-screen.md § Layout / wireframe.
-  // Pins the round-counter title color/letter-spacing contract on the
-  // round phase (interactive == true so the inline result view does not
-  // unmount the title).
   group('QuickBattleScreen round phase title (Refs #2869 R7)', () {
-    QuickBattleInput buildInput() {
-      return const QuickBattleInput(
-        attackerFactionId: 'gp1',
-        defenderFactionId: 'gp2',
-        attackerDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['a1', 'a2', 'a3'],
-              cohesion: 3,
-            ),
-          ],
-        ),
-        defenderDeployment: QuickBattleDeployment(
-          groups: [
-            QuickBattleGroup(
-              lane: QuickBattleLane.center,
-              line: QuickBattleLine.front,
-              unitIds: ['d1'],
-              cohesion: 3,
-            ),
-          ],
-        ),
-        provinceId: 'oldWorld|p1',
-        regionId: 'oldWorld',
-        maxRounds: 3,
-      );
-    }
-
     testWidgets(
       'dark editorial-monocle: round counter resolves to --accent + 0.05 letter-spacing',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           combatUiSpecsDarkFrame(
             QuickBattleScreen(
-              input: buildInput(),
+              input: combatUiSpecsStandardQuickBattleInput(),
               onComplete: (_) {},
               interactive: true,
             ),
@@ -396,7 +330,7 @@ void main() {
         await tester.pumpWidget(
           combatUiSpecsFrame(
             QuickBattleScreen(
-              input: buildInput(),
+              input: combatUiSpecsStandardQuickBattleInput(),
               onComplete: (_) {},
               interactive: true,
             ),

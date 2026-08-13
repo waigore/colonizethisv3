@@ -7,9 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 import 'app_shell_harness.dart';
+import 'e2e_helpers_barrel_reexport_smoke_support.dart';
 
 void main() {
   suppressLogsForTests();
+
+  registerE2eHelpersBarrelReexportSmokeTests();
 
   group('AC1 barrel: wrapper forwarding smokes', () {
     testWidgets('pumpFor returns without throwing for Duration.zero', (

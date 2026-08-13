@@ -1,25 +1,5 @@
 // Widget tests for the Deal Book tab live ledger (Refs #2993 E6).
 // SPEC/ui/trade-screen.md § Body — Deal Book tab.
-//
-// Exercises the durable contract for the Deal Book tab body:
-//
-//  * the live `_DealBookTabContent` mounts under
-//    `tradeScreenDealBookTabBody` with both bids and offers panels and
-//    treasury-totals rows always present (so widget tests can pin the
-//    totals affordance regardless of activity);
-//  * filled rows are sourced from
-//    `Game.worldMarketState.lastTurnActivity[*].deals`, scoped per
-//    panel by `buyerFactionId` (bids panel) and `sellerFactionId`
-//    (offers panel), with `quantity × pricePerUnit` summed into the
-//    totals row;
-//  * unfilled rows are sourced from
-//    `WorldMarketState.carryForward{Bids,Offers}ByFactionId[playerId]`
-//    so the previous turn's carry-forward orders are visible;
-//  * empty-state copy renders when the player has neither filled rows
-//    nor carry-forward orders on a side;
-//  * FRR / FTP tags render on filled rows that the matcher annotated
-//    so the player can audit why a deal cleared.
-
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
