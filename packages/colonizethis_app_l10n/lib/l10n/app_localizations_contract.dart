@@ -1649,6 +1649,12 @@ abstract class AppLocalizations {
   /// On-request help for the Market first-right chip.
   String get tradeMarket_firstRightTooltip;
 
+  /// Market row previous-turn aggregate bid/offer volume line.
+  String tradeMarket_lastTurnVolume(int bids, int offers);
+
+  /// Tooltip on Market price cluster when a last-turn coin delta is shown.
+  String get tradeMarket_priceMovedTooltip;
+
   /// Deal Book audit tag for first-right-of-refusal matches.
   String get tradeDealBook_matchTagFirstRight;
 

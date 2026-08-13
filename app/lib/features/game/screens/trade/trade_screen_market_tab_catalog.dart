@@ -16,6 +16,7 @@ import '../counsel/trade_counsel_l10n.dart';
 import 'trade_market_counsel_star.dart';
 import 'trade_market_staging_context.dart';
 import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_price_delta.dart';
 import 'trade_screen_market_row.dart';
 import 'trade_screen_market_tab.dart';
 
@@ -196,6 +197,16 @@ extension MarketTabContentCatalog on MarketTabContent {
         ),
       );
     }
+    final MarketActivity activity =
+        staging.market.lastTurnActivity[commodityId] ?? MarketActivity.empty;
+    final int? effectivePrice = effectiveMarketPriceCoins(
+      staging.market.prices[commodityId],
+      commodityId: commodityId,
+    );
+    final int? priceDelta = marketPriceDeltaCoins(
+      currentPrice: effectivePrice,
+      priceChangePercent: activity.priceChangePercent,
+    );
     final rowParams = (
       commodityId: commodityId,
       commodityDisplayName: commodityDisplayName(l10n, commodityId),
@@ -203,9 +214,11 @@ extension MarketTabContentCatalog on MarketTabContent {
         staging.market.prices[commodityId],
         commodityId: commodityId,
       ),
-      volumeText: volumeText(
-        staging.market.lastTurnActivity[commodityId] ?? MarketActivity.empty,
-      ),
+      volumeText: volumeText(activity, l10n),
+      priceDeltaCoins: priceDelta,
+      priceDeltaTooltip: priceDelta == null
+          ? ''
+          : l10n.tradeMarket_priceMovedTooltip,
       stagedOrder: staging.stagedOrderFor(commodityId),
       sellableHeadroom: staging.sellableHeadroomFor(commodityId),
       offerCap: staging.offerCap[commodityId] ?? 0,
@@ -225,6 +238,8 @@ extension MarketTabContentCatalog on MarketTabContent {
         commodityDisplayName: rowParams.commodityDisplayName,
         priceText: rowParams.priceText,
         volumeText: rowParams.volumeText,
+        priceDeltaCoins: rowParams.priceDeltaCoins,
+        priceDeltaTooltip: rowParams.priceDeltaTooltip,
         stagedOrder: rowParams.stagedOrder,
         sellableHeadroom: rowParams.sellableHeadroom,
         offerCap: rowParams.offerCap,
@@ -247,6 +262,8 @@ extension MarketTabContentCatalog on MarketTabContent {
       commodityDisplayName: rowParams.commodityDisplayName,
       priceText: rowParams.priceText,
       volumeText: rowParams.volumeText,
+      priceDeltaCoins: rowParams.priceDeltaCoins,
+      priceDeltaTooltip: rowParams.priceDeltaTooltip,
       stagedOrder: rowParams.stagedOrder,
       sellableHeadroom: rowParams.sellableHeadroom,
       offerCap: rowParams.offerCap,
@@ -266,9 +283,22 @@ extension MarketTabContentCatalog on MarketTabContent {
   }
 }
 
-String volumeText(MarketActivity activity) {
-  return '${MarketTabContent.bidsLabel} ${activity.totalBidQuantity} / '
-      '${MarketTabContent.offersLabel} ${activity.totalOfferQuantity}';
+String volumeText(MarketActivity activity, AppLocalizations l10n) {
+  return l10n.tradeMarket_lastTurnVolume(
+    activity.totalBidQuantity,
+    activity.totalOfferQuantity,
+  );
+}
+
+/// Resolves the integer price used for Market display and delta math.
+int? effectiveMarketPriceCoins(
+  int? price, {
+  required CommodityId commodityId,
+}) {
+  final ResourceRules rules =
+      TradeScreenMarketKeys.marketPriceResourceRulesOverride ??
+      ResourceRules.defaultRules;
+  return price ?? rules.defaultMarketPriceForCommodityId(commodityId);
 }
 
 /// Returns the tradeable commodities grouped by their
@@ -320,11 +350,8 @@ SectionedTradeableCommodities tradeableCommoditiesByCategory() {
 /// canonical em-dash glyph is a defensive fallback retained for future
 /// commodity additions that ship without a catalog default.
 String formatMarketPrice(int? price, {required CommodityId commodityId}) {
-  final ResourceRules rules =
-      TradeScreenMarketKeys.marketPriceResourceRulesOverride ??
-      ResourceRules.defaultRules;
   final int? effective =
-      price ?? rules.defaultMarketPriceForCommodityId(commodityId);
+      effectiveMarketPriceCoins(price, commodityId: commodityId);
   if (effective == null) return MarketTabContent.priceUnknownGlyph;
   return effective.toString();
 }

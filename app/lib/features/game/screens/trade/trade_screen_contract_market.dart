@@ -175,6 +175,12 @@ abstract final class TradeScreenMarketKeys {
   static Key marketRowPriceCoinIconKey(CommodityId commodityId) =>
       ValueKey<String>('tradeScreenMarketRow:$commodityId:priceCoin');
 
+  /// Per-row key for the optional last-turn signed coin delta under the
+  /// coin+price cluster (Refs `#4345`). Mounted only when reconstructed
+  /// delta is non-zero.
+  static Key marketRowPriceDeltaKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:priceDelta');
+
   /// Logical-pixel side length of the leading `ResourceIcon` paint on
   /// each Market row (Refs `#3093` — row-icons slice). 20 dp matches
   /// the Production panel's `CtResourceCell.leadingIconSize` so the
