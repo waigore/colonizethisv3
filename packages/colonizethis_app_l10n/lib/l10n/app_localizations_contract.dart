@@ -401,6 +401,15 @@ abstract class AppLocalizations {
   /// Submit all call-to-arms choices.
   String get game_callToArms_submit;
 
+  /// Optional muted formal-alliance reason under each call-to-arms prompt (Refs #4364).
+  String game_callToArms_formalAllianceReason(String defender);
+
+  /// First-order Join effect under each call-to-arms row (Refs #4364).
+  String game_callToArms_effectJoin(String aggressor, String defender);
+
+  /// First-order Refuse effect under each call-to-arms row (Refs #4364).
+  String game_callToArms_effectRefuse(String defender);
+
   /// Error banner when intervention Yarn fails to load.
   String game_intervention_loadError(String error);
 
@@ -1059,6 +1068,18 @@ abstract class AppLocalizations {
   /// Mission consequence caption on Beachhead target picker (DLG31002).
   String get naval_mission_targetCaption_beachhead;
 
+  /// Fogged Blockade target row when full naval/military intel is unavailable (DLG31002).
+  String get naval_mission_targetIntel_harborUnknown;
+
+  /// Full-intel Blockade target row when the province has no registered seaboard port (DLG31002).
+  String get naval_mission_targetIntel_noPort;
+
+  /// Full-intel Blockade target row when a port is present and no hostile fleets are in port (DLG31002).
+  String get naval_mission_targetIntel_emptyHarbor;
+
+  /// Full-intel Blockade target row summarizing hostile fleets docked at the target port (DLG31002).
+  String naval_mission_targetIntel_fleetsInPort(int count);
+
   /// Empty-state line for fleet with no ships.
   String get naval_units_noShipsInFleet;
 
@@ -1339,7 +1360,6 @@ abstract class AppLocalizations {
   /// Localized display name for commodity id `spices`.
   String get commodity_spices;
 
-
   /// Civilian units panel title.
   String get civilian_units_title;
 
@@ -1584,7 +1604,11 @@ abstract class AppLocalizations {
   String get militaryCounsel_cost_noMaterials;
 
   /// Train counsel affordability summary.
-  String militaryCounsel_costSummary(int treasury, String materials, int peasants);
+  String militaryCounsel_costSummary(
+    int treasury,
+    String materials,
+    int peasants,
+  );
 
   /// Brief military counsel reason for train recommendations.
   String get militaryCounsel_reason_affordableTrain_brief;
@@ -2010,6 +2034,9 @@ abstract class AppLocalizations {
   /// Minor/Tribe (Refs #3753 R4b).
   String get provinceOverlay_tileConsulateRequiredForExploreTooltip;
 
+  /// Narrow MAP20001 variant that names the Political shortcut.
+  String get provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip;
+
   /// Tooltip and semantics label for province tile build-improvement shortcut action.
   String get provinceOverlay_tileBuildImprovementTooltip;
 
@@ -2086,6 +2113,12 @@ abstract class AppLocalizations {
 
   /// Plain-language port status when the province has a seaboard port.
   String get provinceOverlay_tilePortStatusPresent;
+
+  /// Named affordance opening Tile connectivity/port teaching helper (Refs #4369).
+  String get provinceOverlay_tileDetailsAction;
+
+  /// Title for the Tile details helper dialog (Refs #4369).
+  String get provinceOverlay_tileDetailsTitle;
 
   /// Tooltip and semantics label for province tile purchase-land shortcut action.
   String get provinceOverlay_tilePurchaseLandTooltip;
@@ -2210,6 +2243,18 @@ abstract class AppLocalizations {
   /// Political Upgrade town shortcut label. Refs #4316.
   String get provinceOverlay_upgradeTownAction;
 
+  /// Political shortcut that stages a Trade Consulate overture. Refs #4346.
+  String get provinceOverlay_establishConsulateAction;
+
+  /// Political shortcut label while that Consulate overture is pending.
+  String get provinceOverlay_cancelEstablishConsulateAction;
+
+  /// Political status line explaining the missing relationship.
+  String provinceOverlay_noConsulateWith(String owner);
+
+  /// Accessible disabled label including the canonical validator reason.
+  String provinceOverlay_establishConsulateDisabledSemantics(String reason);
+
   /// Political Upgrade town enabled tooltip. Refs #4316.
   String get provinceOverlay_politicalUpgradeTownTooltip;
 
@@ -2229,6 +2274,24 @@ abstract class AppLocalizations {
   String provinceOverlay_politicalUpgradeTownDisabledMaterialsTooltip(
     String shortfall,
   );
+
+  /// MAP20001 Military Move control label. Refs #4350.
+  String get provinceOverlay_moveArmyAction;
+
+  /// MAP20001 Military Invade control label. Refs #4350.
+  String provinceOverlay_invadeArmyAction(String provinceName);
+
+  /// Disabled Move — Home Army cannot leave capital. Refs #4350.
+  String get provinceOverlay_moveArmyDisabledHomeArmyTooltip;
+
+  /// Disabled Move — no legal destinations for stationed field armies. Refs #4350.
+  String get provinceOverlay_moveArmyDisabledNoDestinationsTooltip;
+
+  /// Disabled Invade — no field army can reach this province (cache). Refs #4350.
+  String get provinceOverlay_invadeArmyDisabledCannotReachTooltip;
+
+  /// Multi-army picker title for overlay Move/Invade. Refs #4350.
+  String get provinceOverlay_selectArmyTitle;
 
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
@@ -2460,11 +2523,7 @@ abstract class AppLocalizations {
   String get production_labourDetails;
 
   /// Per-tier labour readiness detail row.
-  String production_labourTierDetail(
-    String tier,
-    int working,
-    int notWorking,
-  );
+  String production_labourTierDetail(String tier, int working, int notWorking);
 
   /// Forces-food default line when land military feeding is complete.
   String get production_forcesFoodArmiesFullyFed;

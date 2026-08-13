@@ -696,6 +696,36 @@
   "@game_callToArms_submit": {
     "description": "Submit all call-to-arms choices."
   },
+  "game_callToArms_formalAllianceReason": "Formal alliance with {defender}",
+  "@game_callToArms_formalAllianceReason": {
+    "description": "Optional muted reason line under each call-to-arms prompt (Refs #4364). Speaks of formal alliance/treaty, not the informal Friendly band.",
+    "placeholders": {
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_callToArms_effectJoin": "Effect: Enter war with {aggressor} this turn. The treaty with {defender} stays.",
+  "@game_callToArms_effectJoin": {
+    "description": "First-order Join consequence under each call-to-arms row (Refs #4364).",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_callToArms_effectRefuse": "Effect: The treaty with {defender} ends. Relations with {defender} worsen (−50). Standing with other Great Powers worsens (−10).",
+  "@game_callToArms_effectRefuse": {
+    "description": "First-order Refuse consequence under each call-to-arms row (Refs #4364). Aggressor excluded from the −10 standing hit per GDD.",
+    "placeholders": {
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
   "game_intervention_loadError": "Could not load intervention dialogue: {error}",
   "@game_intervention_loadError": {
     "description": "Error banner when intervention Yarn fails to load.",
@@ -1997,6 +2027,27 @@
   "@naval_mission_targetCaption_beachhead": {
     "description": "Mission consequence caption on Beachhead target picker (DLG31002)."
   },
+  "naval_mission_targetIntel_harborUnknown": "Harbor status unknown",
+  "@naval_mission_targetIntel_harborUnknown": {
+    "description": "Fogged Blockade target row when full naval/military intel is unavailable (DLG31002)."
+  },
+  "naval_mission_targetIntel_noPort": "No port",
+  "@naval_mission_targetIntel_noPort": {
+    "description": "Full-intel Blockade target row when the province has no registered seaboard port (DLG31002)."
+  },
+  "naval_mission_targetIntel_emptyHarbor": "Empty harbor",
+  "@naval_mission_targetIntel_emptyHarbor": {
+    "description": "Full-intel Blockade target row when a port is present and no hostile fleets are in port (DLG31002)."
+  },
+  "naval_mission_targetIntel_fleetsInPort": "{count} fleets in port",
+  "@naval_mission_targetIntel_fleetsInPort": {
+    "description": "Full-intel Blockade target row summarizing hostile fleets docked at the target port (DLG31002).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "naval_units_noShipsInFleet": "No ships in this fleet",
   "@naval_units_noShipsInFleet": {
     "description": "Empty-state line for fleet with no ships."
@@ -3205,6 +3256,36 @@
   "@provinceOverlay_tileConsulateRequiredForExploreTooltip": {
     "description": "Tooltip shown on the disabled province tile Explore/Prospect inline actions when the issuing Great Power holds no Consulate (or higher) with the owning Minor/Tribe (Refs #3753 R4b)."
   },
+  "provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip": "Establish a consulate before exploring or prospecting. Use Establish Consulate on Political.",
+  "@provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip": {
+    "description": "Narrow MAP20001 tooltip directing players from gated Explore/Prospect to Political Establish Consulate."
+  },
+  "provinceOverlay_establishConsulateAction": "Establish Consulate",
+  "@provinceOverlay_establishConsulateAction": {
+    "description": "Political shortcut label for staging a Trade Consulate overture."
+  },
+  "provinceOverlay_cancelEstablishConsulateAction": "Cancel",
+  "@provinceOverlay_cancelEstablishConsulateAction": {
+    "description": "Political shortcut label when a Trade Consulate overture is already pending."
+  },
+  "provinceOverlay_noConsulateWith": "No consulate with {owner}",
+  "@provinceOverlay_noConsulateWith": {
+    "description": "Political status line shown above the Establish Consulate shortcut.",
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_establishConsulateDisabledSemantics": "Establish Consulate unavailable: {reason}",
+  "@provinceOverlay_establishConsulateDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Establish Consulate shortcut.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
@@ -3295,6 +3376,35 @@
       }
     }
   },
+  "provinceOverlay_moveArmyAction": "Move",
+  "@provinceOverlay_moveArmyAction": {
+    "description": "MAP20001 Military Move control label (Refs #4350)."
+  },
+  "provinceOverlay_invadeArmyAction": "Invade {provinceName}",
+  "@provinceOverlay_invadeArmyAction": {
+    "description": "MAP20001 Military Invade control label (Refs #4350).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_moveArmyDisabledHomeArmyTooltip": "The Home Army cannot leave the capital. Split a field army first.",
+  "@provinceOverlay_moveArmyDisabledHomeArmyTooltip": {
+    "description": "Disabled Move tooltip when only Home Army is present (Refs #4350)."
+  },
+  "provinceOverlay_moveArmyDisabledNoDestinationsTooltip": "No legal destinations for field armies stationed here.",
+  "@provinceOverlay_moveArmyDisabledNoDestinationsTooltip": {
+    "description": "Disabled Move tooltip when cache has no destinations (Refs #4350)."
+  },
+  "provinceOverlay_invadeArmyDisabledCannotReachTooltip": "No field army can reach this province this turn.",
+  "@provinceOverlay_invadeArmyDisabledCannotReachTooltip": {
+    "description": "Disabled Invade tooltip when province missing from army-move cache (Refs #4350)."
+  },
+  "provinceOverlay_selectArmyTitle": "Select army",
+  "@provinceOverlay_selectArmyTitle": {
+    "description": "DLG20002 overlay army picker title (Refs #4350)."
+  },
   "provinceOverlay_tileBuildFortTooltip": "Build fort",
   "@provinceOverlay_tileBuildFortTooltip": {
     "description": "Tooltip for enabled build-fort shortcut on town tile (Refs #4280)."
@@ -3362,6 +3472,14 @@
   "provinceOverlay_tilePortStatusPresent": "Port: Present",
   "@provinceOverlay_tilePortStatusPresent": {
     "description": "MAP20001 Tile plain-language port status when province has a seaboard port"
+  },
+  "provinceOverlay_tileDetailsAction": "Tile details",
+  "@provinceOverlay_tileDetailsAction": {
+    "description": "MAP20001 named affordance opening connectivity/port teaching helper (Refs #4369)"
+  },
+  "provinceOverlay_tileDetailsTitle": "Tile details",
+  "@provinceOverlay_tileDetailsTitle": {
+    "description": "MAP20001 Tile details helper dialog title (Refs #4369)"
   },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {

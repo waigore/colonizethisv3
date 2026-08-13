@@ -49,7 +49,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
-        name: 'Standalone — tile capital-link disconnected',
+        name: 'Standalone — tile stranded capital-link default (Refs #4369)',
         builder: (context) {
           final game = demoGameForOverlay;
           final region = demoRegionForOverlay;
@@ -170,6 +170,8 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           upgradeTownHasBuilderUnits: false,
         ),
       ),
+      ...provinceOverlayMoveInvadeUseCases,
+      ...provinceOverlayEstablishConsulateUseCases,
       WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
@@ -212,14 +214,16 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                 },
               ),
               availableByCommodity: {
-                CommodityCatalog.grain.id: const ProvinceImprovableCommodityCount(
-                  count: 3,
-                  tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|2|0'],
-                ),
-                CommodityCatalog.timber.id: const ProvinceImprovableCommodityCount(
-                  count: 2,
-                  tileKeys: ['oldWorld|p1|0|1'],
-                ),
+                CommodityCatalog.grain.id:
+                    const ProvinceImprovableCommodityCount(
+                      count: 3,
+                      tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|2|0'],
+                    ),
+                CommodityCatalog.timber.id:
+                    const ProvinceImprovableCommodityCount(
+                      count: 2,
+                      tileKeys: ['oldWorld|p1|0|1'],
+                    ),
               },
               onClose: () {},
             ),
@@ -536,10 +540,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       game.worldState,
       player.id,
     );
-    final shipCounts = shipTypeCountsForPlayer(
-      game.worldState,
-      player.id,
-    );
+    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
     final forcesFeeding = forcesFeedingForPlayer(
       game: game,
       topology: topology,
@@ -615,8 +616,7 @@ class CivilianPanelWithMapStory extends StatefulWidget {
       CivilianPanelWithMapStoryState();
 }
 
-class CivilianPanelWithMapStoryState
-    extends State<CivilianPanelWithMapStory> {
+class CivilianPanelWithMapStoryState extends State<CivilianPanelWithMapStory> {
   late Game _game;
   late AppEventBus _panelBus;
   final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
@@ -948,8 +948,7 @@ class MilitaryPanelWithMapStory extends StatefulWidget {
       MilitaryPanelWithMapStoryState();
 }
 
-class MilitaryPanelWithMapStoryState
-    extends State<MilitaryPanelWithMapStory> {
+class MilitaryPanelWithMapStoryState extends State<MilitaryPanelWithMapStory> {
   int _regionIndex = 0;
   String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;

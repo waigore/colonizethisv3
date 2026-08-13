@@ -59,7 +59,7 @@ runSeedAndAssignLandPass({
 
 List<List<String>> runLakesAndBorderNoisePass({
   required TileMapParams params,
-  required TileMapGenLakesProvinces lakeAndProvinceService,
+  required TileMapGenLakesProvinces lakesService,
   required List<List<String>> grid,
   required String seaZoneId,
   required List<(int x, int y)> landSeeds,
@@ -67,7 +67,7 @@ List<List<String>> runLakesAndBorderNoisePass({
   required Random rnd,
   void Function(String)? onLog,
 }) {
-  return lakeAndProvinceService.run(
+  return lakesService.run(
     MapGenPassContext<LakesPassPayload>(
       params: params,
       payload: LakesPassPayload(

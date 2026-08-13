@@ -26,22 +26,22 @@ void main() {
     );
   });
 
-  test('ceiling is 350 after wave-5 headroom ratchet (#4297)', () {
-    expect(mapLibFileSizeHeadroomCeiling, 350);
+  test('ceiling is 300 after wave-6 headroom ratchet (#4371)', () {
+    expect(mapLibFileSizeHeadroomCeiling, 300);
   });
 
   test('grandfather allowlist is empty after wave-5 splits', () {
     expect(mapLibFileSizeHeadroomGrandfathered, isEmpty);
   });
 
-  test('fails when a gen file exceeds the 350 non-comment-line headroom', () {
+  test('fails when a gen file exceeds the 300 non-comment-line headroom', () {
     final temp =
         Directory.systemTemp.createTempSync('check_map_lib_headroom_fail_');
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File('${temp.path}/$_genRoot/big_pass.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(351, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(301, 'final x = 1;').join('\n'));
     Directory('${temp.path}/$_viewRoot').createSync(recursive: true);
     Directory('${temp.path}/$_renderRoot').createSync(recursive: true);
 
@@ -55,10 +55,10 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('big_pass.dart'));
-    expect(logs.join('\n'), contains('non-comment lines > 350'));
+    expect(logs.join('\n'), contains('non-comment lines > 300'));
   });
 
-  test('passes a gen file at exactly the headroom cap (350 non-comment lines)',
+  test('passes a gen file at exactly the headroom cap (300 non-comment lines)',
       () {
     final temp =
         Directory.systemTemp.createTempSync('check_map_lib_headroom_edge_');
@@ -66,7 +66,7 @@ void main() {
 
     File('${temp.path}/$_genRoot/edge_pass.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(350, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(300, 'final x = 1;').join('\n'));
     Directory('${temp.path}/$_viewRoot').createSync(recursive: true);
     Directory('${temp.path}/$_renderRoot').createSync(recursive: true);
 

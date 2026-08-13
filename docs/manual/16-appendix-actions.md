@@ -11,7 +11,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | Decree | Entry point and control | Cost / chief refusal | Result appears | See |
 |---|---|---|---|---|
 | Civilian move (`MoveOrder`) | **Spy:** `UNIT10001` → idle Spy **Relocate** → map destination (soft warn if last Spy leaves foreign intel). Other civilians: implicit leg of `WorkOrder` only (Chs. 4, 6). | Civilian must be yours; destination land, visible, occupiable; xor with `WorkOrder` on same unit. | **Movement** | Chs. 4–5 |
-| Army move / invasion (`ArmyMoveOrder`) | `UNIT20001` **Military Units** → **Move** on a non-Home Army → `DLG20001` **Move army** → destination; invasion confirmation may add Declare War. | Free. Home Army cannot leave capital; own destinations or adjacent valid foreign targets only; war must exist or be declared in the same draft. | **Diplomacy**, then **Movement**; battle follows if contested. | Chs. 11–12 |
+| Army move / invasion (`ArmyMoveOrder`) | `UNIT20001` **Military Units** → **Move** on a non-Home Army → `DLG20001` **Move army** → destination; or `MAP20001` Military **Move** / **Invade** (optional `DLG20002` when several armies qualify; Invade preselects the viewed province). Invasion confirmation may add Declare War. | Free. Home Army cannot leave capital; own destinations or adjacent valid foreign targets only; war must exist or be declared in the same draft. | **Diplomacy**, then **Movement**; battle follows if contested. | Chs. 11–12 |
 | Civilian work (`WorkOrder`) | `UNIT10001` **Civilian Units** → idle unit **Assign** → target → highlighted valid map tile; `MAP20001` shortcuts may open filtered assignment. | One pending work per unit; target, occupancy, terrain, ownership, technology, materials, and tile reservation must pass. | Implicit move: **Movement**; assignment/progress: **Build / work**. | Chs. 4, 6 |
 | Recruit / train worker (`RecruitWorkerOrder`) | `GAME20001` **Production** → **Labour Controls** → tier **+**. | Peasant: fabric ×2. Higher tiers consume one peasant, need paper/treasury and required technologies; queued military/naval builds share the peasant reserve. | **Build / work** | Ch. 5 |
 | Research (`ResearchOrder`) | `GAME40001` **Technology** → **Slots** → choose technology and funding. **Cancel** clears the slot and forfeits its progress. | Funding is paid from treasury; technology must be researchable, not complete, and fit an available slot. | **Research** | Ch. 9 |
@@ -19,7 +19,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | Build regiment (`BuildUnitOrder`) | `UNIT20001` → **Train** → `UNIT50001` **Train Military** (row shows category, combat-role gist, food upkeep / turn, and build costs). | Treasury, materials, one reserved peasant, and regiment technology. | **Build / work**; joins Home Army. | Ch. 11 |
 | Build ship (`BuildUnitOrder`) | `UNIT30001` → **Train** → `UNIT60001` **Train Naval**. | Treasury, materials, one reserved peasant, and ship technology where required. | **Build / work**; joins Home Fleet. | Ch. 13 |
 | Fleet move (`NavalMoveOrder`) | **Map:** tap in-port sea-going fleet marker (`MAP10001`) → `DLG30001`, or at-sea marker → `DLG31001` **Sail / Move** → `DLG30001`. **Panel:** `UNIT30001` → **Move** on a sea-going fleet → `DLG30001` **Move Fleet** → legal destination. | Free. Home Fleet cannot move; only one adjacent sea/port step; ports must be yours. Replaces that fleet’s pending mission. | **Movement** | Ch. 13 |
-| Fleet mission (`NavalMissionOrder`) | **Map:** tap at-sea human fleet marker (`MAP10001`) → `DLG31003` (if needed) → `DLG31001` **Assign mission** → `DLG31002` for Blockade/Beachhead targets. Home Fleet marker opens `UNIT30001` instead; in-port sea-going marker opens Move. **Panel:** `UNIT30001` → **Mission** on an at-sea sea-going fleet (same flow). **Cancel pending mission** clears a staged mission. | Free. Patrol/Blockade/Beachhead/Defend require a sea-going fleet at sea; Blockade/Beachhead need an adjacent at-war province target. A fleet moves or takes one mission, never both. Join Home Fleet: dock at capital or `DLG40001` transfer — not the mission menu. | Assignment: **Movement**; interceptions: **Naval Interception & Naval Combat**. | Ch. 13 |
+| Fleet mission (`NavalMissionOrder`) | **Map:** tap at-sea human fleet marker (`MAP10001`) → `DLG31003` (if needed) → `DLG31001` **Assign mission** → `DLG31002` for Blockade/Beachhead targets (rows show fog-honest defender or harbor intel). Home Fleet marker opens `UNIT30001` instead; in-port sea-going marker opens Move. **Panel:** `UNIT30001` → **Mission** on an at-sea sea-going fleet (same flow). **Cancel pending mission** clears a staged mission. | Free. Patrol/Blockade/Beachhead/Defend require a sea-going fleet at sea; Blockade/Beachhead need an adjacent at-war province target. A fleet moves or takes one mission, never both. Join Home Fleet: dock at capital or `DLG40001` transfer — not the mission menu. | Assignment: **Movement**; interceptions: **Naval Interception & Naval Combat**. | Ch. 13 |
 | Trade bid / offer (`TradeOrder`) | Left-rail **Trade** → `GAME60001` **Trade screen** → **Market** (bid/offer/none + quantity; last-turn price move beside the price) or **Deal Book** (last-turn fills / carry-forwards). | Bid/offer are mutually exclusive per commodity; quantity, cargo, treasury, stockpile, and bid-type caps apply; riches cannot trade. | **World Market** | Ch. 8 |
 
 ### Work targets
@@ -31,7 +31,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | `build_improvement` — Builder | Lumber + cast iron; resource required; mineral must be prospected; level/tech cap applies. | Raises improvement level. |
 | `upgrade_town` — Builder | National Bureaucracy, materials, and province town tile; availability reflects current validator rules. **`MAP20001` Upgrade town** on the Political Town development row opens Builder-only assignment for the province town tile when eligible. | Raises town development. |
 | `build_road` — Engineer | Lumber + metal; terrain/road technology limits. | Raises transport level. |
-| `build_port` — Engineer | Lumber + metal; valid coastal/river tile. **`MAP20001` Build port** shortcut on the Road / transport row opens Engineer-only assignment for the selected coastal tile when eligible; Port status reads None or Present. **`GAME80001` Counsel** → `GAME90001` Development tab can **Agree** a ranked port when the courts would dig one this turn. | Creates port and transport level 4. |
+| `build_port` — Engineer | Lumber + metal; valid coastal/river tile. **`MAP20001` Build port** shortcut on the Road / transport row opens Engineer-only assignment for the selected coastal tile when eligible; Port status (**None** / **Present**) is under **Tile details**. **`GAME80001` Counsel** → `GAME90001` Development tab can **Agree** a ranked port when the courts would dig one this turn. | Creates port and transport level 4. |
 | `build_fort` — Engineer | Materials, town tile, and fort technology where required. **`MAP20001` Build fort** shortcut on the Military fort row opens Engineer-only assignment for the selected town tile when eligible. | Raises fort level. |
 | `build_rail` — Rail Builder | Steel ×2 + lumber ×2; road level 1–2, known terrain, matching rail technology. | Sets railroad transport level 4. |
 | `counter_spy` — Spy | Free; owned province. | Ongoing empire-wide counter-espionage effect; spy checks occur in **Spy resolution**. |
@@ -39,7 +39,7 @@ Use this ledger to issue every decree available to your court, check its price a
 
 ### Diplomacy
 
-All begin at `GAME30001` **Diplomacy** → select faction → `GAME30002` detail/actions → confirm. Most are pending decrees resolved in **Diplomacy**.
+Most begin at `GAME30001` **Diplomacy** → select faction → choose an action → confirm, then resolve in **Diplomacy**. The first Consulate stage also has a focused entry at `MAP20001` Political when that missing relationship blocks Explore or Prospect.
 
 | Decree | Cost / key refusal | Result |
 |---|---|---|
@@ -47,7 +47,7 @@ All begin at `GAME30001` **Diplomacy** → select faction → `GAME30002` detail
 | Offer Peace | Must be at war; target must accept. | Peace if accepted. |
 | Alliance | Great Power only; peace; no existing formal alliance. | Treaty if accepted. |
 | Break Alliance | Formal alliance required. `GAME30001` panel **Break Alliance** confirmation is immediate for the human player. | Treaty ends immediately; same-pair alliance/overture/aid/subsidy blocked until next turn. |
-| Establish Overture | One stage at a time; relation, treasury, target, and technology gates apply. | Target accepts/rejects in Diplomacy. |
+| Establish Overture | `GAME30001`, or `MAP20001` Political **Establish Consulate** for a Consulate-gated Minor/Tribe province. One stage at a time; relation, treasury, target, and technology gates apply. | Target accepts/rejects in Diplomacy; pending Consulate may be cancelled from the same map control. |
 | Grant Aid | Embassy; positive £1,000 steps; sufficient treasury. `DIPL20001` **Grant or subsidy** dialog. | Transfer and relation effect in Diplomacy. |
 | Set Subsidy | Embassy; Minor/Tribe only; 5–20% in steps of 5. `DIPL20001`. | No treasury charge; active market/relation effect. |
 | Boycott | Great Power target; own at least one colony; peace; no existing boycott. | Colonial trade embargo. |
@@ -103,7 +103,11 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/game/diplomacy.md`
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/military-units-army-management.md`
+- `SPEC/ui/move-army-dialog.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/overlay-army-move-picker-dialog.md`
 - `SPEC/ui/naval-units-fleet-management.md`
 - `SPEC/ui/naval-mission-menu-dialog.md`
 - `SPEC/ui/naval-mission-target-dialog.md`
 - `SPEC/ui/map-widget.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`

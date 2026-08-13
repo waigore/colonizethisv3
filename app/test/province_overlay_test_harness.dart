@@ -91,6 +91,11 @@ Widget buildProvinceOverlayDarkThemeShell({
   bool buildImprovementActionEnabled = false,
   bool buildImprovementActionHasBuilderUnits = false,
   VoidCallback? onBuildImprovementTap,
+  bool showEstablishConsulateControl = false,
+  bool establishConsulateEnabled = false,
+  bool establishConsulatePending = false,
+  String? establishConsulateRejectionReason,
+  VoidCallback? onEstablishConsulateTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
@@ -98,6 +103,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   ProvinceTileConnectivityDisplay? tileConnectivity,
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
   ThemeData? shellTheme,
+  Size? viewport,
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -118,8 +124,14 @@ Widget buildProvinceOverlayDarkThemeShell({
     onExploreWithExplorerTap: onExploreWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+    buildImprovementActionHasBuilderUnits:
+        buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
+    showEstablishConsulateControl: showEstablishConsulateControl,
+    establishConsulateEnabled: establishConsulateEnabled,
+    establishConsulatePending: establishConsulatePending,
+    establishConsulateRejectionReason: establishConsulateRejectionReason,
+    onEstablishConsulateTap: onEstablishConsulateTap,
     omniscientDetail: omniscientDetail,
     townProductionBonusByCommodity: townProductionBonusByCommodity,
     extractionSnapshot: extractionSnapshot,
@@ -134,6 +146,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   // Optional [shellTheme] is a documented buildAppShell specialization
   // (same l10n wiring; no inline MaterialApp).
   return buildAppShell(
+    viewport: viewport,
     theme: shellTheme,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -165,6 +178,11 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   bool buildImprovementActionEnabled = false,
   bool buildImprovementActionHasBuilderUnits = false,
   VoidCallback? onBuildImprovementTap,
+  bool showEstablishConsulateControl = false,
+  bool establishConsulateEnabled = false,
+  bool establishConsulatePending = false,
+  String? establishConsulateRejectionReason,
+  VoidCallback? onEstablishConsulateTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
@@ -172,6 +190,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   ProvinceTileConnectivityDisplay? tileConnectivity,
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
   ThemeData? shellTheme,
+  Size? viewport,
 }) async {
   await tester.pumpWidget(
     buildProvinceOverlayDarkThemeShell(
@@ -194,14 +213,21 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       onExploreWithExplorerTap: onExploreWithExplorerTap,
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
-      buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+      buildImprovementActionHasBuilderUnits:
+          buildImprovementActionHasBuilderUnits,
       onBuildImprovementTap: onBuildImprovementTap,
+      showEstablishConsulateControl: showEstablishConsulateControl,
+      establishConsulateEnabled: establishConsulateEnabled,
+      establishConsulatePending: establishConsulatePending,
+      establishConsulateRejectionReason: establishConsulateRejectionReason,
+      onEstablishConsulateTap: onEstablishConsulateTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
       tileConnectivity: tileConnectivity,
       shellTheme: shellTheme,
+      viewport: viewport,
     ),
   );
   await tester.pump();

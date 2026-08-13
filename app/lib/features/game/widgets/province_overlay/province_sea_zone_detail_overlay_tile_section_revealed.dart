@@ -1,7 +1,8 @@
 /// Revealed-tile body for [ProvinceSeaZoneDetailOverlay] tile section.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show terrainDisplayName;
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -12,14 +13,20 @@ import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../config/constants.dart' show kNarrowBreakpoint;
 import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart' show explorerConsulateGateBlocksMinorTribeProvince, isProspectableTerrain, isProspectableTerrainId;
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show
+        explorerConsulateGateBlocksMinorTribeProvince,
+        isProspectableTerrain,
+        isProspectableTerrainId;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show PlayerView, resourceIdVisibleInPlayerView;
 
 Widget buildRevealedTileSection({
   required BuildContext context,
@@ -90,11 +97,14 @@ Widget buildRevealedTileSection({
     playerId: humanPlayerId,
     provinceOwnerId: tileOwnerId,
   );
+  final consulateTooltip = MediaQuery.sizeOf(context).width < kNarrowBreakpoint
+      ? l10n.provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip
+      : l10n.provinceOverlay_tileConsulateRequiredForExploreTooltip;
   final exploreTooltip = (!exploreActionEnabled && consulateGated)
-      ? l10n.provinceOverlay_tileConsulateRequiredForExploreTooltip
+      ? consulateTooltip
       : l10n.provinceOverlay_tileExploreWithExplorerTooltip;
   final prospectTooltip = (!prospectActionEnabled && consulateGated)
-      ? l10n.provinceOverlay_tileConsulateRequiredForExploreTooltip
+      ? consulateTooltip
       : l10n.provinceOverlay_tileProspectWithExplorerTooltip;
 
   final prospectedRow = Row(
@@ -177,8 +187,7 @@ Widget buildRevealedTileSection({
       children: [
         Text(l10n.provinceOverlay_tileCoordinates(x, y), style: bodyStyle),
         Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
-        if (designationLine != null)
-          Text(designationLine, style: bodyStyle),
+        if (designationLine != null) Text(designationLine, style: bodyStyle),
         buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
@@ -191,7 +200,8 @@ Widget buildRevealedTileSection({
           resourceLabel: resourceLabel,
           showPurchaseLandActionIcon: showPurchaseLandActionIcon,
           purchaseLandActionEnabled: purchaseLandActionEnabled,
-          purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
+          purchaseLandActionHasMerchantUnits:
+              purchaseLandActionHasMerchantUnits,
           onPurchaseLandTap: onPurchaseLandTap,
         ),
         prospectedRow,
@@ -213,9 +223,15 @@ Widget buildRevealedTileSection({
           buildPortActionEnabled: buildPortActionEnabled,
           buildPortActionHasEngineerUnits: buildPortActionHasEngineerUnits,
           onBuildPortTap: onBuildPortTap,
+          tileConnectivity: tileConnectivity,
         ),
         ...buildTileConnectivityLabelWidgets(
+          context: context,
           l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          provinceId: provinceId,
+          roadLevel: roadLevel,
           tileConnectivity: tileConnectivity,
         ),
         Text(

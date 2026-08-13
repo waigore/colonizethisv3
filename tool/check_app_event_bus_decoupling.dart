@@ -143,6 +143,13 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Declare-war confirm `showDialog` lives in state after wave-9 de-part
   // (Refs #4117). Same local-by-design rationale as `move_army_dialog_declare_war.dart`.
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_state.dart',
+  // Shared MoveArmyDialog opener + MAP20001 overlay Move/Invade flow
+  // (optional DLG20002 army picker). Same local-by-design rationale as
+  // `move_army_dialog.dart` / naval mission flow —
+  // `SPEC/program/app-ui-wiring.md` Land armies + overlay Move/Invade
+  // (Refs #4350).
+  'app/lib/features/game/widgets/unit_orders/show_move_army_dialog.dart',
+  'app/lib/features/game/widgets/unit_orders/overlay_army_move_flow.dart',
   // Military Counsel invade Agree reuses the move-army declare-war copy and
   // chrome — same local-by-design rationale as
   // `move_army_dialog_declare_war.dart` (Refs #4307).
@@ -153,6 +160,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
   // (Refs #4213, #4343).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
+  // MAP20001 Tile teaching helper — read-only connectivity/port/caption
+  // details opened from transport cluster tap or named Tile details action
+  // within the province overlay (Refs #4369). Same local-by-design rationale
+  // as tech detail / research breakdown dialogs.
+  'app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate

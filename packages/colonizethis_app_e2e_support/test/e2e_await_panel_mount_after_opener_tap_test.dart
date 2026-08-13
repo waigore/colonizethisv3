@@ -21,15 +21,27 @@
 /// implementation; AC10 — no silent flakiness from timeout regressions).
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
+import 'support/delayed_mount_harness.dart';
+
 const _kPanelKey = ValueKey<String>('e2e_await_panel_mount_panel');
+
+Widget _panelHost({
+  required void Function(DelayedMountHostState state) onState,
+  Duration? flipAfter,
+}) => DelayedMountHost(
+  mountAfter: flipAfter,
+  onState: onState,
+  child: const KeyedSubtree(
+    key: _kPanelKey,
+    child: SizedBox(width: 100, height: 100),
+  ),
+);
 
 void main() {
   suppressLogsForTests();
@@ -96,10 +108,10 @@ void main() {
     // [e2ePumpUntilConditionOrIdle]) but would pay one extra adaptive
     // poll cycle per call across all three openers (Refs GitHub #2336
     // AC1 / AC5).
-    late _DelayedMountState state;
+    late DelayedMountHostState state;
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: _DelayedMountHost(onState: (s) => state = s)),
+        home: Scaffold(body: _panelHost(onState: (s) => state = s)),
       ),
     );
     expect(find.byKey(_kPanelKey), findsNothing);
@@ -144,11 +156,11 @@ void main() {
       // would still pass this test (because the predicate eventually
       // becomes true), but the timeout-failure test below pins the
       // best-effort contract directly.
-      late _DelayedMountState state;
+      late DelayedMountHostState state;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: _DelayedMountHost(
+            body: _panelHost(
               flipAfter: const Duration(milliseconds: 60),
               onState: (s) => state = s,
             ),
@@ -318,53 +330,4 @@ void main() {
       expect(result, isTrue);
     },
   );
-}
-
-/// Host that exposes a `mount()` method to externally trigger a `setState`
-/// flip that mounts a [KeyedSubtree(key: _kPanelKey)] in the widget tree.
-///
-/// When [flipAfter] is provided, schedules a fake-async [Timer] in
-/// `initState` that mounts the panel after the requested elapsed fake
-/// time. The host is otherwise inert so a test can call `state.mount()`
-/// from outside the helper to exercise the post-pump fast-check path.
-class _DelayedMountHost extends StatefulWidget {
-  const _DelayedMountHost({required this.onState, this.flipAfter});
-
-  final void Function(_DelayedMountState state) onState;
-  final Duration? flipAfter;
-
-  @override
-  State<_DelayedMountHost> createState() => _DelayedMountState();
-}
-
-class _DelayedMountState extends State<_DelayedMountHost> {
-  bool _show = false;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.onState(this);
-    final after = widget.flipAfter;
-    if (after != null) {
-      Timer(after, () {
-        if (!mounted) return;
-        setState(() => _show = true);
-      });
-    }
-  }
-
-  void mount() {
-    setState(() => _show = true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_show) {
-      return const SizedBox.shrink();
-    }
-    return const KeyedSubtree(
-      key: _kPanelKey,
-      child: SizedBox(width: 100, height: 100),
-    );
-  }
 }

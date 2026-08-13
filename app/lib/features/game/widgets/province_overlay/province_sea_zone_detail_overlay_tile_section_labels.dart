@@ -3,7 +3,7 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
-import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_build_port.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -15,10 +15,20 @@ import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_details.dart';
 import 'province_sea_zone_detail_overlay_tile_section_label_text.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 export 'province_sea_zone_detail_overlay_tile_section_label_text.dart';
+export 'province_sea_zone_detail_overlay_tile_details.dart'
+    show
+        kProvinceTileDetailsActionKey,
+        kProvinceTileDetailsClusterKey,
+        kProvinceTileDetailsPanelKey,
+        showDefaultStrandedCapitalLink,
+        showTileDetailsExtractionRow,
+        tileCapitalLinkLine,
+        tileConnectivityDetailLinesForTests;
 
 Widget buildTileResourceLabelRow({
   required BuildContext context,
@@ -107,18 +117,13 @@ List<Widget> buildTileRoadLabelWidgets({
   required bool buildPortActionEnabled,
   required bool buildPortActionHasEngineerUnits,
   VoidCallback? onBuildPortTap,
+  ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   if (roadLevel == null) {
     return [
       Text(l10n.provinceOverlay_tileRoadNone, style: overlayFgBodyStyle()),
     ];
   }
-  final theme = Theme.of(context);
-  final roadCaptionStyle =
-      (theme.textTheme.labelSmall ?? const TextStyle(fontSize: 11)).copyWith(
-        height: 1.25,
-        color: EditorialMonoclePalette.muted,
-      );
   final buildRoadTooltip = provinceOverlayBuildRoadTooltip(
     l10n: l10n,
     game: game,
@@ -137,12 +142,30 @@ List<Widget> buildTileRoadLabelWidgets({
     enabled: buildPortActionEnabled,
     hasEngineerUnits: buildPortActionHasEngineerUnits,
   );
+  void openDetails() {
+    showProvinceTileDetailsDialog(
+      context: context,
+      l10n: l10n,
+      game: game,
+      humanPlayerId: humanPlayerId,
+      provinceId: provinceId,
+      roadLevel: roadLevel,
+      tileConnectivity: tileConnectivity,
+    );
+  }
+
+  final transportText = Text(
+    roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+    style: overlayFgBodyStyle(),
+  );
   final transportRow = Row(
     children: [
       Expanded(
-        child: Text(
-          roadRailTransportLevelPrimaryLine(l10n, roadLevel),
-          style: overlayFgBodyStyle(),
+        child: GestureDetector(
+          key: kProvinceTileDetailsClusterKey,
+          onTap: openDetails,
+          behavior: HitTestBehavior.opaque,
+          child: transportText,
         ),
       ),
       if (showBuildRoadActionIcon)
@@ -167,84 +190,51 @@ List<Widget> buildTileRoadLabelWidgets({
         ),
     ],
   );
-  final province = game.worldState.tryGetProvince(provinceId);
-  final showPortStatus = province != null && province.ownerId == humanPlayerId;
-  final portPresent =
-      showPortStatus &&
-      GameMapAreaProvinceActionStatesBuildPort.provinceHasAnyPort(
-        game: game,
-        prefixedProvinceId: provinceId,
-      );
-  return [
-    transportRow,
-    Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
-    if (roadLevel == 1)
-      Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
-    if (showPortStatus)
-      Text(
-        portPresent
-            ? l10n.provinceOverlay_tilePortStatusPresent
-            : l10n.provinceOverlay_tilePortStatusNone,
-        style: overlayFgBodyStyle(),
-      ),
-  ];
+  final detailsAction = Align(
+    alignment: Alignment.centerLeft,
+    child: CtActionTextButton(
+      key: kProvinceTileDetailsActionKey,
+      label: l10n.provinceOverlay_tileDetailsAction,
+      onPressed: openDetails,
+    ),
+  );
+  return [transportRow, detailsAction];
 }
 
-String tileCapitalLinkLine(
-  AppLocalizations l10n,
-  ProvinceTileConnectivityDisplay display,
-) {
-  if (display.capitalConnected) {
-    final pathLevel = display.pathTransportLevel;
-    if (pathLevel != null) {
-      return l10n.provinceOverlay_tileCapitalLinkConnectedWithPath(pathLevel);
-    }
-    return l10n.provinceOverlay_tileCapitalLinkConnected;
-  }
-  return l10n.provinceOverlay_tileCapitalLinkNotConnected;
-}
-
-@visibleForTesting
-List<String> tileConnectivityDetailLinesForTests({
-  required AppLocalizations l10n,
-  required ProvinceTileConnectivityDisplay? tileConnectivity,
-}) {
-  if (tileConnectivity == null) {
-    return const [];
-  }
-  final lines = <String>[tileCapitalLinkLine(l10n, tileConnectivity)];
-  if (tileConnectivity.showExtractionRow) {
-    lines.add(
-      l10n.provinceOverlay_tileExtractionFromTile(
-        tileConnectivity.extractionEffective!,
-        tileConnectivity.extractionFull!,
-      ),
-    );
-  }
-  return lines;
-}
-
+/// Default-surface connectivity: stranded exception only (Refs #4369).
 List<Widget> buildTileConnectivityLabelWidgets({
+  required BuildContext context,
   required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required String provinceId,
+  required int? roadLevel,
   required ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
-  if (tileConnectivity == null) {
+  if (!showDefaultStrandedCapitalLink(tileConnectivity)) {
     return const [];
   }
   final bodyStyle = overlayFgBodyStyle();
-  final widgets = <Widget>[
-    Text(tileCapitalLinkLine(l10n, tileConnectivity), style: bodyStyle),
-  ];
-  if (tileConnectivity.showExtractionRow) {
-    widgets.add(
-      Text(
-        l10n.provinceOverlay_tileExtractionFromTile(
-          tileConnectivity.extractionEffective!,
-          tileConnectivity.extractionFull!,
-        ),
-        style: bodyStyle,
-      ),
+  void openDetails() {
+    showProvinceTileDetailsDialog(
+      context: context,
+      l10n: l10n,
+      game: game,
+      humanPlayerId: humanPlayerId,
+      provinceId: provinceId,
+      roadLevel: roadLevel,
+      tileConnectivity: tileConnectivity,
     );
   }
-  return widgets;
+
+  return [
+    GestureDetector(
+      onTap: openDetails,
+      behavior: HitTestBehavior.opaque,
+      child: Text(
+        tileCapitalLinkLine(l10n, tileConnectivity!),
+        style: bodyStyle,
+      ),
+    ),
+  ];
 }
