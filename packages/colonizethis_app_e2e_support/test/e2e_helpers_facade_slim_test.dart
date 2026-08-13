@@ -51,20 +51,21 @@ void main() {
     });
   });
 
-  group('province expected-lines section split (Refs #4075 AC4)', () {
-    test('public entrypoint file parts in section libraries', () {
+  group('province expected-lines section split (Refs #4075 AC4 / #4344 Slice A)', () {
+    test('public entrypoint imports section libraries (no part directives)', () {
       final entry = File(
         p.join(supportDir.path, 'province_panel_e2e_expected_lines.dart'),
       ).readAsStringSync();
       expect(entry, contains('provincePanelWideLayoutExpectedTexts'));
-      for (final part in <String>[
-        "part 'province_panel_e2e_expected_lines_ctx.dart';",
-        "part 'province_panel_e2e_expected_lines_political_tile.dart';",
-        "part 'province_panel_e2e_expected_lines_economic.dart';",
-        "part 'province_panel_e2e_expected_lines_units.dart';",
-        "part 'province_panel_e2e_expected_lines_labels.dart';",
+      expect(RegExp(r"^\s*part\s+", multiLine: true).hasMatch(entry), isFalse);
+      for (final imp in <String>[
+        "import 'province_panel_e2e_expected_lines_ctx.dart';",
+        "import 'province_panel_e2e_expected_lines_political_tile.dart';",
+        "import 'province_panel_e2e_expected_lines_economic.dart';",
+        "import 'province_panel_e2e_expected_lines_units.dart';",
+        "import 'province_panel_e2e_expected_lines_labels.dart';",
       ]) {
-        expect(entry, contains(part));
+        expect(entry, contains(imp));
       }
     });
 
@@ -76,7 +77,7 @@ void main() {
       expect(lines, lessThanOrEqualTo(200));
     });
 
-    test('negative: section parts exist and stay under 400 physical lines', () {
+    test('negative: section libraries exist, stay ≤400 lines, and are not parts', () {
       for (final name in <String>[
         'province_panel_e2e_expected_lines_ctx.dart',
         'province_panel_e2e_expected_lines_political_tile.dart',
@@ -86,9 +87,10 @@ void main() {
       ]) {
         final file = File(p.join(supportDir.path, name));
         expect(file.existsSync(), isTrue, reason: '$name missing');
+        final body = file.readAsStringSync();
         expect(
-          file.readAsStringSync(),
-          contains("part of 'province_panel_e2e_expected_lines.dart';"),
+          RegExp(r"^\s*part\s+of\s+", multiLine: true).hasMatch(body),
+          isFalse,
         );
         expect(file.readAsLinesSync().length, lessThanOrEqualTo(400));
       }
