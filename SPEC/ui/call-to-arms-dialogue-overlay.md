@@ -51,15 +51,25 @@ Internal state ownership:
 |                 Text.rich(game_callToArms_prompt)         |
 |                   -- defender name span: accent w600      |
 |                   -- remaining war context: muted         |
+|                 Text(formalAllianceReason)  -- muted bodySmall |
 |                 Wrap(alignment: end, spacing: 12)         |
 |                   _LabeledToggle(Join)   -- CtToggleSwitch |
 |                   _LabeledToggle(Refuse) -- CtToggleSwitch |
+|                 Text(effectJoin)   -- muted bodySmall     |
+|                 Text(effectRefuse) -- muted bodySmall     |
 |             Align(centerRight)                            |
 |               CtNinePatchButton(game_callToArms_submit)   |
 +-----------------------------------------------------------+
 ```
 
 Each row's prompt is the localized `game_callToArms_prompt(defenderName, aggressorName)` rendered as a single `Text.rich`. The calling faction name — the resolved `defenderGpId` display name (`game.playerById(...).displayName`, raw id on lookup failure) — paints in `EditorialMonoclePalette.accent` with `FontWeight.w600` (issue #2867 R24 "faction name in `--accent`"); the surrounding war context paints in `EditorialMonoclePalette.muted`. Names are resolved from `game.playerById(...)` — if the lookup fails the raw id is shown so the row never collapses to an empty string. If the resolved faction name is not a substring of the localized prompt (defensive — e.g. a future localization variant), the whole sentence falls back to `--muted`.
+
+Below the prompt, each row shows a muted `bodySmall` **formal-alliance reason** line (`game_callToArms_formalAllianceReason(defenderName)`) that names the formal treaty with the defender only — never the informal Friendly relation band (Refs #4364). Under the Join / Refuse toggles, two read-only muted `bodySmall` **Effect** lines always render (same product pattern as `OVL50001` / #4267):
+
+- Join: `game_callToArms_effectJoin(aggressorName, defenderName)` — enter war with the aggressor this turn; treaty with the defender stays.
+- Refuse: `game_callToArms_effectRefuse(defenderName)` — treaty with the defender ends; relations with the defender worsen (−50); standing with other Great Powers worsens (−10) (aggressor excluded per GDD).
+
+Effect lines are read-only and do not change the `_join` tristate or the emitted `CallToArmsDecision` list. At narrow viewports the Effect lines wrap; when the dialog body exceeds `maxHeight`, `CtDialogShell`'s internal scroll exposes the full content (Refs #4364; [mobile-adaptation.md](mobile-adaptation.md) § 7).
 
 Per-call rows stack the prompt above an end-aligned `Wrap` of the Join + Refuse toggles (no per-row `Row` with `Expanded(prompt) + controls`). At narrow viewports the two toggles can flow onto a second run rather than overflowing horizontally, and the prompt text always has the full dialog content column width to wrap onto multiple lines (issue #2870 S8 / S10 narrow-viewport contract — see [mobile-adaptation.md](mobile-adaptation.md) § 7).
 
@@ -98,7 +108,7 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
 - `CtToggleSwitch` (`app/lib/widgets/ct_toggle_switch.dart`) — per-row Join (`--success` glow) and Refuse (`--danger` glow) two-state toggles (issue #2867 R24).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`) — Submit button (no Material buttons in dialogue chrome).
 - `EditorialMonoclePalette` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) tokens: `dialogScrim` (Material scrim color), `accent` (title + faction-name color), `muted` (intro + prompt color), `success` (active Join glow / label), `danger` (active Refuse glow / label).
-- Localized strings via `appL10n(context)`: `game_callToArms_title`, `game_callToArms_intro`, `game_callToArms_prompt(defender, aggressor)`, `game_callToArms_join`, `game_callToArms_refuse`, and `game_callToArms_submit`.
+- Localized strings via `appL10n(context)`: `game_callToArms_title`, `game_callToArms_intro`, `game_callToArms_prompt(defender, aggressor)`, `game_callToArms_formalAllianceReason(defender)`, `game_callToArms_join`, `game_callToArms_refuse`, `game_callToArms_effectJoin(aggressor, defender)`, `game_callToArms_effectRefuse(defender)`, and `game_callToArms_submit`.
 
 ---
 
@@ -150,14 +160,26 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
   When the user taps the Join toggle and then taps the Join toggle a second time,
   Then after the first tap the Join toggle reports `value == true` and Submit is `enabled == true`, and after the second tap the row reverts to undecided (`_join[0] == null`), the Join toggle reports `value == false`, and Submit returns to `enabled == false` (issue #2867 R24 tristate / R25 gate re-engages).
 
-- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when the overlay is mounted with one or two pending calls against the three-GP `Game` fixture (`gp_player` / `gp_portugal` / `gp_spain`), then `WidgetTester.takeException()` returns `null`, the `Call to arms` title renders, every pending row mounts a Join + Refuse `CtToggleSwitch` pair (with their `Join` / `Refuse` labels) end-aligned via the per-row `Wrap`, and the trailing `Submit` `CtNinePatchButton` renders (the per-call `Column(Text + Text + Wrap(Join + Refuse))` from § Layout / wireframe must wrap within the ~288 dp `CtDialogShell` content column without horizontal overflow per [mobile-adaptation.md](mobile-adaptation.md) § 7).
+- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when the overlay is mounted with one or two pending calls against the three-GP `Game` fixture (`gp_player` / `gp_portugal` / `gp_spain`), then `WidgetTester.takeException()` returns `null`, the `Call to arms` title renders, every pending row mounts a Join + Refuse `CtToggleSwitch` pair (with their `Join` / `Refuse` labels) end-aligned via the per-row `Wrap`, Effect lines are fully readable (wrap and/or dialog scroll), and the trailing `Submit` `CtNinePatchButton` renders (the per-call `Column(prompt + reason + Wrap(Join + Refuse) + Effects)` from § Layout / wireframe must wrap within the ~288 dp `CtDialogShell` content column without horizontal overflow per [mobile-adaptation.md](mobile-adaptation.md) § 7).
+
+- Given a `CallToArmsDialogueOverlay` is mounted with exactly one pending call where `defenderGpId == 'gp_portugal'` and `aggressorGpId == 'gp_spain'` and matching display names `Portugal` / `Spain`,
+  When the widget tree settles,
+  Then the row shows `game_callToArms_formalAllianceReason('Portugal')`, a Join Effect stating war with Spain this turn and that the treaty with Portugal stays, and a Refuse Effect stating the treaty with Portugal ends, relations with Portugal worsen (−50), and standing with other Great Powers worsens (−10) (Refs #4364).
+
+- Given the overlay is mounted with two pending calls with different defender/aggressor pairs,
+  When the overlay renders,
+  Then each row’s Effect lines and formal-alliance reason use that row’s defender/aggressor display names only (Refs #4364).
+
+- Given Join or Refuse is selected and Submit is tapped,
+  When `onDecisions` fires,
+  Then the emitted `CallToArmsDecision` list is unchanged by the Effect lines (Effects are read-only; R25 Submit gate unchanged) (Refs #4364).
 
 ---
 
 ## Widgetbook
 
-Catalog directory: `Call to Arms Dialogue Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `callToArmsDialogueOverlayDirectories` in `catalog_part4.dart`). Required use cases:
+Catalog directory: `Call to Arms Dialogue Overlay` (registered in `widgetbook_host/lib/catalogs/catalog.dart` via `callToArmsDialogueOverlayDirectories` in `catalog_dialogs.dart`). Required use cases:
 
-1. **Default — two pending calls** — wraps a localized `widgetbook_gameShell` child in `CallToArmsDialogueOverlay` with a small in-memory `Game` and two `CallToArmsPending` entries from different aggressor / defender combinations. The story exercises Join/Refuse toggles and the Submit button across two rows.
+1. **Default — two pending calls** — wraps a localized `widgetbook_gameShell` child in `CallToArmsDialogueOverlay` with a small in-memory `Game` and two `CallToArmsPending` entries from different aggressor / defender combinations. The story exercises Join/Refuse toggles, per-row formal-alliance reason + Effect lines, and the Submit button across two rows.
 
-The story analyzes cleanly with no hardcoded UI strings: title, intro, prompt, Join, Refuse, and Submit labels are sourced from `appL10n(context)`.
+The story analyzes cleanly with no hardcoded UI strings: title, intro, prompt, formal-alliance reason, Join, Refuse, Effect lines, and Submit labels are sourced from `appL10n(context)`.
