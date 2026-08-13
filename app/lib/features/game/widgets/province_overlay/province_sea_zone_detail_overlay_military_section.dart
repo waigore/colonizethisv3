@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -26,6 +27,15 @@ Widget buildMilitarySectionByOwner({
   required bool buildFortActionHasEngineerUnits,
   required String buildFortTooltip,
   VoidCallback? onBuildFortTap,
+  bool showMoveArmyControl = false,
+  bool moveArmyEnabled = false,
+  String moveArmyTooltip = '',
+  VoidCallback? onMoveArmyTap,
+  bool showInvadeArmyControl = false,
+  bool invadeArmyEnabled = false,
+  String invadeArmyTooltip = '',
+  VoidCallback? onInvadeArmyTap,
+  String? provinceDisplayName,
 }) {
   final pending = provincePanelPendingMilitaryLines(
     game: game,
@@ -55,13 +65,37 @@ Widget buildMilitarySectionByOwner({
         ),
     ],
   );
+  final moveInvadeActions = <Widget>[
+    if (showMoveArmyControl)
+      Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: CtActionTextButton(
+          label: l10n.provinceOverlay_moveArmyAction,
+          tooltip: moveArmyTooltip,
+          enabled: moveArmyEnabled,
+          onPressed: moveArmyEnabled ? onMoveArmyTap : null,
+        ),
+      ),
+    if (showInvadeArmyControl)
+      Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: CtActionTextButton(
+          label: l10n.provinceOverlay_invadeArmyAction(
+            provinceDisplayName ?? provinceId,
+          ),
+          tooltip: invadeArmyTooltip,
+          enabled: invadeArmyEnabled,
+          onPressed: invadeArmyEnabled ? onInvadeArmyTap : null,
+        ),
+      ),
+  ];
   if (military.isEmpty && pending.isEmpty) {
     return buildOverlaySection(
       l10n.provinceOverlay_sectionMilitary,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [fortStatusRow],
+        children: [fortStatusRow, ...moveInvadeActions],
       ),
     );
   }
@@ -73,6 +107,7 @@ Widget buildMilitarySectionByOwner({
         mainAxisSize: MainAxisSize.min,
         children: [
           fortStatusRow,
+          ...moveInvadeActions,
           ...pending.map(
             (line) => Padding(
               padding: const EdgeInsets.only(left: CtSpacing.m / 2),
@@ -104,6 +139,7 @@ Widget buildMilitarySectionByOwner({
       mainAxisSize: MainAxisSize.min,
       children: [
         fortStatusRow,
+        ...moveInvadeActions,
         const SizedBox(height: CtSpacing.m / 2),
         ...ownerIds.map((oid) {
           final list = byOwner[oid]!;

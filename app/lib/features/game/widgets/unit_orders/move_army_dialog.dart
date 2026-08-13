@@ -43,6 +43,7 @@ class MoveArmyDialog extends StatefulWidget {
     required this.topology,
     required this.draftOrders,
     this.playerView,
+    this.initialDestinationProvinceId,
   });
 
   /// SPEC/ui/move-army-dialog.md — [UiScreenIds.moveArmyDialog].
@@ -59,6 +60,10 @@ class MoveArmyDialog extends StatefulWidget {
   /// per-dialog [IncrementalCandidateValidator] instead of rebuilding them on
   /// every picker call (Refs #2394, SPEC/program/order-suggestions.md).
   final PlayerView? playerView;
+
+  /// When non-null and present in the destination list, preselect that province
+  /// (overlay Invade). Otherwise first picker row (Refs #4350).
+  final String? initialDestinationProvinceId;
 
   @override
   State<MoveArmyDialog> createState() => MoveArmyDialogState();

@@ -106,6 +106,7 @@ import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dia
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_target_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/overlay_army_move_picker_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';

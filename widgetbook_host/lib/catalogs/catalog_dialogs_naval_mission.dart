@@ -278,4 +278,32 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
       ),
     ],
   ),
+  WidgetbookFolder(
+    name: 'Overlay Army Move Picker Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — two armies',
+        builder: (context) {
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<String>(
+                    context: innerContext,
+                    builder: (_) => OverlayArmyMovePickerDialog(
+                      game: demoGameForOverlay,
+                      humanPlayerId: demoGameForOverlay.players.first.id,
+                      armyIds: const ['army_a', 'army_b'],
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Overlay Army Move Picker'),
+              );
+            },
+          );
+        },
+      ),
+    ],
+  ),
 ];

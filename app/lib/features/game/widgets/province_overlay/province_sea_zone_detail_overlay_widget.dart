@@ -61,6 +61,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.upgradeTownHasBuilderUnits = false,
     this.upgradeTownTargetTileKey,
     this.onUpgradeTownTap,
+    this.showMoveArmyControl = false,
+    this.moveArmyEnabled = false,
+    this.moveArmyTooltip = '',
+    this.onMoveArmyTap,
+    this.showInvadeArmyControl = false,
+    this.invadeArmyEnabled = false,
+    this.invadeArmyTooltip = '',
+    this.onInvadeArmyTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
@@ -110,6 +118,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool upgradeTownHasBuilderUnits;
   final String? upgradeTownTargetTileKey;
   final VoidCallback? onUpgradeTownTap;
+  final bool showMoveArmyControl;
+  final bool moveArmyEnabled;
+  final String moveArmyTooltip;
+  final VoidCallback? onMoveArmyTap;
+  final bool showInvadeArmyControl;
+  final bool invadeArmyEnabled;
+  final String invadeArmyTooltip;
+  final VoidCallback? onInvadeArmyTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
@@ -180,6 +196,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,
       upgradeTownTargetTileKey: upgradeTownTargetTileKey,
       onUpgradeTownTap: onUpgradeTownTap,
+      showMoveArmyControl: showMoveArmyControl,
+      moveArmyEnabled: moveArmyEnabled,
+      moveArmyTooltip: moveArmyTooltip,
+      onMoveArmyTap: onMoveArmyTap,
+      showInvadeArmyControl: showInvadeArmyControl,
+      invadeArmyEnabled: invadeArmyEnabled,
+      invadeArmyTooltip: invadeArmyTooltip,
+      onInvadeArmyTap: onInvadeArmyTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,

@@ -10,7 +10,7 @@ This chapter covers how an army attacks, how you choose between a swift resoluti
 
 ### Attacking a province
 
-1. Open **Military units panel**, select a non-Home army, and choose **Move** to open **Move army dialog**. Invasion rows show known defender totals, **Unopposed capture**, or **Defenders unknown**, plus open-field or siege labels when intel allows—so you need not hop to the map overlay to judge a border strike.
+1. Open **Military units panel**, select a non-Home army, and choose **Move** to open **Move army dialog** — or from **Province sea-zone overlay** tap **Invade** on the foreign province you are studying (or **Move** on an owned province that already holds a field army). When several armies can act, **Overlay army move picker** picks the army first; Invade preselects that province on **Move army dialog**. Invasion rows show known defender totals, **Unopposed capture**, or **Defenders unknown**, plus open-field or siege labels when intel allows.
 2. Select a legal destination. Your own provinces appear separately from invasion targets. An enemy province may require a declaration of war; confirm that declaration and the move together when the dialog asks.
 3. End the turn. When the army finishes in an enemy-controlled province, every regiment in that army attacks together. Great Powers initiate these attacks; Minor Nations and Tribes defend.
 4. An enemy province with no combat-capable defenders can be captured without a battle when your army arrives during a war. Otherwise, the combat phase creates a battle.

@@ -886,6 +886,29 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_moveArmyAction => 'Move';
+
+  @override
+  String provinceOverlay_invadeArmyAction(String provinceName) {
+    return 'Invade $provinceName';
+  }
+
+  @override
+  String get provinceOverlay_moveArmyDisabledHomeArmyTooltip =>
+      'The Home Army cannot leave the capital. Split a field army first.';
+
+  @override
+  String get provinceOverlay_moveArmyDisabledNoDestinationsTooltip =>
+      'No legal destinations for field armies stationed here.';
+
+  @override
+  String get provinceOverlay_invadeArmyDisabledCannotReachTooltip =>
+      'No field army can reach this province this turn.';
+
+  @override
+  String get provinceOverlay_selectArmyTitle => 'Select army';
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }

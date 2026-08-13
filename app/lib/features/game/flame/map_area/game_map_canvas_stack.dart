@@ -14,6 +14,7 @@ import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 
 import '../overlays/game_map_province_detail_side_panel.dart';
 import 'game_map_canvas_stack_selection_prompt.dart';
+import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
@@ -47,6 +48,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.humanPlayerId,
     required this.playerView,
     required this.workTargetSelectionCache,
+    this.armyMovePickerCache,
     required this.centerOnTileKey,
     required this.validTileKeysForSelection,
     required this.onTileSelectedForWork,
@@ -78,6 +80,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final String humanPlayerId;
   final PlayerView playerView;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
+  final PerPlayerArmyMovePickerCache? armyMovePickerCache;
   final String? centerOnTileKey;
   final Set<String>? validTileKeysForSelection;
 
@@ -166,6 +169,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   omniscientDetail: omniscientDetail,
                   canMutateViaUi: canMutateViaUi,
                   workTargetSelectionCache: workTargetSelectionCache,
+                  armyMovePickerCache: armyMovePickerCache,
                 ),
             ],
           ),
