@@ -1,23 +1,7 @@
 // Widget tests for the Trade Market tab treasury bid cap (Refs #3093 —
-// treasury bid budget slice).
-//
 // SPEC/ui/trade-screen.md § Market tab — treasury bid cap,
 // SPEC/game/world-market.md § Treasury budget for bids.
-//
-// Pins:
-//   * Toggling `Bid` on a row clamps the staged quantity to
-//     `min(marketRowQuantityDefault, treasuryQuantityCap)`.
-//   * Incrementing a staged Bid past the treasury budget is a silent
-//     no-op (no mutation of `currentOrdersProvider`).
-//   * Toggling `Bid` on a fresh row whose `treasuryHeadroom < rowPrice`
-//     is a silent no-op.
-//   * Toggling `Bid` on a row whose effective market price is null
-//     (manufactured commodity without catalog default) is a silent
-//     no-op.
-//   * Projected non-bid pending costs (from `treasurySummaryProvider`)
-//     reduce the bid budget; net non-bid income leaves it at raw
 //     treasury (conservative clamp per SPEC).
-
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';

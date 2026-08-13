@@ -1,8 +1,8 @@
 // Physical line limit for app widget/unit tests (`repo.app_test_file_size`).
 //
-// SPEC: SPEC/program/repo-lint.md (§ app test file size). Refs #4013, #4021.
+// SPEC: SPEC/program/repo-lint.md (§ app test file size). Refs #4013, #4021, #4352.
 //
-// Cap is 500 physical lines (Refs #4305 Slice D). Files currently over the cap
+// Cap is 400 physical lines (Refs #4352 Slice D). Files currently over the cap
 // are listed in [appTestFileSizeAllowlistForTests] (shrink-only). A stale
 // allowlist entry (missing file, or file now ≤ cap) fails so the backlog cannot
 // retain slack.
@@ -11,13 +11,45 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 500;
+const _maxPhysicalLines = 400;
 
 const String _appTestsRelativePath = 'app/test';
 
-/// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4305).
+/// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4352).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
-const List<String> appTestFileSizeAllowlistForTests = <String>[];
+const List<String> appTestFileSizeAllowlistForTests = <String>[
+  'app/test/app_event_handler_test.dart',
+  'app/test/ct_spacing_features_adoption_test.dart',
+  'app/test/ct_toggle_switch_test.dart',
+  'app/test/debug_console_overlay_panel_test.dart',
+  'app/test/diplomacy_detail_screen_test.dart',
+  'app/test/diplomacy_dialogs_test.dart',
+  'app/test/diplomacy_panel_orders_test.dart',
+  'app/test/diplomacy_panel_test.dart',
+  'app/test/game_event_bridge_test.dart',
+  'app/test/game_top_bar_test.dart',
+  'app/test/military_units_panel_test_scenarios.dart',
+  'app/test/mobile_320dp_min_viewport_test.dart',
+  'app/test/move_army_invasion_intel_test.dart',
+  'app/test/move_dialogs_specs_part1_test.dart',
+  'app/test/move_fleet_dialog_test.dart',
+  'app/test/naval_panel_combine_tables.dart',
+  'app/test/naval_panel_part1_pins.dart',
+  'app/test/naval_units_panel_interaction_helpers.dart',
+  'app/test/naval_units_panel_test_scenarios.dart',
+  'app/test/overture_dialogue_overlay_test.dart',
+  'app/test/panels_320dp_min_viewport_test.dart',
+  'app/test/pause_menu_side_menu_specs_test.dart',
+  'app/test/province_overlay_extraction_available_test.dart',
+  'app/test/screen_spec_acceptance_part2_test.dart',
+  'app/test/trade_screen_deal_book_tab_e6_test.dart',
+  'app/test/trade_screen_market_tab_treasury_bid_cap_test.dart',
+  'app/test/trade_screen_scaffold_test.dart',
+  'app/test/units_panel_shared_widgets_test.dart',
+  'app/test/units_panel_test_support_test.dart',
+  'app/test/widgetbook_in_game_shell_chrome_test.dart',
+  'app/test/widgets/ct_nine_patch_button_dark_test.dart',
+];
 
 int runCheckAppTestFileSize(
   String repoRoot, {

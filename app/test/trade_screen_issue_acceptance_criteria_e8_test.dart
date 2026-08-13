@@ -1,141 +1,25 @@
 // Issue-AC-mapped widget tests for `TradeScreen` (`#2993` E8).
 // SPEC/ui/trade-screen.md.
-//
-// Pins the six issue-body ACs (E8 a–f) in one contract file; per-slice
-// trade_screen_* suites cover the broader SPEC table. Groups map 1:1:
-// AC1 open TradeScreen; AC2 bid+qty (default priority); AC3 mutual
-// exclusion; AC4 Deal Book; AC5 cargo cap; AC6 observe variant.
-// Harness matches sibling trade_screen_* ProviderScope patterns.
-
-import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/route_paths.dart';
-import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
-import 'trade_screen_test_support.dart';
 import 'trade_screen_e8_test_helpers.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
   suppressLogsForTests();
 
-  late Game routeHostGame;
-  late Player routeHostPlayer;
-  late Box<dynamic> gamesBox;
-
-  setUpAll(() async {
-    // Lightweight fixture (Refs #3656): route-host + left-rail tests
-    // (AC #1, #6) only need a Game with a human player.
-    routeHostGame = buildTradeScaffoldTestGame();
-    routeHostPlayer = routeHostGame.players.firstWhere(
-      (p) => p.isHuman,
-      orElse: () => routeHostGame.players.first,
-    );
-    Hive.init('./.dart_tool/test_hive_trade_screen_e8');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
-  });
-
-  routeHostOverrides({bool globalObserve = false}) => [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentGameProvider.overrideWith(
-          () => CurrentGameNotifier(routeHostGame),
-        ),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        appEventBusProvider.overrideWith((ref) {
-          final bus = AppEventBus.create();
-          ref.onDispose(bus.dispose);
-          return bus;
-        }),
-        if (globalObserve)
-          shellPlayerContextProvider.overrideWithValue(
-            tradeTestGlobalObserveShellContext(),
-          ),
-      ];
-
-  Widget routeHostShell({required Widget child, bool globalObserve = false}) =>
-      buildAppShell(
-        overrides: routeHostOverrides(globalObserve: globalObserve),
-        navigatorKey: appNavigatorKey,
-        onGenerateRoute: Routes.generate,
-        shellWrapper: (app) => AppEventHandlerScope(child: app),
-        child: child,
-      );
-
-  Widget buildLeftRailHost({bool globalObserve = false}) => routeHostShell(
-        globalObserve: globalObserve,
-        child: Scaffold(
-          body: Stack(
-            children: [
-              Positioned(
-                left: 20,
-                top: 0,
-                child: GameMapEmpireLeftRail(
-                  game: routeHostGame,
-                  humanPlayerId: routeHostPlayer.id,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-  Widget buildTradeRouteHost({bool globalObserve = false}) => routeHostShell(
-        globalObserve: globalObserve,
-        child: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(
-                    RoutePaths.trade,
-                    arguments: <String, Object?>{
-                      'game': routeHostGame,
-                      'humanPlayerId': routeHostPlayer.id,
-                    },
-                  );
-                },
-                // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('open trade'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-  Future<void> openTradeFromRouteHost(
-    WidgetTester tester, {
-    bool globalObserve = false,
-  }) async {
-    await tester.pumpWidget(buildTradeRouteHost(globalObserve: globalObserve));
-    await pumpSettleCapped(tester);
-    await tester.tap(find.text('open trade'));
-    await pumpSettleCapped(tester);
-  }
+  setUpAll(tradeE8InitRouteHostHive);
 
   group('AC #1 — Left rail Trade icon opens TradeScreen full-screen dark '
       'editorial-monocle surface (#2993 E8 (a))', () {
@@ -144,7 +28,7 @@ void main() {
       'CtTopBar (Trade title, Map back affordance, 18 px trade icon) '
       'and the two-tab Market + Deal Book body',
       (tester) async {
-        await tester.pumpWidget(buildLeftRailHost());
+        await tester.pumpWidget(tradeE8LeftRailHost());
         await pumpSettleCapped(tester);
 
         final trade = find.byKey(kEmpireTradeButtonKey);
@@ -173,7 +57,7 @@ void main() {
       'is dismissed) — confirms the full-screen feature contract pops '
       'cleanly without leaking chrome',
       (tester) async {
-        await openTradeFromRouteHost(tester);
+        await tradeE8OpenTradeFromRouteHost(tester);
         expect(find.byType(TradeScreen), findsOneWidget);
 
         final back = find.descendant(
@@ -269,19 +153,25 @@ void main() {
       await tradeE8SwitchToDealBook(tester);
       for (final finder in <Finder>[
         find.byKey(
-          TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
+          TradeScreenDealBookKeys.dealBookFilledRowKey(
+            TradeScreenDealBookKeys.dealBookSideBids,
+            0,
+          ),
         ),
-        // ignore: avoid_hardcoded_strings_in_widgets
         find.text('timber — qty 5 × 8 = 40'),
         find.byKey(
-          TradeScreenDealBookKeys.dealBookUnfilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
+          TradeScreenDealBookKeys.dealBookUnfilledRowKey(
+            TradeScreenDealBookKeys.dealBookSideBids,
+            0,
+          ),
         ),
-        // ignore: avoid_hardcoded_strings_in_widgets
         find.text('timber — qty 5 (priority 1)'),
         find.byKey(
-          TradeScreenDealBookKeys.dealBookUnfilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 0),
+          TradeScreenDealBookKeys.dealBookUnfilledRowKey(
+            TradeScreenDealBookKeys.dealBookSideOffers,
+            0,
+          ),
         ),
-        // ignore: avoid_hardcoded_strings_in_widgets
         find.text('fabric — qty 3 (priority 1)'),
       ]) {
         expect(finder, findsOneWidget);
@@ -293,7 +183,10 @@ void main() {
       );
       expect(
         find.byKey(
-          TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 0),
+          TradeScreenDealBookKeys.dealBookFilledRowKey(
+            TradeScreenDealBookKeys.dealBookSideOffers,
+            0,
+          ),
         ),
         findsNothing,
       );
@@ -324,14 +217,11 @@ void main() {
 
       expectTradeE8CargoSaturated(tester);
 
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(kTradeE8Timber)));
-      await tester.pump();
-      expect(
-        tradeE8StagedOrder(container, kTradeE8Timber)?.quantity,
-        6,
-        reason:
-            'Refs #2993 E5c: bid increment blocked when cargo saturated.',
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(kTradeE8Timber)),
       );
+      await tester.pump();
+      expect(tradeE8StagedOrder(container, kTradeE8Timber)?.quantity, 6);
 
       await tradeE8TapBid(tester, kTradeE8Grain);
       expect(tradeE8StagedOrder(container, kTradeE8Grain), isNull);
@@ -372,12 +262,7 @@ void main() {
 
         final TradeOrder? fabric = tradeE8StagedOrder(container, kTradeE8Fabric);
         expect(fabric?.type, TradeOrderType.bid);
-        expect(
-          fabric?.quantity,
-          1,
-          reason:
-              'Refs #2993 E5c: bid toggle clamps to remaining cargo.',
-        );
+        expect(fabric?.quantity, 1);
         expectTradeE8CargoSaturated(tester);
       },
     );
@@ -390,7 +275,7 @@ void main() {
         'no Market or Deal Book tab bodies and no bid/offer chips or '
         'stepper buttons are mounted, but the dark CtTopBar chrome '
         'still paints', (tester) async {
-      await openTradeFromRouteHost(tester, globalObserve: true);
+      await tradeE8OpenTradeFromRouteHost(tester, globalObserve: true);
       expectTradeE8ObserveModeBlocksMarket(tester);
     });
 
@@ -417,12 +302,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(
-        tradeE8StagedOrder(container, kTradeE8Timber),
-        isNull,
-        reason:
-            'Per-GP observe must not mutate currentOrdersProvider.',
-      );
+      expect(tradeE8StagedOrder(container, kTradeE8Timber), isNull);
     });
   });
 }
