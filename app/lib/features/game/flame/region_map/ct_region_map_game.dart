@@ -29,6 +29,7 @@ class CtRegionMapGame extends FlameGame
     required bool showProvinceOverlay,
     required bool showProvinceOwnershipTint,
     required bool showProvinceNamesLayer,
+    bool showCapitalLinkDisconnectedHighlight = true,
     required CtMapVisibilityMode visibilityMode,
     BaseLayerDisplayMode baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
@@ -65,6 +66,8 @@ class CtRegionMapGame extends FlameGame
     this.showProvinceOverlay = showProvinceOverlay;
     this.showProvinceOwnershipTint = showProvinceOwnershipTint;
     this.showProvinceNamesLayer = showProvinceNamesLayer;
+    this.showCapitalLinkDisconnectedHighlight =
+        showCapitalLinkDisconnectedHighlight;
     this.visibilityMode = visibilityMode;
     this.baseLayerDisplayMode = baseLayerDisplayMode;
     this.onProvinceSelected = onProvinceSelected;
@@ -108,6 +111,7 @@ class CtRegionMapGame extends FlameGame
     bool? showProvinceOverlay,
     bool? showProvinceOwnershipTint,
     bool? showProvinceNamesLayer,
+    bool? showCapitalLinkDisconnectedHighlight,
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? selectedTileKey,
@@ -144,6 +148,8 @@ class CtRegionMapGame extends FlameGame
         showProvinceOverlay: showProvinceOverlay,
         showProvinceOwnershipTint: showProvinceOwnershipTint,
         showProvinceNamesLayer: showProvinceNamesLayer,
+        showCapitalLinkDisconnectedHighlight:
+            showCapitalLinkDisconnectedHighlight,
         visibilityMode: visibilityMode,
         baseLayerDisplayMode: baseLayerDisplayMode,
         selectedTileKey: selectedTileKey,

@@ -221,6 +221,9 @@ abstract class AppLocalizations {
   /// Toggle label for showing land province names on the map.
   String get map_displayOptions_showProvinceNames;
 
+  /// Toggle for hatch on owned land not bound to the capital (Refs #4370).
+  String get map_displayOptions_showCapitalLinkDisconnected;
+
   /// Generic Close button label or tooltip.
   String get common_close;
 

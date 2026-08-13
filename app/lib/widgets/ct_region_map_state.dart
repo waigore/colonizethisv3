@@ -43,6 +43,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         widget.showProvinceOwnershipTint !=
             oldWidget.showProvinceOwnershipTint ||
         widget.showProvinceNamesLayer != oldWidget.showProvinceNamesLayer ||
+        widget.showCapitalLinkDisconnectedHighlight !=
+            oldWidget.showCapitalLinkDisconnectedHighlight ||
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
@@ -71,6 +73,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         showProvinceOverlay: widget.showProvinceOverlay,
         showProvinceOwnershipTint: widget.showProvinceOwnershipTint,
         showProvinceNamesLayer: widget.showProvinceNamesLayer,
+        showCapitalLinkDisconnectedHighlight:
+            widget.showCapitalLinkDisconnectedHighlight,
         visibilityMode: widget.visibilityMode,
         baseLayerDisplayMode:
             widget.baseLayerDisplayMode ??

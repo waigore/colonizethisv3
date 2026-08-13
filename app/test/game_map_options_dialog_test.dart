@@ -89,9 +89,13 @@ void main() {
       expect(find.text('Show province overlay'), findsOneWidget);
       expect(find.text('Show province ownership'), findsOneWidget);
       expect(find.text('Show province names'), findsOneWidget);
+      expect(
+        find.text('Highlight land not bound to the capital'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('renders three keyed CtToggleSwitch rows with default values', (
+    testWidgets('renders four keyed CtToggleSwitch rows with default values', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -104,7 +108,7 @@ void main() {
 
       expect(
         find.byType(CtToggleSwitch),
-        findsNWidgets(3),
+        findsNWidgets(4),
       );
 
       final overlay = tester.widget<CtToggleSwitch>(
@@ -116,10 +120,14 @@ void main() {
       final names = tester.widget<CtToggleSwitch>(
         find.byKey(kGameMapOptionsShowProvinceNamesToggleKey),
       );
+      final capitalLink = tester.widget<CtToggleSwitch>(
+        find.byKey(kGameMapOptionsShowCapitalLinkDisconnectedToggleKey),
+      );
 
       expect(overlay.value, isTrue);
       expect(ownership.value, isFalse);
       expect(names.value, isTrue);
+      expect(capitalLink.value, isTrue);
     });
 
     testWidgets('Close action uses CtNinePatchButton (no Material TextButton)',

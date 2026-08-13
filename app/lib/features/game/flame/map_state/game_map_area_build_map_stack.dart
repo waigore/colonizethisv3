@@ -59,6 +59,8 @@ mixin GameMapAreaBuildMapStack
           showProvinceOverlay: mapViewState.showProvinceOverlay,
           showProvinceOwnershipTint: mapViewState.showProvinceOwnershipTint,
           showProvinceNamesLayer: mapViewState.showProvinceNamesLayer,
+          showCapitalLinkDisconnectedHighlight:
+              mapViewState.showCapitalLinkDisconnectedHighlight,
           humanPlayerId: mapPlayerId,
           playerView: mapPlayerView,
           visibilityMode: shell.mapVisibilityMode,

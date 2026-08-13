@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
+import '../render/capital_link_disconnected_highlight_layer.dart';
 import '../render/gp_ownership_tint_layer.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_component.dart';
@@ -78,6 +79,16 @@ extension CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
 
   void paintGreatPowerLandOwnershipTint(Canvas canvas) {
     paintGreatPowerOwnershipTintLayer(
+      canvas: canvas,
+      region: region,
+      cellSize: cellSize,
+      honorUnrevealedTiles:
+          visibilityMode == CtMapVisibilityMode.playerConstrained,
+    );
+  }
+
+  void paintCapitalLinkDisconnectedHighlight(Canvas canvas) {
+    paintCapitalLinkDisconnectedHighlightLayer(
       canvas: canvas,
       region: region,
       cellSize: cellSize,

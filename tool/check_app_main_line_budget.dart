@@ -58,7 +58,8 @@ const _packageName = 'colonizethis_app';
 // raised for DLG31002 Blockade/Beachhead fog-honest target intel (Refs #4340).
 // raised for MAP20001 Establish Consulate Political shortcut (Refs #4346).
 // raised for combined #4340+#4346 merge headroom on DLG31002 intel + Consulate shortcut.
-const _maxMainLines = 74500;
+// raised for MAP10001 capital-link disconnected land highlight (Refs #4370).
+const _maxMainLines = 74700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

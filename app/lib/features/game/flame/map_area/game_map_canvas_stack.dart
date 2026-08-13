@@ -44,6 +44,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.showProvinceOverlay,
     required this.showProvinceOwnershipTint,
     required this.showProvinceNamesLayer,
+    required this.showCapitalLinkDisconnectedHighlight,
     required this.humanPlayerId,
     required this.playerView,
     required this.workTargetSelectionCache,
@@ -75,6 +76,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final bool showProvinceOverlay;
   final bool showProvinceOwnershipTint;
   final bool showProvinceNamesLayer;
+  final bool showCapitalLinkDisconnectedHighlight;
   final String humanPlayerId;
   final PlayerView playerView;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
@@ -119,6 +121,8 @@ class GameMapCanvasStack extends ConsumerWidget {
                   showProvinceOverlay: showProvinceOverlay,
                   showProvinceOwnershipTint: showProvinceOwnershipTint,
                   showProvinceNamesLayer: showProvinceNamesLayer,
+                  showCapitalLinkDisconnectedHighlight:
+                      showCapitalLinkDisconnectedHighlight,
                   visibilityMode: visibilityMode,
                   playerViewForResources:
                       visibilityMode == CtMapVisibilityMode.playerConstrained

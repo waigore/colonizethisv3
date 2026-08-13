@@ -26,13 +26,17 @@ const ValueKey<String> kGameMapOptionsShowProvinceOwnershipToggleKey =
 const ValueKey<String> kGameMapOptionsShowProvinceNamesToggleKey =
     ValueKey<String>('gameMapOptions:showProvinceNames');
 
-/// Dark editorial-monocle modal that lets the player toggle the three global
-/// in-game map view layers — province overlay strokes, Great Power ownership
-/// tint, and province name labels. Implements `Refs #2861` S8 / R9 (universal
-/// dialog pattern from `Refs #2867` R1) by painting a [CtDialogShell] frame
-/// containing a title, three [CtToggleSwitch] rows, and a single
-/// [CtNinePatchButton] **Close** action. Material `AlertDialog` / `Dialog` and
-/// `SwitchListTile` chrome is not used here per
+/// Stable key for the capital-link disconnected land highlight toggle.
+const ValueKey<String> kGameMapOptionsShowCapitalLinkDisconnectedToggleKey =
+    ValueKey<String>('gameMapOptions:showCapitalLinkDisconnectedHighlight');
+
+/// Dark editorial-monocle modal that lets the player toggle the in-game map
+/// view layers — province overlay strokes, Great Power ownership tint,
+/// province name labels, and capital-link disconnected land highlight.
+/// Implements `Refs #2861` S8 / R9 and `Refs #4370` by painting a
+/// [CtDialogShell] frame containing a title, [CtToggleSwitch] rows, and a
+/// single [CtNinePatchButton] **Close** action. Material `AlertDialog` /
+/// `Dialog` and `SwitchListTile` chrome is not used here per
 /// `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban.
 ///
 /// The dialog manages local state synchronised with the host map area. Each
@@ -110,6 +114,16 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
             value: _state.showProvinceNamesLayer,
             onChanged: (value) =>
                 _update(_state.copyWith(showProvinceNamesLayer: value)),
+          ),
+          CtGap.m,
+          _GameMapOptionsToggleRow(
+            toggleKey: kGameMapOptionsShowCapitalLinkDisconnectedToggleKey,
+            label: l10n.map_displayOptions_showCapitalLinkDisconnected,
+            labelStyle: labelStyle,
+            value: _state.showCapitalLinkDisconnectedHighlight,
+            onChanged: (value) => _update(
+              _state.copyWith(showCapitalLinkDisconnectedHighlight: value),
+            ),
           ),
           CtGap.l,
           Row(

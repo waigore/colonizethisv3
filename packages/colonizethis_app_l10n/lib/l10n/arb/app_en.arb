@@ -396,6 +396,10 @@
   "@map_displayOptions_showProvinceNames": {
     "description": "Toggle label for showing land province names on the map."
   },
+  "map_displayOptions_showCapitalLinkDisconnected": "Highlight land not bound to the capital",
+  "@map_displayOptions_showCapitalLinkDisconnected": {
+    "description": "Toggle for hatch on owned land tiles that will not extract to the capital (Refs #4370)."
+  },
   "common_close": "Close",
   "@common_close": {
     "description": "Generic Close button label or tooltip."
