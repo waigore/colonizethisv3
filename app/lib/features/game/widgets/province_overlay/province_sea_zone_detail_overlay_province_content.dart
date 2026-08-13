@@ -1,7 +1,6 @@
 /// Province tab content assembly for [ProvinceSeaZoneDetailOverlay].
 library;
 
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -22,8 +21,14 @@ import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, fleetsInPortAtProvince, kRegionNewWorld, provincePanelShowsFullTileDerivedIntel;
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show
+        PlayerView,
+        fleetsInPortAtProvince,
+        kRegionNewWorld,
+        provincePanelShowsFullTileDerivedIntel;
 
 OverlayContent provinceContent({
   required BuildContext context,
@@ -67,11 +72,16 @@ OverlayContent provinceContent({
   required bool upgradeTownHasBuilderUnits,
   required String? upgradeTownTargetTileKey,
   VoidCallback? onUpgradeTownTap,
+  required bool showEstablishConsulateControl,
+  required bool establishConsulateEnabled,
+  required bool establishConsulatePending,
+  required String? establishConsulateRejectionReason,
+  VoidCallback? onEstablishConsulateTap,
+  required bool isNarrow,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
-  Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
-      const {},
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   void Function(Iterable<String>?)? onHighlightTiles,
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
@@ -144,7 +154,8 @@ OverlayContent provinceContent({
     onExploreWithExplorerTap: onExploreWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+    buildImprovementActionHasBuilderUnits:
+        buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
     currentOrders: draftOrders,
     showBuildRoadActionIcon: showBuildRoadActionIcon,
@@ -167,8 +178,8 @@ OverlayContent provinceContent({
     ownerName: ownerNameForProvinceOverlay(l10n, game, province?.ownerId),
     regionLabel: provinceOverlayRegionLabel(l10n, regionId),
     isCapital: provinceOverlayIsCapital(game, provinceId),
-    townDevelopmentLevel: province?.townDevelopmentLevel ??
-        kTownDevelopmentLevelMin,
+    townDevelopmentLevel:
+        province?.townDevelopmentLevel ?? kTownDevelopmentLevelMin,
     showUpgradeTownControl: showUpgradeTownControl,
     upgradeTownEnabled: upgradeTownEnabled,
     upgradeTownTooltip: upgradeTownTargetTileKey == null
@@ -183,6 +194,12 @@ OverlayContent provinceContent({
             hasBuilderUnits: upgradeTownHasBuilderUnits,
           ),
     onUpgradeTownTap: onUpgradeTownTap,
+    showEstablishConsulateControl: showEstablishConsulateControl,
+    establishConsulateEnabled: establishConsulateEnabled,
+    establishConsulatePending: establishConsulatePending,
+    establishConsulateRejectionReason: establishConsulateRejectionReason,
+    onEstablishConsulateTap: onEstablishConsulateTap,
+    isNarrow: isNarrow,
   );
   final economic = showsFullIntel
       ? buildEconomicSection(

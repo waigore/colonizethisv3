@@ -1,12 +1,16 @@
-
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show buildDiplomacyConfirmPreviewMessage;
 import 'package:flutter/widgets.dart';
 
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/game_map_area_state_logic.dart';
+import '../../widgets/diplomacy/diplomacy_order_helpers.dart'
+    show diplomacyActionLabel;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`
@@ -21,6 +25,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onBuildPortTap,
   VoidCallback? onPurchaseLandTap,
   VoidCallback? onUpgradeTownTap,
+  VoidCallback? onEstablishConsulateTap,
 });
 
 VoidCallback? _provinceDetailShortcutTap({
@@ -66,6 +71,10 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required String provinceId,
   required bool upgradeTownEnabled,
   required String? upgradeTownTargetTileKey,
+  required bool establishConsulateEnabled,
+  required bool establishConsulatePending,
+  required ct_models.DiplomaticOrder? establishConsulateOrder,
+  required String establishConsulateTargetName,
   required ct_models.AppEventBus bus,
 }) {
   final topology = mapData?.combinedTopology;
@@ -92,6 +101,18 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
             ),
           ),
         );
+  final establishConsulateTap = _establishConsulateTap(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    draftOrders: draftOrders,
+    topology: topology,
+    enabled: establishConsulateEnabled,
+    pending: establishConsulatePending,
+    order: establishConsulateOrder,
+    targetName: establishConsulateTargetName,
+    bus: bus,
+  );
   if (tileKey == null) {
     return (
       onExploreWithExplorerTap: null,
@@ -102,6 +123,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onBuildPortTap: null,
       onPurchaseLandTap: null,
       onUpgradeTownTap: upgradeTownTap,
+      onEstablishConsulateTap: establishConsulateTap,
     );
   }
 
@@ -160,13 +182,14 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     ),
     onBuildRoadTap: _provinceDetailShortcutTap(
       enabled: buildRoadEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildRoadActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-      ).enabled,
+      revalidateEnabled: () =>
+          GameMapAreaStateLogic.provinceBuildRoadActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: tileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          ).enabled,
       emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
@@ -176,13 +199,14 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     ),
     onBuildFortTap: _provinceDetailShortcutTap(
       enabled: buildFortEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildFortActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-      ).enabled,
+      revalidateEnabled: () =>
+          GameMapAreaStateLogic.provinceBuildFortActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: tileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          ).enabled,
       emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
@@ -192,16 +216,17 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     ),
     onBuildPortTap: _provinceDetailShortcutTap(
       enabled: buildPortEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildPortActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-        topology: topology,
-        currentOrders: draftOrders,
-        tileMapByRegion: mapData?.tileMapByRegion,
-      ).enabled,
+      revalidateEnabled: () =>
+          GameMapAreaStateLogic.provinceBuildPortActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: tileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+            topology: topology,
+            currentOrders: draftOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          ).enabled,
       emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
@@ -227,5 +252,61 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       ),
     ),
     onUpgradeTownTap: upgradeTownTap,
+    onEstablishConsulateTap: establishConsulateTap,
   );
+}
+
+VoidCallback? _establishConsulateTap({
+  required ct_models.Game game,
+  required String humanPlayerId,
+  required String provinceId,
+  required ct_models.Orders draftOrders,
+  required MapTopology? topology,
+  required bool enabled,
+  required bool pending,
+  required ct_models.DiplomaticOrder? order,
+  required String targetName,
+  required ct_models.AppEventBus bus,
+}) {
+  if (!enabled || order == null) return null;
+  if (pending) {
+    return () => bus.emit(
+      ct_models.RemoveDiplomaticOrderRequestedEvent(
+        playerId: humanPlayerId,
+        type: ct_models.DiplomaticOrderType.establishOverture,
+        targetFactionId: order.targetFactionId,
+      ),
+    );
+  }
+  return () {
+    final state = GameMapAreaStateLogic.provinceEstablishConsulateActionState(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      provinceId: provinceId,
+      topology: topology,
+      currentOrders: draftOrders,
+    );
+    if (!state.enabled || state.pending || state.order == null) return;
+    final validatedOrder = state.order!;
+    bus.emit(
+      ct_models.ConfirmDialogEvent(
+        title: diplomacyActionLabel(validatedOrder),
+        message: buildDiplomacyConfirmPreviewMessage(
+          order: validatedOrder,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          targetDisplayName: targetName,
+        ),
+        onResult: (confirmed) {
+          if (!confirmed) return;
+          bus.emit(
+            ct_models.AppendDiplomaticOrderRequestedEvent(
+              playerId: humanPlayerId,
+              order: validatedOrder,
+            ),
+          );
+        },
+      ),
+    );
+  };
 }

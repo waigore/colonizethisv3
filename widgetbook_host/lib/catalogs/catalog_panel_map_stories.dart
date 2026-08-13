@@ -171,6 +171,37 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Standalone — Political Establish Consulate enabled',
+        builder: (context) => _provinceOverlayEstablishConsulateStory(
+          showControl: true,
+          enabled: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — Political Establish Consulate disabled',
+        builder: (context) => _provinceOverlayEstablishConsulateStory(
+          showControl: true,
+          enabled: false,
+          rejectionReason:
+              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — Political Establish Consulate pending',
+        builder: (context) => _provinceOverlayEstablishConsulateStory(
+          showControl: true,
+          enabled: true,
+          pending: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — Political Establish Consulate hidden',
+        builder: (context) => _provinceOverlayEstablishConsulateStory(
+          showControl: false,
+          enabled: false,
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
           final game = demoGameForOverlay;
@@ -212,14 +243,16 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                 },
               ),
               availableByCommodity: {
-                CommodityCatalog.grain.id: const ProvinceImprovableCommodityCount(
-                  count: 3,
-                  tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|2|0'],
-                ),
-                CommodityCatalog.timber.id: const ProvinceImprovableCommodityCount(
-                  count: 2,
-                  tileKeys: ['oldWorld|p1|0|1'],
-                ),
+                CommodityCatalog.grain.id:
+                    const ProvinceImprovableCommodityCount(
+                      count: 3,
+                      tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|2|0'],
+                    ),
+                CommodityCatalog.timber.id:
+                    const ProvinceImprovableCommodityCount(
+                      count: 2,
+                      tileKeys: ['oldWorld|p1|0|1'],
+                    ),
               },
               onClose: () {},
             ),
@@ -392,6 +425,34 @@ Widget _provinceOverlayUpgradeTownStory({
   );
 }
 
+/// MAP20001 Political **Establish Consulate** shortcut variants. Refs #4346.
+Widget _provinceOverlayEstablishConsulateStory({
+  required bool showControl,
+  required bool enabled,
+  bool pending = false,
+  String? rejectionReason,
+}) {
+  final game = demoGameForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: demoRegionForOverlay,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showEstablishConsulateControl: showControl,
+      establishConsulateEnabled: enabled,
+      establishConsulatePending: pending,
+      establishConsulateRejectionReason: rejectionReason,
+      onEstablishConsulateTap: () {},
+      onClose: () {},
+    ),
+  );
+}
+
 /// Production panel story with `ProviderScope` + live Breakdown dialog
 /// wired into the same `previewStockpileNetDeltaByCommodityForPlayer`
 /// preview pipeline the running app uses, per
@@ -536,10 +597,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       game.worldState,
       player.id,
     );
-    final shipCounts = shipTypeCountsForPlayer(
-      game.worldState,
-      player.id,
-    );
+    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
     final forcesFeeding = forcesFeedingForPlayer(
       game: game,
       topology: topology,
@@ -615,8 +673,7 @@ class CivilianPanelWithMapStory extends StatefulWidget {
       CivilianPanelWithMapStoryState();
 }
 
-class CivilianPanelWithMapStoryState
-    extends State<CivilianPanelWithMapStory> {
+class CivilianPanelWithMapStoryState extends State<CivilianPanelWithMapStory> {
   late Game _game;
   late AppEventBus _panelBus;
   final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
@@ -948,8 +1005,7 @@ class MilitaryPanelWithMapStory extends StatefulWidget {
       MilitaryPanelWithMapStoryState();
 }
 
-class MilitaryPanelWithMapStoryState
-    extends State<MilitaryPanelWithMapStory> {
+class MilitaryPanelWithMapStoryState extends State<MilitaryPanelWithMapStory> {
   int _regionIndex = 0;
   String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;

@@ -80,6 +80,10 @@ ProvinceDetailShortcutCallbacks _callbacks({
   required bool purchaseLandEnabled,
   bool upgradeTownEnabled = false,
   String? upgradeTownTargetTileKey,
+  bool establishConsulateEnabled = false,
+  bool establishConsulatePending = false,
+  DiplomaticOrder? establishConsulateOrder,
+  String establishConsulateTargetName = '',
   String provinceId = 'oldWorld|p1',
   required AppEventBus bus,
 }) =>
@@ -103,6 +107,10 @@ ProvinceDetailShortcutCallbacks _callbacks({
       provinceId: provinceId,
       upgradeTownEnabled: upgradeTownEnabled,
       upgradeTownTargetTileKey: upgradeTownTargetTileKey,
+      establishConsulateEnabled: establishConsulateEnabled,
+      establishConsulatePending: establishConsulatePending,
+      establishConsulateOrder: establishConsulateOrder,
+      establishConsulateTargetName: establishConsulateTargetName,
       bus: bus,
     );
 

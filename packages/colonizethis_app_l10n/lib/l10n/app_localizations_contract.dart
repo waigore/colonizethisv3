@@ -1333,7 +1333,6 @@ abstract class AppLocalizations {
   /// Localized display name for commodity id `spices`.
   String get commodity_spices;
 
-
   /// Civilian units panel title.
   String get civilian_units_title;
 
@@ -1578,7 +1577,11 @@ abstract class AppLocalizations {
   String get militaryCounsel_cost_noMaterials;
 
   /// Train counsel affordability summary.
-  String militaryCounsel_costSummary(int treasury, String materials, int peasants);
+  String militaryCounsel_costSummary(
+    int treasury,
+    String materials,
+    int peasants,
+  );
 
   /// Brief military counsel reason for train recommendations.
   String get militaryCounsel_reason_affordableTrain_brief;
@@ -1998,6 +2001,9 @@ abstract class AppLocalizations {
   /// Minor/Tribe (Refs #3753 R4b).
   String get provinceOverlay_tileConsulateRequiredForExploreTooltip;
 
+  /// Narrow MAP20001 variant that names the Political shortcut.
+  String get provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip;
+
   /// Tooltip and semantics label for province tile build-improvement shortcut action.
   String get provinceOverlay_tileBuildImprovementTooltip;
 
@@ -2197,6 +2203,18 @@ abstract class AppLocalizations {
 
   /// Political Upgrade town shortcut label. Refs #4316.
   String get provinceOverlay_upgradeTownAction;
+
+  /// Political shortcut that stages a Trade Consulate overture. Refs #4346.
+  String get provinceOverlay_establishConsulateAction;
+
+  /// Political shortcut label while that Consulate overture is pending.
+  String get provinceOverlay_cancelEstablishConsulateAction;
+
+  /// Political status line explaining the missing relationship.
+  String provinceOverlay_noConsulateWith(String owner);
+
+  /// Accessible disabled label including the canonical validator reason.
+  String provinceOverlay_establishConsulateDisabledSemantics(String reason);
 
   /// Political Upgrade town enabled tooltip. Refs #4316.
   String get provinceOverlay_politicalUpgradeTownTooltip;
@@ -2448,11 +2466,7 @@ abstract class AppLocalizations {
   String get production_labourDetails;
 
   /// Per-tier labour readiness detail row.
-  String production_labourTierDetail(
-    String tier,
-    int working,
-    int notWorking,
-  );
+  String production_labourTierDetail(String tier, int working, int notWorking);
 
   /// Forces-food default line when land military feeding is complete.
   String get production_forcesFoodArmiesFullyFed;
