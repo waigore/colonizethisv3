@@ -114,7 +114,48 @@ class NavalMissionMenuDialog extends StatelessWidget {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
     final fleetLabel = l10n.naval_fleetLabel(fleet.id);
+    return CtDialogShell(
+      maxHeight: 720,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.naval_mission_menuTitle(fleetLabel),
+            style: moveDialogTitleTextStyle(theme),
+          ),
+          const SizedBox(height: CtSpacing.ml),
+          ..._menuRows(context, l10n, theme),
+          const SizedBox(height: CtSpacing.l),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.common_cancel),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Sail/Move, mission options, optional cancel-pending (Refs #4343).
+  List<Widget> _menuRows(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
     final rows = <Widget>[
+      _menuActionRow(
+        context: context,
+        label: l10n.naval_mission_sail,
+        effectLine: l10n.naval_mission_effect_sail,
+        enabled: true,
+        onTap: () => Navigator.pop(
+          context,
+          const NavalMissionMenuChoiceSail(),
+        ),
+      ),
       for (final option in availability.missions)
         _missionRow(context, option),
       if (availability.canCancelPending)
@@ -128,6 +169,7 @@ class NavalMissionMenuDialog extends StatelessWidget {
           ),
         ),
     ];
+    // Sail/Move is always present; empty copy only if somehow no rows remain.
     if (rows.isEmpty) {
       rows.add(
         Padding(
@@ -139,29 +181,7 @@ class NavalMissionMenuDialog extends StatelessWidget {
         ),
       );
     }
-
-    return CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.naval_mission_menuTitle(fleetLabel),
-            style: moveDialogTitleTextStyle(theme),
-          ),
-          const SizedBox(height: CtSpacing.ml),
-          ...rows,
-          const SizedBox(height: CtSpacing.l),
-          Align(
-            alignment: Alignment.centerRight,
-            child: CtNinePatchButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.common_cancel),
-            ),
-          ),
-        ],
-      ),
-    );
+    return rows;
   }
 
   Widget _missionRow(BuildContext context, NavalMissionOption option) {

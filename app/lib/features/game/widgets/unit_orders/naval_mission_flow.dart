@@ -1,4 +1,4 @@
-// Naval mission assign flow: fleet pick → mission menu → target pick (Refs #4213).
+// Naval mission assign + map fleet-marker routing (Refs #4213, #4343).
 // SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -11,10 +11,76 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/ui_screen_ids.dart';
 import '../panels/tree_builders/fleet_mission_label.dart';
+import 'move_fleet_dialog.dart';
 import 'naval_mission_menu_dialog.dart';
 import 'naval_mission_target_dialog.dart';
 
-/// Opens the human naval mission assign flow for [fleetIds] (map marker or panel).
+/// Map fleet-marker tap: pick fleet when stacked, then route to the legal action.
+///
+/// Home Fleet → tile-scoped [OpenNavalUnitsPanelEvent]; sea-going in port →
+/// [MoveFleetDialog]; sea-going at sea → [showNavalMissionFlow] (Refs #4343).
+Future<void> showNavalFleetMarkerFlow({
+  required BuildContext context,
+  required Game game,
+  required MapTopology topology,
+  required String humanPlayerId,
+  required Orders draftOrders,
+  required AppEventBus bus,
+  required List<String> fleetIds,
+  required String locationScopeKey,
+  String? preselectedFleetId,
+  String? tileScopeTileKey,
+}) async {
+  if (fleetIds.isEmpty) return;
+
+  final selectedFleetId = await _pickFleetId(
+    context: context,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    fleetIds: fleetIds,
+    preselectedFleetId: preselectedFleetId,
+  );
+  if (selectedFleetId == null || !context.mounted) return;
+
+  final fleet = game.fleetById(selectedFleetId);
+  if (fleet == null || !context.mounted) return;
+
+  if (fleet.id == homeFleetIdFor(humanPlayerId)) {
+    bus.emit(
+      OpenNavalUnitsPanelEvent(
+        locationScopeKey: locationScopeKey,
+        initialSelectedFleetId: fleet.id,
+        tileScopeTileKey: tileScopeTileKey,
+      ),
+    );
+    return;
+  }
+
+  if (!fleet.isAtSea) {
+    await showMoveFleetDialogForFleet(
+      context: context,
+      game: game,
+      topology: topology,
+      humanPlayerId: humanPlayerId,
+      fleet: fleet,
+      bus: bus,
+    );
+    return;
+  }
+
+  await showNavalMissionFlow(
+    context: context,
+    game: game,
+    topology: topology,
+    humanPlayerId: humanPlayerId,
+    draftOrders: draftOrders,
+    bus: bus,
+    fleetIds: [fleet.id],
+    preselectedFleetId: fleet.id,
+  );
+}
+
+/// Opens the human naval mission assign flow for [fleetIds] (map at-sea or panel).
 Future<void> showNavalMissionFlow({
   required BuildContext context,
   required Game game,
@@ -27,21 +93,14 @@ Future<void> showNavalMissionFlow({
 }) async {
   if (fleetIds.isEmpty) return;
 
-  var selectedFleetId = preselectedFleetId;
-  if (fleetIds.length > 1) {
-    selectedFleetId = await showDialog<String>(
-      context: context,
-      builder: (ctx) => NavalMissionFleetPickerDialog(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        fleetIds: fleetIds,
-        initialFleetId: preselectedFleetId,
-      ),
-    );
-    if (selectedFleetId == null || !context.mounted) return;
-  } else {
-    selectedFleetId = fleetIds.first;
-  }
+  final selectedFleetId = await _pickFleetId(
+    context: context,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    fleetIds: fleetIds,
+    preselectedFleetId: preselectedFleetId,
+  );
+  if (selectedFleetId == null || !context.mounted) return;
 
   final fleet = game.fleetById(selectedFleetId);
   if (fleet == null || !context.mounted) return;
@@ -75,6 +134,15 @@ Future<void> showNavalMissionFlow({
           humanPlayerId: humanPlayerId,
           fleetId: fleet.id,
         ),
+      );
+    case NavalMissionMenuChoiceSail():
+      await showMoveFleetDialogForFleet(
+        context: context,
+        game: game,
+        topology: topology,
+        humanPlayerId: humanPlayerId,
+        fleet: fleet,
+        bus: bus,
       );
     case NavalMissionMenuChoiceMission(:final mission):
       if (mission == FleetMission.blockade || mission == FleetMission.beachhead) {
@@ -115,6 +183,48 @@ Future<void> showNavalMissionFlow({
   }
 }
 
+/// Local `showDialog` for [MoveFleetDialog] (panel Move, marker in-port, Sail).
+Future<bool?> showMoveFleetDialogForFleet({
+  required BuildContext context,
+  required Game game,
+  required MapTopology topology,
+  required String humanPlayerId,
+  required Fleet fleet,
+  required AppEventBus bus,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => MoveFleetDialog(
+      game: game,
+      topology: topology,
+      humanPlayerId: humanPlayerId,
+      fleet: fleet,
+      bus: bus,
+    ),
+  );
+}
+
+Future<String?> _pickFleetId({
+  required BuildContext context,
+  required Game game,
+  required String humanPlayerId,
+  required List<String> fleetIds,
+  String? preselectedFleetId,
+}) async {
+  if (fleetIds.length > 1) {
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => NavalMissionFleetPickerDialog(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        fleetIds: fleetIds,
+        initialFleetId: preselectedFleetId,
+      ),
+    );
+  }
+  return fleetIds.first;
+}
+
 /// Menu selection for [showNavalMissionFlow].
 sealed class NavalMissionMenuChoice {
   const NavalMissionMenuChoice();
@@ -127,6 +237,11 @@ final class NavalMissionMenuChoiceMission extends NavalMissionMenuChoice {
 
 final class NavalMissionMenuChoiceCancelPending extends NavalMissionMenuChoice {
   const NavalMissionMenuChoiceCancelPending();
+}
+
+/// Opens [MoveFleetDialog] from `DLG31001` Sail / Move (Refs #4343).
+final class NavalMissionMenuChoiceSail extends NavalMissionMenuChoice {
+  const NavalMissionMenuChoiceSail();
 }
 
 /// Screen ids for naval mission dialog hosts (Refs #4213).
