@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';
@@ -66,6 +65,18 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     currentOrders: draftOrders,
     tileMapByRegion: mapData?.tileMapByRegion,
   );
+  final establishConsulateState =
+      GameMapAreaStateLogicProvinceActions.provinceEstablishConsulateActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        provinceId: displayId,
+        topology: mapData?.combinedTopology,
+        currentOrders: draftOrders,
+      );
+  final establishConsulateTargetName = _factionDisplayName(
+    game,
+    establishConsulateState.ownerId,
+  );
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
     humanPlayerId: humanPlayerId,
@@ -85,6 +96,10 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     provinceId: displayId,
     upgradeTownEnabled: upgradeTownState.enabled,
     upgradeTownTargetTileKey: upgradeTownState.townTileKey,
+    establishConsulateEnabled: establishConsulateState.enabled,
+    establishConsulatePending: establishConsulateState.pending,
+    establishConsulateOrder: establishConsulateState.order,
+    establishConsulateTargetName: establishConsulateTargetName,
     bus: bus,
   );
   final townProductionBonus = provinceTownProductionBonusPreview(
@@ -175,11 +190,31 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onBuildFortTap: shortcuts.onBuildFortTap,
     onBuildPortTap: shortcuts.onBuildPortTap,
     onPurchaseLandTap: shortcuts.onPurchaseLandTap,
-    showUpgradeTownControl:
-        canMutateViaUi && upgradeTownState.showControl,
+    showUpgradeTownControl: canMutateViaUi && upgradeTownState.showControl,
     upgradeTownEnabled: canMutateViaUi && upgradeTownState.enabled,
     upgradeTownHasBuilderUnits: upgradeTownState.hasBuilderUnits,
     upgradeTownTargetTileKey: upgradeTownState.townTileKey,
     onUpgradeTownTap: shortcuts.onUpgradeTownTap,
+    showEstablishConsulateControl:
+        canMutateViaUi && establishConsulateState.showControl,
+    establishConsulateEnabled:
+        canMutateViaUi && establishConsulateState.enabled,
+    establishConsulatePending: establishConsulateState.pending,
+    establishConsulateRejectionReason: establishConsulateState.rejectionReason,
+    onEstablishConsulateTap: shortcuts.onEstablishConsulateTap,
   );
+}
+
+String _factionDisplayName(ct_models.Game game, String? factionId) {
+  if (factionId == null) return '';
+  for (final player in game.players) {
+    if (player.id == factionId) return player.displayName;
+  }
+  for (final minor in game.minorNations) {
+    if (minor.id == factionId) return minor.displayName ?? factionId;
+  }
+  for (final tribe in game.tribes) {
+    if (tribe.id == factionId) return tribe.displayName ?? factionId;
+  }
+  return factionId;
 }

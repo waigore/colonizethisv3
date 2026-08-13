@@ -1,7 +1,6 @@
 /// Political section assembly and owner/region display helpers.
 library;
 
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
@@ -9,7 +8,8 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_support.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show WorldStateProvinceLookup, kRegionNewWorld, kRegionOldWorld;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show WorldStateProvinceLookup, kRegionNewWorld, kRegionOldWorld;
 
 String ownerNameForProvinceOverlay(
   AppLocalizations l10n,
@@ -36,8 +36,7 @@ String provinceOverlayOwnerName(
   AppLocalizations l10n,
   Game game,
   String? ownerId,
-) =>
-    ownerNameForProvinceOverlay(l10n, game, ownerId);
+) => ownerNameForProvinceOverlay(l10n, game, ownerId);
 
 String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
   return switch (regionId) {
@@ -53,8 +52,7 @@ String provinceOverlayTownDevelopmentGist(
   int townDevelopmentLevel,
 ) {
   return switch (townDevelopmentLevel) {
-    kTownDevelopmentLevelMax =>
-      l10n.provinceOverlay_townDevelopmentGistMax,
+    kTownDevelopmentLevelMax => l10n.provinceOverlay_townDevelopmentGistMax,
     2 => l10n.provinceOverlay_townDevelopmentGistBonusActiveNextAt4,
     3 => l10n.provinceOverlay_townDevelopmentGistNextAt4,
     _ => l10n.provinceOverlay_townDevelopmentGistNextAt2,
@@ -72,6 +70,12 @@ Widget buildPoliticalSection({
   required bool upgradeTownEnabled,
   required String upgradeTownTooltip,
   VoidCallback? onUpgradeTownTap,
+  required bool showEstablishConsulateControl,
+  required bool establishConsulateEnabled,
+  required bool establishConsulatePending,
+  required String? establishConsulateRejectionReason,
+  VoidCallback? onEstablishConsulateTap,
+  required bool isNarrow,
 }) {
   final bodyStyle = overlayFgBodyStyle();
   final gistStyle = bodyStyle.copyWith(
@@ -86,6 +90,17 @@ Widget buildPoliticalSection({
       children: [
         Text(l10n.provinceOverlay_name(name), style: bodyStyle),
         Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
+        if (showEstablishConsulateControl)
+          ..._buildEstablishConsulateControl(
+            l10n: l10n,
+            ownerName: ownerName,
+            enabled: establishConsulateEnabled,
+            pending: establishConsulatePending,
+            rejectionReason: establishConsulateRejectionReason,
+            onTap: onEstablishConsulateTap,
+            isNarrow: isNarrow,
+            bodyStyle: gistStyle,
+          ),
         Text(l10n.provinceOverlay_region(regionLabel), style: bodyStyle),
         Text(
           isCapital
@@ -117,6 +132,48 @@ Widget buildPoliticalSection({
       ],
     ),
   );
+}
+
+List<Widget> _buildEstablishConsulateControl({
+  required AppLocalizations l10n,
+  required String ownerName,
+  required bool enabled,
+  required bool pending,
+  required String? rejectionReason,
+  required VoidCallback? onTap,
+  required bool isNarrow,
+  required TextStyle bodyStyle,
+}) {
+  final label = pending
+      ? l10n.provinceOverlay_cancelEstablishConsulateAction
+      : l10n.provinceOverlay_establishConsulateAction;
+  final tooltip = enabled || rejectionReason == null ? label : rejectionReason;
+  return [
+    Text(l10n.provinceOverlay_noConsulateWith(ownerName), style: bodyStyle),
+    Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          CtActionTextButton(
+            label: label,
+            tooltip: tooltip,
+            semanticLabel: !enabled && rejectionReason != null
+                ? l10n.provinceOverlay_establishConsulateDisabledSemantics(
+                    rejectionReason,
+                  )
+                : label,
+            enabled: enabled,
+            onPressed: enabled ? onTap : null,
+          ),
+          if (isNarrow && !enabled && rejectionReason != null)
+            Text(rejectionReason, style: bodyStyle),
+        ],
+      ),
+    ),
+  ];
 }
 
 Province? findProvinceForSeaZoneOverlay(Game game, String provinceId) =>
