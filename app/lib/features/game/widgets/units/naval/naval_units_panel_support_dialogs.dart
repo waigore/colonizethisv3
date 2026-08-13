@@ -7,7 +7,6 @@ import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
     show trainNavalDialogId;
 import '../../panels/tree_builders/naval_tree_builder.dart';
-import '../../unit_orders/move_fleet_dialog.dart';
 import '../../unit_orders/naval_mission_flow.dart';
 import '../../unit_orders/split_fleet_dialog.dart';
 import '../shared/base_units_panel.dart';
@@ -47,15 +46,13 @@ mixin NavalUnitsPanelDialogs
     final fleet = widget.game.fleetById(row.fleetId);
     final nonNullFleet = fleet;
     if (nonNullFleet == null) return;
-    await showDialog<bool>(
+    await showMoveFleetDialogForFleet(
       context: context,
-      builder: (ctx) => MoveFleetDialog(
-        game: widget.game,
-        topology: widget.topology,
-        humanPlayerId: widget.humanPlayerId,
-        fleet: nonNullFleet,
-        bus: widget.bus,
-      ),
+      game: widget.game,
+      topology: widget.topology,
+      humanPlayerId: widget.humanPlayerId,
+      fleet: nonNullFleet,
+      bus: widget.bus,
     );
   }
 

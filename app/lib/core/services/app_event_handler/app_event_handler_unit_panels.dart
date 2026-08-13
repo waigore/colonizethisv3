@@ -176,7 +176,7 @@ Future<void> appEventHandlerOpenNavalMissionMenu(
   final humanPlayerId = resolveShellPanelPlayerId(shell, game);
   final mapData = container.read(gameServiceProvider).getMapData(game.id);
   final draftOrders = container.read(currentOrdersProvider);
-  await showNavalMissionFlow(
+  await showNavalFleetMarkerFlow(
     context: ctx,
     game: game,
     topology: mapData?.combinedTopology ?? const MapTopology(),
@@ -184,6 +184,8 @@ Future<void> appEventHandlerOpenNavalMissionMenu(
     draftOrders: draftOrders,
     bus: container.read(appEventBusProvider),
     fleetIds: event.fleetIds,
+    locationScopeKey: event.locationScopeKey,
     preselectedFleetId: event.initialSelectedFleetId,
+    tileScopeTileKey: event.tileScopeTileKey,
   );
 }
