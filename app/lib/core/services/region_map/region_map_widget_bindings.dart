@@ -22,7 +22,7 @@ typedef CreateCtRegionMapGame = CtRegionMapGame Function({
   required bool showProvinceOverlay,
   required bool showProvinceOwnershipTint,
   required bool showProvinceNamesLayer,
-  bool showCapitalLinkDisconnectedHighlight = true,
+  bool showCapitalLinkDisconnectedHighlight,
   required CtMapVisibilityMode visibilityMode,
   required BaseLayerDisplayMode baseLayerDisplayMode,
   required void Function(String provinceId)? onProvinceSelected,
