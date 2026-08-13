@@ -575,6 +575,13 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
       'Stage a landing site so your armies can invade that coast next turn; marker then expires.';
 
   @override
+  String get naval_mission_sail => 'Sail / Move';
+
+  @override
+  String get naval_mission_effect_sail =>
+      'Move this fleet to an adjacent sea zone or owned port.';
+
+  @override
   String get naval_mission_targetCaption_blockade =>
       'Pressures the target port approaches with stronger interception than Patrol.';
 

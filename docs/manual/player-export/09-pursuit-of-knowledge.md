@@ -31,6 +31,7 @@ Efficiency is about 2 RP per gold except Maximum (~2.5). Some military/naval tec
 - **Cancel** clears the slot; **all progress on that tech is forfeited** (confirm when progress > 0).
 - Slot assignments persist across turns until unlock or cancel. An optional **goal** highlight may sort the Tree for you — it is UI-only and is **not** part of the research order payload.
 - **Empty seats and funding None are legal.** You may leave a slot empty or set funding to **None** when gold is needed for builds, recruits, diplomacy, or the market. That is a treasury choice, not a failed order. Ending the turn does **not** warn about unused research seats the way it may list idle civilians — review slots on **Technology screen** when you mean to invest again.
+- **Research this turn:** On **Technology screen**, read the line under **Research Slots** — **Research this turn: −£X · +Y RP** — for the empire-wide gold and RP the next End Turn will apply across all funded seats (slots spend in order, so later seats may show no RP when earlier ones already consumed your treasury). When nothing will spend, the panel shows **Research this turn: no spend**. Tap a blocked slot’s gold row or RP delta for the per-slot breakdown.
 
 ### Eight branches (categories)
 

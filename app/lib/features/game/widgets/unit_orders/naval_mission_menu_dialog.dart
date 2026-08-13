@@ -115,6 +115,16 @@ class NavalMissionMenuDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final fleetLabel = l10n.naval_fleetLabel(fleet.id);
     final rows = <Widget>[
+      _menuActionRow(
+        context: context,
+        label: l10n.naval_mission_sail,
+        effectLine: l10n.naval_mission_effect_sail,
+        enabled: true,
+        onTap: () => Navigator.pop(
+          context,
+          const NavalMissionMenuChoiceSail(),
+        ),
+      ),
       for (final option in availability.missions)
         _missionRow(context, option),
       if (availability.canCancelPending)
@@ -128,6 +138,7 @@ class NavalMissionMenuDialog extends StatelessWidget {
           ),
         ),
     ];
+    // Sail/Move is always present; empty copy only if somehow no rows remain.
     if (rows.isEmpty) {
       rows.add(
         Padding(
@@ -141,6 +152,7 @@ class NavalMissionMenuDialog extends StatelessWidget {
     }
 
     return CtDialogShell(
+      maxHeight: 720,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
