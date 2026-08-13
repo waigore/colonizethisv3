@@ -1997,6 +1997,27 @@
   "@naval_mission_targetCaption_beachhead": {
     "description": "Mission consequence caption on Beachhead target picker (DLG31002)."
   },
+  "naval_mission_targetIntel_harborUnknown": "Harbor status unknown",
+  "@naval_mission_targetIntel_harborUnknown": {
+    "description": "Fogged Blockade target row when full naval/military intel is unavailable (DLG31002)."
+  },
+  "naval_mission_targetIntel_noPort": "No port",
+  "@naval_mission_targetIntel_noPort": {
+    "description": "Full-intel Blockade target row when the province has no registered seaboard port (DLG31002)."
+  },
+  "naval_mission_targetIntel_emptyHarbor": "Empty harbor",
+  "@naval_mission_targetIntel_emptyHarbor": {
+    "description": "Full-intel Blockade target row when a port is present and no hostile fleets are in port (DLG31002)."
+  },
+  "naval_mission_targetIntel_fleetsInPort": "{count} fleets in port",
+  "@naval_mission_targetIntel_fleetsInPort": {
+    "description": "Full-intel Blockade target row summarizing hostile fleets docked at the target port (DLG31002).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "naval_units_noShipsInFleet": "No ships in this fleet",
   "@naval_units_noShipsInFleet": {
     "description": "Empty-state line for fleet with no ships."
@@ -3324,6 +3345,35 @@
         "type": "String"
       }
     }
+  },
+  "provinceOverlay_moveArmyAction": "Move",
+  "@provinceOverlay_moveArmyAction": {
+    "description": "MAP20001 Military Move control label (Refs #4350)."
+  },
+  "provinceOverlay_invadeArmyAction": "Invade {provinceName}",
+  "@provinceOverlay_invadeArmyAction": {
+    "description": "MAP20001 Military Invade control label (Refs #4350).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_moveArmyDisabledHomeArmyTooltip": "The Home Army cannot leave the capital. Split a field army first.",
+  "@provinceOverlay_moveArmyDisabledHomeArmyTooltip": {
+    "description": "Disabled Move tooltip when only Home Army is present (Refs #4350)."
+  },
+  "provinceOverlay_moveArmyDisabledNoDestinationsTooltip": "No legal destinations for field armies stationed here.",
+  "@provinceOverlay_moveArmyDisabledNoDestinationsTooltip": {
+    "description": "Disabled Move tooltip when cache has no destinations (Refs #4350)."
+  },
+  "provinceOverlay_invadeArmyDisabledCannotReachTooltip": "No field army can reach this province this turn.",
+  "@provinceOverlay_invadeArmyDisabledCannotReachTooltip": {
+    "description": "Disabled Invade tooltip when province missing from army-move cache (Refs #4350)."
+  },
+  "provinceOverlay_selectArmyTitle": "Select army",
+  "@provinceOverlay_selectArmyTitle": {
+    "description": "DLG20002 overlay army picker title (Refs #4350)."
   },
   "provinceOverlay_tileBuildFortTooltip": "Build fort",
   "@provinceOverlay_tileBuildFortTooltip": {

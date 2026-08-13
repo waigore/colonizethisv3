@@ -57,13 +57,14 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 
 - **Home Fleet** — opens `UNIT30001` Naval Units scoped to that port so you can Split or Train without a dead-end tap.
 - **Sea-going fleet in port** — opens `DLG30001` **Move Fleet** so you can undock immediately.
-- **Sea-going fleet at sea** — opens `DLG31001` **Assign mission** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open `DLG30001` without returning to the rail panel. Blockade and Beachhead open `DLG31002` **Select target** so you choose an adjacent enemy province at war with you.
+- **Sea-going fleet at sea** — opens `DLG31001` **Assign mission** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open `DLG30001` without returning to the rail panel. Blockade and Beachhead open `DLG31002` **Select target** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target.
+
 
 **Panel parity:** In `UNIT30001` **Naval Units**, tap **Mission** on an eligible at-sea fleet row for the same `DLG31001` flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
-- **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port.
-- **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs.
+- **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port. Use the target-row harbor line to compare empty harbors against ports with fleets already docked.
+- **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs. Target intel helps you compare landing coasts; it does not mean the fleet captures the province this turn.
 - **Defend:** Remain in place without actively seeking combat. Defending fleets can still be attacked or drawn into combat by hostile patrols or blockades.
 
 A fleet may have a pending **move** or a pending **mission** for the turn, never both. Staging a mission clears any pending move for that fleet, and vice versa.
@@ -108,7 +109,7 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - [ ] Explains the complete merchant and warship roster, each ship’s technology gate, and the Carrack exception.
 - [ ] Documents `UNIT30001` and `UNIT60001` for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints.
 - [ ] Documents `DLG30001` one-hop port⇄sea movement, owned-port docking, capital docking, and sea-zone revelation.
-- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, cancel-pending, and move xor mission.
+- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, cancel-pending, move xor mission, and fog-honest Beachhead/Blockade target intel on `DLG31002`.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing preconditions; Join Home Fleet via dock/transfer only (not mission menu).
 - [ ] Documents `DLG40001` transfer of selected hulls from an eligible capital-port fleet into the Home Fleet.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.

@@ -58,6 +58,7 @@ abstract final class UiScreenIds {
   // DLG — modal dialogs (non-route)
   static const String newGameLeaderSelectionDialog = 'DLG10001';
   static const String moveArmyDialog = 'DLG20001';
+  static const String overlayArmyMovePickerDialog = 'DLG20002';
   static const String moveFleetDialog = 'DLG30001';
   static const String transferToHomeFleetDialog = 'DLG40001';
   static const String navalMissionMenuDialog = 'DLG31001';

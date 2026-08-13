@@ -97,6 +97,21 @@ part of 'catalog.dart';
         ],
       ),
       newWorld: const RegionData(),
+      portsByProvinceSeaboard: const {
+        'oldWorld|p_enemy|sea_origin': 'oldWorld|p_enemy|0|0',
+      },
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          ownProvince: ['oldWorld|p_own|0|0'],
+          enemyProvince: ['oldWorld|p_enemy|0|0'],
+        },
+      },
+      playerVisibilityByTile: const {
+        playerId: {
+          'oldWorld|p_own|0|0': 'fullyVisible',
+          'oldWorld|p_enemy|0|0': 'fullyVisible',
+        },
+      },
     ),
     diplomacyRelations: const [
       DiplomacyRelation(
@@ -212,6 +227,7 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
                       mission: FleetMission.blockade,
                       fleet: fixture.fleet,
                       targetProvinceIds: fixture.targetProvinceIds,
+                      humanPlayerId: fixture.fleet.ownerId,
                     ),
                   );
                 },
@@ -237,11 +253,76 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
                       mission: FleetMission.beachhead,
                       fleet: fixture.fleet,
                       targetProvinceIds: fixture.targetProvinceIds,
+                      humanPlayerId: fixture.fleet.ownerId,
                     ),
                   );
                 },
                 // ignore: avoid_hardcoded_strings_in_widgets
                 child: const Text('Open Naval Mission Target (Beachhead)'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Beachhead — full intel unopposed',
+        builder: (context) {
+          final fixture = _navalMissionTargetStoryFixture();
+          final view = buildPlayerView(
+            fixture.game,
+            fixture.topology,
+            fixture.fleet.ownerId,
+          );
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => NavalMissionTargetDialog(
+                      game: fixture.game,
+                      mission: FleetMission.beachhead,
+                      fleet: fixture.fleet,
+                      targetProvinceIds: fixture.targetProvinceIds,
+                      humanPlayerId: fixture.fleet.ownerId,
+                      playerView: view,
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Beachhead Target (full intel)'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Blockade — full intel empty harbor',
+        builder: (context) {
+          final fixture = _navalMissionTargetStoryFixture();
+          final view = buildPlayerView(
+            fixture.game,
+            fixture.topology,
+            fixture.fleet.ownerId,
+          );
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => NavalMissionTargetDialog(
+                      game: fixture.game,
+                      mission: FleetMission.blockade,
+                      fleet: fixture.fleet,
+                      targetProvinceIds: fixture.targetProvinceIds,
+                      humanPlayerId: fixture.fleet.ownerId,
+                      playerView: view,
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Blockade Target (full intel)'),
               );
             },
           );
@@ -271,6 +352,34 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
                 },
                 // ignore: avoid_hardcoded_strings_in_widgets
                 child: const Text('Open Naval Mission Fleet Picker'),
+              );
+            },
+          );
+        },
+      ),
+    ],
+  ),
+  WidgetbookFolder(
+    name: 'Overlay Army Move Picker Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — two armies',
+        builder: (context) {
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<String>(
+                    context: innerContext,
+                    builder: (_) => OverlayArmyMovePickerDialog(
+                      game: demoGameForOverlay,
+                      humanPlayerId: demoGameForOverlay.players.first.id,
+                      armyIds: const ['army_a', 'army_b'],
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Overlay Army Move Picker'),
               );
             },
           );

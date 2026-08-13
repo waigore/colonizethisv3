@@ -170,6 +170,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           upgradeTownHasBuilderUnits: false,
         ),
       ),
+      ...provinceOverlayMoveInvadeUseCases,
       ...provinceOverlayEstablishConsulateUseCases,
       WidgetbookUseCase(
         name: 'Standalone — extraction & available',
