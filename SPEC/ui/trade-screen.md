@@ -39,6 +39,7 @@
 - `TradeScreenMarketKeys.marketRowQuantityTextKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:quantity')` (per-row quantity readout; renders the staged `TradeOrder.quantity` or `marketRowQuantityIdleGlyph` (`—`) when no direction is staged — Refs `#2993` E5b).
 - `TradeScreenMarketKeys.marketRowResourceIconKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:resourceIcon')` (per-row leading `ResourceIcon` paint at `marketRowResourceIconSize` (20 dp) immediately before the commodity display name on line 1 — Refs `#3093` row-icons slice). Mounted exactly once per row.
 - `TradeScreenMarketKeys.marketRowPriceCoinIconKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:priceCoin')` (per-row trailing treasury-coin `StrictAssetIcon` paint at `marketRowPriceCoinIconSize` (14 dp) immediately before the integer price text on line 1 — Refs `#3093` row-icons slice). Always mounted regardless of whether the row resolves to an integer price or the em-dash fallback so the coin acts as a visual currency cue rather than a price-availability flag. Asset: `marketRowPriceCoinAssetPath == 'assets/icons/32/ui_icon_treasury_coin.png'`.
+- `TradeScreenMarketKeys.marketRowPriceDeltaKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:priceDelta')` (optional signed last-turn coin delta under the coin+price cluster — Refs `#4345`). Mounted only when reconstructed `delta ≠ 0`.
 - `TradeScreenMarketKeys.marketBidGoodsIndicatorKey` — `ValueKey<String>('tradeScreenMarketBidGoodsIndicator')` (persistent header strip above the cargo indicator; renders `Bid goods: U of C` where `U` is the count of distinct staged `TradeOrderType.bid` commodities and `C` is `worldMarketBidTypeCap(game, playerId)` — Refs `#4170`).
 - `TradeScreenMarketKeys.marketBidTypeWarningKey` — `ValueKey<String>('tradeScreenMarketBidTypeWarning')` (warning row below the bid-goods indicator when `U >= C` and `C > 0`; default body colour — Refs `#4170`, `#4186`).
 - `TradeScreenMarketKeys.marketBidGoodsTooltipKey` — `ValueKey<String>('tradeScreenMarketBidGoodsTooltip')` (inline `CtIconAction` + `Tooltip` beside the bid-goods line — Refs `#4186`).
@@ -137,11 +138,14 @@ Padding (16 dp)
             │                           │   │   ├── TradeMarketCounselStar ★ (≤3 highlights — Refs #4282)
             │                           │   │   └── Text '(N)' sellable (`...:sellable`, --muted)
             │                           │   └── SizedBox width `marketRowPriceColumnWidth` (right-aligned)
-            │                           │       └── Row (mainAxisSize: min)
-            │                           │           ├── StrictAssetIcon coin 14 dp (`...:priceCoin`,
-            │                           │           │     assets/icons/32/ui_icon_treasury_coin.png)
-            │                           │           └── Text <price | "—"> (titleSmall, --accentBright)
-            │                           ├── Text 'Bids N / Offers M' (bodySmall, --muted)
+            │                           │       └── Column (end-aligned; Refs #4345)
+            │                           │           ├── Row (mainAxisSize: min)  // coin + price
+            │                           │           │   ├── StrictAssetIcon coin 14 dp (`...:priceCoin`,
+            │                           │           │   │     assets/icons/32/ui_icon_treasury_coin.png)
+            │                           │           │   └── Text <price | "—"> (titleSmall, --accentBright)
+            │                           │           └── Text optional `+£N` / `−£N` (`...:priceDelta`,
+            │                           │                 success/danger; omitted when no last-turn move)
+            │                           ├── Text 'Last turn: bids N · offers M' (bodySmall, --muted)
             │                           └── Wrap (per-row interactive controls — Refs #2993 E5b)
             │                               ├── CtChoiceChip 'None'  (`...:none`)
             │                               ├── CtChoiceChip 'Bid'   (`...:bid`)
@@ -203,7 +207,8 @@ The Market tab body is the read-only commodity table (`#2993` E5a). It iterates 
 
 - the **commodity display name** in `--accent` (`titleSmall`),
 - the **last market price** from `Game.worldMarketState.prices[commodityId]` in `--accentBright` (`titleSmall`), formatted as a whole integer (prices on `Game.worldMarketState.prices` are integer treasury units per [`world-market.md`](../game/world-market.md) § Price discovery). When the commodity is absent from `prices`, the row falls back to the published default market price from `ResourceRules.defaultRules.defaultMarketPriceForCommodityId(commodityId)`, which now covers **every** tradeable commodity — raw resources (per the `Resource` enum default-price map) and manufactured commodities (per [`commodity-catalog.md`](../game/commodity-catalog.md) § Manufactured base prices). First-load Market tab sessions therefore render a finite integer price for every tradeable row. The canonical em-dash glyph `—` renders only when neither the market state nor the catalog has a value — a defensive fallback path retained for future commodity additions that ship without a catalog default,
-- the **previous-turn aggregate volume** line `Bids X / Offers Y` from `Game.worldMarketState.lastTurnActivity[commodityId]` in `--muted` (`bodySmall`); commodities absent from `lastTurnActivity` default to `Bids 0 / Offers 0` so the column reads consistently.
+- the **last-turn price move** (Refs `#4345`): when `lastTurnActivity[commodityId].priceChangePercent` is non-zero, reconstruct the previous integer price as `(currentPrice / (1 + percent)).round()` (when `percent > −1`), then `delta = currentPrice − previous`. When `delta ≠ 0`, paint a compact signed treasury delta under the coin+price cluster (`+£N` in `--success`, `−£N` with unicode minus U+2212 in `--danger`, keyed `marketRowPriceDeltaKey`). Omit the delta when activity is missing, percent is `0`, current price is unknown, or reconstructed delta is `0`. Do **not** show raw percent or `Δ%`. Tooltip / long-press on the price cluster (when a delta is shown) states that last market moved this price and **this turn’s deals use the price shown**,
+- the **previous-turn aggregate volume** line `Last turn: bids X · offers Y` from `Game.worldMarketState.lastTurnActivity[commodityId]` in `--muted` (`bodySmall`); commodities absent from `lastTurnActivity` default to `Last turn: bids 0 · offers 0` so the column reads consistently (wording clarifies last market, not the player’s staged book).
 
 ### Deal Book ledger content (`#2993` E6)
 
@@ -280,7 +285,7 @@ When the Market tab commodity list inherits `BoxConstraints.maxWidth >= TradeScr
 On wide layouts each commodity row uses the **compact two-line** variant (`MarketCommodityRowCompact`):
 
 - **Line 1:** `MarketCommodityRowHeader` (resource icon, name, sellable `(N)`, trailing price column) — same keys as the narrow row.
-- **Line 2:** a horizontal `Row` with an `Expanded` volume readout (`Bids N / Offers M`, `bodySmall`, `--muted`) on the leading edge and `MarketCommodityRowControls` (`None` / `Bid` / `Offer` chips + stepper) trailing. Controls remain on the last primary line; the `Wrap` may wrap within line 2 when the column is narrow.
+- **Line 2:** a horizontal `Row` with an `Expanded` volume readout (`Last turn: bids N · offers M`, `bodySmall`, `--muted`) on the leading edge and `MarketCommodityRowControls` (`None` / `Bid` / `Offer` chips + stepper) trailing. Controls remain on the last primary line; the `Wrap` may wrap within line 2 when the column is narrow. Last-turn price deltas stack under the coin+price cluster inside the trailing price column (same keys as narrow).
 - **Internal vertical gap:** `2` dp between line 1 and line 2.
 
 Below `marketTwoColumnMinWidth` the Market tab retains the existing **single-column three-line** `MarketCommodityRow` stack (`header` → `volume` → `controls` with `2` dp / `6` dp internal gaps). Functional parity (bid/offer/none, steppers, cargo/budget/bid-type header, sellable readout, validation caps) is unchanged — densification is layout-only.
@@ -443,7 +448,7 @@ Use cases for the current slice (E1+E2+E3+E4+E5a+E5b+E5c+E6+E7):
 
 | Use case | Proves |
 |----------|--------|
-| `Scaffold (Market tab)` | Default mount of `TradeScreen` with the dark `CtTopBar` and `_TradeScreenTabsBody` showing the Market tab read-only commodity table selected (the initial state visited by every gameplay session). The cargo indicator renders `Cargo remaining: 24` (home-fleet stub capacity, no staged bids). |
+| `Scaffold (Market tab)` | Default mount of `TradeScreen` with the dark `CtTopBar` and `_TradeScreenTabsBody` showing the Market tab commodity table selected (the initial state visited by every gameplay session). Seeded last-turn activity shows volume wording and signed price deltas where percent ≠ 0 (Refs `#4345`). The cargo indicator renders `Cargo remaining: 24` (home-fleet stub capacity, no staged bids). |
 | `Scaffold (mobile)` | Same default story inside `mobileViewport` (360 × 640 dp) to satisfy the per-spec mobile use case (`SPEC/ui/mobile-adaptation.md`). |
 | `Market tab — staged bid + offer (Refs #2993 E5b)` | Story Game with `currentOrdersProvider` pre-seeded so reviewers see an active `Bid` (timber, qty 4) and `Offer` (fabric, qty 7) without needing to drive the chips themselves. Cargo indicator reads `Cargo remaining: 20` (`24 − 4`). |
 | `Market tab — cargo saturated (Refs #2993 E5c)` | Story Game with `currentOrdersProvider` pre-seeded to stage bids whose total quantity equals `tradeCargoCapacity` so the cargo indicator reads `Cargo remaining: 0` and the warning row `tradeScreenMarketCargoWarning` is mounted. Reviewers can confirm neutral body-colour warning copy and the cargo-limit inline help without touching the chips. |
@@ -499,8 +504,17 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 - **Given** the same conditions and the Market tab commodity list content width is **at or above** `marketTwoColumnMinWidth`, **then** within each non-empty section the first two catalog commodities share the same `Offset.dy` with strictly increasing `Offset.dx` (row-major two-column flow per § Market tab — wide two-column layout (`#4227` slice)), and when a section has an odd commodity count the last row's sole commodity occupies the left column only.
 - **Given** the same conditions and `Game.worldMarketState.prices` contains an entry `{'timber': 30}` (and no entry for `'iron'`, whose published default market price per `ResourceRules.defaultRules` is the integer `80`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `30` (the integer market value) and the `tradeScreenMarketRow:iron` row contains the text `80` (the catalog default-market-price fallback for raw resources absent from `Game.worldMarketState.prices`).
 - **Given** the same conditions and `Game.worldMarketState.prices` is empty and the row is a manufactured commodity enumerated in [`commodity-catalog.md`](../game/commodity-catalog.md) § Manufactured base prices (e.g. `'lumber'` with published catalog base price `60`, or `'castIron'` with `160`), **when** the Market tab body renders, **then** the row's price cell contains the integer base price from that table (the catalog default-market-price fallback for manufactured commodities) and never renders the em-dash glyph `—`. The em-dash glyph `priceUnknownGlyph` (`—`) is reserved for the defensive case where a tradeable commodity id is absent from both `Game.worldMarketState.prices` and the published catalog — a state not reachable under current rulesets but retained for future commodity additions.
-- **Given** the same conditions and `Game.worldMarketState.lastTurnActivity` contains `{'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8)}` (and no entry for `'fabric'`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `Bids 12 / Offers 8` and the `tradeScreenMarketRow:fabric` row contains the text `Bids 0 / Offers 0` (zero-default for commodities absent from the activity map).
+- **Given** the same conditions and `Game.worldMarketState.lastTurnActivity` contains `{'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8)}` (and no entry for `'fabric'`), **when** the Market tab body renders, **then** the `tradeScreenMarketRow:timber` row contains the text `Last turn: bids 12 · offers 8` and the `tradeScreenMarketRow:fabric` row contains the text `Last turn: bids 0 · offers 0` (zero-default for commodities absent from the activity map).
 - **Given** the `TradeScreen` is mounted with a human player and observe mode is **not** active, **then** the `tradeScreenMarketCommodityList` widget is present **only** under the `tradeScreenMarketTabBody` subtree (not under the off-stage `tradeScreenDealBookTabBody` subtree, even when reached via `find.byKey(..., skipOffstage: false)`).
+
+### Market tab — last-turn price move (`#4345`)
+
+- **Given** `WorldMarketState.prices['timber'] == 36` and `lastTurnActivity['timber'].priceChangePercent` reconstructs coin delta `+6`, **when** the Market timber row builds, **then** the UI layer shows price `36` and a success-coloured `+£6` under key `tradeScreenMarketRow:timber:priceDelta`, and does not show a raw percent or `Δ%`.
+- **Given** a negative non-zero percent whose reconstructed coin delta is `−3`, **when** the Market row builds, **then** the UI layer shows danger-coloured `−£3` (unicode minus U+2212) under `marketRowPriceDeltaKey`.
+- **Given** no `lastTurnActivity` entry, `priceChangePercent == 0`, or reconstructed coin delta `0`, **when** the Market row builds, **then** the UI layer omits `marketRowPriceDeltaKey` and leaves the integer price unchanged.
+- **Given** a non-zero move, **when** the player hovers or long-presses the price cluster, **then** the UI layer shows a short tooltip stating that last market moved the price and this turn’s deals use the price shown.
+- **Given** a 320 dp viewport and a ≥600 dp two-column Market list, **when** a row with a delta builds, **then** the coin price stays visible and the row does not overflow.
+- **Given** observe / read-only mode (`canMutateViaUi == false`), **when** the Market tab builds, **then** deltas and last-turn volume still render and no trade order is staged by this display.
 
 ### Market tab — interactive bid/offer/quantity controls (`#2993` E5b)
 

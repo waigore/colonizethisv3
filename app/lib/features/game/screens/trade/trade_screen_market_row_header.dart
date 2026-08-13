@@ -16,15 +16,19 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../../../widgets/resource_icon.dart';
 import '../../../../widgets/strict_asset_icon.dart';
 import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_price_delta.dart';
 
 class MarketCommodityRowHeader extends StatelessWidget {
-  const MarketCommodityRowHeader({super.key, 
+  const MarketCommodityRowHeader({
+    super.key,
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,
     required this.sellableHeadroom,
     required this.nameStyle,
     required this.priceStyle,
+    this.priceDeltaCoins,
+    this.priceDeltaTooltip = '',
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
@@ -37,6 +41,11 @@ class MarketCommodityRowHeader extends StatelessWidget {
   final int sellableHeadroom;
   final TextStyle nameStyle;
   final TextStyle priceStyle;
+
+  /// Last-turn reconstructed coin delta (Refs `#4345`). Null / omitted
+  /// when activity is missing, percent is zero, or delta rounds to 0.
+  final int? priceDeltaCoins;
+  final String priceDeltaTooltip;
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
@@ -77,6 +86,8 @@ class MarketCommodityRowHeader extends StatelessWidget {
           commodityId: commodityId,
           priceText: priceText,
           priceStyle: priceStyle,
+          priceDeltaCoins: priceDeltaCoins,
+          priceDeltaTooltip: priceDeltaTooltip,
         ),
       ],
     );
@@ -148,34 +159,60 @@ class _MarketCommodityRowPriceTrailing extends StatelessWidget {
     required this.commodityId,
     required this.priceText,
     required this.priceStyle,
+    this.priceDeltaCoins,
+    this.priceDeltaTooltip = '',
   });
 
   final CommodityId commodityId;
   final String priceText;
   final TextStyle priceStyle;
+  final int? priceDeltaCoins;
+  final String priceDeltaTooltip;
 
   @override
   Widget build(BuildContext context) {
+    final int? delta = priceDeltaCoins;
+    final Widget coinAndPrice = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        StrictAssetIcon(
+          key: TradeScreenMarketKeys.marketRowPriceCoinIconKey(commodityId),
+          assetPath: TradeScreenMarketKeys.marketRowPriceCoinAssetPath,
+          width: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
+          height: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
+        ),
+        const SizedBox(
+          width: TradeScreenMarketKeys.marketRowPriceColumnInnerGap,
+        ),
+        Text(priceText, style: priceStyle),
+      ],
+    );
+    final Widget cluster = delta == null
+        ? coinAndPrice
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              coinAndPrice,
+              Text(
+                formatMarketPriceDelta(delta),
+                key: TradeScreenMarketKeys.marketRowPriceDeltaKey(commodityId),
+                style: (Theme.of(context).textTheme.labelSmall ??
+                        const TextStyle(fontSize: 10))
+                    .copyWith(
+                  color: delta > 0
+                      ? EditorialMonoclePalette.success
+                      : EditorialMonoclePalette.danger,
+                ),
+              ),
+            ],
+          );
+    final Widget child = delta == null || priceDeltaTooltip.isEmpty
+        ? cluster
+        : Tooltip(message: priceDeltaTooltip, child: cluster);
     return SizedBox(
       width: TradeScreenMarketKeys.marketRowPriceColumnWidth,
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            StrictAssetIcon(
-              key: TradeScreenMarketKeys.marketRowPriceCoinIconKey(commodityId),
-              assetPath: TradeScreenMarketKeys.marketRowPriceCoinAssetPath,
-              width: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
-              height: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
-            ),
-            const SizedBox(
-              width: TradeScreenMarketKeys.marketRowPriceColumnInnerGap,
-            ),
-            Text(priceText, style: priceStyle),
-          ],
-        ),
-      ),
+      child: Align(alignment: Alignment.centerRight, child: child),
     );
   }
 }
