@@ -165,5 +165,89 @@ void main() {
       }
       expect(oversized, isEmpty, reason: 'All test files must be ≤500 lines');
     });
+
+    test('wave-3 Slice B hit_testable_scroll topic split (Refs #4344 AC3)', () {
+      final barrel = File(
+        p.join(libDir.path, 'e2e_test_shared_hit_testable_scroll.dart'),
+      ).readAsStringSync();
+      for (final export in <String>[
+        "export 'e2e_test_shared_hit_testable_tap.dart';",
+        "export 'e2e_test_shared_hit_testable_civilian_menu.dart';",
+        "export 'e2e_test_shared_hit_testable_scroll_gestures.dart';",
+      ]) {
+        expect(barrel, contains(export));
+      }
+      for (final name in <String>[
+        'e2e_test_shared_hit_testable_tap.dart',
+        'e2e_test_shared_hit_testable_civilian_menu.dart',
+        'e2e_test_shared_hit_testable_scroll_gestures.dart',
+      ]) {
+        final file = File(p.join(libDir.path, name));
+        expect(file.existsSync(), isTrue, reason: '$name missing');
+        expect(
+          file.readAsLinesSync().length,
+          lessThanOrEqualTo(300),
+          reason: '$name over Slice B lib cap',
+        );
+      }
+    });
+
+    test('wave-3 Slice B standard_scenario_opener topic split (Refs #4344 AC3)', () {
+      final barrel = File(
+        p.join(libDir.path, 'e2e_test_shared_standard_scenario_opener.dart'),
+      ).readAsStringSync();
+      for (final export in <String>[
+        "export 'e2e_test_shared_standard_scenario_opener_constants.dart';",
+        "export 'e2e_test_shared_standard_scenario_opener_result.dart';",
+        "export 'e2e_test_shared_standard_scenario_opener_enter.dart';",
+      ]) {
+        expect(barrel, contains(export));
+      }
+    });
+
+    test('wave-3 Slice B naval_move_pick topic split (Refs #4344 AC3)', () {
+      final barrel = File(
+        p.join(libDir.path, 'e2e_test_shared_naval_move_pick.dart'),
+      ).readAsStringSync();
+      for (final export in <String>[
+        "export 'e2e_test_shared_naval_move_pick_confirm.dart';",
+        "export 'e2e_test_shared_naval_move_pick_sea.dart';",
+      ]) {
+        expect(barrel, contains(export));
+      }
+    });
+
+    test('wave-3 Slice B residual target libs stay ≤300 (Refs #4344)', () {
+      for (final name in <String>[
+        'e2e_test_shared_hit_testable_scroll.dart',
+        'e2e_test_shared_standard_scenario_opener.dart',
+        'e2e_test_shared_naval_move_pick.dart',
+        'e2e_helpers_aliases_ui.dart',
+        'e2e_helpers_aliases_ui_wait.dart',
+        'e2e_helpers_aliases_ui_panels.dart',
+        'e2e_test_shared_fleet_reach_scenario_preamble.dart',
+        'e2e_test_shared_fleet_reach_scenario_preamble_constants.dart',
+        'e2e_test_shared_fleet_reach_scenario_preamble_enter.dart',
+        'e2e_test_shared_fleet_reach_scenario_preamble_result.dart',
+        'e2e_test_shared_standard_scenario_opener_constants.dart',
+        'e2e_test_shared_standard_scenario_opener_enter.dart',
+        'e2e_test_shared_standard_scenario_opener_result.dart',
+        'e2e_test_shared_naval_move_pick_confirm.dart',
+        'e2e_test_shared_naval_move_pick_sea.dart',
+      ]) {
+        final file = File(p.join(libDir.path, name));
+        expect(file.existsSync(), isTrue, reason: '$name missing');
+        final lines = file.readAsLinesSync().length;
+        expect(lines, lessThanOrEqualTo(300), reason: '$name still over 300');
+      }
+    });
+
+    test('wave-3 Slice B aliases_ui topic split (Refs #4344)', () {
+      final barrel = File(
+        p.join(libDir.path, 'e2e_helpers_aliases_ui.dart'),
+      ).readAsStringSync();
+      expect(barrel, contains("export 'e2e_helpers_aliases_ui_wait.dart';"));
+      expect(barrel, contains("export 'e2e_helpers_aliases_ui_panels.dart';"));
+    });
   });
 }
