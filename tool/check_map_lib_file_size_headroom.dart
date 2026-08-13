@@ -1,9 +1,9 @@
-// Wave-5 headroom gate: colonizethis_map gen/view/render modules ≤350 NCL.
-// SPEC/program/repo-lint.md (`repo.map_lib_file_size_headroom`, Refs #4112, #4297).
+// Wave-6 headroom gate: colonizethis_map gen/view/render modules ≤300 NCL.
+// SPEC/program/repo-lint.md (`repo.map_lib_file_size_headroom`, Refs #4112, #4297, #4371).
 //
 // Complements `repo.map_lib_file_size` (500 NCL hard cap) with a peer-aligned
-// 350 non-comment-line advisory ratchet so near-cap modules gain headroom after
-// wave-5 splits without lowering the 500 ceiling.
+// 300 non-comment-line advisory ratchet so near-cap modules gain headroom after
+// wave-6 splits without lowering the 500 ceiling.
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -13,7 +13,7 @@ import 'check_dart_file_non_comment_line_size.dart'
 import 'check_map_lib_file_size.dart' show mapLibFileSizeScanRoots;
 import 'ct_repo_lint_scan_contract.dart';
 
-const int mapLibFileSizeHeadroomCeiling = 350;
+const int mapLibFileSizeHeadroomCeiling = 300;
 
 /// Shrink-only allowlist during transition; remove entries as splits land.
 const List<String> mapLibFileSizeHeadroomGrandfathered = <String>[];

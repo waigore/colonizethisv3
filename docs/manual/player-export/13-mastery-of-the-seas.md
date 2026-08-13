@@ -57,13 +57,14 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 
 - **Home Fleet** — opens **Naval units panel** Naval Units scoped to that port so you can Split or Train without a dead-end tap.
 - **Sea-going fleet in port** — opens **Move fleet dialog** so you can undock immediately.
-- **Sea-going fleet at sea** — opens **Naval mission menu dialog** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open **Move fleet dialog** without returning to the rail panel. Blockade and Beachhead open **Naval mission target dialog** so you choose an adjacent enemy province at war with you.
+- **Sea-going fleet at sea** — opens **Naval mission menu dialog** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open **Move fleet dialog** without returning to the rail panel. Blockade and Beachhead open **Naval mission target dialog** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target.
+
 
 **Panel parity:** In **Naval units panel**, tap **Mission** on an eligible at-sea fleet row for the same **Naval mission menu dialog** flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
-- **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port.
-- **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs.
+- **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port. Use the target-row harbor line to compare empty harbors against ports with fleets already docked.
+- **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs. Target intel helps you compare landing coasts; it does not mean the fleet captures the province this turn.
 - **Defend:** Remain in place without actively seeking combat. Defending fleets can still be attacked or drawn into combat by hostile patrols or blockades.
 
 A fleet may have a pending **move** or a pending **mission** for the turn, never both. Staging a mission clears any pending move for that fleet, and vice versa.

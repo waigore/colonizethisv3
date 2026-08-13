@@ -1,18 +1,6 @@
 // Widget tests pinning the wood-panel button hover state in the
 // `CtMainMenu` `pixelArt` variant (Refs #2860 AC 7). Verifies the
 // SPEC/ui/main-menu.md § Variant rendering hover ACs:
-//
-//   - On pointer enter: surface border shifts to `--accent`, brass corner
-//     brackets brighten to `--accent-bright` × 1.0 alpha, engraved label
-//     color resolves to `--accent-bright` while retaining the canonical
-//     1 px downward `--surface` engrave shadow.
-//   - On pointer exit: every property reverts to the rest variant
-//     (`--border`, `--accent` × 0.75 alpha, label `--accent`).
-//
-// Mirrors the hover-state pinning already in
-// `app/test/widgets/ct_nine_patch_button_dark_test.dart` for the bare
-// `CtNinePatchButton`, but exercises the wood-panel call site so the AC
-// is anchored at the screen contract level (`CtMainMenu`).
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';

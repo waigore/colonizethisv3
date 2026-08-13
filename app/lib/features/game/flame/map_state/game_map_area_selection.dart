@@ -39,6 +39,28 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     );
   }
 
+  void refreshArmyMovePickerCache(ct_models.Game game) {
+    final view = buildPlayerView(
+      game,
+      widget.mapViewData.combinedTopology,
+      mapPlayerId,
+    );
+    armyMovePickerCache.refresh(
+      ArmyMovePickerSnapshot(
+        game: game,
+        playerId: mapPlayerId,
+        playerView: view,
+        topology: widget.mapViewData.combinedTopology,
+        currentOrders: ref.read(currentOrdersProvider),
+      ),
+    );
+  }
+
+  void refreshMapSuggestionCaches(ct_models.Game game) {
+    refreshWorkTargetSelectionCache(game);
+    refreshArmyMovePickerCache(game);
+  }
+
   int? preferredRegionIndexForValidSelection(Set<String> validTileKeys) {
     if (validTileKeys.isEmpty) {
       return null;
@@ -81,7 +103,7 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     final view = buildPlayerView(game, topology, mapPlayerId);
     final workTarget = workTargetSelection!.workTarget;
     cachedValidTileKeys =
-        GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
+        GameMapAreaStateLogicWorkTargets.resolveValidTileKeysForCivilianWorkSelection(
           workTarget: workTarget,
           workTargetSelectionCache: workTargetSelectionCache,
           humanPlayerId: mapPlayerId,
@@ -156,7 +178,7 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     final sel = workTargetSelection;
     if (sel == null) return;
     final target = sel.workTarget;
-    final targetTileKey = GameMapAreaStateLogic.translateWorkTargetTileKey(
+    final targetTileKey = GameMapAreaStateLogicShell.translateWorkTargetTileKey(
       tileKey: tileKey,
       workTarget: target,
     );
@@ -169,7 +191,7 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     ref
         .read(currentOrdersProvider.notifier)
         .replaceAll(
-          GameMapAreaStateLogic.addHumanWorkOrder(
+          GameMapAreaStateLogicWorkTargets.addHumanWorkOrder(
             orders: orders,
             humanPlayerId: mapPlayerId,
             workOrder: workOrder,
@@ -177,7 +199,7 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
         );
     setState(() {
       selectedCivilianTileKey =
-          GameMapAreaStateLogic.selectionAfterWorkAssignment(
+          GameMapAreaStateLogicWorkTargets.selectionAfterWorkAssignment(
             currentSelectedCivilianTileKey: selectedCivilianTileKey,
             assignedTileKey: targetTileKey,
           );

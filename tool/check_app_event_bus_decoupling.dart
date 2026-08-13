@@ -143,6 +143,13 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Declare-war confirm `showDialog` lives in state after wave-9 de-part
   // (Refs #4117). Same local-by-design rationale as `move_army_dialog_declare_war.dart`.
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_state.dart',
+  // Shared MoveArmyDialog opener + MAP20001 overlay Move/Invade flow
+  // (optional DLG20002 army picker). Same local-by-design rationale as
+  // `move_army_dialog.dart` / naval mission flow —
+  // `SPEC/program/app-ui-wiring.md` Land armies + overlay Move/Invade
+  // (Refs #4350).
+  'app/lib/features/game/widgets/unit_orders/show_move_army_dialog.dart',
+  'app/lib/features/game/widgets/unit_orders/overlay_army_move_flow.dart',
   // Military Counsel invade Agree reuses the move-army declare-war copy and
   // chrome — same local-by-design rationale as
   // `move_army_dialog_declare_war.dart` (Refs #4307).

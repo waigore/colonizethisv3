@@ -65,6 +65,7 @@ mixin GameMapAreaBuildMapStack
           omniscientDetail: shell.omniscientDetail,
           canMutateViaUi: shell.canMutateViaUi,
           workTargetSelectionCache: workTargetSelectionCache,
+          armyMovePickerCache: armyMovePickerCache,
           centerOnTileKey: centerOnTileKey,
           validTileKeysForSelection: validTileKeysForSelection,
           selectedCivilianTileKey: selectedCivilianTileKey,

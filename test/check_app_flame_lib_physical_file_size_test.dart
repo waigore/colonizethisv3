@@ -33,7 +33,7 @@ void main() {
     Directory('${temp.path}/$_flameRel').createSync(recursive: true);
     File('${temp.path}/$_flameRel/huge.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(301, 'final x = 1;').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppFlameLibPhysicalFileSize(
@@ -45,7 +45,7 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge.dart'));
-    expect(logs.join('\n'), contains('physical lines > 400'));
+    expect(logs.join('\n'), contains('physical lines > 300'));
   });
 
   test('fails when the flame directory is missing', () {

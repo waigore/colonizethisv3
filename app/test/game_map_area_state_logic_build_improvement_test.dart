@@ -143,7 +143,7 @@ void main() {
         MapTopology? topology,
         PlayerView? playerView,
       }) {
-        return GameMapAreaStateLogic.provinceBuildImprovementActionState(
+        return GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
           game: game,
           humanPlayerId: humanPlayerId,
           selectedTileKey: selectedTileKey,

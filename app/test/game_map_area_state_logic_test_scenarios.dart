@@ -179,7 +179,7 @@ RegionMapViewData stateLogicProjectDraft({
   required ct_models.Game game,
   required ct_models.Orders orders,
   String humanPlayerId = kStateLogicHumanPlayerId,
-}) => GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+}) => GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft(
   region: region,
   game: game,
   orders: orders,

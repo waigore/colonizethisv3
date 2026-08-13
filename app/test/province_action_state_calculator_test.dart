@@ -31,19 +31,19 @@ void main() {
 
         expect(
           states.explore,
-          GameMapAreaStateLogic.kHiddenExplorerInlineActionState,
+          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
         );
         expect(
           states.prospect,
-          GameMapAreaStateLogic.kHiddenExplorerInlineActionState,
+          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
         );
         expect(
           states.buildImprovement,
-          GameMapAreaStateLogic.kHiddenBuilderInlineActionState,
+          GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
         );
         expect(
           states.buildRoad,
-          GameMapAreaStateLogic.kHiddenEngineerInlineActionState,
+          GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState,
         );
       },
     );
@@ -73,7 +73,7 @@ void main() {
         );
 
         final expectedExplore =
-            GameMapAreaStateLogic.provinceExploreActionState(
+            GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
           game: game,
           humanPlayerId: humanPlayerId,
           selectedTileKey: tileKey,
@@ -81,7 +81,7 @@ void main() {
           workTargetSelectionCache: cache,
         );
         final expectedProspect =
-            GameMapAreaStateLogic.provinceProspectActionState(
+            GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
           game: game,
           humanPlayerId: humanPlayerId,
           selectedTileKey: tileKey,
@@ -91,7 +91,7 @@ void main() {
           tileMapByRegion: null,
         );
         final expectedBuild =
-            GameMapAreaStateLogic.provinceBuildImprovementActionState(
+            GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
           game: game,
           humanPlayerId: humanPlayerId,
           selectedTileKey: tileKey,
@@ -99,7 +99,7 @@ void main() {
           workTargetSelectionCache: cache,
         );
         final expectedBuildRoad =
-            GameMapAreaStateLogic.provinceBuildRoadActionState(
+            GameMapAreaStateLogicProvinceActions.provinceBuildRoadActionState(
           game: game,
           humanPlayerId: humanPlayerId,
           selectedTileKey: tileKey,

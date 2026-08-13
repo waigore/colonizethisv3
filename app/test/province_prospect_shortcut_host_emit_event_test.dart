@@ -180,7 +180,7 @@ void main() {
   test('prospect action state fixture is enabled for host wiring', () {
     final game = _buildGame(withExplorer: true);
     final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    final state = GameMapAreaStateLogic.provinceProspectActionState(
+    final state = GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
       game: game,
       humanPlayerId: _kHumanPlayerId,
       selectedTileKey: _kTileKey,

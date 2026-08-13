@@ -28,12 +28,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
+import 'support/e2e_tap_counter.dart';
+
 const _kTriggerKey = ValueKey<String>('e2e_ottam_trigger');
 const _kPanelKey = ValueKey<String>('e2e_ottam_panel');
-
-class _TapCounter {
-  int value = 0;
-}
 
 void main() {
   suppressLogsForTests();
@@ -48,7 +46,7 @@ void main() {
       // recipe, which is critical for the post-sheet-close iteration
       // where the panel can already be rebuilt before the opener loop
       // reaches its rail-tap arm.
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(
         _TriggerAndPanelHarness(counter, panelMounted: true),
       );
@@ -119,7 +117,7 @@ void main() {
       // short fake-async delay that lands inside the mount-probe window.
       // This pins the full success path: tap fires → post-tap fast-check
       // misses → bounded poll observes the mount → helper returns true.
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(
         _TriggerThenPanelHarness(
           counter,
@@ -166,7 +164,7 @@ void main() {
       // strict [e2ePumpUntil] would surface as a hard TestFailure inside
       // `tryOpen`, regressing every opener whose rail tap races with a
       // closing sheet).
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(_TriggerOnlyHarness(counter));
       Object? caught;
       bool? result;
@@ -228,7 +226,7 @@ void main() {
         E2ePerfLog? perf,
       })
       tearOff = openerTapTriggerAndAwaitMount;
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(
         _TriggerAndPanelHarness(counter, panelMounted: true),
       );
@@ -273,7 +271,7 @@ class _PanelRoot extends StatelessWidget {
 class _TriggerAndPanelHarness extends StatelessWidget {
   const _TriggerAndPanelHarness(this.counter, {required this.panelMounted});
 
-  final _TapCounter counter;
+  final E2eTapCounter counter;
   final bool panelMounted;
 
   @override
@@ -301,7 +299,7 @@ class _TriggerAndPanelHarness extends StatelessWidget {
 class _TriggerThenPanelHarness extends StatefulWidget {
   const _TriggerThenPanelHarness(this.counter, {required this.mountAfter});
 
-  final _TapCounter counter;
+  final E2eTapCounter counter;
   final Duration mountAfter;
 
   @override
@@ -342,7 +340,7 @@ class _TriggerThenPanelHarnessState extends State<_TriggerThenPanelHarness> {
 class _TriggerOnlyHarness extends StatelessWidget {
   const _TriggerOnlyHarness(this.counter);
 
-  final _TapCounter counter;
+  final E2eTapCounter counter;
 
   @override
   Widget build(BuildContext context) {

@@ -82,7 +82,7 @@ void main() {
         required VisibilityLevel visibility,
         Map<String, TileMapResult>? tileMapByRegion,
       }) {
-        return GameMapAreaStateLogic.provinceProspectActionState(
+        return GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
           game: game,
           humanPlayerId: humanPlayerId,
           selectedTileKey: selectedTileKey,
@@ -279,7 +279,7 @@ void main() {
       ({bool showIcon, bool enabled, bool hasExplorerUnits}) explore(
         ct_models.Game g,
         RegionMapViewData region,
-      ) => GameMapAreaStateLogic.provinceExploreActionState(
+      ) => GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
         game: g,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,

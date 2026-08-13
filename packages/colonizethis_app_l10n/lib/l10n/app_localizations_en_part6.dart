@@ -150,4 +150,41 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
   String get development_counsel => 'Counsel';
 
+  @override
+  String get provinceOverlay_sectionMilitary => 'Military';
+
+  @override
+  String get provinceOverlay_sectionCivilian => 'Civilian';
+
+  @override
+  String get provinceOverlay_sectionNaval => 'Naval';
+
+  @override
+  String get provinceOverlay_titleProvince => 'Province';
+
+  @override
+  String get provinceOverlay_titleSeaZone => 'Sea zone';
+
+  @override
+  String get provinceOverlay_moveArmyAction => 'Move';
+
+  @override
+  String provinceOverlay_invadeArmyAction(String provinceName) {
+    return 'Invade $provinceName';
+  }
+
+  @override
+  String get provinceOverlay_moveArmyDisabledHomeArmyTooltip =>
+      'The Home Army cannot leave the capital. Split a field army first.';
+
+  @override
+  String get provinceOverlay_moveArmyDisabledNoDestinationsTooltip =>
+      'No legal destinations for field armies stationed here.';
+
+  @override
+  String get provinceOverlay_invadeArmyDisabledCannotReachTooltip =>
+      'No field army can reach this province this turn.';
+
+  @override
+  String get provinceOverlay_selectArmyTitle => 'Select army';
 }

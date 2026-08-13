@@ -4,24 +4,10 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'app_event_handler_scope_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
-
-  Game gameWithMode(CombatMode mode) {
-    return Game(
-      id: 'g1',
-      worldState: const WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-      ),
-      players: const [
-        Player(id: 'p1', displayName: 'P1', isHuman: true),
-        Player(id: 'p2', displayName: 'P2', isHuman: false),
-      ],
-      defaultCombatMode: mode,
-    );
-  }
 
   group('applyCombatModeChoiceToGame', () {
     test('returns null when there is no active game', () {
@@ -30,13 +16,13 @@ void main() {
     });
 
     test('returns same instance when mode is unchanged', () {
-      final game = gameWithMode(CombatMode.quickBattle);
+      final game = scopeGameWithCombatMode(CombatMode.quickBattle);
       final updated = applyCombatModeChoiceToGame(game, CombatMode.quickBattle);
       expect(identical(updated, game), isTrue);
     });
 
     test('updates default combat mode when player picks a new mode', () {
-      final game = gameWithMode(CombatMode.autoResolve);
+      final game = scopeGameWithCombatMode(CombatMode.autoResolve);
       final updated = applyCombatModeChoiceToGame(game, CombatMode.quickBattle);
       expect(updated, isNotNull);
       expect(updated!.defaultCombatMode, CombatMode.quickBattle);
@@ -59,30 +45,9 @@ void main() {
     });
 
     test('spawns requested civilian count at human capital tile', () {
-      final game = Game(
+      final game = scopeCivilianCapitalGame(
         id: 'g2',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|1',
-              x: 2,
-              y: 3,
-            ),
-          ),
+        extraPlayers: const [
           Player(id: 'p2', displayName: 'P2', isHuman: false),
         ],
       );
@@ -106,32 +71,7 @@ void main() {
     });
 
     test('rejects unsupported unit type', () {
-      final game = Game(
-        id: 'g3',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|1',
-              x: 2,
-              y: 3,
-            ),
-          ),
-        ],
-      );
+      final game = scopeCivilianCapitalGame(id: 'g3');
       const event = SpawnDebugCivilianAtCapitalEvent(
         humanPlayerId: 'p1',
         unitType: 'InvalidType',
@@ -146,38 +86,15 @@ void main() {
     });
 
     test('continues deterministic canonical unit id sequence', () {
-      final game = Game(
+      final game = scopeCivilianCapitalGame(
         id: 'g4',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                id: 'unit_7',
-                type: kUnitTypeBuilder,
-                ownerId: 'p1',
-                locationProvinceId: 'oldWorld|1',
-                tileKey: 'oldWorld|1|2|3',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|1',
-              x: 2,
-              y: 3,
-            ),
+        existingUnits: [
+          Unit(
+            id: 'unit_7',
+            type: kUnitTypeBuilder,
+            ownerId: 'p1',
+            locationProvinceId: 'oldWorld|1',
+            tileKey: 'oldWorld|1|2|3',
           ),
         ],
       );
@@ -199,32 +116,7 @@ void main() {
     });
 
     test('caps oversized debug spawn count to 25', () {
-      final game = Game(
-        id: 'g5',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|1',
-              x: 2,
-              y: 3,
-            ),
-          ),
-        ],
-      );
+      final game = scopeCivilianCapitalGame(id: 'g5');
       const event = SpawnDebugCivilianAtCapitalEvent(
         humanPlayerId: 'p1',
         unitType: kUnitTypeExplorer,
@@ -241,32 +133,7 @@ void main() {
     });
 
     test('rejects zero or negative count', () {
-      final game = Game(
-        id: 'g6',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|1',
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|1',
-              x: 2,
-              y: 3,
-            ),
-          ),
-        ],
-      );
+      final game = scopeCivilianCapitalGame(id: 'g6');
       const event = SpawnDebugCivilianAtCapitalEvent(
         humanPlayerId: 'p1',
         unitType: kUnitTypeExplorer,
@@ -297,26 +164,7 @@ void main() {
     });
 
     test('spawns regiment into region units and home army', () {
-      final game = Game(
-        id: 'g-reg-1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|1',
-          ),
-        ],
-      );
+      final game = scopeCapitalProvinceOnlyGame(id: 'g-reg-1');
       const event = SpawnDebugRegimentAtCapitalEvent(
         humanPlayerId: 'p1',
         regimentTypeId: 'peasant_levies',
@@ -343,13 +191,8 @@ void main() {
     });
 
     test('fails on unknown player and keeps state unchanged', () {
-      final game = Game(
+      final game = scopeEmptyWorldGame(
         id: 'g-reg-2',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       const event = SpawnDebugRegimentAtCapitalEvent(
@@ -365,13 +208,8 @@ void main() {
     });
 
     test('fails on missing capital and keeps state unchanged', () {
-      final game = Game(
+      final game = scopeEmptyWorldGame(
         id: 'g-reg-3',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       const event = SpawnDebugRegimentAtCapitalEvent(
@@ -387,13 +225,8 @@ void main() {
     });
 
     test('fails when matched player is not human', () {
-      final game = Game(
+      final game = scopeEmptyWorldGame(
         id: 'g-reg-not-human',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [
           Player(
             id: 'p2',
@@ -418,13 +251,8 @@ void main() {
     test(
       'fails on malformed capital province id and keeps state unchanged',
       () {
-        final game = Game(
+        final game = scopeEmptyWorldGame(
           id: 'g-reg-invalid-capital',
-          worldState: const WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
-          ),
           players: const [
             Player(
               id: 'p1',
@@ -448,13 +276,8 @@ void main() {
     );
 
     test('fails on unsupported regiment type and keeps state unchanged', () {
-      final game = Game(
+      final game = scopeEmptyWorldGame(
         id: 'g-reg-4',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
         players: const [
           Player(
             id: 'p1',
