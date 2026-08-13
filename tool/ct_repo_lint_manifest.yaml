@@ -956,7 +956,7 @@ rules:
 
   - rule_id: repo.ai_source_file_size
     group: structure
-    title: colonizethis_ai lib/src files must stay at or below 350 physical lines (Refs #4079, #4310)
+    title: colonizethis_ai lib/src files must stay at or below 300 physical lines (Refs #4079, #4310, #4365)
     spec: SPEC/program/ai-source-file-size.md
     runner: dart
     script: tool/check_ai_source_file_size.dart
