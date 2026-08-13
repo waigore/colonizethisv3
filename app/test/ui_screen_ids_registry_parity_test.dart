@@ -53,6 +53,7 @@ const Map<String, String> _expectedConstants = {
   'playerTurnEventFeed': UiScreenIds.playerTurnEventFeed,
   'newGameLeaderSelectionDialog': UiScreenIds.newGameLeaderSelectionDialog,
   'moveArmyDialog': UiScreenIds.moveArmyDialog,
+  'overlayArmyMovePickerDialog': UiScreenIds.overlayArmyMovePickerDialog,
   'moveFleetDialog': UiScreenIds.moveFleetDialog,
   'navalMissionMenuDialog': UiScreenIds.navalMissionMenuDialog,
   'navalMissionTargetDialog': UiScreenIds.navalMissionTargetDialog,

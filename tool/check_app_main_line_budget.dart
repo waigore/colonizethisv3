@@ -57,9 +57,10 @@ const _packageName = 'colonizethis_app';
 // raised for GAME40001 sequential multi-slot research preview + turn funding header (Refs #4335).
 // raised for DLG31002 Blockade/Beachhead fog-honest target intel (Refs #4340).
 // raised for MAP20001 Establish Consulate Political shortcut (Refs #4346).
-// raised for combined #4340+#4346 merge headroom on DLG31002 intel + Consulate shortcut.
+// raised for combined #4340+#4346+#4350 merge headroom (DLG31002 intel,
+// Consulate shortcut, Move/Invade overlay Military shortcuts).
 // raised for MAP10001 capital-link disconnected land highlight (Refs #4370).
-const _maxMainLines = 74700;
+const _maxMainLines = 75400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

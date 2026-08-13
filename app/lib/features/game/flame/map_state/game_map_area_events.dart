@@ -21,7 +21,7 @@ mixin GameMapAreaEvents
       return;
     }
     setState(() {
-      refreshWorkTargetSelectionCache(widget.game);
+      refreshMapSuggestionCaches(widget.game);
       resolvedPlayerTurnEvents = List<ct_models.GameToUIEvent>.from(
         pendingPlayerTurnEvents,
       );

@@ -3350,6 +3350,35 @@
       }
     }
   },
+  "provinceOverlay_moveArmyAction": "Move",
+  "@provinceOverlay_moveArmyAction": {
+    "description": "MAP20001 Military Move control label (Refs #4350)."
+  },
+  "provinceOverlay_invadeArmyAction": "Invade {provinceName}",
+  "@provinceOverlay_invadeArmyAction": {
+    "description": "MAP20001 Military Invade control label (Refs #4350).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_moveArmyDisabledHomeArmyTooltip": "The Home Army cannot leave the capital. Split a field army first.",
+  "@provinceOverlay_moveArmyDisabledHomeArmyTooltip": {
+    "description": "Disabled Move tooltip when only Home Army is present (Refs #4350)."
+  },
+  "provinceOverlay_moveArmyDisabledNoDestinationsTooltip": "No legal destinations for field armies stationed here.",
+  "@provinceOverlay_moveArmyDisabledNoDestinationsTooltip": {
+    "description": "Disabled Move tooltip when cache has no destinations (Refs #4350)."
+  },
+  "provinceOverlay_invadeArmyDisabledCannotReachTooltip": "No field army can reach this province this turn.",
+  "@provinceOverlay_invadeArmyDisabledCannotReachTooltip": {
+    "description": "Disabled Invade tooltip when province missing from army-move cache (Refs #4350)."
+  },
+  "provinceOverlay_selectArmyTitle": "Select army",
+  "@provinceOverlay_selectArmyTitle": {
+    "description": "DLG20002 overlay army picker title (Refs #4350)."
+  },
   "provinceOverlay_tileBuildFortTooltip": "Build fort",
   "@provinceOverlay_tileBuildFortTooltip": {
     "description": "Tooltip for enabled build-fort shortcut on town tile (Refs #4280)."
