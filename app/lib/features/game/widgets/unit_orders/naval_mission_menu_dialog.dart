@@ -114,6 +114,37 @@ class NavalMissionMenuDialog extends StatelessWidget {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
     final fleetLabel = l10n.naval_fleetLabel(fleet.id);
+    return CtDialogShell(
+      maxHeight: 720,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.naval_mission_menuTitle(fleetLabel),
+            style: moveDialogTitleTextStyle(theme),
+          ),
+          const SizedBox(height: CtSpacing.ml),
+          ..._menuRows(context, l10n, theme),
+          const SizedBox(height: CtSpacing.l),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.common_cancel),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Sail/Move, mission options, optional cancel-pending (Refs #4343).
+  List<Widget> _menuRows(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
     final rows = <Widget>[
       _menuActionRow(
         context: context,
@@ -150,30 +181,7 @@ class NavalMissionMenuDialog extends StatelessWidget {
         ),
       );
     }
-
-    return CtDialogShell(
-      maxHeight: 720,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.naval_mission_menuTitle(fleetLabel),
-            style: moveDialogTitleTextStyle(theme),
-          ),
-          const SizedBox(height: CtSpacing.ml),
-          ...rows,
-          const SizedBox(height: CtSpacing.l),
-          Align(
-            alignment: Alignment.centerRight,
-            child: CtNinePatchButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.common_cancel),
-            ),
-          ),
-        ],
-      ),
-    );
+    return rows;
   }
 
   Widget _missionRow(BuildContext context, NavalMissionOption option) {
