@@ -160,6 +160,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // numbered fragment. The `repo.app_widgetbook_file_naming` gate enforces the
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_build_port_stories.dart';
+part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
 part 'catalog_panels_counsel.dart';
