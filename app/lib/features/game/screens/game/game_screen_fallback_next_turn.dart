@@ -33,7 +33,7 @@ class _GameScreenFallbackNextTurnButtonState
   @override
   Widget build(BuildContext context) {
     final bool nextTurnEnabled = !widget.turnResolutionBlocking &&
-        GameMapAreaStateLogic.allowsFullTurnResolution(widget.game);
+        GameMapAreaStateLogicShell.allowsFullTurnResolution(widget.game);
 
     return CtNinePatchButton(
       key: kGameMapNextTurnButtonKey,

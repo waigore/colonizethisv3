@@ -56,7 +56,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final buildFortState = actionStates.buildFort;
   final buildPortState = actionStates.buildPort;
   final purchaseLandState = actionStates.purchaseLand;
-  final upgradeTownState = GameMapAreaStateLogic.provinceUpgradeTownActionState(
+  final upgradeTownState = GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
     game: game,
     humanPlayerId: humanPlayerId,
     provinceId: displayId,

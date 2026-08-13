@@ -618,7 +618,7 @@ rules:
 
   - rule_id: repo.app_flame_lib_physical_file_size
     group: structure
-    title: app/lib/features/game/flame files must stay at or below 400 physical lines (shrink-only grandfather)
+    title: app/lib/features/game/flame files must stay at or below 300 physical lines (shrink-only grandfather)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_flame_lib_physical_file_size.dart

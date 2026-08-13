@@ -88,7 +88,7 @@ mixin GameMapAreaView on ConsumerState<GameMapArea>, GameMapAreaStateBase {
   /// highlight on [currentPlayerId]'s capital tile. No-op when the resolved
   /// target is null (global observe or no capital).
   void applyCapitalCenter(String? currentPlayerId) {
-    final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+    final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
       game: widget.game,
       currentPlayerId: currentPlayerId,
     );
