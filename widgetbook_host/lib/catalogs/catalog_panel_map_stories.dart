@@ -170,37 +170,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           upgradeTownHasBuilderUnits: false,
         ),
       ),
-      WidgetbookUseCase(
-        name: 'Standalone — Political Establish Consulate enabled',
-        builder: (context) => _provinceOverlayEstablishConsulateStory(
-          showControl: true,
-          enabled: true,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — Political Establish Consulate disabled',
-        builder: (context) => _provinceOverlayEstablishConsulateStory(
-          showControl: true,
-          enabled: false,
-          rejectionReason:
-              'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — Political Establish Consulate pending',
-        builder: (context) => _provinceOverlayEstablishConsulateStory(
-          showControl: true,
-          enabled: true,
-          pending: true,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — Political Establish Consulate hidden',
-        builder: (context) => _provinceOverlayEstablishConsulateStory(
-          showControl: false,
-          enabled: false,
-        ),
-      ),
+      ...provinceOverlayEstablishConsulateUseCases,
       WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
@@ -420,34 +390,6 @@ Widget _provinceOverlayUpgradeTownStory({
           ? sampleTileKeyForProvinceOverlay
           : null,
       onUpgradeTownTap: () {},
-      onClose: () {},
-    ),
-  );
-}
-
-/// MAP20001 Political **Establish Consulate** shortcut variants. Refs #4346.
-Widget _provinceOverlayEstablishConsulateStory({
-  required bool showControl,
-  required bool enabled,
-  bool pending = false,
-  String? rejectionReason,
-}) {
-  final game = demoGameForOverlay;
-  return SizedBox(
-    width: 640,
-    height: 520,
-    child: ProvinceSeaZoneDetailOverlay(
-      game: game,
-      region: demoRegionForOverlay,
-      displayId: sampleProvinceIdForOverlay,
-      selectedTileKey: sampleTileKeyForProvinceOverlay,
-      humanPlayerId: game.players.first.id,
-      playerView: demoHumanPlayerViewForOverlay,
-      showEstablishConsulateControl: showControl,
-      establishConsulateEnabled: enabled,
-      establishConsulatePending: pending,
-      establishConsulateRejectionReason: rejectionReason,
-      onEstablishConsulateTap: () {},
       onClose: () {},
     ),
   );
