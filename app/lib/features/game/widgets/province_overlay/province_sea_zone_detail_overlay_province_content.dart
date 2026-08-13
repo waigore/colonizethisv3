@@ -12,11 +12,10 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_detail_ov
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import 'province_overlay_unit_partition.dart';
-import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
 import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_economic_section.dart';
-import 'province_sea_zone_detail_overlay_military_section.dart';
 import 'province_sea_zone_detail_overlay_province_content_intel.dart';
+import 'province_sea_zone_detail_overlay_province_content_units.dart';
 import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
@@ -208,70 +207,36 @@ OverlayContent provinceContent({
           l10n.provinceOverlay_sectionEconomic,
           overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
-  final militarySection = showsFullIntel
-      ? buildMilitarySectionByOwner(
-          l10n: l10n,
-          game: game,
-          military: military,
-          humanPlayerId: humanPlayerId,
-          provinceId: provinceId,
-          draftOrders: draftOrders,
-          fortLevel: province?.fortLevel ?? 0,
-          showBuildFortActionIcon: showBuildFortActionIcon,
-          buildFortActionEnabled: buildFortActionEnabled,
-          buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
-          buildFortTooltip: selectedTileKey == null
-              ? l10n.provinceOverlay_tileBuildFortDisabledTooltip
-              : provinceOverlayBuildFortTooltip(
-                  l10n: l10n,
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  currentOrders: draftOrders,
-                  selectedTileKey: selectedTileKey,
-                  enabled: buildFortActionEnabled,
-                  hasEngineerUnits: buildFortActionHasEngineerUnits,
-                ),
-          onBuildFortTap: onBuildFortTap,
-          showMoveArmyControl: showMoveArmyControl,
-          moveArmyEnabled: moveArmyEnabled,
-          moveArmyTooltip: moveArmyTooltip,
-          onMoveArmyTap: onMoveArmyTap,
-          showInvadeArmyControl: showInvadeArmyControl,
-          invadeArmyEnabled: invadeArmyEnabled,
-          invadeArmyTooltip: invadeArmyTooltip,
-          onInvadeArmyTap: onInvadeArmyTap,
-          provinceDisplayName: province?.displayName,
-        )
-      : buildOverlaySection(
-          l10n.provinceOverlay_sectionMilitary,
-          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
-        );
-  final civilianSection = showsFullIntel
-      ? buildCivilianSectionFiltered(
-          l10n: l10n,
-          game: game,
-          civilian: civilian,
-          humanPlayerId: humanPlayerId,
-          playerView: playerView,
-          draftOrders: draftOrders,
-        )
-      : buildOverlaySection(
-          l10n.provinceOverlay_sectionCivilian,
-          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
-        );
-  final naval = showsFullIntel
-      ? buildNavalSection(
-          l10n: l10n,
-          game: game,
-          fleets: fleetsInPort,
-          humanPlayerId: humanPlayerId,
-          draftOrders: draftOrders,
-          pendingNavalPortProvinceId: provinceId,
-        )
-      : buildOverlaySection(
-          l10n.provinceOverlay_sectionNaval,
-          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
-        );
+  final unitSections = buildProvinceContentUnitSections(
+    l10n: l10n,
+    game: game,
+    showsFullIntel: showsFullIntel,
+    military: military,
+    civilian: civilian,
+    fleetsInPort: fleetsInPort,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+    provinceId: provinceId,
+    draftOrders: draftOrders,
+    fortLevel: province?.fortLevel ?? 0,
+    showBuildFortActionIcon: showBuildFortActionIcon,
+    buildFortActionEnabled: buildFortActionEnabled,
+    buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
+    selectedTileKey: selectedTileKey,
+    onBuildFortTap: onBuildFortTap,
+    showMoveArmyControl: showMoveArmyControl,
+    moveArmyEnabled: moveArmyEnabled,
+    moveArmyTooltip: moveArmyTooltip,
+    onMoveArmyTap: onMoveArmyTap,
+    showInvadeArmyControl: showInvadeArmyControl,
+    invadeArmyEnabled: invadeArmyEnabled,
+    invadeArmyTooltip: invadeArmyTooltip,
+    onInvadeArmyTap: onInvadeArmyTap,
+    provinceDisplayName: province?.displayName,
+  );
+  final militarySection = unitSections.military;
+  final civilianSection = unitSections.civilian;
+  final naval = unitSections.naval;
 
   final tabLabels = [
     l10n.provinceOverlay_sectionPolitical,
