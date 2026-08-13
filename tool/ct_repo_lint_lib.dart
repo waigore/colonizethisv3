@@ -101,6 +101,7 @@ import 'check_screen_registry_active_paths.dart';
 import 'check_subscription_tracker.dart';
 import 'check_tech_id_constants.dart';
 import 'check_turn_no_part_directives.dart';
+import 'check_ai_no_part_directives.dart';
 import 'check_turn_resume_param_budget.dart';
 import 'check_work_target_constants.dart';
 import 'check_workspace_outdated_latest_direct.dart';
@@ -871,6 +872,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckPartUnitSize(repoRoot);
     case 'repo.turn_no_part_directives':
       return runCheckTurnNoPartDirectives(repoRoot);
+    case 'repo.app_e2e_support_no_part_directives':
+      return runCheckAppE2eSupportNoPartDirectives(repoRoot);
     case 'repo.turn_resume_param_budget':
       return runCheckTurnResumeParamBudget(repoRoot);
     case 'repo.diplomacy_no_part_of':

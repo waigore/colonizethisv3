@@ -31,8 +31,8 @@ void main() {
       final lines = File(
         p.join(libDir.path, 'e2e_helpers.dart'),
       ).readAsLinesSync().length;
-      // Pre-slim size was 1007 physical lines; post-#4195 lib cap is 400.
-      expect(lines, lessThanOrEqualTo(400));
+      // Pre-slim size was 1007 physical lines; post-#4344 lib cap is 300.
+      expect(lines, lessThanOrEqualTo(300));
     });
 
     test('negative: no helpers alias file re-absorbs the pre-slim size', () {
@@ -43,7 +43,7 @@ void main() {
           continue;
         }
         final lines = file.readAsLinesSync().length;
-        if (lines > 400) {
+        if (lines > 300) {
           oversized.add('$name ($lines)');
         }
       }
@@ -77,7 +77,7 @@ void main() {
       expect(lines, lessThanOrEqualTo(200));
     });
 
-    test('negative: section libraries exist, stay ≤400 lines, and are not parts', () {
+    test('negative: section libraries exist, stay ≤300 lines, and are not parts', () {
       for (final name in <String>[
         'province_panel_e2e_expected_lines_ctx.dart',
         'province_panel_e2e_expected_lines_political_tile.dart',
@@ -92,7 +92,7 @@ void main() {
           RegExp(r"^\s*part\s+of\s+", multiLine: true).hasMatch(body),
           isFalse,
         );
-        expect(file.readAsLinesSync().length, lessThanOrEqualTo(400));
+        expect(file.readAsLinesSync().length, lessThanOrEqualTo(300));
       }
     });
   });

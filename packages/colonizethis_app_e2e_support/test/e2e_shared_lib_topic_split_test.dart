@@ -36,7 +36,7 @@ void main() {
       ).readAsLinesSync().length;
       // Pre-split size was 1456 physical lines; topic extraction must leave a
       // thin barrel + pump/perf core well under that ceiling.
-      expect(lines, lessThanOrEqualTo(400));
+      expect(lines, lessThanOrEqualTo(300));
     });
 
     test('negative: no shared topic library re-absorbs the pre-split size', () {
@@ -47,7 +47,7 @@ void main() {
           continue;
         }
         final lines = file.readAsLinesSync().length;
-        if (lines > 400) {
+        if (lines > 300) {
           oversized.add('$name ($lines)');
         }
       }
@@ -75,7 +75,7 @@ void main() {
         p.join(libDir.path, 'e2e_test_shared_panels.dart'),
       ).readAsLinesSync().length;
       // Pre-split size was 1379 physical lines.
-      expect(lines, lessThanOrEqualTo(400));
+      expect(lines, lessThanOrEqualTo(300));
     });
 
     test('negative: panels topic libraries exist as distinct files', () {
@@ -109,11 +109,11 @@ void main() {
         final file = File(p.join(libDir.path, name));
         expect(file.existsSync(), isTrue, reason: '$name missing');
         final lines = file.readAsLinesSync().length;
-        expect(lines, lessThanOrEqualTo(400), reason: '$name still over slice-A cap');
+        expect(lines, lessThanOrEqualTo(300), reason: '$name still over wave-3 300 cap');
       }
     });
 
-    test('slice B residual lib files stay under 400 physical lines (Refs #4195)', () {
+    test('slice B residual lib files stay under 300 physical lines (Refs #4195)', () {
       for (final name in <String>[
         'e2e_test_shared.dart',
         'e2e_test_shared_adaptive_polling.dart',
@@ -127,7 +127,7 @@ void main() {
         final file = File(p.join(libDir.path, name));
         expect(file.existsSync(), isTrue, reason: '$name missing');
         final lines = file.readAsLinesSync().length;
-        expect(lines, lessThanOrEqualTo(400), reason: '$name still over slice-B cap');
+        expect(lines, lessThanOrEqualTo(300), reason: '$name still over wave-3 300 cap');
       }
     });
 
@@ -153,13 +153,13 @@ void main() {
       );
     });
 
-    test('slice D test mirror files stay under 500 physical lines (Refs #4195)', () {
+    test('slice D test mirror files stay under 400 physical lines (Refs #4344)', () {
       final testDir = Directory(p.join(e2eSupportPackageRoot().path, 'test'));
       final oversized = <String>[];
       for (final file in testDir.listSync(recursive: true).whereType<File>()) {
         if (!file.path.endsWith('.dart')) continue;
         final lines = file.readAsLinesSync().length;
-        if (lines > 500) {
+        if (lines > 400) {
           oversized.add('${p.relative(file.path, from: testDir.path)} ($lines)');
         }
       }
