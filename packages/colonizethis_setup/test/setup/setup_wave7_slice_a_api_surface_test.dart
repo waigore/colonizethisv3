@@ -2,8 +2,8 @@
 import 'dart:io';
 
 import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_test/test.dart';
 import 'package:path/path.dart' as p;
-import 'package:test/test.dart';
 
 import '../../lib/src/setup/game_setup_ownership_old_world.dart' as ow;
 import '../../lib/src/setup/game_setup_ownership_old_world_contiguous.dart'
