@@ -10,6 +10,8 @@ import 'locked_province_assigner_types.dart';
 
 export 'game_setup_ownership_comparators.dart';
 export 'game_setup_ownership_old_world.dart';
+export 'game_setup_ownership_old_world_contiguous.dart';
+export 'game_setup_ownership_old_world_seeds.dart';
 
 Game assignCapitalsForFactions({
   required Game game,
