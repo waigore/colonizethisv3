@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/init_game_map_view_fixtures.dart';
 import 'support/init_game_map_view_region_cells_scenarios.dart';
+import 'support/init_game_map_view_region_cells_presence_scenarios.dart';
 
 void main() {
   group('buildInitGameMapViewData region data', () {

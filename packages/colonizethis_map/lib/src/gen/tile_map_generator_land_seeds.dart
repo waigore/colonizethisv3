@@ -5,7 +5,8 @@
 /// Implementation is split across standalone classes for review-size hygiene:
 /// shared Voronoi/buffer helpers ([LandSeedShared]), placement
 /// (seed-before-assignment, [LandSeedPlacement]), organic interleaved
-/// placement+Voronoi+coastline driver ([LandSeedOrganic]), and coastline
+/// placement+Voronoi+coastline driver ([LandSeedOrganic] with
+/// [LandSeedOrganicPlacement] / [LandSeedOrganicVoronoi]), and coastline
 /// growth helpers ([LandSeedCoast]). The public surface here is intentionally a
 /// thin facade so callers continue to depend on a single import and the
 /// `TileMapGenLandSeeds` class (see #3588).
