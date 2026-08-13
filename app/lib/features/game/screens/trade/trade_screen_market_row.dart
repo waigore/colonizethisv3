@@ -26,7 +26,8 @@ import 'trade_screen_market_row_header.dart';
 import 'trade_screen_market_tab.dart';
 
 class MarketCommodityRow extends StatelessWidget {
-  const MarketCommodityRow({super.key, 
+  const MarketCommodityRow({
+    super.key,
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,
@@ -42,6 +43,8 @@ class MarketCommodityRow extends StatelessWidget {
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
+    this.priceDeltaCoins,
+    this.priceDeltaTooltip = '',
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
@@ -52,6 +55,8 @@ class MarketCommodityRow extends StatelessWidget {
   final String commodityDisplayName;
   final String priceText;
   final String volumeText;
+  final int? priceDeltaCoins;
+  final String priceDeltaTooltip;
   final TradeOrder? stagedOrder;
 
   /// Refs #3093 — sellable clamp slice. The `(N)` value rendered
@@ -128,6 +133,8 @@ class MarketCommodityRow extends StatelessWidget {
           sellableHeadroom: sellableHeadroom,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
+          priceDeltaCoins: priceDeltaCoins,
+          priceDeltaTooltip: priceDeltaTooltip,
           showFirstRightChip: showFirstRightChip,
           firstRightChipLabel: firstRightChipLabel,
           firstRightTooltip: firstRightTooltip,
@@ -157,7 +164,8 @@ class MarketCommodityRow extends StatelessWidget {
 /// Wide-layout (≥ 600 dp) Market row: two-line compact structure with the
 /// volume readout and interactive controls sharing line 2 (Refs #4227).
 class MarketCommodityRowCompact extends StatelessWidget {
-  const MarketCommodityRowCompact({super.key, 
+  const MarketCommodityRowCompact({
+    super.key,
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,
@@ -173,6 +181,8 @@ class MarketCommodityRowCompact extends StatelessWidget {
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
+    this.priceDeltaCoins,
+    this.priceDeltaTooltip = '',
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
@@ -183,6 +193,8 @@ class MarketCommodityRowCompact extends StatelessWidget {
   final String commodityDisplayName;
   final String priceText;
   final String volumeText;
+  final int? priceDeltaCoins;
+  final String priceDeltaTooltip;
   final TradeOrder? stagedOrder;
   final int sellableHeadroom;
   final int offerCap;
@@ -235,6 +247,8 @@ class MarketCommodityRowCompact extends StatelessWidget {
           sellableHeadroom: sellableHeadroom,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
+          priceDeltaCoins: priceDeltaCoins,
+          priceDeltaTooltip: priceDeltaTooltip,
           showFirstRightChip: showFirstRightChip,
           firstRightChipLabel: firstRightChipLabel,
           firstRightTooltip: firstRightTooltip,

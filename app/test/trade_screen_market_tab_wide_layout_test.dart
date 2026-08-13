@@ -128,7 +128,8 @@ void main() {
         expect(
           find.descendant(
             of: find.byWidget(band),
-            matching: find.textContaining('Bids'),
+            // ignore: avoid_hardcoded_strings_in_widgets
+            matching: find.textContaining('Last turn'),
           ),
           findsOneWidget,
         );
@@ -172,7 +173,8 @@ void main() {
 
         final Finder volumeText = find.descendant(
           of: rowKey,
-          matching: find.textContaining('Bids'),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          matching: find.textContaining('Last turn'),
         );
         final Element volumeElement = tester.element(volumeText);
         expect(volumeElement.findAncestorWidgetOfExactType<Row>(), isNull);
