@@ -589,17 +589,24 @@ rules:
 
   - rule_id: repo.app_e2e_support_lib_file_size
     group: testing
-    title: "colonizethis_app_e2e_support/lib files must stay at or below 400 physical lines (shrink-only allowlist; Refs #4075, #4195)"
+    title: "colonizethis_app_e2e_support/lib files must stay at or below 300 physical lines (shrink-only allowlist; Refs #4075, #4195, #4344)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_e2e_support_lib_file_size.dart
 
   - rule_id: repo.app_e2e_support_test_file_size
     group: testing
-    title: "colonizethis_app_e2e_support/test files must stay at or below 500 physical lines (shrink-only allowlist; Refs #4075, #4195)"
+    title: "colonizethis_app_e2e_support/test files must stay at or below 400 physical lines (shrink-only allowlist; Refs #4075, #4195, #4344)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_e2e_support_test_file_size.dart
+
+  - rule_id: repo.app_e2e_support_no_part_directives
+    group: structure
+    title: colonizethis_app_e2e_support lib and test must not use Dart part / part of directives (Refs #4344)
+    spec: SPEC/program/app-e2e-support-no-part-directives.md
+    runner: dart
+    script: tool/check_app_e2e_support_no_part_directives.dart
 
   - rule_id: repo.app_flame_map_import_boundary
     group: architecture
@@ -1426,7 +1433,7 @@ rules:
 
   - rule_id: repo.map_lib_file_size_headroom
     group: structure
-    title: colonizethis_map gen/view/render source files must be 350 non-comment lines or fewer (wave-5 headroom, Refs #4297)
+    title: colonizethis_map gen/view/render source files must be 300 non-comment lines or fewer (wave-6 headroom, Refs #4371)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_lib_file_size_headroom.dart

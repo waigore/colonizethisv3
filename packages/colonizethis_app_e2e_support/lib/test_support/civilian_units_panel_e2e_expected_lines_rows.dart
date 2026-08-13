@@ -1,6 +1,26 @@
-part of 'civilian_units_panel_e2e_expected_lines.dart';
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
+// Expected plain-text lines for CivilianUnitsPanel (bottom sheet). Mirrors
+// app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart for e2e.
+// If drift fails tests, align this file with the panel widget.
 
-String _locationLabel(
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'civilian_units_panel_e2e_expected_lines_assigned.dart';
+
+String locationLabel(
   String? projectedTileKey,
   Map<String, String> provinceNames,
 ) {
@@ -13,7 +33,7 @@ String _locationLabel(
   return '$regionLabel — $name';
 }
 
-void _addUnitRowTexts({
+void addUnitRowTexts({
   required List<String> out,
   required Game game,
   required Unit unit,
@@ -35,10 +55,10 @@ void _addUnitRowTexts({
   out.add(l10n.civilian_units_status(statusLabel));
   out.add(
     l10n.civilian_units_location(
-      _locationLabel(projectedTileKey, provinceNames),
+      locationLabel(projectedTileKey, provinceNames),
     ),
   );
-  _addAssignedLines(
+  addAssignedLines(
     out,
     game,
     unit,
@@ -53,10 +73,10 @@ void _addUnitRowTexts({
   // card layout). The Locate action is icon-only and contributes no Text, so
   // it is intentionally omitted here (Refs #2336).
   if (showActions) {
-    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
+    if (isIdleNoPending(unit, currentOrders, humanPlayerId)) {
       out.add(l10n.civilian_units_assign);
     }
-    if (_hasWork(unit, currentOrders, humanPlayerId)) {
+    if (hasWork(unit, currentOrders, humanPlayerId)) {
       out.add(l10n.common_cancel);
     }
   }

@@ -29,69 +29,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'support/naval_fleet_move_harness.dart';
+
 const String _seaText = 'sea zone 1';
-
-class _MoveButton extends StatelessWidget {
-  const _MoveButton({this.onPressedSpy, this.dialogBuilder, this.buttonKey});
-
-  final void Function()? onPressedSpy;
-  final Widget Function(BuildContext context)? dialogBuilder;
-
-  /// Stable key for the Move control. Non-home fleets carry the production
-  /// [kCtE2EFleetMoveActionKey] so the helper's keyed finder resolves it
-  /// (production renders the action icon-only at narrow test-host viewports —
-  /// no `Text('Move')` — so it is located by key, Refs #2336). The home fleet
-  /// has `onMoveFleet == null` in production and emits no keyed button.
-  final Key? buttonKey;
-
-  @override
-  Widget build(BuildContext context) {
-    return Builder(
-      builder: (context) {
-        return TextButton(
-          key: buttonKey,
-          onPressed: () {
-            onPressedSpy?.call();
-            showDialog<void>(
-              context: context,
-              builder: dialogBuilder ??
-                  (_) => const AlertDialog(content: Text('Move dialog')),
-            );
-          },
-          child: const Text('Move'),
-        );
-      },
-    );
-  }
-}
-
-ExpansionTile _fleetTile({
-  required String title,
-  String? subtitle,
-  void Function()? onMovePressed,
-  Widget Function(BuildContext context)? dialogBuilder,
-}) {
-  return ExpansionTile(
-    title: Text(title),
-    subtitle: subtitle == null ? null : Text(subtitle),
-    initiallyExpanded: true,
-    children: [
-      _MoveButton(
-        onPressedSpy: onMovePressed,
-        dialogBuilder: dialogBuilder,
-        buttonKey: kCtE2EFleetMoveActionKey,
-      ),
-    ],
-  );
-}
-
-Widget _navalPanel({required List<Widget> children}) => KeyedSubtree(
-  key: kCtE2ENavalPanelRootKey,
-  child: Column(children: children),
-);
-
-Widget _wrap(Widget body) =>
-    MaterialApp(home: Scaffold(body: SingleChildScrollView(child: body)));
 
 class _DismissibleSeaDialog extends StatefulWidget {
   const _DismissibleSeaDialog({required this.l10n});
@@ -134,97 +74,83 @@ void main() {
     ) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
               ExpansionTile(
                 title: const Text('Home Fleet'),
                 initiallyExpanded: true,
-                children: [_MoveButton(onPressedSpy: () {})],
+                children: [FleetMoveButton(onPressedSpy: () {})],
               ),
             ],
           ),
         ),
       );
-      await e2eTryNavalMoveSegment(
-        tester,
-        l10n,
-        navalPanelAlreadyOpen: true,
-      );
+      await e2eTryNavalMoveSegment(tester, l10n, navalPanelAlreadyOpen: true);
       expect(find.byType(AlertDialog), findsNothing);
     });
 
-    testWidgets(
-      'no adjacent sea zones message -> Cancel dismisses dialog',
-      (tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
-              children: [
-                _fleetTile(
-                  title: 'Fleet 2',
-                  subtitle: 'New World — Outer Sea',
-                  dialogBuilder: (context) => AlertDialog(
-                    content: Text(l10n.moveFleet_noAdjacentSeaZones),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(l10n.common_cancel),
-                      ),
-                    ],
-                  ),
+    testWidgets('no adjacent sea zones message -> Cancel dismisses dialog', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.pumpWidget(
+        wrapNavalScrollBody(
+          navalPanelRoot(
+            children: [
+              fleetMoveTile(
+                title: 'Fleet 2',
+                subtitle: 'New World — Outer Sea',
+                dialogBuilder: (context) => AlertDialog(
+                  content: Text(l10n.moveFleet_noAdjacentSeaZones),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.common_cancel),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-        await e2eTryNavalMoveSegment(
-          tester,
-          l10n,
-          navalPanelAlreadyOpen: true,
-        );
-        expect(find.byType(AlertDialog), findsNothing);
-      },
-    );
+        ),
+      );
+      await e2eTryNavalMoveSegment(tester, l10n, navalPanelAlreadyOpen: true);
+      expect(find.byType(AlertDialog), findsNothing);
+    });
   });
 
   group('e2eTryNavalMoveSegment — happy path', () {
-    testWidgets(
-      'sea-radio move dialog confirmed when panel already open',
-      (tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
-              children: [
-                _fleetTile(
-                  title: 'Fleet 2',
-                  subtitle: 'New World — Outer Sea',
-                  dialogBuilder: (_) => _DismissibleSeaDialog(l10n: l10n),
-                ),
-              ],
-            ),
+    testWidgets('sea-radio move dialog confirmed when panel already open', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await tester.pumpWidget(
+        wrapNavalScrollBody(
+          navalPanelRoot(
+            children: [
+              fleetMoveTile(
+                title: 'Fleet 2',
+                subtitle: 'New World — Outer Sea',
+                dialogBuilder: (_) => _DismissibleSeaDialog(l10n: l10n),
+              ),
+            ],
           ),
-        );
-        await e2eTryNavalMoveSegment(
-          tester,
-          l10n,
-          navalPanelAlreadyOpen: true,
-        );
-        expect(find.byType(AlertDialog), findsNothing);
-      },
-    );
+        ),
+      );
+      await e2eTryNavalMoveSegment(tester, l10n, navalPanelAlreadyOpen: true);
+      expect(find.byType(AlertDialog), findsNothing);
+    });
 
     testWidgets(
       'allowWarpDestinations false reaches sea-radio branch on warp+sea dialog',
       (tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
+          wrapNavalScrollBody(
+            navalPanelRoot(
               children: [
-                _fleetTile(
+                fleetMoveTile(
                   title: 'Fleet 2',
                   subtitle: 'New World — Outer Sea',
                   dialogBuilder: (_) => AlertDialog(
@@ -293,10 +219,8 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final perf = E2ePerfLog('no_non_home_move');
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
-            children: const [Text('loading fleets')],
-          ),
+        wrapNavalScrollBody(
+          navalPanelRoot(children: const [Text('loading fleets')]),
         ),
       );
       final lines = <String>[];
@@ -330,10 +254,10 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final perf = E2ePerfLog('no_legal_step');
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
-              _fleetTile(
+              fleetMoveTile(
                 title: 'Fleet 2',
                 subtitle: 'New World — Outer Sea',
                 dialogBuilder: (context) => AlertDialog(
@@ -378,10 +302,7 @@ void main() {
 
   group('e2eTryNavalMoveSegment — default constants', () {
     test('kE2eDefaultNavalMoveSegmentUiWait matches legacy 5 s cap', () {
-      expect(
-        kE2eDefaultNavalMoveSegmentUiWait,
-        const Duration(seconds: 5),
-      );
+      expect(kE2eDefaultNavalMoveSegmentUiWait, const Duration(seconds: 5));
     });
   });
 }

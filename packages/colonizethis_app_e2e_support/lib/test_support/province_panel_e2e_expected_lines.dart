@@ -24,12 +24,12 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_pending_orders.dart';
 import 'package:colonizethis_app/widgets/commodity_display_name.dart';
+import 'province_panel_e2e_expected_lines_ctx.dart';
+import 'province_panel_e2e_expected_lines_political_tile.dart';
+import 'province_panel_e2e_expected_lines_economic.dart';
+import 'province_panel_e2e_expected_lines_units.dart';
+import 'province_panel_e2e_expected_lines_labels.dart';
 
-part 'province_panel_e2e_expected_lines_ctx.dart';
-part 'province_panel_e2e_expected_lines_political_tile.dart';
-part 'province_panel_e2e_expected_lines_economic.dart';
-part 'province_panel_e2e_expected_lines_units.dart';
-part 'province_panel_e2e_expected_lines_labels.dart';
 
 /// In-order [Text.data] strings matching depth-first pre-order of the wide-layout panel
 /// (section titles and bodies) for a **land** province.
@@ -37,13 +37,13 @@ List<String> provincePanelWideLayoutExpectedTexts(
   CtE2eLastPanelSnapshot snap,
   AppLocalizations l10n,
 ) {
-  final ctx = _buildProvincePanelWideExpectedCtx(snap);
+  final ctx = buildProvincePanelWideExpectedCtx(snap);
   final out = <String>['Province', '×'];
-  _appendProvincePanelPoliticalSection(out, ctx, l10n);
-  _appendProvincePanelTileSection(out, ctx, l10n);
-  _appendProvincePanelEconomicSection(out, ctx, l10n);
-  _appendProvincePanelMilitarySection(out, ctx, l10n);
-  _appendProvincePanelCivilianSection(out, ctx, l10n);
-  _appendProvincePanelNavalSection(out, ctx, l10n);
+  appendProvincePanelPoliticalSection(out, ctx, l10n);
+  appendProvincePanelTileSection(out, ctx, l10n);
+  appendProvincePanelEconomicSection(out, ctx, l10n);
+  appendProvincePanelMilitarySection(out, ctx, l10n);
+  appendProvincePanelCivilianSection(out, ctx, l10n);
+  appendProvincePanelNavalSection(out, ctx, l10n);
   return out;
 }

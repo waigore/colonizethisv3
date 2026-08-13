@@ -17,67 +17,22 @@
 library;
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_data/colonizethis_data.dart'
-    show MapTopology, TopologyNode, TopologyNodeType;
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-const String _human = 'gp1';
-const String _otherGp = 'gp2';
+import 'support/ct_naval_snapshot_fixtures.dart';
 
-const TurnState _orderingTurn = TurnState(
-  phase: TurnPhase.orders,
-  turnNumber: 1,
-);
+const String _human = ctNavalSnapshotHuman;
+const String _otherGp = ctNavalSnapshotOtherGp;
 
-const RegionData _emptyRegion = RegionData();
-
-const Orders _emptyOrders = Orders();
-
-const MapTopology _emptyTopology = MapTopology();
-
-MapTopology _topologyWithSeaZone({
-  required String seaId,
-  required String regionId,
-}) => MapTopology(
-  nodes: [
-    TopologyNode(id: seaId, regionId: regionId, type: TopologyNodeType.seaZone),
-  ],
-);
-
-Game _gameWithFleets(List<Fleet> fleets) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: _orderingTurn,
-    oldWorld: _emptyRegion,
-    newWorld: _emptyRegion,
-    fleets: fleets,
-  ),
-  players: const [Player(id: _human, displayName: 'You', isHuman: true)],
-);
-
-CtE2eNavalPanelSnapshot _snapshot({
-  required List<Fleet> fleets,
-  MapTopology topology = _emptyTopology,
-}) => CtE2eNavalPanelSnapshot(
-  game: _gameWithFleets(fleets),
-  humanPlayerId: _human,
-  topology: topology,
-  draftOrders: _emptyOrders,
-);
-
-Fleet _homeFleet({
-  String regionId = 'oldWorld',
-  String? inPortAtProvinceId = 'oldWorld|capital',
-}) => Fleet(
-  id: 'fleet_$_human',
-  ownerId: _human,
-  regionId: regionId,
-  inPortAtProvinceId: inPortAtProvinceId,
-);
+// Local aliases keep the test bodies below byte-identical to the
+// pre-extraction fixture names.
+final _snapshot = ctNavalSnapshot;
+final _homeFleet = ctNavalSnapshotHomeFleet;
 
 void main() {
   suppressLogsForTests();
@@ -184,7 +139,10 @@ void main() {
                 seaZoneId: 'sea1',
               ),
             ],
-            topology: _topologyWithSeaZone(seaId: 'sea1', regionId: 'oldWorld'),
+            topology: ctNavalSnapshotTopologyWithSeaZone(
+              seaId: 'sea1',
+              regionId: 'oldWorld',
+            ),
           ),
         ),
         isFalse,
@@ -210,7 +168,7 @@ void main() {
                   seaZoneId: 'sea_phantom',
                 ),
               ],
-              topology: _emptyTopology,
+              topology: ctNavalSnapshotEmptyTopology,
             ),
           ),
           isFalse,
@@ -263,7 +221,7 @@ void main() {
               ),
             ],
             // Empty topology: regionId path alone must satisfy the predicate.
-            topology: _emptyTopology,
+            topology: ctNavalSnapshotEmptyTopology,
           ),
         ),
         isTrue,
@@ -289,7 +247,7 @@ void main() {
                 seaZoneId: 'sea_nw_2',
               ),
             ],
-            topology: _topologyWithSeaZone(
+            topology: ctNavalSnapshotTopologyWithSeaZone(
               seaId: 'sea_nw_2',
               regionId: 'newWorld',
             ),
@@ -330,7 +288,7 @@ void main() {
                   regionId: 'newWorld',
                 ),
               ],
-              topology: _topologyWithSeaZone(
+              topology: ctNavalSnapshotTopologyWithSeaZone(
                 seaId: 'sea_ow',
                 regionId: 'oldWorld',
               ),
@@ -385,7 +343,10 @@ void main() {
                 seaZoneId: 'sea_asia',
               ),
             ],
-            topology: _topologyWithSeaZone(seaId: 'sea_asia', regionId: 'asia'),
+            topology: ctNavalSnapshotTopologyWithSeaZone(
+              seaId: 'sea_asia',
+              regionId: 'asia',
+            ),
           ),
         ),
         isFalse,
