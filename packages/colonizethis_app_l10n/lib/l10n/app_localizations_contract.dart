@@ -404,6 +404,15 @@ abstract class AppLocalizations {
   /// Submit all call-to-arms choices.
   String get game_callToArms_submit;
 
+  /// Optional muted formal-alliance reason under each call-to-arms prompt (Refs #4364).
+  String game_callToArms_formalAllianceReason(String defender);
+
+  /// First-order Join effect under each call-to-arms row (Refs #4364).
+  String game_callToArms_effectJoin(String aggressor, String defender);
+
+  /// First-order Refuse effect under each call-to-arms row (Refs #4364).
+  String game_callToArms_effectRefuse(String defender);
+
   /// Error banner when intervention Yarn fails to load.
   String game_intervention_loadError(String error);
 

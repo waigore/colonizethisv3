@@ -23,6 +23,7 @@ library;
 // Split under repo.app_test_file_size (Refs #4013) — part 2:
 // OvertureDialogueOverlay + CallToArmsDialogueOverlay.
 
+import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_call_row.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -94,8 +95,19 @@ Future<void> _tapSettle(
   Finder finder, {
   bool warnIfMissed = true,
 }) async {
+  // Effect lines (#4364) can push Submit below the CtDialogShell viewport;
+  // scroll the shell before hit-testing (SPEC scroll contract).
+  await tester.ensureVisible(finder);
+  await tester.pump();
   await tester.tap(finder, warnIfMissed: warnIfMissed);
   await pumpDialogueOverlaysUntilSettled(tester);
+}
+
+String _ctaPromptPlainText(WidgetTester tester) {
+  final Text prompt = tester.widget<Text>(
+    find.byKey(CallToArmsCallRow.promptKey),
+  );
+  return prompt.data ?? prompt.textSpan?.toPlainText() ?? '';
 }
 
 void main() {
@@ -271,8 +283,10 @@ void main() {
         expect(find.text('Join'), findsOneWidget);
         expect(find.text('Refuse'), findsOneWidget);
         expect(find.text('Submit'), findsOneWidget);
-        expect(find.textContaining('Portugal'), findsOneWidget);
-        expect(find.textContaining('Spain'), findsOneWidget);
+        // Prompt only — reason/Effect lines also name the GPs (#4364).
+        final String prompt = _ctaPromptPlainText(tester);
+        expect(prompt, contains('Portugal'));
+        expect(prompt, contains('Spain'));
       },
     );
 
@@ -370,8 +384,9 @@ void main() {
         ],
       );
 
-      expect(find.textContaining('gp_unknown_defender'), findsOneWidget);
-      expect(find.textContaining('gp_unknown_aggressor'), findsOneWidget);
+      final String prompt = _ctaPromptPlainText(tester);
+      expect(prompt, contains('gp_unknown_defender'));
+      expect(prompt, contains('gp_unknown_aggressor'));
     });
   });
 }

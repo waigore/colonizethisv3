@@ -700,6 +700,36 @@
   "@game_callToArms_submit": {
     "description": "Submit all call-to-arms choices."
   },
+  "game_callToArms_formalAllianceReason": "Formal alliance with {defender}",
+  "@game_callToArms_formalAllianceReason": {
+    "description": "Optional muted reason line under each call-to-arms prompt (Refs #4364). Speaks of formal alliance/treaty, not the informal Friendly band.",
+    "placeholders": {
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_callToArms_effectJoin": "Effect: Enter war with {aggressor} this turn. The treaty with {defender} stays.",
+  "@game_callToArms_effectJoin": {
+    "description": "First-order Join consequence under each call-to-arms row (Refs #4364).",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_callToArms_effectRefuse": "Effect: The treaty with {defender} ends. Relations with {defender} worsen (−50). Standing with other Great Powers worsens (−10).",
+  "@game_callToArms_effectRefuse": {
+    "description": "First-order Refuse consequence under each call-to-arms row (Refs #4364). Aggressor excluded from the −10 standing hit per GDD.",
+    "placeholders": {
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
   "game_intervention_loadError": "Could not load intervention dialogue: {error}",
   "@game_intervention_loadError": {
     "description": "Error banner when intervention Yarn fails to load.",

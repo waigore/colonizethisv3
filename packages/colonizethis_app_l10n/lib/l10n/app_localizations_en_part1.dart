@@ -425,6 +425,21 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get game_callToArms_submit => 'Submit';
 
   @override
+  String game_callToArms_formalAllianceReason(String defender) {
+    return 'Formal alliance with $defender';
+  }
+
+  @override
+  String game_callToArms_effectJoin(String aggressor, String defender) {
+    return 'Effect: Enter war with $aggressor this turn. The treaty with $defender stays.';
+  }
+
+  @override
+  String game_callToArms_effectRefuse(String defender) {
+    return 'Effect: The treaty with $defender ends. Relations with $defender worsen (−50). Standing with other Great Powers worsens (−10).';
+  }
+
+  @override
   String game_intervention_loadError(String error) {
     return 'Could not load intervention dialogue: $error';
   }
