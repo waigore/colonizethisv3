@@ -1,21 +1,19 @@
 // ProductionPanel chrome / allocation ACs (part1). SPEC/ui/production-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/production/production_recipe_affordance.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
+import 'production_panel_part_helpers.dart';
 import 'production_panel_test_support.dart';
 
 void main() {
@@ -31,21 +29,18 @@ void main() {
     testWidgets('Available header has no Breakdown button without callback', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
       expect(find.text('Breakdown'), findsNothing);
     });
 
     testWidgets(
       'Available header shows Breakdown text button when callback set',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            onOpenCommodityBreakdown: () {},
-          ),
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          onOpenCommodityBreakdown: () {},
         );
-        await pumpSettleCapped(tester);
         expect(find.text('Breakdown'), findsOneWidget);
       },
     );
@@ -53,13 +48,11 @@ void main() {
     testWidgets(
       'Available header Breakdown renders as CtActionTextButton (Refs #2862 S10b / C11)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            onOpenCommodityBreakdown: () {},
-          ),
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          onOpenCommodityBreakdown: () {},
         );
-        await pumpSettleCapped(tester);
 
         final breakdownFinder = find.widgetWithText(
           CtActionTextButton,
@@ -77,25 +70,16 @@ void main() {
       'negative: Available header Breakdown does not render as CtNinePatchButton '
       '(Refs #2862 S10b / C11)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            onOpenCommodityBreakdown: () {},
-          ),
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          onOpenCommodityBreakdown: () {},
         );
-        await pumpSettleCapped(tester);
 
-        final ninePatchBreakdown = find.byWidgetPredicate((Widget w) {
-          if (w is! CtNinePatchButton) return false;
-          final child = w.child;
-          return child is Text && child.data == 'Breakdown';
-        });
         expect(
-          ninePatchBreakdown,
+          productionNinePatchLabeled('Breakdown'),
           findsNothing,
-          reason:
-              'Available header Breakdown must use CtActionTextButton per '
-              '#2862 C11, not a CtNinePatchButton labelled "Breakdown".',
+          reason: 'Breakdown must be CtActionTextButton (#2862 C11).',
         );
       },
     );
@@ -103,8 +87,7 @@ void main() {
     testWidgets('Available subpanel shows commodity groups', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       expect(find.text('Available'), findsOneWidget);
       expect(find.byType(CtSectionLabel), findsAtLeastNWidgets(4));
@@ -118,8 +101,7 @@ void main() {
     testWidgets('Available subpanel shows raw materials used as inputs', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       expect(find.byType(CtResourceCell), findsAtLeastNWidgets(3));
       expect(find.text('Timber'), findsOneWidget);
@@ -130,8 +112,7 @@ void main() {
     testWidgets('Allocation subpanel shows recipe labels with inputs', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       expect(find.text('Allocation'), findsOneWidget);
       expect(
@@ -145,8 +126,7 @@ void main() {
     testWidgets(
       'normalized recipe labels show updated input quantities (Refs #3873)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         expect(find.textContaining('Tobacco ×2'), findsOneWidget);
         expect(find.textContaining('Timber ×2'), findsAtLeastNWidgets(2));
@@ -159,8 +139,7 @@ void main() {
     testWidgets(
       'Allocation rows show right-aligned affordance max · bottleneck',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         expect(
           find.textContaining('·'),
@@ -172,8 +151,7 @@ void main() {
     testWidgets(
       'Full availability: sliders enable comfort headroom at default allocation',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         final sliders = tester
             .widgetList<CtSlider>(find.byType(CtSlider))
@@ -187,14 +165,12 @@ void main() {
       WidgetTester tester,
     ) async {
       Map<String, int>? lastOutput;
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          desiredOutputByRecipe: {'lumber_from_timber': 5},
-          onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
-        ),
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        desiredOutputByRecipe: {'lumber_from_timber': 5},
+        onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
       );
-      await pumpSettleCapped(tester);
 
       final resetFinder = find.byKey(
         const ValueKey<String>('production_allocation_reset_button'),
@@ -214,8 +190,7 @@ void main() {
     testWidgets(
       'Allocation header Reset renders as CtDangerTextButton (Refs #2862 S8d / C8)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         final resetFinder = find.byKey(
           const ValueKey<String>('production_allocation_reset_button'),
@@ -242,22 +217,12 @@ void main() {
     testWidgets(
       'negative: production panel does not render Reset as CtNinePatchButton (Refs #2862 S8d / C8)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
-        final ninePatchButtonsWithResetLabel = find.byWidgetPredicate((
-          Widget w,
-        ) {
-          if (w is! CtNinePatchButton) return false;
-          final child = w.child;
-          return child is Text && child.data == 'Reset';
-        });
         expect(
-          ninePatchButtonsWithResetLabel,
+          productionNinePatchLabeled('Reset'),
           findsNothing,
-          reason:
-              'Allocation header Reset must use CtDangerTextButton per #2862 C8, '
-              'not a CtNinePatchButton labelled "Reset".',
+          reason: 'Reset must be CtDangerTextButton (#2862 C8).',
         );
       },
     );
@@ -267,15 +232,13 @@ void main() {
     ) async {
       Map<String, int>? lastOutput;
       final firstId = ProductionRecipesCatalog.all.first.id;
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          onDesiredOutputChanged: (next) =>
-              lastOutput = Map<String, int>.from(next),
-        ),
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        onDesiredOutputChanged: (next) =>
+            lastOutput = Map<String, int>.from(next),
       );
-      await pumpSettleCapped(tester);
-      final l10n = lookupAppLocalizations(const Locale('en'));
+      final l10n = productionEnL10n();
       await tester.tap(
         find.bySemanticsLabel(l10n.production_allocationIncrementRecipe).first,
       );
@@ -289,26 +252,20 @@ void main() {
     ) async {
       Map<String, int>? lastOutput;
       const lumberId = 'lumber_from_timber';
-      final lumberIndex = ProductionRecipesCatalog.all.indexWhere(
-        (r) => r.id == lumberId,
+      final lumberIndex = productionRecipeIndex(lumberId);
+      final l10n = productionEnL10n();
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        desiredOutputByRecipe: const {lumberId: 3},
+        onDesiredOutputChanged: (next) =>
+            lastOutput = Map<String, int>.from(next),
       );
-      expect(lumberIndex, greaterThanOrEqualTo(0));
-      final l10n = lookupAppLocalizations(const Locale('en'));
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          desiredOutputByRecipe: const {lumberId: 3},
-          onDesiredOutputChanged: (next) =>
-              lastOutput = Map<String, int>.from(next),
-        ),
+      await tapProductionAllocationSemantic(
+        tester,
+        semanticLabel: l10n.production_allocationDecrementRecipe,
+        recipeIndex: lumberIndex,
       );
-      await pumpSettleCapped(tester);
-      await tester.tap(
-        find
-            .bySemanticsLabel(l10n.production_allocationDecrementRecipe)
-            .at(lumberIndex),
-      );
-      await pumpSyncFrames(tester);
       expect(lastOutput, isNotNull);
       expect(lastOutput![lumberId], 2);
     });
@@ -318,25 +275,20 @@ void main() {
     ) async {
       Map<String, int>? lastOutput;
       const lumberId = 'lumber_from_timber';
-      final lumberIndex = ProductionRecipesCatalog.all.indexWhere(
-        (r) => r.id == lumberId,
+      final lumberIndex = productionRecipeIndex(lumberId);
+      final l10n = productionEnL10n();
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        desiredOutputByRecipe: const {lumberId: 4},
+        onDesiredOutputChanged: (next) =>
+            lastOutput = Map<String, int>.from(next),
       );
-      final l10n = lookupAppLocalizations(const Locale('en'));
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          desiredOutputByRecipe: const {lumberId: 4},
-          onDesiredOutputChanged: (next) =>
-              lastOutput = Map<String, int>.from(next),
-        ),
+      await tapProductionAllocationSemantic(
+        tester,
+        semanticLabel: l10n.production_allocationClearRecipe,
+        recipeIndex: lumberIndex,
       );
-      await pumpSettleCapped(tester);
-      await tester.tap(
-        find
-            .bySemanticsLabel(l10n.production_allocationClearRecipe)
-            .at(lumberIndex),
-      );
-      await pumpSyncFrames(tester);
       expect(lastOutput, isNotNull);
       expect(lastOutput!.containsKey(lumberId), isFalse);
     });
@@ -346,48 +298,24 @@ void main() {
     ) async {
       Map<String, int>? lastOutput;
       const lumberId = 'lumber_from_timber';
-      final lumberIndex = ProductionRecipesCatalog.all.indexWhere(
-        (r) => r.id == lumberId,
-      );
-      final l10n = lookupAppLocalizations(const Locale('en'));
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          desiredOutputByRecipe: const {lumberId: 1},
-          onDesiredOutputChanged: (next) =>
-              lastOutput = Map<String, int>.from(next),
-        ),
-      );
-      await pumpSettleCapped(tester);
-      final displayGame = productionPanelTestGameFor(fullPlayer);
-      final regimentCounts = regimentTypeCountsForPlayer(
-        displayGame.worldState,
-        fullPlayer.id,
-      );
-      final shipCounts = shipTypeCountsForPlayer(
-        displayGame.worldState,
-        fullPlayer.id,
-      );
-      final effectiveLabour = effectiveLabourForWorkers(
-        workers: fullPlayer.workerPool,
-        stockpile: fullPlayer.stockpile,
-        foodCounts: MilitaryNavyFoodCounts(
-          regimentCountsById: regimentCounts,
-          shipCountsById: shipCounts,
-        ),
-      );
-      final expectedMax = computeRecipeAffordance(
-        recipe: ProductionRecipesCatalog.byId[lumberId]!,
-        stockpile: fullPlayer.stockpile,
+      final lumberIndex = productionRecipeIndex(lumberId);
+      final l10n = productionEnL10n();
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
         desiredOutputByRecipe: const {lumberId: 1},
-        effectiveLabour: effectiveLabour,
-      ).maxDesiredOutput;
-      await tester.tap(
-        find
-            .bySemanticsLabel(l10n.production_allocationMaximizeRecipe)
-            .at(lumberIndex),
+        onDesiredOutputChanged: (next) =>
+            lastOutput = Map<String, int>.from(next),
       );
-      await pumpSyncFrames(tester);
+      final expectedMax = expectedLumberMaxForPlayer(
+        fullPlayer,
+        currentDesired: 1,
+      );
+      await tapProductionAllocationSemantic(
+        tester,
+        semanticLabel: l10n.production_allocationMaximizeRecipe,
+        recipeIndex: lumberIndex,
+      );
       expect(lastOutput, isNotNull);
       expect(lastOutput![lumberId], expectedMax);
     });
@@ -396,27 +324,21 @@ void main() {
       'allocation cross-row: lumber maxed disables cast iron increment',
       (WidgetTester tester) async {
         const castIronId = 'castIron_from_iron';
-        final castIronIndex = ProductionRecipesCatalog.all.indexWhere(
-          (r) => r.id == castIronId,
+        final castIronIndex = productionRecipeIndex(castIronId);
+        final l10n = productionEnL10n();
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          desiredOutputByRecipe: const {'lumber_from_timber': 50},
         );
-        expect(castIronIndex, greaterThanOrEqualTo(0));
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            desiredOutputByRecipe: const {'lumber_from_timber': 50},
-          ),
-        );
-        await pumpSettleCapped(tester);
         final before = tester
             .widget<CtSlider>(find.byType(CtSlider).at(castIronIndex))
             .value;
-        await tester.tap(
-          find
-              .bySemanticsLabel(l10n.production_allocationIncrementRecipe)
-              .at(castIronIndex),
+        await tapProductionAllocationSemantic(
+          tester,
+          semanticLabel: l10n.production_allocationIncrementRecipe,
+          recipeIndex: castIronIndex,
         );
-        await pumpSyncFrames(tester);
         final after = tester
             .widget<CtSlider>(find.byType(CtSlider).at(castIronIndex))
             .value;
@@ -428,13 +350,11 @@ void main() {
       WidgetTester tester,
     ) async {
       Map<String, int>? lastOutput;
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
-        ),
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        onDesiredOutputChanged: (next) => lastOutput = Map.from(next),
       );
-      await pumpSettleCapped(tester);
 
       final sliders = find.byType(CtSlider);
       expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
@@ -448,10 +368,12 @@ void main() {
     testWidgets('Narrow viewport stacks subpanels and is scrollable', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildProductionPanel(player: fullPlayer, width: 400, height: 600),
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        width: 400,
+        height: 600,
       );
-      await pumpSettleCapped(tester);
 
       expect(find.byType(SingleChildScrollView), findsAtLeastNWidgets(1));
       expect(find.text('Available'), findsOneWidget);
@@ -461,10 +383,12 @@ void main() {
     testWidgets('Wide viewport shows subpanels in row', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildProductionPanel(player: fullPlayer, width: 800, height: 500),
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        width: 800,
+        height: 500,
       );
-      await pumpSettleCapped(tester);
 
       expect(find.byType(Row), findsWidgets);
       expect(find.text('Available'), findsOneWidget);
