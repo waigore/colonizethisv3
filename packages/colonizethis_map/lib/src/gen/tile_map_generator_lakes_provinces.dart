@@ -11,6 +11,7 @@ import 'dart:math';
 import 'map_gen_pass_payloads.dart';
 import 'map_gen_stage.dart';
 import 'tile_map_gen_continent_join_pass.dart';
+import 'tile_map_generator_border_noise.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_params.dart';
 import 'tile_map_grid_graph.dart';
@@ -68,7 +69,7 @@ class TileMapGenLakesProvinces
       ctx.log('Pass 4: Fill lakes and moats done');
     }
     if (params.borderNoise > 0) {
-      nextGrid = borderNoise(nextGrid, payload.seaZoneId, payload.rnd);
+      nextGrid = applyBorderNoise(params, nextGrid, payload.seaZoneId, payload.rnd);
       ctx.log('Pass 5: Border noise applied');
     } else {
       ctx.log('Pass 5: Border noise skipped (0)');
@@ -94,31 +95,6 @@ class TileMapGenLakesProvinces
           next[ny][nx] == seaZoneId &&
           _graph.oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
         coastalLandCandidates.add((nx, ny));
-      }
-    }
-  }
-
-  void _tryBorderNoiseSwapAtCell(
-    List<List<String>> grid,
-    List<List<String>> next,
-    int x,
-    int y,
-    String seaZoneId,
-    Random rnd,
-  ) {
-    if (rnd.nextDouble() >= params.borderNoise) return;
-    final id = grid[y][x];
-    for (final (dx, dy) in kTileMapDirections4WestEastNorthSouth) {
-      final nx = x + dx;
-      final ny = y + dy;
-      final nid = grid[ny][nx];
-      final atBoundary =
-          (id == kTileMapLandSentinel && nid == seaZoneId) ||
-          (id == seaZoneId && nid == kTileMapLandSentinel);
-      if (atBoundary) {
-        next[ny][nx] = id;
-        next[y][x] = nid;
-        break;
       }
     }
   }
@@ -291,24 +267,6 @@ class TileMapGenLakesProvinces
       moatCells.length,
     );
 
-    return next;
-  }
-
-  /// Border noise: swap only at land/sea boundary (sentinel vs seaZoneId).
-  List<List<String>> borderNoise(
-    List<List<String>> grid,
-    String seaZoneId,
-    Random rnd,
-  ) {
-    final next = snapshotGrid(grid);
-    // ct-lint-allow: nested-grid-walk — bordered interior walk (skips the grid
-    // edge, y/x in 1..n-2), so the full-grid TileMapGrid.forEachIndex contract
-    // does not apply.
-    for (var y = 1; y < params.height - 1; y++) {
-      for (var x = 1; x < params.width - 1; x++) {
-        _tryBorderNoiseSwapAtCell(grid, next, x, y, seaZoneId, rnd);
-      }
-    }
     return next;
   }
 }

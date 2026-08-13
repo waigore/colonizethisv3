@@ -6,6 +6,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:image/image.dart' as img;
 
 import 'support/init_game_map_view_fixtures.dart';
+import 'support/init_game_map_view_visualization_fixtures.dart';
 
 /// Shared fixtures for the `tile_map_visualization` test suites.
 ///

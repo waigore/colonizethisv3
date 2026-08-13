@@ -112,37 +112,6 @@ Game minimalGame({
   );
 }
 
-/// Dual-region topology + tile maps used by visualization render tests.
-MapTopology oldWorldTwoProvinceSeaVisualizationTopology() {
-  return regionTopology(
-    regionId: 'oldWorld',
-    provinceIds: const ['p1', 'p2'],
-    seaZoneIds: const ['s1'],
-    edges: const [
-      TopologyEdge(id1: 'p1', id2: 'p2'),
-      TopologyEdge(id1: 'p1', id2: 's1'),
-    ],
-  );
-}
-
-/// Two adjacent sea zones in [regionId] (sea–sea border render tests).
-MapTopology twoAdjacentSeaZonesTopology(String regionId) {
-  return regionTopology(
-    regionId: regionId,
-    seaZoneIds: const ['s1', 's2'],
-    edges: const [TopologyEdge(id1: 's1', id2: 's2')],
-  );
-}
-
-/// Standard 4×3 visualization grid with p1/p2 land and s1 sea.
-TileMapResult visualizationSmallTileMap() {
-  return mapTileGrid([
-    ['p1', 'p1', 'p2', 'p2'],
-    ['p1', 's1', 's1', 'p2'],
-    ['p1', 'p1', 'p2', 'p2'],
-  ]);
-}
-
 /// Dual-region view-builder / visualizer scenario wiring.
 class DualRegionViewScenario {
   const DualRegionViewScenario({
