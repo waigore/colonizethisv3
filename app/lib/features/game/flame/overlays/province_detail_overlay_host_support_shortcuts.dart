@@ -75,7 +75,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       : _provinceDetailShortcutTap(
           enabled: upgradeTownEnabled,
           revalidateEnabled: () =>
-              GameMapAreaStateLogic.provinceUpgradeTownActionState(
+              GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
                 game: game,
                 humanPlayerId: humanPlayerId,
                 provinceId: provinceId,
@@ -108,7 +108,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   return (
     onExploreWithExplorerTap: _provinceDetailShortcutTap(
       enabled: exploreEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceExploreActionState(
+      revalidateEnabled: () => GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: tileKey,
@@ -125,7 +125,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     onProspectWithExplorerTap: _provinceDetailShortcutTap(
       enabled: prospectEnabled,
       revalidateEnabled: () =>
-          GameMapAreaStateLogic.provinceProspectActionState(
+          GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: tileKey,
@@ -144,7 +144,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     onBuildImprovementTap: _provinceDetailShortcutTap(
       enabled: buildImprovementEnabled,
       revalidateEnabled: () =>
-          GameMapAreaStateLogic.provinceBuildImprovementActionState(
+          GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: tileKey,
@@ -160,7 +160,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     ),
     onBuildRoadTap: _provinceDetailShortcutTap(
       enabled: buildRoadEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildRoadActionState(
+      revalidateEnabled: () => GameMapAreaStateLogicProvinceActions.provinceBuildRoadActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: tileKey,
@@ -176,7 +176,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     ),
     onBuildFortTap: _provinceDetailShortcutTap(
       enabled: buildFortEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildFortActionState(
+      revalidateEnabled: () => GameMapAreaStateLogicProvinceActions.provinceBuildFortActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: tileKey,
@@ -192,7 +192,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     ),
     onBuildPortTap: _provinceDetailShortcutTap(
       enabled: buildPortEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildPortActionState(
+      revalidateEnabled: () => GameMapAreaStateLogicProvinceActions.provinceBuildPortActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: tileKey,
@@ -212,7 +212,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     onPurchaseLandTap: _provinceDetailShortcutTap(
       enabled: purchaseLandEnabled,
       revalidateEnabled: () =>
-          GameMapAreaStateLogic.provincePurchaseLandActionState(
+          GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: tileKey,

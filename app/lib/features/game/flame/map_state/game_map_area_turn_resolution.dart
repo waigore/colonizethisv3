@@ -46,7 +46,7 @@ mixin GameMapAreaTurnResolution
     }
     final game = ref.read(currentGameProvider);
     if (game == null) return;
-    if (!GameMapAreaStateLogic.allowsFullTurnResolution(game)) {
+    if (!GameMapAreaStateLogicShell.allowsFullTurnResolution(game)) {
       return;
     }
 
