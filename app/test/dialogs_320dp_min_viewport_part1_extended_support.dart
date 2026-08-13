@@ -156,8 +156,8 @@ void registerDialogs320Part1ExtendedTests() {
       );
 
       testWidgets('AC (positive) GameMapOptionsDialog @ 320×640: no RenderFlex '
-          'overflow exception, title + 3 toggle labels + Close action render '
-          '(all three Expanded labels + 12 dp gap + CtToggleSwitch rows must '
+          'overflow exception, title + 4 toggle labels + Close action render '
+          '(all four Expanded labels + 12 dp gap + CtToggleSwitch rows must '
           'fit within the ~288 dp content width)', (WidgetTester tester) async {
         await pumpDialogs320At(
           tester,
