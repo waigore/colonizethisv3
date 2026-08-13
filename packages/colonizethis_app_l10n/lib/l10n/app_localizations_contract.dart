@@ -2132,6 +2132,12 @@ abstract class AppLocalizations {
   /// Plain-language port status when the province has a seaboard port.
   String get provinceOverlay_tilePortStatusPresent;
 
+  /// Named affordance opening Tile connectivity/port teaching helper (Refs #4369).
+  String get provinceOverlay_tileDetailsAction;
+
+  /// Title for the Tile details helper dialog (Refs #4369).
+  String get provinceOverlay_tileDetailsTitle;
+
   /// Tooltip and semantics label for province tile purchase-land shortcut action.
   String get provinceOverlay_tilePurchaseLandTooltip;
 

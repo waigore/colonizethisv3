@@ -589,17 +589,24 @@ rules:
 
   - rule_id: repo.app_e2e_support_lib_file_size
     group: testing
-    title: "colonizethis_app_e2e_support/lib files must stay at or below 400 physical lines (shrink-only allowlist; Refs #4075, #4195)"
+    title: "colonizethis_app_e2e_support/lib files must stay at or below 300 physical lines (shrink-only allowlist; Refs #4075, #4195, #4344)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_e2e_support_lib_file_size.dart
 
   - rule_id: repo.app_e2e_support_test_file_size
     group: testing
-    title: "colonizethis_app_e2e_support/test files must stay at or below 500 physical lines (shrink-only allowlist; Refs #4075, #4195)"
+    title: "colonizethis_app_e2e_support/test files must stay at or below 400 physical lines (shrink-only allowlist; Refs #4075, #4195, #4344)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_e2e_support_test_file_size.dart
+
+  - rule_id: repo.app_e2e_support_no_part_directives
+    group: structure
+    title: colonizethis_app_e2e_support lib and test must not use Dart part / part of directives (Refs #4344)
+    spec: SPEC/program/app-e2e-support-no-part-directives.md
+    runner: dart
+    script: tool/check_app_e2e_support_no_part_directives.dart
 
   - rule_id: repo.app_flame_map_import_boundary
     group: architecture
@@ -954,9 +961,23 @@ rules:
     runner: dart
     script: tool/check_ai_contracts_h8_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_contracts_source_file_size
+    group: structure
+    title: colonizethis_ai_contracts lib files must stay at or below the wave-2 260 physical-line ceiling (Refs #4368)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_contracts_source_file_size.dart
+
+  - rule_id: repo.ai_contracts_test_file_size
+    group: testing
+    title: colonizethis_ai_contracts test files must stay at or below the wave-2 280 physical-line ceiling (Refs #4368)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_contracts_test_file_size.dart
+
   - rule_id: repo.ai_source_file_size
     group: structure
-    title: colonizethis_ai lib/src files must stay at or below 350 physical lines (Refs #4079, #4310)
+    title: colonizethis_ai lib/src files must stay at or below 300 physical lines (Refs #4079, #4310, #4365)
     spec: SPEC/program/ai-source-file-size.md
     runner: dart
     script: tool/check_ai_source_file_size.dart
@@ -1426,7 +1447,7 @@ rules:
 
   - rule_id: repo.map_lib_file_size_headroom
     group: structure
-    title: colonizethis_map gen/view/render source files must be 350 non-comment lines or fewer (wave-5 headroom, Refs #4297)
+    title: colonizethis_map gen/view/render source files must be 300 non-comment lines or fewer (wave-6 headroom, Refs #4371)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_lib_file_size_headroom.dart
@@ -1874,7 +1895,7 @@ rules:
 
   - rule_id: repo.ai_colonial_military_naval_pin_cases_required
     group: testing
-    title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 750 physical lines must import a sibling *_cases.dart (Refs #3977, #3997)
+    title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 400 physical lines must import a sibling *_cases.dart (Refs #3977, #3997, #4365 Slice C)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_colonial_military_naval_pin_suite_size.dart

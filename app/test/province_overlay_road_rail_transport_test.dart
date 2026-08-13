@@ -130,7 +130,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Road / railroad: transport level 2'), findsOneWidget);
-        expect(find.text('improved road'), findsOneWidget);
+        expect(find.text('improved road'), findsNothing);
+        expect(find.text('Tile details'), findsOneWidget);
       },
     );
   });

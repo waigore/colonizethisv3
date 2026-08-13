@@ -3,8 +3,6 @@ import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
-import '../projections/order_projections.dart';
 export 'economy_preview_pipeline.dart'
     show
         EconomyPreviewInputs,
@@ -19,199 +17,14 @@ export 'economy_preview_pipeline.dart'
         previewStockpilePhaseDeltasByCommodityForPlayer;
 export 'package:colonizethis_economy/colonizethis_economy.dart'
     show previewTownManufacturingBonusByProvince;
-import 'turn_order_acceptance.dart';
 import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';
-import 'turn_resolution_sequence.dart';
 export 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
 export 'turn_resolver_config.dart';
+export 'turn_resolver_order_entry.dart';
 export 'turn_resolver_resume.dart';
-
-/// Turn resolver stub (Phase 1 compatibility). Runs phase sequence; only
-/// endOfTurn advances turn number.
-WorldState resolveTurn(WorldState current) {
-  WorldState state = current;
-  for (final phase in turnResolutionSequence) {
-    state = _runWorldStatePhase(state, phase);
-  }
-  return state;
-}
-
-WorldState _runWorldStatePhase(WorldState state, TurnPhase phase) {
-  switch (phase) {
-    case TurnPhase.orders:
-    case TurnPhase.extraction:
-    case TurnPhase.richesToTreasury:
-    case TurnPhase.production:
-    case TurnPhase.consumption:
-    case TurnPhase.spyResolution:
-    case TurnPhase.research:
-    case TurnPhase.diplomacy:
-    case TurnPhase.movement:
-    case TurnPhase.minorRegimentUpgrade:
-    case TurnPhase.navalInterceptionCombat:
-    case TurnPhase.combat:
-    case TurnPhase.buildWork:
-    case TurnPhase.worldMarket:
-      return state;
-    case TurnPhase.endOfTurn:
-      return state.copyWith(
-        turnState: state.turnState.copyWith(
-          turnNumber: state.turnState.turnNumber + 1,
-          phase: TurnPhase.orders,
-        ),
-      );
-  }
-}
-
-/// Resolves turn using OrderEngine output. Merges human + AI orders (AI optional).
-/// SPEC/program/order-engine.md: merge at turn resolution.
-/// Returns [TurnResolutionResult]; may be [TurnResolutionPendingOvertures] when a human must accept/reject an overture.
-TurnResolutionResult resolveTurnForGameFromOrderEngine({
-  required Game game,
-  required MapTopology topology,
-  required OrderEngine orderEngine,
-  Orders? aiOrders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  TurnEventSink? eventSink,
-  void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
-  TurnTraceRuntime? turnTraceRuntime,
-}) {
-  final merged = mergeOrderLists(
-    humanOrders: orderEngine.orders,
-    aiOrders: aiOrders,
-  );
-  return validateOrdersAndResolveTurn(
-    game: game,
-    topology: topology,
-    orders: merged,
-    eventSink: eventSink,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    onTurnTracePhase: onTurnTracePhase,
-    turnTraceRuntime: turnTraceRuntime,
-  );
-}
-
-/// Validates orders and resolves the turn. Returns [TurnResolutionResult];
-/// may be [TurnResolutionPendingOvertures] when a human must accept/reject an overture.
-///
-/// **Untrusted entry point.** Runs [filterAcceptedOrdersForAllPlayers] over
-/// the supplied [orders] before applying so any rejected orders are stripped
-/// from each per-player list. Required for callers whose order sources are not
-/// pre-validated (scenario runners, ad-hoc test orders, manual JSON-loaded
-/// orders, future external/manual sources).
-///
-/// Use [validateOrdersAndResolveTurnFromTrustedOrders] when every order has
-/// already passed OrderEngine validation (human draft) or the order suggestion
-/// API guarantee (AI orders). Both entry points return the same resulting
-/// [WorldState] for inputs whose orders all pass validation.
-///
-/// SPEC: `SPEC/program/order-engine.md` § Turn Resolution Integration §
-/// Trusted-source resolution.
-TurnResolutionResult validateOrdersAndResolveTurn({
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  TurnEventSink? eventSink,
-  void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
-  onPhaseProgress,
-  void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
-  TurnTraceRuntime? turnTraceRuntime,
-}) {
-  final engine = OrderEngine(
-    initialOrders: orders,
-    projector: projectOrderEffects,
-  );
-  final filtered = filterAcceptedOrdersForAllPlayers(
-    engine: engine,
-    game: game,
-    topology: topology,
-    sink: eventSink ?? const TurnEventSink(),
-    tileMapByRegion: tileMapByRegion,
-  );
-  return resolveTurnForGame(
-    game: game,
-    eventSink: eventSink,
-    topology: topology,
-    orders: filtered,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    onPhaseProgress: onPhaseProgress,
-    onTurnTracePhase: onTurnTracePhase,
-    turnTraceRuntime: turnTraceRuntime,
-  );
-}
-
-/// Resolves the turn using [orders] without running the per-player pre-apply
-/// validation pass.
-///
-/// **Trusted entry point.** Skips [filterAcceptedOrdersForAllPlayers] and
-/// dispatches straight to [resolveTurnForGame]. Caller contract: every order in
-/// [orders] must already have been accepted by either:
-///
-/// 1. [OrderEngine.addXxxOrderWithContext] (human draft orders), or
-/// 2. the order suggestion API guarantee (AI-generated orders) — see
-///    `SPEC/program/order-suggestions.md` § Guarantees.
-///
-/// Use this entry point only when the order sources are auditable as
-/// pre-validated. Mixing untrusted orders breaks the contract; for any other
-/// source use [validateOrdersAndResolveTurn] instead.
-///
-/// A separate function name (not a flag on [Orders]) is the chosen mechanism
-/// so trust does not propagate silently through copies or future refactors.
-///
-/// SPEC: `SPEC/program/order-engine.md` § Turn Resolution Integration §
-/// Trusted-source resolution.
-TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Map<String, MapTopology>? topologyByRegion,
-  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
-  List<AssignedRecipe> defaultAssignments = const [],
-  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
-  TurnEventSink? eventSink,
-  void Function(Map<String, Map<String, int>> productionByRecipeByPlayerId)?
-  onProductionComplete,
-  void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
-  onPhaseProgress,
-  void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
-  TurnTraceRuntime? turnTraceRuntime,
-}) {
-  return resolveTurnForGame(
-    game: game,
-    eventSink: eventSink,
-    onProductionComplete: onProductionComplete,
-    topology: topology,
-    orders: orders,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-    extractedByPlayerId: extractedByPlayerId,
-    defaultAssignments: defaultAssignments,
-    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-    onPhaseProgress: onPhaseProgress,
-    onTurnTracePhase: onTurnTracePhase,
-    turnTraceRuntime: turnTraceRuntime,
-  );
-}
+export 'turn_resolver_world_state_stub.dart';
 
 /// Resolves one full turn. Returns [TurnResolutionComplete] with the new game state,
 /// or [TurnResolutionPendingOvertures] when the Diplomacy phase needs a human target

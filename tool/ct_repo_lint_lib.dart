@@ -101,11 +101,13 @@ import 'check_screen_registry_active_paths.dart';
 import 'check_subscription_tracker.dart';
 import 'check_tech_id_constants.dart';
 import 'check_turn_no_part_directives.dart';
+import 'check_ai_no_part_directives.dart';
 import 'check_turn_resume_param_budget.dart';
 import 'check_work_target_constants.dart';
 import 'check_workspace_outdated_latest_direct.dart';
 import 'check_workspace_outdated_resolvable.dart';
 import 'ct_repo_lint_map_dispatch.dart';
+import 'ct_repo_lint_process_io.dart';
 import 'ct_repo_lint_scan_contract.dart';
 
 /// One entry from [tool/ct_repo_lint_manifest.yaml].
@@ -708,7 +710,7 @@ int _runOneRule({
       environment: Platform.environment,
       runInShell: false,
     );
-    _forwardProcessOutput(
+    forwardRepoLintProcessOutput(
       result,
       relayStdoutToStderr: relayChildStdoutToStderr,
     );
@@ -747,7 +749,7 @@ int _runOneRule({
     environment: Platform.environment,
     runInShell: false,
   );
-  _forwardProcessOutput(result, relayStdoutToStderr: relayChildStdoutToStderr);
+  forwardRepoLintProcessOutput(result, relayStdoutToStderr: relayChildStdoutToStderr);
   if (result.exitCode != 0) {
     stderr.writeln(
       'ct_repo_lint: FAILED [${rule.ruleId}] exit ${result.exitCode} (see output above)',
@@ -871,6 +873,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckPartUnitSize(repoRoot);
     case 'repo.turn_no_part_directives':
       return runCheckTurnNoPartDirectives(repoRoot);
+    case 'repo.app_e2e_support_no_part_directives':
+      return runCheckAppE2eSupportNoPartDirectives(repoRoot);
     case 'repo.turn_resume_param_budget':
       return runCheckTurnResumeParamBudget(repoRoot);
     case 'repo.diplomacy_no_part_of':
@@ -1082,23 +1086,5 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupTestUseSharedFixtures(repoRoot);
     default:
       return null;
-  }
-}
-
-void _forwardProcessOutput(
-  ProcessResult result, {
-  required bool relayStdoutToStderr,
-}) {
-  final out = result.stdout.toString();
-  final err = result.stderr.toString();
-  if (out.isNotEmpty) {
-    if (relayStdoutToStderr) {
-      stderr.write(out);
-    } else {
-      stdout.write(out);
-    }
-  }
-  if (err.isNotEmpty) {
-    stderr.write(err);
   }
 }

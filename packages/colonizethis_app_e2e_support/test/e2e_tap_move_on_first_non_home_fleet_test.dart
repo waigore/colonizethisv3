@@ -25,83 +25,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Mounts a Move row that opens an [AlertDialog] when tapped, mirroring the
-/// production fleet-row Move button surface (`fleet_expansion_tile.dart`).
-///
-/// The button always carries the production [kCtE2EFleetMoveActionKey] so the
-/// helper can locate it by key. When [iconOnly] is `true` it renders no
-/// `Text('Move')` — mirroring the production dense naval action cluster
-/// collapse at narrow viewports, where the label is suppressed and only the
-/// key (not the text) identifies the control (Refs #2336).
-class _MoveButton extends StatelessWidget {
-  const _MoveButton({this.onPressedSpy, this.iconOnly = false});
-
-  final void Function()? onPressedSpy;
-  final bool iconOnly;
-
-  @override
-  Widget build(BuildContext context) {
-    return Builder(
-      builder: (context) {
-        void onPressed() {
-          onPressedSpy?.call();
-          showDialog<void>(
-            context: context,
-            builder: (_) => const AlertDialog(content: Text('Move dialog')),
-          );
-        }
-
-        if (iconOnly) {
-          return IconButton(
-            key: kCtE2EFleetMoveActionKey,
-            tooltip: 'Move',
-            icon: const Icon(Icons.route),
-            onPressed: onPressed,
-          );
-        }
-        return TextButton(
-          key: kCtE2EFleetMoveActionKey,
-          onPressed: onPressed,
-          child: const Text('Move'),
-        );
-      },
-    );
-  }
-}
-
-/// Builds a non-home fleet [ExpansionTile] with a `Fleet X` title, an
-/// optional subtitle line, and a Move button as the expanded child.
-ExpansionTile _fleetTile({
-  required String title,
-  String? subtitle,
-  bool initiallyExpanded = true,
-  bool iconOnly = false,
-  void Function()? onMovePressed,
-}) {
-  return ExpansionTile(
-    title: Text(title),
-    subtitle: subtitle == null ? null : Text(subtitle),
-    initiallyExpanded: initiallyExpanded,
-    children: [_MoveButton(onPressedSpy: onMovePressed, iconOnly: iconOnly)],
-  );
-}
-
-/// Wraps panel children under [kCtE2ENavalPanelRootKey] so the helper's
-/// `find.byKey(kCtE2ENavalPanelRootKey)` lookup matches.
-Widget _navalPanel({required List<Widget> children}) => KeyedSubtree(
-  key: kCtE2ENavalPanelRootKey,
-  child: Column(children: children),
-);
-
-Widget _wrap(Widget body) =>
-    MaterialApp(home: Scaffold(body: SingleChildScrollView(child: body)));
+import 'support/naval_fleet_move_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('e2eTapMoveOnFirstNonHomeFleet — false / no-tap branches', () {
     testWidgets('no naval panel root key in tree -> false', (tester) async {
-      await tester.pumpWidget(_wrap(const SizedBox.shrink()));
+      await tester.pumpWidget(wrapNavalScrollBody(const SizedBox.shrink()));
       expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isFalse);
       expect(find.byType(AlertDialog), findsNothing);
     });
@@ -110,7 +41,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(_navalPanel(children: const [Text('loading')])),
+        wrapNavalScrollBody(navalPanelRoot(children: const [Text('loading')])),
       );
       expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isFalse);
       expect(find.byType(AlertDialog), findsNothing);
@@ -121,14 +52,17 @@ void main() {
     ) async {
       var taps = 0;
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
               ExpansionTile(
                 title: const Text('Home Fleet'),
                 initiallyExpanded: true,
                 children: [
-                  _MoveButton(onPressedSpy: () => taps++),
+                  FleetMoveButton(
+                    buttonKey: kCtE2EFleetMoveActionKey,
+                    onPressedSpy: () => taps++,
+                  ),
                 ],
               ),
             ],
@@ -145,15 +79,18 @@ void main() {
     ) async {
       var taps = 0;
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
               ExpansionTile(
                 title: const Text('Flotilla 7'),
                 subtitle: const Text('New World — Outer Sea'),
                 initiallyExpanded: true,
                 children: [
-                  _MoveButton(onPressedSpy: () => taps++),
+                  FleetMoveButton(
+                    buttonKey: kCtE2EFleetMoveActionKey,
+                    onPressedSpy: () => taps++,
+                  ),
                 ],
               ),
             ],
@@ -167,42 +104,47 @@ void main() {
   });
 
   group('e2eTapMoveOnFirstNonHomeFleet — true / tap branches', () {
-    testWidgets('single non-home fleet with NW subtitle -> taps Move + dialog',
-        (tester) async {
-      var taps = 0;
-      await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
-            children: [
-              _fleetTile(
-                title: 'Fleet 2',
-                subtitle: 'New World — Outer Sea',
-                onMovePressed: () => taps++,
-              ),
-            ],
+    testWidgets(
+      'single non-home fleet with NW subtitle -> taps Move + dialog',
+      (tester) async {
+        var taps = 0;
+        await tester.pumpWidget(
+          wrapNavalScrollBody(
+            navalPanelRoot(
+              children: [
+                fleetMoveTile(
+                  title: 'Fleet 2',
+                  subtitle: 'New World — Outer Sea',
+                  onMovePressed: () => taps++,
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-      expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
-      expect(taps, 1);
-      expect(find.byType(AlertDialog), findsOneWidget);
-    });
+        );
+        expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
+        expect(taps, 1);
+        expect(find.byType(AlertDialog), findsOneWidget);
+      },
+    );
 
     testWidgets('home fleet skipped; second tile (NW) wins', (tester) async {
       var homeTaps = 0;
       var nwTaps = 0;
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
               ExpansionTile(
                 title: const Text('Home Fleet'),
                 initiallyExpanded: true,
                 children: [
-                  _MoveButton(onPressedSpy: () => homeTaps++),
+                  FleetMoveButton(
+                    buttonKey: kCtE2EFleetMoveActionKey,
+                    onPressedSpy: () => homeTaps++,
+                  ),
                 ],
               ),
-              _fleetTile(
+              fleetMoveTile(
                 title: 'Fleet 3',
                 subtitle: 'New World — Inner Sea',
                 onMovePressed: () => nwTaps++,
@@ -217,40 +159,40 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
     });
 
-    testWidgets(
-      'NW tile preferred over earlier OW tile (location-line gate)',
-      (tester) async {
-        var owTaps = 0;
-        var nwTaps = 0;
-        await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
-              children: [
-                _fleetTile(
-                  title: 'Fleet 1',
-                  subtitle: 'Old World — Coastal Sea',
-                  onMovePressed: () => owTaps++,
-                ),
-                _fleetTile(
-                  title: 'Fleet 2',
-                  subtitle: 'New World — Outer Sea',
-                  onMovePressed: () => nwTaps++,
-                ),
-              ],
-            ),
+    testWidgets('NW tile preferred over earlier OW tile (location-line gate)', (
+      tester,
+    ) async {
+      var owTaps = 0;
+      var nwTaps = 0;
+      await tester.pumpWidget(
+        wrapNavalScrollBody(
+          navalPanelRoot(
+            children: [
+              fleetMoveTile(
+                title: 'Fleet 1',
+                subtitle: 'Old World — Coastal Sea',
+                onMovePressed: () => owTaps++,
+              ),
+              fleetMoveTile(
+                title: 'Fleet 2',
+                subtitle: 'New World — Outer Sea',
+                onMovePressed: () => nwTaps++,
+              ),
+            ],
           ),
-        );
-        expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
-        expect(
-          owTaps,
-          0,
-          reason: 'NW preference must skip the earlier OW tile so the '
-              'fleet-reach loop progresses toward New World per Bottleneck 4.',
-        );
-        expect(nwTaps, 1);
-        expect(find.byType(AlertDialog), findsOneWidget);
-      },
-    );
+        ),
+      );
+      expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
+      expect(
+        owTaps,
+        0,
+        reason:
+            'NW preference must skip the earlier OW tile so the '
+            'fleet-reach loop progresses toward New World per Bottleneck 4.',
+      );
+      expect(nwTaps, 1);
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
 
     testWidgets(
       'no NW location available -> first hit-testable non-home Move tapped',
@@ -258,15 +200,15 @@ void main() {
         var firstTaps = 0;
         var secondTaps = 0;
         await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
+          wrapNavalScrollBody(
+            navalPanelRoot(
               children: [
-                _fleetTile(
+                fleetMoveTile(
                   title: 'Fleet 1',
                   subtitle: 'Old World — Coastal Sea',
                   onMovePressed: () => firstTaps++,
                 ),
-                _fleetTile(
+                fleetMoveTile(
                   title: 'Fleet 2',
                   subtitle: 'Old World — Inner Sea',
                   onMovePressed: () => secondTaps++,
@@ -279,7 +221,8 @@ void main() {
         expect(
           firstTaps,
           1,
-          reason: 'When no tile has an NW subtitle the first hit-testable '
+          reason:
+              'When no tile has an NW subtitle the first hit-testable '
               'Move must be the fallback; pinning this prevents the loop '
               'silently switching to a later iteration order.',
         );
@@ -297,10 +240,10 @@ void main() {
         // [kCtE2EFleetMoveActionKey], not the label.
         var taps = 0;
         await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
+          wrapNavalScrollBody(
+            navalPanelRoot(
               children: [
-                _fleetTile(
+                fleetMoveTile(
                   title: 'Fleet 2',
                   subtitle: 'New World — Outer Sea',
                   iconOnly: true,
@@ -313,7 +256,8 @@ void main() {
         expect(
           find.text('Move'),
           findsNothing,
-          reason: 'Sanity: the icon-only Move control renders no label, so a '
+          reason:
+              'Sanity: the icon-only Move control renders no label, so a '
               'text-based finder would fail — the regression this test pins.',
         );
         expect(
@@ -327,45 +271,45 @@ void main() {
       },
     );
 
-    testWidgets(
-      'collapsed icon-only tile expanded then keyed Move tapped',
-      (tester) async {
-        var taps = 0;
-        await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
-              children: [
-                _fleetTile(
-                  title: 'Fleet 5',
-                  subtitle: 'New World — Inner Sea',
-                  initiallyExpanded: false,
-                  iconOnly: true,
-                  onMovePressed: () => taps++,
-                ),
-              ],
-            ),
+    testWidgets('collapsed icon-only tile expanded then keyed Move tapped', (
+      tester,
+    ) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        wrapNavalScrollBody(
+          navalPanelRoot(
+            children: [
+              fleetMoveTile(
+                title: 'Fleet 5',
+                subtitle: 'New World — Inner Sea',
+                initiallyExpanded: false,
+                iconOnly: true,
+                onMovePressed: () => taps++,
+              ),
+            ],
           ),
-        );
-        expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
-        expect(
-          taps,
-          1,
-          reason: 'Collapsed tiles must still be expanded and the keyed '
-              'icon-only Move tapped (Refs #2336).',
-        );
-        expect(find.byType(AlertDialog), findsOneWidget);
-      },
-    );
+        ),
+      );
+      expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
+      expect(
+        taps,
+        1,
+        reason:
+            'Collapsed tiles must still be expanded and the keyed '
+            'icon-only Move tapped (Refs #2336).',
+      );
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
 
     testWidgets(
       'collapsed tile expanded via Icons.expand_more before Move tap',
       (tester) async {
         var taps = 0;
         await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
+          wrapNavalScrollBody(
+            navalPanelRoot(
               children: [
-                _fleetTile(
+                fleetMoveTile(
                   title: 'Fleet 4',
                   subtitle: 'New World — Inner Sea',
                   initiallyExpanded: false,
@@ -378,14 +322,16 @@ void main() {
         expect(
           find.text('Move'),
           findsNothing,
-          reason: 'Sanity: Move text is not mounted while the tile is '
+          reason:
+              'Sanity: Move text is not mounted while the tile is '
               'collapsed (children only build after expansion).',
         );
         expect(await e2eTapMoveOnFirstNonHomeFleet(tester), isTrue);
         expect(
           taps,
           1,
-          reason: 'The helper must tap the expand-more icon and wait for '
+          reason:
+              'The helper must tap the expand-more icon and wait for '
               'Move text to appear before issuing the Move tap, otherwise '
               'every collapsed tile would silently fall through (Bottleneck 4).',
         );
@@ -398,10 +344,10 @@ void main() {
       (tester) async {
         for (final separator in const ['—', '–', '-']) {
           await tester.pumpWidget(
-            _wrap(
-              _navalPanel(
+            wrapNavalScrollBody(
+              navalPanelRoot(
                 children: [
-                  _fleetTile(
+                  fleetMoveTile(
                     title: 'Fleet 9',
                     subtitle: 'New World $separator Outer Sea',
                   ),
@@ -412,7 +358,8 @@ void main() {
           expect(
             await e2eTapMoveOnFirstNonHomeFleet(tester),
             isTrue,
-            reason: 'Move on a non-home fleet should fire for separator '
+            reason:
+                'Move on a non-home fleet should fire for separator '
                 '"$separator" (e2eTextLooksLikeNewWorldLocationLine '
                 'accepts em / en / hyphen variants).',
           );

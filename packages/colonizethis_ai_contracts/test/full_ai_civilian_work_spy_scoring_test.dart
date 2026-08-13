@@ -1,35 +1,25 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/civilian_work_scoring_game_fixture.dart';
+
 /// Spy civilian-work scoring (Refs #3834 R11).
 void main() {
-  const playerId = 'gp1';
+  const playerId = civilianWorkScoringPlayerId;
 
   Game gameWith({
     List<Player> rivals = const [],
     List<DiplomacyRelation> diplomacyRelations = const [],
     List<Unit> oldWorldUnits = const [],
     String? capitalProvinceId,
-  }) => Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(units: oldWorldUnits),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      Player(
-        id: playerId,
-        displayName: 'GP1',
-        isHuman: false,
-        capitalProvinceId: capitalProvinceId,
-      ),
-      ...rivals,
-    ],
+  }) => civilianWorkScoringGame(
+    playerDisplayName: 'GP1',
+    rivals: rivals,
     diplomacyRelations: diplomacyRelations,
+    oldWorldUnits: oldWorldUnits,
+    capitalProvinceId: capitalProvinceId,
   );
 
   PlayerView spyViewFor(

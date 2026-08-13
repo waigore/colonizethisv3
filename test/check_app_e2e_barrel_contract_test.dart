@@ -36,6 +36,8 @@ void main() {
       }
       final aliasSurface = [
         File(p.join(supportLib, 'e2e_helpers_aliases_ui.dart')),
+        File(p.join(supportLib, 'e2e_helpers_aliases_ui_wait.dart')),
+        File(p.join(supportLib, 'e2e_helpers_aliases_ui_panels.dart')),
         File(p.join(supportLib, 'e2e_helpers_aliases_orders.dart')),
         File(p.join(supportLib, 'e2e_helpers_aliases_scenario.dart')),
       ].map((f) => f.readAsStringSync()).join('\n');

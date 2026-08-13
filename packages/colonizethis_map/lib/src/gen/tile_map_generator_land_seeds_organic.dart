@@ -2,25 +2,22 @@
 ///
 /// SPEC/program/tile-map-gen-algorithm.md.
 ///
-/// Extracted from the former `tile_map_generator_land_seeds_organic_part`
-/// `part` fragment so the interleaved placement / Voronoi / coastline-growth
-/// driver is an independently importable, testable unit (see #3588).
+/// Interleaved placement driver only; candidate/placement and no-join Voronoi
+/// live in sibling libraries (Refs #3588, #4371 Slice B).
 library;
 
 import 'dart:math';
 
 import 'tile_map_generator_land_seeds_coast.dart';
-import 'tile_map_generator_land_seeds_shared.dart';
+import 'tile_map_generator_land_seeds_organic_placement.dart';
+import 'tile_map_generator_land_seeds_organic_voronoi.dart';
 import 'tile_map_land_seed_contract.dart';
 import '../tile_map_grid.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_manhattan_distance_maps.dart';
-import 'tile_map_manhattan_distance_transform.dart';
 import 'tile_map_province_budget.dart';
 
-/// Candidate selection over close sea cells, per-round placement of one organic
-/// land seed, Voronoi-with-no-join assignment, and the top-level interleaved
-/// placement / Voronoi / coastline-growth driver.
+/// Top-level interleaved placement / Voronoi / coastline-growth driver.
 class LandSeedOrganic {
   const LandSeedOrganic._();
 
@@ -121,7 +118,7 @@ class LandSeedOrganic {
       // Step 1: Place one land seed per continent (if needed)
       for (var c = 0; c < numContinents; c++) {
         if (seedCountsPerContinent[c] >= seedsPerContinent[c]) continue;
-        final (sx, sy) = _placeOneOrganicSeed(
+        final (sx, sy) = LandSeedOrganicPlacement.placeOneOrganicSeed(
           params,
           g,
           distToOtherByContinent[c],
@@ -144,7 +141,8 @@ class LandSeedOrganic {
       }
 
       // Step 2: Small Voronoi with no-join (use round's budgetPerContinent)
-      final voronoiResult = _assignLandByLandSeedsWithNoJoin(
+      final voronoiResult =
+          LandSeedOrganicVoronoi.assignLandByLandSeedsWithNoJoin(
         params,
         g,
         continentGrid,
@@ -154,7 +152,7 @@ class LandSeedOrganic {
         budgetPerContinent,
       );
       g = voronoiResult.$1;
-      // [_assignLandByLandSeedsWithNoJoin] already returns a fresh continent grid;
+      // [assignLandByLandSeedsWithNoJoin] already returns a fresh continent grid;
       // adopt it instead of copying cell-by-cell into the prior buffer (Refs #2489).
       continentGrid = voronoiResult.$2;
     }
@@ -179,163 +177,5 @@ class LandSeedOrganic {
     }
 
     return (continentSeeds, landSeeds, continentBySeedIndex, g);
-  }
-
-  static List<(int x, int y)> _organicSeedCloseSeaCandidates(
-    TileMapLandSeedParams params,
-    List<List<String>> grid,
-    String seaZoneId,
-    int closeRadius,
-    List<List<int>> minDistToOwnLand,
-  ) {
-    final candidates = <(int x, int y)>[];
-    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
-      if (grid[y][x] != seaZoneId) return;
-      final minDistToOwn = minDistToOwnLand[y][x];
-      if (minDistToOwn > closeRadius) return;
-      candidates.add((x, y));
-    });
-    return candidates;
-  }
-
-  static (int, int) _pickBestOrganicSeaCandidate(
-    List<(int x, int y)> candidates,
-    List<List<int>> minDistToOwnLand,
-    List<List<int>> distToOtherContinent,
-    double awayPenalty,
-    Random rnd,
-  ) {
-    var bestScore = -1e100;
-    final bestCandidates = <(int x, int y)>[];
-    for (final (x, y) in candidates) {
-      final minDistToOwn = minDistToOwnLand[y][x];
-      final minDistToOther = distToOtherContinent[y][x];
-      final score = -minDistToOwn + awayPenalty * minDistToOther;
-      if (score > bestScore) {
-        bestScore = score;
-        bestCandidates.clear();
-        bestCandidates.add((x, y));
-      } else if ((score - bestScore).abs() < 0.01) {
-        bestCandidates.add((x, y));
-      }
-    }
-    if (bestCandidates.isEmpty) return (-1, -1);
-    return bestCandidates[rnd.nextInt(bestCandidates.length)];
-  }
-
-  /// Place one land seed near existing land of continent c, preferably away
-  /// from others.
-  static (int, int) _placeOneOrganicSeed(
-    TileMapLandSeedParams params,
-    List<List<String>> grid,
-    List<List<int>> distToOtherContinent,
-    (int x, int y) continentSeed,
-    List<(int x, int y)> existingLandSeeds,
-    List<int> continentBySeedIndex,
-    int c,
-    int closeRadius,
-    double awayPenalty,
-    String seaZoneId,
-    Random rnd,
-  ) {
-    final ownLandOrSeed = <(int x, int y)>[continentSeed];
-    for (var i = 0; i < existingLandSeeds.length; i++) {
-      if (continentBySeedIndex[i] == c) {
-        ownLandOrSeed.add(existingLandSeeds[i]);
-      }
-    }
-    final minDistToOwnLand = manhattanDistToNearestPoints(
-      params.width,
-      params.height,
-      ownLandOrSeed,
-      distanceWhenNoSources: 1 << 30,
-    );
-    final candidates = _organicSeedCloseSeaCandidates(
-      params,
-      grid,
-      seaZoneId,
-      closeRadius,
-      minDistToOwnLand,
-    );
-    if (candidates.isEmpty) {
-      final (cx, cy) = continentSeed;
-      const jitter = 2;
-      final jx = (cx + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(
-        0,
-        params.width - 1,
-      );
-      final jy = (cy + rnd.nextInt(jitter * 2 + 1) - jitter).clamp(
-        0,
-        params.height - 1,
-      );
-      return (jx, jy);
-    }
-    return _pickBestOrganicSeaCandidate(
-      candidates,
-      minDistToOwnLand,
-      distToOtherContinent,
-      awayPenalty,
-      rnd,
-    );
-  }
-
-  /// Voronoi with no-join: do not assign cell to c if any cell within buffer is
-  /// land of another continent.
-  static (List<List<String>>, List<List<int>>) _assignLandByLandSeedsWithNoJoin(
-    TileMapLandSeedParams params,
-    List<List<String>> grid,
-    List<List<int>> continentGrid,
-    List<(int x, int y)> landSeeds,
-    List<int> continentBySeedIndex,
-    String seaZoneId,
-    List<int> budgetPerContinent,
-  ) {
-    if (landSeeds.isEmpty) return (grid, continentGrid);
-    final numContinents = budgetPerContinent.length;
-
-    final seedStartByContinent = List<int>.filled(numContinents, 0);
-    final seedEndByContinent = List<int>.filled(numContinents, 0);
-    LandSeedShared.fillLandSeedIndexRangesByContinent(
-      continentBySeedIndex,
-      numContinents,
-      landSeeds.length,
-      seedStartByContinent,
-      seedEndByContinent,
-    );
-
-    final entries = LandSeedShared.voronoiLandCellEntries(
-      params,
-      landSeeds,
-      numContinents,
-      seedStartByContinent,
-      seedEndByContinent,
-    );
-    entries.sort((a, b) => a.$1.compareTo(b.$1));
-
-    final next = TileMapGrid.copy(grid);
-    final nextContinent = TileMapGrid.copy(continentGrid);
-    final used = List<int>.filled(numContinents, 0);
-    final buffer = params.continentBufferTiles == 0
-        ? 1
-        : params.continentBufferTiles;
-    final offsets = LandSeedShared.bufferOffsets(buffer);
-    for (final (_, x, y, c) in entries) {
-      if (next[y][x] == kTileMapLandSentinel) continue;
-      if (used[c] >= budgetPerContinent[c]) continue;
-      if (LandSeedShared.wouldJoinOtherContinentInBuffer(
-        nextContinent,
-        params,
-        x,
-        y,
-        c,
-        offsets,
-      )) {
-        continue;
-      }
-      next[y][x] = kTileMapLandSentinel;
-      nextContinent[y][x] = c;
-      used[c]++;
-    }
-    return (next, nextContinent);
   }
 }

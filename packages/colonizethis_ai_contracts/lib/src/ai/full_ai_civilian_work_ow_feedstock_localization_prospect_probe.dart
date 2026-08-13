@@ -5,18 +5,18 @@ import 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         isMineralEligibleTile,
         provinceHasAtLeastVisibility,
-        validateCivilianBundledWorkMoveLeg;
-import 'package:colonizethis_orders/src/orders/order_resolution_context.dart'
-    show OrderResolutionContext, orderResolutionContextFromView;
+        validateCivilianBundledWorkMoveLeg,
+        OrderResolutionContext,
+        orderResolutionContextFromView,
+        suggestWorkOrders;
 import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart'
     show
         buildIncrementalCandidateValidator,
         isWorkOrderAcceptedWithValidator;
-import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart'
-    show suggestWorkOrders;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../constants.dart';
+import 'full_ai_civilian_work_ow_feedstock_localization_prospect_probe_scan.dart';
 
 /// Per-gate pass signals for a co-located mineral-eligible feedstock `prospect`
 /// probe (Refs #2847 § H8-extraction prospect intra-pass localization).
@@ -72,37 +72,12 @@ bool suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTil
   Set<String> feedstockIds,
   Map<String, TileMapResult>? tileMapByRegion,
 ) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
-  // Owned, unprospected, mineral-eligible Old World feedstock tiles grouped by
-  // province — the same scan the mineral-eligibility predicate performs, but
-  // retaining the tile keys so the emitted `prospect` target can be matched.
-  final eligibleTileKeysByProvince = <String, Set<String>>{};
-  for (final entry in ws.resourceByTileKey.entries) {
-    if (!feedstockIds.contains(entry.value)) continue;
-    if (!kMineralResourceIds.contains(entry.value)) continue;
-    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
-    if (prospected.contains(entry.key)) continue;
-    if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
-    final provinceId = Unit.provinceIdFromTileKey(entry.key);
-    if (provinceId == null) continue;
-    final province = ws.tryGetProvince(provinceId);
-    if (province == null || province.ownerId != playerId) continue;
-    (eligibleTileKeysByProvince[provinceId] ??= <String>{}).add(entry.key);
-  }
-  if (eligibleTileKeysByProvince.isEmpty) return false;
-  // Restrict to tiles whose province hosts an idle Explorer (the precondition
-  // the mineral-eligibility predicate asserts), so this predicate's truth
-  // region is a strict refinement of that one.
-  final targetTileKeys = <String>{};
-  for (final unit in allUnitsFromWorld(ws)) {
-    if (unit.ownerId != playerId) continue;
-    if (!isExplorerUnit(unit.type)) continue;
-    if (unit.currentWork != null) continue;
-    final tiles = eligibleTileKeysByProvince[unit.locationProvinceId];
-    if (tiles != null) targetTileKeys.addAll(tiles);
-  }
+  final targetTileKeys = colocatedMineralEligibleFeedstockTargetTileKeys(
+    game: game,
+    playerId: playerId,
+    feedstockIds: feedstockIds,
+    tileMapByRegion: tileMapByRegion,
+  );
   if (targetTileKeys.isEmpty) return false;
   final suggestions = suggestWorkOrders(
     view,
@@ -118,70 +93,16 @@ bool suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTil
   return false;
 }
 
-/// Co-located mineral-eligible feedstock tile paired with the idle Explorer
-/// that shares its province — the probe target for intra-pass gate checks.
-typedef _ColocatedFeedstockProspectProbe = ({
-  Unit unit,
-  String tileKey,
-  String provinceIdFull,
-  String regionId,
-});
-
-List<_ColocatedFeedstockProspectProbe>
-_colocatedMineralEligibleFeedstockProspectProbes({
-  required Game game,
-  required String playerId,
-  required Set<String> feedstockIds,
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  if (feedstockIds.isEmpty) return const [];
-  final ws = game.worldState;
-  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
-  final eligibleTileKeysByProvince = <String, Set<String>>{};
-  for (final entry in ws.resourceByTileKey.entries) {
-    if (!feedstockIds.contains(entry.value)) continue;
-    if (!kMineralResourceIds.contains(entry.value)) continue;
-    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
-    if (prospected.contains(entry.key)) continue;
-    if (!isMineralEligibleTile(game, tileMapByRegion, entry.key)) continue;
-    final provinceId = Unit.provinceIdFromTileKey(entry.key);
-    if (provinceId == null) continue;
-    final province = ws.tryGetProvince(provinceId);
-    if (province == null || province.ownerId != playerId) continue;
-    (eligibleTileKeysByProvince[provinceId] ??= <String>{}).add(entry.key);
-  }
-  if (eligibleTileKeysByProvince.isEmpty) return const [];
-  final probes = <_ColocatedFeedstockProspectProbe>[];
-  for (final unit in allUnitsFromWorld(ws)) {
-    if (unit.ownerId != playerId) continue;
-    if (!isExplorerUnit(unit.type)) continue;
-    if (unit.currentWork != null) continue;
-    final tiles = eligibleTileKeysByProvince[unit.locationProvinceId];
-    if (tiles == null) continue;
-    for (final tileKey in tiles) {
-      final regionId = Unit.regionIdFromTileKey(tileKey);
-      if (regionId == null) continue;
-      probes.add((
-        unit: unit,
-        tileKey: tileKey,
-        provinceIdFull: unit.locationProvinceId,
-        regionId: regionId,
-      ));
-    }
-  }
-  return probes;
-}
-
 /// True iff the bundled move-leg gate accepts [candidate] for [probe]'s
 /// Explorer. [validateCivilianBundledWorkMoveLeg] already returns
 /// `accepted()` when no province move-leg is required, so this collapses the
 /// "no move leg" and "validated move leg" branches into one flat check (Refs
 /// #2847 prospect intra-pass localization).
-bool _probeBundledMoveLegAccepted({
+bool probeBundledMoveLegAccepted({
   required Game game,
   required MapTopology topology,
   required String playerId,
-  required _ColocatedFeedstockProspectProbe probe,
+  required ColocatedFeedstockProspectProbe probe,
   required WorkOrder candidate,
   required OrderResolutionContext resolution,
   required List<DiplomaticOrder> diplomatic,
@@ -220,7 +141,7 @@ colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates({
   required Set<String> feedstockIds,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final probes = _colocatedMineralEligibleFeedstockProspectProbes(
+  final probes = colocatedMineralEligibleFeedstockProspectProbes(
     game: game,
     playerId: playerId,
     feedstockIds: feedstockIds,
@@ -263,7 +184,7 @@ colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates({
       targetTileKey: probe.tileKey,
     );
     if (!bundledMoveLeg &&
-        _probeBundledMoveLegAccepted(
+        probeBundledMoveLegAccepted(
           game: game,
           topology: topology,
           playerId: playerId,

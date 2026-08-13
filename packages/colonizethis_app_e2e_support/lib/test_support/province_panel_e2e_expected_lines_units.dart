@@ -1,11 +1,39 @@
-part of 'province_panel_e2e_expected_lines.dart';
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
+// Expected plain-text lines for ProvinceSeaZoneDetailOverlay wide layout (scroll column).
+// Mirrors app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart for e2e.
+// If drift fails tests, align this file with the overlay widget.
 
-void _appendProvincePanelMilitarySection(
+
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        CommodityCatalog,
+        MapTopology,
+        TileMapResult,
+        isMilitaryUnit,
+        terrainDisplayName;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_pending_orders.dart';
+import 'package:colonizethis_app/widgets/commodity_display_name.dart';
+import 'province_panel_e2e_expected_lines_ctx.dart';
+import 'province_panel_e2e_expected_lines_labels.dart';
+
+void appendProvincePanelMilitarySection(
   List<String> out,
-  _ProvincePanelWideExpectedCtx ctx,
+  ProvincePanelWideExpectedCtx ctx,
   AppLocalizations l10n,
 ) {
-  _appendProvincePanelSection(out, 'Military', () {
+  appendProvincePanelSection(out, 'Military', () {
     final pending = provincePanelPendingMilitaryLines(
       game: ctx.game,
       orders: ctx.draftOrders,
@@ -31,7 +59,7 @@ void _appendProvincePanelMilitarySection(
       ..sort((a, b) {
         if (a == ctx.humanPlayerId) return -1;
         if (b == ctx.humanPlayerId) return 1;
-        return _ownerName(ctx.game, a).compareTo(_ownerName(ctx.game, b));
+        return ownerDisplayName(ctx.game, a).compareTo(ownerDisplayName(ctx.game, b));
       });
     for (final oid in ownerIds) {
       final list = byOwner[oid]!;
@@ -39,7 +67,7 @@ void _appendProvincePanelMilitarySection(
       for (final u in list) {
         byType[u.type] = (byType[u.type] ?? 0) + 1;
       }
-      final name = _ownerName(ctx.game, oid);
+      final name = ownerDisplayName(ctx.game, oid);
       out.add(name);
       for (final e in byType.entries) {
         final label = regimentTypeDisplayLabel(l10n, e.key);
@@ -52,12 +80,12 @@ void _appendProvincePanelMilitarySection(
   });
 }
 
-void _appendProvincePanelCivilianSection(
+void appendProvincePanelCivilianSection(
   List<String> out,
-  _ProvincePanelWideExpectedCtx ctx,
+  ProvincePanelWideExpectedCtx ctx,
   AppLocalizations l10n,
 ) {
-  _appendProvincePanelSection(out, 'Civilian', () {
+  appendProvincePanelSection(out, 'Civilian', () {
     final visible = ctx.civilian
         .where(
           (u) => foreignCivilianVisibleToPlayer(
@@ -89,19 +117,19 @@ void _appendProvincePanelCivilianSection(
           out.add('${u.type}: ${unitStatusDisplayLabel(l10n, u.status)}');
         }
       } else {
-        final o = _ownerName(ctx.game, u.ownerId);
+        final o = ownerDisplayName(ctx.game, u.ownerId);
         out.add('$o — ${u.type}: ${unitStatusDisplayLabel(l10n, u.status)}');
       }
     }
   });
 }
 
-void _appendProvincePanelNavalSection(
+void appendProvincePanelNavalSection(
   List<String> out,
-  _ProvincePanelWideExpectedCtx ctx,
+  ProvincePanelWideExpectedCtx ctx,
   AppLocalizations l10n,
 ) {
-  _appendProvincePanelSection(out, 'Naval', () {
+  appendProvincePanelSection(out, 'Naval', () {
     final pending = provincePanelPendingNavalLines(
       game: ctx.game,
       orders: ctx.draftOrders,
@@ -115,7 +143,7 @@ void _appendProvincePanelNavalSection(
     }
     if (ctx.fleetsInPort.isNotEmpty) {
       for (final f in ctx.fleetsInPort) {
-        final ownerName = _ownerName(ctx.game, f.ownerId);
+        final ownerName = ownerDisplayName(ctx.game, f.ownerId);
         final byType = <String, int>{};
         for (final s in f.ships) {
           byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;

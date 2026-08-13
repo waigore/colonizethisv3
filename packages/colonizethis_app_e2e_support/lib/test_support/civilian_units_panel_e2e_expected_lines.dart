@@ -16,9 +16,9 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'civilian_units_panel_e2e_expected_lines_assigned.dart';
+import 'civilian_units_panel_e2e_expected_lines_rows.dart';
 
-part 'civilian_units_panel_e2e_expected_lines_assigned.dart';
-part 'civilian_units_panel_e2e_expected_lines_rows.dart';
 
 /// In-order [Text.data] strings for [CivilianUnitsPanel] preorder traversal.
 List<String> civilianUnitsPanelExpectedTexts(
@@ -97,7 +97,7 @@ List<String> civilianUnitsPanelExpectedTexts(
     // mirror must upper-case to match the rendered Text.data (Refs #2336).
     out.add(regionDisplayLabel('oldWorld').toUpperCase());
     for (final u in scopedOw) {
-      _addUnitRowTexts(
+      addUnitRowTexts(
         out: out,
         game: game,
         unit: u,
@@ -120,7 +120,7 @@ List<String> civilianUnitsPanelExpectedTexts(
     // (see oldWorld header above; Refs #2859 R9 / #2866 S1-S3 / #2336).
     out.add(regionDisplayLabel('newWorld').toUpperCase());
     for (final u in scopedNw) {
-      _addUnitRowTexts(
+      addUnitRowTexts(
         out: out,
         game: game,
         unit: u,
