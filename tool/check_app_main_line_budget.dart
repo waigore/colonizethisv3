@@ -45,6 +45,7 @@
 // raised for Military Counsel budget headroom after dev integration (Refs #4307).
 // raised for MAP20001 Upgrade town merge headroom on military counsel branch (Refs #4316).
 // raised for UNIT50001 Train Military benefit vs cost gist rows (Refs #4324).
+// raised for MAP10001 extraction-disc legend + popover teaching chrome (Refs #4367).
 import 'dart:convert';
 import 'dart:io';
 
@@ -58,7 +59,7 @@ const _packageName = 'colonizethis_app';
 // raised for DLG31002 Blockade/Beachhead fog-honest target intel (Refs #4340).
 // raised for MAP20001 Establish Consulate Political shortcut (Refs #4346).
 // raised for combined #4340+#4346 merge headroom on DLG31002 intel + Consulate shortcut.
-const _maxMainLines = 74500;
+const _maxMainLines = 75000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

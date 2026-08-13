@@ -37,10 +37,12 @@ Tiles carry **terrain** and optional **resources**. Extraction only happens wher
 
 When resource icons are visible on the empire map (`MAP10001`), small coloured **extraction discs** may appear beside the icon on your owned improved tiles:
 
-- **Gold discs** — effective yield transported toward the capital (**E**). These units count toward your stockpile path.
-- **Brown discs** — blocked yield (**B**). Either the tile is **not capital-connected** (nothing reaches the stockpile from that tile) or a **connected** tile is path- or transport-capped below its full production.
+- **Gold discs** — yield that reaches your capital / stockpile this turn.
+- **Brown discs** — improved yield that does **not** reach the stockpile (no capital link, or a road / port / town path cap).
 
-A disconnected improved tile with a visible resource icon shows **0 gold + F brown** discs (where **F** is full tile production under current rules) — not silence. That is your cue that the improvement looks productive but extraction is stranded until you restore capital link (roads, towns, ports) toward your capital.
+A compact **extraction-disc legend** sits above the bottom-left map tools whenever resource icons are on and you are viewing as a player (normal play or player observe) — including on turn 1 before any discs are painted. Tap the legend for a short panel that restates both colours and counsel to restore roads, towns, or ports toward the capital. The legend hides in **terrain only** and in **global observe**.
+
+A disconnected improved tile with a visible resource icon shows **all brown** discs (no gold) — not silence. That is your cue that the improvement looks productive but extraction is stranded until you restore capital link toward your capital.
 
 ### Why province identity matters in the UI
 
@@ -74,7 +76,7 @@ AI courts value capital-connected extraction and contested border provinces when
 - [ ] Summarizes region resource rules and prospect-required minerals (detail deferred to Ch. 4/6 as appropriate).
 - [ ] Explains capital connectivity’s effect on extraction usefulness.
 - [ ] Documents plains placement for capitals and per-province town tiles (including neutral provinces; prefer plains, convert-if-needed).
-- [ ] Explains gold vs brown extraction discs on `MAP10001` and ties brown discs on disconnected improved tiles to capital connectivity.
+- [ ] Explains gold vs brown extraction discs on `MAP10001`, the on-map legend, and ties brown discs on disconnected improved tiles to capital connectivity.
 - [ ] Explains prefixed province identity (`regionId|localId`) as the UI naming contract.
 - [ ] Sources match the chapter coverage map.
 

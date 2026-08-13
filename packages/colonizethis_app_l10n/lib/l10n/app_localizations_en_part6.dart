@@ -164,4 +164,25 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
 
   @override
   String get provinceOverlay_titleSeaZone => 'Sea zone';
+
+  @override
+  String get mapExtractionDisc_legendGold => 'Reaches capital';
+
+  @override
+  String get mapExtractionDisc_legendBrown => 'Blocked — will not extract';
+
+  @override
+  String get mapExtractionDisc_legendSemantics => 'Extraction disc colours';
+
+  @override
+  String get mapExtractionDisc_detailsGold =>
+      'Gold: yield that reaches your capital this turn.';
+
+  @override
+  String get mapExtractionDisc_detailsBrown =>
+      'Brown: improved yield that does not reach the stockpile (no capital link, or the road/port/town path is capped).';
+
+  @override
+  String get mapExtractionDisc_detailsCounsel =>
+      'Restore roads, towns, or ports toward your capital before treating a brown-disc tile as productive.';
 }
