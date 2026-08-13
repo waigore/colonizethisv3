@@ -3,6 +3,7 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -191,16 +192,10 @@ List<Widget> buildTileRoadLabelWidgets({
   );
   final detailsAction = Align(
     alignment: Alignment.centerLeft,
-    child: TextButton(
+    child: CtActionTextButton(
       key: kProvinceTileDetailsActionKey,
+      label: l10n.provinceOverlay_tileDetailsAction,
       onPressed: openDetails,
-      style: TextButton.styleFrom(
-        padding: EdgeInsets.zero,
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: EditorialMonoclePalette.accent,
-      ),
-      child: Text(l10n.provinceOverlay_tileDetailsAction),
     ),
   );
   return [transportRow, detailsAction];
