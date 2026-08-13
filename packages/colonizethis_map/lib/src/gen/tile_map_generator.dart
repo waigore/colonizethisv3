@@ -10,6 +10,7 @@ import 'tile_map_gen_sea_zone_subdivide_pass.dart';
 import 'tile_map_gen_terrain_jitter_pass.dart';
 import 'tile_map_generator_land_seeds.dart';
 import 'tile_map_generator_lakes_provinces.dart';
+import 'tile_map_generator_provinces.dart';
 import 'tile_map_generator_pass_adapters.dart';
 import 'tile_map_generator_terrain_assign.dart';
 import 'tile_map_grid_graph.dart';
@@ -43,10 +44,12 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       graph,
       continentJoinImpl,
     );
+    final provinceImpl = TileMapGenProvinces(params, graph);
     return TileMapGenerator._(
       params: params,
       landSeedService: landImpl,
-      lakeAndProvinceService: lakesImpl,
+      lakesService: lakesImpl,
+      provinceService: provinceImpl,
       terrainResourceService: terrainImpl,
       continentJoinService: continentJoinImpl,
       terrainJitterService: terrainJitterImpl,
@@ -57,20 +60,23 @@ class TileMapGenerator extends _TileMapGeneratorShell {
   TileMapGenerator._({
     required super.params,
     required TileMapGenLandSeeds landSeedService,
-    required TileMapGenLakesProvinces lakeAndProvinceService,
+    required TileMapGenLakesProvinces lakesService,
+    required TileMapGenProvinces provinceService,
     required TileMapGenTerrainResource terrainResourceService,
     required ContinentJoinPass continentJoinService,
     required TerrainJitterPass terrainJitterService,
     required SeaZoneSubdividePass seaZoneSubdivideService,
   }) : _landSeedService = landSeedService,
-       _lakeAndProvinceService = lakeAndProvinceService,
+       _lakesService = lakesService,
+       _provinceService = provinceService,
        _terrainResourceService = terrainResourceService,
        _continentJoinService = continentJoinService,
        _terrainJitterService = terrainJitterService,
        _seaZoneSubdivideService = seaZoneSubdivideService;
 
   final TileMapGenLandSeeds _landSeedService;
-  final TileMapGenLakesProvinces _lakeAndProvinceService;
+  final TileMapGenLakesProvinces _lakesService;
+  final TileMapGenProvinces _provinceService;
   final TileMapGenTerrainResource _terrainResourceService;
   final ContinentJoinPass _continentJoinService;
   final TerrainJitterPass _terrainJitterService;
@@ -152,7 +158,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     );
     grid = runLakesAndBorderNoisePass(
       params: params,
-      lakeAndProvinceService: _lakeAndProvinceService,
+      lakesService: _lakesService,
       grid: grid,
       seaZoneId: seaZoneId,
       landSeeds: landSeeds,
@@ -172,7 +178,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     var terrainGrid = terrainAndResources.$1;
     var resourceGrid = terrainAndResources.$2;
 
-    final provinceSeeds = _lakeAndProvinceService.placeProvinceSeedsOnLand(
+    final provinceSeeds = _provinceService.placeProvinceSeedsOnLand(
       grid,
       provinceToContinent,
       landSeeds,
@@ -183,7 +189,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     onLog?.call(
       'Pass 8: Province seeds on land (${provinceSeeds.length} provinces)',
     );
-    grid = _lakeAndProvinceService.assignProvincesFromSeeds(
+    grid = _provinceService.assignProvincesFromSeeds(
       grid,
       provinceSeeds,
       seaZoneId,

@@ -1433,7 +1433,7 @@ rules:
 
   - rule_id: repo.map_lib_file_size_headroom
     group: structure
-    title: colonizethis_map gen/view/render source files must be 350 non-comment lines or fewer (wave-5 headroom, Refs #4297)
+    title: colonizethis_map gen/view/render source files must be 300 non-comment lines or fewer (wave-6 headroom, Refs #4371)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_lib_file_size_headroom.dart

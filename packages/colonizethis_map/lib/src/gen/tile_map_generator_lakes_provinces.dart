@@ -1,31 +1,25 @@
-/// Pass 4–5, Pass 8–9: lakes, moats, border noise, province seeds and assignment.
+/// Pass 4–5: lakes, moats, and border noise.
 ///
 /// SPEC/program/tile-map-gen-algorithm.md.
 ///
-/// Extracted from the former `part of 'tile_map_generator.dart'` fragment into a
-/// standalone, independently importable class so the lake/moat/border-noise and
-/// province seeding passes can be unit-tested without the full generator library
-/// scope (see #3588). Constructor-injected [TileMapGridGraph] and
-/// [ContinentJoinPass] dependencies replace the former shared-scope access.
+/// Province seeding (Passes 8–9) lives in [TileMapGenProvinces]
+/// (`tile_map_generator_provinces.dart`, Refs #4371).
 library;
 
 import 'dart:math';
 
-import 'grid_voronoi.dart';
 import 'map_gen_pass_payloads.dart';
 import 'map_gen_stage.dart';
 import 'tile_map_gen_continent_join_pass.dart';
+import 'tile_map_generator_border_noise.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_params.dart';
 import 'tile_map_grid_graph.dart';
 import '../tile_map_directions.dart';
 import '../tile_map_grid.dart';
 
-/// Pass 4–5, Pass 8–9 service: lake/moat fill, border noise, province seed
-/// placement and Voronoi province assignment. Implements [MapGenPass] so
-/// [TileMapGenerator] drives Pass 4–5 through the uniform [run] entry, while the
-/// later province passes ([placeProvinceSeedsOnLand], [assignProvincesFromSeeds])
-/// are invoked directly by the orchestrator.
+/// Pass 4–5 service: lake/moat fill and border noise. Implements [MapGenPass]
+/// so [TileMapGenerator] drives Pass 4–5 through the uniform [run] entry.
 class TileMapGenLakesProvinces
     implements MapGenPass<LakesPassPayload, List<List<String>>> {
   TileMapGenLakesProvinces(this.params, this._graph, this._join);
@@ -45,7 +39,20 @@ class TileMapGenLakesProvinces
     if (params.skipFillLakes) {
       ctx.log('Pass 4: Fill lakes and moats skipped');
     } else {
+      var ocean = _graph.oceanCells(
+        nextGrid,
+        payload.seaZoneId,
+        payload.landSeeds,
+        payload.continentBySeedIndex,
+      );
       nextGrid = fillLakes(
+        nextGrid,
+        payload.seaZoneId,
+        payload.landSeeds,
+        payload.continentBySeedIndex,
+        ocean: ocean,
+      );
+      ocean = _graph.oceanCells(
         nextGrid,
         payload.seaZoneId,
         payload.landSeeds,
@@ -57,11 +64,12 @@ class TileMapGenLakesProvinces
         payload.landSeeds,
         payload.continentBySeedIndex,
         payload.rnd,
+        ocean: ocean,
       );
       ctx.log('Pass 4: Fill lakes and moats done');
     }
     if (params.borderNoise > 0) {
-      nextGrid = borderNoise(nextGrid, payload.seaZoneId, payload.rnd);
+      nextGrid = applyBorderNoise(params, nextGrid, payload.seaZoneId, payload.rnd);
       ctx.log('Pass 5: Border noise applied');
     } else {
       ctx.log('Pass 5: Border noise skipped (0)');
@@ -91,49 +99,46 @@ class TileMapGenLakesProvinces
     }
   }
 
-  void _tryBorderNoiseSwapAtCell(
+  Set<(int x, int y)> _resolveOceanCells(
     List<List<String>> grid,
-    List<List<String>> next,
-    int x,
-    int y,
     String seaZoneId,
-    Random rnd,
-  ) {
-    if (rnd.nextDouble() >= params.borderNoise) return;
-    final id = grid[y][x];
-    for (final (dx, dy) in kTileMapDirections4WestEastNorthSouth) {
-      final nx = x + dx;
-      final ny = y + dy;
-      final nid = grid[ny][nx];
-      final atBoundary =
-          (id == kTileMapLandSentinel && nid == seaZoneId) ||
-          (id == seaZoneId && nid == kTileMapLandSentinel);
-      if (atBoundary) {
-        next[ny][nx] = id;
-        next[y][x] = nid;
-        break;
-      }
-    }
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex, {
+    Set<(int x, int y)>? ocean,
+  }) {
+    return ocean ??
+        _graph.oceanCells(
+          grid,
+          seaZoneId,
+          landSeeds,
+          continentBySeedIndex,
+        );
   }
 
-  /// Fill lakes: convert lake (sea not in ocean) to land; skip lakes that border 2+ continents (straits).
+  /// Fill lakes: convert lake (sea not in ocean) to land; skip lakes that
+  /// border 2+ continents (straits).
+  ///
+  /// When [ocean] is omitted, the ocean set is derived from [grid] (direct test
+  /// entry points). [run] passes an explicit snapshot per step (Refs #4371).
   List<List<String>> fillLakes(
     List<List<String>> grid,
     String seaZoneId,
     List<(int x, int y)> landSeeds,
-    List<int> continentBySeedIndex,
-  ) {
-    final ocean = _graph.oceanCells(
+    List<int> continentBySeedIndex, {
+    Set<(int x, int y)>? ocean,
+  }) {
+    final resolvedOcean = _resolveOceanCells(
       grid,
       seaZoneId,
       landSeeds,
       continentBySeedIndex,
+      ocean: ocean,
     );
     final next = snapshotGrid(grid);
     final lakeCells = <(int x, int y)>[];
     TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
       if (grid[y][x] != seaZoneId) return;
-      if (ocean.contains((x, y))) return;
+      if (resolvedOcean.contains((x, y))) return;
       lakeCells.add((x, y));
     });
     final lakeComponents = _graph.connectedComponentsOfLand(lakeCells.toSet());
@@ -148,7 +153,7 @@ class TileMapGenLakesProvinces
           y,
           next,
           seaZoneId,
-          ocean,
+          resolvedOcean,
           coastalLandCandidates,
         );
       }
@@ -160,14 +165,14 @@ class TileMapGenLakesProvinces
           a.$1,
           a.$2,
           seaZoneId,
-          ocean,
+          resolvedOcean,
         );
         final nb = _graph.oceanNeighbourCount(
           next,
           b.$1,
           b.$2,
           seaZoneId,
-          ocean,
+          resolvedOcean,
         );
         return nb.compareTo(na);
       });
@@ -184,27 +189,32 @@ class TileMapGenLakesProvinces
   /// A moat candidate is an ocean cell whose 4-neighbourhood contains land
   /// belonging to the **same** continent in at least two directions and no
   /// land from any other continent.
+  ///
+  /// When [ocean] is omitted, the ocean set is derived from [grid]. [run]
+  /// recomputes and passes the post-lake snapshot (Refs #4371).
   List<List<String>> fillMoats(
     List<List<String>> grid,
     String seaZoneId,
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
-    Random rnd,
-  ) {
-    final ocean = _graph.oceanCells(
+    Random rnd, {
+    Set<(int x, int y)>? ocean,
+  }) {
+    final resolvedOcean = _resolveOceanCells(
       grid,
       seaZoneId,
       landSeeds,
       continentBySeedIndex,
+      ocean: ocean,
     );
-    if (ocean.isEmpty) return grid;
+    if (resolvedOcean.isEmpty) return grid;
 
     final next = snapshotGrid(grid);
     final moatCells = <(int x, int y)>[];
 
     TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
       if (next[y][x] != seaZoneId) return;
-      if (!ocean.contains((x, y))) return;
+      if (!resolvedOcean.contains((x, y))) return;
 
       // Examine 4-neighbourhood for bordering land.
       final neighbouringContinents = <int>{};
@@ -253,124 +263,10 @@ class TileMapGenLakesProvinces
       null,
       null,
       seaZoneId,
-      ocean,
+      resolvedOcean,
       moatCells.length,
     );
 
-    return next;
-  }
-
-  /// Land cells grouped by continent (nearest land seed → continent via continentBySeedIndex).
-  Map<int, List<(int x, int y)>> _landCellsByContinent(
-    List<List<String>> grid,
-    List<(int x, int y)> landSeeds,
-    List<int> continentBySeedIndex,
-  ) {
-    final numContinents = continentBySeedIndex.isEmpty
-        ? 0
-        : continentBySeedIndex.reduce((a, b) => a > b ? a : b) + 1;
-    final byContinent = <int, List<(int x, int y)>>{
-      for (var c = 0; c < numContinents; c++) c: [],
-    };
-    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
-      if (grid[y][x] != kTileMapLandSentinel) return;
-      final bestSeedIndex = _graph.nearestLandSeedIndexForCell(x, y, landSeeds);
-      final c = continentBySeedIndex[bestSeedIndex];
-      byContinent[c]!.add((x, y));
-    });
-    return byContinent;
-  }
-
-  /// Place one province seed per province on that continent's land cells; min spacing.
-  Map<String, (int x, int y)> placeProvinceSeedsOnLand(
-    List<List<String>> grid,
-    Map<String, int> provinceToContinent,
-    List<(int x, int y)> landSeeds,
-    List<int> continentBySeedIndex,
-    String seaZoneId,
-    Random rnd,
-  ) {
-    if (provinceToContinent.isEmpty) return {};
-    final numContinents = provinceToContinent.values.toSet().length;
-    final byContinent = _landCellsByContinent(
-      grid,
-      landSeeds,
-      continentBySeedIndex,
-    );
-    final seeds = <String, (int x, int y)>{};
-    const minDist = 3;
-    for (var c = 0; c < numContinents; c++) {
-      final cells = byContinent[c] ?? [];
-      if (cells.isEmpty) continue;
-      final provinceIds =
-          provinceToContinent.entries
-              .where((e) => e.value == c)
-              .map((e) => e.key)
-              .toList()
-            ..sort();
-      final used = <(int x, int y)>{};
-      for (final provinceId in provinceIds) {
-        final shuffled = List<(int x, int y)>.from(cells)..shuffle(rnd);
-        for (final (x, y) in shuffled) {
-          if (used.any(
-            (p) => (p.$1 - x).abs() < minDist && (p.$2 - y).abs() < minDist,
-          )) {
-            continue;
-          }
-          seeds[provinceId] = (x, y);
-          used.add((x, y));
-          break;
-        }
-        if (!seeds.containsKey(provinceId) && cells.isNotEmpty) {
-          final (x, y) = cells[rnd.nextInt(cells.length)];
-          seeds[provinceId] = (x, y);
-          used.add((x, y));
-        }
-      }
-    }
-    return seeds;
-  }
-
-  /// Replace each kTileMapLandSentinel cell with nearest province seed id. Uses generic Voronoi.
-  List<List<String>> assignProvincesFromSeeds(
-    List<List<String>> grid,
-    Map<String, (int x, int y)> provinceSeeds,
-    String seaZoneId,
-  ) {
-    if (provinceSeeds.isEmpty) return grid;
-    final landCells = <(int x, int y)>[];
-    TileMapGrid.forEachCell(grid, (y, x, value) {
-      if (value == kTileMapLandSentinel) landCells.add((x, y));
-    });
-    final assignment = assignCellsToNearestSeed(
-      landCells,
-      provinceSeeds,
-      noiseScale: 0,
-      noiseSeed: params.seed,
-    );
-    final next = snapshotGrid(grid);
-    for (final entry in assignment.entries) {
-      final (x, y) = entry.key;
-      next[y][x] = entry.value;
-    }
-    return next;
-  }
-
-  /// Border noise: swap only at land/sea boundary (sentinel vs seaZoneId).
-  List<List<String>> borderNoise(
-    List<List<String>> grid,
-    String seaZoneId,
-    Random rnd,
-  ) {
-    final next = snapshotGrid(grid);
-    // ct-lint-allow: nested-grid-walk — bordered interior walk (skips the grid
-    // edge, y/x in 1..n-2), so the full-grid TileMapGrid.forEachIndex contract
-    // does not apply.
-    for (var y = 1; y < params.height - 1; y++) {
-      for (var x = 1; x < params.width - 1; x++) {
-        _tryBorderNoiseSwapAtCell(grid, next, x, y, seaZoneId, rnd);
-      }
-    }
     return next;
   }
 }
