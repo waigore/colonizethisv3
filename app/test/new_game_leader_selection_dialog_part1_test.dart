@@ -105,7 +105,6 @@ void main() {
       await tester.ensureVisible(find.text('Start'));
       expect(tester.getRect(find.text('Start')).top, greaterThanOrEqualTo(0));
     });
-
     testWidgets('Start passes default ordered Great Power ids and leader map', (
       WidgetTester tester,
     ) async {
@@ -133,7 +132,6 @@ void main() {
       expect(gotSeed, 42);
       expect(gotInfiniteMode, isFalse);
     });
-
     testWidgets(
       'AI profile dropdowns mount for blessed names and forward selected id',
       (WidgetTester tester) async {
@@ -182,7 +180,6 @@ void main() {
       expect(confirmed, isFalse);
       expect(find.text('Choose nations and leaders'), findsNothing);
     });
-
     testWidgets('changing slot 1 nation to Sweden updates order and leader', (
       WidgetTester tester,
     ) async {
@@ -209,7 +206,6 @@ void main() {
       expect(gotLeaders, isNotNull);
       expect(gotLeaders!['sweden'], 'gustavus');
     });
-
     testWidgets(
       'Start seed field: 0 passes through; cleared falls back to 42',
       (WidgetTester tester) async {
@@ -249,7 +245,6 @@ void main() {
         );
         expect(got, AdvancedStartType.none);
       });
-
       testWidgets('selecting 50 Turns In forwards AdvancedStartType.turns50', (
         WidgetTester tester,
       ) async {
@@ -270,7 +265,6 @@ void main() {
         );
         expect(got, AdvancedStartType.turns50);
       });
-
       testWidgets(
         'non-locked profile shows disabled helper and Start emits none',
         (WidgetTester tester) async {
@@ -295,7 +289,6 @@ void main() {
         },
       );
     });
-
     testWidgets('Start passes terrainVariation default and left/right edges', (
       WidgetTester tester,
     ) async {
@@ -363,7 +356,6 @@ void main() {
           );
         }
       });
-
       testWidgets(
         'recovery: replacing the duplicate nation unmounts the wrapper and '
         're-enables Start',

@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   suppressLogsForTests();
-  group('GameMapAreaStateLogic.allowsFullTurnResolution', () {
+  group('GameMapAreaStateLogicShell.allowsFullTurnResolution', () {
     final baseGame = Game(
       id: 'g1',
       worldState: WorldState(
@@ -18,12 +18,12 @@ void main() {
     );
 
     test('true when no victory and calendar not halted', () {
-      expect(GameMapAreaStateLogic.allowsFullTurnResolution(baseGame), isTrue);
+      expect(GameMapAreaStateLogicShell.allowsFullTurnResolution(baseGame), isTrue);
     });
 
     test('false when calendar halted', () {
       final g = baseGame.copyWith(calendarCampaignHalted: true);
-      expect(GameMapAreaStateLogic.allowsFullTurnResolution(g), isFalse);
+      expect(GameMapAreaStateLogicShell.allowsFullTurnResolution(g), isFalse);
     });
 
     test('false when military victory set', () {
@@ -34,7 +34,7 @@ void main() {
           turnNumber: 4,
         ),
       );
-      expect(GameMapAreaStateLogic.allowsFullTurnResolution(g), isFalse);
+      expect(GameMapAreaStateLogicShell.allowsFullTurnResolution(g), isFalse);
     });
   });
 }

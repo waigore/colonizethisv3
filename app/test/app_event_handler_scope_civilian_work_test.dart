@@ -52,7 +52,6 @@ void main() {
   setUp(() {
     AppEventBus.reset();
   });
-
   testWidgets(
     'civilian work upsert validates merged draft once and keeps one order per unit',
     (tester) async {

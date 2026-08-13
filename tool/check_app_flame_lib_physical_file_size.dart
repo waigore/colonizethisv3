@@ -1,6 +1,6 @@
 // Physical line ratchet for app/lib/features/game/flame (`repo.app_flame_lib_physical_file_size`).
 //
-// SPEC: SPEC/program/repo-lint.md (wave-10 #4183 Slice A). Shrink-only
+// SPEC: SPEC/program/repo-lint.md (wave-15 #4352 Slice C). Shrink-only
 // grandfather allowlist; remove entries as splits land.
 import 'dart:convert';
 import 'dart:io';
@@ -9,13 +9,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for app flame wave-10 post-split target (≤400 physical lines).
-const int appFlameLibPhysicalFileSizeCeiling = 400;
+/// Ratchet ceiling for app flame wave-15 post-split target (≤300 physical lines).
+const int appFlameLibPhysicalFileSizeCeiling = 300;
 
 const String _flameLibRelativePath = 'app/lib/features/game/flame';
 
-/// Hot files still above the wave-10 ceiling during transition slices.
-/// Shrink-only allowlist; remove entries as splits land. Refs #4183, #4224.
+/// Hot files still above the wave-15 ceiling during transition slices.
+/// Shrink-only allowlist; remove entries as splits land. Refs #4352.
 const List<String> appFlameLibPhysicalFileSizeGrandfatheredForTests = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -102,7 +102,7 @@ int runCheckAppFlameLibPhysicalFileSize(
   if (violations.isEmpty) {
     logI(
       'check_app_flame_lib_physical_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4183).',
+      '(ceiling $ceiling; Refs #4352).',
     );
     return 0;
   }
@@ -111,7 +111,7 @@ int runCheckAppFlameLibPhysicalFileSize(
   logE(
     'check_app_flame_lib_physical_file_size: found ${violations.length} '
     'violation(s) under $_flameLibRelativePath (ceiling $ceiling; '
-    'Refs #4183):',
+    'Refs #4352):',
   );
   for (final violation in violations) {
     logE(' - $violation');

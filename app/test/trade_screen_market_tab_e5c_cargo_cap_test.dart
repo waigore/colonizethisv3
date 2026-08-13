@@ -1,36 +1,7 @@
 // Widget tests for the Market tab cross-commodity cargo-remaining
 // indicator + per-stepper cap + warning row (Refs #2993 E5c).
 // SPEC/ui/trade-screen.md § Cargo indicator + per-stepper cap +
-// warning.
-//
-// Exercises the durable contract for the E5c cargo telemetry and cap:
-//
-//  * The cargo indicator (`marketCargoIndicatorKey`) is always
-//    mounted in the Market tab body and renders `Cargo remaining: X`
-//    where `X = max(0, tradeCargoCapacity − totalStagedBidQuantity)`.
-//  * `tradeCargoCapacity` comes from `cargoHoldsForHomeFleet` and
-//    falls back to `defaultCargoHoldsStub = 24` when the player has
-//    no home fleet.
 //  * Offers do not consume cargo (per #2988 § Cargo Constraint Model).
-//  * The warning row (`marketCargoWarningKey`) is only mounted when
-//    `remainingCargo == 0` AND `totalStagedBidQuantity > 0`; absent
-//    otherwise.
-//  * Bid increments are blocked when the cross-commodity bid total
-//    would exceed `tradeCargoCapacity`; the staged TradeOrder.quantity
-//    stays at its prior value and the indicator + warning state stays
-//    consistent.
-//  * Toggling a row to `Bid` is clamped: the staged quantity =
-//    min(desiredQuantity, maxAllowedBidQuantity); the cross-commodity
-//    bid total never exceeds `tradeCargoCapacity`.
-//  * Toggling a row to `Bid` is a silent no-op when
-//    `maxAllowedBidQuantity <= 0` (cargo budget already saturated by
-//    other commodities).
-//  * Decrement and `None` free cargo: the indicator updates and the
-//    warning row is removed when the cap is no longer saturated.
-//  * Observe-mode (`canMutateViaUi == false`): the cargo indicator and
-//    warning still mount with live text values; the chip / stepper
-//    taps are blocked by the existing `IgnorePointer` wrapper.
-
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -120,7 +91,6 @@ void main() {
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
-
     testWidgets('staged offers do not consume cargo → indicator stays at the '
         'full capacity and the warning row is absent', (tester) async {
       await pumpTradeScreenWithContainer(
@@ -135,7 +105,6 @@ void main() {
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
-
     testWidgets(
       'staged bids totalling 7 (timber 4 + iron 3) under capacity 24 → '
       'indicator reads "Cargo remaining: 17" and no warning is shown',
@@ -174,7 +143,6 @@ void main() {
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
       expect(find.text(TradeScreenMarketKeys.cargoLimitWarningText), findsOneWidget);
     });
-
     testWidgets(
       'capacity 10 with bid timber 6 (cargo remaining 4): incrementing '
       'timber `+` four times brings staged quantity to 10 then the '
@@ -251,7 +219,6 @@ void main() {
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
     });
-
     testWidgets('capacity 10 with cargo saturated and a staged offer: tapping '
         '`Bid` on the offer row is also blocked (the prior offer '
         'survives because the toggle is rejected)', (tester) async {
@@ -283,7 +250,6 @@ void main() {
       expect(fabric?.quantity, 5);
       expect(_totalStagedBid(container), 10);
     });
-
     testWidgets('capacity 10 with offer fabric 8 (cargo remaining 10): tapping '
         '`Bid` on fabric preserves the prior quantity (8 ≤ 10) and '
         'reduces cargo remaining to 2', (tester) async {
@@ -309,7 +275,6 @@ void main() {
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 2');
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
-
     testWidgets('capacity 10 with bid timber 9 (cargo remaining 1) AND offer '
         'fabric 5: tapping `Bid` on fabric clamps the new staged '
         'quantity to the remaining cargo (1, not the prior 5)', (tester) async {
@@ -351,7 +316,6 @@ void main() {
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
     });
-
     testWidgets('capacity 10 saturated with bid timber 10: tapping `−` on '
         'timber frees one unit of cargo, removes the warning row, and '
         'updates the indicator to "Cargo remaining: 1"', (tester) async {
@@ -375,7 +339,6 @@ void main() {
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 1');
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
-
     testWidgets('capacity 10 saturated with bid timber 10: tapping `None` on '
         'timber removes the staged TradeOrder, frees the entire cargo '
         'budget, and removes the warning row', (tester) async {
@@ -397,7 +360,6 @@ void main() {
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 10');
       expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
-
     testWidgets('observe mode (canMutateViaUi == false): the cargo indicator '
         'and warning row stay mounted with live text values; the chip '
         'taps are blocked by the existing IgnorePointer wrapper so '
