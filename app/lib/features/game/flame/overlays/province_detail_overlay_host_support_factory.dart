@@ -1,29 +1,35 @@
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:flutter/widgets.dart';
 
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:flutter/material.dart';
+
+import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/province_action_state_calculator.dart';
 import '../map_state/game_map_area_state_logic.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
     show isProvinceSeaZoneOverlaySeaZone;
+import 'province_detail_overlay_host_support_army_move.dart';
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
 /// narrow panel hosts. Hosts own layout / E2E only. Refs #4018.
 ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
+  required BuildContext context,
   required ct_models.Game game,
   required RegionMapViewData region,
   required String humanPlayerId,
   required PlayerView playerView,
   required PerPlayerWorkTargetSelectionCache workTargetSelectionCache,
+  PerPlayerArmyMovePickerCache? armyMovePickerCache,
   required String? selectedTileKey,
   required ct_models.Orders draftOrders,
   required GameMapData? mapData,
@@ -73,10 +79,11 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         topology: mapData?.combinedTopology,
         currentOrders: draftOrders,
       );
-  final establishConsulateTargetName = _factionDisplayName(
-    game,
-    establishConsulateState.ownerId,
-  );
+  final consulateOwnerId = establishConsulateState.ownerId;
+  final establishConsulateTargetName = consulateOwnerId == null
+      ? ''
+      : (game.factionDisplayNameById(consulateOwnerId) ?? consulateOwnerId);
+
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
     humanPlayerId: humanPlayerId,
@@ -145,6 +152,23 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
       );
     }
   }
+  final isSeaZone = isProvinceSeaZoneOverlaySeaZone(region, displayId);
+  final armyMove = buildProvinceArmyMoveOverlayControls(
+    context: context,
+    game: game,
+    region: region,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+    displayId: displayId,
+    draftOrders: draftOrders,
+    mapData: mapData,
+    canMutateViaUi: canMutateViaUi,
+    omniscientDetail: omniscientDetail,
+    armyMovePickerCache: armyMovePickerCache,
+    bus: bus,
+    isSeaZone: isSeaZone,
+  );
+
   return ProvinceSeaZoneDetailOverlay(
     game: game,
     region: region,
@@ -195,6 +219,14 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     upgradeTownHasBuilderUnits: upgradeTownState.hasBuilderUnits,
     upgradeTownTargetTileKey: upgradeTownState.townTileKey,
     onUpgradeTownTap: shortcuts.onUpgradeTownTap,
+    showMoveArmyControl: armyMove.showMove,
+    moveArmyEnabled: armyMove.moveEnabled,
+    moveArmyTooltip: armyMove.moveTooltip,
+    onMoveArmyTap: armyMove.onMoveTap,
+    showInvadeArmyControl: armyMove.showInvade,
+    invadeArmyEnabled: armyMove.invadeEnabled,
+    invadeArmyTooltip: armyMove.invadeTooltip,
+    onInvadeArmyTap: armyMove.onInvadeTap,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,
     establishConsulateEnabled:
@@ -203,18 +235,4 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     establishConsulateRejectionReason: establishConsulateState.rejectionReason,
     onEstablishConsulateTap: shortcuts.onEstablishConsulateTap,
   );
-}
-
-String _factionDisplayName(ct_models.Game game, String? factionId) {
-  if (factionId == null) return '';
-  for (final player in game.players) {
-    if (player.id == factionId) return player.displayName;
-  }
-  for (final minor in game.minorNations) {
-    if (minor.id == factionId) return minor.displayName ?? factionId;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == factionId) return tribe.displayName ?? factionId;
-  }
-  return factionId;
 }

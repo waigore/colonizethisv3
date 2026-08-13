@@ -9,6 +9,7 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import 'province_detail_overlay_host_support.dart';
 import 'province_detail_panel_slide_transition.dart';
@@ -34,6 +35,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     required this.humanPlayerId,
     required this.playerView,
     required this.workTargetSelectionCache,
+    this.armyMovePickerCache,
     this.omniscientDetail = false,
     this.canMutateViaUi = true,
     super.key,
@@ -44,6 +46,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   final String humanPlayerId;
   final PlayerView playerView;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
+  final PerPlayerArmyMovePickerCache? armyMovePickerCache;
   final bool omniscientDetail;
   final bool canMutateViaUi;
 
@@ -74,11 +77,13 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
       child: buildProvinceSeaZoneDetailOverlayForPanel(
+        context: context,
         game: game,
         region: region,
         humanPlayerId: humanPlayerId,
         playerView: playerView,
         workTargetSelectionCache: workTargetSelectionCache,
+        armyMovePickerCache: armyMovePickerCache,
         selectedTileKey: panel.selectedTileKey,
         draftOrders: draftOrders,
         mapData: hostArgs.mapData,

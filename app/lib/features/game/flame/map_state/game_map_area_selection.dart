@@ -39,6 +39,28 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     );
   }
 
+  void refreshArmyMovePickerCache(ct_models.Game game) {
+    final view = buildPlayerView(
+      game,
+      widget.mapViewData.combinedTopology,
+      mapPlayerId,
+    );
+    armyMovePickerCache.refresh(
+      ArmyMovePickerSnapshot(
+        game: game,
+        playerId: mapPlayerId,
+        playerView: view,
+        topology: widget.mapViewData.combinedTopology,
+        currentOrders: ref.read(currentOrdersProvider),
+      ),
+    );
+  }
+
+  void refreshMapSuggestionCaches(ct_models.Game game) {
+    refreshWorkTargetSelectionCache(game);
+    refreshArmyMovePickerCache(game);
+  }
+
   int? preferredRegionIndexForValidSelection(Set<String> validTileKeys) {
     if (validTileKeys.isEmpty) {
       return null;
