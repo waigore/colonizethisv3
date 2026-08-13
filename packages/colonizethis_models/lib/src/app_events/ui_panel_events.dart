@@ -108,7 +108,8 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
   final String? tileScopeTileKey;
 }
 
-/// Map fleet-marker shortcut: mission assign context menu (Refs #4213).
+/// Map fleet-marker shortcut: routes to Naval Units (Home Fleet), Move (in
+/// port), or mission + Sail (at sea) (Refs #4343).
 class OpenNavalMissionMenuEvent extends UIActionEvent {
   const OpenNavalMissionMenuEvent({
     required this.locationScopeKey,
