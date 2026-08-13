@@ -7,6 +7,7 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../constants.dart';
+import 'full_ai_civilian_work_selection_explore_prospect_exposure.dart';
 import 'full_ai_civilian_work_selection_feedstock_predicates.dart';
 import 'full_ai_civilian_work_selection_shared.dart';
 
@@ -16,91 +17,7 @@ import 'full_ai_civilian_work_selection_shared.dart';
 // out of full_ai_civilian_work_selection.dart by concern to keep each library
 // file small.
 
-bool _observationEligible(
-  PlayerView view,
-  Game game,
-  String playerId,
-  String tileKey,
-  Province province,
-) {
-  if (view.visibilityForTile(tileKey) == VisibilityLevel.fullyVisible) {
-    return true;
-  }
-  if (province.ownerId == playerId) return true;
-  return false;
-}
-
-bool _tileShowsMineralForExposure(
-  Game game,
-  String playerId,
-  String tileKey,
-  String mineralId,
-) {
-  final res = game.worldState.resourceByTileKey[tileKey];
-  if (res == mineralId) return true;
-  final prospected =
-      game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-  return prospected.contains(tileKey) && res == mineralId;
-}
-
-void _bumpExposureForTile(
-  Game game,
-  PlayerView view,
-  String playerId,
-  String tileKey,
-  Province province,
-  Map<String, int> counts,
-) {
-  if (!_observationEligible(view, game, playerId, tileKey, province)) {
-    return;
-  }
-  for (final m in kMineralResourceIds) {
-    if (!_tileShowsMineralForExposure(game, playerId, tileKey, m)) continue;
-    counts[m] = (counts[m] ?? 0) + 1;
-  }
-}
-
-void _bumpExposureForProvinceEntry(
-  Game game,
-  PlayerView view,
-  String playerId,
-  MapEntry<String, List<String>> entry,
-  Map<String, int> counts,
-) {
-  final province = game.worldState.tryGetProvince(entry.key);
-  if (province == null) return;
-  for (final tk in entry.value) {
-    _bumpExposureForTile(game, view, playerId, tk, province, counts);
-  }
-}
-
-Map<String, int> _exposureCountsByMineral(
-  Game game,
-  PlayerView view,
-  String playerId,
-) {
-  final counts = <String, int>{for (final m in kMineralResourceIds) m: 0};
-  for (final byProvince in game.worldState.tileKeysByRegionAndProvince.values) {
-    for (final entry in byProvince.entries) {
-      _bumpExposureForProvinceEntry(game, view, playerId, entry, counts);
-    }
-  }
-  return counts;
-}
-
-Set<String> _mineralsWithMinExposure(Map<String, int> exposure) {
-  if (exposure.isEmpty) return {};
-  var minV = 1 << 30;
-  for (final v in exposure.values) {
-    if (v < minV) minV = v;
-  }
-  return exposure.entries
-      .where((e) => e.value == minV)
-      .map((e) => e.key)
-      .toSet();
-}
-
-int _unknownTilesInExploreProvince(PlayerView view, Game game, WorkOrder w) {
+int unknownTilesInExploreProvince(PlayerView view, Game game, WorkOrder w) {
   final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
   if (provId == null) return 0;
   final regionId = ProvinceId.regionIdFrom(provId);
@@ -114,8 +31,8 @@ int _unknownTilesInExploreProvince(PlayerView view, Game game, WorkOrder w) {
   return u;
 }
 
-int _eScore(WorkOrder w, PlayerView view, Game game) {
-  final unknown = _unknownTilesInExploreProvince(view, game, w);
+int exploreWorkScore(WorkOrder w, PlayerView view, Game game) {
+  final unknown = unknownTilesInExploreProvince(view, game, w);
   // Issue #2082: E_unknown = min(24, 3 × U), not min(24, unknown) on the tile count.
   int score = 100 + math.min(24, 3 * unknown);
   final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
@@ -125,7 +42,7 @@ int _eScore(WorkOrder w, PlayerView view, Game game) {
   return score;
 }
 
-int _prospectTerritoryPoints(
+int prospectTerritoryPoints(
   Game game,
   PlayerView view,
   String playerId,
@@ -148,25 +65,25 @@ int _prospectTerritoryPoints(
   return 0;
 }
 
-Resource? _resourceByMineralId(String mId) {
+Resource? resourceByMineralId(String mId) {
   for (final r in Resource.values) {
     if (r.name == mId) return r;
   }
   return null;
 }
 
-bool _terrainHostsMineral(
+bool terrainHostsMineral(
   TerrainType terrain,
   String mId,
   ResourceRules rules,
 ) {
-  final res = _resourceByMineralId(mId);
+  final res = resourceByMineralId(mId);
   if (res == null) return false;
   final allowed = rules.allowedTerrains[res];
   return allowed != null && allowed.contains(terrain);
 }
 
-bool _tileCanHostAnyMineralInSet(
+bool tileCanHostAnyMineralInSet(
   Map<String, TileMapResult>? tileMapByRegion,
   String tileKey,
   Set<String> mineralIds,
@@ -176,7 +93,7 @@ bool _tileCanHostAnyMineralInSet(
   if (terrain == null) return false;
   final rules = ResourceRules.defaultRules;
   for (final mId in mineralIds) {
-    if (_terrainHostsMineral(terrain, mId, rules)) return true;
+    if (terrainHostsMineral(terrain, mId, rules)) return true;
   }
   return false;
 }
@@ -189,7 +106,7 @@ bool _tileCanHostAnyMineralInSet(
 // ahead of ordinary explore / prospect work; behaviour is normative in
 // SPEC/ai/civilian-work-planner.md.
 
-int _pScore(
+int prospectWorkScore(
   WorkOrder w,
   Game game,
   PlayerView view,
@@ -201,7 +118,7 @@ int _pScore(
 }) {
   final base =
       25 +
-      _prospectTerritoryPoints(
+      prospectTerritoryPoints(
         game,
         view,
         playerId,
@@ -209,7 +126,7 @@ int _pScore(
         factionMembership,
       );
   final urgent =
-      _tileCanHostAnyMineralInSet(tileMapByRegion, w.targetTileKey, sHigh)
+      tileCanHostAnyMineralInSet(tileMapByRegion, w.targetTileKey, sHigh)
       ? 95
       : 0;
   final feedstock =
@@ -225,7 +142,7 @@ int _pScore(
   return base + urgent + feedstock;
 }
 
-int _exploreTieCompare(WorkOrder w, WorkOrder best) {
+int exploreTieCompare(WorkOrder w, WorkOrder best) {
   final tk = w.targetTileKey.compareTo(best.targetTileKey);
   if (tk != 0) return tk;
   final pw = Unit.provinceIdFromTileKey(w.targetTileKey) ?? '';
@@ -233,19 +150,19 @@ int _exploreTieCompare(WorkOrder w, WorkOrder best) {
   return pw.compareTo(pb);
 }
 
-WorkOrder? _bestExploreRow(
+WorkOrder? bestExploreRow(
   List<WorkOrder> explores,
   PlayerView view,
   Game game,
 ) {
   return bestScoredWorkRow(
     explores,
-    scoreOf: (w) => _eScore(w, view, game),
-    compareTieBreak: _exploreTieCompare,
+    scoreOf: (w) => exploreWorkScore(w, view, game),
+    compareTieBreak: exploreTieCompare,
   );
 }
 
-WorkOrder? _bestProspectRow(
+WorkOrder? bestProspectRow(
   List<WorkOrder> prospects,
   Game game,
   PlayerView view,
@@ -257,7 +174,7 @@ WorkOrder? _bestProspectRow(
 }) {
   return bestScoredWorkRow(
     prospects,
-    scoreOf: (w) => _pScore(
+    scoreOf: (w) => prospectWorkScore(
       w,
       game,
       view,
@@ -282,10 +199,10 @@ WorkOrder? pickExplorerCandidateSet(
 }) {
   final explores = c.where((w) => w.target == kWorkTargetExplore).toList();
   final prospects = c.where((w) => w.target == kWorkTargetProspect).toList();
-  final exposure = _exposureCountsByMineral(game, view, playerId);
-  final sHigh = _mineralsWithMinExposure(exposure);
-  final bestE = _bestExploreRow(explores, view, game);
-  final bestP = _bestProspectRow(
+  final exposure = exposureCountsByMineral(game, view, playerId);
+  final sHigh = mineralsWithMinExposure(exposure);
+  final bestE = bestExploreRow(explores, view, game);
+  final bestP = bestProspectRow(
     prospects,
     game,
     view,
@@ -298,8 +215,8 @@ WorkOrder? pickExplorerCandidateSet(
   if (bestE == null && bestP == null) return null;
   if (bestE == null) return bestP;
   if (bestP == null) return bestE;
-  final eScore = _eScore(bestE, view, game);
-  final pScore = _pScore(
+  final eScore = exploreWorkScore(bestE, view, game);
+  final pScore = prospectWorkScore(
     bestP,
     game,
     view,
