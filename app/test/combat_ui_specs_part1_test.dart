@@ -9,112 +9,12 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_action_selector.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-
 import 'combat_ui_specs_test_support.dart';
-
-QuickBattleGroup _centerFront({
-  required List<String> unitIds,
-  int cohesion = 3,
-}) =>
-    QuickBattleGroup(
-      lane: QuickBattleLane.center,
-      line: QuickBattleLine.front,
-      unitIds: unitIds,
-      cohesion: cohesion,
-    );
-
-QuickBattleDeploymentView _deploymentView({
-  List<QuickBattleGroup> attackerGroups = const [],
-  List<QuickBattleGroup> defenderGroups = const [],
-  String attackerName = 'Attacker',
-  String defenderName = 'Defender',
-}) =>
-    QuickBattleDeploymentView(
-      attackerDeployment: QuickBattleDeployment(groups: attackerGroups),
-      defenderDeployment: QuickBattleDeployment(groups: defenderGroups),
-      attackerName: attackerName,
-      defenderName: defenderName,
-    );
-
-Future<void> _pumpSelector(
-  WidgetTester tester, {
-  required int cpRemaining,
-  required void Function(QuickBattleAction) onActionSelected,
-  bool dark = false,
-}) {
-  final child = QuickBattleActionSelector(
-    cpRemaining: cpRemaining,
-    onActionSelected: onActionSelected,
-  );
-  return tester.pumpWidget(
-    dark ? combatUiSpecsDarkFrame(child) : combatUiSpecsFrame(child),
-  );
-}
-
-(AppEventBus, List<CombatMode>) _listenCombatModes() {
-  final bus = AppEventBus.create();
-  final received = <CombatMode>[];
-  final sub = bus.on<CombatModeChosenEvent>().listen((e) {
-    received.add(e.mode);
-  });
-  addTearDown(() async {
-    await sub.cancel();
-  });
-  return (bus, received);
-}
-
-Future<void> _openCombatModeChoice(
-  WidgetTester tester, {
-  required AppEventBus bus,
-  required String provinceName,
-  required bool isCapitalSiege,
-}) async {
-  await tester.pumpWidget(
-    combatUiSpecsFrame(
-      Builder(
-        builder: (ctx) {
-          return TextButton(
-            child: const Text('open'),
-            onPressed: () {
-              showDialog<void>(
-                context: ctx,
-                builder: (_) => CombatModeChoiceDialog(
-                  bus: bus,
-                  provinceName: provinceName,
-                  isCapitalSiege: isCapitalSiege,
-                ),
-              );
-            },
-          );
-        },
-      ),
-    ),
-  );
-  await tester.tap(find.text('open'));
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pumpDarkCombatModeChoice(
-  WidgetTester tester, {
-  required String provinceName,
-  required bool isCapitalSiege,
-}) =>
-    tester.pumpWidget(
-      combatUiSpecsDarkFrame(
-        CombatModeChoiceDialog(
-          bus: AppEventBus.create(),
-          provinceName: provinceName,
-          isCapitalSiege: isCapitalSiege,
-        ),
-      ),
-    );
 
 void main() {
 
@@ -128,9 +28,9 @@ void main() {
       ) async {
         await tester.pumpWidget(
           combatUiSpecsFrame(
-            _deploymentView(
-              attackerGroups: [_centerFront(unitIds: const ['a1', 'a2', 'a3'])],
-              defenderGroups: [_centerFront(unitIds: const ['d1', 'd2'])],
+            combatUiSpecsDeploymentView(
+              attackerGroups: [combatUiSpecsCenterFront(unitIds: const ['a1', 'a2', 'a3'])],
+              defenderGroups: [combatUiSpecsCenterFront(unitIds: const ['d1', 'd2'])],
               attackerName: 'Castile',
               defenderName: 'England',
             ),
@@ -148,12 +48,12 @@ void main() {
       ) async {
         await tester.pumpWidget(
           combatUiSpecsFrame(
-            _deploymentView(
+            combatUiSpecsDeploymentView(
               attackerGroups: [
-                _centerFront(unitIds: const ['a1'], cohesion: 0),
+                combatUiSpecsCenterFront(unitIds: const ['a1'], cohesion: 0),
               ],
               defenderGroups: [
-                _centerFront(unitIds: const ['d1'], cohesion: 1),
+                combatUiSpecsCenterFront(unitIds: const ['d1'], cohesion: 1),
               ],
             ),
           ),
@@ -167,7 +67,7 @@ void main() {
         'uses default Attacker / Defender headers when names are omitted',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            combatUiSpecsFrame(_deploymentView()),
+            combatUiSpecsFrame(combatUiSpecsDeploymentView()),
           );
 
           expect(find.text('Attacker'), findsOneWidget);
@@ -181,12 +81,12 @@ void main() {
         (WidgetTester tester) async {
           await tester.pumpWidget(
             combatUiSpecsDarkFrame(
-              _deploymentView(
+              combatUiSpecsDeploymentView(
                 attackerGroups: [
-                  _centerFront(unitIds: const ['a1', 'a2', 'a3']),
+                  combatUiSpecsCenterFront(unitIds: const ['a1', 'a2', 'a3']),
                 ],
                 defenderGroups: [
-                  _centerFront(unitIds: const ['d1'], cohesion: 0),
+                  combatUiSpecsCenterFront(unitIds: const ['d1'], cohesion: 0),
                 ],
               ),
             ),
@@ -205,9 +105,9 @@ void main() {
 
           await tester.pumpWidget(
             combatUiSpecsFrame(
-              _deploymentView(
+              combatUiSpecsDeploymentView(
                 attackerGroups: [
-                  _centerFront(unitIds: const ['a1'], cohesion: 2),
+                  combatUiSpecsCenterFront(unitIds: const ['a1'], cohesion: 2),
                 ],
               ),
             ),
@@ -231,7 +131,7 @@ void main() {
         WidgetTester tester,
       ) async {
         QuickBattleAction? picked;
-        await _pumpSelector(
+        await pumpCombatUiSpecsSelector(
           tester,
           cpRemaining: 3,
           onActionSelected: (a) => picked = a,
@@ -251,7 +151,7 @@ void main() {
         WidgetTester tester,
       ) async {
         var taps = 0;
-        await _pumpSelector(
+        await pumpCombatUiSpecsSelector(
           tester,
           cpRemaining: 1,
           onActionSelected: (_) => taps++,
@@ -276,7 +176,7 @@ void main() {
         WidgetTester tester,
       ) async {
         var taps = 0;
-        await _pumpSelector(
+        await pumpCombatUiSpecsSelector(
           tester,
           cpRemaining: 0,
           onActionSelected: (_) => taps++,
@@ -299,7 +199,7 @@ void main() {
       testWidgets(
         'CP indicator resolves to --muted under dark and fallback themes',
         (WidgetTester tester) async {
-          await _pumpSelector(
+          await pumpCombatUiSpecsSelector(
             tester,
             cpRemaining: 3,
             onActionSelected: (_) {},
@@ -313,7 +213,7 @@ void main() {
             EditorialMonoclePalette.muted,
           );
 
-          await _pumpSelector(tester, cpRemaining: 0, onActionSelected: (_) {});
+          await pumpCombatUiSpecsSelector(tester, cpRemaining: 0, onActionSelected: (_) {});
           expect(
             tester
                 .widget<Text>(find.textContaining('Command Points: 0'))
@@ -334,8 +234,8 @@ void main() {
           ('Auto-Resolve', CombatMode.autoResolve),
           ('Quick Battle', CombatMode.quickBattle),
         ]) {
-          final (bus, received) = _listenCombatModes();
-          await _openCombatModeChoice(
+          final (bus, received) = listenCombatUiSpecsModes();
+          await openCombatUiSpecsModeChoice(
             tester,
             bus: bus,
             provinceName: 'Lisbon',
@@ -385,8 +285,8 @@ void main() {
     testWidgets('capital siege variant only renders Quick Battle button', (
       WidgetTester tester,
     ) async {
-      final (bus, received) = _listenCombatModes();
-      await _openCombatModeChoice(
+      final (bus, received) = listenCombatUiSpecsModes();
+      await openCombatUiSpecsModeChoice(
         tester,
         bus: bus,
         provinceName: 'Madrid',
@@ -408,7 +308,7 @@ void main() {
     testWidgets(
       'dark editorial-monocle chrome: Lisbon regular + Madrid capital siege',
       (WidgetTester tester) async {
-        await _pumpDarkCombatModeChoice(
+        await pumpDarkCombatUiSpecsModeChoice(
           tester,
           provinceName: 'Lisbon',
           isCapitalSiege: false,
@@ -434,7 +334,7 @@ void main() {
         expect(find.byType(OutlinedButton), findsNothing);
         expect(find.byType(FilledButton), findsNothing);
 
-        await _pumpDarkCombatModeChoice(
+        await pumpDarkCombatUiSpecsModeChoice(
           tester,
           provinceName: 'Madrid',
           isCapitalSiege: true,

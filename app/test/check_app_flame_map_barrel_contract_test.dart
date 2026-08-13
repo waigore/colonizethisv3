@@ -22,8 +22,13 @@ void main() {
 
   test('map_state barrel exports GameMapArea stack', () {
     expect(GameMapArea, isNotNull);
-    expect(GameMapAreaStateLogic, isNotNull);
     expect(GameMapAreaProvinceActionStates, isNotNull);
+    // Wave-15 Slice C (#4352): forwarder facade removed; topic classes are the
+    // stable map_state / game_map_area_state_logic export surface.
+    expect(GameMapAreaStateLogicShell, isNotNull);
+    expect(GameMapAreaStateLogicWorkTargets, isNotNull);
+    expect(GameMapAreaStateLogicDraftProjection, isNotNull);
+    expect(GameMapAreaStateLogicProvinceActions, isNotNull);
   });
 
   test('region_map barrel exports CtRegionMapComponent stack', () {

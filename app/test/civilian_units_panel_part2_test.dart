@@ -7,101 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
-import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildImprovement, kWorkTargetExplore;
+    show kWorkTargetBuildImprovement;
 
-import 'app_shell_harness.dart';
+import 'civilian_units_panel_part2_cancel_support.dart';
 import 'civilian_units_panel_test_support.dart';
-
-Unit? _firstIdleCivilian(Game game, String humanId) {
-  final units = [
-    ...game.worldState.oldWorld.units,
-    ...game.worldState.newWorld.units,
-  ];
-  for (final u in units) {
-    if (u.ownerId == humanId &&
-        u.tileKey != null &&
-        isCivilianUnit(u) &&
-        u.currentWork == null) {
-      return u;
-    }
-  }
-  return null;
-}
-
-Orders _pendingExploreOrders(String humanId, Unit unit) {
-  final pendingOrder = WorkOrder(
-    unitId: unit.id,
-    target: kWorkTargetExplore,
-    targetTileKey: '${unit.tileKey!.split('|').take(2).join('|')}|0|0',
-  );
-  return Orders(
-    workOrdersByPlayerId: {
-      humanId: [pendingOrder],
-    },
-  );
-}
-
-Future<void> _invokePendingCancel(
-  WidgetTester tester,
-  Unit unit,
-) async {
-  final pendingRow = find.byKey(
-    ValueKey('civilian-unit-card-${unit.id}'),
-    skipOffstage: false,
-  );
-  expect(pendingRow, findsOneWidget);
-  final cancelOnPendingRow = find.descendant(
-    of: pendingRow,
-    matching: find.byType(CtDangerTextButton, skipOffstage: false),
-  );
-  expect(cancelOnPendingRow, findsOneWidget);
-  final cancelBtn = tester.widget<CtDangerTextButton>(cancelOnPendingRow);
-  expect(cancelBtn.onPressed, isNotNull);
-  cancelBtn.onPressed!();
-  await tester.pumpAndSettle();
-}
-
-/// Cross-panel style watcher host: editorial [buildAppShell] + confirm-dialog
-/// bus leaf + a counter strip (Refs #4035 — no inline `MaterialApp`).
-Widget _watcherHost({
-  required AppEventBus bus,
-  required GlobalKey<NavigatorState> navigatorKey,
-  required ValueNotifier<int> counter,
-  required String labelPrefix,
-  required Game game,
-  required String humanId,
-  required Orders orders,
-}) {
-  return buildAppShell(
-    navigatorKey: navigatorKey,
-    child: Scaffold(
-      body: Column(
-        children: [
-          ValueListenableBuilder<int>(
-            valueListenable: counter,
-            builder: (_, count, _) => Text('$labelPrefix:$count'),
-          ),
-          Expanded(
-            child: CivilianPanelBusDialogHost(
-              bus: bus,
-              navigatorKey: navigatorKey,
-              child: CivilianUnitsPanel(
-                game: game,
-                humanPlayerId: humanId,
-                currentOrders: orders,
-                bus: bus,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -147,7 +59,6 @@ void main() {
           expect(locateEvent!.regionId, 'oldWorld');
         }
 
-        // Full-list: single Locate in the action cluster (R30 / #3514).
         await runLocateCase(
           host: (bus) => buildCivilianPanel(
             game: buildCivilianSingleUnitOwGame(
@@ -164,7 +75,6 @@ void main() {
           locateIndex: 0,
         );
 
-        // Tile-scoped: every visible row exposes Locate, including non-selected.
         await runLocateCase(
           host: (bus) => buildCivilianPanel(
             game: buildCivilianOwUnitsGame(
@@ -208,7 +118,7 @@ void main() {
           humanId: human,
           standingTile: standingTile,
         );
-        final orders = const Orders(
+        const orders = Orders(
           workOrdersByPlayerId: {
             human: [
               WorkOrder(
@@ -290,9 +200,6 @@ void main() {
         await tester.tap(assignButton.first);
         await tester.pumpAndSettle();
 
-        // Work-target menu rows render through InkWell over palette-token
-        // chrome (Refs #2914 S8 — no Material ListTile); an enabled row has a
-        // non-null onTap.
         final enabledTargetRow = find.descendant(
           of: find.byType(BottomSheet),
           matching: find.byWidgetPredicate(
@@ -316,7 +223,7 @@ void main() {
     testWidgets(
       'Cancel on pending row: Yes removes order; No dismisses without remove',
       (WidgetTester tester) async {
-        final idleCivilian = _firstIdleCivilian(game, humanPlayerIdWithUnits);
+        final idleCivilian = firstIdleCivilian(game, humanPlayerIdWithUnits);
         if (idleCivilian == null) return;
 
         Future<RemovePendingWorkOrderRequestedEvent?> confirmPending(
@@ -332,15 +239,14 @@ void main() {
               bus: bus,
               game: game,
               humanPlayerId: humanPlayerIdWithUnits,
-              currentOrders: _pendingExploreOrders(
+              currentOrders: pendingExploreOrders(
                 humanPlayerIdWithUnits,
                 idleCivilian,
               ),
             ),
           );
           await tester.pumpAndSettle();
-          // R30 (#3514): pending rows expose Cancel + circular Locate.
-          await _invokePendingCancel(tester, idleCivilian);
+          await invokePendingCancel(tester, idleCivilian);
           expect(find.text('Cancel work order?'), findsOneWidget);
           await tester.tap(find.text(answer));
           await tester.pumpAndSettle();
@@ -359,7 +265,7 @@ void main() {
     testWidgets(
       'pending cancel event can drive external watcher updates (cross-panel style)',
       (WidgetTester tester) async {
-        final idleCivilian = _firstIdleCivilian(game, humanPlayerIdWithUnits);
+        final idleCivilian = firstIdleCivilian(game, humanPlayerIdWithUnits);
         if (idleCivilian == null) return;
 
         final bus = AppEventBus.create();
@@ -374,20 +280,20 @@ void main() {
         });
 
         await tester.pumpWidget(
-          _watcherHost(
+          civilianPanelWatcherHost(
             bus: bus,
             navigatorKey: navigatorKey,
             counter: observedRemovals,
             labelPrefix: 'observed-removals',
             game: game,
             humanId: humanPlayerIdWithUnits,
-            orders: _pendingExploreOrders(humanPlayerIdWithUnits, idleCivilian),
+            orders: pendingExploreOrders(humanPlayerIdWithUnits, idleCivilian),
           ),
         );
         await tester.pumpAndSettle();
         expect(find.text('observed-removals:0'), findsOneWidget);
 
-        await _invokePendingCancel(tester, idleCivilian);
+        await invokePendingCancel(tester, idleCivilian);
         await tester.tap(find.text('Yes'));
         await tester.pumpAndSettle();
 
@@ -424,7 +330,7 @@ void main() {
         if (workingCivilians.isEmpty) return;
 
         await tester.pumpWidget(
-          _watcherHost(
+          civilianPanelWatcherHost(
             bus: bus,
             navigatorKey: navigatorKey,
             counter: observedCancels,

@@ -131,7 +131,7 @@ mixin GameMapAreaRelocateSelection
     if (!mounted) return;
     setState(() {
       selectedCivilianTileKey =
-          GameMapAreaStateLogic.selectionAfterWorkAssignment(
+          GameMapAreaStateLogicWorkTargets.selectionAfterWorkAssignment(
             currentSelectedCivilianTileKey: selectedCivilianTileKey,
             assignedTileKey: tileKey,
           );

@@ -35,7 +35,7 @@ mixin GameScreenFallbackNextTurnRunner
   Future<void> runFlameCanvasFallbackNextTurn() async {
     final context = this.context;
     final game = widget.game;
-    if (!GameMapAreaStateLogic.allowsFullTurnResolution(game)) {
+    if (!GameMapAreaStateLogicShell.allowsFullTurnResolution(game)) {
       return;
     }
     final currentTurn = game.worldState.turnState.turnNumber;

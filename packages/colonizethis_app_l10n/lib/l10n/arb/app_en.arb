@@ -3226,6 +3226,36 @@
   "@provinceOverlay_tileConsulateRequiredForExploreTooltip": {
     "description": "Tooltip shown on the disabled province tile Explore/Prospect inline actions when the issuing Great Power holds no Consulate (or higher) with the owning Minor/Tribe (Refs #3753 R4b)."
   },
+  "provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip": "Establish a consulate before exploring or prospecting. Use Establish Consulate on Political.",
+  "@provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip": {
+    "description": "Narrow MAP20001 tooltip directing players from gated Explore/Prospect to Political Establish Consulate."
+  },
+  "provinceOverlay_establishConsulateAction": "Establish Consulate",
+  "@provinceOverlay_establishConsulateAction": {
+    "description": "Political shortcut label for staging a Trade Consulate overture."
+  },
+  "provinceOverlay_cancelEstablishConsulateAction": "Cancel",
+  "@provinceOverlay_cancelEstablishConsulateAction": {
+    "description": "Political shortcut label when a Trade Consulate overture is already pending."
+  },
+  "provinceOverlay_noConsulateWith": "No consulate with {owner}",
+  "@provinceOverlay_noConsulateWith": {
+    "description": "Political status line shown above the Establish Consulate shortcut.",
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_establishConsulateDisabledSemantics": "Establish Consulate unavailable: {reason}",
+  "@provinceOverlay_establishConsulateDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Establish Consulate shortcut.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."

@@ -11,9 +11,15 @@ import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
 
 export 'diplomacy_relation_constants.dart';
 export 'diplomacy_relation_upsert.dart';
-export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
+export 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart'
+    show
+        pairKey,
+        getRelation,
+        factionsAtWar,
+        hostileFactionsByFaction,
+        enemiesOf;
 export 'package:colonizethis_world/src/world/province_owner_cache.dart'
-    show oldWorldProvinceCountOwnedBy;
+    show ProvinceOwnerCache, oldWorldProvinceCountOwnedBy;
 
 import 'diplomacy_relation_constants.dart';
 

@@ -2,7 +2,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'diplomacy_relation_lookup.dart';
-import 'diplomacy_shared_helpers.dart';
 
 /// GP–GP war pairs from declare-war orders that are at war after step 5.
 List<({String aggressor, String defender})> gpGpWarPairsFromDeclareWarOrders(

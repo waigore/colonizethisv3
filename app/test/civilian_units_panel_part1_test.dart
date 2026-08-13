@@ -10,8 +10,14 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildImprovement, kWorkTargetBuildRoad, kWorkTargetExplore, kWorkTargetProspect, kWorkTargetPurchaseLand;
+    show
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildRoad,
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetPurchaseLand;
 
+import 'civilian_units_panel_part1_shortcut_support.dart';
 import 'civilian_units_panel_test_support.dart';
 
 void main() {
@@ -87,7 +93,6 @@ void main() {
     testWidgets(
       'work targets not in availableWorkTargets are grayed out (disabled)',
       (WidgetTester tester) async {
-        // Find an idle civilian unit
         final units = [
           ...game.worldState.oldWorld.units,
           ...game.worldState.newWorld.units,
@@ -102,11 +107,9 @@ void main() {
         if (idleCivilians.isEmpty) return;
         final idleCivilian = idleCivilians.first;
 
-        // Get allowed work targets for this unit type
         final allowed = workOrderTargetsByUnitType[idleCivilian.type] ?? [];
         if (allowed.isEmpty) return;
 
-        // Provide empty availableWorkTargets - ALL items should be disabled
         final availableWorkTargets = <String, List<String>>{};
 
         await tester.pumpWidget(
@@ -123,9 +126,6 @@ void main() {
 
         expect(find.textContaining('Assign work'), findsOneWidget);
 
-        // Get all target rows - all should be disabled. Work-target menu rows
-        // render through InkWell over palette-token chrome (Refs #2914 S8 —
-        // no Material ListTile); a disabled row has a null onTap.
         final targetRows = find
             .descendant(
               of: find.byType(BottomSheet),
@@ -135,7 +135,6 @@ void main() {
 
         expect(targetRows, isNotEmpty);
 
-        // All items should be disabled when availableWorkTargets is empty
         for (final row in targetRows) {
           final widget = row.widget as InkWell;
           expect(
@@ -165,7 +164,6 @@ void main() {
     });
 
     testWidgets('tap Assign opens order menu', (WidgetTester tester) async {
-      // Find an idle civilian unit
       final units = [
         ...game.worldState.oldWorld.units,
         ...game.worldState.newWorld.units,
@@ -177,15 +175,12 @@ void main() {
             isCivilianUnit(u) &&
             u.currentWork == null,
       );
-      // Skip if no idle civilians in test game
       if (idleCivilians.isEmpty) return;
 
       await tester.pumpWidget(
         buildCivilianPanel(
           game: game,
           humanPlayerId: humanPlayerIdWithUnits,
-          // Pass empty availableWorkTargets - all options will be disabled
-          // This tests the UI renders but callback won't fire on disabled items
           availableWorkTargets: const {},
         ),
       );
@@ -194,101 +189,17 @@ void main() {
       await tester.tap(find.text('Assign').first);
       await tester.pumpAndSettle();
 
-      // Menu opens but all items are disabled since no available targets provided
       expect(find.textContaining('Assign work'), findsOneWidget);
-      // Note: selectedUnit/selectedTarget remain null because items are disabled
 
       final scaffoldCtx = tester.element(find.byType(Scaffold));
       Navigator.of(scaffoldCtx, rootNavigator: true).pop();
       await tester.pumpAndSettle();
     });
 
-    Future<void> expectShortcutCommit(
-      WidgetTester tester, {
-      required String gameId,
-      required String visibleType,
-      required String hiddenType,
-      required String unitId,
-      required String workTarget,
-      bool builderFirst = false,
-      bool explorerOnly = false,
-      bool builderOnly = false,
-      bool engineerOnly = false,
-      bool merchantOnly = false,
-      String? prospectShortcutTargetTileKey,
-      String? exploreShortcutTargetTileKey,
-      String? buildImprovementShortcutTargetTileKey,
-      String? buildRoadShortcutTargetTileKey,
-      String? purchaseLandShortcutTargetTileKey,
-      bool expectCloseBeforeUpsert = true,
-      Game Function(String id)? customGameBuilder,
-    }) async {
-      const human = 'h1';
-      const tileKey = 'oldWorld|p1|0|0';
-      final bus = AppEventBus.create();
-      final events = <Type>[];
-      UpsertPendingCivilianWorkOrderRequestedEvent? upsertEvent;
-      bus.stream.listen((e) => events.add(e.runtimeType));
-      bus.on<UpsertPendingCivilianWorkOrderRequestedEvent>().listen(
-        (event) => upsertEvent = event,
-      );
-      await tester.pumpWidget(
-        buildCivilianPanel(
-          game: customGameBuilder != null
-              ? customGameBuilder(gameId)
-              : buildCivilianExplorerBuilderShortcutGame(
-                  id: gameId,
-                  humanId: human,
-                  tileKey: tileKey,
-                  builderFirst: builderFirst,
-                ),
-          humanPlayerId: human,
-          bus: bus,
-          explorerOnly: explorerOnly,
-          builderOnly: builderOnly,
-          engineerOnly: engineerOnly,
-          merchantOnly: merchantOnly,
-          prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-          exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-          buildImprovementShortcutTargetTileKey:
-              buildImprovementShortcutTargetTileKey,
-          buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
-          purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
-          availableWorkTargets: {
-            unitId: [workTarget],
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text(visibleType), findsOneWidget);
-      expect(find.text(hiddenType), findsNothing);
-
-      await tester.tap(find.text('Assign'));
-      await tester.pump();
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Assign work'), findsNothing);
-      expect(upsertEvent, isNotNull);
-      expect(upsertEvent!.playerId, human);
-      expect(upsertEvent!.workOrder.unitId, unitId);
-      expect(upsertEvent!.workOrder.target, workTarget);
-      expect(upsertEvent!.workOrder.targetTileKey, tileKey);
-      expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
-      if (expectCloseBeforeUpsert) {
-        expect(
-          events.indexOf(ClosePanelEvent),
-          lessThan(
-            events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent),
-          ),
-        );
-      }
-    }
-
     testWidgets(
       'prospect shortcut mode filters explorers and commits prospect',
       (WidgetTester tester) async {
-        await expectShortcutCommit(
+        await expectCivilianShortcutCommit(
           tester,
           gameId: 'g_civ_prospect_shortcut',
           visibleType: kUnitTypeExplorer,
@@ -296,7 +207,7 @@ void main() {
           unitId: 'e1',
           workTarget: kWorkTargetProspect,
           explorerOnly: true,
-          prospectShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          prospectShortcutTargetTileKey: civilianPanelPart1TileKey,
         );
       },
     );
@@ -304,7 +215,7 @@ void main() {
     testWidgets(
       'explore shortcut mode filters explorers and commits explore',
       (WidgetTester tester) async {
-        await expectShortcutCommit(
+        await expectCivilianShortcutCommit(
           tester,
           gameId: 'g_civ_explore_shortcut',
           visibleType: kUnitTypeExplorer,
@@ -312,7 +223,7 @@ void main() {
           unitId: 'e1',
           workTarget: kWorkTargetExplore,
           explorerOnly: true,
-          exploreShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          exploreShortcutTargetTileKey: civilianPanelPart1TileKey,
         );
       },
     );
@@ -320,7 +231,7 @@ void main() {
     testWidgets(
       'build-improvement shortcut mode filters builders and commits',
       (WidgetTester tester) async {
-        await expectShortcutCommit(
+        await expectCivilianShortcutCommit(
           tester,
           gameId: 'g_civ_build_improvement_shortcut',
           visibleType: kUnitTypeBuilder,
@@ -329,7 +240,7 @@ void main() {
           workTarget: kWorkTargetBuildImprovement,
           builderFirst: true,
           builderOnly: true,
-          buildImprovementShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          buildImprovementShortcutTargetTileKey: civilianPanelPart1TileKey,
           expectCloseBeforeUpsert: false,
         );
       },
@@ -338,7 +249,7 @@ void main() {
     testWidgets(
       'build-road shortcut mode filters engineers and commits',
       (WidgetTester tester) async {
-        await expectShortcutCommit(
+        await expectCivilianShortcutCommit(
           tester,
           gameId: 'g_civ_build_road_shortcut',
           visibleType: kUnitTypeEngineer,
@@ -346,7 +257,7 @@ void main() {
           unitId: 'e_eng',
           workTarget: kWorkTargetBuildRoad,
           engineerOnly: true,
-          buildRoadShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          buildRoadShortcutTargetTileKey: civilianPanelPart1TileKey,
           expectCloseBeforeUpsert: false,
           customGameBuilder: (id) => buildCivilianEngineerBuilderShortcutGame(
             id: id,
@@ -359,7 +270,7 @@ void main() {
     testWidgets(
       'purchase-land shortcut mode filters merchants and commits',
       (WidgetTester tester) async {
-        await expectShortcutCommit(
+        await expectCivilianShortcutCommit(
           tester,
           gameId: 'g_civ_purchase_land_shortcut',
           visibleType: kUnitTypeMerchant,
@@ -367,7 +278,7 @@ void main() {
           unitId: 'm1',
           workTarget: kWorkTargetPurchaseLand,
           merchantOnly: true,
-          purchaseLandShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          purchaseLandShortcutTargetTileKey: civilianPanelPart1TileKey,
           expectCloseBeforeUpsert: false,
           customGameBuilder: (id) => buildCivilianMerchantBuilderShortcutGame(
             id: id,

@@ -10,9 +10,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'diplomacy_event_logging.dart';
 import 'diplomacy_logging.dart';
+import 'diplomacy_pending_suspend.dart';
 import 'diplomacy_phase_result.dart';
 
-export 'package:colonizethis_world/src/world/faction_membership.dart';
+export 'package:colonizethis_world/src/world/faction_membership.dart'
+    show DiplomacyFactionMembership, isGreatPower, isMinorOrTribe;
 import 'alliance_resolver.dart';
 import 'boycott_resolver.dart';
 import 'break_alliance_resolver.dart';
@@ -81,16 +83,13 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
 
   // Snapshot relation scores at phase start so end-of-phase decay can skip pairs
   // modified by any event this turn (skip-on-event, Refs #3753 R9.4).
-  final phaseStartScores = snapshotRelationScores(game);
+  final phaseStartScores = snapshotPhaseStartRelationScores(game);
 
   // Snapshot of formal-alliance pairs at phase start (i.e. end of the preceding
   // turn, before this turn's Alliance orders resolve in step 4). Call to arms
   // (step 5c) gates on this snapshot so an alliance formed the same turn as a
   // war declaration does not trigger mutual defence. SPEC/game/diplomacy.md.
-  final formalAlliancePairKeysAtPhaseStart = <String>{
-    for (final r in game.diplomacyRelations)
-      if (r.formalAlliance) pairKey(r.factionId1, r.factionId2),
-  };
+  final allianceKeysAtStart = formalAlliancePairKeysAtPhaseStart(game);
 
   final diploByPlayer = orders.diplomaticOrdersByPlayerId;
   var factionMembership = DiplomacyFactionMembership.from(game);
@@ -105,14 +104,13 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     eventTally: eventTally,
   );
   state = overtureResult.game;
-  if (overtureResult.pendingOvertures != null &&
-      overtureResult.pendingOvertures!.isNotEmpty) {
-    diploLog.d('diplomacy phase suspended (pending overture decisions)');
-    return DiplomacyPhaseResult(
-      state,
-      pendingOvertures: overtureResult.pendingOvertures,
-    );
-  }
+  final pendingOverture = maybePendingDiplomacyResult(
+    game: state,
+    pending: overtureResult.pendingOvertures,
+    logMessage: 'diplomacy phase suspended (pending overture decisions)',
+    build: (items) => DiplomacyPhaseResult(state, pendingOvertures: items),
+  );
+  if (pendingOverture != null) return pendingOverture;
 
   // 2. Advance in-progress overtures (turn delays)
   state = advanceOvertures(state, turn);
@@ -165,14 +163,13 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     eventTally: eventTally,
   );
   state = ftpResult.game;
-  if (ftpResult.pendingFtpOffers != null &&
-      ftpResult.pendingFtpOffers!.isNotEmpty) {
-    diploLog.d('diplomacy phase suspended (pending FTP decisions)');
-    return DiplomacyPhaseResult(
-      state,
-      pendingFtpOffers: ftpResult.pendingFtpOffers,
-    );
-  }
+  final pendingFtp = maybePendingDiplomacyResult(
+    game: state,
+    pending: ftpResult.pendingFtpOffers,
+    logMessage: 'diplomacy phase suspended (pending FTP decisions)',
+    build: (items) => DiplomacyPhaseResult(state, pendingFtpOffers: items),
+  );
+  if (pendingFtp != null) return pendingFtp;
 
   // 5. Process Declare War and Peace
   state = processWarAndPeace(
@@ -193,13 +190,15 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     interventionDecisions: interventionDecisions,
     eventTally: eventTally,
   );
-  if (interventionResult.pendingInterventions != null &&
-      interventionResult.pendingInterventions!.isNotEmpty) {
-    return DiplomacyPhaseResult(
+  final pendingIntervention = maybePendingDiplomacyResult(
+    game: interventionResult.game,
+    pending: interventionResult.pendingInterventions,
+    build: (items) => DiplomacyPhaseResult(
       interventionResult.game,
-      pendingInterventions: interventionResult.pendingInterventions,
-    );
-  }
+      pendingInterventions: items,
+    ),
+  );
+  if (pendingIntervention != null) return pendingIntervention;
   state = interventionResult.game;
 
   // 5c. Call to arms (allies of GP declared upon). SPEC/game/diplomacy.md.
@@ -208,19 +207,18 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     diploByPlayer,
     turn,
     factionMembership: factionMembership,
-    formalAlliancePairKeysAtPhaseStart: formalAlliancePairKeysAtPhaseStart,
+    formalAlliancePairKeysAtPhaseStart: allianceKeysAtStart,
     callToArmsDecisions: callToArmsDecisions,
     eventTally: eventTally,
   );
   state = ctaResult.game;
-  if (ctaResult.pendingCallToArms != null &&
-      ctaResult.pendingCallToArms!.isNotEmpty) {
-    diploLog.d('diplomacy phase suspended (pending call to arms)');
-    return DiplomacyPhaseResult(
-      state,
-      pendingCallToArms: ctaResult.pendingCallToArms,
-    );
-  }
+  final pendingCta = maybePendingDiplomacyResult(
+    game: state,
+    pending: ctaResult.pendingCallToArms,
+    logMessage: 'diplomacy phase suspended (pending call to arms)',
+    build: (items) => DiplomacyPhaseResult(state, pendingCallToArms: items),
+  );
+  if (pendingCta != null) return pendingCta;
 
   // 6. War terminates agreements with target
   state = terminateAgreementsOnWar(state, eventTally: eventTally);
