@@ -77,7 +77,7 @@ mixin GameMapAreaBuild
           onNextTurn: onNextTurn,
           nextTurnEnabled:
               !isTurnResolving &&
-              GameMapAreaStateLogic.allowsFullTurnResolution(widget.game),
+              GameMapAreaStateLogicShell.allowsFullTurnResolution(widget.game),
           regionIndex: regionIndex,
           onRegionIndexChanged: (i) =>
               setState(() => regionIndex = i == 0 ? 0 : 1),

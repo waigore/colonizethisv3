@@ -38,7 +38,7 @@ void main() {
       final game = _gameWithNoUnits();
       const orders = ct_models.Orders();
       final viaForwarder =
-          GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+          GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft(
         region: region,
         game: game,
         orders: orders,
@@ -78,7 +78,7 @@ void main() {
       const orders = ct_models.Orders();
       const topology = MapTopology();
       final viaForwarder =
-          GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+          GameMapAreaStateLogicDraftProjection.projectFleetMarkersForHumanDraft(
         region: region,
         game: game,
         orders: orders,
@@ -150,11 +150,11 @@ void main() {
       'legacy state-logic constants forward to province-actions module',
       () {
         expect(
-          GameMapAreaStateLogic.kHiddenExplorerInlineActionState,
+          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
           GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
         );
         expect(
-          GameMapAreaStateLogic.kHiddenBuilderInlineActionState,
+          GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
           GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
         );
       },
@@ -164,7 +164,7 @@ void main() {
       final game = _gameWithNoUnits();
       final view = _emptyPlayerView('gp1');
       final viaForwarder =
-          GameMapAreaStateLogic.provinceBuildImprovementActionState(
+          GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
         game: game,
         humanPlayerId: 'gp1',
         selectedTileKey: 'bad',

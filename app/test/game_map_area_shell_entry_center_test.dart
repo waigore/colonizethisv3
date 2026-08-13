@@ -34,7 +34,7 @@ import 'panel_test_fixtures.dart';
 void main() {
   suppressLogsForTests();
 
-  group('GameMapAreaStateLogic.resolveShellEntryAutoCenter (Refs #3616)', () {
+  group('GameMapAreaStateLogicShell.resolveShellEntryAutoCenter (Refs #3616)', () {
     Game gameWith({CapitalTile? gp1Capital, CapitalTile? gp2Capital}) {
       return Game(
         id: 'g',
@@ -72,7 +72,7 @@ void main() {
         x: 2,
         y: 3,
       );
-      final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: gameWith(gp1Capital: capital),
         currentPlayerId: 'gp1',
       );
@@ -88,7 +88,7 @@ void main() {
         x: 5,
         y: 6,
       );
-      final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: gameWith(gp1Capital: capital),
         currentPlayerId: 'gp1',
       );
@@ -104,7 +104,7 @@ void main() {
         x: 0,
         y: 0,
       );
-      final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: gameWith(gp1Capital: capital),
         currentPlayerId: null,
       );
@@ -112,7 +112,7 @@ void main() {
     });
 
     test('player without capitalTile returns null', () {
-      final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: gameWith(),
         currentPlayerId: 'gp1',
       );
@@ -126,7 +126,7 @@ void main() {
         x: 1,
         y: 1,
       );
-      final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: gameWith(gp1Capital: capital),
         currentPlayerId: 'nope',
       );
@@ -140,7 +140,7 @@ void main() {
         x: 4,
         y: 4,
       );
-      final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: gameWith(
           gp1Capital: const CapitalTile(
             regionId: 'oldWorld',
@@ -164,7 +164,7 @@ void main() {
         x: 7,
         y: 8,
       );
-      final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
+      final target = GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: gameWith(gp1Capital: reassigned),
         currentPlayerId: 'gp1',
       );

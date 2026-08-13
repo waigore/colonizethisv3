@@ -13,12 +13,14 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckDiplomacyLibFileSize', () {
-    test('passes on current repo tree under wave-5 ceiling', () {
+    test('passes on current repo tree under wave-6 ceiling', () {
       expect(runCheckDiplomacyLibFileSize('.'), 0);
     });
 
     test('fails when a diplomacy lib file exceeds the ceiling', () {
-      final root = Directory.systemTemp.createTempSync('diplomacy_lib_size_bad');
+      final root = Directory.systemTemp.createTempSync(
+        'diplomacy_lib_size_bad',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,
@@ -39,7 +41,9 @@ void main() {
     });
 
     test('ignores generated files and grandfathered hot files', () {
-      final root = Directory.systemTemp.createTempSync('diplomacy_lib_size_gen');
+      final root = Directory.systemTemp.createTempSync(
+        'diplomacy_lib_size_gen',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,

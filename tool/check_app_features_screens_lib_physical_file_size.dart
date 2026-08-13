@@ -1,7 +1,7 @@
 // Physical line ratchet for app/lib/features/game/screens
 // (`repo.app_features_screens_lib_physical_file_size`).
 //
-// SPEC: SPEC/program/app-features-screens-file-size.md (wave-14 #4305 Slice B).
+// SPEC: SPEC/program/app-features-screens-file-size.md (wave-15 #4352 Slice A).
 // Shrink-only grandfather allowlist; remove entries as splits land.
 import 'dart:convert';
 import 'dart:io';
@@ -10,13 +10,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for app feature screens (≤400 physical lines).
-const int appFeaturesScreensLibPhysicalFileSizeCeiling = 400;
+/// Ratchet ceiling for app feature screens (≤300 physical lines).
+const int appFeaturesScreensLibPhysicalFileSizeCeiling = 300;
 
 const String _screensLibRelativePath = 'app/lib/features/game/screens';
 
-/// Hot files still above the wave-14 ceiling during transition slices.
-/// Shrink-only allowlist; remove entries as splits land. Refs #4305.
+/// Hot files still above the wave-15 ceiling during transition slices.
+/// Shrink-only allowlist; remove entries as splits land. Refs #4352.
 const List<String> appFeaturesScreensLibPhysicalFileSizeGrandfatheredForTests =
     <String>[];
 
@@ -106,7 +106,7 @@ int runCheckAppFeaturesScreensLibPhysicalFileSize(
   if (violations.isEmpty) {
     logI(
       'check_app_features_screens_lib_physical_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4305).',
+      '(ceiling $ceiling; Refs #4352).',
     );
     return 0;
   }
@@ -115,7 +115,7 @@ int runCheckAppFeaturesScreensLibPhysicalFileSize(
   logE(
     'check_app_features_screens_lib_physical_file_size: found '
     '${violations.length} violation(s) under $_screensLibRelativePath '
-    '(ceiling $ceiling; Refs #4305):',
+    '(ceiling $ceiling; Refs #4352):',
   );
   for (final violation in violations) {
     logE(' - $violation');

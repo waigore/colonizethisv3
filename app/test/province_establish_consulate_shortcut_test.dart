@@ -121,7 +121,8 @@ void main() {
   group('Establish Consulate action state', () {
     test('shows enabled when gate applies and probe accepts', () {
       final game = _buildGame(ownerId: _kMinorId);
-      final state = GameMapAreaStateLogic.provinceEstablishConsulateActionState(
+      final state =
+          GameMapAreaStateLogicProvinceActions.provinceEstablishConsulateActionState(
         game: game,
         humanPlayerId: _kHumanPlayerId,
         provinceId: _kProvinceId,

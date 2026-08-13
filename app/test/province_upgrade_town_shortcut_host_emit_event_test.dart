@@ -254,7 +254,7 @@ void main() {
   test('upgrade town action state fixture is enabled for host wiring', () {
     final game = _buildGame(withBuilder: true);
     final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    final state = GameMapAreaStateLogic.provinceUpgradeTownActionState(
+    final state = GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
       game: game,
       humanPlayerId: _kHumanPlayerId,
       provinceId: _kProvinceId,
