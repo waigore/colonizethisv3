@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_constants.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
@@ -109,7 +110,15 @@ class CounselScreen extends ConsumerWidget {
             );
         final tabCallbacks = buildCounselScreenTabCallbacks(
           context: context,
-          shellRef: shellRef,
+          bus: shellRef.read(appEventBusProvider),
+          readCurrentOrders: () => shellRef.read(currentOrdersProvider),
+          replaceCurrentOrders: (next) =>
+              shellRef.read(currentOrdersProvider.notifier).replaceAll(next),
+          readProductionDesiredOutput: () =>
+              shellRef.read(productionDesiredOutputProvider),
+          replaceProductionDesiredOutput: (next) => shellRef
+              .read(productionDesiredOutputProvider.notifier)
+              .replaceAll(next),
           displayGame: displayGame,
           humanPlayerId: humanPlayerId,
           topology: topology,

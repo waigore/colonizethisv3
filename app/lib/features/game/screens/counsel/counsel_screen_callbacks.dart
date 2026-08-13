@@ -9,12 +9,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart' show OrderEngine;
 import 'package:colonizethis_turn/colonizethis_turn.dart' show projectOrderEffects;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/routes.dart';
-import '../../../../providers/app_event_bus_provider.dart';
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/production_allocation_provider.dart';
 import 'counsel_development_apply.dart';
 import 'counsel_development_tab_body.dart';
 import 'counsel_industry_apply.dart';
@@ -41,9 +37,15 @@ final class CounselScreenTabCallbacks {
   final CounselDevelopmentCallbacks development;
 }
 
+/// Callers read providers in their own scope and pass narrow deps — do not
+/// thread [WidgetRef] into this helper (`repo.app_widget_ref_parameter_smell`).
 CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
   required BuildContext context,
-  required WidgetRef shellRef,
+  required AppEventBus bus,
+  required Orders Function() readCurrentOrders,
+  required void Function(Orders next) replaceCurrentOrders,
+  required Map<String, int> Function() readProductionDesiredOutput,
+  required void Function(Map<String, int> next) replaceProductionDesiredOutput,
   required Game displayGame,
   required String humanPlayerId,
   required MapTopology topology,
@@ -52,26 +54,21 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
   required bool canEdit,
   required TradeCounselBookResult tradeCounsel,
 }) {
-  final bus = shellRef.read(appEventBusProvider);
   final industryCallbacks = CounselIndustryCallbacks(
     onApplyProduceAllocation: canEdit
         ? () {
-            final currentDesired = shellRef.read(
-              productionDesiredOutputProvider,
-            );
+            final currentDesired = readProductionDesiredOutput();
             final next = industryCounselDesiredOutputAfterProduceAgree(
               game: displayGame,
               playerId: humanPlayerId,
               currentDesired: currentDesired,
             );
-            shellRef
-                .read(productionDesiredOutputProvider.notifier)
-                .replaceAll(next);
+            replaceProductionDesiredOutput(next);
           }
         : null,
     onAgreeTrain: canEdit
         ? (tier) {
-            final orders = shellRef.read(currentOrdersProvider);
+            final orders = readCurrentOrders();
             final next = industryCounselOrdersAfterTrainAgree(
               currentOrders: orders,
               playerId: humanPlayerId,
@@ -87,7 +84,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
               );
               return;
             }
-            shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+            replaceCurrentOrders(next);
           }
         : null,
     onOpenDevelopment: canEdit
@@ -104,18 +101,18 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
   final tradeCallbacks = CounselTradeCallbacks(
     onApplyBook: canEdit && tradeCounsel.book.isNotEmpty
         ? () {
-            final orders = shellRef.read(currentOrdersProvider);
+            final orders = readCurrentOrders();
             final next = tradeCounselOrdersAfterApplyBook(
               currentOrders: orders,
               playerId: humanPlayerId,
               book: tradeCounsel.book,
             );
-            shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+            replaceCurrentOrders(next);
           }
         : null,
     onAgreeLine: canEdit
         ? (order) {
-            final orders = shellRef.read(currentOrdersProvider);
+            final orders = readCurrentOrders();
             final next = tradeCounselOrdersAfterAgree(
               currentOrders: orders,
               playerId: humanPlayerId,
@@ -127,7 +124,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
               );
               return;
             }
-            shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+            replaceCurrentOrders(next);
           }
         : null,
   );
@@ -139,7 +136,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
             if (unitType == null || count == null || count <= 0) {
               return;
             }
-            final orders = shellRef.read(currentOrdersProvider);
+            final orders = readCurrentOrders();
             final next = militaryCounselOrdersAfterTrainAgree(
               game: displayGame,
               playerId: humanPlayerId,
@@ -156,7 +153,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
               );
               return;
             }
-            shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+            replaceCurrentOrders(next);
           }
         : null,
     onAgreeInvade: canEdit
@@ -165,7 +162,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
                 militaryCounselInvadeDestinationForRecommendation(
                   game: displayGame,
                   playerId: humanPlayerId,
-                  currentOrders: shellRef.read(currentOrdersProvider),
+                  currentOrders: readCurrentOrders(),
                   topology: topology,
                   recommendation: recommendation,
                 );
@@ -190,7 +187,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
               );
               if (ok != true || !context.mounted) return;
             }
-            final orders = shellRef.read(currentOrdersProvider);
+            final orders = readCurrentOrders();
             final next = militaryCounselOrdersAfterInvadeAgree(
               currentOrders: orders,
               playerId: humanPlayerId,
@@ -214,14 +211,14 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
               );
               return;
             }
-            shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+            replaceCurrentOrders(next);
           }
         : null,
   );
   final developmentCallbacks = CounselDevelopmentCallbacks(
     onAgreeBuildPort: canEdit
         ? (recommendation) {
-            final orders = shellRef.read(currentOrdersProvider);
+            final orders = readCurrentOrders();
             final workOrder = developmentCounselPortWorkOrderAfterAgree(
               game: displayGame,
               playerId: humanPlayerId,
