@@ -2123,6 +2123,30 @@
   "@trainCivilians_title": {
     "description": "Train civilians dialog title."
   },
+  "trainCivilians_roleGistExplorer": "Explores provinces · Prospects minerals",
+  "@trainCivilians_roleGistExplorer": {
+    "description": "Muted role gist on Train Civilians Explorer row. SPEC/ui/train-civilians-dialog.md; Refs #4366."
+  },
+  "trainCivilians_roleGistBuilder": "Improves tiles · Upgrades towns",
+  "@trainCivilians_roleGistBuilder": {
+    "description": "Muted role gist on Train Civilians Builder row. Refs #4366."
+  },
+  "trainCivilians_roleGistEngineer": "Builds roads, ports, and forts",
+  "@trainCivilians_roleGistEngineer": {
+    "description": "Muted role gist on Train Civilians Engineer row. Refs #4366."
+  },
+  "trainCivilians_roleGistSpy": "Holds foreign intel · Counter-espionage at home",
+  "@trainCivilians_roleGistSpy": {
+    "description": "Muted role gist on Train Civilians Spy row. Describes post work only; must not imply idle Spies are unused capacity (UXD-002). Refs #4366."
+  },
+  "trainCivilians_roleGistMerchant": "Purchases land in Minor/Tribe provinces",
+  "@trainCivilians_roleGistMerchant": {
+    "description": "Muted role gist on Train Civilians Merchant row. Refs #4366."
+  },
+  "trainCivilians_roleGistRailBuilder": "Upgrades roads to railroad",
+  "@trainCivilians_roleGistRailBuilder": {
+    "description": "Muted role gist on Train Civilians Rail Builder row. Refs #4366."
+  },
   "trainMilitary_title": "Train Military",
   "@trainMilitary_title": {
     "description": "Train military dialog title."
