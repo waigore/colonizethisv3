@@ -13,15 +13,15 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckAiSourceFileSize', () {
-    test('passes on current repo tree under 350 physical-line ceiling', () {
+    test('passes on current repo tree under 300 physical-line ceiling', () {
       expect(runCheckAiSourceFileSize('.'), 0);
     });
 
-    test('ceiling is 350 after #4310 Slice B headroom ratchet', () {
-      expect(aiSourceFileSizeCeiling, 350);
+    test('ceiling is 300 after #4365 Slice A headroom ratchet', () {
+      expect(aiSourceFileSizeCeiling, 300);
     });
 
-    test('grandfather allowlist is empty after #4079 / #4104 / #4310 splits', () {
+    test('grandfather allowlist is empty after #4079 / #4104 / #4310 / #4365 splits', () {
       expect(aiSourceFileSizeGrandfatheredForTests, isEmpty);
     });
 

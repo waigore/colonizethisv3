@@ -11,156 +11,11 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import '../ai_contracts_logging.dart';
-import '../constants.dart';
+import 'simple_ai_heuristics_apply.dart';
 import 'simple_ai_heuristics_category.dart';
+import 'simple_ai_heuristics_finalize.dart';
 
 export 'simple_ai_heuristics_seed.dart' show turnSeedForPlayer;
-
-Orders _applyChosenSimpleHeuristicCategory({
-  required SimpleHeuristicSuggestionCategory chosenCategory,
-  required Game g,
-  required String playerId,
-  required math.Random rng,
-  required Orders current,
-  required List<MoveOrder> moveSuggestions,
-  required List<ArmyMoveOrder> armyMoveSuggestions,
-  required List<WorkOrder> workSuggestions,
-  required List<BuildUnitOrder> buildSuggestions,
-  required List<ResearchOrder> researchSuggestions,
-}) {
-  switch (chosenCategory) {
-    case SimpleHeuristicSuggestionCategory.moves:
-      if (moveSuggestions.isEmpty) {
-        final idx = rng.nextInt(armyMoveSuggestions.length);
-        final chosen = armyMoveSuggestions[idx];
-        return applyArmyMoveOrderForPlayer(current, playerId, chosen);
-      }
-      if (armyMoveSuggestions.isEmpty) {
-        final idx = rng.nextInt(moveSuggestions.length);
-        final chosen = moveSuggestions[idx];
-        final list = List<MoveOrder>.from(
-          current.moveOrdersByPlayerId[playerId] ?? const [],
-        )..add(chosen);
-        return current.copyWith(
-          moveOrdersByPlayerId: {
-            ...current.moveOrdersByPlayerId,
-            playerId: list,
-          },
-        );
-      }
-      if (rng.nextBool()) {
-        final idx = rng.nextInt(moveSuggestions.length);
-        final chosen = moveSuggestions[idx];
-        final list = List<MoveOrder>.from(
-          current.moveOrdersByPlayerId[playerId] ?? const [],
-        )..add(chosen);
-        return current.copyWith(
-          moveOrdersByPlayerId: {
-            ...current.moveOrdersByPlayerId,
-            playerId: list,
-          },
-        );
-      }
-      final idx = rng.nextInt(armyMoveSuggestions.length);
-      final chosen = armyMoveSuggestions[idx];
-      return applyArmyMoveOrderForPlayer(current, playerId, chosen);
-    case SimpleHeuristicSuggestionCategory.work:
-      final idx = rng.nextInt(workSuggestions.length);
-      final chosen = workSuggestions[idx];
-      final list = List<WorkOrder>.from(
-        current.workOrdersByPlayerId[playerId] ?? const [],
-      )..add(chosen);
-      return current.copyWith(
-        workOrdersByPlayerId: {...current.workOrdersByPlayerId, playerId: list},
-      );
-    case SimpleHeuristicSuggestionCategory.build:
-      final bidx = rng.nextInt(buildSuggestions.length);
-      final bchosen = buildSuggestions[bidx];
-      final blist = List<BuildUnitOrder>.from(
-        current.buildUnitOrdersByPlayerId[playerId] ?? const [],
-      )..add(bchosen);
-      return current.copyWith(
-        buildUnitOrdersByPlayerId: {
-          ...current.buildUnitOrdersByPlayerId,
-          playerId: blist,
-        },
-      );
-    case SimpleHeuristicSuggestionCategory.research:
-      final ridx = rng.nextInt(researchSuggestions.length);
-      final rchosen = researchSuggestions[ridx];
-      final rlist = <ResearchOrder>[
-        ...current.researchOrdersByPlayerId[playerId] ?? const [],
-        rchosen,
-      ];
-      return current.copyWith(
-        researchOrdersByPlayerId: {
-          ...current.researchOrdersByPlayerId,
-          playerId: rlist,
-        },
-      );
-  }
-}
-
-Orders _finalizeSimpleHeuristicOrdersForPlayer({
-  required Game g,
-  required String playerId,
-  required Orders current,
-}) {
-  final moveByPlayer = <String, List<MoveOrder>>{};
-  final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
-  final buildByPlayer = <String, List<BuildUnitOrder>>{};
-  final workByPlayer = <String, List<WorkOrder>>{};
-  final researchByPlayer = <String, List<ResearchOrder>>{};
-
-  final rawMoves = current.moveOrdersByPlayerId[playerId];
-  if (rawMoves != null && rawMoves.isNotEmpty) {
-    final filtered = filterMoveOrdersByDiplomacy(g, playerId, rawMoves);
-    if (filtered.isNotEmpty) {
-      moveByPlayer[playerId] = filtered;
-    }
-  }
-  final rawArmyMoves = current.armyMoveOrdersByPlayerId[playerId];
-  if (rawArmyMoves != null && rawArmyMoves.isNotEmpty) {
-    final filtered = filterArmyMoveOrdersByDiplomacy(g, playerId, rawArmyMoves);
-    if (filtered.isNotEmpty) {
-      armyMoveByPlayer[playerId] = filtered;
-    }
-  }
-  if (current.buildUnitOrdersByPlayerId.containsKey(playerId)) {
-    buildByPlayer[playerId] = List<BuildUnitOrder>.from(
-      current.buildUnitOrdersByPlayerId[playerId]!,
-    );
-  }
-  if (current.workOrdersByPlayerId.containsKey(playerId)) {
-    workByPlayer[playerId] = List<WorkOrder>.from(
-      current.workOrdersByPlayerId[playerId]!,
-    );
-  }
-  if (current.researchOrdersByPlayerId.containsKey(playerId)) {
-    researchByPlayer[playerId] = List<ResearchOrder>.from(
-      current.researchOrdersByPlayerId[playerId]!,
-    );
-  }
-
-  final m = moveByPlayer[playerId]?.length ?? 0;
-  final a = armyMoveByPlayer[playerId]?.length ?? 0;
-  final b = buildByPlayer[playerId]?.length ?? 0;
-  final w = workByPlayer[playerId]?.length ?? 0;
-  final r = researchByPlayer[playerId]?.length ?? 0;
-  aiContractsLog.i(
-    'simple heuristics generated orders player=$playerId move=$m armyMove=$a build=$b work=$w research=$r',
-  );
-
-  return Orders(
-    moveOrdersByPlayerId: moveByPlayer,
-    armyMoveOrdersByPlayerId: armyMoveByPlayer,
-    buildUnitOrdersByPlayerId: buildByPlayer,
-    workOrdersByPlayerId: workByPlayer,
-    diplomaticOrdersByPlayerId: const {},
-    researchOrdersByPlayerId: researchByPlayer,
-  );
-}
 
 /// Generates orders for a single player using the shared simple heuristics:
 /// PlayerView, order suggestion API, category order (move → work → build →
@@ -266,7 +121,7 @@ Orders generateOrdersWithSimpleHeuristics(
       rng: rng,
     );
 
-    current = _applyChosenSimpleHeuristicCategory(
+    current = applyChosenSimpleHeuristicCategory(
       chosenCategory: chosenCategory,
       g: g,
       playerId: player.id,
@@ -280,7 +135,7 @@ Orders generateOrdersWithSimpleHeuristics(
     );
   }
 
-  return _finalizeSimpleHeuristicOrdersForPlayer(
+  return finalizeSimpleHeuristicOrdersForPlayer(
     g: g,
     playerId: player.id,
     current: current,

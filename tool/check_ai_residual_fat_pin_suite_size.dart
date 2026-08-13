@@ -8,8 +8,8 @@ import 'ct_repo_lint_scan_contract.dart';
 /// extraction (Refs #3997 / #4079 Slice D / #4104 Slice C). Phase-8 used
 /// ≤750-or-cases; Phase-9 tightened to ≤650-or-cases; Phase-10 densify
 /// ratchets to ≤500-or-cases for gated basenames (Phase-12 Slice D);
-/// Phase-13 Slice D →450 (Refs #4310).
-const int residualFatPinSuitePhysicalLineCeiling = 450;
+/// Phase-13 Slice D →450 (Refs #4310); Phase-14 Slice B →400 (Refs #4365).
+const int residualFatPinSuitePhysicalLineCeiling = 400;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const String _supportTestPrefix =
@@ -68,6 +68,8 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'phase_planner_dispatch_test.dart',
   'expand_phase_planner_great_power_war_count_and_pending_declare_war_test.dart',
   'phase_planner_military_plans_test.dart',
+  // Phase-14 Slice B join-empire densify (Refs #4365).
+  'colonial_phase_planner_acquisition_join_empire_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {
