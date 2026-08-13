@@ -3,6 +3,7 @@
 library;
 
 export 'province_assignment_bfs_growth.dart';
+export 'province_assignment_bfs_greedy.dart';
 
 /// True if [provinceId] shares a P–P edge with a province owned by [factionId].
 bool provinceTouchesFaction(

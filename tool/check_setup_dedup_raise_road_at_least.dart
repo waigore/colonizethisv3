@@ -2,11 +2,12 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Raise-road-at-least must live in `setup_road_wiring.dart` (Refs #4020).
+/// Raise-road-at-least must live in `setup_road_wiring_tile_helpers.dart`
+/// (Refs #4020; SoT path updated Refs #4349).
 const _setupLibDir = 'packages/colonizethis_setup/lib/src/setup';
 
 const _helperModuleRelativePath =
-    'packages/colonizethis_setup/lib/src/setup/setup_road_wiring.dart';
+    'packages/colonizethis_setup/lib/src/setup/setup_road_wiring_tile_helpers.dart';
 
 /// Local clone names observed historically (plus the canonical public name).
 final RegExp _raiseRoadDef = RegExp(
@@ -50,7 +51,8 @@ int runCheckSetupDedupRaiseRoadAtLeast(
 
   logE(
     'ERROR: raiseRoadAtLeast / _raiseRoadAtLeast / _setRoadLevelMax must be '
-    'defined only in setup_road_wiring.dart; call sites must import it.',
+    'defined only in setup_road_wiring_tile_helpers.dart; call sites must '
+    'import it (or setup_road_wiring.dart which re-exports it).',
   );
   for (final v in violations) {
     logE('${v.path}:${v.line} ${v.message}');
