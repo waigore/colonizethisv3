@@ -35,6 +35,8 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   String? lastValidHoveredWorkTargetTileKey;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache =
       PerPlayerWorkTargetSelectionCache();
+  final PerPlayerArmyMovePickerCache armyMovePickerCache =
+      PerPlayerArmyMovePickerCache();
   bool sideMenuOpen = false;
   bool debugConsoleOpen = false;
 

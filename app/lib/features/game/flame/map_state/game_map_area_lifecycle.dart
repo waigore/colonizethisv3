@@ -9,6 +9,7 @@ import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
+import '../../../../providers/games_provider.dart';
 
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
@@ -32,7 +33,7 @@ mixin GameMapAreaLifecycle
   void initState() {
     super.initState();
     mapViewState = widget.game.mapViewState;
-    refreshWorkTargetSelectionCache(widget.game);
+    refreshMapSuggestionCaches(widget.game);
     final bus = ref.read(appEventBusProvider);
     for (final subscription in [
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
@@ -126,6 +127,11 @@ mixin GameMapAreaLifecycle
         cancelAnyMapTileSelection();
       }
     });
+    ref.listenManual(currentOrdersProvider, (previous, next) {
+      if (!mounted) return;
+      if (identical(previous, next)) return;
+      refreshArmyMovePickerCache(widget.game);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       maybeAutoCenterOnShellEntry();
@@ -147,7 +153,7 @@ mixin GameMapAreaLifecycle
       ref.read(mapProvincePanelProvider.notifier).reset();
       ref.read(regionMinimapVisibleProvider.notifier).reset();
       setState(() {
-        refreshWorkTargetSelectionCache(widget.game);
+        refreshMapSuggestionCaches(widget.game);
         mapViewState = widget.game.mapViewState;
         regionViewportSnapshot = null;
         pendingRegionViewport = null;
@@ -164,7 +170,7 @@ mixin GameMapAreaLifecycle
     if (oldWidget.game.worldState.turnState.turnNumber !=
         widget.game.worldState.turnState.turnNumber) {
       setState(() {
-        refreshWorkTargetSelectionCache(widget.game);
+        refreshMapSuggestionCaches(widget.game);
       });
     }
   }

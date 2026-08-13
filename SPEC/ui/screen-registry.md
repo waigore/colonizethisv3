@@ -61,6 +61,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `CMPT50001` | Quick battle result dialog | [quick-battle-result-dialog.md](quick-battle-result-dialog.md) | `app/lib/features/game/widgets/combat/quick_battle_result_dialog.dart` | Quick Battle | active |
 | `DLG10001` | New game leader selection | [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) | `app/lib/features/shell/new_game_leader_selection_dialog.dart` | New Game Leader Selection Dialog | active |
 | `DLG20001` | Move army dialog | [move-army-dialog.md](move-army-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart` | Move Army Dialog | active |
+| `DLG20002` | Overlay army move picker | [overlay-army-move-picker-dialog.md](overlay-army-move-picker-dialog.md) | `app/lib/features/game/widgets/unit_orders/overlay_army_move_picker_dialog.dart` | Overlay Army Move Picker Dialog | active |
 | `DLG30001` | Move fleet dialog | [move-fleet-dialog.md](move-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart` | Move Fleet Dialog | active |
 | `DLG31001` | Naval mission menu dialog | [naval-mission-menu-dialog.md](naval-mission-menu-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart` | Naval Mission Menu Dialog | active |
 | `DLG31002` | Naval mission target dialog | [naval-mission-target-dialog.md](naval-mission-target-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_target_dialog.dart` | Naval Mission Target Dialog | active |

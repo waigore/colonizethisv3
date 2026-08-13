@@ -9,3 +9,4 @@ export 'src/orders/orders.dart';
 export 'src/orders/civilian_projected_tile.dart';
 export 'src/orders/diplomatic_panel_actions.dart';
 export 'src/orders/per_player_work_target_selection_cache.dart';
+export 'src/orders/per_player_army_move_picker_cache.dart';

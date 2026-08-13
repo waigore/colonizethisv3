@@ -52,13 +52,6 @@ class ExtractionDiscLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = appL10n(context);
-    final TextStyle labelStyle =
-        (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(
-          color: EditorialMonoclePalette.muted,
-          fontSize: 10,
-          height: 1.2,
-        );
-
     return Material(
       key: kExtractionDiscLegendKey,
       color: Colors.transparent,
@@ -71,43 +64,63 @@ class ExtractionDiscLegend extends StatelessWidget {
             l10n: l10n,
           );
         },
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: EditorialMonoclePalette.surface.withValues(alpha: 0.92),
-            border: Border.all(color: EditorialMonoclePalette.border),
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: CtSpacing.s,
-              vertical: narrow ? CtSpacing.xs : CtSpacing.s,
-            ),
-            child: Semantics(
-              button: true,
-              label: l10n.mapExtractionDisc_legendSemantics,
-              child: narrow
-                  ? const _DiscPair()
-                  : ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: wideMaxWidth),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          _LegendRow(
-                            gold: true,
-                            label: l10n.mapExtractionDisc_legendGold,
-                            style: labelStyle,
-                          ),
-                          const SizedBox(height: CtSpacing.xs),
-                          _LegendRow(
-                            gold: false,
-                            label: l10n.mapExtractionDisc_legendBrown,
-                            style: labelStyle,
-                          ),
-                        ],
+        child: _LegendChipBody(narrow: narrow, l10n: l10n),
+      ),
+    );
+  }
+}
+
+class _LegendChipBody extends StatelessWidget {
+  const _LegendChipBody({required this.narrow, required this.l10n});
+
+  final bool narrow;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle labelStyle =
+        (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(
+          color: EditorialMonoclePalette.muted,
+          fontSize: 10,
+          height: 1.2,
+        );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.surface.withValues(alpha: 0.92),
+        border: Border.all(color: EditorialMonoclePalette.border),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: CtSpacing.s,
+          vertical: narrow ? CtSpacing.xs : CtSpacing.s,
+        ),
+        child: Semantics(
+          button: true,
+          label: l10n.mapExtractionDisc_legendSemantics,
+          child: narrow
+              ? const _DiscPair()
+              : ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: ExtractionDiscLegend.wideMaxWidth,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      _LegendRow(
+                        gold: true,
+                        label: l10n.mapExtractionDisc_legendGold,
+                        style: labelStyle,
                       ),
-                    ),
-            ),
-          ),
+                      const SizedBox(height: CtSpacing.xs),
+                      _LegendRow(
+                        gold: false,
+                        label: l10n.mapExtractionDisc_legendBrown,
+                        style: labelStyle,
+                      ),
+                    ],
+                  ),
+                ),
         ),
       ),
     );
