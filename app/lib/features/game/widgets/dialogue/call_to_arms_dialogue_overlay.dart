@@ -121,8 +121,18 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
                   _gpName(c.defenderGpId),
                   _gpName(c.aggressorGpId),
                 ),
+                formalAllianceReason: l10n.game_callToArms_formalAllianceReason(
+                  _gpName(c.defenderGpId),
+                ),
                 joinLabel: l10n.game_callToArms_join,
                 refuseLabel: l10n.game_callToArms_refuse,
+                joinEffect: l10n.game_callToArms_effectJoin(
+                  _gpName(c.aggressorGpId),
+                  _gpName(c.defenderGpId),
+                ),
+                refuseEffect: l10n.game_callToArms_effectRefuse(
+                  _gpName(c.defenderGpId),
+                ),
                 decision: _join[i],
                 onDecisionChanged: (bool? next) {
                   setState(() => _join[i] = next);

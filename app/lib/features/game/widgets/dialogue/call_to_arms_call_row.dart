@@ -9,16 +9,20 @@ import 'dialogue_tristate_decision_row.dart';
 /// Mirrors the overture overlay's offer row (`SPEC/ui/overture-dialogue-overlay.md`
 /// R22): the calling faction name renders in `--accent`, the war prompt in
 /// `--muted`, and Join / Refuse use [DialogueTristateDecisionRow] (issue #2867
-/// R24 / #4018). Submit stays disabled until every row has a non-null decision
-/// (R25).
+/// R24 / #4018). First-order Join/Refuse Effect lines (Refs #4364) mirror
+/// intervention choice Effects (`OVL50001` / #4267). Submit stays disabled
+/// until every row has a non-null decision (R25).
 class CallToArmsCallRow extends StatelessWidget {
   const CallToArmsCallRow({
     super.key,
     required this.rowIndex,
     required this.factionName,
     required this.prompt,
+    required this.formalAllianceReason,
     required this.joinLabel,
     required this.refuseLabel,
+    required this.joinEffect,
+    required this.refuseEffect,
     required this.decision,
     required this.onDecisionChanged,
   });
@@ -26,8 +30,11 @@ class CallToArmsCallRow extends StatelessWidget {
   final int rowIndex;
   final String factionName;
   final String prompt;
+  final String formalAllianceReason;
   final String joinLabel;
   final String refuseLabel;
+  final String joinEffect;
+  final String refuseEffect;
 
   /// Current tristate decision: `null` (undecided) / `true` (join) /
   /// `false` (refuse).
@@ -46,6 +53,18 @@ class CallToArmsCallRow extends StatelessWidget {
   static String refuseToggleKeyFor(int rowIndex) =>
       'callToArmsRefuseToggle_$rowIndex';
 
+  /// Stable test-grep key for the optional formal-alliance reason line.
+  static String formalAllianceReasonKeyFor(int rowIndex) =>
+      'callToArmsFormalAllianceReason_$rowIndex';
+
+  /// Stable test-grep key for the Join Effect line in row N.
+  static String joinEffectKeyFor(int rowIndex) =>
+      'callToArmsEffectJoin_$rowIndex';
+
+  /// Stable test-grep key for the Refuse Effect line in row N.
+  static String refuseEffectKeyFor(int rowIndex) =>
+      'callToArmsEffectRefuse_$rowIndex';
+
   /// Stable test-grep key for the per-row prompt `Text.rich`.
   static const ValueKey<String> promptKey =
       ValueKey<String>('callToArmsPrompt');
@@ -53,6 +72,9 @@ class CallToArmsCallRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextStyle effectStyle =
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+            .copyWith(color: EditorialMonoclePalette.muted);
     // Per-call rows stack the prompt above an end-aligned Wrap of Join +
     // Refuse toggles so the row never relies on a horizontal
     // Row(Expanded(prompt) + controls) fitting at narrow viewports
@@ -64,6 +86,12 @@ class CallToArmsCallRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _buildPrompt(theme),
+          const SizedBox(height: CtSpacing.s),
+          Text(
+            formalAllianceReason,
+            key: ValueKey<String>(formalAllianceReasonKeyFor(rowIndex)),
+            style: effectStyle,
+          ),
           const SizedBox(height: CtSpacing.m),
           DialogueTristateDecisionRow(
             positiveToggleKey: ValueKey<String>(joinToggleKeyFor(rowIndex)),
@@ -72,6 +100,18 @@ class CallToArmsCallRow extends StatelessWidget {
             negativeLabel: refuseLabel,
             decision: decision,
             onDecisionChanged: onDecisionChanged,
+          ),
+          const SizedBox(height: CtSpacing.s),
+          Text(
+            joinEffect,
+            key: ValueKey<String>(joinEffectKeyFor(rowIndex)),
+            style: effectStyle,
+          ),
+          const SizedBox(height: CtSpacing.xs),
+          Text(
+            refuseEffect,
+            key: ValueKey<String>(refuseEffectKeyFor(rowIndex)),
+            style: effectStyle,
           ),
         ],
       ),
