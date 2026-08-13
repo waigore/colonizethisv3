@@ -4,6 +4,8 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement, kWorkTargetCounterSpy;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -137,8 +139,8 @@ void main() {
         find.text('Holds foreign intel · Counter-espionage at home'),
         findsOneWidget,
       );
-      expect(find.textContaining('build_improvement'), findsNothing);
-      expect(find.textContaining('counter_spy'), findsNothing);
+      expect(find.textContaining(kWorkTargetBuildImprovement), findsNothing);
+      expect(find.textContaining(kWorkTargetCounterSpy), findsNothing);
 
       await harness.pumpDialog(
         tester,

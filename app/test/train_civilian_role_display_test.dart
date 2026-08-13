@@ -1,5 +1,14 @@
 import 'package:colonizethis_app/features/game/widgets/train/train_civilian_role_display.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        kWorkTargetBuildFort,
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildPort,
+        kWorkTargetBuildRoad,
+        kWorkTargetCounterSpy,
+        kWorkTargetPurchaseLand,
+        kWorkTargetUpgradeTown;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/widgets.dart';
@@ -51,13 +60,13 @@ void main() {
       for (final gist in byId.values) {
         expect(gist, isNotEmpty);
         // Raw work-target / persistence ids must not appear.
-        expect(gist, isNot(contains('build_improvement')));
-        expect(gist, isNot(contains('counter_spy')));
-        expect(gist, isNot(contains('purchase_land')));
-        expect(gist, isNot(contains('build_road')));
-        expect(gist, isNot(contains('build_fort')));
-        expect(gist, isNot(contains('build_port')));
-        expect(gist, isNot(contains('upgrade_town')));
+        expect(gist, isNot(contains(kWorkTargetBuildImprovement)));
+        expect(gist, isNot(contains(kWorkTargetCounterSpy)));
+        expect(gist, isNot(contains(kWorkTargetPurchaseLand)));
+        expect(gist, isNot(contains(kWorkTargetBuildRoad)));
+        expect(gist, isNot(contains(kWorkTargetBuildFort)));
+        expect(gist, isNot(contains(kWorkTargetBuildPort)));
+        expect(gist, isNot(contains(kWorkTargetUpgradeTown)));
         expect(gist, isNot(contains('explore_province')));
       }
     });
