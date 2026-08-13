@@ -110,6 +110,12 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get provinceOverlay_tilePortStatusPresent => 'Port: Present';
 
   @override
+  String get provinceOverlay_tileDetailsAction => 'Tile details';
+
+  @override
+  String get provinceOverlay_tileDetailsTitle => 'Tile details';
+
+  @override
   String get developmentCounsel_tabDevelopment => 'Development';
 
   @override

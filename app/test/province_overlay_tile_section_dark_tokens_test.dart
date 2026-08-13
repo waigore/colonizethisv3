@@ -50,6 +50,9 @@ Future<void> _assertMutedRoadCaption(
   String? extraMutedText,
 }) async {
   await _pumpFullPlayerRoad(tester, roadLevel: roadLevel);
+  expect(find.text(caption), findsNothing);
+  await tester.tap(find.text('Tile details'));
+  await tester.pumpAndSettle();
   expect(_textStyleFor(tester, caption).color, EditorialMonoclePalette.muted);
   if (extraMutedText != null) {
     expect(

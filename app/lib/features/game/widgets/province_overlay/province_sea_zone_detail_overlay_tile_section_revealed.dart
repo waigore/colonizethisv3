@@ -223,9 +223,15 @@ Widget buildRevealedTileSection({
           buildPortActionEnabled: buildPortActionEnabled,
           buildPortActionHasEngineerUnits: buildPortActionHasEngineerUnits,
           onBuildPortTap: onBuildPortTap,
+          tileConnectivity: tileConnectivity,
         ),
         ...buildTileConnectivityLabelWidgets(
+          context: context,
           l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          provinceId: provinceId,
+          roadLevel: roadLevel,
           tileConnectivity: tileConnectivity,
         ),
         Text(
