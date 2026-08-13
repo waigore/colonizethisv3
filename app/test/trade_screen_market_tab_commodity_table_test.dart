@@ -1,32 +1,10 @@
 // Widget tests for the Market tab read-only commodity table
 // (Refs #2993 E5a + #3093 integer-price refresh + sectioned grouping).
 // SPEC/ui/trade-screen.md § Body — Market tab.
-//
-// Exercises the durable contract for the Market tab body:
-//
-//  * one row per tradeable commodity (full CommodityCatalog minus
 //    riches and `spices` — 22 rows total per SPEC/game/world-market.md
 //    §Tradeable commodities),
 //  * Production-style sectioned grouping (`#3093` § Layout & grouping):
-//    the rows are grouped by [CommodityCategory] under `CtSectionLabel`
-//    headers — Food → Raw Materials → Manufactured — and within each
-//    section the rows follow `CommodityCatalog.all` catalog order
-//    (mirroring the Production panel's Available subpanel),
-//  * last market price sourced from `Game.worldMarketState.prices`
-//    (integer, post-#3093). Rows fall back to
-//    `ResourceRules.defaultMarketPriceForCommodityId` when the prices
-//    map lacks an entry — the catalog covers every tradeable commodity,
-//    raw resources (e.g. iron → 80) and manufactured commodities (e.g.
 //    lumber → 60 per SPEC/game/commodity-catalog.md § Manufactured base
-//    prices). The em-dash glyph is reserved as a defensive fallback for
-//    future commodity additions that ship without a catalog default.
-//  * previous-turn aggregate volume line `Last turn: bids X · offers Y`
-//    sourced from `Game.worldMarketState.lastTurnActivity`.
-//
-// The interactive Market controls (bid/offer toggle, quantity stepper,
-// priority dropdown, cargo indicator) ship in follow-up slices and are
-// out of scope for this pin file.
-
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -251,7 +229,6 @@ void main() {
             '(`${manufacturedCommodities.first.id}`).',
       );
     });
-
     testWidgets(
       'section headers show Food/Raw Materials/Manufactured labels inside '
       'Market tab body only (not Deal Book)',

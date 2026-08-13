@@ -1,46 +1,8 @@
 // Widget goldens for the train-dialog visual acceptance criteria of issue
-// #3568 (align Train Civilians dialog `UNIT40001` and the shared
-// `TrainDialogChrome` — incl. Train Military `UNIT50001` — to the canonical
-// mockup). PR #3569 landed the formatting/layout/styling and text-content
-// assertions; these pixel baselines close the remaining UI verification gap by
-// mapping the *visual* ACs (boxed inset resource bar, row geometry,
-// `£`+comma glyphs, deficit-hint colour) to golden PNGs under
-// `app/test/goldens/`.
-//
-// Harness mirrors the committed golden pattern
-// (`diplomacy_panel_goldens_test.dart`, `unit_panels_goldens_test.dart`): a
-// keyed `RepaintBoundary` wraps each dialog, the committed seed-42 game fixture
-// (`loadSeed42Game()`) pins the content via a cheap JSON decode instead of the
 // ~7-11s `getDebugInitGameResult()` map generation (Refs #3656), and
-// `AppThemes.editorialMonocle` supplies the dark-theme chrome
-// (`colonizethis-ui-design.mdc`). Each golden is paired with structural finder
-// assertions so the baseline keeps mapping to its AC rather than silently
-// drifting.
-//
-//  - AC1 (£+comma treasury) / AC3 (name-over-cost + stepper-right row) /
-//    AC4 (boxed inset resource bar, monospace bold values): civilian default.
-//  - AC5 (both-resource deficit `Treasury low, Paper low` in danger colour):
-//    civilian deficit.
-//  - AC6 (military £+comma + shared restyled resource bar): military default.
-//
-// Issue #3601 visual ACs (closes verification gaps G1/G3/G4): the new
-// `TrainNavalDialog` (`UNIT60001`) had no pixel baseline, and the
-// `remaining / total` + danger-cost styling lacked deficit goldens. These add:
-//  - #3601 AC9 (naval resource bar — Treasury/Peasants + lumber/fabric/
-//    castIron/coal `remaining / total`): naval default.
-//  - #3601 AC6 (danger `[+]`) + per-item red cost text: naval deficit (zero
-//    treasury) and military deficit (zero treasury).
-//
-// Issue #3601 verification gap G2: the civilian reset path (AC3 — `Reset`
-// restores `remaining == total`) had no pixel baseline. This adds:
-//  - #3601 AC3 (Reset restores the resource bar to `£5,000 / £5,000`, `12 / 12`
-//    after queued Builders dropped it to `£3,000 / £5,000`, `8 / 12`):
-//    civilian reset.
-//
 // SPEC: SPEC/ui/train-civilians-dialog.md (`UNIT40001`),
 // SPEC/ui/components/train-dialog-chrome.md, SPEC/ui/train-military-dialog.md,
 // SPEC/ui/train-naval-dialog.md (`UNIT60001`).
-
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';

@@ -7,9 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         kWorkTargetBuildFort,
@@ -23,70 +23,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetPurchaseLand,
         kWorkTargetUpgradeTown;
 
+import 'civilian_units_panel_part3_pump_support.dart';
 import 'civilian_units_panel_test_support.dart';
-
-const _human = 'h1';
-const _tileKey = 'oldWorld|p1|0|0';
-
-Finder _resourceIcon(String commodityId) => find.byWidgetPredicate(
-  (w) => w is ResourceIcon && w.commodityId == commodityId,
-);
-
-Future<void> _pumpPendingUnit(
-  WidgetTester tester, {
-  required String gameId,
-  required String unitId,
-  required String unitType,
-  required String workTarget,
-  Map<String, String> resourceByTileKey = const {},
-}) async {
-  await tester.pumpWidget(
-    buildCivilianPanel(
-      game: buildCivilianSingleUnitOwGame(
-        id: gameId,
-        humanId: _human,
-        unitId: unitId,
-        unitType: unitType,
-        tileKey: _tileKey,
-        resourceByTileKey: resourceByTileKey,
-      ),
-      humanPlayerId: _human,
-      currentOrders: civilianSinglePendingWorkOrder(
-        humanId: _human,
-        unitId: unitId,
-        target: workTarget,
-        targetTileKey: _tileKey,
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pumpTileScopedPanel(
-  WidgetTester tester, {
-  required Game game,
-  required String humanPlayerId,
-  required AppEventBus bus,
-  String? tileScopeTileKey,
-  String? initialSelectedUnitId,
-  bool settle = true,
-}) async {
-  await tester.pumpWidget(
-    buildCivilianPanel(
-      game: game,
-      humanPlayerId: humanPlayerId,
-      bus: bus,
-      tileScopeTileKey: tileScopeTileKey,
-      initialSelectedUnitId: initialSelectedUnitId,
-    ),
-  );
-  if (settle) {
-    await tester.pumpAndSettle();
-  } else {
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-  }
-}
 
 void main() {
   suppressLogsForTests();
@@ -103,7 +41,7 @@ void main() {
     testWidgets(
       'AC: pending build_improvement shows ResourceIcons and omits (pending)',
       (WidgetTester tester) async {
-        await _pumpPendingUnit(
+        await pumpCivilianPanelPendingUnit(
           tester,
           gameId: 'g_civ_pending_build',
           unitId: 'b1',
@@ -113,8 +51,8 @@ void main() {
 
         expect(find.textContaining('Assigned to:'), findsOneWidget);
         expect(find.textContaining('(pending)'), findsNothing);
-        expect(_resourceIcon('lumber'), findsOneWidget);
-        expect(_resourceIcon('castIron'), findsOneWidget);
+        expect(civilianPanelResourceIcon('lumber'), findsOneWidget);
+        expect(civilianPanelResourceIcon('castIron'), findsOneWidget);
       },
     );
 
@@ -128,9 +66,9 @@ void main() {
             game: buildCivilianDualBuilderLowStockGame(
               id: 'g_civ_dual_shortfall',
             ),
-            humanPlayerId: _human,
+            humanPlayerId: civilianPanelPart3HumanId,
             currentOrders: civilianPendingWorkOrders(
-              humanId: _human,
+              humanId: civilianPanelPart3HumanId,
               workOrders: [
                 WorkOrder(
                   unitId: 'b1',
@@ -149,8 +87,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Assigned to:'), findsNWidgets(2));
-        expect(_resourceIcon('lumber'), findsNWidgets(2));
-        expect(_resourceIcon('castIron'), findsNWidgets(2));
+        expect(civilianPanelResourceIcon('lumber'), findsNWidgets(2));
+        expect(civilianPanelResourceIcon('castIron'), findsNWidgets(2));
         expect(find.textContaining('Short:'), findsOneWidget);
       },
     );
@@ -158,7 +96,7 @@ void main() {
     testWidgets(
       'AC: pending explore shows inline turns and no ResourceIcon strip',
       (WidgetTester tester) async {
-        await _pumpPendingUnit(
+        await pumpCivilianPanelPendingUnit(
           tester,
           gameId: 'g_civ_pending_explore',
           unitId: 'e1',
@@ -176,13 +114,13 @@ void main() {
     testWidgets(
       'AC: pending purchase_land shows treasury chip not ResourceIcon',
       (WidgetTester tester) async {
-        await _pumpPendingUnit(
+        await pumpCivilianPanelPendingUnit(
           tester,
           gameId: 'g_civ_pending_land',
           unitId: 'm1',
           unitType: kUnitTypeMerchant,
           workTarget: kWorkTargetPurchaseLand,
-          resourceByTileKey: {_tileKey: 'grain'},
+          resourceByTileKey: {civilianPanelPart3TileKey: 'grain'},
         );
 
         expect(find.textContaining('Treasury:'), findsOneWidget);
@@ -194,7 +132,7 @@ void main() {
     testWidgets(
       'AC: pending purchase_land without tile resource still shows inline turns',
       (WidgetTester tester) async {
-        await _pumpPendingUnit(
+        await pumpCivilianPanelPendingUnit(
           tester,
           gameId: 'g_civ_pending_land_nores',
           unitId: 'm1',
@@ -252,27 +190,27 @@ void main() {
             buildCivilianPanel(
               game: buildCivilianOwUnitsGame(
                 id: 'g_civ_pending_turns_${c.target}_$i',
-                humanId: _human,
+                humanId: civilianPanelPart3HumanId,
                 fortLevel: 2,
                 resourceByTileKey: const {targetTileKey: 'grain'},
                 tileKeysByRegionAndProvince: const {
                   'oldWorld': {
-                    'oldWorld|p1': [_tileKey, targetTileKey],
+                    'oldWorld|p1': [civilianPanelPart3TileKey, targetTileKey],
                   },
                 },
                 units: [
                   civilianIdleUnit(
                     id: unitId,
                     type: c.unitType,
-                    ownerId: _human,
+                    ownerId: civilianPanelPart3HumanId,
                     provinceId: 'oldWorld|p1',
-                    tileKey: _tileKey,
+                    tileKey: civilianPanelPart3TileKey,
                   ),
                 ],
               ),
-              humanPlayerId: _human,
+              humanPlayerId: civilianPanelPart3HumanId,
               currentOrders: civilianSinglePendingWorkOrder(
-                humanId: _human,
+                humanId: civilianPanelPart3HumanId,
                 unitId: unitId,
                 target: c.target,
                 targetTileKey: targetTileKey,
@@ -308,7 +246,7 @@ void main() {
     testWidgets('AC: pending build_rail shows steel and lumber icons', (
       WidgetTester tester,
     ) async {
-      await _pumpPendingUnit(
+      await pumpCivilianPanelPendingUnit(
         tester,
         gameId: 'g_civ_pending_rail',
         unitId: 'r1',
@@ -317,8 +255,8 @@ void main() {
       );
 
       expect(find.textContaining('(pending)'), findsNothing);
-      expect(_resourceIcon('lumber'), findsOneWidget);
-      expect(_resourceIcon('steel'), findsOneWidget);
+      expect(civilianPanelResourceIcon('lumber'), findsOneWidget);
+      expect(civilianPanelResourceIcon('steel'), findsOneWidget);
     });
 
     testWidgets('AC: in-progress work row has no pending cost ResourceIcons', (
@@ -327,10 +265,10 @@ void main() {
       await tester.pumpWidget(
         buildCivilianPanel(
           game: buildCivilianWorkingBuilderGame(
-            humanId: _human,
-            tileKey: _tileKey,
+            humanId: civilianPanelPart3HumanId,
+            tileKey: civilianPanelPart3TileKey,
           ),
-          humanPlayerId: _human,
+          humanPlayerId: civilianPanelPart3HumanId,
         ),
       );
       await tester.pumpAndSettle();
@@ -357,7 +295,7 @@ void main() {
         final scopedUnitId = civilianWithTile.first.id;
         final bus = AppEventBus.create();
 
-        await _pumpTileScopedPanel(
+        await pumpCivilianPanelTileScoped(
           tester,
           game: game,
           humanPlayerId: humanPlayerIdWithUnits,
@@ -398,7 +336,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final bus = AppEventBus.create();
-      await _pumpTileScopedPanel(
+      await pumpCivilianPanelTileScoped(
         tester,
         game: game,
         humanPlayerId: humanPlayerIdWithUnits,
@@ -420,7 +358,7 @@ void main() {
       '(no CtNinePatchButton header chrome) — #3514 owner decision #5',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
-        await _pumpTileScopedPanel(
+        await pumpCivilianPanelTileScoped(
           tester,
           game: game,
           humanPlayerId: humanPlayerIdWithUnits,
@@ -476,7 +414,7 @@ void main() {
         });
         addTearDown(sub.cancel);
 
-        await _pumpTileScopedPanel(
+        await pumpCivilianPanelTileScoped(
           tester,
           game: game,
           humanPlayerId: humanPlayerIdWithUnits,

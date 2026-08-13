@@ -154,7 +154,6 @@ void main() {
     expect(find.textContaining('· Old World'), findsNothing);
     expect(find.textContaining('(cross-region)'), findsNothing);
   });
-
   testWidgets(
     'shows links-to Old World for new-world fleet cross-region picks',
     (WidgetTester tester) async {
@@ -261,7 +260,6 @@ void main() {
     expect(locate!.regionId, 'newWorld');
     expect(locate.tileKey, 'newWorld|port_nw|0|0');
   });
-
   testWidgets(
     'in-port fleet with combined topology shows Sea zones (issue #1446)',
     (WidgetTester tester) async {

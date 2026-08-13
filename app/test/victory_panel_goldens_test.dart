@@ -1,21 +1,6 @@
 // Widget goldens for the Victory panel (GAME70001) visual acceptance criteria
 // (Refs #4165). Pixel baselines live under `app/test/goldens/` and are asserted
-// with `matchesGoldenFile`, following the committed golden harness pattern
-// (`technology_slots_panel_parity_goldens_test.dart`,
-// `diplomacy_panel_goldens_test.dart`): keyed `RepaintBoundary`, deterministic
-// fixtures, and `AppThemes.editorialMonocle` dark-theme chrome.
-//
-// Golden mapping:
-//  - AC-2  conditions block (31 OW military threshold + calendar copy;
-//         infinite-mode bypass variant)
-//  - AC-3  GP standings sorted by OW count with human row emphasis
-//  - AC-4  expandable power-score breakdown (expanded row)
-//  - AC-7  end-state banners (military victory, calendar declared winner, tie)
-//  - AC-12 wide side-by-side layout (standings + minimap)
-//  - AC-14–AC-16 annotated minimap (province names, capital border, towns)
-//
 // SPEC: SPEC/ui/victory-panel.md § Acceptance criteria.
-
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_political_minimap.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_body.dart';
@@ -97,7 +82,6 @@ void main() {
   tearDownAll(() async {
     await _victoryGoldenGamesBox.close();
   });
-
   testWidgets(
     'golden: conditions and GP standings default (Refs #4165 AC-2/AC-3)',
     (WidgetTester tester) async {

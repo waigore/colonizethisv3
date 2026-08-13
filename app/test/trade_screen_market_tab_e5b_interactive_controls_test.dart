@@ -1,26 +1,5 @@
 // Widget tests for the Market tab interactive bid/offer/quantity
 // controls (Refs #2993 E5b). SPEC/ui/trade-screen.md § Body — Market
-// tab interactive controls.
-//
-// Exercises the durable contract for the per-row interactive controls:
-//
-//  * `None` / `Bid` / `Offer` direction selector is keyed per
-//    commodity (`marketRowNoneChipKey` / `marketRowBidChipKey` /
-//    `marketRowOfferChipKey`),
-//  * Tapping `Bid` stages a `TradeOrder(type: bid, quantity: 1,
-//    priority: 1)` for the row's commodity in `currentOrdersProvider`,
-//  * Tapping `Offer` on a row that already has a staged bid REPLACES
-//    the prior order (mutual exclusion: at most one staged TradeOrder
-//    per (player, commodityId)),
-//  * Tapping `None` removes any staged order for the commodity,
-//  * Quantity stepper `+` / `−` adjusts `TradeOrder.quantity` in
-//    steps of 1, clamped at the lower bound `marketRowQuantityMin` (1)
-//    while a direction is selected,
-//  * Decrement is disabled at the lower bound (no further decrement),
-//  * Stepper buttons and direction chips are non-interactive when
-//    `canMutateViaUi == false` (observe variant) — controls render but
-//    taps do not mutate `currentOrdersProvider`.
-
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

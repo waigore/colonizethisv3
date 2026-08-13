@@ -41,7 +41,6 @@ void main() {
       expect(find.textContaining('captured'), findsOneWidget);
       expect(find.text('OK'), findsOneWidget);
     });
-
     testWidgets('defender holds suppresses captured banner', (
       WidgetTester tester,
     ) async {
@@ -62,7 +61,6 @@ void main() {
 
       expect(find.textContaining('captured'), findsNothing);
     });
-
     testWidgets('mutual exhaustion suppresses captured banner', (
       WidgetTester tester,
     ) async {
@@ -82,7 +80,6 @@ void main() {
       expect(find.textContaining('captured'), findsNothing);
       expect(find.text('OK'), findsOneWidget);
     });
-
     testWidgets('OK button pops the dialog route', (WidgetTester tester) async {
       await tester.pumpWidget(
         combatUiSpecsFrame(

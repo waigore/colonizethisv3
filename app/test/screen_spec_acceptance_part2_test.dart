@@ -17,7 +17,6 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
-
 import 'app_shell_harness.dart';
 import 'screen_spec_acceptance_test_support.dart';
 

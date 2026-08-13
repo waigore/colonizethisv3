@@ -133,14 +133,12 @@ void main() {
       await dir.delete(recursive: true);
     }
   });
-
   test('empty-state provider reads when no games / no current game', () async {
     final container = _container();
     expect(await container.read(gameListIdsProvider.future), isEmpty);
     expect(container.read(availableWorkTargetIdsForUnitProvider('u1')), isEmpty);
     expect(container.read(devExclusiveReservedWorkTileKeysProvider), isEmpty);
   });
-
   test('derived providers compute with a real current game', () {
     final container = _container();
     final gameService = container.read(gameServiceProvider);
@@ -162,7 +160,6 @@ void main() {
       isA<Set<String>>(),
     );
   });
-
   test(
     'availableWorkTargetIdsForUnitProvider matches getAvailableWorkTargetsForUnit',
     () {
@@ -274,7 +271,6 @@ void main() {
     );
     expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
   });
-
   test('session providers: intro shown, game/orders, pending diplomacy', () {
     final container = _container();
 
@@ -329,7 +325,6 @@ void main() {
     diplomacy.clear();
     expect(container.read(pendingDiplomacyProvider), isNull);
   });
-
   test(
     'panel-open provider latency median stays within 1.5x from early to late fixture',
     () {

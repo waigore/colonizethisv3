@@ -1,12 +1,5 @@
 // Widget tests for the dark editorial-monocle visual contract on
 // `CtNinePatchButton` (`Refs #2859` S2 / R1). Verifies the AC set:
-//   - gradient background sourced from `CtGradients.buttonGradient`
-//   - 1 px border, default `--border`, hover `--accent`
-//   - four 10x10 brass corner brackets, default `--accent` at 0.75 alpha,
-//     hover `--accent-bright` at 1.0 alpha
-//   - engraved label text shadow `Offset(0, 1)` blur 0 colour `--surface`
-//   - disabled wraps the button in 0.4 opacity and suppresses taps.
-
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

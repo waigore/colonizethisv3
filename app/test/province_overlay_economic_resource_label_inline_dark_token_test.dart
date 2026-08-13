@@ -1,24 +1,7 @@
 // Pins the dark editorial-monocle Economic section commodity-id label
-// tokens rendered by the shared `ResourceLabelInline` widget when mounted
-// as the leading child of an Economic improved / improvable row in
-// `_buildEconomicSection`.
-//
 // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
 // § Style / implementation — Dark-theme Economic section body tokens
 // (Refs #2865 S6 — extends the row-label slice by bringing the
-// `ResourceLabelInline` commodity-id label rendered alongside the row
-// label into scope for the Economic call site).
-//
-// The Economic call site MUST forward an `EditorialMonoclePalette.fg`-
-// coloured `TextStyle` through `ResourceLabelInline.labelStyle` for the
-// improved row and an `EditorialMonoclePalette.muted`-coloured
-// `TextStyle` for the improvable row, so the rendered internal
-// `Text(label ?? commodityId)` resolves to the canonical Economic body
-// foreground / latent-yield muted token without `DefaultTextStyle`
-// fall-through. `ResourceLabelInline.labelStyle` remains optional so
-// production-panel chips and any other unmigrated call site keep their
-// existing token contract until separately migrated.
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -147,7 +130,6 @@ void main() {
             'ResourceLabelInline.labelStyle.',
       );
     });
-
     testWidgets('improvable-row commodity-id label resolves to '
         'EditorialMonoclePalette.muted under editorialMonocle (positive '
         'AC: Economic improvable-row commodity-id label colour)', (
@@ -231,7 +213,6 @@ void main() {
             'through ResourceLabelInline.labelStyle.',
       );
     });
-
     testWidgets(
       'improved-row commodity-id label regression guard — never falls '
       'through DefaultTextStyle and never resolves to Colors.white (the '

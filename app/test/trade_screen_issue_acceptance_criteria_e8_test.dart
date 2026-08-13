@@ -1,12 +1,6 @@
 // Issue-AC-mapped widget tests for `TradeScreen` (`#2993` E8).
 // SPEC/ui/trade-screen.md.
-//
-// Pins the six issue-body ACs (E8 a–f) in one contract file; per-slice
 // trade_screen_* suites cover the broader SPEC table. Groups map 1:1:
-// AC1 open TradeScreen; AC2 bid+qty (default priority); AC3 mutual
-// exclusion; AC4 Deal Book; AC5 cargo cap; AC6 observe variant.
-// Harness matches sibling trade_screen_* ProviderScope patterns.
-
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/route_paths.dart';
@@ -212,7 +206,6 @@ void main() {
       expect(offer?.quantity, TradeScreenMarketKeys.marketRowQuantityDefault);
       expect(offer?.priority, TradeScreenMarketKeys.marketRowDefaultPriority);
     });
-
     testWidgets('per-commodity mutual exclusion + cross-commodity coexistence', (
       tester,
     ) async {
@@ -345,7 +338,6 @@ void main() {
       expect(totalBidUnits, 10);
       expectTradeE8CargoSaturated(tester);
     });
-
     testWidgets(
       'Toggle clamp: with timber 9 + offer fabric 5 (cargo remaining 1), '
       'tapping `Bid` on fabric clamps the new staged quantity to the '
@@ -393,7 +385,6 @@ void main() {
       await openTradeFromRouteHost(tester, globalObserve: true);
       expectTradeE8ObserveModeBlocksMarket(tester);
     });
-
     testWidgets('Per-GP observe variant (canMutateViaUi == false, not global '
         'observe): the Market tab body remains mounted (read-only data '
         'still renders) but the IgnorePointer wrapper blocks taps; '
