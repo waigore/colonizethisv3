@@ -51,4 +51,26 @@ void main() {
     expect(resolveTurnForGameWithConfig, isA<Function>());
     expect(resolveTurn, isA<Function>());
   });
+
+  test('Slice C densified non-support suites are each ≤250 physical lines', () {
+    int testPhysicalLines(String relativePath) {
+      final file = File('test/$relativePath');
+      expect(file.existsSync(), isTrue, reason: relativePath);
+      return file.readAsLinesSync().length;
+    }
+
+    const densified = [
+      'turn/diplomacy_phase_handler_test.dart',
+      'turn_trace_army_move_order_events_test.dart',
+      'research_extraction_integration_test.dart',
+      'turn/world_market_phase_treasury_clamp_test.dart',
+    ];
+    for (final path in densified) {
+      expect(
+        testPhysicalLines(path),
+        lessThanOrEqualTo(250),
+        reason: path,
+      );
+    }
+  });
 }
