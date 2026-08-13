@@ -77,7 +77,6 @@ void main() {
     expect(border.bottom.width, GameTabBar.borderWidth);
     expect(border.bottom.color, EditorialMonoclePalette.border);
   });
-
   testWidgets('pins the bar height to GameTabBar.height (34 dp)', (
     WidgetTester tester,
   ) async {
@@ -87,7 +86,6 @@ void main() {
     final surfaceSize = tester.getSize(find.byKey(GameTabBar.surfaceKey));
     expect(surfaceSize.height, GameTabBar.height);
   });
-
   testWidgets('active region tab label uses --accent', (
     WidgetTester tester,
   ) async {
@@ -97,7 +95,6 @@ void main() {
     final oldWorldLabel = tester.widget<Text>(find.text('Old World'));
     expect(oldWorldLabel.style?.color, EditorialMonoclePalette.accent);
   });
-
   testWidgets('inactive region tab label uses --muted', (
     WidgetTester tester,
   ) async {
@@ -107,7 +104,6 @@ void main() {
     final newWorldLabel = tester.widget<Text>(find.text('New World'));
     expect(newWorldLabel.style?.color, EditorialMonoclePalette.muted);
   });
-
   testWidgets('positive treasury delta resolves to --success', (
     WidgetTester tester,
   ) async {
@@ -117,7 +113,6 @@ void main() {
     final deltaText = tester.widget<Text>(find.text('+250'));
     expect(deltaText.style?.color, EditorialMonoclePalette.success);
   });
-
   testWidgets('negative treasury delta resolves to --danger', (
     WidgetTester tester,
   ) async {
@@ -127,7 +122,6 @@ void main() {
     final deltaText = tester.widget<Text>(find.text('-400'));
     expect(deltaText.style?.color, EditorialMonoclePalette.danger);
   });
-
   testWidgets('tapping treasury toggles exact and abbreviated modes', (
     WidgetTester tester,
   ) async {
@@ -144,7 +138,6 @@ void main() {
     await tester.pump();
     expect(find.text('12,345'), findsOneWidget);
   });
-
   testWidgets('region tab tap calls onRegionIndexChanged', (
     WidgetTester tester,
   ) async {
@@ -160,7 +153,6 @@ void main() {
     await tester.pump();
     expect(selected, 1);
   });
-
   testWidgets('cargo hold indicator renders supplied label', (
     WidgetTester tester,
   ) async {
@@ -170,7 +162,6 @@ void main() {
     expect(find.byKey(kCargoHoldIndicatorKey), findsOneWidget);
     expect(find.text('7/20'), findsOneWidget);
   });
-
   testWidgets('cargo numeric text uses accent at tight threshold', (
     WidgetTester tester,
   ) async {
@@ -186,7 +177,6 @@ void main() {
     final label = tester.widget<Text>(find.text('10/12'));
     expect(label.style?.color, EditorialMonoclePalette.accent);
   });
-
   testWidgets('cargo numeric text uses danger when full', (
     WidgetTester tester,
   ) async {
@@ -202,7 +192,6 @@ void main() {
     final label = tester.widget<Text>(find.text('12/12'));
     expect(label.style?.color, EditorialMonoclePalette.danger);
   });
-
   testWidgets('cargo tooltip exposes plain-language overseas vs holds', (
     WidgetTester tester,
   ) async {
@@ -214,7 +203,6 @@ void main() {
       findsOneWidget,
     );
   });
-
   testWidgets('tapping cargo opens details panel with breakdown rows', (
     WidgetTester tester,
   ) async {
@@ -233,7 +221,6 @@ void main() {
       findsOneWidget,
     );
   });
-
   testWidgets('dismiss cargo panel via close and reopen on next tap', (
     WidgetTester tester,
   ) async {
@@ -252,7 +239,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
   });
-
   testWidgets('unreliable cargo used shows em dash in panel overseas row', (
     WidgetTester tester,
   ) async {
@@ -272,7 +258,6 @@ void main() {
     expect(find.text('Overseas extraction: —'), findsOneWidget);
     expect(find.text('Free for trade bids: —'), findsOneWidget);
   });
-
   testWidgets(
     'narrow viewport: cargo panel leaves Next turn tappable',
     (WidgetTester tester) async {
@@ -338,7 +323,6 @@ void main() {
     expect(deltaText.style?.color, isNot(Colors.green));
     expect(deltaText.style?.color, EditorialMonoclePalette.success);
   });
-
   testWidgets(
     'M1: region tabs start-aligned; treasury -> cargo -> news toggle '
     'end-aligned in order',

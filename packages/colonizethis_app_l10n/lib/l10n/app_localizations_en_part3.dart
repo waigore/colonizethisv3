@@ -240,8 +240,7 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
     String commodity,
     int quantity,
     int amount,
-  ) =>
-      '$commodity × $quantity — £$amount credited';
+  ) => '$commodity × $quantity — £$amount credited';
 
   @override
   String eventFeed_overseasProfitCredited(int amount, int count) =>
@@ -628,6 +627,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Establish a consulate before exploring or prospecting';
 
   @override
+  String get provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip =>
+      'Establish a consulate before exploring or prospecting. '
+      'Use Establish Consulate on Political.';
+
+  @override
   String get provinceOverlay_tileBuildImprovementTooltip => 'Build improvement';
 
   @override
@@ -865,6 +869,22 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_upgradeTownAction => 'Upgrade town';
+
+  @override
+  String get provinceOverlay_establishConsulateAction => 'Establish Consulate';
+
+  @override
+  String get provinceOverlay_cancelEstablishConsulateAction => 'Cancel';
+
+  @override
+  String provinceOverlay_noConsulateWith(String owner) {
+    return 'No consulate with $owner';
+  }
+
+  @override
+  String provinceOverlay_establishConsulateDisabledSemantics(String reason) {
+    return 'Establish Consulate unavailable: $reason';
+  }
 
   @override
   String get provinceOverlay_politicalUpgradeTownTooltip => 'Upgrade town';

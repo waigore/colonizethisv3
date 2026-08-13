@@ -9,7 +9,7 @@ Relations are shown as Peace or War and a descriptive relation meter rather than
 ## How it is done
 
 1. From `GAME10001` **Game screen**, use the diplomacy button to open `GAME30001` **Diplomacy screen**. It lists discovered Great Powers, Minor Nations, and contacted Tribes. Select a row for `GAME30002` **Diplomacy detail screen**, where you may review the relationship and its diplomatic history.
-2. Choose an enabled action on each faction row (`GAME30001`), set any required parameter, then confirm it. The confirmation dialog states first-order **cost** (when relevant), **effect**, and **when** (Break Alliance only — immediate) before you commit. Most actions become pending orders and resolve in the Diplomacy phase before movement; use **Cancel** to withdraw a pending action. Each row shows only the actions you can take right now; tap **More actions** to see unavailable steps and the reason each is blocked.
+2. Choose an enabled action on each faction row (`GAME30001`), set any required parameter, then confirm it. When a Minor or Tribe province blocks Explore or Prospect for lack of a Consulate, `MAP20001` Political offers the same first-stage **Establish Consulate** decree in context. Both entry points use the same confirmation, validation, pending order, and **Cancel** behavior. The confirmation states first-order **cost** (when relevant), **effect**, and **when** (Break Alliance only — immediate) before you commit. Each diplomacy row shows current actions; tap **More actions** for unavailable steps and reasons.
 3. **Declare War** requires peace with the target. It takes effect before that turn’s movement and combat, so it may support an invasion ordered for the same turn. **Offer Peace** requires war; peace needs the other side’s agreement and does not change borders.
 4. **Alliance** targets another Great Power at peace when no formal alliance already exists. A successful treaty creates formal mutual defence. **Break Alliance** requires that treaty; on the human panel it applies immediately after confirmation rather than waiting for turn resolution.
 5. After voluntarily breaking an alliance, the two Great Powers cannot form an alliance, establish an overture, grant aid, or set a subsidy with one another for the rest of that turn. War and peace remain available; the bilateral cooldown ends next turn.
@@ -70,6 +70,7 @@ AI allies join a defensive call to arms when their relation with the defended al
 - `SPEC/game/tech-tree-diplomacy-civilian.md`
 - `SPEC/program/orders.md`
 - `SPEC/ui/diplomacy-panel.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/diplomacy-detail-screen.md`
 - `SPEC/ui/grant-or-subsidy-dialog.md`
 - `SPEC/ui/overture-dialogue-overlay.md`

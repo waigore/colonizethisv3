@@ -39,7 +39,7 @@ Use this ledger to issue every decree available to your court, check its price a
 
 ### Diplomacy
 
-All begin at `GAME30001` **Diplomacy** → select faction → `GAME30002` detail/actions → confirm. Most are pending decrees resolved in **Diplomacy**.
+Most begin at `GAME30001` **Diplomacy** → select faction → choose an action → confirm, then resolve in **Diplomacy**. The first Consulate stage also has a focused entry at `MAP20001` Political when that missing relationship blocks Explore or Prospect.
 
 | Decree | Cost / key refusal | Result |
 |---|---|---|
@@ -47,7 +47,7 @@ All begin at `GAME30001` **Diplomacy** → select faction → `GAME30002` detail
 | Offer Peace | Must be at war; target must accept. | Peace if accepted. |
 | Alliance | Great Power only; peace; no existing formal alliance. | Treaty if accepted. |
 | Break Alliance | Formal alliance required. `GAME30001` panel **Break Alliance** confirmation is immediate for the human player. | Treaty ends immediately; same-pair alliance/overture/aid/subsidy blocked until next turn. |
-| Establish Overture | One stage at a time; relation, treasury, target, and technology gates apply. | Target accepts/rejects in Diplomacy. |
+| Establish Overture | `GAME30001`, or `MAP20001` Political **Establish Consulate** for a Consulate-gated Minor/Tribe province. One stage at a time; relation, treasury, target, and technology gates apply. | Target accepts/rejects in Diplomacy; pending Consulate may be cancelled from the same map control. |
 | Grant Aid | Embassy; positive £1,000 steps; sufficient treasury. `DIPL20001` **Grant or subsidy** dialog. | Transfer and relation effect in Diplomacy. |
 | Set Subsidy | Embassy; Minor/Tribe only; 5–20% in steps of 5. `DIPL20001`. | No treasury charge; active market/relation effect. |
 | Boycott | Great Power target; own at least one colony; peace; no existing boycott. | Colonial trade embargo. |
@@ -110,3 +110,4 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/ui/naval-mission-menu-dialog.md`
 - `SPEC/ui/naval-mission-target-dialog.md`
 - `SPEC/ui/map-widget.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`

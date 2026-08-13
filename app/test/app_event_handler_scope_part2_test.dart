@@ -1,28 +1,12 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'app_event_handler_scope_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
-
-  Game emptyWorldGame({
-    required String id,
-    TurnPhase phase = TurnPhase.orders,
-    int turnNumber = 1,
-    required List<Player> players,
-  }) {
-    return Game(
-      id: id,
-      worldState: WorldState(
-        turnState: TurnState(phase: phase, turnNumber: turnNumber),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
-      players: players,
-    );
-  }
 
   group('applyDebugTreasuryCredit', () {
     test('returns message when there is no active game', () {
@@ -37,7 +21,7 @@ void main() {
     });
 
     test('adds credited amount to human player treasury', () {
-      final game = emptyWorldGame(
+      final game = scopeEmptyWorldGame(
         id: 'g-treasury',
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 100),
@@ -58,7 +42,7 @@ void main() {
     });
 
     test('clamped success message includes requested and credited amounts', () {
-      final game = emptyWorldGame(
+      final game = scopeEmptyWorldGame(
         id: 'g-treasury2',
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 0),
@@ -76,7 +60,7 @@ void main() {
     });
 
     test('rejects command outside human orders phase', () {
-      final game = emptyWorldGame(
+      final game = scopeEmptyWorldGame(
         id: 'g-treasury3',
         phase: TurnPhase.movement,
         players: const [
@@ -99,7 +83,7 @@ void main() {
 
   group('applyDebugStockpileCredit', () {
     test('adds credited amount to human player stockpile commodity', () {
-      final game = emptyWorldGame(
+      final game = scopeEmptyWorldGame(
         id: 'g-stockpile',
         players: const [
           Player(
@@ -126,7 +110,7 @@ void main() {
     });
 
     test('rejects add_resource command outside human orders phase', () {
-      final game = emptyWorldGame(
+      final game = scopeEmptyWorldGame(
         id: 'g-stockpile2',
         phase: TurnPhase.movement,
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
@@ -146,7 +130,7 @@ void main() {
     });
 
     test('clamped success message includes requested and credited amounts', () {
-      final game = emptyWorldGame(
+      final game = scopeEmptyWorldGame(
         id: 'g-stockpile3',
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -168,83 +152,14 @@ void main() {
   });
 
   group('applyDebugFlipProvinceOwnership', () {
-    const flipHuman = Player(
-      id: 'human_1',
-      displayName: 'Human',
-      isHuman: true,
-    );
-    const flipAi = Player(id: 'ai_1', displayName: 'AI', isHuman: false);
-
-    Game baseGame({
-      required TurnPhase phase,
-      required String ownerId,
-      required String humanVisibility,
-    }) {
-      return Game(
-        id: 'g-flip',
-        worldState: WorldState(
-          turnState: TurnState(phase: phase, turnNumber: 2),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|P1',
-                regionId: 'oldWorld',
-                ownerId: ownerId,
-                displayName: 'New Bordeaux',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'r1',
-                type: 'musketeers',
-                ownerId: ownerId,
-                locationProvinceId: 'oldWorld|P1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              'oldWorld|P1': ['oldWorld|P1|0|0'],
-            },
-          },
-          playerVisibilityByTile: {
-            'human_1': {'oldWorld|P1|0|0': humanVisibility},
-          },
-        ),
-        players: const [flipHuman, flipAi],
-      );
-    }
-
-    FlipDebugProvinceOwnershipEvent nameEvent([
-      String displayName = 'New Bordeaux',
-    ]) {
-      return FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'human_1',
-        regionId: 'oldWorld',
-        provinceDisplayName: displayName,
-      );
-    }
-
-    ({Game? game, String message}) flip(
-      Game game,
-      FlipDebugProvinceOwnershipEvent event,
-    ) {
-      return applyDebugFlipProvinceOwnership(
-        currentGame: game,
-        event: event,
-        combinedTopology: const MapTopology(),
-      );
-    }
-
     test('flips province through canonical transfer on valid command', () {
-      final result = flip(
-        baseGame(
+      final result = scopeApplyFlip(
+        scopeFlipBaseGame(
           phase: TurnPhase.orders,
           ownerId: 'ai_1',
           humanVisibility: 'fogged',
         ),
-        nameEvent(),
+        scopeFlipNameEvent(),
       );
 
       expect(result.game, isNotNull);
@@ -258,13 +173,13 @@ void main() {
     });
 
     test('rejects command outside human orders phase', () {
-      final result = flip(
-        baseGame(
+      final result = scopeApplyFlip(
+        scopeFlipBaseGame(
           phase: TurnPhase.movement,
           ownerId: 'ai_1',
           humanVisibility: 'fogged',
         ),
-        nameEvent(),
+        scopeFlipNameEvent(),
       );
 
       expect(result.game, isNull);
@@ -275,13 +190,13 @@ void main() {
     });
 
     test('rejects unknown province visibility to human', () {
-      final result = flip(
-        baseGame(
+      final result = scopeApplyFlip(
+        scopeFlipBaseGame(
           phase: TurnPhase.orders,
           ownerId: 'ai_1',
           humanVisibility: 'unknown',
         ),
-        nameEvent(),
+        scopeFlipNameEvent(),
       );
 
       expect(result.game, isNull);
@@ -289,13 +204,13 @@ void main() {
     });
 
     test('rejects already human-owned province', () {
-      final result = flip(
-        baseGame(
+      final result = scopeApplyFlip(
+        scopeFlipBaseGame(
           phase: TurnPhase.orders,
           ownerId: 'human_1',
           humanVisibility: 'fogged',
         ),
-        nameEvent(),
+        scopeFlipNameEvent(),
       );
 
       expect(result.game, isNull);
@@ -337,23 +252,23 @@ void main() {
             },
           },
         ),
-        players: const [flipHuman, flipAi],
+        players: const [scopeFlipHuman, scopeFlipAi],
       );
 
-      final result = flip(game, nameEvent());
+      final result = scopeApplyFlip(game, scopeFlipNameEvent());
 
       expect(result.game, isNull);
       expect(result.message, contains('ambiguous'));
     });
 
     test('rejects province display name not found in region', () {
-      final result = flip(
-        baseGame(
+      final result = scopeApplyFlip(
+        scopeFlipBaseGame(
           phase: TurnPhase.orders,
           ownerId: 'ai_1',
           humanVisibility: 'fogged',
         ),
-        nameEvent('Nonexistent Province'),
+        scopeFlipNameEvent('Nonexistent Province'),
       );
 
       expect(result.game, isNull);
@@ -385,23 +300,23 @@ void main() {
             'human_1': {'oldWorld|P1|0|0': 'fogged'},
           },
         ),
-        players: const [flipHuman, flipAi],
+        players: const [scopeFlipHuman, scopeFlipAi],
       );
 
-      final result = flip(game, nameEvent());
+      final result = scopeApplyFlip(game, scopeFlipNameEvent());
 
       expect(result.game, isNull);
       expect(result.message, contains('no current owner'));
     });
 
     test('JSON round-trip preserves flip outcome (persistence parity)', () {
-      final result = flip(
-        baseGame(
+      final result = scopeApplyFlip(
+        scopeFlipBaseGame(
           phase: TurnPhase.orders,
           ownerId: 'ai_1',
           humanVisibility: 'fogged',
         ),
-        nameEvent(),
+        scopeFlipNameEvent(),
       );
 
       expect(result.game, isNotNull);
@@ -447,9 +362,9 @@ void main() {
               },
             },
           ),
-          players: const [flipHuman, flipAi],
+          players: const [scopeFlipHuman, scopeFlipAi],
         );
-        final result = flip(game, nameEvent());
+        final result = scopeApplyFlip(game, scopeFlipNameEvent());
         expect(result.game, isNull);
         expect(
           result.message,
@@ -460,8 +375,8 @@ void main() {
     );
 
     test('flip resolves directly by full province id', () {
-      final result = flip(
-        baseGame(
+      final result = scopeApplyFlip(
+        scopeFlipBaseGame(
           phase: TurnPhase.orders,
           ownerId: 'ai_1',
           humanVisibility: 'fogged',

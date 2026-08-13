@@ -1,46 +1,76 @@
-/// Fog-gated military / civilian / naval sections for province tab content.
+/// Intel-gated economic / military / civilian / naval sections for province tabs.
 library;
 
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+import 'province_sea_zone_detail_overlay_economic_section.dart';
 import 'province_sea_zone_detail_overlay_military_section.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
-/// Builds military, civilian, and naval sections when [showsFullIntel] is true;
-/// otherwise returns obfuscated placeholders for each section.
-({Widget military, Widget civilian, Widget naval})
-buildProvinceContentUnitSections({
+({
+  Widget economic,
+  Widget military,
+  Widget civilian,
+  Widget naval,
+}) buildProvinceIntelGatedUnitSections({
   required AppLocalizations l10n,
   required Game game,
   required bool showsFullIntel,
+  required String humanPlayerId,
+  required String provinceId,
+  required Orders draftOrders,
+  required PlayerView playerView,
   required List<Unit> military,
   required List<Unit> civilian,
   required List<Fleet> fleetsInPort,
-  required String humanPlayerId,
-  required PlayerView playerView,
-  required String provinceId,
-  required Orders draftOrders,
   required int fortLevel,
   required bool showBuildFortActionIcon,
   required bool buildFortActionEnabled,
   required bool buildFortActionHasEngineerUnits,
   required String? selectedTileKey,
   VoidCallback? onBuildFortTap,
-  required bool showMoveArmyControl,
-  required bool moveArmyEnabled,
-  required String moveArmyTooltip,
+  bool showMoveArmyControl = false,
+  bool moveArmyEnabled = false,
+  String moveArmyTooltip = '',
   VoidCallback? onMoveArmyTap,
-  required bool showInvadeArmyControl,
-  required bool invadeArmyEnabled,
-  required String invadeArmyTooltip,
+  bool showInvadeArmyControl = false,
+  bool invadeArmyEnabled = false,
+  String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
   String? provinceDisplayName,
+  void Function(String?)? onHighlightTile,
+  void Function(Iterable<String>?)? onHighlightTiles,
+  ProvinceExtractionSnapshot? extractionSnapshot,
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
+  Map<String, int> townProductionBonusByCommodity = const {},
+  required Map<String, List<({String tileKey, String terrain, String impBase})>>
+  byResImproved,
+  required Map<String, List<({String tileKey, String terrain})>> byResImprovable,
+  required List<String> resourceKeysSorted,
 }) {
+  final economic = showsFullIntel
+      ? buildEconomicSection(
+          l10n: l10n,
+          resourceKeysSorted: resourceKeysSorted,
+          byResImproved: byResImproved,
+          byResImprovable: byResImprovable,
+          onHighlightTile: onHighlightTile,
+          onHighlightTiles: onHighlightTiles,
+          extractionSnapshot: extractionSnapshot,
+          availableByCommodity: availableByCommodity,
+          townProductionBonusByCommodity: townProductionBonusByCommodity,
+        )
+      : buildOverlaySection(
+          l10n.provinceOverlay_sectionEconomic,
+          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
+        );
   final militarySection = showsFullIntel
       ? buildMilitarySectionByOwner(
           l10n: l10n,
@@ -106,6 +136,7 @@ buildProvinceContentUnitSections({
           overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   return (
+    economic: economic,
     military: militarySection,
     civilian: civilianSection,
     naval: naval,
