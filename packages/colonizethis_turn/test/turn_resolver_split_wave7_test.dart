@@ -27,6 +27,23 @@ void main() {
     );
   });
 
+  test('Slice B research/combat siblings are each ≤300 physical lines', () {
+    expect(
+      physicalLines('research_resolver_allocation.dart'),
+      lessThanOrEqualTo(300),
+    );
+    expect(physicalLines('research_resolver.dart'), lessThanOrEqualTo(300));
+    expect(physicalLines('combat_phase_helpers.dart'), lessThanOrEqualTo(300));
+    expect(
+      physicalLines('combat_phase_land_battle_apply.dart'),
+      lessThanOrEqualTo(300),
+    );
+    expect(
+      physicalLines('combat_phase_land_battle_outcome.dart'),
+      lessThanOrEqualTo(300),
+    );
+  });
+
   test('public trusted/untrusted entry points remain distinct barrel exports', () {
     expect(validateOrdersAndResolveTurn, isA<Function>());
     expect(validateOrdersAndResolveTurnFromTrustedOrders, isA<Function>());
