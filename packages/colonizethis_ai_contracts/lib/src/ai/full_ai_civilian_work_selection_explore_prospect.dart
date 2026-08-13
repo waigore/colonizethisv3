@@ -8,6 +8,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../constants.dart';
 import 'full_ai_civilian_work_selection_feedstock_predicates.dart';
+import 'full_ai_civilian_work_selection_shared.dart';
 
 // Explorer / prospect candidate scoring and per-row selection for Full AI
 // civilian work (mineral exposure balancing, explore/prospect scoring, and the
@@ -237,20 +238,11 @@ WorkOrder? _bestExploreRow(
   PlayerView view,
   Game game,
 ) {
-  if (explores.isEmpty) return null;
-  var best = explores.first;
-  var bestScore = _eScore(best, view, game);
-  for (var i = 1; i < explores.length; i++) {
-    final w = explores[i];
-    final s = _eScore(w, view, game);
-    if (s > bestScore) {
-      bestScore = s;
-      best = w;
-      continue;
-    }
-    if (s == bestScore && _exploreTieCompare(w, best) < 0) best = w;
-  }
-  return best;
+  return bestScoredWorkRow(
+    explores,
+    scoreOf: (w) => _eScore(w, view, game),
+    compareTieBreak: _exploreTieCompare,
+  );
 }
 
 WorkOrder? _bestProspectRow(
@@ -263,21 +255,9 @@ WorkOrder? _bestProspectRow(
   DiplomacyFactionMembership factionMembership, {
   Set<String> feedstockExtractionResourceIds = const <String>{},
 }) {
-  if (prospects.isEmpty) return null;
-  var best = prospects.first;
-  var bestScore = _pScore(
-    best,
-    game,
-    view,
-    playerId,
-    tileMapByRegion,
-    sHigh,
-    factionMembership,
-    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
-  );
-  for (var i = 1; i < prospects.length; i++) {
-    final w = prospects[i];
-    final s = _pScore(
+  return bestScoredWorkRow(
+    prospects,
+    scoreOf: (w) => _pScore(
       w,
       game,
       view,
@@ -286,17 +266,9 @@ WorkOrder? _bestProspectRow(
       sHigh,
       factionMembership,
       feedstockExtractionResourceIds: feedstockExtractionResourceIds,
-    );
-    if (s > bestScore) {
-      bestScore = s;
-      best = w;
-      continue;
-    }
-    if (s == bestScore && w.targetTileKey.compareTo(best.targetTileKey) < 0) {
-      best = w;
-    }
-  }
-  return best;
+    ),
+    compareTieBreak: (a, b) => a.targetTileKey.compareTo(b.targetTileKey),
+  );
 }
 
 WorkOrder? pickExplorerCandidateSet(
