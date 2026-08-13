@@ -59,7 +59,6 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 - **Sea-going fleet in port** — opens **Move fleet dialog** so you can undock immediately.
 - **Sea-going fleet at sea** — opens **Naval mission menu dialog** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open **Move fleet dialog** without returning to the rail panel. Blockade and Beachhead open **Naval mission target dialog** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target.
 
-
 **Panel parity:** In **Naval units panel**, tap **Mission** on an eligible at-sea fleet row for the same **Naval mission menu dialog** flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
