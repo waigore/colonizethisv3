@@ -198,7 +198,7 @@ class _MarketCommodityRowPriceTrailing extends StatelessWidget {
                 formatMarketPriceDelta(delta),
                 key: TradeScreenMarketKeys.marketRowPriceDeltaKey(commodityId),
                 style: (Theme.of(context).textTheme.labelSmall ??
-                        const TextStyle(fontSize: 10))
+                        const TextStyle(fontSize: 11))
                     .copyWith(
                   color: delta > 0
                       ? EditorialMonoclePalette.success
