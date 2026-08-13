@@ -174,6 +174,8 @@ There are no loading, transient, or error variants; absence of a Yarn dependency
   When `onDecisions` fires,
   Then the emitted `CallToArmsDecision` list is unchanged by the Effect lines (Effects are read-only; R25 Submit gate unchanged) (Refs #4364).
 
+- Given `OVL40001` one-call, two-call, and 320 dp two-call Effect layouts under `AppThemes.editorialMonocle`, when the host golden suite in `app/test/call_to_arms_choice_effects_goldens_test.dart` captures each keyed `RepaintBoundary`, then each `matchesGoldenFile` baseline under `app/test/goldens/call_to_arms_choice_effects_*.png` matches the committed PNG (Refs #4364).
+
 ---
 
 ## Widgetbook
