@@ -1,23 +1,20 @@
 
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
 import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/province_action_state_calculator.dart';
-import '../map_state/province_army_move_action_state.dart';
 import '../map_state/game_map_area_state_logic.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
     show isProvinceSeaZoneOverlaySeaZone;
-import '../../widgets/unit_orders/overlay_army_move_flow.dart';
+import 'province_detail_overlay_host_support_army_move.dart';
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
@@ -82,10 +79,11 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         topology: mapData?.combinedTopology,
         currentOrders: draftOrders,
       );
-  final establishConsulateTargetName = _factionDisplayName(
-    game,
-    establishConsulateState.ownerId,
-  );
+  final consulateOwnerId = establishConsulateState.ownerId;
+  final establishConsulateTargetName = consulateOwnerId == null
+      ? ''
+      : (game.factionDisplayNameById(consulateOwnerId) ?? consulateOwnerId);
+
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
     humanPlayerId: humanPlayerId,
@@ -155,88 +153,21 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     }
   }
   final isSeaZone = isProvinceSeaZoneOverlaySeaZone(region, displayId);
-  final armyCache = armyMovePickerCache ?? PerPlayerArmyMovePickerCache();
-  final provinceTileKeys =
-      game.worldState.tileKeysByRegionAndProvince[region.regionId]?[displayId] ??
-      const <String>[];
-  final showsFullMilitaryIntel =
-      omniscientDetail ||
-      provincePanelShowsFullTileDerivedIntel(
-        game: game,
-        view: playerView,
-        humanPlayerId: humanPlayerId,
-        provinceId: displayId,
-        provinceTileKeys: provinceTileKeys,
-      );
-  final armyMoveState = computeProvinceArmyMoveActionState(
+  final armyMove = buildProvinceArmyMoveOverlayControls(
+    context: context,
     game: game,
+    region: region,
     humanPlayerId: humanPlayerId,
-    provinceId: displayId,
-    topology: mapData?.combinedTopology ?? const MapTopology(),
-    armyMovePickerCache: armyCache,
-    showsFullMilitaryIntel: showsFullMilitaryIntel,
-    isSeaZoneContext: isSeaZone,
+    playerView: playerView,
+    displayId: displayId,
+    draftOrders: draftOrders,
+    mapData: mapData,
+    canMutateViaUi: canMutateViaUi,
+    omniscientDetail: omniscientDetail,
+    armyMovePickerCache: armyMovePickerCache,
+    bus: bus,
+    isSeaZone: isSeaZone,
   );
-  // L10n for tooltips — hosts always build under MaterialApp with l10n;
-  // AppLocalizationsEn is the contract default for factory without BuildContext l10n.
-  final l10n = appL10n(context);
-  String moveTooltip() {
-    switch (armyMoveState.moveDisabledReason) {
-      case ProvinceArmyMoveDisabledReason.homeArmyCannotLeave:
-        return l10n.provinceOverlay_moveArmyDisabledHomeArmyTooltip;
-      case ProvinceArmyMoveDisabledReason.noDestinations:
-        return l10n.provinceOverlay_moveArmyDisabledNoDestinationsTooltip;
-      case ProvinceArmyMoveDisabledReason.cannotReach:
-      case ProvinceArmyMoveDisabledReason.none:
-        return l10n.provinceOverlay_moveArmyAction;
-    }
-  }
-
-  String invadeTooltip() {
-    switch (armyMoveState.invadeDisabledReason) {
-      case ProvinceArmyMoveDisabledReason.cannotReach:
-        return l10n.provinceOverlay_invadeArmyDisabledCannotReachTooltip;
-      case ProvinceArmyMoveDisabledReason.homeArmyCannotLeave:
-      case ProvinceArmyMoveDisabledReason.noDestinations:
-      case ProvinceArmyMoveDisabledReason.none:
-        return l10n.provinceOverlay_invadeArmyAction(
-          game.worldState.allProvincesById[displayId]?.displayName ??
-              displayId,
-        );
-    }
-  }
-
-  VoidCallback? moveTap;
-  if (canMutateViaUi && armyMoveState.moveEnabled) {
-    moveTap = () {
-      showOverlayArmyMoveFlow(
-        context: context,
-        game: game,
-        topology: mapData?.combinedTopology ?? const MapTopology(),
-        humanPlayerId: humanPlayerId,
-        draftOrders: draftOrders,
-        bus: bus,
-        armyIds: armyMoveState.eligibleMoveArmyIds,
-        playerView: playerView,
-      );
-    };
-  }
-  VoidCallback? invadeTap;
-  if (canMutateViaUi && armyMoveState.invadeEnabled) {
-    invadeTap = () {
-      showOverlayArmyMoveFlow(
-        context: context,
-        game: game,
-        topology: mapData?.combinedTopology ?? const MapTopology(),
-        humanPlayerId: humanPlayerId,
-        draftOrders: draftOrders,
-        bus: bus,
-        armyIds: armyMoveState.eligibleInvadeArmyIds,
-        playerView: playerView,
-        initialDestinationProvinceId: displayId,
-      );
-    };
-  }
 
   return ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -288,14 +219,14 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     upgradeTownHasBuilderUnits: upgradeTownState.hasBuilderUnits,
     upgradeTownTargetTileKey: upgradeTownState.townTileKey,
     onUpgradeTownTap: shortcuts.onUpgradeTownTap,
-    showMoveArmyControl: canMutateViaUi && armyMoveState.showMove,
-    moveArmyEnabled: canMutateViaUi && armyMoveState.moveEnabled,
-    moveArmyTooltip: moveTooltip(),
-    onMoveArmyTap: moveTap,
-    showInvadeArmyControl: canMutateViaUi && armyMoveState.showInvade,
-    invadeArmyEnabled: canMutateViaUi && armyMoveState.invadeEnabled,
-    invadeArmyTooltip: invadeTooltip(),
-    onInvadeArmyTap: invadeTap,
+    showMoveArmyControl: armyMove.showMove,
+    moveArmyEnabled: armyMove.moveEnabled,
+    moveArmyTooltip: armyMove.moveTooltip,
+    onMoveArmyTap: armyMove.onMoveTap,
+    showInvadeArmyControl: armyMove.showInvade,
+    invadeArmyEnabled: armyMove.invadeEnabled,
+    invadeArmyTooltip: armyMove.invadeTooltip,
+    onInvadeArmyTap: armyMove.onInvadeTap,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,
     establishConsulateEnabled:
@@ -304,18 +235,4 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     establishConsulateRejectionReason: establishConsulateState.rejectionReason,
     onEstablishConsulateTap: shortcuts.onEstablishConsulateTap,
   );
-}
-
-String _factionDisplayName(ct_models.Game game, String? factionId) {
-  if (factionId == null) return '';
-  for (final player in game.players) {
-    if (player.id == factionId) return player.displayName;
-  }
-  for (final minor in game.minorNations) {
-    if (minor.id == factionId) return minor.displayName ?? factionId;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == factionId) return tribe.displayName ?? factionId;
-  }
-  return factionId;
 }
