@@ -164,21 +164,9 @@ WorkOrder? bestBuildImprovementRow(
   final improvements = candidates
       .where((w) => w.target == kWorkTargetBuildImprovement)
       .toList();
-  if (improvements.isEmpty) return null;
-  var best = improvements.first;
-  var bestScore = buildImprovementWorkScore(
-    best,
-    game,
-    playerId: playerId,
-    feedstockExtractionResourceIds: feedstockExtractionResourceIds,
-    growthStageFabricFeedstockResourceIds:
-        growthStageFabricFeedstockResourceIds,
-    growthStageInfraFeedstockResourceIds: growthStageInfraFeedstockResourceIds,
-    connectivityDev: connectivityDev,
-  );
-  for (var i = 1; i < improvements.length; i++) {
-    final w = improvements[i];
-    final s = buildImprovementWorkScore(
+  return bestScoredWorkRow(
+    improvements,
+    scoreOf: (w) => buildImprovementWorkScore(
       w,
       game,
       playerId: playerId,
@@ -188,17 +176,9 @@ WorkOrder? bestBuildImprovementRow(
       growthStageInfraFeedstockResourceIds:
           growthStageInfraFeedstockResourceIds,
       connectivityDev: connectivityDev,
-    );
-    if (s > bestScore) {
-      bestScore = s;
-      best = w;
-      continue;
-    }
-    if (s == bestScore && compareWorkOrderLex(w, best) < 0) {
-      best = w;
-    }
-  }
-  return best;
+    ),
+    compareTieBreak: compareWorkOrderLex,
+  );
 }
 
 int _purchaseLandWorkScore(
@@ -228,20 +208,9 @@ WorkOrder? bestPurchaseLandRow(
   final purchases = candidates
       .where((w) => w.target == kWorkTargetPurchaseLand)
       .toList();
-  if (purchases.isEmpty) return null;
-  var best = purchases.first;
-  var bestScore = _purchaseLandWorkScore(best, game, factionMembership);
-  for (var i = 1; i < purchases.length; i++) {
-    final w = purchases[i];
-    final s = _purchaseLandWorkScore(w, game, factionMembership);
-    if (s > bestScore) {
-      bestScore = s;
-      best = w;
-      continue;
-    }
-    if (s == bestScore && compareWorkOrderLex(w, best) < 0) {
-      best = w;
-    }
-  }
-  return best;
+  return bestScoredWorkRow(
+    purchases,
+    scoreOf: (w) => _purchaseLandWorkScore(w, game, factionMembership),
+    compareTieBreak: compareWorkOrderLex,
+  );
 }

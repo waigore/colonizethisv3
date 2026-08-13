@@ -80,6 +80,36 @@ PlayerView belowQuotaSellerBuilderView(Game game) {
   );
 }
 
+/// Active below-quota gate with recovered treasury unless [treasury] is set.
+Game belowQuotaActiveGateSellerGame({
+  int? treasury,
+  int owOwned = 5,
+  Stockpile stockpile = const Stockpile(),
+  List<Unit> extraUnits = const [],
+  Map<String, String> resourceByTileKey = const {
+    h8BelowQuotaGrainTile: 'grain',
+    h8BelowQuotaWoolTile: 'wool',
+  },
+  TileMapState? tileState,
+}) {
+  return belowQuotaZeroNwSellerGame(
+    owOwned: owOwned,
+    treasury: treasury ?? cheapestRegimentBuildTreasuryCost(),
+    stockpile: stockpile,
+    extraUnits: extraUnits,
+    resourceByTileKey: resourceByTileKey,
+    tileState: tileState,
+  );
+}
+
+/// Peasant levy owned by [h8BelowQuotaSellerId] at `oldWorld|p0`.
+Unit belowQuotaPeasantLevyUnit() => Unit(
+  id: 'r1',
+  type: 'peasant_levies',
+  ownerId: h8BelowQuotaSellerId,
+  locationProvinceId: 'oldWorld|p0',
+);
+
 /// Grain + wool `build_improvement` suggestions for Builder `b1`.
 List<WorkOrder> belowQuotaGrainWoolBuildSuggestions() => const [
   WorkOrder(
