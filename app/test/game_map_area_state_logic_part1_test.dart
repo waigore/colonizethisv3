@@ -266,7 +266,7 @@ void main() {
         ),
       ]) {
         expect(
-          GameMapAreaStateLogic.selectionAfterWorkAssignment(
+          GameMapAreaStateLogicWorkTargets.selectionAfterWorkAssignment(
             currentSelectedCivilianTileKey: case_.selected,
             assignedTileKey: case_.assigned,
           ),
@@ -279,8 +279,8 @@ void main() {
       );
       expect(displayProvinceOrSeaIdFromTileKey('badKey'), isNull);
       expect(displayProvinceOrSeaIdFromTileKey(null), isNull);
-      expect(GameMapAreaStateLogic.regionIndexFromWorldRegionId('newWorld'), 1);
-      expect(GameMapAreaStateLogic.regionIndexFromWorldRegionId('oldWorld'), 0);
+      expect(GameMapAreaStateLogicShell.regionIndexFromWorldRegionId('newWorld'), 1);
+      expect(GameMapAreaStateLogicShell.regionIndexFromWorldRegionId('oldWorld'), 0);
       const tile = 'oldWorld|p1|10|20';
       for (final case_ in <({String tileKey, String workTarget})>[
         (tileKey: tile, workTarget: kWorkTargetExplore),
@@ -288,7 +288,7 @@ void main() {
         (tileKey: 'oldWorld|p1', workTarget: kWorkTargetExplore),
       ]) {
         expect(
-          GameMapAreaStateLogic.translateWorkTargetTileKey(
+          GameMapAreaStateLogicShell.translateWorkTargetTileKey(
             tileKey: case_.tileKey,
             workTarget: case_.workTarget,
           ),
@@ -304,7 +304,7 @@ void main() {
         targetTileKey: 'oldWorld|p1|0|0',
       );
       expect(
-        GameMapAreaStateLogic.addHumanWorkOrder(
+        GameMapAreaStateLogicWorkTargets.addHumanWorkOrder(
           orders: const ct_models.Orders(
             workOrdersByPlayerId: {humanPlayerId: []},
           ),
@@ -320,7 +320,7 @@ void main() {
         targetTileKey: 'oldWorld|p1|1|0',
       );
       expect(
-        GameMapAreaStateLogic.addHumanWorkOrder(
+        GameMapAreaStateLogicWorkTargets.addHumanWorkOrder(
           orders: const ct_models.Orders(
             workOrdersByPlayerId: {
               humanPlayerId: [
@@ -343,7 +343,7 @@ void main() {
         target: kWorkTargetExplore,
         targetTileKey: 'oldWorld|p2|0|0',
       );
-      final updated = GameMapAreaStateLogic.addHumanWorkOrder(
+      final updated = GameMapAreaStateLogicWorkTargets.addHumanWorkOrder(
         orders: ct_models.Orders(
           moveOrdersByPlayerId: {
             humanPlayerId: const [

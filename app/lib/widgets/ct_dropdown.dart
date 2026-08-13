@@ -2,37 +2,10 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import '../config/constants.dart';
-import 'ct_dialog_shell.dart';
+import 'ct_dropdown_constants.dart';
+import 'ct_dropdown_picker.dart';
 
-/// Animation timing for the trigger chevron rotation between
-/// closed (chevron-down) and open (chevron-up) states per
-/// SPEC/ui/pixel-art-ui-catalog.md (CtDropdown / Refs #2859 R5d).
-const Duration kCtDropdownChevronAnimationDuration = Duration(milliseconds: 120);
-
-/// Final turn fraction the chevron rotates through when the picker opens.
-/// `0.5` turns equals 180°, taking the glyph from chevron-down to chevron-up.
-const double _kChevronOpenTurns = 0.5;
-const double _kChevronClosedTurns = 0.0;
-
-/// Width of the picker row's accent left-edge indicator. Pinned to 1 dp so
-/// selected and unselected rows occupy identical horizontal space — the
-/// unselected variant paints a fully transparent border at the same width,
-/// keeping the layout stable across selection changes (Refs #2859 R5c).
-const double kCtDropdownPickerSelectedLeftEdgeWidth = 1.0;
-
-/// Compact trigger visual min-height (DLG10001 mockup `.dropdown-wrapper
-/// select`). Layout contribution stays at this height; hit testing expands
-/// to [kMinTouchTargetSize] via an invisible OverflowBox (Refs #4062).
-const double kCtDropdownTriggerVisualMinHeight = 34.0;
-
-/// Compact picker-row visual min-height (Refs #4062).
-const double kCtDropdownPickerRowVisualMinHeight = 32.0;
-
-/// Trigger / picker label font size (mockup `font-size:12px`).
-const double kCtDropdownLabelFontSize = 12.0;
-
-/// Trigger chevron glyph size (mockup `.chevron` `font-size:10px`).
-const double kCtDropdownChevronSize = 10.0;
+export 'ct_dropdown_constants.dart';
 
 /// Compact flat select + modal list of options.
 ///
@@ -131,95 +104,14 @@ class _CtDropdownState<T> extends State<CtDropdown<T>> {
     if (!mounted) return;
     setState(() => _isOpen = true);
     try {
-      final chosen = await showDialog<T>(
+      final chosen = await showCtDropdownPickerDialog<T>(
         context: context,
-        builder: (ctx) => CtDialogShell(
-          maxWidth: 320,
-          maxHeight: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.hint != null) ...[
-                Text(widget.hint!, style: Theme.of(ctx).textTheme.titleMedium),
-                const SizedBox(height: 8),
-              ],
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: widget.items.length,
-                itemBuilder: (context, index) {
-                  final v = widget.items[index];
-                  final label = labelFor(v);
-                  final rowLeading = widget.itemLeading?.call(context, v);
-                  final bool isSelected =
-                      widget.value != null && v == widget.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: DecoratedBox(
-                      key: isSelected
-                          ? CtDropdown.kCtDropdownPickerSelectedRowKey
-                          : null,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? EditorialMonoclePalette.accentDim
-                            : null,
-                        border: Border(
-                          left: BorderSide(
-                            color: isSelected
-                                ? EditorialMonoclePalette.accent
-                                : Colors.transparent,
-                            width: kCtDropdownPickerSelectedLeftEdgeWidth,
-                          ),
-                        ),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(ctx).pop(v);
-                          },
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              minHeight: kCtDropdownPickerRowVisualMinHeight,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 6,
-                              ),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Row(
-                                  children: [
-                                    if (rowLeading != null) ...[
-                                      rowLeading,
-                                      const SizedBox(width: 8),
-                                    ],
-                                    Expanded(
-                                      child: Text(
-                                        label,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: kCtDropdownLabelFontSize,
-                                          color: EditorialMonoclePalette.fg,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
+        items: widget.items,
+        value: widget.value,
+        hint: widget.hint,
+        labelFor: labelFor,
+        itemLeading: widget.itemLeading,
+        selectedRowKey: CtDropdown.kCtDropdownPickerSelectedRowKey,
       );
       if (chosen != null) {
         widget.onChanged(chosen);
@@ -358,7 +250,7 @@ class _CtDropdownState<T> extends State<CtDropdown<T>> {
   Widget _buildChevron() {
     return AnimatedRotation(
       key: CtDropdown.kChevronAnimatedRotationKey,
-      turns: _isOpen ? _kChevronOpenTurns : _kChevronClosedTurns,
+      turns: _isOpen ? kCtDropdownChevronOpenTurns : kCtDropdownChevronClosedTurns,
       duration: kCtDropdownChevronAnimationDuration,
       curve: Curves.easeOut,
       child: Icon(

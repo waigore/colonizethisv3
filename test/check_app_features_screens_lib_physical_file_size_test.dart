@@ -34,7 +34,7 @@ void main() {
     Directory('${temp.path}/$_screensRel').createSync(recursive: true);
     File('${temp.path}/$_screensRel/huge.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(301, 'final x = 1;').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppFeaturesScreensLibPhysicalFileSize(
@@ -46,7 +46,7 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge.dart'));
-    expect(logs.join('\n'), contains('physical lines > 400'));
+    expect(logs.join('\n'), contains('physical lines > 300'));
   });
 
   test('fails when the screens directory is missing', () {

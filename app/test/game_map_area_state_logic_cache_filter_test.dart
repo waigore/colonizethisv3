@@ -24,7 +24,7 @@ void main() {
       'worker targets',
       () {
         expect(
-          GameMapAreaStateLogic.kCacheFirstWorkTargets,
+          GameMapAreaStateLogicWorkTargets.kCacheFirstWorkTargets,
           containsAll(<String>{
             kWorkTargetExplore,
             kWorkTargetCounterSpy,
@@ -78,7 +78,7 @@ void main() {
           kWorkTargetBuildRail,
         ]) {
           final filtered =
-              GameMapAreaStateLogic.filterCacheSelectionForRuntimeStaleTileConflicts(
+              GameMapAreaStateLogicWorkTargets.filterCacheSelectionForRuntimeStaleTileConflicts(
                 cachedTileKeys: const {'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
                 game: game,
                 currentOrders: ct_models.Orders(
@@ -148,7 +148,7 @@ void main() {
         );
 
         final filtered =
-            GameMapAreaStateLogic.filterCacheSelectionForRuntimeStaleTileConflicts(
+            GameMapAreaStateLogicWorkTargets.filterCacheSelectionForRuntimeStaleTileConflicts(
               cachedTileKeys: const {'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
               game: game,
               currentOrders: const ct_models.Orders(),
