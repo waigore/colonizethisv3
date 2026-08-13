@@ -42,7 +42,7 @@ On the in-game map shell (`GAME10001`), the tab bar shows a compact **cargo** re
 
 ### Move a sea-going fleet
 
-1. In `UNIT30001`, select **Move** beside a sea-going fleet to open `DLG30001` **Move Fleet**.
+1. In `UNIT30001`, select **Move** beside a sea-going fleet to open `DLG30001` **Move Fleet**. You can also open the same dialog from the map: tap an **in-port** sea-going fleet marker, or tap **Sail / Move** on `DLG31001` when the fleet is already at sea.
 2. Select one legal adjacent destination and confirm. A fleet at sea may move sea zone to sea zone, or dock at an adjacent **owned** port. A fleet in port may undock only into an adjacent sea zone.
 3. Port-to-port moves and multi-hop moves are not available. Docking at the capital merges the arriving fleet into the Home Fleet when the turn resolves.
 4. Entering a sea zone reveals its water and the coastal edge of adjacent provinces for your realm.
@@ -53,9 +53,14 @@ A move order replaces that fleet’s earlier move order and clears its pending m
 
 Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions. Fleets **in port** must undock (move to an adjacent sea zone) before missions are offered.
 
-**Map shortcut (primary):** Tap your **fleet marker** on the map (`MAP10001`). When multiple fleets share the marker, choose which fleet in `DLG31003` **Select fleet**, then pick a mission in `DLG31001` **Assign mission**. Blockade and Beachhead open `DLG31002` **Select target** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target. **Cancel pending mission** clears a staged mission without issuing a “none” order.
+**Map shortcut (primary):** Tap your **fleet marker** on the map (`MAP10001`). When multiple fleets share the marker, choose which fleet in `DLG31003` **Select fleet**. What opens next depends on that fleet:
 
-**Panel parity:** In `UNIT30001` **Naval Units**, tap **Mission** on an eligible at-sea fleet row for the same flow. The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
+- **Home Fleet** — opens `UNIT30001` Naval Units scoped to that port so you can Split or Train without a dead-end tap.
+- **Sea-going fleet in port** — opens `DLG30001` **Move Fleet** so you can undock immediately.
+- **Sea-going fleet at sea** — opens `DLG31001` **Assign mission** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open `DLG30001` without returning to the rail panel. Blockade and Beachhead open `DLG31002` **Select target** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target.
+
+
+**Panel parity:** In `UNIT30001` **Naval Units**, tap **Mission** on an eligible at-sea fleet row for the same `DLG31001` flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
 - **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port. Use the target-row harbor line to compare empty harbors against ports with fleets already docked.
@@ -104,7 +109,7 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - [ ] Explains the complete merchant and warship roster, each ship’s technology gate, and the Carrack exception.
 - [ ] Documents `UNIT30001` and `UNIT60001` for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints.
 - [ ] Documents `DLG30001` one-hop port⇄sea movement, owned-port docking, capital docking, and sea-zone revelation.
-- [ ] Documents map fleet-marker mission assign (`DLG31001`–`DLG31003`) and `UNIT30001` **Mission** parity, including cancel-pending, move xor mission, and fog-honest Beachhead/Blockade target intel on `DLG31002`.
+- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, cancel-pending, move xor mission, and fog-honest Beachhead/Blockade target intel on `DLG31002`.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing preconditions; Join Home Fleet via dock/transfer only (not mission menu).
 - [ ] Documents `DLG40001` transfer of selected hulls from an eligible capital-port fleet into the Home Fleet.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.

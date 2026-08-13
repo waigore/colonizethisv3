@@ -79,6 +79,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expectEditorialMonocleDarkChrome(tester);
       expect(find.text('Assign mission — Fleet sea_named'), findsOneWidget);
+      expect(find.text('Sail / Move'), findsOneWidget);
       expect(find.text('Patrol'), findsOneWidget);
       expect(find.text('Defend'), findsOneWidget);
       expect(find.text('Blockade'), findsOneWidget);
@@ -123,6 +124,10 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Cancel pending mission'), findsOneWidget);
+      // CtDialogShell scrolls when Sail + missions + cancel exceed maxHeight;
+      // bring Cancel pending into the captured frame (Refs #4343).
+      await tester.ensureVisible(find.text('Cancel pending mission'));
+      await tester.pumpAndSettle();
 
       await expectLater(
         find.byKey(boundaryKey),

@@ -42,7 +42,7 @@ On the in-game map shell (**Game screen**), the tab bar shows a compact **cargo*
 
 ### Move a sea-going fleet
 
-1. In **Naval units panel**, select **Move** beside a sea-going fleet to open **Move fleet dialog**.
+1. In **Naval units panel**, select **Move** beside a sea-going fleet to open **Move fleet dialog**. You can also open the same dialog from the map: tap an **in-port** sea-going fleet marker, or tap **Sail / Move** on **Naval mission menu dialog** when the fleet is already at sea.
 2. Select one legal adjacent destination and confirm. A fleet at sea may move sea zone to sea zone, or dock at an adjacent **owned** port. A fleet in port may undock only into an adjacent sea zone.
 3. Port-to-port moves and multi-hop moves are not available. Docking at the capital merges the arriving fleet into the Home Fleet when the turn resolves.
 4. Entering a sea zone reveals its water and the coastal edge of adjacent provinces for your realm.
@@ -53,9 +53,14 @@ A move order replaces that fleet’s earlier move order and clears its pending m
 
 Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions. Fleets **in port** must undock (move to an adjacent sea zone) before missions are offered.
 
-**Map shortcut (primary):** Tap your **fleet marker** on the map (**Empire overview / map area**). When multiple fleets share the marker, choose which fleet in **Naval mission fleet picker dialog**, then pick a mission in **Naval mission menu dialog**. Blockade and Beachhead open **Naval mission target dialog** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target. **Cancel pending mission** clears a staged mission without issuing a “none” order.
+**Map shortcut (primary):** Tap your **fleet marker** on the map (**Empire overview / map area**). When multiple fleets share the marker, choose which fleet in **Naval mission fleet picker dialog**. What opens next depends on that fleet:
 
-**Panel parity:** In **Naval units panel**, tap **Mission** on an eligible at-sea fleet row for the same flow. The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
+- **Home Fleet** — opens **Naval units panel** Naval Units scoped to that port so you can Split or Train without a dead-end tap.
+- **Sea-going fleet in port** — opens **Move fleet dialog** so you can undock immediately.
+- **Sea-going fleet at sea** — opens **Naval mission menu dialog** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open **Move fleet dialog** without returning to the rail panel. Blockade and Beachhead open **Naval mission target dialog** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target.
+
+
+**Panel parity:** In **Naval units panel**, tap **Mission** on an eligible at-sea fleet row for the same **Naval mission menu dialog** flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
 - **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port. Use the target-row harbor line to compare empty harbors against ports with fleets already docked.
