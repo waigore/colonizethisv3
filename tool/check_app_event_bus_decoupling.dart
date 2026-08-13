@@ -147,10 +147,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // chrome — same local-by-design rationale as
   // `move_army_dialog_declare_war.dart` (Refs #4307).
   'app/lib/features/game/screens/counsel/counsel_military_invade_confirm.dart',
-  // Naval mission assign flow — fleet picker / mission menu / target picker
-  // `showDialog` steps in `showNavalMissionFlow`. Same local-by-design rationale
-  // as move fleet — `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
-  // (Refs #4213).
+  // Naval mission / fleet-marker flow — fleet picker / mission menu / target /
+  // move `showDialog` steps in `showNavalFleetMarkerFlow` /
+  // `showNavalMissionFlow`. Same local-by-design rationale as move fleet —
+  // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
+  // (Refs #4213, #4343).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is

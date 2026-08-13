@@ -11,7 +11,7 @@ const navalMissionGoldenHumanId = 'gp_mission_golden';
 const navalMissionGoldenEnemyId = 'gp_enemy';
 const navalMissionGoldenSeaZone = 'sea1';
 
-const Size kNavalMissionGoldenViewport = Size(360, 520);
+const Size kNavalMissionGoldenViewport = Size(360, 800);
 
 Game buildNavalMissionMenuPeacetimeGame() =>
     buildNavalPanelNamedSeaZoneGame(humanId: navalMissionGoldenHumanId);

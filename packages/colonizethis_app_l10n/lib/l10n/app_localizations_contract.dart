@@ -1047,6 +1047,12 @@ abstract class AppLocalizations {
   /// Plain-language effect line for Beachhead mission row (DLG31001).
   String get naval_mission_effect_beachhead;
 
+  /// DLG31001 Sail / Move row label (Refs #4343).
+  String get naval_mission_sail;
+
+  /// Effect line for Sail / Move on DLG31001 (Refs #4343).
+  String get naval_mission_effect_sail;
+
   /// Mission consequence caption on Blockade target picker (DLG31002).
   String get naval_mission_targetCaption_blockade;
 
@@ -1639,6 +1645,12 @@ abstract class AppLocalizations {
 
   /// On-request help for the Market first-right chip.
   String get tradeMarket_firstRightTooltip;
+
+  /// Market row previous-turn aggregate bid/offer volume line.
+  String tradeMarket_lastTurnVolume(int bids, int offers);
+
+  /// Tooltip on Market price cluster when a last-turn coin delta is shown.
+  String get tradeMarket_priceMovedTooltip;
 
   /// Deal Book audit tag for first-right-of-refusal matches.
   String get tradeDealBook_matchTagFirstRight;

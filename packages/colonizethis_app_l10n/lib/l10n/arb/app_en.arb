@@ -1981,6 +1981,14 @@
   "@naval_mission_effect_beachhead": {
     "description": "Plain-language effect line for Beachhead mission row (DLG31001)."
   },
+  "naval_mission_sail": "Sail / Move",
+  "@naval_mission_sail": {
+    "description": "DLG31001 row that opens Move fleet (DLG30001) from the mission menu (Refs #4343)."
+  },
+  "naval_mission_effect_sail": "Move this fleet to an adjacent sea zone or owned port.",
+  "@naval_mission_effect_sail": {
+    "description": "Effect line for Sail / Move row on DLG31001 (Refs #4343)."
+  },
   "naval_mission_targetCaption_blockade": "Pressures the target port approaches with stronger interception than Patrol.",
   "@naval_mission_targetCaption_blockade": {
     "description": "Mission consequence caption on Blockade target picker (DLG31002)."
@@ -5679,6 +5687,18 @@
   "tradeMarket_firstRightTooltip": "You hold first right on goods from this purchased tile. Your bids clear before rivals, and you earn overseas profit when another power buys here.",
   "@tradeMarket_firstRightTooltip": {
     "description": "On-request help for the Market first-right chip."
+  },
+  "tradeMarket_lastTurnVolume": "Last turn: bids {bids} · offers {offers}",
+  "@tradeMarket_lastTurnVolume": {
+    "description": "Market row previous-turn aggregate bid/offer volume line (Refs #4345).",
+    "placeholders": {
+      "bids": { "type": "int" },
+      "offers": { "type": "int" }
+    }
+  },
+  "tradeMarket_priceMovedTooltip": "Last market moved this price. This turn's deals use the price shown.",
+  "@tradeMarket_priceMovedTooltip": {
+    "description": "Tooltip on Market price cluster when a last-turn coin delta is shown (Refs #4345)."
   },
   "tradeDealBook_matchTagFirstRight": "First right",
   "@tradeDealBook_matchTagFirstRight": {
