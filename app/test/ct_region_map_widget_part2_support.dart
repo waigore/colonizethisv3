@@ -214,6 +214,72 @@ Future<List<OpenArmyStackMarkerEvent>> pumpAndTapArmyMarker(
   return openedStacks;
 }
 
+Future<void> expectCivilianAndArmyHitsOnSharedTownCell(
+  WidgetTester tester,
+) async {
+  const markerTileKey = 'oldWorld|pBoth|0|0';
+  final region = ctRegionMapArmyMarkerRegion(
+    localProvinceId: 'pBoth',
+    markerTileKey: markerTileKey,
+    civilianTileMarkers: [
+      ctRegionMapCivilianMarker(
+        tileKey: markerTileKey,
+        x: 0,
+        y: 0,
+        localProvinceId: 'pBoth',
+      ),
+    ],
+  );
+  final (bus, openedStacks) = ctRegionMapBusCapture<OpenArmyStackMarkerEvent>();
+  String? civilianTileKey;
+  String? detailTileKey;
+  await pumpCtRegionMapTest(
+    tester,
+    region: region,
+    width: 64,
+    height: 64,
+    cellSizePx: 32,
+    bus: bus,
+    onCivilianTileStateChanged: (tileKey) => civilianTileKey = tileKey,
+    onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+  );
+  await tapCtRegionMapCivilianGlyph(tester);
+  expect(civilianTileKey, markerTileKey);
+  expect(openedStacks, isEmpty);
+  expect(detailTileKey, isNull);
+
+  civilianTileKey = null;
+  await tapCtRegionMapArmyIcon(tester);
+  expect(openedStacks, hasLength(1));
+  expect(openedStacks.single.tileKey, markerTileKey);
+  expect(civilianTileKey, isNull);
+  expect(detailTileKey, isNull);
+}
+
+Future<(List<OpenArmyStackMarkerEvent>, int)>
+pumpAndTapArmyMarkerInWorkTargetMode(WidgetTester tester) async {
+  const markerTileKey = 'oldWorld|pArmy|0|0';
+  const validTileKey = 'oldWorld|pArmy|0|0';
+  final region = ctRegionMapArmyMarkerRegion(
+    localProvinceId: 'pArmy',
+    markerTileKey: markerTileKey,
+  );
+  final (bus, openedStacks) = ctRegionMapBusCapture<OpenArmyStackMarkerEvent>();
+  var selectedCallCount = 0;
+  await pumpCtRegionMapTest(
+    tester,
+    region: region,
+    width: 64,
+    height: 64,
+    cellSizePx: 32,
+    bus: bus,
+    validTileKeys: {validTileKey},
+    onTileSelected: (_) => selectedCallCount++,
+  );
+  await tapCtRegionMapArmyIcon(tester);
+  return (openedStacks, selectedCallCount);
+}
+
 Future<(String?, String?)> pumpAndTapTownMarker(WidgetTester tester) async {
   final region = ctRegionMapTownMarkerRegion(localProvinceId: 'pTown');
   String? selectedId;
