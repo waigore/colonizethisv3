@@ -2,6 +2,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart'
     show defaultCargoHoldsStub;
 import 'package:colonizethis_test/test.dart';
 
+import '../support/world_market_test_support.dart';
 import 'world_market_phase_extraction_cargo_cases.dart';
 
 /// Cargo-released-by-extraction integration for the world market phase
@@ -13,12 +14,13 @@ void main() {
     test('tradeCapacity = homeFleetCargo − overseasShippedTonnage; '
         'bid partial-fills against the reduced cap', () {
       expect(defaultCargoHoldsStub, 24);
-      final next = runExtractionCargoTimberPhase(
-        shippedTonnage: 12,
-        offerQuantity: 24,
-        bidQuantity: 24,
-        sellerTimber: 30,
-        buyerTreasury: 100000,
+      final next = runWorldMarketPhaseFrom(
+        pipeline: extractionCargoTimberPipeline(
+          shippedTonnage: 12,
+          sellerTimber: 30,
+          buyerTreasury: 100000,
+        ),
+        orders: gpGpTimberTradeOrders(offerQuantity: 24, bidQuantity: 24),
       );
 
       final buyer = next.players.firstWhere(
@@ -47,12 +49,13 @@ void main() {
 
     test('overseas shipped tonnage ≥ home-fleet capacity clamps trade cargo '
         'to 0 — no fills, full bid carry-forward', () {
-      final next = runExtractionCargoTimberPhase(
-        shippedTonnage: 24,
-        offerQuantity: 5,
-        bidQuantity: 5,
-        sellerTimber: 10,
-        buyerTreasury: 100000,
+      final next = runWorldMarketPhaseFrom(
+        pipeline: extractionCargoTimberPipeline(
+          shippedTonnage: 24,
+          sellerTimber: 10,
+          buyerTreasury: 100000,
+        ),
+        orders: gpGpTimberTradeOrders(offerQuantity: 5, bidQuantity: 5),
       );
 
       final buyer = next.players.firstWhere(
@@ -73,12 +76,13 @@ void main() {
 
     test('overseas shipped tonnage exceeding home-fleet capacity does not '
         'underflow tradeCapacity (released-cargo clamp at 0)', () {
-      final next = runExtractionCargoTimberPhase(
-        shippedTonnage: 999,
-        offerQuantity: 5,
-        bidQuantity: 5,
-        sellerTimber: 5,
-        buyerTreasury: 1000,
+      final next = runWorldMarketPhaseFrom(
+        pipeline: extractionCargoTimberPipeline(
+          shippedTonnage: 999,
+          sellerTimber: 5,
+          buyerTreasury: 1000,
+        ),
+        orders: gpGpTimberTradeOrders(offerQuantity: 5, bidQuantity: 5),
       );
 
       final buyer = next.players.firstWhere(
@@ -94,11 +98,12 @@ void main() {
 
     test('missing tonnage entry defaults to 0 — buyer keeps full home-fleet '
         'capacity (legacy contract preserved)', () {
-      final next = runExtractionCargoTimberPhaseNoTonnageMap(
-        offerQuantity: 5,
-        bidQuantity: 5,
-        sellerTimber: 5,
-        buyerTreasury: 1000,
+      final next = runWorldMarketPhaseFrom(
+        pipeline: extractionCargoTimberPipelineNoTonnageMap(
+          sellerTimber: 5,
+          buyerTreasury: 1000,
+        ),
+        orders: gpGpTimberTradeOrders(offerQuantity: 5, bidQuantity: 5),
       );
 
       final buyer = next.players.firstWhere(

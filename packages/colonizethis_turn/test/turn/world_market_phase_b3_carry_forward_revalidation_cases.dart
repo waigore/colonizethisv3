@@ -25,18 +25,14 @@ TradeOrder b3TimberOrder({
   priority: priority,
 );
 
-Game runB3CarryForwardPhase({
+Game b3CarryForwardGame({
   required WorldMarketState priorMarket,
   required Stockpile sellerStockpile,
   required int buyerTreasury,
-  required Orders orders,
   Map<CommodityId, int> marketPrices = const {'timber': 30},
-}) => runWorldMarketPhase(
-  game: gameWithTwoGps(
-    sellerStockpile: sellerStockpile,
-    sellerTreasury: 0,
-    buyerTreasury: buyerTreasury,
-    marketPrices: marketPrices,
-  ).copyWith(worldMarketState: priorMarket),
-  orders: orders,
-);
+}) => gameWithTwoGps(
+  sellerStockpile: sellerStockpile,
+  sellerTreasury: 0,
+  buyerTreasury: buyerTreasury,
+  marketPrices: marketPrices,
+).copyWith(worldMarketState: priorMarket);

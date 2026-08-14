@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/world_market_test_support.dart';
 import 'world_market_phase_b3_carry_forward_revalidation_cases.dart';
 
 /// Integration tests for the carry-forward re-validation branch of
@@ -18,16 +19,18 @@ void main() {
       'SPEC/program/world-market-resolution.md § Step A Gather)', () {
     test('carry-forward offer dropped when start-of-turn stockpile is below '
         'order quantity (note recorded, order not used in matching)', () {
-      final next = runB3CarryForwardPhase(
-        priorMarket: b3PriorMarket(
-          carryForwardOffersByFactionId: {
-            'gpSeller': [
-              b3TimberOrder(type: TradeOrderType.offer, quantity: 5),
-            ],
-          },
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            carryForwardOffersByFactionId: {
+              'gpSeller': [
+                b3TimberOrder(type: TradeOrderType.offer, quantity: 5),
+              ],
+            },
+          ),
+          sellerStockpile: const Stockpile().applyDelta('timber', 2),
+          buyerTreasury: 1000,
         ),
-        sellerStockpile: const Stockpile().applyDelta('timber', 2),
-        buyerTreasury: 1000,
         orders: Orders(
           tradeOrdersByPlayerId: {
             'gpBuyer': [b3TimberOrder(type: TradeOrderType.bid, quantity: 5)],
@@ -81,19 +84,21 @@ void main() {
     test('carry-forward bid dropped when start-of-turn cargo capacity is below '
         'order quantity (note recorded, order not used in matching)', () {
       const oversizedBidQuantity = 30; // > defaultCargoHoldsStub (24)
-      final next = runB3CarryForwardPhase(
-        priorMarket: b3PriorMarket(
-          carryForwardBidsByFactionId: {
-            'gpBuyer': [
-              b3TimberOrder(
-                type: TradeOrderType.bid,
-                quantity: oversizedBidQuantity,
-              ),
-            ],
-          },
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            carryForwardBidsByFactionId: {
+              'gpBuyer': [
+                b3TimberOrder(
+                  type: TradeOrderType.bid,
+                  quantity: oversizedBidQuantity,
+                ),
+              ],
+            },
+          ),
+          sellerStockpile: const Stockpile().applyDelta('timber', 30),
+          buyerTreasury: 100000,
         ),
-        sellerStockpile: const Stockpile().applyDelta('timber', 30),
-        buyerTreasury: 100000,
         orders: Orders(
           tradeOrdersByPlayerId: {
             'gpSeller': [
@@ -142,16 +147,18 @@ void main() {
 
     test('carry-forward offer that still fits stockpile is preserved and '
         'matches normally', () {
-      final next = runB3CarryForwardPhase(
-        priorMarket: b3PriorMarket(
-          carryForwardOffersByFactionId: {
-            'gpSeller': [
-              b3TimberOrder(type: TradeOrderType.offer, quantity: 3),
-            ],
-          },
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            carryForwardOffersByFactionId: {
+              'gpSeller': [
+                b3TimberOrder(type: TradeOrderType.offer, quantity: 3),
+              ],
+            },
+          ),
+          sellerStockpile: const Stockpile().applyDelta('timber', 5),
+          buyerTreasury: 1000,
         ),
-        sellerStockpile: const Stockpile().applyDelta('timber', 5),
-        buyerTreasury: 1000,
         orders: Orders(
           tradeOrdersByPlayerId: {
             'gpBuyer': [b3TimberOrder(type: TradeOrderType.bid, quantity: 3)],
@@ -181,30 +188,32 @@ void main() {
 
     test('cumulative cargo check drops only the bids that exceed capacity '
         '(earlier carry-forwards keep their slots)', () {
-      final next = runB3CarryForwardPhase(
-        priorMarket: b3PriorMarket(
-          prices: const {'timber': 30, 'iron': 80},
-          carryForwardBidsByFactionId: {
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 20,
-                priority: 2,
-              ),
-              TradeOrder(
-                commodityId: 'iron',
-                type: TradeOrderType.bid,
-                quantity: 10,
-                priority: 1,
-              ),
-            ],
-          },
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            prices: const {'timber': 30, 'iron': 80},
+            carryForwardBidsByFactionId: {
+              'gpBuyer': [
+                TradeOrder(
+                  commodityId: 'timber',
+                  type: TradeOrderType.bid,
+                  quantity: 20,
+                  priority: 2,
+                ),
+                TradeOrder(
+                  commodityId: 'iron',
+                  type: TradeOrderType.bid,
+                  quantity: 10,
+                  priority: 1,
+                ),
+              ],
+            },
+          ),
+          sellerStockpile: Stockpile.empty,
+          buyerTreasury: 100000,
+          marketPrices: const {'timber': 30, 'iron': 80},
         ),
-        sellerStockpile: Stockpile.empty,
-        buyerTreasury: 100000,
         orders: const Orders(),
-        marketPrices: const {'timber': 30, 'iron': 80},
       );
 
       final carriedBids =

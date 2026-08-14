@@ -5,52 +5,35 @@ import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 import '../support/world_market_test_support.dart';
 
 const extractionCargoBuyerId = 'gpBuyer';
-const extractionCargoSellerId = 'gpSeller';
 
-Game runExtractionCargoTimberPhase({
+TurnPipelineState extractionCargoTimberPipeline({
   required int shippedTonnage,
-  required int offerQuantity,
-  required int bidQuantity,
   required int sellerTimber,
   required int buyerTreasury,
 }) {
-  final game = gameWithTwoGps(
-    sellerStockpile: Stockpile.empty.applyDelta('timber', sellerTimber),
-    sellerTreasury: 0,
-    buyerTreasury: buyerTreasury,
-    marketPrices: const {'timber': 30},
-  );
-  return runWorldMarketPhaseFrom(
-    pipeline: TurnPipelineState(
-      game: game,
-      overseasExtractionShippedTonnageByPlayerId: <String, int>{
-        extractionCargoBuyerId: shippedTonnage,
-      },
+  return TurnPipelineState(
+    game: gameWithTwoGps(
+      sellerStockpile: Stockpile.empty.applyDelta('timber', sellerTimber),
+      sellerTreasury: 0,
+      buyerTreasury: buyerTreasury,
+      marketPrices: const {'timber': 30},
     ),
-    orders: gpGpTimberTradeOrders(
-      offerQuantity: offerQuantity,
-      bidQuantity: bidQuantity,
-    ),
+    overseasExtractionShippedTonnageByPlayerId: <String, int>{
+      extractionCargoBuyerId: shippedTonnage,
+    },
   );
 }
 
-Game runExtractionCargoTimberPhaseNoTonnageMap({
-  required int offerQuantity,
-  required int bidQuantity,
+TurnPipelineState extractionCargoTimberPipelineNoTonnageMap({
   required int sellerTimber,
   required int buyerTreasury,
 }) {
-  final game = gameWithTwoGps(
-    sellerStockpile: Stockpile.empty.applyDelta('timber', sellerTimber),
-    sellerTreasury: 0,
-    buyerTreasury: buyerTreasury,
-    marketPrices: const {'timber': 30},
-  );
-  return runWorldMarketPhaseFrom(
-    pipeline: TurnPipelineState(game: game),
-    orders: gpGpTimberTradeOrders(
-      offerQuantity: offerQuantity,
-      bidQuantity: bidQuantity,
+  return TurnPipelineState(
+    game: gameWithTwoGps(
+      sellerStockpile: Stockpile.empty.applyDelta('timber', sellerTimber),
+      sellerTreasury: 0,
+      buyerTreasury: buyerTreasury,
+      marketPrices: const {'timber': 30},
     ),
   );
 }
