@@ -823,7 +823,7 @@ rules:
 
   - rule_id: repo.turn_lib_file_size
     group: structure
-    title: colonizethis_turn lib files must stay at or below the wave-4 400 physical-line ceiling (Refs #4113)
+    title: colonizethis_turn lib files must stay at or below the wave-7 300 physical-line ceiling (Refs #4113, #4342)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_lib_file_size.dart
