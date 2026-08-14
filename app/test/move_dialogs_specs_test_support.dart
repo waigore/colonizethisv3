@@ -1,4 +1,4 @@
-// Shared opener for move_dialogs_specs_part*_test (Refs #4013, #4035 / #4117 slice F).
+// Shared opener for move_dialogs_specs army/fleet tests (Refs #4013, #4035 / #4117 slice F, #4352).
 import 'package:flutter/material.dart';
 
 import 'app_shell_harness.dart';

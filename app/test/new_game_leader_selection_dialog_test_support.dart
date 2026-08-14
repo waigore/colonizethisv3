@@ -1,6 +1,6 @@
 // Shared pump / tap helpers for NewGameLeaderSelectionDialog widget tests.
-// Used by `new_game_leader_selection_dialog_part1_test.dart` and
-// `new_game_leader_selection_dialog_part2_test.dart` (Refs #4013).
+// Used by `new_game_leader_selection_dialog_slots_and_payload_test.dart` and
+// `new_game_leader_selection_dialog_narrow_stacking_test.dart` (Refs #4013, #4352).
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
@@ -14,15 +14,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
 
-typedef NewGameLeaderSelectionConfirmed = void Function(
-  List<String> orderedGreatPowerIds,
-  Map<String, String> leaderVariantByGpId,
-  int seed,
-  bool infiniteMode,
-  double terrainVariation,
-  Map<String, String?> aiProfileByGpId,
-  AdvancedStartType advancedStart,
-);
+typedef NewGameLeaderSelectionConfirmed =
+    void Function(
+      List<String> orderedGreatPowerIds,
+      Map<String, String> leaderVariantByGpId,
+      int seed,
+      bool infiniteMode,
+      double terrainVariation,
+      Map<String, String?> aiProfileByGpId,
+      AdvancedStartType advancedStart,
+    );
 
 /// Opens [NewGameLeaderSelectionDialog] via a MaterialApp opener button.
 ///
@@ -156,7 +157,8 @@ void expectNewGameLeaderDialogChromeTexts(Iterable<String> texts) {
   }
 }
 
-Finder newGameLeaderKeyedFinder(String key) => find.byKey(ValueKey<String>(key));
+Finder newGameLeaderKeyedFinder(String key) =>
+    find.byKey(ValueKey<String>(key));
 
 Text newGameLeaderKeyedText(WidgetTester tester, String key) =>
     tester.widget<Text>(newGameLeaderKeyedFinder(key));
@@ -169,7 +171,10 @@ Future<void> pumpNewGameLeaderDuplicateEngland(WidgetTester tester) {
   );
 }
 
-Future<int?> confirmNewGameLeaderWithSeed(WidgetTester tester, String seed) async {
+Future<int?> confirmNewGameLeaderWithSeed(
+  WidgetTester tester,
+  String seed,
+) async {
   int? gotSeed;
   await pumpNewGameLeaderSelectionDialog(
     tester,
