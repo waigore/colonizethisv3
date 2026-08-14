@@ -72,7 +72,7 @@ Per `colonizethis-ui-documentation.mdc`:
 
 ### 5. Tests
 
-- Point ACs to `app/test/screen_spec_acceptance_part*_test.dart` or focused `*_test.dart`.
+- Point ACs to `app/test/screen_spec_acceptance_*_test.dart` or focused `*_test.dart`.
 - Do not add trivial tests; cover new triggers and emissions.
 
 ## Output to the user

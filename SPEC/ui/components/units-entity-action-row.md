@@ -120,7 +120,7 @@ Consumer specs link back here instead of redeclaring the surface, pill footprint
 ## Tests
 
 - `app/test/units_panel_shared_widgets_test.dart` — wide vs narrow rendering and the `UnitsPanelRowChrome` wrapper.
-- `app/test/naval_units_panel_mockup_fidelity_test.dart` — naval `dense: true` R25/R27 contract.
+- `app/test/naval_units_panel_combine_and_mockup_test.dart` — naval `dense: true` R25/R27 contract.
 - `app/test/units_entity_card_test.dart` — `chrome: false` + `UnitsEntityCard` card chrome.
 - `app/test/spec_components_units_entity_action_row_test.dart` — spec-pinning and the 1000-word ceiling.
 

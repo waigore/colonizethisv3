@@ -1,4 +1,4 @@
-// Army-dialog fixtures for move_dialogs_specs_part1 (Refs #4352).
+// Army-dialog fixtures for move_dialogs_specs_army_test (Refs #4352).
 
 import 'dart:async';
 

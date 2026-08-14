@@ -110,7 +110,7 @@ Widget wrapDiplomacyPanelAtViewport({
 }
 
 /// Canonical [CivilianUnitsPanel] host used across the three
-/// `civilian_units_panel_part*_test.dart` files and row-card chrome suites
+/// `civilian_units_panel_*_test.dart` files and row-card chrome suites
 /// (Refs #4013, #4035). Composes [buildAppShell] — callers must not redeclare
 /// an inline `MaterialApp` for this panel.
 Widget buildCivilianPanel({
