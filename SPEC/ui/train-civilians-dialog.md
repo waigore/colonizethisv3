@@ -31,10 +31,13 @@ The Train Civilians dialog lets the player queue training orders for civilian un
 │ └─────────────────────────────────────┘ │
 │  Treasury low, Paper low                │  ← Dynamic deficit hint (below box)
 │  Explorer                   [−] 0 [+]   │  ← Per-unit-type row (single line)
-│  £1,000 + 2 paper                       │     name over cost (left), stepper (right)
+│  Explores provinces · Prospects minerals│     name → muted role gist → cost
+│  £1,000 + 2 paper                       │     (left), stepper (right)
 │  Builder                    [−] 0 [+]   │
+│  Improves tiles · Upgrades towns        │
 │  £1,000 + 2 paper                       │
 │  🔒 Merchant                [−] 0 [+]   │  ← Locked (tech not unlocked)
+│  Purchases land in Minor/Tribe provinces│     gist stays visible when locked
 │  £2,000 + 4 paper                       │
 │  Requires: Merchant Companies           │  ← Lock reason
 └─────────────────────────────────────────┘
@@ -74,11 +77,22 @@ For each `CivilianEconomyCatalog` entry:
 | Commodity inputs | `CivilianEconomy.buildInputs` (key = commodity id, value = qty) |
 | Locked state | `unlockingTechByCivilianId[unitType]` not in `Player.techUnlocked` |
 
-Each row is a **single horizontal line**: a left info `Column` (unit name stacked
-above the cost line) takes the residual width, and the stepper sits on the right
-of the same row, vertically centered (wrapping below only when the width cannot
-fit both). This matches the mockup `.unit-row` (`flex; align-items:center`) with a
-left `.info` block and a right `.stepper`.
+Each row is a **single horizontal line**: a left info `Column` (unit name,
+**muted role gist**, then cost line) takes the residual width, and the stepper
+sits on the right of the same row, vertically centered (wrapping below only when
+the width cannot fit both). This matches the mockup `.unit-row`
+(`flex; align-items:center`) with a left `.info` block and a right `.stepper`.
+
+#### Role gist (always visible)
+
+Under the type name and above the cost line, every catalog civilian row shows
+one muted ~10 px plain-language role gist (`TrainCivilianRoleDisplay.roleGist`,
+Refs #4366). Copy is authored in l10n — never raw work-target ids (`explore`,
+`build_improvement`, `counter_spy`) or persistence type ids beyond the display
+name. Locked rows keep the gist at the existing locked-row opacity. Spy gist
+describes intel / counter-espionage work only and must **not** imply an
+unassigned Spy is unused capacity (UXD-002). Full work costs, tile gates, and
+assign flows stay on `UNIT10001` / `MAP20001`.
 
 #### Unlocked Unit Row
 - Unit type icon (or pixel-art icon from catalog) + unit name (left info column, top)
@@ -238,6 +252,14 @@ column. The `ui_icon_lock` pixel-art asset remains available for other surfaces.
 - **Given** an unlocked civilian row whose `[+]` is disabled because adding one more exceeds available resources, **when** the row renders, **then** the `[+]` button uses the `danger` variant (red border/label) distinct from the normal disabled appearance.
 
 - **Given** a tech-locked civilian row, **when** the row renders, **then** the `[+]` button shows the normal (non-danger) disabled appearance with no red tint.
+
+- **Given** `UNIT40001` is open, **when** each of the six catalog civilian types renders, **then** the UI layer shows a muted role gist under the type name and above the cost line in plain language, with no raw work-target or unit-type persistence ids other than the display name.
+
+- **Given** a tech-locked Merchant, Spy, or Rail Builder row, **when** the row renders, **then** the role gist remains visible at the existing locked-row opacity together with `Requires: {tech}`, and steppers stay disabled.
+
+- **Given** the player changes a stepper, **when** remaining treasury/paper and deficit hints update, **then** the role gist copy is unchanged and existing affordability / order-on-close behavior is unchanged.
+
+- **Given** the Spy row, **when** the role gist renders, **then** the UI layer describes intel / counter-espionage work in player words and does not treat an unassigned Spy as unused capacity.
 
 ---
 

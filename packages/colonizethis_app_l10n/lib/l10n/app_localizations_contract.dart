@@ -1145,6 +1145,24 @@ abstract class AppLocalizations {
   /// Train civilians dialog title.
   String get trainCivilians_title;
 
+  /// Muted role gist on Train Civilians Explorer row (Refs #4366).
+  String get trainCivilians_roleGistExplorer;
+
+  /// Muted role gist on Train Civilians Builder row (Refs #4366).
+  String get trainCivilians_roleGistBuilder;
+
+  /// Muted role gist on Train Civilians Engineer row (Refs #4366).
+  String get trainCivilians_roleGistEngineer;
+
+  /// Muted role gist on Train Civilians Spy row (Refs #4366).
+  String get trainCivilians_roleGistSpy;
+
+  /// Muted role gist on Train Civilians Merchant row (Refs #4366).
+  String get trainCivilians_roleGistMerchant;
+
+  /// Muted role gist on Train Civilians Rail Builder row (Refs #4366).
+  String get trainCivilians_roleGistRailBuilder;
+
   /// Train military dialog title.
   String get trainMilitary_title;
 

@@ -14,8 +14,10 @@ import 'package:path/path.dart' as p;
 const String setupTestSupportRelativeDir =
     'packages/colonizethis_setup/test/setup/support';
 
-/// Post–slice D scenario-table support-tree ceiling (physical LOC) with headroom.
-const int setupTestSupportLocCeiling = 2700;
+/// Post–wave-7 slice C densify support-tree ceiling (physical LOC) with headroom.
+/// Measured ≈3995 after migrating five ≥300-line suites into scenario tables;
+/// Slice D will split fat scenario modules and re-ratchet (Refs #4349).
+const int setupTestSupportLocCeiling = 4100;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countSetupTestSupportPhysicalLoc(Directory dir) {
