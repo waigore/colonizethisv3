@@ -31,6 +31,22 @@ class MapResourceExtractionMaps {
   final Set<String> capitalLinkDisconnectedTileKeys;
 }
 
+/// Global observe (`panelPlayerId == null`) keeps extraction discs but omits
+/// hatch keys so no GP's connected set is painted (Refs #4370).
+MapResourceExtractionMaps mapViewExtractionMapsForShell({
+  required MapResourceExtractionMaps built,
+  required String? panelPlayerId,
+}) {
+  if (panelPlayerId != null) {
+    return built;
+  }
+  return MapResourceExtractionMaps(
+    unitsByTile: built.unitsByTile,
+    effectiveUnitsByTile: built.effectiveUnitsByTile,
+    blockedUnitsByTile: built.blockedUnitsByTile,
+  );
+}
+
 void _recordExtractionDiscs({
   required Map<String, int> unitsByTile,
   required Map<String, int> effectiveUnitsByTile,
@@ -120,9 +136,11 @@ MapResourceExtractionMaps mapViewBuildResourceExtractionMaps({
     );
   }
 
-  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+  for (final regionEntry
+      in game.worldState.tileKeysByRegionAndProvince.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
-      final province = provincesByFullId[provinceEntry.key] ??
+      final province =
+          provincesByFullId[provinceEntry.key] ??
           game.worldState.tryGetProvince(provinceEntry.key);
       if (province?.ownerId != mapPlayer.id) {
         continue;
