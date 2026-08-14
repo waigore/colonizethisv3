@@ -192,6 +192,69 @@ List<WidgetbookNode> get gameTabBarDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Extraction disc legend — wide',
+        builder: (context) {
+          final GlobalKey anchor = GlobalKey();
+          return widgetbookEditorialMonocleApp(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+            child: Center(
+              child: ExtractionDiscLegend(
+                key: anchor,
+                narrow: false,
+                anchorKey: anchor,
+                chromeBottomY: 0,
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Extraction disc legend — narrow chip',
+        builder: (context) {
+          final GlobalKey anchor = GlobalKey();
+          return widgetbookEditorialMonocleApp(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+            child: Center(
+              child: ExtractionDiscLegend(
+                key: anchor,
+                narrow: true,
+                anchorKey: anchor,
+                chromeBottomY: 0,
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Extraction disc legend — details panel',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+          child: Builder(
+            builder: (BuildContext ctx) {
+              final l10n = appL10n(ctx);
+              return Center(
+                child: SizedBox(
+                  width: 280,
+                  child: ExtractionDiscLegendPanel(
+                    l10n: l10n,
+                    onClose: () {},
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     ],
   ),
 ];

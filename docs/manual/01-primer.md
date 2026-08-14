@@ -30,7 +30,7 @@ Later chapters deepen victory counsel; start here so you know the finish line.
 ### Orientation tour of the game screen
 
 1. From the shell, after a game is created or loaded, you arrive on `GAME10001` **Game screen** — host for the map, chrome, next-turn flow, and overlays.
-2. The map area is `MAP10001` **Empire overview / map widget**: pan, zoom, region tabs (Old World / New World), and selection of provinces and sea zones.
+2. The map area is `MAP10001` **Empire overview / map widget**: pan, zoom, region tabs (Old World / New World), and selection of provinces and sea zones. When resource icons are on, a small **extraction-disc legend** near the bottom-left map tools teaches gold vs brown disc colours (Chapter 3).
 3. **Empire buttons** sit as an always-visible **icon column on the left** of the map (labels on hover): Production (`GAME20001`), Development (`GAME80001`), Trade (`GAME60001`), Civilian Units, Military Units, Naval Units, Diplomacy (`GAME30001`), Technology (`GAME40001`), Victory (`GAME70001`). Icons are defined in the toolbar-icons catalog. Development scans improvable tiles empire-wide and one-tap assigns Builders (Chapter 6); Trade opens the Market + Deal Book desk (Chapter 8); Victory opens mid-campaign standings and conditions (Chapter 15); market clearance still resolves in turn phases.
 4. The top bar carries turn controls, region tabs, and the hamburger that opens `GAME50001` **Game side menu** (Game Parameters read-only + Debug log — not a second empire toolbar).
 5. Tap a province or sea zone to open `MAP20001` **Province / sea-zone detail overlay** for identity, ownership, and local actions.

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -45,6 +46,9 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   List<ct_models.GameToUIEvent> resolvedPlayerTurnEvents = const [];
   bool isTurnResolving = false;
   StreamSubscription<TurnResolutionProgressEvent>? turnResolutionProgressSub;
+
+  /// Anchor for the extraction-disc legend popover (Refs #4367).
+  final GlobalKey extractionDiscLegendAnchorKey = GlobalKey();
 
   String get mapPlayerId =>
       ref.read(shellPlayerContextProvider).mapPlayerIdFor(widget.game);

@@ -113,6 +113,16 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 - **Glyph:** Unchanged at **22 × 22 dp** (mockup keeps `.corner-btn img { 22 × 22 }` at narrow); the visible padding around the glyph compresses to 1 dp per side.
 - **Chrome tokens:** Unchanged — narrow buttons keep the wide gradient/border/full-colour icon and hover/press contracts above.
 
+### Extraction disc legend (in-game map only)
+
+Compact teaching chrome for gold vs brown **extraction discs** (Refs #4367; disc paint contract in [map-widget.md](map-widget.md) § Per-tile extraction throughput indicators).
+
+- **Placement:** Above the bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/controls/game_map_corner_controls.dart) row in the map `Stack` ([ExtractionDiscLegend](../../app/lib/features/game/flame/controls/extraction_disc_legend.dart)). Does not replace the three 24×24 / 32×32 corner tools.
+- **Visibility:** Shown when `baseLayerDisplayMode != terrainOnly` **and** `ShellPlayerContext.viewingPlayerId != null` (normal play and player observe), **including when zero discs are painted**. Hidden in **terrain only** and **global observe** (`viewingPlayerId == null`). Visibility does **not** depend on disc count.
+- **Wide:** Two swatches (gold `0xFFFFD700` / brown `0xFF5C4033` with dark stroke matching disc paint) plus plain labels (“Reaches capital” / “Blocked — will not extract”).
+- **Narrow (`< kNarrowBreakpoint`):** Collapses to a tappable two-disc chip; popover stacks above the bottom province sheet when open.
+- **Tap:** Opens a dismissible floating panel (cargo-hold family: ×, outside tap, Esc) restating both meanings plus one counsel line about restoring roads/towns/ports toward the capital. No orders staged; no new screen ID (extends `MAP10001`).
+
 **Acceptance (narrow corner controls):**
 
 - **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`), **when** `GameMapCornerControls` is constructed with `narrow: true` and lays out the three corner buttons, **then** every visible corner button paints a **24 × 24 dp** square surface.
@@ -330,6 +340,9 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 - **Given** the Empire overview map is visible and the current flags equal a cycle preset, **when** the user taps the base-layer cycle button at the **bottom-left** of the map area (leftmost of the horizontal map tool row), **then** the UI layer writes the next preset in order terrain-only → resources → resources+improvements → full detail → terrain-only, persists those flags on `MapViewState`, and the button tooltip/semantics name the **current** combination.
 - **Given** resources are off, improvements are on, and roads are off (non-preset), **when** the user taps the base-layer cycle button, **then** all three flags become off (terrain-only) and the tooltip/semantics name terrain only.
 - **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the **bottom-left** of the map area and displays the stacked layers icon (icon-only).
+- **Given** the Empire overview map is in a resource-including base-layer mode and `ShellPlayerContext.viewingPlayerId != null`, **when** the map chrome renders (including zero discs), **then** the UI layer shows the extraction-disc legend above the corner controls with plain gold/brown meanings (Refs #4367).
+- **Given** the player taps the extraction-disc legend, **when** the details popover opens, **then** the UI layer shows both colour meanings and a capital-link counsel line, and dismisses via ×, outside tap, or Esc without staging orders (Refs #4367).
+- **Given** the base layer is **terrain only** or global observe (`viewingPlayerId == null`), **when** the map chrome renders, **then** the UI layer omits the extraction-disc legend (Refs #4367).
 
 - **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible **immediately to the right** of the base-layer cycle button in the same **bottom-left** horizontal row.
 - **Given** the Empire overview map is visible and the current player has a defined capital tile, **when** the user taps the home-to-capital button, **then** the active region switches (if needed) to the current player's capital region and the map centers on the current player's capital tile with the selection/highlight cursor placed on that tile.
