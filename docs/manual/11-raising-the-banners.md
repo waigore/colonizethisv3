@@ -44,7 +44,7 @@ On `UNIT20001` **Military Units panel**, the **Generals** strip at the top of th
 
 ### Moving a field army
 
-1. **From the map:** Open `MAP20001` on a province. On the **Military** section, tap **Move** when a non-Home field army is stationed there, or **Invade** on a foreign province when a field army can conceivably reach it. If several armies qualify, `DLG20002` asks which army acts; then `DLG20001` opens. **Invade** preselects that province so you need not hunt it again.
+1. **From the map:** Open `MAP20001` on a province. On the **Military** section, tap **Move** when a non-Home field army is stationed there, or **Invade** on a foreign province when a field army can conceivably reach it. If several armies qualify, `DLG20002` asks which army acts and shows each army’s regiment mix so you can tell them apart; then `DLG20001` opens. **Invade** preselects that province so you need not hunt it again.
 2. **From the roster:** In `UNIT20001`, select **Move** on a non-Home army.
 3. `DLG20001` **Move army dialog** lists only destinations that are legal for that army and the current turn’s orders. The dialog body shows **Your army: N regiments** for the army you are moving. When you select an invasion destination, it also shows how many invasions you have staged this turn versus how many generals you have; staging more invasions than generals triggers a soft warning that extra armies fight with weaker command (Confirm stays enabled). If your armies are short on rations this turn, a separate soft line warns that they will fight weaker — again without blocking Confirm. Invasion target rows show defender strength, unopposed capture, and fort/siege risk when your military intel is complete (Spy, full tile visibility, or Spy fog-decay timer); otherwise they show **Defenders unknown**. Select an invasion row to see regiment-type breakdown when intel allows.
 4. Your owned provinces may be selected for relocation, including provinces in another region. Enemy, neutral, Minor Nation, or Tribe provinces must be adjacent to the army’s present province and lie in its current region.
@@ -87,7 +87,7 @@ Other Great Powers use deterministic planners to weigh expansion, military rebui
 - [ ] Documents `UNIT20001` and `UNIT50001` training flow, including peasant consumption and capital Home Army arrival.
 - [ ] Explains armies, splitting and combining, Home Army purpose, and generals’ combat assignment and medal growth.
 - [ ] Documents `DLG20001` legal movement destinations, pending moves, invasion confirmation, and same-turn war declaration.
-- [ ] Documents `MAP20001` Military **Move** / **Invade** shortcuts and optional `DLG20002` army picker.
+- [ ] Documents `MAP20001` Military **Move** / **Invade** shortcuts and optional `DLG20002` army picker (regiment mix on each row).
 - [ ] Documents `GAME90001` Military Counsel: `UNIT20001` entry, train/invade Agree, war confirm, empty state.
 - [ ] States that the Home Army cannot march and that a field army must be split from it.
 - [ ] Grounds rival military behaviour in the Full AI phase-planning model.

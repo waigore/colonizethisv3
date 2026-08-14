@@ -53,7 +53,7 @@ A move order replaces that fleet’s earlier move order and clears its pending m
 
 Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions. Fleets **in port** must undock (move to an adjacent sea zone) before missions are offered.
 
-**Map shortcut (primary):** Tap your **fleet marker** on the map (**Empire overview / map area**). When multiple fleets share the marker, choose which fleet in **Naval mission fleet picker dialog**. What opens next depends on that fleet:
+**Map shortcut (primary):** Tap your **fleet marker** on the map (**Empire overview / map area**). When multiple fleets share the marker, choose which fleet in **Naval mission fleet picker dialog** — each row shows that fleet’s ship mix (and a pending mission line when one is already staged) so you can tell stacked fleets apart. What opens next depends on that fleet:
 
 - **Home Fleet** — opens **Naval units panel** Naval Units scoped to that port so you can Split or Train without a dead-end tap.
 - **Sea-going fleet in port** — opens **Move fleet dialog** so you can undock immediately.

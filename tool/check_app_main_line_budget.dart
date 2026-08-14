@@ -65,7 +65,8 @@ const _packageName = 'colonizethis_app';
 // raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
 // raised for combined #4366+#4367+#4369 merge headroom.
-const _maxMainLines = 76000;
+// raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
+const _maxMainLines = 76200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
