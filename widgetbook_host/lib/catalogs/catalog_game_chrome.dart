@@ -427,6 +427,16 @@ List<WidgetbookNode> get gameMapOptionsDialogDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Resources only',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapResources: true,
+            showMapImprovements: false,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Improvements without resources',
         builder: (context) => _gameMapOptionsDialogStoryFrame(
           initialState: const MapViewState(
