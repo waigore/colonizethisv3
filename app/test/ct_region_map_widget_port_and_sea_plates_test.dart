@@ -1,3 +1,6 @@
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// port-drawable sea taps and sea-zone name plate layout.
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +14,7 @@ import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 
-import 'ct_region_map_widget_part3_support.dart';
+import 'ct_region_map_widget_port_and_sea_plates_support.dart';
 
 void main() {
   suppressLogsForTests();

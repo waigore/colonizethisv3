@@ -1,3 +1,6 @@
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// in-port harbor anchoring for projectFleetMarkersForHumanDraft.
+
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';

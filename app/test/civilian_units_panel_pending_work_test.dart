@@ -1,4 +1,6 @@
 // Tests for CivilianUnitsPanel. SPEC/ui/civilian-units-panel.md.
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// pending-work icons, shortfall, and assigned-to copy.
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -16,8 +18,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetExplore,
         kWorkTargetPurchaseLand;
 
-import 'civilian_units_panel_part3_pending_support.dart';
-import 'civilian_units_panel_part3_pump_support.dart';
+import 'civilian_units_panel_pending_support.dart';
+import 'civilian_units_panel_pump_support.dart';
 import 'civilian_units_panel_test_support.dart';
 
 void main() {

@@ -171,8 +171,8 @@ const _kCatalogUnitHostSuiteNames = <String>[
   'shell_game_screen_specs_test.dart',
   'debug_log_viewer_test.dart',
   'ct_region_map_test_support.dart',
-  'ct_region_map_widget_part2_test.dart',
-  'ct_region_map_widget_part3_test.dart',
+  'ct_region_map_widget_camera_and_view_test.dart',
+  'ct_region_map_widget_port_and_sea_plates_test.dart',
   'region_map_zoom_fit_test.dart',
   'plains_plantation_terrain_goldens_test.dart',
   'region_map_extraction_disc_indicators_test.dart',
@@ -431,7 +431,7 @@ WidgetbookUseCase _useCase(
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(
       temp,
-      'naval_units_panel_part1_test.dart',
+      'naval_units_panel_roster_and_draft_test.dart',
       'Game g() => Game(id: "x", worldState: WorldState(), players: const []);\n',
     );
 
@@ -495,7 +495,7 @@ WidgetbookUseCase _useCase(
       'check_app_test_no_dup_scaffolding_naval_part_ok_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
-    _writeGovernedFile(temp, 'naval_units_panel_part1_test.dart', '''
+    _writeGovernedFile(temp, 'naval_units_panel_roster_and_draft_test.dart', '''
 import 'naval_units_panel_test_support.dart';
 
 Game g() => buildNavalPanelOwFleetsGame(
@@ -516,7 +516,7 @@ Game g() => buildNavalPanelOwFleetsGame(
       'check_app_test_no_dup_scaffolding_naval_pump_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
-    _writeGovernedFile(temp, 'naval_units_panel_part1_test.dart', '''
+    _writeGovernedFile(temp, 'naval_units_panel_roster_and_draft_test.dart', '''
 Future<void> _pumpNaval(WidgetTester tester) async {}
 ''');
 
@@ -729,9 +729,13 @@ void main() {
       'check_app_test_no_dup_scaffolding_civ_mat_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
-    _writeGovernedFile(temp, 'civilian_units_panel_part2_test.dart', '''
+    _writeGovernedFile(
+      temp,
+      'civilian_units_panel_locate_and_cancel_test.dart',
+      '''
 Widget host() => MaterialApp(home: const Placeholder());
-''');
+''',
+    );
 
     final logs = <String>[];
     final code = runCheckAppTestNoDuplicateScaffolding(
@@ -749,7 +753,10 @@ Widget host() => MaterialApp(home: const Placeholder());
       'check_app_test_no_dup_scaffolding_civ_ok_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
-    _writeGovernedFile(temp, 'civilian_units_panel_part1_test.dart', '''
+    _writeGovernedFile(
+      temp,
+      'civilian_units_panel_list_and_shortcuts_test.dart',
+      '''
 import 'civilian_units_panel_test_support.dart';
 
 void main() {
@@ -762,7 +769,8 @@ void main() {
     );
   });
 }
-''');
+''',
+    );
 
     final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
     expect(code, 0);

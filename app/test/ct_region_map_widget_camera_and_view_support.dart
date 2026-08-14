@@ -1,4 +1,4 @@
-// Marker / interaction helpers for CtRegionMap part2 widget tests (Refs #4352).
+// Marker / interaction helpers for CtRegionMap camera/view widget tests (Refs #4352).
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
@@ -121,8 +121,7 @@ Future<List<OpenNavalMissionMenuEvent>> pumpAndTapFleetMarker(
     localSeaId: 'sMarker',
     markerTileKey: markerTileKey,
   );
-  final (bus, openedMenus) =
-      ctRegionMapBusCapture<OpenNavalMissionMenuEvent>();
+  final (bus, openedMenus) = ctRegionMapBusCapture<OpenNavalMissionMenuEvent>();
   await pumpCtRegionMapTest(
     tester,
     region: region,

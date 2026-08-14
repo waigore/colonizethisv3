@@ -1,4 +1,6 @@
 // Tests for CivilianUnitsPanel. SPEC/ui/civilian-units-panel.md.
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// list chrome, empty state, and work-target shortcuts.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -18,7 +20,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetProspect,
         kWorkTargetPurchaseLand;
 
-import 'civilian_units_panel_part1_shortcut_support.dart';
+import 'civilian_units_panel_shortcut_support.dart';
 import 'civilian_units_panel_test_support.dart';
 
 void main() {

@@ -1,4 +1,6 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// combine selection and UNIT30001 mockup fidelity.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';

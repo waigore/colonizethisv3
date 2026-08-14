@@ -1,4 +1,6 @@
 // Tests for CivilianUnitsPanel. SPEC/ui/civilian-units-panel.md.
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// locate icon and cancel-pending-work pins.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -12,7 +14,7 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_u
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement;
 
-import 'civilian_units_panel_part2_cancel_support.dart';
+import 'civilian_units_panel_cancel_support.dart';
 import 'civilian_units_panel_test_support.dart';
 
 void main() {

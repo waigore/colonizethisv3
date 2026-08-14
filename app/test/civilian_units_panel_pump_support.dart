@@ -1,4 +1,4 @@
-// Part3 pump helpers for CivilianUnitsPanel tests (Refs #4352).
+// Pump helpers for CivilianUnitsPanel pending-work suite (Refs #4352).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -246,8 +246,20 @@ bool _isGovernedTradeScreenFile(String relativePath) {
 }
 
 /// True for units-panel suites that must call shared Game factories
-/// (Refs #4021). Covers civilian/military/naval part + specialty suites that
+/// (Refs #4021). Covers civilian/military/naval concern + specialty suites that
 /// previously re-declared private `Game(` builders.
+const _governedCivilianUnitsPanelTests = {
+  'civilian_units_panel_list_and_shortcuts_test.dart',
+  'civilian_units_panel_locate_and_cancel_test.dart',
+  'civilian_units_panel_pending_work_test.dart',
+  'civilian_units_panel_row_card_r30_test.dart',
+};
+
+const _governedNavalUnitsPanelTests = {
+  'naval_units_panel_roster_and_draft_test.dart',
+  'naval_units_panel_combine_and_mockup_test.dart',
+};
+
 bool _isGovernedUnitsPanelPartFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -256,26 +268,24 @@ bool _isGovernedUnitsPanelPartFile(String relativePath) {
   if (!name.endsWith('_test.dart')) {
     return false;
   }
-  if (name.startsWith('civilian_units_panel_part') ||
-      name.startsWith('naval_units_panel_part') ||
+  if (_governedCivilianUnitsPanelTests.contains(name) ||
+      _governedNavalUnitsPanelTests.contains(name) ||
       name.startsWith('military_units_panel_army') ||
       name == 'military_units_panel_test.dart' ||
-      name == 'military_units_panel_display_test.dart' ||
-      name == 'civilian_units_panel_row_card_r30_test.dart') {
+      name == 'military_units_panel_display_test.dart') {
     return true;
   }
   return false;
 }
 
-/// True for `naval_units_panel_part*_test.dart` — must call shared
-/// [pumpNavalPanel] (Refs #4035).
+/// True for naval roster/combine suites — must call shared
+/// [pumpNavalPanel] (Refs #4035, #4352).
 bool _isGovernedNavalUnitsPanelPartFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
   }
   final name = p.basename(relativePath);
-  return name.startsWith('naval_units_panel_part') &&
-      name.endsWith('_test.dart');
+  return _governedNavalUnitsPanelTests.contains(name);
 }
 
 /// True for military panel suites that must call shared [pumpMilitaryPanel]
@@ -407,7 +417,7 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// (`debug_log_viewer` via `buildAppShell(theme:)`), Flame region-map
 /// suites densified onto `ctRegionMapTestHarness` (`ct_region_map_test_support`
 /// via `buildAppShellMaterialApp(applyEditorialTheme: false)`, plus
-/// `ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`, plains
+/// `ct_region_map_widget_camera_and_view` / `port_and_sea_plates`, `region_map_zoom_fit`, plains
 /// plantation / extraction-disc / transport-resource goldens), and e2e
 /// helper/smoke suites that pump bare MaterialApp chrome via the same
 /// helper (`e2e_helpers_barrel` / `pr2731_lifted`,
@@ -435,9 +445,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'production_allocation_row_buttons_test.dart' ||
       name == 'production_allocation_row_chrome_test.dart' ||
       name == 'production_panel_icons_test.dart' ||
-      name.startsWith('naval_units_panel_part') ||
-      name.startsWith('civilian_units_panel_part') ||
-      name == 'civilian_units_panel_row_card_r30_test.dart' ||
+      _governedNavalUnitsPanelTests.contains(name) ||
+      _governedCivilianUnitsPanelTests.contains(name) ||
       name == 'game_map_narrow_detail_overlay_test.dart' ||
       name == 'military_units_panel_test.dart' ||
       name == 'military_units_panel_display_test.dart' ||
@@ -613,8 +622,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_screen_intervention_flow_test.dart' ||
       name == 'shell_game_screen_specs_test.dart' ||
       name == 'debug_log_viewer_test.dart' ||
-      name == 'ct_region_map_widget_part2_test.dart' ||
-      name == 'ct_region_map_widget_part3_test.dart' ||
+      name == 'ct_region_map_widget_camera_and_view_test.dart' ||
+      name == 'ct_region_map_widget_port_and_sea_plates_test.dart' ||
       name == 'region_map_zoom_fit_test.dart' ||
       name == 'plains_plantation_terrain_goldens_test.dart' ||
       name == 'region_map_extraction_disc_indicators_test.dart' ||

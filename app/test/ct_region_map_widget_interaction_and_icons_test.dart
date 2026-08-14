@@ -1,6 +1,6 @@
 // Gesture / centering / resource-icon display pins for CtRegionMap.
-// Split from part1/part2 under `repo.app_test_file_size` (Refs #4013).
-// Stay-split family: ct_region_map_widget_test (SPEC/program/repo-lint.md).
+// Concern split under repo.app_test_file_size (Refs #4013, #4352).
+// Stay-split family: ct_region_map_widget (SPEC/program/repo-lint.md).
 
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

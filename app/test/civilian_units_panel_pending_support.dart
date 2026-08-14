@@ -1,4 +1,4 @@
-// Pending-turns + dual-shortfall helpers for CivilianUnitsPanel part3 (Refs #4352).
+// Pending-turns + dual-shortfall helpers for CivilianUnitsPanel pending-work suite (Refs #4352).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +17,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetPurchaseLand,
         kWorkTargetUpgradeTown;
 
-import 'civilian_units_panel_part3_pump_support.dart';
+import 'civilian_units_panel_pump_support.dart';
 import 'civilian_units_panel_test_support.dart';
 
 const List<({String unitType, String target, int turns})>

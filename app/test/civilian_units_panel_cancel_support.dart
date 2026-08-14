@@ -1,4 +1,4 @@
-// Pending/in-progress cancel helpers for CivilianUnitsPanel part2 (Refs #4352).
+// Pending/in-progress cancel helpers for CivilianUnitsPanel locate/cancel suite (Refs #4352).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';

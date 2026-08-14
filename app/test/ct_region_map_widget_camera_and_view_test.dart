@@ -1,3 +1,6 @@
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// camera resize, view-changed callbacks, and small-cell clamp.
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +13,7 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 
 import 'ct_region_map_test_support.dart';
-import 'ct_region_map_widget_part2_support.dart';
+import 'ct_region_map_widget_camera_and_view_support.dart';
 
 Finder get _map => ctRegionMapFinder();
 

@@ -1,3 +1,6 @@
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// didUpdateWidget presence refresh after rebuild.
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

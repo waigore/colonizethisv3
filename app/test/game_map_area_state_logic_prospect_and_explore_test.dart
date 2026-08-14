@@ -1,3 +1,6 @@
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// provinceProspectActionState and provinceExploreActionState.
+
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -7,7 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-/// Densified in-file helpers for part2 action-state suites (Refs #4021).
+/// Densified in-file helpers for prospect/explore action-state suites (Refs #4021).
 void main() {
   suppressLogsForTests();
   group('GameMapAreaStateLogic', () {

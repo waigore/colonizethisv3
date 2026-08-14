@@ -1,4 +1,4 @@
-// Shortcut-commit helpers for CivilianUnitsPanel part1 (Refs #4352).
+// Shortcut-commit helpers for CivilianUnitsPanel list/shortcuts suite (Refs #4352).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';

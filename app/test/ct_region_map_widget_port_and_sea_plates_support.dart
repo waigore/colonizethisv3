@@ -1,4 +1,4 @@
-// Part3 region-map widget helpers (Refs #4352).
+// Port-tap and sea-plate helpers for CtRegionMap widget tests (Refs #4352).
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'

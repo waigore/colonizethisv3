@@ -1,3 +1,6 @@
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
+// civilian draft projection, selection helpers, addHumanWorkOrder.
+
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
