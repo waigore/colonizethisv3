@@ -2,8 +2,8 @@
 //
 // SPEC: SPEC/program/repo-lint.md (§ app test file size). Refs #4013, #4021, #4352.
 //
-// Cap is 400 physical lines (Refs #4352 Slice D). Files currently over the cap
-// are listed in [appTestFileSizeAllowlistForTests] (shrink-only). A stale
+// Cap is 400 physical lines (Refs #4352 Slice D). The shrink-only
+// [appTestFileSizeAllowlistForTests] is empty after densify; a stale
 // allowlist entry (missing file, or file now ≤ cap) fails so the backlog cannot
 // retain slack.
 import 'dart:convert';
@@ -17,19 +17,7 @@ const String _appTestsRelativePath = 'app/test';
 
 /// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4352).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
-const List<String> appTestFileSizeAllowlistForTests = <String>[
-  'app/test/app_event_handler_test.dart',
-  'app/test/diplomacy_panel_orders_test.dart',
-  'app/test/game_event_bridge_test.dart',
-  'app/test/move_fleet_dialog_test.dart',
-  'app/test/naval_panel_part1_pins.dart',
-  'app/test/trade_screen_deal_book_tab_e6_test.dart',
-  'app/test/trade_screen_market_tab_treasury_bid_cap_test.dart',
-  'app/test/trade_screen_scaffold_test.dart',
-  'app/test/units_panel_shared_widgets_test.dart',
-  'app/test/units_panel_test_support_test.dart',
-  'app/test/widgetbook_in_game_shell_chrome_test.dart',
-];
+const List<String> appTestFileSizeAllowlistForTests = <String>[];
 
 int runCheckAppTestFileSize(
   String repoRoot, {
