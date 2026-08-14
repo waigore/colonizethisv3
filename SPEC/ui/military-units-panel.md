@@ -17,7 +17,7 @@
 
 ## Trigger conditions
 
-- **Access:** Toolbar **Military Units** button.
+- **Access:** Toolbar **Military Units** button, or a `MAP10001` Home-Army-only stack-marker tap (`OpenArmyStackMarkerEvent` → `OpenMilitaryUnitsPanelEvent`).
 - **Desktop / wide:** Bottom-sheet panel over the map; map visible.
 - **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
 - **Bottom-sheet sizing (Refs #3627):** The host sizes the panel via the shared `unitsPanelSheetConstraints(viewport)` rule (see [`components/units-panel-shell.md`](components/units-panel-shell.md) § Bottom-sheet sizing): **narrow** (`width < 600` dp) → full width × **`50%`** height; **wide** (`width >= 600` dp) → **`70%`** width × **`55vh`**. `isScrollControlled: true`; content scrolls inside the sheet.

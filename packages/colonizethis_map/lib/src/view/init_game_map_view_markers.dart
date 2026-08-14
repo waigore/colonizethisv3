@@ -1,10 +1,11 @@
-/// Thin façade for map marker builders (fleet + land/overlay).
+/// Thin façade for map marker builders (fleet, army, land/overlay).
 /// SPEC/program/map-visualization.md § Map view model for tools. Refs #4022.
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'init_game_map_view_army_markers.dart';
 import 'init_game_map_view_data.dart';
 import 'init_game_map_view_fleet_markers.dart';
 import 'init_game_map_view_land_markers.dart';
@@ -96,5 +97,15 @@ class InitGameMapViewMarkers {
     fleets: fleets,
     regionId: regionId,
     provincePresenceById: provincePresenceById,
+  );
+
+  static List<ArmyTileMarkerView> buildArmyTileMarkersForRegion({
+    required Game game,
+    required String regionId,
+    required List<TownMarkerView> towns,
+  }) => InitGameMapViewArmyMarkers.buildArmyTileMarkersForRegion(
+    game: game,
+    regionId: regionId,
+    towns: towns,
   );
 }

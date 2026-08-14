@@ -45,6 +45,7 @@ typedef CreateCtRegionMapGame =
         String markerTileKey,
       )?
       onFleetMarkerTapped,
+      required void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
       required VoidCallback? onCivilianTileSelectionCleared,
       required String? selectedTileKey,
       required String? selectedCivilianTileKey,
@@ -85,6 +86,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     String markerTileKey,
   )?
   onFleetMarkerTapped,
+  required void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
   required VoidCallback? onCivilianTileSelectionCleared,
   required String? selectedTileKey,
   required String? selectedCivilianTileKey,
@@ -119,6 +121,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     onTileHovered: onTileHovered,
     onCivilianTileTapped: onCivilianTileTapped,
     onFleetMarkerTapped: onFleetMarkerTapped,
+    onArmyMarkerTapped: onArmyMarkerTapped,
     onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
     selectedTileKey: selectedTileKey,
     selectedCivilianTileKey: selectedCivilianTileKey,
