@@ -45,7 +45,7 @@ Reject reasons you may see: **Insufficient workers**, **Insufficient materials**
 
 ### Civilian roster and training
 
-Civilians are map units. Open **Civilian units panel** from the left empire rail, then **Train** to open **Train civilians dialog**.
+Civilians are map units. Open **Civilian units panel** from the left empire rail, then **Train** to open **Train civilians dialog**. Each row shows a short muted role line under the type name (explore/prospect, improve/upgrade town, roads/ports/forts, foreign intel and home counter-espionage, purchase land, upgrade roads to railroad) so you can tell the six types apart before you commit treasury and paper.
 
 | Unit | Train cost (approx.) | Unlock notes |
 |------|----------------------|--------------|
