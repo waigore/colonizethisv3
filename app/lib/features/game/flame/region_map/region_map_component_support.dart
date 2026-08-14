@@ -113,8 +113,7 @@ void ctRegionMapComponentSetHoverFromCell(
     }
   }
   final session = component.session;
-  final prevId =
-      session.hoveredTileX != null && session.hoveredTileY != null
+  final prevId = session.hoveredTileX != null && session.hoveredTileY != null
       ? '${component.region.regionId}|${component.region.cellAt(session.hoveredTileX!, session.hoveredTileY!).regionCellId}'
       : null;
   final nextId = nx != null && ny != null
@@ -154,6 +153,17 @@ void ctRegionMapComponentHandleTapAtWorld(
         component.validTileKeys!.contains(tileKey)) {
       component.onTileTapped?.call(tileKey);
     }
+    return;
+  }
+  final tappedArmy = ctRegionMapComponentGetArmyMarkerAtLocal(
+    component,
+    local.x,
+    local.y,
+    x,
+    y,
+  );
+  if (tappedArmy != null) {
+    component.onArmyMarkerTapped?.call(tappedArmy);
     return;
   }
   final tappedFleet = ctRegionMapComponentGetFleetMarkerAtTile(component, x, y);
@@ -198,6 +208,33 @@ FleetTileMarkerView? ctRegionMapComponentGetFleetMarkerAtTile(
 ) {
   for (final marker in component.region.fleetTileMarkers) {
     if (marker.x == x && marker.y == y) return marker;
+  }
+  return null;
+}
+
+ArmyTileMarkerView? ctRegionMapComponentGetArmyMarkerAtLocal(
+  CtRegionMapComponent component,
+  double localX,
+  double localY,
+  int x,
+  int y,
+) {
+  for (final marker in component.region.armyTileMarkers) {
+    if (marker.x != x || marker.y != y) continue;
+    final cell = component.region.cellAt(x, y);
+    if (component.visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.unrevealed) {
+      return null;
+    }
+    final inCellX = localX - x * component.cellSize;
+    final inCellY = localY - y * component.cellSize;
+    if (ArmyTileMarkerLayout.hitTestInCell(
+      localX: inCellX,
+      localY: inCellY,
+      cellSize: component.cellSize,
+    )) {
+      return marker;
+    }
   }
   return null;
 }

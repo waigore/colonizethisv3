@@ -112,6 +112,7 @@ class RegionMapViewData {
     this.unitMarkers = const [],
     this.civilianTileMarkers = const [],
     this.fleetTileMarkers = const [],
+    this.armyTileMarkers = const [],
     this.warpMarkers = const [],
     this.townMarkers = const [],
     this.provinceUnitPresenceByProvinceId = const {},
@@ -158,6 +159,10 @@ class RegionMapViewData {
 
   /// Human-player fleet markers (port or sea-zone stacks).
   final List<FleetTileMarkerView> fleetTileMarkers;
+
+  /// Human-player army stack markers (province town tiles). Distinct from
+  /// [unitMarkers]. SPEC/program/map-visualization.md.
+  final List<ArmyTileMarkerView> armyTileMarkers;
 
   /// Province full id -> class presence counts/intel gate for map labels.
   final Map<String, ProvinceUnitPresenceView> provinceUnitPresenceByProvinceId;

@@ -112,6 +112,59 @@ class FleetTileMarkerView {
   final bool applyFleetRevealHalo;
 }
 
+/// Human-player army stack at one province town tile for interactive map markers.
+/// Distinct from ctdev [UnitMarkerView]. SPEC/ui/map-widget.md § Human army markers.
+class ArmyTileMarkerView {
+  const ArmyTileMarkerView({
+    required this.tileKey,
+    required this.x,
+    required this.y,
+    required this.provinceId,
+    required this.armyIds,
+    required this.fieldArmyIds,
+    required this.stackCount,
+    required this.hasHomeArmy,
+    this.renderGrayscale = false,
+  });
+
+  /// Town-tile key `regionId|localProvinceId|x|y` (may be draft-projected).
+  final String tileKey;
+  final int x;
+  final int y;
+
+  /// Prefixed stationed province id (`regionId|localId`).
+  final String provinceId;
+
+  /// Army ids at this marker, deterministic lexical order. Includes Home Army.
+  final List<String> armyIds;
+
+  /// Non-Home field army ids only — pass these to `showOverlayArmyMoveFlow`.
+  final List<String> fieldArmyIds;
+
+  /// Same as [armyIds.length]; Home Army counts toward the stack badge.
+  final int stackCount;
+
+  final bool hasHomeArmy;
+
+  /// Grayscale when at least one field army exists and every field army has
+  /// a pending [ArmyMoveOrder].
+  final bool renderGrayscale;
+}
+
+/// Bottom-right sub-rect of the town cell used for army icon paint and hit-test.
+abstract final class ArmyTileMarkerLayout {
+  static const double originFrac = 0.55;
+
+  static bool hitTestInCell({
+    required double localX,
+    required double localY,
+    required double cellSize,
+  }) {
+    if (cellSize <= 0) return false;
+    return localX / cellSize >= originFrac && localY / cellSize >= originFrac;
+  }
+}
+
 /// Province-level unit-presence counts for map labels.
 class ProvinceUnitPresenceView {
   const ProvinceUnitPresenceView({

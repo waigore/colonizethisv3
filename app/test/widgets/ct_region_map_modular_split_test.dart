@@ -16,6 +16,8 @@ void main() {
       expect(buildCtRegionMapGame, isNotNull);
       expect(attachCtRegionMapMinimapCameraBusSubscriptions, isNotNull);
       expect(handleCtRegionMapCivilianTileTapped, isNotNull);
+      expect(handleCtRegionMapFleetMarkerTapped, isNotNull);
+      expect(handleCtRegionMapArmyMarkerTapped, isNotNull);
     });
   });
 }

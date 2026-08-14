@@ -47,6 +47,7 @@ class CtRegionMapGame extends FlameGame
       String markerTileKey,
     )?
     onFleetMarkerTapped,
+    void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
     VoidCallback? onCivilianTileSelectionCleared,
     String? selectedTileKey,
     String? selectedCivilianTileKey,
@@ -82,6 +83,7 @@ class CtRegionMapGame extends FlameGame
     this.onTileHovered = onTileHovered;
     this.onCivilianTileTapped = onCivilianTileTapped;
     this.onFleetMarkerTapped = onFleetMarkerTapped;
+    this.onArmyMarkerTapped = onArmyMarkerTapped;
     this.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
     this.selectedTileKey = selectedTileKey;
     this.selectedCivilianTileKey = selectedCivilianTileKey;
@@ -139,6 +141,7 @@ class CtRegionMapGame extends FlameGame
       String markerTileKey,
     )?
     onFleetMarkerTapped,
+    void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
     VoidCallback? onCivilianTileSelectionCleared,
     required PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
@@ -171,6 +174,7 @@ class CtRegionMapGame extends FlameGame
     onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
     onCivilianTileTapped: onCivilianTileTapped,
     onFleetMarkerTapped: onFleetMarkerTapped,
+    onArmyMarkerTapped: onArmyMarkerTapped,
     onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
     playerViewForResources: playerViewForResources,
     onViewportSnapshotChanged: onViewportSnapshotChanged,

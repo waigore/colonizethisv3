@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
+import 'game_map_area_army_draft_projection.dart';
 import 'game_map_area_civilian_draft_projection.dart';
 import 'game_map_area_fleet_draft_projection.dart';
 
@@ -16,14 +17,13 @@ abstract final class GameMapAreaStateLogicDraftProjection {
     required ct_models.Orders orders,
     required String humanPlayerId,
     Set<String>? civilianMarkerOwnerIds,
-  }) =>
-      GameMapAreaCivilianDraftProjection.project(
-        region: region,
-        game: game,
-        orders: orders,
-        humanPlayerId: humanPlayerId,
-        civilianMarkerOwnerIds: civilianMarkerOwnerIds,
-      );
+  }) => GameMapAreaCivilianDraftProjection.project(
+    region: region,
+    game: game,
+    orders: orders,
+    humanPlayerId: humanPlayerId,
+    civilianMarkerOwnerIds: civilianMarkerOwnerIds,
+  );
 
   /// Projects fleet marker tiles using human naval move drafts.
   ///
@@ -36,16 +36,15 @@ abstract final class GameMapAreaStateLogicDraftProjection {
     required Map<String, TileMapResult> tileMapByRegion,
     required Map<String, MapTopology> topologyByRegion,
     required MapTopology combinedTopology,
-  }) =>
-      GameMapAreaFleetDraftProjection.project(
-        region: region,
-        game: game,
-        orders: orders,
-        humanPlayerId: humanPlayerId,
-        tileMapByRegion: tileMapByRegion,
-        topologyByRegion: topologyByRegion,
-        combinedTopology: combinedTopology,
-      );
+  }) => GameMapAreaFleetDraftProjection.project(
+    region: region,
+    game: game,
+    orders: orders,
+    humanPlayerId: humanPlayerId,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    combinedTopology: combinedTopology,
+  );
 
   /// Civilian and fleet draft marker projection for one [RegionMapViewData].
   static RegionMapViewData projectHumanDraftMarkersForRegion({
@@ -78,6 +77,11 @@ abstract final class GameMapAreaStateLogicDraftProjection {
         combinedTopology: combinedTopology,
       );
     }
-    return projected;
+    return GameMapAreaArmyDraftProjection.project(
+      region: projected,
+      game: game,
+      orders: orders,
+      humanPlayerId: humanPlayerId,
+    );
   }
 }

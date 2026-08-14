@@ -2,7 +2,12 @@
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show OpenCivilianUnitsPanelEvent, OpenNavalMissionMenuEvent;
+    show
+        OpenArmyStackMarkerEvent,
+        OpenCivilianUnitsPanelEvent,
+        OpenNavalMissionMenuEvent,
+        OpenProvinceDetailPanelEvent;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
@@ -52,6 +57,37 @@ RegionMapViewData ctRegionMapFleetMarkerRegion({
         x: 0,
         y: 0,
         locationScopeKey: 'sea:oldWorld|fleet_scope',
+      ),
+    ],
+  );
+}
+
+RegionMapViewData ctRegionMapArmyMarkerRegion({
+  required String localProvinceId,
+  required String markerTileKey,
+  String displayName = 'Army Province',
+  List<String> armyIds = const ['army_field'],
+  List<String> fieldArmyIds = const ['army_field'],
+  bool hasHomeArmy = false,
+  List<CivilianTileMarkerView> civilianTileMarkers = const [],
+}) {
+  return ctRegionMapMiniLandStrip(
+    base: ctRegionMapTestOldWorldRegion(),
+    width: 1,
+    height: 1,
+    cellSize: 24,
+    regionCellId: localProvinceId,
+    displayName: displayName,
+    civilianTileMarkers: civilianTileMarkers,
+    armyTileMarkers: [
+      ctRegionMapArmyMarker(
+        tileKey: markerTileKey,
+        x: 0,
+        y: 0,
+        provinceId: 'oldWorld|$localProvinceId',
+        armyIds: armyIds,
+        fieldArmyIds: fieldArmyIds,
+        hasHomeArmy: hasHomeArmy,
       ),
     ],
   );
@@ -132,6 +168,116 @@ Future<List<OpenNavalMissionMenuEvent>> pumpAndTapFleetMarker(
   );
   await tapCtRegionMap(tester);
   return openedMenus;
+}
+
+Future<void> tapCtRegionMapArmyIcon(WidgetTester tester) async {
+  final topLeft = tester.getTopLeft(ctRegionMapFinder());
+  final size = tester.getSize(ctRegionMapFinder());
+  await tester.tapAt(topLeft + Offset(size.width * 0.8, size.height * 0.8));
+  await tester.pump();
+}
+
+Future<void> tapCtRegionMapCivilianGlyph(WidgetTester tester) async {
+  final topLeft = tester.getTopLeft(ctRegionMapFinder());
+  final size = tester.getSize(ctRegionMapFinder());
+  await tester.tapAt(topLeft + Offset(size.width * 0.2, size.height * 0.2));
+  await tester.pump();
+}
+
+Future<List<OpenArmyStackMarkerEvent>> pumpAndTapArmyMarker(
+  WidgetTester tester,
+) async {
+  const markerTileKey = 'oldWorld|pArmy|0|0';
+  final region = ctRegionMapArmyMarkerRegion(
+    localProvinceId: 'pArmy',
+    markerTileKey: markerTileKey,
+  );
+  final (bus, openedStacks) = ctRegionMapBusCapture<OpenArmyStackMarkerEvent>();
+  final openedDetails = <OpenProvinceDetailPanelEvent>[];
+  final detailSub = bus.on<OpenProvinceDetailPanelEvent>().listen(
+    openedDetails.add,
+  );
+  addTearDown(detailSub.cancel);
+  String? detailTileKey;
+  await pumpCtRegionMapTest(
+    tester,
+    region: region,
+    width: 64,
+    height: 64,
+    cellSizePx: 32,
+    bus: bus,
+    onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+  );
+  await tapCtRegionMapArmyIcon(tester);
+  expect(detailTileKey, isNull);
+  expect(openedDetails, isEmpty);
+  return openedStacks;
+}
+
+Future<void> expectCivilianAndArmyHitsOnSharedTownCell(
+  WidgetTester tester,
+) async {
+  const markerTileKey = 'oldWorld|pBoth|0|0';
+  final region = ctRegionMapArmyMarkerRegion(
+    localProvinceId: 'pBoth',
+    markerTileKey: markerTileKey,
+    civilianTileMarkers: [
+      ctRegionMapCivilianMarker(
+        tileKey: markerTileKey,
+        x: 0,
+        y: 0,
+        localProvinceId: 'pBoth',
+      ),
+    ],
+  );
+  final (bus, openedStacks) = ctRegionMapBusCapture<OpenArmyStackMarkerEvent>();
+  String? civilianTileKey;
+  String? detailTileKey;
+  await pumpCtRegionMapTest(
+    tester,
+    region: region,
+    width: 64,
+    height: 64,
+    cellSizePx: 32,
+    bus: bus,
+    onCivilianTileStateChanged: (tileKey) => civilianTileKey = tileKey,
+    onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+  );
+  await tapCtRegionMapCivilianGlyph(tester);
+  expect(civilianTileKey, markerTileKey);
+  expect(openedStacks, isEmpty);
+  expect(detailTileKey, isNull);
+
+  civilianTileKey = null;
+  await tapCtRegionMapArmyIcon(tester);
+  expect(openedStacks, hasLength(1));
+  expect(openedStacks.single.tileKey, markerTileKey);
+  expect(civilianTileKey, isNull);
+  expect(detailTileKey, isNull);
+}
+
+Future<(List<OpenArmyStackMarkerEvent>, int)>
+pumpAndTapArmyMarkerInWorkTargetMode(WidgetTester tester) async {
+  const markerTileKey = 'oldWorld|pArmy|0|0';
+  const validTileKey = 'oldWorld|pArmy|0|0';
+  final region = ctRegionMapArmyMarkerRegion(
+    localProvinceId: 'pArmy',
+    markerTileKey: markerTileKey,
+  );
+  final (bus, openedStacks) = ctRegionMapBusCapture<OpenArmyStackMarkerEvent>();
+  var selectedCallCount = 0;
+  await pumpCtRegionMapTest(
+    tester,
+    region: region,
+    width: 64,
+    height: 64,
+    cellSizePx: 32,
+    bus: bus,
+    validTileKeys: {validTileKey},
+    onTileSelected: (_) => selectedCallCount++,
+  );
+  await tapCtRegionMapArmyIcon(tester);
+  return (openedStacks, selectedCallCount);
 }
 
 Future<(String?, String?)> pumpAndTapTownMarker(WidgetTester tester) async {
