@@ -282,6 +282,33 @@ void main() {
         temp.deleteSync(recursive: true);
       }
     });
+
+    test('ignores sibling *_cases.dart fixtures without a shared runner', () {
+      final temp = Directory.systemTemp.createTempSync('turn-wm-cases-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'turn'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'world_market_phase_sample_cases.dart'),
+          'Game sampleWorldMarketGame() => Game();\n',
+        );
+        _writeDartFile(
+          p.join(dir.path, 'world_market_phase_sample_test.dart'),
+          "import '../support/world_market_test_support.dart';\n"
+          'final next = runWorldMarketPhase(game: g, orders: o);\n',
+        );
+
+        final exitCode = runCheckTurnWorldMarketTestSupport(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 0);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
   });
 
   group('runCheckTurnTestResolveComplete', () {

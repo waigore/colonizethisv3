@@ -72,12 +72,21 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     final connectivityForHuman = connectivity[mapPlayer.id];
     var extractionMaps = MapResourceExtractionMaps.empty;
     if (connectivityForHuman != null) {
-      extractionMaps = mapViewBuildResourceExtractionMaps(
+      final built = mapViewBuildResourceExtractionMaps(
         game: game,
         mapPlayer: mapPlayer,
         tileMapByRegion: mapData.tileMapByRegion,
         connectivityForHuman: connectivityForHuman,
       );
+      // Global observe: no viewing GP — omit capital-link hatch keys so no
+      // other player's connected set is painted (Refs #4370).
+      extractionMaps = shell.panelPlayerId == null
+          ? MapResourceExtractionMaps(
+              unitsByTile: built.unitsByTile,
+              effectiveUnitsByTile: built.effectiveUnitsByTile,
+              blockedUnitsByTile: built.blockedUnitsByTile,
+            )
+          : built;
     }
 
     final base = buildInitGameMapViewData(
@@ -92,6 +101,8 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       resourceExtractionEffectiveUnitsByTile:
           extractionMaps.effectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile: extractionMaps.blockedUnitsByTile,
+      capitalLinkDisconnectedTileKeys:
+          extractionMaps.capitalLinkDisconnectedTileKeys,
       civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
     );
     return applyMapFortVisibility(

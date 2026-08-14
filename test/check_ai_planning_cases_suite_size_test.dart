@@ -7,6 +7,10 @@ import '../tool/check_ai_planning_cases_suite_size.dart';
 
 void main() {
   group('runCheckAiPlanningCasesSuiteSize', () {
+    test('ceiling is 400 after #4365 Slice B', () {
+      expect(aiPlanningCasesSuitePhysicalLineCeiling, 400);
+    });
+
     test('fails when an in-scope *_cases.dart exceeds the ceiling', () {
       final temp = Directory.systemTemp.createTempSync('ai-cases-size-');
       try {
@@ -31,11 +35,7 @@ void main() {
     test('passes when an in-scope *_cases.dart is under the ceiling', () {
       final temp = Directory.systemTemp.createTempSync('ai-cases-size-ok-');
       try {
-        _writeCases(
-          temp,
-          'thin_cases.dart',
-          'void registerThin() {}\n',
-        );
+        _writeCases(temp, 'thin_cases.dart', 'void registerThin() {}\n');
         final exitCode = runCheckAiPlanningCasesSuiteSize(
           temp.path,
           info: (_) {},
@@ -53,9 +53,7 @@ void main() {
         final planning = Directory(
           p.join(temp.path, 'packages', 'colonizethis_ai', 'test', 'planning'),
         )..createSync(recursive: true);
-        File(
-          p.join(planning.path, 'fat_test.dart'),
-        ).writeAsStringSync(
+        File(p.join(planning.path, 'fat_test.dart')).writeAsStringSync(
           '${List.filled(700, '// pad').join('\n')}\nvoid main() {}\n',
         );
         final exitCode = runCheckAiPlanningCasesSuiteSize(

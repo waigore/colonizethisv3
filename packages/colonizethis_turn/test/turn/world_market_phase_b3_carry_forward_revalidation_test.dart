@@ -1,9 +1,8 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 import '../support/world_market_test_support.dart';
+import 'world_market_phase_b3_carry_forward_revalidation_cases.dart';
 
 /// Integration tests for the carry-forward re-validation branch of
 /// `worldMarketTurnPhaseHandler` (Refs #2990 B3 follow-up).
@@ -20,58 +19,42 @@ void main() {
       'SPEC/program/world-market-resolution.md § Step A Gather)', () {
     test('carry-forward offer dropped when start-of-turn stockpile is below '
         'order quantity (note recorded, order not used in matching)', () {
-      // Seller carried forward a 5-timber offer but has only 2 timber on hand.
-      // Buyer submits a 5-timber bid; without re-validation the matcher would
-      // attempt to fill from the dropped offer. Expectation: offer dropped,
-      // no fill, bid carries forward, dropped note recorded on activity.
-      final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30},
-        carryForwardOffersByFactionId: {
-          'gpSeller': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.offer,
-              quantity: 5,
-              priority: 1,
-            ),
-          ],
-        },
-      );
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            carryForwardOffersByFactionId: {
+              'gpSeller': [
+                b3TimberOrder(type: TradeOrderType.offer, quantity: 5),
+              ],
+            },
+          ),
           sellerStockpile: const Stockpile().applyDelta('timber', 2),
-          sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket);
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
+        ),
         orders: Orders(
           tradeOrdersByPlayerId: {
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 5,
-                priority: 1,
-              ),
-            ],
+            'gpBuyer': [b3TimberOrder(type: TradeOrderType.bid, quantity: 5)],
           },
         ),
       );
 
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
-      );
-
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
-      expect(buyer.stockpile.quantityOf('timber'), 0,
-          reason: 'dropped offer cannot fill the bid');
-      expect(buyer.treasury, 1000,
-          reason: 'no fill -> no treasury movement on buyer');
-      expect(seller.stockpile.quantityOf('timber'), 2,
-          reason: 'seller stockpile unchanged when offer is dropped');
+      expect(
+        buyer.stockpile.quantityOf('timber'),
+        0,
+        reason: 'dropped offer cannot fill the bid',
+      );
+      expect(
+        buyer.treasury,
+        1000,
+        reason: 'no fill -> no treasury movement on buyer',
+      );
+      expect(
+        seller.stockpile.quantityOf('timber'),
+        2,
+        reason: 'seller stockpile unchanged when offer is dropped',
+      );
       expect(seller.treasury, 0);
       final activity = next.worldMarketState.lastTurnActivity['timber']!;
       expect(activity.filledQuantity, 0);
@@ -91,63 +74,56 @@ void main() {
       final carriedBids =
           next.worldMarketState.carryForwardBidsByFactionId['gpBuyer'];
       expect(carriedBids, isNotNull);
-      expect(carriedBids!.single.quantity, 5,
-          reason: 'unfilled bid carries forward as usual');
+      expect(
+        carriedBids!.single.quantity,
+        5,
+        reason: 'unfilled bid carries forward as usual',
+      );
     });
 
     test('carry-forward bid dropped when start-of-turn cargo capacity is below '
         'order quantity (note recorded, order not used in matching)', () {
-      // Buyer carried forward a 30-timber bid but their default home-fleet
-      // cargo capacity is only 24. The bid must be dropped, leaving the
-      // seller's 30-timber offer unfilled.
       const oversizedBidQuantity = 30; // > defaultCargoHoldsStub (24)
-      final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30},
-        carryForwardBidsByFactionId: {
-          'gpBuyer': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: oversizedBidQuantity,
-              priority: 1,
-            ),
-          ],
-        },
-      );
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            carryForwardBidsByFactionId: {
+              'gpBuyer': [
+                b3TimberOrder(
+                  type: TradeOrderType.bid,
+                  quantity: oversizedBidQuantity,
+                ),
+              ],
+            },
+          ),
           sellerStockpile: const Stockpile().applyDelta('timber', 30),
-          sellerTreasury: 0,
           buyerTreasury: 100000,
-          marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket);
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
+        ),
         orders: Orders(
           tradeOrdersByPlayerId: {
             'gpSeller': [
-              TradeOrder(
-                commodityId: 'timber',
+              b3TimberOrder(
                 type: TradeOrderType.offer,
                 quantity: oversizedBidQuantity,
-                priority: 1,
               ),
             ],
           },
         ),
       );
 
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
-      );
-
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
-      expect(buyer.stockpile.quantityOf('timber'), 0,
-          reason: 'dropped bid cannot consume the offer');
+      expect(
+        buyer.stockpile.quantityOf('timber'),
+        0,
+        reason: 'dropped bid cannot consume the offer',
+      );
       expect(buyer.treasury, 100000);
-      expect(seller.stockpile.quantityOf('timber'), 30,
-          reason: 'offer not consumed when bid is dropped');
+      expect(
+        seller.stockpile.quantityOf('timber'),
+        30,
+        reason: 'offer not consumed when bid is dropped',
+      );
       final activity = next.worldMarketState.lastTurnActivity['timber']!;
       expect(activity.filledQuantity, 0);
       expect(activity.notes, hasLength(1));
@@ -163,8 +139,6 @@ void main() {
         isEmpty,
         reason: 'dropped bid is not re-emitted as a new carry-forward',
       );
-      // Unfilled offer is a new submission, so it carries forward via the
-      // matcher's unfilled-output path as usual.
       expect(
         next.worldMarketState.carryForwardOffersByFactionId['gpSeller'],
         isNotNull,
@@ -173,52 +147,32 @@ void main() {
 
     test('carry-forward offer that still fits stockpile is preserved and '
         'matches normally', () {
-      // Seller carried forward a 3-timber offer and has 5 timber on hand;
-      // a matching new bid arrives and fills the carry-forward.
-      final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30},
-        carryForwardOffersByFactionId: {
-          'gpSeller': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.offer,
-              quantity: 3,
-              priority: 1,
-            ),
-          ],
-        },
-      );
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            carryForwardOffersByFactionId: {
+              'gpSeller': [
+                b3TimberOrder(type: TradeOrderType.offer, quantity: 3),
+              ],
+            },
+          ),
           sellerStockpile: const Stockpile().applyDelta('timber', 5),
-          sellerTreasury: 0,
           buyerTreasury: 1000,
-          marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket);
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
+        ),
         orders: Orders(
           tradeOrdersByPlayerId: {
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 3,
-                priority: 1,
-              ),
-            ],
+            'gpBuyer': [b3TimberOrder(type: TradeOrderType.bid, quantity: 3)],
           },
         ),
       );
 
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
-      );
-
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
-      expect(buyer.stockpile.quantityOf('timber'), 3,
-          reason: 'kept carry-forward offer fills the bid');
+      expect(
+        buyer.stockpile.quantityOf('timber'),
+        3,
+        reason: 'kept carry-forward offer fills the bid',
+      );
       expect(seller.stockpile.quantityOf('timber'), 2);
       expect(buyer.treasury, 1000 - 3 * 30);
       expect(seller.treasury, 0 + 3 * 30);
@@ -234,46 +188,34 @@ void main() {
 
     test('cumulative cargo check drops only the bids that exceed capacity '
         '(earlier carry-forwards keep their slots)', () {
-      // Buyer carried forward two bids: 20 + 10 = 30 > 24-cap. The first
-      // bid fits, the second pushes the cumulative kept total above the
-      // cargo cap and must be dropped.
-      final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30, 'iron': 80},
-        carryForwardBidsByFactionId: {
-          'gpBuyer': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: 20,
-              priority: 2,
-            ),
-            TradeOrder(
-              commodityId: 'iron',
-              type: TradeOrderType.bid,
-              quantity: 10,
-              priority: 1,
-            ),
-          ],
-        },
-      );
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: b3CarryForwardGame(
+          priorMarket: b3PriorMarket(
+            prices: const {'timber': 30, 'iron': 80},
+            carryForwardBidsByFactionId: {
+              'gpBuyer': [
+                TradeOrder(
+                  commodityId: 'timber',
+                  type: TradeOrderType.bid,
+                  quantity: 20,
+                  priority: 2,
+                ),
+                TradeOrder(
+                  commodityId: 'iron',
+                  type: TradeOrderType.bid,
+                  quantity: 10,
+                  priority: 1,
+                ),
+              ],
+            },
+          ),
           sellerStockpile: Stockpile.empty,
-          sellerTreasury: 0,
           buyerTreasury: 100000,
           marketPrices: const {'timber': 30, 'iron': 80},
-        ).copyWith(worldMarketState: priorMarket);
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
+        ),
         orders: const Orders(),
       );
 
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
-      );
-
-      // The 10-iron bid was dropped, the 20-timber bid survived. With no
-      // offers this turn the surviving bid carries forward again.
       final carriedBids =
           next.worldMarketState.carryForwardBidsByFactionId['gpBuyer'];
       expect(carriedBids, isNotNull);
@@ -288,12 +230,7 @@ void main() {
       );
       expect(ironActivity.notes.single.factionId, 'gpBuyer');
       expect(ironActivity.notes.single.quantity, 10);
-      final timberActivity =
-          next.worldMarketState.lastTurnActivity['timber'];
-      // Timber was not dropped; the activity entry may or may not be present
-      // depending on whether the kept bid produced any new aggregation. With
-      // zero new orders this turn, no timber activity is emitted by the
-      // current handler. Either way, no drop notes for timber must appear.
+      final timberActivity = next.worldMarketState.lastTurnActivity['timber'];
       if (timberActivity != null) {
         expect(timberActivity.notes, isEmpty);
       }

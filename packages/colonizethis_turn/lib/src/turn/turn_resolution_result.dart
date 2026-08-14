@@ -19,7 +19,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
-export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_phase_result.dart';
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_phase_result.dart'
+    show
+        CallToArmsDecision,
+        CallToArmsPending,
+        DiplomacyPhaseResult,
+        FtpDecision,
+        FtpOffer,
+        InterventionDecision,
+        InterventionPrompt,
+        OvertureDecision,
+        OvertureOffer;
 
 /// Sealed result of turn resolution: complete or pending human input.
 ///
@@ -38,6 +48,7 @@ class TurnResolutionComplete extends TurnResolutionResult {
   const TurnResolutionComplete(this.game, {this.turnNewsDigest});
   @override
   final Game game;
+
   /// Null when [game.victory] was set this resolution (news dialog suppressed).
   final TurnNewsDigest? turnNewsDigest;
 }

@@ -3,17 +3,15 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 
+import 'app_event_handler_test_support.dart';
 import 'app_shell_harness.dart';
 
 void main() {
@@ -28,18 +26,7 @@ void main() {
       AppEventBus.reset();
       bus = AppEventBus.create();
       navKey = GlobalKey<NavigatorState>();
-      handler = AppEventHandler(
-        bus: bus,
-        navigatorKey: navKey,
-        dialogBuilders: {
-          'test_dialog': (ctx, params) =>
-              Material(child: Text('dialog:${params?['id'] ?? 'default'}')),
-        },
-        panelBuilders: {
-          'test_panel': (ctx, params) =>
-              Material(child: Text('panel:${params?['id'] ?? 'default'}')),
-        },
-      );
+      handler = buildTestAppEventHandler(bus: bus, navigatorKey: navKey);
     });
 
     tearDown(() {
@@ -47,46 +34,16 @@ void main() {
       AppEventBus.reset();
     });
 
-    Future<void> pumpEmitButton(
-      WidgetTester tester, {
-      required String label,
-      required VoidCallback onPressed,
-      RouteFactory? onGenerateRoute,
-      Widget? home,
-      List<Override> overrides = const <Override>[],
-    }) async {
-      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-      await tester.pumpWidget(
-        buildAppShell(
-          navigatorKey: navKey,
-          onGenerateRoute: onGenerateRoute,
-          overrides: overrides,
-          child: home ??
-              Builder(
-                builder: (ctx) => TextButton(
-                  onPressed: onPressed,
-                  child: Text(label),
-                ),
-              ),
-        ),
-      );
-      await tester.pumpAndSettle();
-    }
-
-    Future<void> tapLabel(WidgetTester tester, String label) async {
-      await tester.tap(find.text(label));
-      await tester.pumpAndSettle();
-    }
-
     testWidgets('OpenDialogEvent opens registered dialog', (tester) async {
       handler.bind();
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'open',
         onPressed: () =>
             bus.emit(const OpenDialogEvent('test_dialog', {'id': '42'})),
       );
-      await tapLabel(tester, 'open');
+      await tapAppEventHandlerLabel(tester, 'open');
       expect(find.text('dialog:42'), findsOneWidget);
     });
 
@@ -94,20 +51,22 @@ void main() {
       tester,
     ) async {
       handler.bind();
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'open',
         onPressed: () => bus.emit(const OpenDialogEvent('unknown_dialog')),
       );
-      await tapLabel(tester, 'open');
+      await tapAppEventHandlerLabel(tester, 'open');
       expect(find.byType(AlertDialog), findsNothing);
     });
 
     testWidgets('NavigateToRouteEvent calls pushNamed', (tester) async {
       handler.bind();
       final pushed = <RouteSettings?>[];
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'navigate',
         onGenerateRoute: (settings) {
           pushed.add(settings);
@@ -119,7 +78,7 @@ void main() {
         onPressed: () =>
             bus.emit(const NavigateToRouteEvent('/target', {'x': 1})),
       );
-      await tapLabel(tester, 'navigate');
+      await tapAppEventHandlerLabel(tester, 'navigate');
       expect(pushed, hasLength(1));
       expect(pushed[0]?.name, '/target');
       expect(pushed[0]?.arguments, {'x': 1});
@@ -163,64 +122,63 @@ void main() {
       expect(find.text('base_route'), findsOneWidget);
     });
 
-    testWidgets(
-      'OpenPauseMenuPanelEvent opens centered PauseMenuPanel modal '
-      'with five action buttons',
-      (tester) async {
-        handler.bind();
-        await pumpEmitButton(
-          tester,
-          label: 'open',
-          overrides: [
-            turnResolutionBlockingProvider.overrideWith(
-              () => StateToggleNotifier(false),
-            ),
-          ],
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () => bus.emit(const OpenPauseMenuPanelEvent()),
-                child: const Text('open'),
-              ),
+    testWidgets('OpenPauseMenuPanelEvent opens centered PauseMenuPanel modal '
+        'with five action buttons', (tester) async {
+      handler.bind();
+      await pumpAppEventHandlerEmitButton(
+        tester,
+        navigatorKey: navKey,
+        label: 'open',
+        overrides: [
+          turnResolutionBlockingProvider.overrideWith(
+            () => StateToggleNotifier(false),
+          ),
+        ],
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => bus.emit(const OpenPauseMenuPanelEvent()),
+              child: const Text('open'),
             ),
           ),
-          onPressed: () {},
-        );
-        await tapLabel(tester, 'open');
-        expect(find.byType(PauseMenuPanel), findsOneWidget);
-        expect(find.text('Resume'), findsOneWidget);
-        expect(find.text('Save Game'), findsOneWidget);
-        expect(find.text('Load Game'), findsOneWidget);
-        expect(find.text('Settings'), findsOneWidget);
-        expect(find.text('Exit to Main Menu'), findsOneWidget);
-        // Debug log was moved to GameSideMenu in the redesign.
-        expect(find.text('Debug log'), findsNothing);
-      },
-    );
+        ),
+        onPressed: () {},
+      );
+      await tapAppEventHandlerLabel(tester, 'open');
+      expect(find.byType(PauseMenuPanel), findsOneWidget);
+      expect(find.text('Resume'), findsOneWidget);
+      expect(find.text('Save Game'), findsOneWidget);
+      expect(find.text('Load Game'), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Exit to Main Menu'), findsOneWidget);
+      // Debug log was moved to GameSideMenu in the redesign.
+      expect(find.text('Debug log'), findsNothing);
+    });
 
     testWidgets('OpenPanelEvent opens registered bottom sheet panel', (
       tester,
     ) async {
       handler.bind();
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'open panel',
-        onPressed: () => bus.emit(
-          const OpenPanelEvent('test_panel', {'id': 'panel42'}),
-        ),
+        onPressed: () =>
+            bus.emit(const OpenPanelEvent('test_panel', {'id': 'panel42'})),
       );
-      await tapLabel(tester, 'open panel');
+      await tapAppEventHandlerLabel(tester, 'open panel');
       expect(find.text('panel:panel42'), findsOneWidget);
     });
 
     testWidgets('OpenPanelEvent with unknown id shows nothing', (tester) async {
       handler.bind();
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'open',
         onPressed: () => bus.emit(const OpenPanelEvent('unknown_panel')),
       );
-      await tapLabel(tester, 'open');
+      await tapAppEventHandlerLabel(tester, 'open');
       expect(find.text('open'), findsOneWidget);
     });
 
@@ -228,14 +186,15 @@ void main() {
       tester,
     ) async {
       handler.bind();
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'trigger',
         onPressed: () => bus.emit(
           const ConfirmDialogEvent(title: 'Confirm', message: 'Proceed?'),
         ),
       );
-      await tapLabel(tester, 'trigger');
+      await tapAppEventHandlerLabel(tester, 'trigger');
       expect(find.text('Confirm'), findsOneWidget);
       expect(find.text('Proceed?'), findsOneWidget);
       expect(find.text('OK'), findsOneWidget);
@@ -247,8 +206,9 @@ void main() {
       (tester) async {
         handler.bind();
         bool? dialogResult;
-        await pumpEmitButton(
+        await pumpAppEventHandlerEmitButton(
           tester,
+          navigatorKey: navKey,
           label: 'open sheet',
           onPressed: () {},
           home: Builder(
@@ -274,11 +234,11 @@ void main() {
             ),
           ),
         );
-        await tapLabel(tester, 'open sheet');
-        await tapLabel(tester, 'emit from sheet');
+        await tapAppEventHandlerLabel(tester, 'open sheet');
+        await tapAppEventHandlerLabel(tester, 'emit from sheet');
         expect(find.text('Sheet confirm'), findsOneWidget);
         expect(find.text('From bottom sheet'), findsOneWidget);
-        await tapLabel(tester, 'OK');
+        await tapAppEventHandlerLabel(tester, 'OK');
         expect(dialogResult, isTrue);
       },
     );
@@ -293,8 +253,9 @@ void main() {
         onShowSnackBar: (e) => received = e,
       );
       handler.bind();
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'home',
         home: const Text('home'),
         onPressed: () {},
@@ -317,8 +278,9 @@ void main() {
         onDismissOverlay: (e) => received = e,
       );
       handler.bind();
-      await pumpEmitButton(
+      await pumpAppEventHandlerEmitButton(
         tester,
+        navigatorKey: navKey,
         label: 'home',
         home: const Text('home'),
         onPressed: () {},
@@ -372,8 +334,9 @@ void main() {
       'ClosePanelEvent then OpenDialogEvent opens dialog (handler ordering)',
       (tester) async {
         handler.bind();
-        await pumpEmitButton(
+        await pumpAppEventHandlerEmitButton(
           tester,
+          navigatorKey: navKey,
           label: 'home',
           home: const Scaffold(body: Text('home')),
           onPressed: () {},
@@ -384,72 +347,5 @@ void main() {
         expect(find.text('dialog:after_close'), findsOneWidget);
       },
     );
-
-    testWidgets(
-      'CombatModeChoiceDialog opened via OpenDialog emits CombatModeChosenEvent',
-      (tester) async {
-        handler = AppEventHandler(
-          bus: bus,
-          navigatorKey: navKey,
-          dialogBuilders: {
-            'combat_mode_choice': (ctx, params) => CombatModeChoiceDialog(
-              bus: bus,
-              provinceName: params?['provinceName'] as String? ?? '',
-              isCapitalSiege: params?['isCapitalSiege'] as bool? ?? false,
-            ),
-          },
-        );
-        handler.bind();
-        CombatModeChosenEvent? chosen;
-        bus.on<CombatModeChosenEvent>().listen((e) => chosen = e);
-        await pumpEmitButton(
-          tester,
-          label: 'open',
-          onPressed: () => bus.emit(
-            const OpenDialogEvent('combat_mode_choice', {
-              'provinceName': 'TestProv',
-              'isCapitalSiege': false,
-            }),
-          ),
-        );
-        await tapLabel(tester, 'open');
-        await tapLabel(tester, 'Quick Battle');
-        expect(chosen?.mode, CombatMode.quickBattle);
-        expect(find.text('Combat at TestProv'), findsNothing);
-      },
-    );
-
-    testWidgets('OpenDialogEvent quick_battle_result shows dialog', (
-      tester,
-    ) async {
-      handler = AppEventHandler(
-        bus: bus,
-        navigatorKey: navKey,
-        dialogBuilders: {
-          'quick_battle_result': (ctx, params) => QuickBattleResultDialog(
-            result: params!['result'] as QuickBattleResult,
-            attackerName: 'A',
-            defenderName: 'D',
-          ),
-        },
-      );
-      handler.bind();
-      final qb = QuickBattleResult(
-        winner: QuickBattleWinner.attacker,
-        attackerCasualties: const [],
-        defenderCasualties: const [],
-        provinceFlips: false,
-      );
-      await pumpEmitButton(
-        tester,
-        label: 'open',
-        onPressed: () => bus.emit(
-          OpenDialogEvent('quick_battle_result', {'result': qb}),
-        ),
-      );
-      await tapLabel(tester, 'open');
-      expect(find.textContaining('Battle Result'), findsOneWidget);
-      expect(find.textContaining('A wins'), findsOneWidget);
-    });
   });
 }

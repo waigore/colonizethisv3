@@ -117,6 +117,7 @@ The trailing `Wrap` lets Cancel/Confirm flow onto a second run at narrow viewpor
 - `app/test/move_dialogs_specs_part1_test.dart` / `move_dialogs_specs_part2_test.dart` — pin army/fleet consumer dialogs over this chrome (section labels, confirm/cancel, declare-war flow, locate).
 - `app/test/move_dialogs_320dp_min_viewport_test.dart` — pins both dialogs at `kMinViewportWidth = 320` dp without overflow.
 - `app/test/unit_picker_composition_test.dart` / `unit_picker_composition_320dp_test.dart` — `DLG20002` / `DLG31003` composition content in `MoveDialogDestinationRow`.
+- `app/test/unit_picker_composition_goldens_test.dart` — host PNGs for army composition and fleet pending-mission rows.
 
 ---
 

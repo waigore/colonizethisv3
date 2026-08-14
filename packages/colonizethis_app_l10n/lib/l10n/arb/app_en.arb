@@ -396,6 +396,10 @@
   "@map_displayOptions_showProvinceNames": {
     "description": "Toggle label for showing land province names on the map."
   },
+  "map_displayOptions_showCapitalLinkDisconnected": "Highlight land not bound to the capital",
+  "@map_displayOptions_showCapitalLinkDisconnected": {
+    "description": "Toggle for hatch on owned land tiles that will not extract to the capital (Refs #4370)."
+  },
   "map_displayOptions_mapMarksHeading": "Map marks",
   "@map_displayOptions_mapMarksHeading": {
     "description": "Section heading for resource, improvement, and road information-layer toggles."
@@ -3499,6 +3503,36 @@
   "provinceOverlay_tileBuildPortDisabledMaterialsTooltip": "{reason}",
   "@provinceOverlay_tileBuildPortDisabledMaterialsTooltip": {
     "description": "MAP20001 Tile Build port disabled for materials/treasury shortfall",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRailroadTooltip": "Build railroad",
+  "@provinceOverlay_tileBuildRailroadTooltip": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip when enabled without cost preview"
+  },
+  "provinceOverlay_tileBuildRailroadTooltipWithCost": "Build railroad ({costs})",
+  "@provinceOverlay_tileBuildRailroadTooltipWithCost": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip with material cost",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": "No Rail Builder available to build railroad",
+  "@provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: no Rail Builder units"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledTooltip": "No Rail Builder can assign railroad work here this turn",
+  "@provinceOverlay_tileBuildRailroadDisabledTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: not assignable this turn"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled for materials/treasury shortfall",
     "placeholders": {
       "reason": {
         "type": "String"

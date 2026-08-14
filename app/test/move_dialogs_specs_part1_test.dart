@@ -2,15 +2,12 @@
 // - SPEC/ui/move-army-dialog.md
 // Split under repo.app_test_file_size (Refs #4013).
 
-import 'dart:async';
-
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart'
     show editorialMonocleDisplayFontFamily;
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -18,196 +15,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 
-import 'move_dialogs_specs_test_support.dart';
+import 'move_dialogs_specs_army_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('MoveArmyDialog (SPEC/ui/move-army-dialog.md)', () {
-    const playerId = 'gp_specs_army';
-    const otherFactionId = 'gp_specs_rival';
-    const from = 'oldWorld|p_from';
-    const playerDest = 'oldWorld|p_owned';
-    const invasionDest = 'oldWorld|p_invade';
-
-    MapTopology buildTopology() {
-      return const MapTopology(
-        nodes: [
-          TopologyNode(
-            id: from,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: playerDest,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: invasionDest,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: [
-          TopologyEdge(id1: from, id2: playerDest),
-          TopologyEdge(id1: from, id2: invasionDest),
-        ],
-      );
-    }
-
-    Game buildGame() {
-      return Game(
-        id: 'g_specs_army',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: from,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                displayName: 'Origin',
-              ),
-              Province(
-                id: playerDest,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                displayName: 'Owned Dest',
-              ),
-              Province(
-                id: invasionDest,
-                regionId: 'oldWorld',
-                ownerId: otherFactionId,
-                displayName: 'Invade Dest',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'u_specs',
-                type: 'musketeers',
-                ownerId: playerId,
-                locationProvinceId: from,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: const [
-            Army(
-              id: 'aspecs',
-              ownerId: playerId,
-              regionId: 'oldWorld',
-              stationedProvinceId: from,
-              regimentUnitIds: ['u_specs'],
-              isHomeArmy: false,
-            ),
-          ],
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              from: ['oldWorld|p_from|0|0'],
-              playerDest: ['oldWorld|p_owned|0|0'],
-              invasionDest: ['oldWorld|p_invade|0|0'],
-            },
-          },
-          playerVisibilityByTile: const {
-            playerId: {
-              'oldWorld|p_from|0|0': 'fullyVisible',
-              'oldWorld|p_owned|0|0': 'fullyVisible',
-              'oldWorld|p_invade|0|0': 'fullyVisible',
-            },
-          },
-        ),
-        players: const [
-          Player(
-            id: playerId,
-            displayName: 'Specs Player',
-            isHuman: true,
-            capitalProvinceId: from,
-          ),
-          Player(
-            id: otherFactionId,
-            displayName: 'Specs Rival',
-            isHuman: false,
-            capitalProvinceId: invasionDest,
-          ),
-        ],
-      );
-    }
-
-    Future<void> pumpDialog(
-      WidgetTester tester, {
-      required AppEventBus bus,
-    }) async {
-      final game = buildGame();
-      final topology = buildTopology();
-      final army = game.worldState.armies.first;
-      await tester.pumpWidget(
-        moveDialogsSpecsFrameWithOpener(
-          (context) => () {
-            showDialog<void>(
-              context: context,
-              builder: (_) => MoveArmyDialog(
-                army: army,
-                game: game,
-                humanPlayerId: playerId,
-                bus: bus,
-                topology: topology,
-                draftOrders: const Orders(),
-              ),
-            );
-          },
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-    }
-
-    (
-      AppEventBus bus,
-      ArmyMoveRequestedEvent? Function() getCaptured,
-      StreamSubscription<ArmyMoveRequestedEvent> sub,
-    )
-    subscribeArmyMoveRequested() {
-      ArmyMoveRequestedEvent? captured;
-      final bus = AppEventBus.create();
-      final sub = bus.on<ArmyMoveRequestedEvent>().listen((e) {
-        captured = e;
-      });
-      return (bus, () => captured, sub);
-    }
-
-    Future<void> openInvasionWarConfirm(
-      WidgetTester tester,
-      AppEventBus bus,
-    ) async {
-      await pumpDialog(tester, bus: bus);
-      await tester.tap(find.text('Invade Dest'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
-      await tester.pumpAndSettle();
-      expect(find.text('Declare war?'), findsOneWidget);
-    }
-
-    Future<TextStyle?> invasionDeclareWarTriggerStyle(
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(tester, bus: AppEventBus.create());
-      final triggerFinder = find.text('declare war on Specs Rival');
-      expect(triggerFinder, findsOneWidget);
-      return tester.widget<Text>(triggerFinder).style;
-    }
-
-    Finder warConfirmSubShell() {
-      return find.ancestor(
-        of: find.text('Declare war?'),
-        matching: find.byType(CtDialogShell),
-      );
-    }
-
     testWidgets(
       'renders CtDialogShell with section labels and no Material dropdown (Refs #2867 S1)',
       (WidgetTester tester) async {
-        await pumpDialog(tester, bus: AppEventBus.create());
+        await pumpMoveArmySpecsDialog(tester, bus: AppEventBus.create());
         expect(find.byType(MoveArmyDialog), findsOneWidget);
         expect(find.byType(CtDialogShell), findsOneWidget);
         expect(find.byType(CtSectionLabel), findsAtLeastNWidgets(2));
@@ -231,13 +48,13 @@ void main() {
         final (bus, getCaptured, sub) = subscribeArmyMoveRequested();
         addTearDown(sub.cancel);
 
-        await pumpDialog(tester, bus: bus);
+        await pumpMoveArmySpecsDialog(tester, bus: bus);
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
         final captured = getCaptured();
         expect(captured, isNotNull);
-        expect(captured!.humanPlayerId, playerId);
+        expect(captured!.humanPlayerId, kMoveArmySpecsPlayerId);
         expect(captured.moveOrder.armyId, 'aspecs');
         expect(captured.declareWarTargetFactionId, isNull);
         expect(find.byType(MoveArmyDialog), findsNothing);
@@ -272,8 +89,11 @@ void main() {
 
         final captured = getCaptured();
         expect(captured, isNotNull);
-        expect(captured!.declareWarTargetFactionId, otherFactionId);
-        expect(captured.moveOrder.destinationProvinceId, invasionDest);
+        expect(captured!.declareWarTargetFactionId, kMoveArmySpecsRivalId);
+        expect(
+          captured.moveOrder.destinationProvinceId,
+          kMoveArmySpecsInvasionDest,
+        );
       },
     );
 
@@ -354,7 +174,7 @@ void main() {
         final (bus, getCaptured, sub) = subscribeArmyMoveRequested();
         addTearDown(sub.cancel);
 
-        await pumpDialog(tester, bus: bus);
+        await pumpMoveArmySpecsDialog(tester, bus: bus);
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Cancel'));
         await tester.pumpAndSettle();
 
@@ -366,86 +186,13 @@ void main() {
     testWidgets(
       'with zero offered destinations renders the empty-state copy and disables Confirm',
       (WidgetTester tester) async {
-        const isolatedPlayerId = 'gp_isolated';
-        const isolatedFrom = 'oldWorld|p_isolated';
-        final isolatedGame = Game(
-          id: 'g_isolated_army',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: isolatedFrom,
-                  regionId: 'oldWorld',
-                  ownerId: isolatedPlayerId,
-                  displayName: 'Lonely',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'u_isolated',
-                  type: 'musketeers',
-                  ownerId: isolatedPlayerId,
-                  locationProvinceId: isolatedFrom,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: const [
-              Army(
-                id: 'aisolated',
-                ownerId: isolatedPlayerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: isolatedFrom,
-                regimentUnitIds: ['u_isolated'],
-                isHomeArmy: false,
-              ),
-            ],
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                isolatedFrom: ['oldWorld|p_isolated|0|0'],
-              },
-            },
-          ),
-          players: const [
-            Player(
-              id: isolatedPlayerId,
-              displayName: 'Isolated',
-              isHuman: true,
-              capitalProvinceId: isolatedFrom,
-            ),
-          ],
+        await pumpMoveArmySpecsDialog(
+          tester,
+          bus: AppEventBus.create(),
+          game: buildMoveArmySpecsIsolatedGame(),
+          topology: isolatedMoveArmySpecsTopology,
+          humanPlayerId: kMoveArmySpecsIsolatedPlayerId,
         );
-        const isolatedTopology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: isolatedFrom,
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [],
-        );
-
-        await tester.pumpWidget(
-          moveDialogsSpecsFrameWithOpener(
-            (context) => () {
-              showDialog<void>(
-                context: context,
-                builder: (_) => MoveArmyDialog(
-                  army: isolatedGame.worldState.armies.first,
-                  game: isolatedGame,
-                  humanPlayerId: isolatedPlayerId,
-                  bus: AppEventBus.create(),
-                  topology: isolatedTopology,
-                  draftOrders: const Orders(),
-                ),
-              );
-            },
-          ),
-        );
-        await tester.tap(find.text('open'));
-        await tester.pumpAndSettle();
 
         expect(find.text('No valid destinations.'), findsOneWidget);
         expect(find.byType(DropdownButtonFormField<String>), findsNothing);
