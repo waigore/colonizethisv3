@@ -70,6 +70,33 @@ DecoratedBox findGradientSurfaceFor(WidgetTester tester, String label) {
   return tester.widget<DecoratedBox>(boxes.first);
 }
 
+/// Default-size [CtMainMenu] pump for pixelArt chrome ACs (Refs #4352).
+Future<void> pumpScreenSpecMainMenu(
+  WidgetTester tester, {
+  MainMenuVariant variant = MainMenuVariant.plain,
+  VoidCallback? onQuit,
+  bool resumeGameVisible = false,
+  VoidCallback? onResumeGame,
+}) async {
+  await tester.pumpWidget(
+    buildScreenSpecMainMenu(
+      variant: variant,
+      resumeGameVisible: resumeGameVisible,
+      onResumeGame: onResumeGame,
+      onNewGame: () {},
+      onLoadGame: () {},
+      onSettings: () {},
+      onQuit: onQuit ?? () {},
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// Texts whose style letter-spacing matches [spacing].
+Finder textsWithLetterSpacing(double spacing) => find.byWidgetPredicate(
+  (Widget w) => w is Text && w.style?.letterSpacing == spacing,
+);
+
 /// Pumps [CtMainMenu] at an explicit viewport size for responsive ACs.
 Future<void> pumpScreenSpecMainMenuAtSize(
   WidgetTester tester, {
