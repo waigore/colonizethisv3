@@ -3849,6 +3849,30 @@
   "@mapCorner_tooltipMapDisplayOptions": {
     "description": "Tooltip for opening map display options."
   },
+  "mapExtractionDisc_legendGold": "Reaches capital",
+  "@mapExtractionDisc_legendGold": {
+    "description": "Compact MAP10001 legend label for gold extraction discs (Refs #4367)."
+  },
+  "mapExtractionDisc_legendBrown": "Blocked — will not extract",
+  "@mapExtractionDisc_legendBrown": {
+    "description": "Compact MAP10001 legend label for brown extraction discs (Refs #4367)."
+  },
+  "mapExtractionDisc_legendSemantics": "Extraction disc colours",
+  "@mapExtractionDisc_legendSemantics": {
+    "description": "Semantics label for the extraction-disc legend control (Refs #4367)."
+  },
+  "mapExtractionDisc_detailsGold": "Gold: yield that reaches your capital this turn.",
+  "@mapExtractionDisc_detailsGold": {
+    "description": "Extraction-disc legend popover gold meaning (Refs #4367)."
+  },
+  "mapExtractionDisc_detailsBrown": "Brown: improved yield that does not reach the stockpile (no capital link, or the road/port/town path is capped).",
+  "@mapExtractionDisc_detailsBrown": {
+    "description": "Extraction-disc legend popover brown meaning (Refs #4367)."
+  },
+  "mapExtractionDisc_detailsCounsel": "Restore roads, towns, or ports toward your capital before treating a brown-disc tile as productive.",
+  "@mapExtractionDisc_detailsCounsel": {
+    "description": "Counsel line in the extraction-disc legend popover (Refs #4367)."
+  },
   "mapControls_cargoHold": "{used}/{capacity}",
   "@mapControls_cargoHold": {
     "description": "Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).",
