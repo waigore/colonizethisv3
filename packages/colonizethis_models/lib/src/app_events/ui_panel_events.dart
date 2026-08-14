@@ -132,6 +132,22 @@ class OpenNavalMissionMenuEvent extends UIActionEvent {
   final String? tileScopeTileKey;
 }
 
+/// Map army-stack marker shortcut: field armies → overlay Move flow;
+/// Home-Army-only → Military Units panel (Refs #4384).
+class OpenArmyStackMarkerEvent extends UIActionEvent {
+  const OpenArmyStackMarkerEvent({
+    required this.provinceId,
+    required this.armyIds,
+    required this.fieldArmyIds,
+    required this.tileKey,
+  });
+
+  final String provinceId;
+  final List<String> armyIds;
+  final List<String> fieldArmyIds;
+  final String tileKey;
+}
+
 /// Toggle in-map debug console overlay panel.
 class ToggleDebugConsolePanelEvent extends UIActionEvent {
   const ToggleDebugConsolePanelEvent();

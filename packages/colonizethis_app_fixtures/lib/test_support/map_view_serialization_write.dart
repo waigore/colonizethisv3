@@ -80,6 +80,21 @@ Map<String, dynamic> _fleetMarkerToJson(FleetTileMarkerView m) {
   return json;
 }
 
+Map<String, dynamic> _armyMarkerToJson(ArmyTileMarkerView m) {
+  final json = <String, dynamic>{
+    'tileKey': m.tileKey,
+    'x': m.x,
+    'y': m.y,
+    'provinceId': m.provinceId,
+    'armyIds': m.armyIds,
+    'fieldArmyIds': m.fieldArmyIds,
+    'stackCount': m.stackCount,
+    'hasHomeArmy': m.hasHomeArmy,
+  };
+  if (m.renderGrayscale) json['renderGrayscale'] = true;
+  return json;
+}
+
 Map<String, dynamic> _presenceToJson(ProvinceUnitPresenceView p) => {
   'civilianCount': p.civilianCount,
   'regimentCount': p.regimentCount,
@@ -145,6 +160,8 @@ Map<String, dynamic> regionMapViewDataToJson(RegionMapViewData region) => {
       .map(_civilianMarkerToJson)
       .toList(),
   'fleetTileMarkers': region.fleetTileMarkers.map(_fleetMarkerToJson).toList(),
+  if (region.armyTileMarkers.isNotEmpty)
+    'armyTileMarkers': region.armyTileMarkers.map(_armyMarkerToJson).toList(),
   'provinceUnitPresenceByProvinceId': region.provinceUnitPresenceByProvinceId
       .map((k, v) => MapEntry(k, _presenceToJson(v))),
   'provincePoliticalOwnerByPrefixedProvinceId':
