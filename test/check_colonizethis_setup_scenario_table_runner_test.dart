@@ -61,6 +61,11 @@ void main() {
   });
 
   group('runCheckColonizethisSetupScenarioTableRunner', () {
+    test('wave-7 slice C keeps baseline allow-all off', () {
+      expect(setupPreferScenarioTablesBaselineAllowAll, isFalse);
+      expect(setupPreferScenarioTablesAllowlist, isNotEmpty);
+    });
+
     test('passes on current repo tree', () {
       expect(runCheckColonizethisSetupScenarioTableRunner('.'), 0);
     });

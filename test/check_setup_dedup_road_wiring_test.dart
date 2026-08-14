@@ -12,7 +12,7 @@ void main() {
     const townsPath =
         'packages/colonizethis_setup/lib/src/setup/init_town_roads.dart';
     const helperPath =
-        'packages/colonizethis_setup/lib/src/setup/setup_road_wiring.dart';
+        'packages/colonizethis_setup/lib/src/setup/setup_road_wiring_tile_helpers.dart';
 
     test('flags private raise-road clone outside helper module', () {
       const src = r'''
@@ -38,7 +38,7 @@ tileState = raiseRoadAtLeast(tileState, key, 1);
       expect(violations, isEmpty);
     });
 
-    test('exempts setup_road_wiring.dart', () {
+    test('exempts setup_road_wiring_tile_helpers.dart', () {
       const src = r'''
 TileMapState raiseRoadAtLeast(TileMapState tileState, String tileKey, int level) {
   final current = tileState.roadLevel(tileKey);
@@ -66,7 +66,7 @@ TileMapState raiseRoadAtLeast(TileMapState tileState, String tileKey, int level)
     const townsPath =
         'packages/colonizethis_setup/lib/src/setup/init_town_roads.dart';
     const helperPath =
-        'packages/colonizethis_setup/lib/src/setup/setup_road_wiring.dart';
+        'packages/colonizethis_setup/lib/src/setup/setup_road_wiring_tile_helpers.dart';
 
     test('flags private _coordToTileKey clone', () {
       const src = r'''
@@ -91,7 +91,7 @@ final allowed = ownedTileKeysForFaction(ws, regionId, factionId);
       expect(violations, isEmpty);
     });
 
-    test('exempts setup_road_wiring.dart', () {
+    test('exempts setup_road_wiring_tile_helpers.dart', () {
       const src = r'''
 Map<String, String> _coordToTileKey(WorldState ws, String regionId) {
   return {};

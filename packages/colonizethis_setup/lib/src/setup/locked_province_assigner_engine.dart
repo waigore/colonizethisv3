@@ -1,8 +1,9 @@
 // SPEC/program/locked-province-assigner.md — DFS engine for locked assigner
-// (Refs #4086 Slice B de-part).
+// (Refs #4086 Slice B de-part; #4349 Slice A candidate extract).
 
 import 'dart:math';
 
+import 'locked_province_assigner_engine_candidates.dart';
 import 'locked_province_assigner_graph.dart';
 import 'locked_province_assigner_types.dart';
 import 'setup_logging.dart' show setupLog;
@@ -111,7 +112,17 @@ final class LockedAssignerEngine {
     final faction = _activeFaction();
     if (faction == null) return _dfsOk;
     lastBlockedFaction = faction;
-    final ranked = _rankedCandidatesForFaction(faction);
+    final ranked = lockedAssignerRankedCandidatesForFaction(
+      faction: faction,
+      owners: owners,
+      unassigned: unassigned,
+      land: land,
+      neighbours: neighbours,
+      mandatory: mandatory,
+      growthOrder: growthOrder,
+      seedPickerRandom: seedPickerRandom,
+      markBlockedFaction: (f) => lastBlockedFaction = f,
+    );
     if (ranked == null || ranked.isEmpty) {
       return _dfsDeadEnd;
     }
@@ -197,47 +208,6 @@ final class LockedAssignerEngine {
     return _dfsDeadEnd;
   }
 
-  List<String>? _rankedCandidatesForFaction(String faction) {
-    final needsSeed = !owners.containsValue(faction);
-    if (needsSeed) {
-      final fixed = mandatory[faction];
-      if (fixed != null) {
-        if (!(unassigned.contains(fixed) && land.contains(fixed))) {
-          lastBlockedFaction = faction;
-          return null;
-        }
-        return rankLegalNeighbors(
-          legal: [fixed],
-          unassigned: unassigned,
-          neighbours: neighbours,
-          land: land,
-        );
-      }
-      final cand = unassigned
-          .where((p) => !_reservedMandatoryForLaterFaction(p, faction))
-          .toList()
-        ..sort();
-      if (seedPickerRandom != null) {
-        cand.shuffle(seedPickerRandom);
-      }
-      if (cand.isEmpty) return null;
-      return rankLegalNeighbors(
-        legal: cand,
-        unassigned: unassigned,
-        neighbours: neighbours,
-        land: land,
-      );
-    }
-    final legalList = _legalNeighborSet(faction).toList()..sort();
-    if (legalList.isEmpty) return null;
-    return rankLegalNeighbors(
-      legal: legalList,
-      unassigned: unassigned,
-      neighbours: neighbours,
-      land: land,
-    );
-  }
-
   bool _landmassComplete() {
     for (final f in growthOrder) {
       if (countPerFaction[f]! < targetPerFaction[f]!) return false;
@@ -250,30 +220,6 @@ final class LockedAssignerEngine {
       if (countPerFaction[f]! < targetPerFaction[f]!) return f;
     }
     return null;
-  }
-
-  bool _reservedMandatoryForLaterFaction(String province, String currentFaction) {
-    final ci = growthOrder.indexOf(currentFaction);
-    if (ci < 0) return false;
-    for (final e in mandatory.entries) {
-      final idx = growthOrder.indexOf(e.key);
-      if (idx <= ci) continue;
-      if (e.value == province) return true;
-    }
-    return false;
-  }
-
-  Set<String> _legalNeighborSet(String faction) {
-    final out = <String>{};
-    for (final e in owners.entries) {
-      if (e.value != faction) continue;
-      for (final n in neighbours[e.key] ?? const <String>{}) {
-        if (!unassigned.contains(n) || !land.contains(n)) continue;
-        if (_reservedMandatoryForLaterFaction(n, faction)) continue;
-        out.add(n);
-      }
-    }
-    return out;
   }
 
   void _popOnePlacement() {

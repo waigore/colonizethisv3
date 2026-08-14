@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Coord→tile / owned-tile-key helpers must live in `setup_road_wiring.dart`
-/// (Refs #4020).
+/// Coord→tile / owned-tile-key helpers must live in
+/// `setup_road_wiring_tile_helpers.dart` (Refs #4020; SoT path updated Refs #4349).
 const _setupLibDir = 'packages/colonizethis_setup/lib/src/setup';
 
 const _helperModuleRelativePath =
-    'packages/colonizethis_setup/lib/src/setup/setup_road_wiring.dart';
+    'packages/colonizethis_setup/lib/src/setup/setup_road_wiring_tile_helpers.dart';
 
 final RegExp _bannedPrivateNames = RegExp(
   r'(?:Map<String,\s*String>\s+|Set<String>\s+)?'
@@ -56,9 +56,10 @@ int runCheckSetupDedupRoadTileKeyMaps(
 
   logE(
     'ERROR: coord→tile / owned tile-key helpers must live in '
-    'setup_road_wiring.dart (coordToTileKeyForRegion / ownedTileKeysForFaction / '
-    'bfsParentsFromTileKey); ban private _coordToTileKey / '
-    '_allowedTileKeysForFaction / _bfsParentsFromCapital clones.',
+    'setup_road_wiring_tile_helpers.dart (coordToTileKeyForRegion / '
+    'ownedTileKeysForFaction / bfsParentsFromTileKey); ban private '
+    '_coordToTileKey / _allowedTileKeysForFaction / _bfsParentsFromCapital '
+    'clones.',
   );
   for (final v in violations) {
     logE('${v.path}:${v.line} ${v.message}');
@@ -86,7 +87,8 @@ findSetupDedupRoadTileKeyMapsViolations({
           path: path,
           line: 1,
           message:
-              'Private road tile-key helper clone; use setup_road_wiring.dart.',
+              'Private road tile-key helper clone; use '
+              'setup_road_wiring_tile_helpers.dart.',
         ),
       );
       continue;
@@ -106,7 +108,7 @@ findSetupDedupRoadTileKeyMapsViolations({
           line: 1,
           message:
               'Reimplemented coord/owned tile-key helper; use '
-              'setup_road_wiring.dart.',
+              'setup_road_wiring_tile_helpers.dart.',
         ),
       );
     }
