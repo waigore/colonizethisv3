@@ -62,13 +62,7 @@ void main() {
         expect(find.text('NEW WORLD'), findsOneWidget);
         expect(find.byType(CtSectionLabel), findsNothing);
 
-        final Border border = unitsSharedHeaderBorder(
-          tester,
-          RegionSectionHeader,
-        );
-        expect(border.left.width, RegionSectionHeader.leftBarWidth);
-        expect(border.left.color, EditorialMonoclePalette.accentDim);
-        expect(border.bottom, BorderSide.none);
+        expectRegionHeaderLeftBar(tester);
       },
     );
 
@@ -94,13 +88,7 @@ void main() {
         expect(label.style?.color, EditorialMonoclePalette.muted);
         expect(label.style?.fontWeight, FontWeight.w600);
 
-        final Border border = unitsSharedHeaderBorder(
-          tester,
-          RegionSectionHeader,
-        );
-        expect(border.bottom.width, RegionSectionHeader.bottomBorderWidth);
-        expect(border.bottom.color, EditorialMonoclePalette.border);
-        expect(border.left, BorderSide.none);
+        expectRegionHeaderBottomBorder(tester);
       },
     );
   });
@@ -302,14 +290,7 @@ void main() {
     ) async {
       await pumpUnitsEntityActionRow(
         tester,
-        actions: [
-          UnitsEntityAction(
-            tooltip: 'Move',
-            icon: Icons.route,
-            label: 'Move',
-            onPressed: () {},
-          ),
-        ],
+        actions: [unitsEntityMoveAction()],
       );
 
       expect(find.text('Left details'), findsOneWidget);
@@ -323,14 +304,7 @@ void main() {
       await pumpUnitsEntityActionRow(
         tester,
         width: 220,
-        actions: [
-          UnitsEntityAction(
-            tooltip: 'Move',
-            icon: Icons.route,
-            label: 'Move',
-            onPressed: () {},
-          ),
-        ],
+        actions: [unitsEntityMoveAction()],
       );
 
       expect(find.byIcon(Icons.route), findsOneWidget);
@@ -345,12 +319,7 @@ void main() {
         await pumpUnitsEntityActionRow(
           tester,
           actions: [
-            UnitsEntityAction(
-              tooltip: 'Move',
-              icon: Icons.route,
-              label: 'Move',
-              onPressed: () {},
-            ),
+            unitsEntityMoveAction(),
             UnitsEntityAction(
               tooltip: 'Cancel',
               icon: Icons.cancel_outlined,
@@ -382,14 +351,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpUnitsEntityActionRow(
           tester,
-          actions: const [
-            UnitsEntityAction(
-              tooltip: 'Move',
-              icon: Icons.route,
-              label: 'Move',
-              onPressed: null,
-            ),
-          ],
+          actions: [unitsEntityMoveAction(enabled: false)],
         );
 
         final pill = tester.widget<CtActionTextButton>(
