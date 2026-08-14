@@ -23,6 +23,7 @@ RegionMapViewData buildRegionViewData({
   Map<String, int>? resourceExtractionUnitsByTile,
   Map<String, int>? resourceExtractionEffectiveUnitsByTile,
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
+  Set<String>? capitalLinkDisconnectedTileKeys,
   Set<String>? civilianMarkerOwnerIds,
 }) {
   final provinceMeta = buildProvinceMetadata(
@@ -47,6 +48,7 @@ RegionMapViewData buildRegionViewData({
     resourceExtractionEffectiveUnitsByTile:
         resourceExtractionEffectiveUnitsByTile,
     resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+    capitalLinkDisconnectedTileKeys: capitalLinkDisconnectedTileKeys,
     civilianMarkerOwnerIds: civilianMarkerOwnerIds,
   );
   final markerData = buildMarkerData(

@@ -22,6 +22,9 @@ extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     if (showProvinceOwnershipTint) {
       paintGreatPowerLandOwnershipTint(canvas);
     }
+    if (showCapitalLinkDisconnectedHighlight) {
+      paintCapitalLinkDisconnectedHighlight(canvas);
+    }
     paintOverlay(canvas);
     if (showProvinceOverlay) {
       paintProvinceBorders(canvas);

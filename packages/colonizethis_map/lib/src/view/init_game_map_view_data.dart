@@ -41,6 +41,7 @@ class CellViewData {
     this.resourceExtractionUnits,
     this.resourceExtractionEffectiveUnits,
     this.resourceExtractionBlockedUnits,
+    this.capitalLinkDisconnected = false,
     this.visibility = TileVisibility.visible,
   });
 
@@ -85,6 +86,11 @@ class CellViewData {
   /// Human-player per-tile units blocked by transport/path bottlenecks.
   /// Null for sea or when not populated.
   final int? resourceExtractionBlockedUnits;
+
+  /// True when this land tile is owned by the viewing player and is **not** in
+  /// that player's capital `ConnectivityResult.connected` set (Refs #4370).
+  /// Sea cells and tiles without a viewing-player connected set stay false.
+  final bool capitalLinkDisconnected;
 
   /// Per-tile visibility for the current player view. Defaults to [TileVisibility.visible].
   final TileVisibility visibility;

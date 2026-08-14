@@ -87,9 +87,13 @@ void main() {
       expect(find.text('Show province and sea borders'), findsOneWidget);
       expect(find.text('Show province ownership'), findsOneWidget);
       expect(find.text('Show province names'), findsOneWidget);
+      expect(
+        find.text('Highlight land not bound to the capital'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('renders six keyed CtToggleSwitch rows with default values', (
+    testWidgets('renders seven keyed CtToggleSwitch rows with default values', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -97,7 +101,7 @@ void main() {
       );
       await _openDialog(tester);
 
-      expect(find.byType(CtToggleSwitch), findsNWidgets(6));
+      expect(find.byType(CtToggleSwitch), findsNWidgets(7));
 
       final resources = tester.widget<CtToggleSwitch>(
         find.byKey(kGameMapOptionsShowMapResourcesToggleKey),
@@ -117,6 +121,9 @@ void main() {
       final names = tester.widget<CtToggleSwitch>(
         find.byKey(kGameMapOptionsShowProvinceNamesToggleKey),
       );
+      final capitalLink = tester.widget<CtToggleSwitch>(
+        find.byKey(kGameMapOptionsShowCapitalLinkDisconnectedToggleKey),
+      );
 
       expect(resources.value, isTrue);
       expect(improvements.value, isTrue);
@@ -125,6 +132,7 @@ void main() {
       expect(overlay.value, isTrue);
       expect(ownership.value, isFalse);
       expect(names.value, isTrue);
+      expect(capitalLink.value, isTrue);
     });
 
     testWidgets(
