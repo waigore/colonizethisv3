@@ -197,6 +197,15 @@ When resource icons are visible, the map may render extraction throughput indica
 - **Icon visibility gating:** If resource icon visibility/prospecting rules suppress the icon on a tile, indicators are also suppressed on that tile.
 - **Fog parity:** On `TileVisibility.fogged`, indicators use the same fog modulation treatment as resource icons (fill and stroke).
 
+### Extraction disc legend (MAP10001 chrome)
+
+Teaching chrome for gold vs brown discs (Refs #4367). Disc math/colours unchanged.
+
+- **Visibility:** Show when `baseLayerDisplayMode != terrainOnly` **and** `ShellPlayerContext.viewingPlayerId != null` (normal play and player observe), **including when zero discs are painted**. Hide in **terrain only** and **global observe** (`viewingPlayerId == null`).
+- **Chrome:** Compact two-swatch legend above bottom-left corner controls. Wide: gold/brown discs + plain labels (“Reaches capital” / “Blocked — will not extract”). Narrow (`< 600 dp`): tappable two-disc chip that does not replace the 24×24 corner tools.
+- **Popover:** Tap opens a dismissible cargo-hold-family panel (×, outside tap, Esc) restating both meanings plus one counsel line about restoring capital link (roads/towns/ports). No orders staged.
+- **Host:** Extends `MAP10001` / empire-overview chrome; no new screen ID.
+
 ---
 
 ## Civilian Marker Icons
@@ -588,6 +597,11 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** a tile with `E + B >= 2` of the same fill color (for example disconnected `F = 2` → two brown discs), **when** the map renders in a resource-including base mode, **then** each unit is painted as a filled disc with a visible dark stroke so rims do not fully dissolve into one blob (Refs #4151 Phase 3).
 - **Given** extraction indicators are rendered for a tile, **when** indicator layout is computed, **then** each indicator square edge length is greater than or equal to the resource icon display edge length for that tile and the stack advances left-to-right with overlap.
 - **Given** a tile renders extraction throughput indicators, **when** the overlay pass paints them, **then** the implementation does not reuse the commodity `Image`/`drawImageRect` path used for the base resource glyph for indicator slots (disc paint path is regression-covered; e.g. golden or dedicated paint helper test).
+- **Given** the in-game map is in a resource-including base-layer mode and `ShellPlayerContext.viewingPlayerId != null`, **when** `MAP10001` renders (including zero extraction discs painted), **then** the UI layer shows a compact gold/brown extraction-disc legend with plain-language labels equivalent to “Reaches capital” and “Blocked — will not extract” (no raw `E`/`B` field names) (Refs #4367).
+- **Given** the player taps the extraction-disc legend, **when** the details popover opens, **then** the UI layer restates both colour meanings and one counsel line about capital link / roads / ports, and dismisses via ×, outside tap, or Esc without staging orders (Refs #4367).
+- **Given** the player cycles to **terrain only**, **when** discs are not painted, **then** the UI layer hides the extraction-disc legend; cycling back to a resource-including mode with `viewingPlayerId != null` shows it again (Refs #4367).
+- **Given** **global observe** (`viewingPlayerId == null`) and a resource-including base-layer mode, **when** `MAP10001` renders, **then** the UI layer omits the extraction-disc legend (Refs #4367).
+- **Given** a human-owned disconnected improved tile with `E = 0`, `B = F`, **when** the map paints brown discs, **then** disc counts/colours are unchanged and the legend’s brown meaning still applies (Refs #4367 / #4151).
 - **Given** a map widget with `RegionMapViewData.warpMarkers` populated (non-empty), **when** the widget renders the map, **then** a glowing yellow border is drawn around each warp sea zone; warp zone indicators are rendered regardless of `baseLayerDisplayMode`.
 - **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where both visibilities are `unrevealed`, **then** no warp glow segment is drawn on that edge.
 - **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where at least one visibility is `visible` or `fogged`, **then** the warp glow segment is drawn on that edge.

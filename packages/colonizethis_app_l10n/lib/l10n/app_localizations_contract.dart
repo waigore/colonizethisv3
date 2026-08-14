@@ -2412,6 +2412,24 @@ abstract class AppLocalizations {
   /// Tooltip for opening map display options.
   String get mapCorner_tooltipMapDisplayOptions;
 
+  /// Compact legend label for gold extraction discs on MAP10001.
+  String get mapExtractionDisc_legendGold;
+
+  /// Compact legend label for brown extraction discs on MAP10001.
+  String get mapExtractionDisc_legendBrown;
+
+  /// Semantics / accessibility label for the extraction-disc legend control.
+  String get mapExtractionDisc_legendSemantics;
+
+  /// Details popover line explaining gold extraction discs.
+  String get mapExtractionDisc_detailsGold;
+
+  /// Details popover line explaining brown extraction discs.
+  String get mapExtractionDisc_detailsBrown;
+
+  /// Counsel line in the extraction-disc legend details popover.
+  String get mapExtractionDisc_detailsCounsel;
+
   /// Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).
   String mapControls_cargoHold(String used, String capacity);
 
