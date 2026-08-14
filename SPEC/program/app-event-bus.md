@@ -155,7 +155,8 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 |-------|-----------|----------------|
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
 | `OpenCivilianUnitsPanelEvent` | `GameSideMenu`, province Tile/Political inline shortcuts | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`). Optional shortcut fields (at most one non-null): `exploreShortcutTargetTileKey` (`explorerOnly`), `prospectShortcutTargetTileKey`, `buildImprovementShortcutTargetTileKey` (`builderOnly`), `buildRoadShortcutTargetTileKey` (`engineerOnly`), `buildFortShortcutTargetTileKey` (`engineerOnly`), `buildPortShortcutTargetTileKey` (`engineerOnly`), `buildRailShortcutTargetTileKey` (`railBuilderOnly`), `purchaseLandShortcutTargetTileKey` (`merchantOnly`), `upgradeTownShortcutTargetTileKey` (`builderOnly`) — each opens the panel in the matching filtered shortcut mode for direct assign on that tile key. |
-| `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
+| `OpenMilitaryUnitsPanelEvent` | `GameSideMenu`; Home-Army-only map marker tap | `MilitaryUnitsPanel` |
+| `OpenArmyStackMarkerEvent` | Map army stack marker tap | If `fieldArmyIds` non-empty: `showOverlayArmyMoveFlow` (field ids only → optional `DLG20002` then `DLG20001`); Home-only: `OpenMilitaryUnitsPanelEvent`. Observe: snackbar + return. |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` (+ `AppEventBus`); optional `locationScopeKey`, `initialSelectedFleetId`, `tileScopeTileKey` for tile-scoped list and header |
 | `OpenNavalMissionMenuEvent` | Map fleet marker tap | `showNavalFleetMarkerFlow` (Home Fleet → tile-scoped `OpenNavalUnitsPanelEvent`; in-port → `DLG30001`; at sea → `showNavalMissionFlow` / `DLG31001` + Sail → `DLG30001`); mission confirm emits `NavalMissionRequestedEvent` / `NavalMissionCancelRequestedEvent` |
 
