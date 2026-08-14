@@ -10,7 +10,6 @@ import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show buildPlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -100,20 +99,6 @@ Game _buildGame({
     ],
   );
 }
-
-RegionMapViewData _emptyRegion() => const RegionMapViewData(
-  regionId: 'oldWorld',
-  width: 1,
-  height: 1,
-  cellSize: 16,
-  cells: [],
-  capitalMarkers: [],
-  portMarkers: [],
-  factionColors: {},
-  greatPowerFactionIds: {},
-  terrainColors: {},
-  provincePoliticalOwnerByPrefixedProvinceId: {},
-);
 
 void main() {
   suppressLogsForTests();
@@ -224,7 +209,7 @@ void main() {
         final callbacks = buildProvinceDetailShortcutCallbacks(
           game: game,
           humanPlayerId: _kHumanPlayerId,
-          region: _emptyRegion(),
+          region: emptyProvinceOverlayRegion(),
           playerView: buildPlayerView(game, _topology, _kHumanPlayerId),
           workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(
             strategies: const {},
@@ -281,7 +266,7 @@ void main() {
       final callbacks = buildProvinceDetailShortcutCallbacks(
         game: game,
         humanPlayerId: _kHumanPlayerId,
-        region: _emptyRegion(),
+        region: emptyProvinceOverlayRegion(),
         playerView: buildPlayerView(game, _topology, _kHumanPlayerId),
         workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(
           strategies: const {},

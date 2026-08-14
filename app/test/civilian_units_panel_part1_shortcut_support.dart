@@ -8,6 +8,35 @@ import 'civilian_units_panel_test_support.dart';
 const civilianPanelPart1HumanId = 'h1';
 const civilianPanelPart1TileKey = 'oldWorld|p1|0|0';
 
+/// Rail Builder + builder on one OW tile for build-rail shortcut mode.
+Game buildCivilianRailBuilderBuilderShortcutGame({
+  required String id,
+  String humanId = 'h1',
+  String tileKey = 'oldWorld|p1|0|0',
+  bool railBuilderFirst = false,
+}) {
+  const provinceId = 'oldWorld|p1';
+  final railBuilder = civilianIdleUnit(
+    id: 'u_rail',
+    type: kUnitTypeRailBuilder,
+    ownerId: humanId,
+    provinceId: provinceId,
+    tileKey: tileKey,
+  );
+  final builder = civilianIdleUnit(
+    id: 'b1',
+    type: kUnitTypeBuilder,
+    ownerId: humanId,
+    provinceId: provinceId,
+    tileKey: tileKey,
+  );
+  return buildCivilianOwUnitsGame(
+    id: id,
+    humanId: humanId,
+    units: railBuilderFirst ? [railBuilder, builder] : [builder, railBuilder],
+  );
+}
+
 Future<void> expectCivilianShortcutCommit(
   WidgetTester tester, {
   required String gameId,

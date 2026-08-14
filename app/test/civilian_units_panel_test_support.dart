@@ -130,35 +130,6 @@ Game buildCivilianEngineerBuilderShortcutGame({
   );
 }
 
-/// Rail Builder + builder on one OW tile for build-rail shortcut mode.
-Game buildCivilianRailBuilderBuilderShortcutGame({
-  required String id,
-  String humanId = 'h1',
-  String tileKey = 'oldWorld|p1|0|0',
-  bool railBuilderFirst = false,
-}) {
-  const provinceId = 'oldWorld|p1';
-  final railBuilder = civilianIdleUnit(
-    id: 'u_rail',
-    type: kUnitTypeRailBuilder,
-    ownerId: humanId,
-    provinceId: provinceId,
-    tileKey: tileKey,
-  );
-  final builder = civilianIdleUnit(
-    id: 'b1',
-    type: kUnitTypeBuilder,
-    ownerId: humanId,
-    provinceId: provinceId,
-    tileKey: tileKey,
-  );
-  return buildCivilianOwUnitsGame(
-    id: id,
-    humanId: humanId,
-    units: railBuilderFirst ? [railBuilder, builder] : [builder, railBuilder],
-  );
-}
-
 /// Merchant + builder on one OW tile for purchase-land shortcut mode.
 Game buildCivilianMerchantBuilderShortcutGame({
   required String id,
