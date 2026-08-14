@@ -680,6 +680,29 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainCivilians_title => 'Train Civilians';
 
   @override
+  String get trainCivilians_roleGistExplorer =>
+      'Explores provinces · Prospects minerals';
+
+  @override
+  String get trainCivilians_roleGistBuilder => 'Improves tiles · Upgrades towns';
+
+  @override
+  String get trainCivilians_roleGistEngineer =>
+      'Builds roads, ports, and forts';
+
+  @override
+  String get trainCivilians_roleGistSpy =>
+      'Holds foreign intel · Counter-espionage at home';
+
+  @override
+  String get trainCivilians_roleGistMerchant =>
+      'Purchases land in Minor/Tribe provinces';
+
+  @override
+  String get trainCivilians_roleGistRailBuilder =>
+      'Upgrades roads to railroad';
+
+  @override
   String get trainMilitary_title => 'Train Military';
 
   @override
