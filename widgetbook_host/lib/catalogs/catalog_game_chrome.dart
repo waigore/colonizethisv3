@@ -256,6 +256,71 @@ List<WidgetbookNode> get gameTabBarDirectories => [
   ),
 ];
 
+/// MAP10001 extraction-disc legend chrome, including hidden variants
+/// (terrain only / global observe) required by Refs #4367 AC7.
+List<WidgetbookNode> get extractionDiscLegendDirectories => [
+  WidgetbookFolder(
+    name: 'Extraction disc legend',
+    children: [
+      WidgetbookUseCase(
+        name: 'Visible — legend above corner controls',
+        builder: (context) => _extractionDiscLegendChromeStory(
+          flags: MapBaseLayerFlags.fullDetail,
+          viewingPlayerId: 'gp_player',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Hidden — terrain only',
+        builder: (context) => _extractionDiscLegendChromeStory(
+          flags: MapBaseLayerFlags.terrainOnly,
+          viewingPlayerId: 'gp_player',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Hidden — global observe',
+        builder: (context) => _extractionDiscLegendChromeStory(
+          flags: MapBaseLayerFlags.fullDetail,
+          viewingPlayerId: null,
+        ),
+      ),
+    ],
+  ),
+];
+
+Widget _extractionDiscLegendChromeStory({
+  required MapBaseLayerFlags flags,
+  required String? viewingPlayerId,
+}) {
+  final GlobalKey anchor = GlobalKey();
+  return _gameMapCornerControlsStoryFrame(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (shouldShowExtractionDiscLegend(
+          flags: flags,
+          viewingPlayerId: viewingPlayerId,
+        )) ...[
+          ExtractionDiscLegend(
+            key: anchor,
+            narrow: false,
+            anchorKey: anchor,
+            chromeBottomY: 0,
+          ),
+          const SizedBox(height: 4),
+        ],
+        GameMapCornerControls(
+          onCycleBaseLayerDisplayMode: () {},
+          onCenterOnHomeCapital: () {},
+          onOpenMapDisplayOptions: () {},
+          homeToCapitalEnabled: viewingPlayerId != null,
+          mapBaseLayerFlags: flags,
+        ),
+      ],
+    ),
+  );
+}
+
 /// Standalone players-bar toggle chrome. SPEC/ui/empire-overview.md § Players
 /// bar toggle (issue #3898). Mirrors the 28 × 22 dp bordered surface beside
 /// the news toggle on `GameTabBar`.
