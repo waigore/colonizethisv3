@@ -548,6 +548,7 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - Given the same tile, when the player taps the transport/connectivity text cluster or the named **Tile details** control, then the helper lists applicable teaching lines (port status, captions, connected capital-link; `E of F` only when F > 0 and E > 0).
 - Given Build road / Build port / Explore / Prospect / Build improvement / Purchase land gates, when Tile renders, then those shortcuts remain on the default surface and opening Tile details does not require tapping those icons.
 - Given a 320–360 dp viewport, when Tile details opens, then the helper is dismissible, does not overflow the overlay slot, and does not add a new tab.
+- Given `MAP20001` Tile details helper open (caption + port + capital-link + `E of F`) and 320 dp overlay-open layouts under `AppThemes.editorialMonocle`, when the host golden suite in `app/test/province_overlay_tile_details_goldens_test.dart` captures each keyed surface, then each `matchesGoldenFile` baseline under `app/test/goldens/province_overlay_tile_details_dialog*.png` matches the committed PNG (Refs #4369).
 
 ---
 
