@@ -45,6 +45,7 @@
 // raised for Military Counsel budget headroom after dev integration (Refs #4307).
 // raised for MAP20001 Upgrade town merge headroom on military counsel branch (Refs #4316).
 // raised for UNIT50001 Train Military benefit vs cost gist rows (Refs #4324).
+// raised for MAP10001 extraction-disc legend + popover teaching chrome (Refs #4367).
 import 'dart:convert';
 import 'dart:io';
 
@@ -60,10 +61,13 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4340+#4346+#4350 merge headroom (DLG31002 intel,
 // Consulate shortcut, Move/Invade overlay Military shortcuts).
 // raised for UNIT40001 civilian role gists on Train Civilians rows (Refs #4366).
+// raised for MAP10001 extraction-disc legend (Refs #4367).
 // raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
+// raised for combined #4366+#4367+#4369 merge headroom.
 // raised for MAP10001 tappable army stack markers (Refs #4384).
-const _maxMainLines = 76100;
+// raised for army-marker + extraction-legend merge headroom after origin/dev.
+const _maxMainLines = 76400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
@@ -76,11 +80,10 @@ int runCheckAppMainLineBudget(
     return 1;
   }
 
-  final result = Process.runSync(
-    'python3',
-    [script, '--json'],
-    workingDirectory: repoRoot,
-  );
+  final result = Process.runSync('python3', [
+    script,
+    '--json',
+  ], workingDirectory: repoRoot);
   if (result.exitCode != 0) {
     logE(
       'check_app_main_line_budget: project_stats.py exited ${result.exitCode}',

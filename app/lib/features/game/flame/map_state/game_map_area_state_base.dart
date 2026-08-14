@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
@@ -52,6 +53,9 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode baseLayerDisplayMode =
       BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+
+  /// Anchor for the extraction-disc legend popover (Refs #4367).
+  final GlobalKey extractionDiscLegendAnchorKey = GlobalKey();
 
   String get mapPlayerId =>
       ref.read(shellPlayerContextProvider).mapPlayerIdFor(widget.game);
