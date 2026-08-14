@@ -24,7 +24,7 @@ When Economic full intel is available on **Province sea-zone overlay**, the **Ex
 - **Partial-yield reason** — when **any** commodity is partial, one **muted reason line** appears immediately under the Extraction line: improved tiles are not linked to your capital, or the road/port path is too weak. This is a connectivity and transport cue — not a tech-cap bug. When all commodities are full-yield or Extraction is empty (`—`), no reason line appears.
 - **Capital grain bonus** — when configured, grain may include a separate muted `incl. +N capital grain bonus` annotation; that bonus is not tile extraction and does not trigger the partial-yield reason by itself.
 
-Capital link, roads, rails, ports, and town rules that decide connectivity are Chapter 3; map **gold vs brown extraction discs** on **Empire overview / map area** are Chapter 3 as well.
+Capital link, roads, rails, ports, and town rules that decide connectivity are Chapter 3; map **gold vs brown extraction discs** and the default-on **Highlight land not bound to the capital** hatch on **Empire overview / map area** are Chapter 3 as well.
 
 ### Work targets by unit
 

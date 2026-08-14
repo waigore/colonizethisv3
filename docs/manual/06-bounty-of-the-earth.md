@@ -24,7 +24,7 @@ When Economic full intel is available on `MAP20001`, the **Extraction** condense
 - **Partial-yield reason** — when **any** commodity is partial, one **muted reason line** appears immediately under the Extraction line: improved tiles are not linked to your capital, or the road/port path is too weak. This is a connectivity and transport cue — not a tech-cap bug. When all commodities are full-yield or Extraction is empty (`—`), no reason line appears.
 - **Capital grain bonus** — when configured, grain may include a separate muted `incl. +N capital grain bonus` annotation; that bonus is not tile extraction and does not trigger the partial-yield reason by itself.
 
-Capital link, roads, rails, ports, and town rules that decide connectivity are Chapter 3; map **gold vs brown extraction discs** on `MAP10001` are Chapter 3 as well.
+Capital link, roads, rails, ports, and town rules that decide connectivity are Chapter 3; map **gold vs brown extraction discs** and the default-on **Highlight land not bound to the capital** hatch on `MAP10001` are Chapter 3 as well.
 
 ### Work targets by unit
 
@@ -74,7 +74,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - [ ] Covers work targets: improvement, town, road, port, fort, rail, purchase_land (explore/prospect cross-ref Ch. 4).
 - [ ] States assign-time Insufficient treasury/materials checks and one-order / per-tile exclusivity.
 - [ ] Documents cancel without material refund; purchase_land debit-at-completion.
-- [ ] Explains extraction caps / tech caps and connectivity dependency at player level.
+- [ ] Explains extraction caps / tech caps and connectivity dependency at player level, and points to Chapter 3 for the on-map hatch of land not bound to the capital.
 - [ ] Explains `MAP20001` Extraction/Available as post-resolution projection from current world state (new-game visibility, mid-turn draft orders unchanged until resolution).
 - [ ] Distinguishes province-overlay Extraction/Available from stockpile-centric `GAME20001` Production.
 - [ ] Explains `MAP20001` Extraction `effective (full)` brackets, capital grain bonus annotation, and the muted partial-yield reason line when connectivity or path limits apply (cross-ref Chapter 3).
