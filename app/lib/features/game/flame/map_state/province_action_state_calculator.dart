@@ -1,8 +1,8 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import '../../../../core/services/game_service/game_service.dart' show GameMapData;
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData;
 import 'game_map_area_state_logic.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
@@ -42,6 +42,13 @@ typedef ProvinceBuildPortActionState = ({
   bool hasEngineerUnits,
 });
 
+/// Build-railroad inline action state shape.
+typedef ProvinceBuildRailActionState = ({
+  bool showIcon,
+  bool enabled,
+  bool hasRailBuilderUnits,
+});
+
 /// Purchase-land inline action state shape.
 typedef ProvinceMerchantActionState = ({
   bool showIcon,
@@ -57,6 +64,7 @@ typedef ProvinceActionStates = ({
   ProvinceEngineerActionState buildRoad,
   ProvinceBuildFortActionState buildFort,
   ProvinceBuildPortActionState buildPort,
+  ProvinceBuildRailActionState buildRail,
   ProvinceMerchantActionState purchaseLand,
 });
 
@@ -154,6 +162,18 @@ class ProvinceActionStateCalculator {
             currentOrders: currentOrders,
             tileMapByRegion: mapData?.tileMapByRegion,
           );
+    final buildRail = selectedTileKey == null
+        ? GameMapAreaProvinceActionStates.kHiddenRailBuilderInlineActionState
+        : GameMapAreaStateLogicProvinceActions.provinceBuildRailActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+            topology: topology,
+            currentOrders: currentOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          );
     final purchaseLand = selectedTileKey == null
         ? GameMapAreaProvinceActionStates.kHiddenMerchantInlineActionState
         : GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
@@ -170,6 +190,7 @@ class ProvinceActionStateCalculator {
       buildRoad: buildRoad,
       buildFort: buildFort,
       buildPort: buildPort,
+      buildRail: buildRail,
       purchaseLand: purchaseLand,
     );
   }

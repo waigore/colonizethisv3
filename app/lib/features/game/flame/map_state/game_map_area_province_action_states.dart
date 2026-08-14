@@ -7,6 +7,7 @@ import 'game_map_area_province_action_states_build_improvement.dart';
 import 'game_map_area_province_action_states_build_road.dart';
 import 'game_map_area_province_action_states_build_fort.dart';
 import 'game_map_area_province_action_states_build_port.dart';
+import 'game_map_area_province_action_states_build_rail.dart';
 import 'game_map_area_province_action_states_explore.dart';
 import 'game_map_area_province_action_states_establish_consulate.dart';
 import 'game_map_area_province_action_states_prospect.dart';
@@ -45,6 +46,12 @@ class GameMapAreaProvinceActionStates {
     showIcon: false,
     enabled: false,
     hasEngineerUnits: false,
+  );
+  static const ({bool showIcon, bool enabled, bool hasRailBuilderUnits})
+  kHiddenRailBuilderInlineActionState = (
+    showIcon: false,
+    enabled: false,
+    hasRailBuilderUnits: false,
   );
   static const ({bool showIcon, bool enabled, bool hasMerchantUnits})
   kHiddenMerchantInlineActionState = (
@@ -175,6 +182,26 @@ class GameMapAreaProvinceActionStates {
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
   }) => GameMapAreaProvinceActionStatesBuildPort.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
+
+  static ({bool showIcon, bool enabled, bool hasRailBuilderUnits}) buildRail({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) => GameMapAreaProvinceActionStatesBuildRail.compute(
     game: game,
     humanPlayerId: humanPlayerId,
     selectedTileKey: selectedTileKey,

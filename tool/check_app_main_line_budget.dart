@@ -64,13 +64,13 @@ const _packageName = 'colonizethis_app';
 // raised for MAP10001 extraction-disc legend (Refs #4367).
 // raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
-// raised for combined #4366+#4367+#4369 merge headroom.
+// raised for MAP20001 Build railroad Rail Builder tile shortcut (Refs #4383).
 // raised for MAP10001 tappable army stack markers (Refs #4384).
-// raised for army-marker + extraction-legend merge headroom after origin/dev.
+// raised for combined #4366+#4367+#4369+#4383+#4384 merge headroom.
 // raised for named map resource/improvement/road layers (Refs #4388).
 // raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
-// raised for combined #4384+#4385+#4388 merge headroom (measured 76_661).
-const _maxMainLines = 76700;
+// raised for combined #4383+#4384+#4385+#4388 merge headroom (measured 76_976).
+const _maxMainLines = 77000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
