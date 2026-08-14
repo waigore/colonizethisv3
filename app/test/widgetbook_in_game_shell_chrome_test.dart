@@ -81,10 +81,7 @@ void main() {
           );
           expect(find.byType(GameTabBar), findsOneWidget);
           expect(find.byType(PlayersBarToggleButton), findsOneWidget);
-          expect(
-            find.byType(PlayerTurnEventsFeedToggleButton),
-            findsOneWidget,
-          );
+          expect(find.byType(PlayerTurnEventsFeedToggleButton), findsOneWidget);
         }
       },
     );
@@ -96,10 +93,7 @@ void main() {
           tester,
           playersBarToggleDirectories,
           folder: 'Players Bar Toggle',
-          useCases: const [
-            'On — accent glyph + border',
-            'Off — dim glyph',
-          ],
+          useCases: const ['On — accent glyph + border', 'Off — dim glyph'],
           widgetType: PlayersBarToggleButton,
         );
       },
@@ -128,20 +122,17 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Game Map Corner Controls folder exposes narrow variant '
-      '(Refs #2870 S9)',
-      (WidgetTester tester) async {
-        final narrow = await pumpWidgetbookStoryAs<GameMapCornerControls>(
-          tester,
-          gameMapCornerControlsDirectories,
-          folder: 'Game Map Corner Controls',
-          useCase: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
-        );
-        expect(narrow.narrow, isTrue);
-        expect(narrow.homeToCapitalEnabled, isTrue);
-      },
-    );
+    testWidgets('Game Map Corner Controls folder exposes narrow variant '
+        '(Refs #2870 S9)', (WidgetTester tester) async {
+      final narrow = await pumpWidgetbookStoryAs<GameMapCornerControls>(
+        tester,
+        gameMapCornerControlsDirectories,
+        folder: 'Game Map Corner Controls',
+        useCase: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
+      );
+      expect(narrow.narrow, isTrue);
+      expect(narrow.homeToCapitalEnabled, isTrue);
+    });
 
     testWidgets(
       'Game Map Options Dialog folder exposes defaults + all-on + all-off variants',
@@ -154,6 +145,8 @@ void main() {
             'Defaults — overlay on, ownership off, names on',
             'All toggles on',
             'All toggles off',
+            'Improvements without resources',
+            'Roads disabled when improvements off',
           ],
           widgetType: GameMapOptionsDialog,
           extra: const Duration(milliseconds: 200),
@@ -208,36 +201,30 @@ void main() {
           useCase: 'Market + overseas profit — separate rows',
         );
         expect(combined.entries.length, 2);
-        expect(
-          combined.entries.map((entry) => entry.text).toList(),
-          [
-            'Overseas profit credited: £120 from 2 rival purchase(s). '
-                'Tap to open Deal Book.',
-            'Market: bought £240 · sold £160',
-          ],
-        );
+        expect(combined.entries.map((entry) => entry.text).toList(), [
+          'Overseas profit credited: £120 from 2 rival purchase(s). '
+              'Tap to open Deal Book.',
+          'Market: bought £240 · sold £160',
+        ]);
       },
     );
 
-    testWidgets(
-      'Player Turn Event Feed Card folder exposes narrow variants '
-      '(Refs #2870 S3)',
-      (WidgetTester tester) async {
-        for (final name in const [
-          'Narrow (360 dp) — populated, clamp(180, 50vw, 260)',
-          'Narrow (460 dp) — populated, 50vw mid-range',
-          'Narrow (599 dp) — empty, clamp upper bound (260 dp)',
-        ]) {
-          final card = await pumpWidgetbookStoryAs<PlayerTurnEventFeedCard>(
-            tester,
-            playerTurnEventFeedCardDirectories,
-            folder: 'Player Turn Event Feed Card',
-            useCase: name,
-          );
-          expect(card.narrow, isTrue, reason: name);
-        }
-      },
-    );
+    testWidgets('Player Turn Event Feed Card folder exposes narrow variants '
+        '(Refs #2870 S3)', (WidgetTester tester) async {
+      for (final name in const [
+        'Narrow (360 dp) — populated, clamp(180, 50vw, 260)',
+        'Narrow (460 dp) — populated, 50vw mid-range',
+        'Narrow (599 dp) — empty, clamp upper bound (260 dp)',
+      ]) {
+        final card = await pumpWidgetbookStoryAs<PlayerTurnEventFeedCard>(
+          tester,
+          playerTurnEventFeedCardDirectories,
+          folder: 'Player Turn Event Feed Card',
+          useCase: name,
+        );
+        expect(card.narrow, isTrue, reason: name);
+      }
+    });
 
     testWidgets(
       'Game Map Empire Left Rail folder exposes wide, debug-console, and narrow variants',
@@ -361,18 +348,17 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Victory folder exposes full scrim overlay (S12 story 12)',
-      (WidgetTester tester) async {
-        await pumpWidgetbookStory(
-          tester,
-          victoryUiDirectories,
-          folder: 'Victory',
-          useCase: 'Victory overlay — full scrim',
-        );
-        expect(find.byType(VictoryOverlay), findsOneWidget);
-      },
-    );
+    testWidgets('Victory folder exposes full scrim overlay (S12 story 12)', (
+      WidgetTester tester,
+    ) async {
+      await pumpWidgetbookStory(
+        tester,
+        victoryUiDirectories,
+        folder: 'Victory',
+        useCase: 'Victory overlay — full scrim',
+      );
+      expect(find.byType(VictoryOverlay), findsOneWidget);
+    });
 
     testWidgets(
       'Exit Confirm Dialog folder exposes default variant (S12 story 13)',
@@ -398,19 +384,13 @@ void main() {
         const folderUseCases = <(String, String)>[
           ('Game Top Bar', 'Default — hamburger + Next turn enabled'),
           ('Game Tab Bar', 'Default — Old World active, no delta'),
-          (
-            'Game Map Corner Controls',
-            'Default — all three buttons enabled',
-          ),
+          ('Game Map Corner Controls', 'Default — all three buttons enabled'),
           (
             'Game Map Empire Left Rail',
             'Wide — six core empire buttons with tooltips',
           ),
           ('Region Minimap', 'Visible — wide chrome with viewport rectangle'),
-          (
-            'Game Map Province Side Panel',
-            'Open — wide layout panel visible',
-          ),
+          ('Game Map Province Side Panel', 'Open — wide layout panel visible'),
           (
             'Player Turn Event Feed Card',
             'Populated — three entries (top entry tappable)',

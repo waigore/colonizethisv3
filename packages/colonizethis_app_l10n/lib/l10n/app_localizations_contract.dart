@@ -221,6 +221,18 @@ abstract class AppLocalizations {
   /// Toggle label for showing land province names on the map.
   String get map_displayOptions_showProvinceNames;
 
+  /// Section heading for resource, improvement, and road information-layer toggles.
+  String get map_displayOptions_mapMarksHeading;
+
+  /// Toggle for commodity icons and extraction discs on the empire map.
+  String get map_displayOptions_showMapResources;
+
+  /// Toggle for improvement I{n} labels on the empire map.
+  String get map_displayOptions_showMapImprovements;
+
+  /// Toggle for road and rail transport sprites; disabled when improvements are off.
+  String get map_displayOptions_showMapRoads;
+
   /// Generic Close button label or tooltip.
   String get common_close;
 
@@ -2370,6 +2382,27 @@ abstract class AppLocalizations {
 
   /// Tooltip for cycling map base layer display.
   String get mapCorner_tooltipBaseLayer;
+
+  /// Tooltip naming the current map information-layer combination.
+  String mapCorner_tooltipMapMarks(String combination);
+
+  /// Map marks combination: all information layers off.
+  String get mapCorner_mapMarks_terrainOnly;
+
+  /// Map marks combination: resource icons only.
+  String get mapCorner_mapMarks_resources;
+
+  /// Map marks combination: resources and improvement labels.
+  String get mapCorner_mapMarks_resourcesAndImprovements;
+
+  /// Map marks combination: full detail.
+  String get mapCorner_mapMarks_full;
+
+  /// Map marks combination: improvement labels without resources.
+  String get mapCorner_mapMarks_improvements;
+
+  /// Map marks combination: improvements and roads without resources.
+  String get mapCorner_mapMarks_improvementsAndRoads;
 
   /// Tooltip for centering the map on the home capital.
   String get mapCorner_tooltipCenterCapital;

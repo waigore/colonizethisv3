@@ -292,7 +292,7 @@ void main() {
         expect(find.byKey(kMapDisplayOptionsButtonKey), findsOneWidget);
         await openMapOptions(tester);
         expect(find.text('Map display options'), findsOneWidget);
-        expect(find.text('Show province overlay'), findsOneWidget);
+        expect(find.text('Show province and sea borders'), findsOneWidget);
         expect(find.text('Show province ownership'), findsOneWidget);
         expect(find.text('Show province names'), findsOneWidget);
       },

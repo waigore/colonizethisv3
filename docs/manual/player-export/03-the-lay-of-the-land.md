@@ -26,6 +26,8 @@ Tiles carry **terrain** and optional **resources**. Extraction only happens wher
 - Some commodities are **Old World only** (e.g. grain, meat, wool, horses), some **New World only** (e.g. sugar cane, tobacco, cotton, furs, spices, precious metals/gems), some **both** (e.g. timber, iron, copper, tin, coal).
 - **Prospect-required** minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until an Explorer **prospects** the tile. Other resources are knowable from terrain once the tile is revealed. Fog and exploration are Chapter 4.
 
+Open **Map display options** (gear, **Empire overview / map area**) to name what is painted: **Show resources** (commodity icons and extraction discs), **Show improvements** (`I{n}` labels), and **Show roads and rails**. Turning improvements off also turns roads off and greys that switch until improvements are on again. The stacked-layers button cycles four presets (terrain only → resources → resources and improvements → all three) and jumps to terrain only from any other combination. Those choices persist when you save.
+
 ### Capital and connectivity
 
 - Your **capital province** and **capital tile** are fixed at setup (Chapter 2). Great Power capital provinces start at high town development. The capital tile is on **plains** — preferred among Class A/B/C candidates when possible, or converted to plains after selection if the winning site was another terrain (any resource on that tile is cleared).
@@ -35,7 +37,7 @@ Tiles carry **terrain** and optional **resources**. Extraction only happens wher
 
 ### Extraction discs on **Empire overview / map area**
 
-When resource icons are visible on the empire map (**Empire overview / map area**), small coloured **extraction discs** may appear beside the icon on your owned improved tiles:
+When resource icons are visible on the empire map (**Empire overview / map area**) — **Show resources** is on in Map display options — small coloured **extraction discs** may appear beside the icon on your owned improved tiles:
 
 - **Gold discs** — effective yield transported toward the capital (**E**). These units count toward your stockpile path.
 - **Brown discs** — blocked yield (**B**). Either the tile is **not capital-connected** (nothing reaches the stockpile from that tile) or a **connected** tile is path- or transport-capped below its full production.

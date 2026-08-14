@@ -1,6 +1,8 @@
 // Golden regression for resource markers over transport (#1848, #1856).
 // SPEC/ui/map-widget.md § Resource Icons (transport overlap; no icon-local plate).
 
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -37,16 +39,12 @@ void main() {
       'road/rail transport overlay is active only in roads base mode (negative: labels mode)',
       () {
         expect(
-          shouldRenderTransportOverlay(
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-          ),
+          shouldRenderTransportOverlay(flags: MapBaseLayerFlags.fullDetail),
           isTrue,
         );
         expect(
           shouldRenderTransportOverlay(
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
+            flags: MapBaseLayerFlags.resourcesAndImprovements,
           ),
           isFalse,
         );

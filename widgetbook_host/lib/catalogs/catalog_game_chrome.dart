@@ -134,17 +134,13 @@ List<WidgetbookNode> get gameTabBarDirectories => [
       ),
       WidgetbookUseCase(
         name: 'News toggle — unread badge',
-        builder: (context) => _gameTabBarStoryFrame(
-          unreadBadgeCount: 5,
-          showFeed: false,
-        ),
+        builder: (context) =>
+            _gameTabBarStoryFrame(unreadBadgeCount: 5, showFeed: false),
       ),
       WidgetbookUseCase(
         name: 'News toggle — feed open (no badge)',
-        builder: (context) => _gameTabBarStoryFrame(
-          unreadBadgeCount: 0,
-          showFeed: true,
-        ),
+        builder: (context) =>
+            _gameTabBarStoryFrame(unreadBadgeCount: 0, showFeed: true),
       ),
       WidgetbookUseCase(
         name: 'Players bar toggle — on (active accent)',
@@ -213,7 +209,8 @@ List<WidgetbookNode> get playersBarToggleDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Off — dim glyph',
-        builder: (context) => _playersBarToggleStoryFrame(showPlayersBar: false),
+        builder: (context) =>
+            _playersBarToggleStoryFrame(showPlayersBar: false),
       ),
     ],
   ),
@@ -298,6 +295,28 @@ List<WidgetbookNode> get gameMapOptionsDialogDirectories => [
             showProvinceOverlay: false,
             showProvinceOwnershipTint: false,
             showProvinceNamesLayer: false,
+            showMapResources: false,
+            showMapImprovements: false,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Improvements without resources',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapResources: false,
+            showMapImprovements: true,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Roads disabled when improvements off',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapImprovements: false,
+            showMapRoads: false,
           ),
         ),
       ),
@@ -470,15 +489,7 @@ Widget _gameMapCornerControlsStoryFrame({required Widget child}) {
     child: SizedBox(
       width: 320,
       height: 220,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 8,
-            bottom: 8,
-            child: child,
-          ),
-        ],
-      ),
+      child: Stack(children: [Positioned(left: 8, bottom: 8, child: child)]),
     ),
   );
 }
@@ -506,13 +517,7 @@ Widget _gameMapCornerControlsNarrowStoryFrame({
           width: viewportWidth,
           height: 640,
           child: Stack(
-            children: [
-              Positioned(
-                left: 2,
-                bottom: 2,
-                child: child,
-              ),
-            ],
+            children: [Positioned(left: 2, bottom: 2, child: child)],
           ),
         ),
       ),
@@ -594,9 +599,8 @@ List<WidgetbookNode> get gameMapEmpireLeftRailDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Wide — debug console enabled (7 icons)',
-        builder: (context) => _gameMapEmpireLeftRailStoryFrame(
-          debugConsoleEnabled: true,
-        ),
+        builder: (context) =>
+            _gameMapEmpireLeftRailStoryFrame(debugConsoleEnabled: true),
       ),
       WidgetbookUseCase(
         name: 'Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed',
@@ -625,10 +629,8 @@ List<WidgetbookNode> get gameRegionMinimapDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Narrow — 90 × 70 dp grid (issue #2870 S3)',
-        builder: (context) => _gameRegionMinimapStoryFrame(
-          visible: true,
-          narrow: true,
-        ),
+        builder: (context) =>
+            _gameRegionMinimapStoryFrame(visible: true, narrow: true),
       ),
     ],
   ),
@@ -642,15 +644,13 @@ List<WidgetbookNode> get gameMapProvinceDetailSidePanelDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Open — wide layout panel visible',
-        builder: (context) => _gameMapProvinceDetailSidePanelProviderScope(
-          initialOpen: true,
-        ),
+        builder: (context) =>
+            _gameMapProvinceDetailSidePanelProviderScope(initialOpen: true),
       ),
       WidgetbookUseCase(
         name: 'Closed — panel collapsed',
-        builder: (context) => _gameMapProvinceDetailSidePanelProviderScope(
-          initialOpen: false,
-        ),
+        builder: (context) =>
+            _gameMapProvinceDetailSidePanelProviderScope(initialOpen: false),
       ),
     ],
   ),
@@ -767,9 +767,10 @@ RegionMapViewportSnapshot _storyMinimapViewportSnapshot(
   // 1.6 × beyond the fit so the white rectangle reads as a window inside
   // the minimap grid rather than spanning the whole panel.
   final fitMapZoom =
-      viewportWidthLogical / mapWidthWorld < viewportHeightLogical / mapHeightWorld
-          ? viewportWidthLogical / mapWidthWorld
-          : viewportHeightLogical / mapHeightWorld;
+      viewportWidthLogical / mapWidthWorld <
+          viewportHeightLogical / mapHeightWorld
+      ? viewportWidthLogical / mapWidthWorld
+      : viewportHeightLogical / mapHeightWorld;
   return RegionMapViewportSnapshot(
     regionId: region.regionId,
     cellSizePx: cellSize,

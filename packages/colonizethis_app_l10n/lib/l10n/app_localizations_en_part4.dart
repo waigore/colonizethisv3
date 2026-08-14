@@ -70,7 +70,31 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
 
   @override
   String get mapCorner_tooltipBaseLayer =>
-      'Base layer: terrain / +resources / +improvements';
+      'Map marks: resources, improvements, and roads';
+
+  @override
+  String mapCorner_tooltipMapMarks(String combination) =>
+      'Map marks: $combination';
+
+  @override
+  String get mapCorner_mapMarks_terrainOnly => 'terrain only';
+
+  @override
+  String get mapCorner_mapMarks_resources => 'resources';
+
+  @override
+  String get mapCorner_mapMarks_resourcesAndImprovements =>
+      'resources and improvements';
+
+  @override
+  String get mapCorner_mapMarks_full => 'resources, improvements, and roads';
+
+  @override
+  String get mapCorner_mapMarks_improvements => 'improvements';
+
+  @override
+  String get mapCorner_mapMarks_improvementsAndRoads =>
+      'improvements and roads';
 
   @override
   String get mapCorner_tooltipCenterCapital => 'Center on capital';
@@ -170,7 +194,8 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
 
   @override
-  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
+  String get diplomacy_panel_noMinorNations =>
+      'No Minor Nations discovered yet.';
 
   @override
   String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
@@ -230,7 +255,10 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_panel_fewerActions => 'Fewer actions';
 
   @override
-  String diplomacy_actionRejection_semanticsLabel(String action, String reason) {
+  String diplomacy_actionRejection_semanticsLabel(
+    String action,
+    String reason,
+  ) {
     return '$action. $reason';
   }
 
@@ -266,11 +294,7 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get production_labourDetails => 'Labour details';
 
   @override
-  String production_labourTierDetail(
-    String tier,
-    int working,
-    int notWorking,
-  ) {
+  String production_labourTierDetail(String tier, int working, int notWorking) {
     return '$tier: $working working, $notWorking not working';
   }
 
@@ -914,5 +938,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
   String get techEffectSummary_industrial_funding_of_research_0 =>
       'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)';
-
 }

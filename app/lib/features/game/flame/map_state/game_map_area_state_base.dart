@@ -2,13 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_map/colonizethis_map.dart'
-    show RegionMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../widgets/shell/shell_player_context.dart';
-import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
 import '../../../../core/services/subscription_tracker.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
@@ -48,10 +45,6 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   List<ct_models.GameToUIEvent> resolvedPlayerTurnEvents = const [];
   bool isTurnResolving = false;
   StreamSubscription<TurnResolutionProgressEvent>? turnResolutionProgressSub;
-
-  /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
-  BaseLayerDisplayMode baseLayerDisplayMode =
-      BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
 
   String get mapPlayerId =>
       ref.read(shellPlayerContextProvider).mapPlayerIdFor(widget.game);

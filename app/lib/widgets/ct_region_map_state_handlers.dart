@@ -36,6 +36,10 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
     showProvinceOwnershipTint: state.widget.showProvinceOwnershipTint,
     showProvinceNamesLayer: state.widget.showProvinceNamesLayer,
     visibilityMode: state.widget.visibilityMode,
+    mapBaseLayerFlags: resolveMapBaseLayerFlags(
+      flags: state.widget.mapBaseLayerFlags,
+      mode: state.widget.baseLayerDisplayMode,
+    ),
     baseLayerDisplayMode:
         state.widget.baseLayerDisplayMode ??
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
@@ -44,10 +48,8 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
     onRegionViewChanged: state.widget.onRegionViewChanged,
     onProvinceHovered: state.widget.onProvinceHovered,
     onTileHovered: state.widget.onTileHovered,
-    onCivilianTileTapped: (tileKey) => handleCtRegionMapCivilianTileTapped(
-      state,
-      tileKey,
-    ),
+    onCivilianTileTapped: (tileKey) =>
+        handleCtRegionMapCivilianTileTapped(state, tileKey),
     onFleetMarkerTapped: (locationScopeKey, fleetIds, markerTileKey) =>
         handleCtRegionMapFleetMarkerTapped(
           state,
@@ -62,8 +64,7 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
     secondaryHighlightTileKeys: state.widget.secondaryHighlightTileKeys,
     validTileKeys: state.widget.validTileKeys,
     onTileSelected: state.widget.onTileSelected,
-    onWorkTargetSelectionCancelled:
-        state.widget.onWorkTargetSelectionCancelled,
+    onWorkTargetSelectionCancelled: state.widget.onWorkTargetSelectionCancelled,
     onTownIconTapped: state.widget.bus != null
         ? (provinceId) {
             state.widget.bus!.emit(OpenProvinceDetailPanelEvent(provinceId));

@@ -7,14 +7,16 @@ import '../caches/resource_icon_cache.dart';
 import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 import 'region_map_component_render_core.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show PlayerView, resourceIdVisibleInPlayerView;
 
 extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
   void paintL1PlainsInteriorResourceVariantOverlays(Canvas canvas) {
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
+          regionMapComponentVisibilityForTerrain(this, cell) ==
+              TileVisibility.unrevealed) {
         continue;
       }
       if (cell.terrainType != TerrainType.plains) continue;
@@ -69,9 +71,7 @@ extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
   }
 
   void paintTransportOverlayTiles(Canvas canvas) {
-    if (!shouldRenderTransportOverlay(
-      baseLayerDisplayMode: baseLayerDisplayMode,
-    )) {
+    if (!shouldRenderTransportOverlay(flags: mapBaseLayerFlags)) {
       return;
     }
     if (!transportOverlayTilesetCache.isLoaded) {
@@ -101,7 +101,9 @@ extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
       );
       final srcRect = tileset.tileRectForMask(mask);
       if (srcRect == null) {
-        regionMapComponentLifecycleLog.w('Transport tile missing for family=$family mask=$mask');
+        regionMapComponentLifecycleLog.w(
+          'Transport tile missing for family=$family mask=$mask',
+        );
         continue;
       }
       final tileLeft = cell.x * cellSize;
@@ -121,7 +123,8 @@ extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
     final top = cell.y * cellSize;
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.unrevealed) {
       return;
     }
 
@@ -169,7 +172,8 @@ extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
   Paint resourceOverlayPaintForCell(CellViewData cell) {
     final paint = Paint();
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.fogged) {
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.fogged) {
       paint.colorFilter = ColorFilter.mode(
         RegionMapPalette.mapHoverSelectorIdle.withValues(
           alpha: RegionMapPalette.foggedResourceIconModulateAlpha,
@@ -200,20 +204,18 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
   }
 
   void paintOverlay(Canvas canvas) {
-    final showResources =
-        baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
+    final showResources = shouldShowResourceIcons(flags: mapBaseLayerFlags);
     final showExtractionIndicators = shouldShowExtractionUnitIndicators(
-      baseLayerDisplayMode: baseLayerDisplayMode,
+      flags: mapBaseLayerFlags,
     );
-    final showImprovementLabels =
-        baseLayerDisplayMode ==
-            BaseLayerDisplayMode.terrainAndResourcesImprovementLabels ||
-        baseLayerDisplayMode ==
-            BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+    final showImprovementLabels = shouldShowImprovementLabels(
+      flags: mapBaseLayerFlags,
+    );
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
+          regionMapComponentVisibilityForTerrain(this, cell) ==
+              TileVisibility.unrevealed) {
         continue;
       }
 
@@ -259,7 +261,8 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
       for (final cell in region.cells) {
         if (cell.isSea) continue;
         if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
+            regionMapComponentVisibilityForTerrain(this, cell) ==
+                TileVisibility.unrevealed) {
           continue;
         }
         final imp = cell.improvementLevel ?? 0;

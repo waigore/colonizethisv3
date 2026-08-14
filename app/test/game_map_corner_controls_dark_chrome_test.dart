@@ -6,6 +6,8 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -15,14 +17,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
 
-Widget _wrap({
-  required Widget child,
-}) {
+Widget _wrap({required Widget child}) {
   return buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en'),
-    child: Scaffold(body: Align(alignment: Alignment.bottomLeft, child: child)),
+    child: Scaffold(
+      body: Align(alignment: Alignment.bottomLeft, child: child),
+    ),
   );
 }
 
@@ -35,12 +37,10 @@ void main() {
   // glyph args (StrictAssetIcon size) without forcing image decoding, and
   // assert the glyph is full-colour pixel art (no ColorFiltered srcIn tint
   // per M6 / S15). The widget tree is still constructed end-to-end.
-  group(
-    'GameMapCornerControls dark editorial-monocle chrome (Refs #2861 S4)',
-    () {
-      testWidgets('positive: default state — gradient surface + 32 dp size + 1 px border + full-colour glyph (no srcIn tint)', (
-        WidgetTester tester,
-      ) async {
+  group('GameMapCornerControls dark editorial-monocle chrome (Refs #2861 S4)', () {
+    testWidgets(
+      'positive: default state — gradient surface + 32 dp size + 1 px border + full-colour glyph (no srcIn tint)',
+      (WidgetTester tester) async {
         await tester.pumpWidget(
           _wrap(
             child: GameMapCornerControls(
@@ -77,10 +77,7 @@ void main() {
         // M6 / S15: glyph renders as full-colour pixel art — no ColorFiltered
         // srcIn tint collapsing the asset to a single accent colour.
         expect(
-          find.descendant(
-            of: baseFinder,
-            matching: find.byType(ColorFiltered),
-          ),
+          find.descendant(of: baseFinder, matching: find.byType(ColorFiltered)),
           findsNothing,
         );
 
@@ -93,11 +90,12 @@ void main() {
         );
         expect(icon.width, GameMapCornerControls.iconSize);
         expect(icon.height, GameMapCornerControls.iconSize);
-      });
+      },
+    );
 
-      testWidgets('positive: hover lifts border to --accent-dim and leaves the full-colour glyph unrecoloured', (
-        WidgetTester tester,
-      ) async {
+    testWidgets(
+      'positive: hover lifts border to --accent-dim and leaves the full-colour glyph unrecoloured',
+      (WidgetTester tester) async {
         await tester.pumpWidget(
           _wrap(
             child: GameMapCornerControls(
@@ -124,18 +122,14 @@ void main() {
             matching: find.byType(AnimatedContainer),
           ),
         );
-        final hoveredDecoration =
-            hoveredContainer.decoration as BoxDecoration;
+        final hoveredDecoration = hoveredContainer.decoration as BoxDecoration;
         final hoveredBorder = hoveredDecoration.border as Border;
         expect(hoveredBorder.top.color, EditorialMonoclePalette.accentDim);
 
         // M6 / S15: hover affordance lives on the border only — the glyph is
         // never wrapped in a ColorFiltered srcIn tint in any state.
         expect(
-          find.descendant(
-            of: baseFinder,
-            matching: find.byType(ColorFiltered),
-          ),
+          find.descendant(of: baseFinder, matching: find.byType(ColorFiltered)),
           findsNothing,
         );
 
@@ -152,11 +146,12 @@ void main() {
         final restoredBorder =
             (restoredContainer.decoration as BoxDecoration).border as Border;
         expect(restoredBorder.top.color, EditorialMonoclePalette.border);
-      });
+      },
+    );
 
-      testWidgets('positive: home-to-capital disabled wraps the surface in IgnorePointer + Opacity(0.4)', (
-        WidgetTester tester,
-      ) async {
+    testWidgets(
+      'positive: home-to-capital disabled wraps the surface in IgnorePointer + Opacity(0.4)',
+      (WidgetTester tester) async {
         var homeCalls = 0;
         await tester.pumpWidget(
           _wrap(
@@ -206,17 +201,15 @@ void main() {
         // M6 / S15: disabled glyph still renders in native full colour — no
         // ColorFiltered srcIn tint over the asset.
         expect(
-          find.descendant(
-            of: homeFinder,
-            matching: find.byType(ColorFiltered),
-          ),
+          find.descendant(of: homeFinder, matching: find.byType(ColorFiltered)),
           findsNothing,
         );
-      });
+      },
+    );
 
-      testWidgets('negative regression guard: no Material(color: Colors.white …) and no Material button chrome inside the row', (
-        WidgetTester tester,
-      ) async {
+    testWidgets(
+      'negative regression guard: no Material(color: Colors.white …) and no Material button chrome inside the row',
+      (WidgetTester tester) async {
         await tester.pumpWidget(
           _wrap(
             child: GameMapCornerControls(
@@ -263,7 +256,24 @@ void main() {
           find.descendant(of: row, matching: find.byType(IconButton)),
           findsNothing,
         );
-      });
-    },
-  );
+      },
+    );
+
+    testWidgets(
+      'cycle button tooltip names the current map marks combination (Refs #4388)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            child: GameMapCornerControls(
+              onCycleBaseLayerDisplayMode: () {},
+              onCenterOnHomeCapital: () {},
+              onOpenMapDisplayOptions: () {},
+              mapBaseLayerFlags: MapBaseLayerFlags.resourcesOnly,
+            ),
+          ),
+        );
+        expect(find.byTooltip('Map marks: resources'), findsOneWidget);
+      },
+    );
+  });
 }

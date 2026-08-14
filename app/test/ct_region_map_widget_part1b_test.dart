@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show
@@ -204,18 +206,14 @@ void main() {
       'extraction indicator visibility, stack layout, and display size',
       (WidgetTester tester) async {
         await _pumpBlank(tester);
-        for (final case_ in <({BaseLayerDisplayMode mode, bool show})>[
-          (mode: BaseLayerDisplayMode.terrainOnly, show: false),
-          (mode: BaseLayerDisplayMode.terrainAndResources, show: true),
-          (
-            mode: BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
-            show: true,
-          ),
+        for (final case_ in <({MapBaseLayerFlags flags, bool show})>[
+          (flags: MapBaseLayerFlags.terrainOnly, show: false),
+          (flags: MapBaseLayerFlags.resourcesOnly, show: true),
+          (flags: MapBaseLayerFlags.resourcesAndImprovements, show: true),
+          (flags: MapBaseLayerFlags.fullDetail, show: true),
         ]) {
           expect(
-            shouldShowExtractionUnitIndicators(
-              baseLayerDisplayMode: case_.mode,
-            ),
+            shouldShowExtractionUnitIndicators(flags: case_.flags),
             case_.show,
           );
         }
