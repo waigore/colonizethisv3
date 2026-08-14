@@ -69,7 +69,7 @@ void main() {
       // narrow breakpoint (`kMainMenuNarrowBreakpoint`), so the menu
       // container must paint the compact `kMainMenuBodyPaddingNarrow`
       // padding rather than the default desktop padding. Existing
-      // `screen_spec_acceptance_part2_test.dart` AC pins this at the 430 dp
+      // `screen_spec_acceptance_pixel_art_chrome_test.dart` AC pins this at the 430 dp
       // boundary and at 360 dp; this pin closes the same visual contract
       // at the absolute minimum supported viewport per
       // `SPEC/ui/mobile-adaptation.md` § 4 Main Menu (`≤ 430 dp`) and § 7
