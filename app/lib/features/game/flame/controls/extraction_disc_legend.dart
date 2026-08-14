@@ -1,10 +1,12 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/ct_spacing.dart';
 import '../region_map/region_map_component_shared_palette.dart'
-    show RegionMapPalette, BaseLayerDisplayMode, shouldShowExtractionUnitIndicators;
+    show RegionMapPalette, shouldShowExtractionUnitIndicators;
 import 'extraction_disc_legend_support.dart';
 
 /// Stable key for the MAP10001 extraction-disc legend chip (Refs #4367).
@@ -16,12 +18,10 @@ const Key kExtractionDiscLegendKey = Key('extraction_disc_legend');
 /// player is present (normal play / player observe), including turn 1 with
 /// zero discs painted. Hidden in terrain-only and global observe.
 bool shouldShowExtractionDiscLegend({
-  required BaseLayerDisplayMode baseLayerDisplayMode,
+  required MapBaseLayerFlags flags,
   required String? viewingPlayerId,
 }) {
-  return shouldShowExtractionUnitIndicators(
-        baseLayerDisplayMode: baseLayerDisplayMode,
-      ) &&
+  return shouldShowExtractionUnitIndicators(flags: flags) &&
       viewingPlayerId != null;
 }
 

@@ -55,10 +55,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _frame(
-          initialState: MapViewState.defaults,
-          onChanged: (_) {},
-        ),
+        _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
       );
       await _openDialog(tester);
 
@@ -78,15 +75,16 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _frame(
-          initialState: MapViewState.defaults,
-          onChanged: (_) {},
-        ),
+        _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
       );
       await _openDialog(tester);
 
       expect(find.text('Map display options'), findsOneWidget);
-      expect(find.text('Show province overlay'), findsOneWidget);
+      expect(find.text('Map marks'), findsOneWidget);
+      expect(find.text('Show resources'), findsOneWidget);
+      expect(find.text('Show improvements'), findsOneWidget);
+      expect(find.text('Show roads and rails'), findsOneWidget);
+      expect(find.text('Show province and sea borders'), findsOneWidget);
       expect(find.text('Show province ownership'), findsOneWidget);
       expect(find.text('Show province names'), findsOneWidget);
       expect(
@@ -95,22 +93,25 @@ void main() {
       );
     });
 
-    testWidgets('renders four keyed CtToggleSwitch rows with default values', (
+    testWidgets('renders seven keyed CtToggleSwitch rows with default values', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _frame(
-          initialState: MapViewState.defaults,
-          onChanged: (_) {},
-        ),
+        _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
       );
       await _openDialog(tester);
 
-      expect(
-        find.byType(CtToggleSwitch),
-        findsNWidgets(4),
-      );
+      expect(find.byType(CtToggleSwitch), findsNWidgets(7));
 
+      final resources = tester.widget<CtToggleSwitch>(
+        find.byKey(kGameMapOptionsShowMapResourcesToggleKey),
+      );
+      final improvements = tester.widget<CtToggleSwitch>(
+        find.byKey(kGameMapOptionsShowMapImprovementsToggleKey),
+      );
+      final roads = tester.widget<CtToggleSwitch>(
+        find.byKey(kGameMapOptionsShowMapRoadsToggleKey),
+      );
       final overlay = tester.widget<CtToggleSwitch>(
         find.byKey(kGameMapOptionsShowProvinceOverlayToggleKey),
       );
@@ -124,90 +125,172 @@ void main() {
         find.byKey(kGameMapOptionsShowCapitalLinkDisconnectedToggleKey),
       );
 
+      expect(resources.value, isTrue);
+      expect(improvements.value, isTrue);
+      expect(roads.value, isTrue);
+      expect(roads.onChanged, isNotNull);
       expect(overlay.value, isTrue);
       expect(ownership.value, isFalse);
       expect(names.value, isTrue);
       expect(capitalLink.value, isTrue);
     });
 
-    testWidgets('Close action uses CtNinePatchButton (no Material TextButton)',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        _frame(
-          initialState: MapViewState.defaults,
-          onChanged: (_) {},
-        ),
-      );
-      await _openDialog(tester);
+    testWidgets(
+      'Close action uses CtNinePatchButton (no Material TextButton)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
+        );
+        await _openDialog(tester);
 
-      expect(
-        find.descendant(
-          of: find.byType(CtDialogShell),
-          matching: find.byType(CtNinePatchButton),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(CtDialogShell),
-          matching: find.byType(TextButton),
-        ),
-        findsNothing,
-      );
+        expect(
+          find.descendant(
+            of: find.byType(CtDialogShell),
+            matching: find.byType(CtNinePatchButton),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(CtDialogShell),
+            matching: find.byType(TextButton),
+          ),
+          findsNothing,
+        );
 
-      final CtNinePatchButton close = tester.widget<CtNinePatchButton>(
-        find.widgetWithText(CtNinePatchButton, 'Close'),
-      );
-      expect(close.dangerVariant, isFalse);
-    });
+        final CtNinePatchButton close = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Close'),
+        );
+        expect(close.dangerVariant, isFalse);
+      },
+    );
 
     testWidgets(
-        'toggling a switch updates local state and emits onChanged with new MapViewState',
-        (WidgetTester tester) async {
-      final List<MapViewState> emitted = <MapViewState>[];
-      await tester.pumpWidget(
-        _frame(
-          initialState: MapViewState.defaults,
-          onChanged: emitted.add,
-        ),
-      );
-      await _openDialog(tester);
+      'toggling a switch updates local state and emits onChanged with new MapViewState',
+      (WidgetTester tester) async {
+        final List<MapViewState> emitted = <MapViewState>[];
+        await tester.pumpWidget(
+          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
+        );
+        await _openDialog(tester);
 
-      await tester.tap(
-        find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+        await tester.tap(
+          find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
 
-      expect(emitted, hasLength(1));
-      expect(emitted.last.showProvinceOwnershipTint, isTrue);
-      // Other fields unchanged from default.
-      expect(emitted.last.showProvinceOverlay, isTrue);
-      expect(emitted.last.showProvinceNamesLayer, isTrue);
+        expect(emitted, hasLength(1));
+        expect(emitted.last.showProvinceOwnershipTint, isTrue);
+        // Other fields unchanged from default.
+        expect(emitted.last.showProvinceOverlay, isTrue);
+        expect(emitted.last.showProvinceNamesLayer, isTrue);
 
-      // Local state updated immediately within the same dialog session.
-      final ownership = tester.widget<CtToggleSwitch>(
-        find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
-      );
-      expect(ownership.value, isTrue);
-    });
+        // Local state updated immediately within the same dialog session.
+        final ownership = tester.widget<CtToggleSwitch>(
+          find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
+        );
+        expect(ownership.value, isTrue);
+      },
+    );
 
-    testWidgets('Close button dismisses the dialog without emitting onChanged',
-        (WidgetTester tester) async {
-      final List<MapViewState> emitted = <MapViewState>[];
-      await tester.pumpWidget(
-        _frame(
-          initialState: MapViewState.defaults,
-          onChanged: emitted.add,
-        ),
-      );
-      await _openDialog(tester);
+    testWidgets(
+      'Close button dismisses the dialog without emitting onChanged',
+      (WidgetTester tester) async {
+        final List<MapViewState> emitted = <MapViewState>[];
+        await tester.pumpWidget(
+          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
+        );
+        await _openDialog(tester);
 
-      await tester.tap(find.widgetWithText(CtNinePatchButton, 'Close'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Close'));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(CtDialogShell), findsNothing);
-      expect(emitted, isEmpty);
-    });
+        expect(find.byType(CtDialogShell), findsNothing);
+        expect(emitted, isEmpty);
+      },
+    );
+
+    testWidgets(
+      'turning improvements off auto-offs roads and disables the roads switch',
+      (WidgetTester tester) async {
+        final List<MapViewState> emitted = <MapViewState>[];
+        await tester.pumpWidget(
+          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
+        );
+        await _openDialog(tester);
+
+        await tester.tap(
+          find.byKey(kGameMapOptionsShowMapImprovementsToggleKey),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(emitted, hasLength(1));
+        expect(emitted.last.showMapImprovements, isFalse);
+        expect(emitted.last.showMapRoads, isFalse);
+        expect(emitted.last.showMapResources, isTrue);
+
+        final roads = tester.widget<CtToggleSwitch>(
+          find.byKey(kGameMapOptionsShowMapRoadsToggleKey),
+        );
+        expect(roads.value, isFalse);
+        expect(roads.onChanged, isNull);
+
+        await tester.tap(find.byKey(kGameMapOptionsShowMapRoadsToggleKey));
+        await tester.pump();
+        expect(emitted, hasLength(1));
+      },
+    );
+
+    testWidgets(
+      'turning improvements on leaves roads off until the player turns them on',
+      (WidgetTester tester) async {
+        final List<MapViewState> emitted = <MapViewState>[];
+        await tester.pumpWidget(
+          _frame(
+            initialState: const MapViewState(
+              showMapImprovements: false,
+              showMapRoads: false,
+            ),
+            onChanged: emitted.add,
+          ),
+        );
+        await _openDialog(tester);
+
+        await tester.tap(
+          find.byKey(kGameMapOptionsShowMapImprovementsToggleKey),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(emitted.last.showMapImprovements, isTrue);
+        expect(emitted.last.showMapRoads, isFalse);
+        final roads = tester.widget<CtToggleSwitch>(
+          find.byKey(kGameMapOptionsShowMapRoadsToggleKey),
+        );
+        expect(roads.value, isFalse);
+        expect(roads.onChanged, isNotNull);
+      },
+    );
+
+    testWidgets(
+      'turning resources off leaves improvements and roads unchanged',
+      (WidgetTester tester) async {
+        final List<MapViewState> emitted = <MapViewState>[];
+        await tester.pumpWidget(
+          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
+        );
+        await _openDialog(tester);
+
+        await tester.tap(find.byKey(kGameMapOptionsShowMapResourcesToggleKey));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(emitted.last.showMapResources, isFalse);
+        expect(emitted.last.showMapImprovements, isTrue);
+        expect(emitted.last.showMapRoads, isTrue);
+      },
+    );
   });
 }

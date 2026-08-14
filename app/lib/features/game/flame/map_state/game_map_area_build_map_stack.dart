@@ -1,10 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-import 'package:colonizethis_map/colonizethis_map.dart'
-    show RegionMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';
@@ -55,7 +52,7 @@ mixin GameMapAreaBuildMapStack
           isNarrow: isNarrow,
           game: widget.game,
           region: projectedRegion,
-          baseLayerDisplayMode: baseLayerDisplayMode,
+          mapBaseLayerFlags: mapViewState.mapBaseLayerFlags,
           showProvinceOverlay: mapViewState.showProvinceOverlay,
           showProvinceOwnershipTint: mapViewState.showProvinceOwnershipTint,
           showProvinceNamesLayer: mapViewState.showProvinceNamesLayer,
@@ -136,7 +133,7 @@ mixin GameMapAreaBuildMapStack
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (shouldShowExtractionDiscLegend(
-                baseLayerDisplayMode: baseLayerDisplayMode,
+                flags: mapViewState.mapBaseLayerFlags,
                 viewingPlayerId: shell.viewingPlayerId,
               )) ...[
                 ExtractionDiscLegend(
@@ -153,6 +150,7 @@ mixin GameMapAreaBuildMapStack
               ],
               GameMapCornerControls(
                 narrow: isNarrow,
+                mapBaseLayerFlags: mapViewState.mapBaseLayerFlags,
                 onCycleBaseLayerDisplayMode: cycleBaseLayerDisplayMode,
                 onCenterOnHomeCapital: centerOnCurrentPlayerCapital,
                 homeToCapitalEnabled: shell.viewingPlayerId != null,

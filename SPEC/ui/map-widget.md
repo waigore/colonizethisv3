@@ -110,20 +110,24 @@ Implementation: `_paintTiles` covers steps 1–4; `_paintGreatPowerLandOwnership
 
 ## Base layer display mode
 
-The widget accepts an optional **base layer display mode** enumerating terrain, resource icons, improvement labels, and road/rail transport sprites. When `baseLayerDisplayMode` is **omitted** (e.g. some Widgetbook stories), the widget uses **terrain + resources + improvements + roads** (full detail) for backward compatibility.
+The widget accepts optional **information-layer flags** (`showMapResources`, `showMapImprovements`, `showMapRoads`; all default **true**). These flags are the **single source of truth** at the paint boundary (Refs #4388). An optional exclusive `BaseLayerDisplayMode` enum remains a Widgetbook/debug convenience and is converted to flags when the flags are omitted. When both are omitted, the widget uses full detail.
 
-| Mode | Terrain | Resource icon | Improvement `I{n}` (n > 0) | Road/rail transport sprite (`roadLevel` > 0) |
+| Flags (R / I / Roads) | Terrain | Resource icon | Improvement `I{n}` (n > 0) | Road/rail sprite (`roadLevel` > 0) |
 |------|---------|---------------|----------------------------|---------------------------|
-| **terrainOnly** | Yes | No | No | No |
-| **terrainAndResources** | Yes | Yes | No | No |
-| **terrainAndResourcesImprovementLabels** | Yes | Yes | Yes | No |
-| **terrainAndResourcesImprovementsRoads** | Yes | Yes | Yes | Yes |
+| F / F / F (terrain only) | Yes | No | No | No |
+| T / F / F (resources) | Yes | Yes | No | No |
+| T / T / F (resources + improvements) | Yes | Yes | Yes | No |
+| T / T / T (full detail) | Yes | Yes | Yes | Yes |
+| F / T / F (improvements only) | Yes | No | Yes | No |
+| F / T / T (improvements + roads) | Yes | No | Yes | Yes |
 
-**Constraint:** Any mode that shows road/rail transport sprites **must** also show improvement labels (the enum satisfies this: roads exist only in `terrainAndResourcesImprovementsRoads`).
+**Constraint:** Road/rail sprites paint only when **both** `showMapRoads` and `showMapImprovements` are on. Extraction discs gate on `showMapResources == true` (plus existing fog/prospect). Widgetbook stories that omit flags keep full-detail fallback.
 
-**Base layer display mode** does not hide capitals, town/port icons, or warp zone indicators when switching among terrain vs resources vs labels — those markers are independent of `terrainOnly` / `terrainAndResources` / etc.
+The four cycle presets the stacked-layers button writes are the first four rows; the last two are dialog-only. Cycle from a non-preset writes terrain only.
 
-**Player-constrained visibility** (fog of war) is separate: **capital markers** and **town/port icons** use the **host cell’s** `CellViewData.visibility` and are **not** drawn when that cell is `unrevealed`, so they do not leak positions in unknown territory. **Warp zone** glow borders are still drawn regardless of `baseLayerDisplayMode`; in player-constrained mode, each warp glow edge segment follows the same edge-gating predicate as province/political borders (draw only if at least one adjacent cell is not `unrevealed`).
+**Base layer flags** do not hide capitals, town/port icons, or warp zone indicators.
+
+**Player-constrained visibility** (fog of war) is separate: **capital markers** and **town/port icons** use the **host cell’s** `CellViewData.visibility` and are **not** drawn when that cell is `unrevealed`, so they do not leak positions in unknown territory. **Warp zone** glow borders are still drawn regardless of these flags; in player-constrained mode, each warp glow edge segment follows the same edge-gating predicate as province/political borders (draw only if at least one adjacent cell is not `unrevealed`).
 
 ---
 
@@ -195,7 +199,7 @@ When resource icons are visible, the map may render extraction throughput indica
 - **Placement:** Indicators are anchored to the painted resource icon `Rect` and rendered immediately to the right in a horizontal left-to-right stack with overlap.
 - **Visual:** Each indicator is a **filled disc with a dark outline** (circle inscribed in the indicator square), not a second copy of the commodity resource bitmap. **Paint order:** fill then stroke; left-to-right stack order unchanged. **Transport semantics (colors):** effective discs (units that count as **effectively transported** toward the capital per `CellViewData.resourceExtractionEffectiveUnits`) use a fixed **gold** fill `Color(0xFFFFD700)` (same accent gold as map warp/selection constants in `region_map_component_shared.dart`). Blocked discs (transport/path-limited slots per `resourceExtractionBlockedUnits`) use a fixed **brown** fill `Color(0xFF5C4033)`. **Outline:** both gold and brown discs share a fixed **dark stroke** `Color(0xFF1A120C)` at ~`1.25` logical px width (stroke radius inset by half the stroke width so the rim stays inside the indicator square). Stroke uses the same fog modulation as fill. This matches program paint order language (“extraction discs”) in `SPEC/program/map-region-map-render.md`. Optional commodity-hue reference output from `tool/generate_resource_icon_disc_palette.dart` is **not** used for on-map extraction disc fills.
 - **Size:** Indicator square edge length is `>=` resource icon display edge length for that tile (slightly larger by default, capped at source-asset native 64 px); the painted disc is inscribed in that square.
-- **Base-layer gating:** Indicators are rendered only when resource icons are rendered (`baseLayerDisplayMode != terrainOnly`).
+- **Base-layer gating:** Indicators are rendered only when resource icons are rendered (`showMapResources == true`).
 - **Icon visibility gating:** If resource icon visibility/prospecting rules suppress the icon on a tile, indicators are also suppressed on that tile.
 - **Fog parity:** On `TileVisibility.fogged`, indicators use the same fog modulation treatment as resource icons (fill and stroke).
 

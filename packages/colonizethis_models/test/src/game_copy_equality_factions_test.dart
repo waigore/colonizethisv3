@@ -58,6 +58,9 @@ void main() {
       expect(roundTrip.mapViewState.showProvinceNamesLayer, isFalse);
       expect(roundTrip.mapViewState.showPlayerTurnEventsFeed, isTrue);
       expect(roundTrip.mapViewState.showPlayersBar, isFalse);
+      expect(roundTrip.mapViewState.showMapResources, isTrue);
+      expect(roundTrip.mapViewState.showMapImprovements, isTrue);
+      expect(roundTrip.mapViewState.showMapRoads, isTrue);
 
       final legacyJson = Map<String, dynamic>.from(game.toJson())
         ..remove('mapViewState');
