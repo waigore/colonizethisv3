@@ -1,11 +1,13 @@
-// Per-unit-type row for [TrainCiviliansDialog]. Refs #3878.
+// Per-unit-type row for [TrainCiviliansDialog]. Refs #3878, #4366.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../widgets/ct_gap.dart';
+import 'train_civilian_role_display.dart';
 import 'train_dialog_chrome.dart';
 
 /// One trainable civilian unit row with treasury + paper cost line.
@@ -51,7 +53,7 @@ class TrainCiviliansDialogUnitRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(child: _buildInfo(theme, paperQty)),
+            Expanded(child: _buildInfo(context, theme, paperQty)),
             CtGap.wm,
             TrainDialogStepper(
               count: count,
@@ -67,11 +69,23 @@ class TrainCiviliansDialogUnitRow extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo(ThemeData theme, int paperQty) {
+  Widget _buildInfo(BuildContext context, ThemeData theme, int paperQty) {
+    final l10n = appL10n(context);
+    final gist = TrainCivilianRoleDisplay.roleGist(l10n, econ.id);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TrainDialogUnitNameLine(name: econ.id, isLocked: isLocked),
+        if (gist.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            gist,
+            style: TextStyle(
+              fontSize: 10,
+              color: EditorialMonoclePalette.muted,
+            ),
+          ),
+        ],
         const SizedBox(height: 2),
         _buildCostLine(theme, paperQty),
         TrainDialogLockedHint(
