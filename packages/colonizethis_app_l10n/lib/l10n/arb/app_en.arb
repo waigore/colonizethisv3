@@ -3509,6 +3509,36 @@
       }
     }
   },
+  "provinceOverlay_tileBuildRailroadTooltip": "Build railroad",
+  "@provinceOverlay_tileBuildRailroadTooltip": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip when enabled without cost preview"
+  },
+  "provinceOverlay_tileBuildRailroadTooltipWithCost": "Build railroad ({costs})",
+  "@provinceOverlay_tileBuildRailroadTooltipWithCost": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip with material cost",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": "No Rail Builder available to build railroad",
+  "@provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: no Rail Builder units"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledTooltip": "No Rail Builder can assign railroad work here this turn",
+  "@provinceOverlay_tileBuildRailroadDisabledTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: not assignable this turn"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled for materials/treasury shortfall",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tilePortStatusNone": "Port: None",
   "@provinceOverlay_tilePortStatusNone": {
     "description": "MAP20001 Tile plain-language port status when province has no seaboard port"

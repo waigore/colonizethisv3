@@ -35,6 +35,13 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
         false;
   }
 
+  bool isRailBuilderUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetBuildRail,
+        ) ??
+        false;
+  }
+
   bool isMerchantUnit(Unit unit) {
     return workOrderTargetsByUnitType[unit.type]?.contains(
           kWorkTargetPurchaseLand,
@@ -132,7 +139,9 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
       buildRoadShortcutTargetTileKey: widget.buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: widget.buildFortShortcutTargetTileKey,
       buildPortShortcutTargetTileKey: widget.buildPortShortcutTargetTileKey,
-      purchaseLandShortcutTargetTileKey: widget.purchaseLandShortcutTargetTileKey,
+      buildRailShortcutTargetTileKey: widget.buildRailShortcutTargetTileKey,
+      purchaseLandShortcutTargetTileKey:
+          widget.purchaseLandShortcutTargetTileKey,
       upgradeTownShortcutTargetTileKey: widget.upgradeTownShortcutTargetTileKey,
     );
   }
@@ -143,6 +152,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     required bool explorerOnly,
     required bool builderOnly,
     required bool engineerOnly,
+    required bool railBuilderOnly,
     required bool merchantOnly,
   }) {
     final tileScopeActive =
@@ -151,6 +161,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
         !explorerOnly &&
         !builderOnly &&
         !engineerOnly &&
+        !railBuilderOnly &&
         !merchantOnly) {
       return units;
     }
@@ -166,6 +177,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
             (!explorerOnly || isExplorerUnit(u)) &&
             (!builderOnly || isBuilderUnit(u)) &&
             (!engineerOnly || isEngineerUnit(u)) &&
+            (!railBuilderOnly || isRailBuilderUnit(u)) &&
             (!merchantOnly || isMerchantUnit(u)))
           u,
     ];

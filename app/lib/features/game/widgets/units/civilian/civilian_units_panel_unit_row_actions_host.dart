@@ -48,10 +48,7 @@ Future<void> confirmCancelCivilianUnitsPanelUnitRowWork({
   final idx = pending.pendingIndex;
   if (idx != null) {
     bus.emit(
-      RemovePendingWorkOrderRequestedEvent(
-        playerId: humanPlayerId,
-        index: idx,
-      ),
+      RemovePendingWorkOrderRequestedEvent(playerId: humanPlayerId, index: idx),
     );
   } else if (unit.currentWork != null) {
     bus.emit(CancelInProgressCivilianWorkRequestedEvent(unitId: unit.id));
@@ -77,6 +74,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
   required String? buildPortShortcutTargetTileKey,
+  required String? buildRailShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
   required String? upgradeTownShortcutTargetTileKey,
 }) {
@@ -118,6 +116,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
                 buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
                 buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
                 buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+                buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
                 purchaseLandShortcutTargetTileKey:
                     purchaseLandShortcutTargetTileKey,
                 upgradeTownShortcutTargetTileKey:

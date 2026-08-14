@@ -2141,6 +2141,23 @@ abstract class AppLocalizations {
   /// Disabled build-port shortcut when materials or treasury are short.
   String provinceOverlay_tileBuildPortDisabledMaterialsTooltip(String reason);
 
+  /// Tooltip for enabled build-railroad shortcut (Refs #4383).
+  String get provinceOverlay_tileBuildRailroadTooltip;
+
+  /// Enabled build-railroad shortcut tooltip with material cost hint.
+  String provinceOverlay_tileBuildRailroadTooltipWithCost(String costs);
+
+  /// Disabled build-railroad shortcut when no Rail Builder units exist.
+  String get provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip;
+
+  /// Disabled build-railroad shortcut when no valid Rail Builder assignment exists.
+  String get provinceOverlay_tileBuildRailroadDisabledTooltip;
+
+  /// Disabled build-railroad shortcut when materials or treasury are short.
+  String provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip(
+    String reason,
+  );
+
   /// Plain-language port status when the province has no seaboard port.
   String get provinceOverlay_tilePortStatusNone;
 

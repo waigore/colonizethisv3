@@ -28,6 +28,23 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
 
 import 'app_shell_harness.dart';
 
+/// Empty 1×1 region used by MAP20001 shortcut callback tests.
+RegionMapViewData emptyProvinceOverlayRegion({String regionId = 'oldWorld'}) {
+  return RegionMapViewData(
+    regionId: regionId,
+    width: 1,
+    height: 1,
+    cellSize: 16,
+    cells: const [],
+    capitalMarkers: const [],
+    portMarkers: const [],
+    factionColors: const {},
+    greatPowerFactionIds: const {},
+    terrainColors: const {},
+    provincePoliticalOwnerByPrefixedProvinceId: const {},
+  );
+}
+
 /// Returns a province id (`regionId|localId`) owned by [ownerId] in the demo
 /// Old World. Province ids in the debug-init game are already prefixed.
 String ownedProvinceIdInOldWorld({

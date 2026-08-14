@@ -38,7 +38,9 @@ String provinceOverlayBuildImprovementTooltip({
       workOrderAffordStatusLine(l10n: l10n, preview: preview),
     );
   }
-  if (enabled && preview.materialCosts != null && preview.materialCosts!.isNotEmpty) {
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
     return l10n.provinceOverlay_tileBuildImprovementTooltipWithCost(
       formatWorkOrderMaterialCostSummary(preview.materialCosts!),
     );
@@ -76,7 +78,9 @@ String provinceOverlayBuildRoadTooltip({
   if (!enabled) {
     return l10n.provinceOverlay_tileBuildRoadDisabledTooltip;
   }
-  if (enabled && preview.materialCosts != null && preview.materialCosts!.isNotEmpty) {
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
     return l10n.provinceOverlay_tileBuildRoadTooltipWithCost(
       formatWorkOrderMaterialCostSummary(preview.materialCosts!),
     );
@@ -114,7 +118,9 @@ String provinceOverlayBuildFortTooltip({
   if (!enabled) {
     return l10n.provinceOverlay_tileBuildFortDisabledTooltip;
   }
-  if (enabled && preview.materialCosts != null && preview.materialCosts!.isNotEmpty) {
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
     return l10n.provinceOverlay_tileBuildFortTooltipWithCost(
       formatWorkOrderMaterialCostSummary(preview.materialCosts!),
     );
@@ -152,12 +158,54 @@ String provinceOverlayBuildPortTooltip({
   if (!enabled) {
     return l10n.provinceOverlay_tileBuildPortDisabledTooltip;
   }
-  if (enabled && preview.materialCosts != null && preview.materialCosts!.isNotEmpty) {
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
     return l10n.provinceOverlay_tileBuildPortTooltipWithCost(
       formatWorkOrderMaterialCostSummary(preview.materialCosts!),
     );
   }
   return l10n.provinceOverlay_tileBuildPortTooltip;
+}
+
+String provinceOverlayBuildRailroadTooltip({
+  required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String selectedTileKey,
+  required bool enabled,
+  required bool hasRailBuilderUnits,
+}) {
+  if (!hasRailBuilderUnits) {
+    return l10n.provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip;
+  }
+  final preview = previewWorkOrderAffordAtTile(
+    game: game,
+    playerId: humanPlayerId,
+    currentOrders: currentOrders,
+    workTarget: kWorkTargetBuildRail,
+    targetTileKey: selectedTileKey,
+  );
+  if (!enabled &&
+      preview.hasCostPreview &&
+      !preview.canAfford &&
+      preview.materialShortfalls.isNotEmpty) {
+    return l10n.provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip(
+      workOrderAffordStatusLine(l10n: l10n, preview: preview),
+    );
+  }
+  if (!enabled) {
+    return l10n.provinceOverlay_tileBuildRailroadDisabledTooltip;
+  }
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
+    return l10n.provinceOverlay_tileBuildRailroadTooltipWithCost(
+      formatWorkOrderMaterialCostSummary(preview.materialCosts!),
+    );
+  }
+  return l10n.provinceOverlay_tileBuildRailroadTooltip;
 }
 
 String provinceOverlayPurchaseLandTooltip({
@@ -179,9 +227,7 @@ String provinceOverlayPurchaseLandTooltip({
     final rel = getRelation(game, humanPlayerId, ownerId);
     final overture = getOverture(game, humanPlayerId, ownerId);
     if (!enabled &&
-        (rel?.atWar == true ||
-            overture == null ||
-            !overture.hasEmbassy)) {
+        (rel?.atWar == true || overture == null || !overture.hasEmbassy)) {
       return l10n.provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip;
     }
   }
@@ -242,7 +288,9 @@ String provinceOverlayPoliticalUpgradeTownTooltip({
   if (!enabled) {
     return l10n.provinceOverlay_politicalUpgradeTownDisabledTooltip;
   }
-  if (enabled && preview.materialCosts != null && preview.materialCosts!.isNotEmpty) {
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
     return l10n.provinceOverlay_politicalUpgradeTownTooltipWithCost(
       formatWorkOrderMaterialCostSummary(preview.materialCosts!),
     );
