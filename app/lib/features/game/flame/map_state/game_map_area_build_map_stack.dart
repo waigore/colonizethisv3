@@ -131,23 +131,45 @@ mixin GameMapAreaBuildMapStack
         Positioned(
           left: kMapOverlayEdgeInset,
           bottom: kMapOverlayEdgeInset,
-          child: GameMapCornerControls(
-            narrow: isNarrow,
-            onCycleBaseLayerDisplayMode: cycleBaseLayerDisplayMode,
-            onCenterOnHomeCapital: centerOnCurrentPlayerCapital,
-            homeToCapitalEnabled: shell.viewingPlayerId != null,
-            onOpenMapDisplayOptions: () {
-              showDialog<void>(
-                context: context,
-                barrierColor: EditorialMonoclePalette.dialogScrim,
-                builder: (context) {
-                  return GameMapOptionsDialog(
-                    initialState: mapViewState,
-                    onChanged: setMapViewState,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (shouldShowExtractionDiscLegend(
+                baseLayerDisplayMode: baseLayerDisplayMode,
+                viewingPlayerId: shell.viewingPlayerId,
+              )) ...[
+                ExtractionDiscLegend(
+                  key: extractionDiscLegendAnchorKey,
+                  narrow: isNarrow,
+                  anchorKey: extractionDiscLegendAnchorKey,
+                  chromeBottomY:
+                      (context.findRenderObject() as RenderBox?)
+                          ?.localToGlobal(Offset.zero)
+                          .dy ??
+                      0,
+                ),
+                SizedBox(height: isNarrow ? 2 : 4),
+              ],
+              GameMapCornerControls(
+                narrow: isNarrow,
+                onCycleBaseLayerDisplayMode: cycleBaseLayerDisplayMode,
+                onCenterOnHomeCapital: centerOnCurrentPlayerCapital,
+                homeToCapitalEnabled: shell.viewingPlayerId != null,
+                onOpenMapDisplayOptions: () {
+                  showDialog<void>(
+                    context: context,
+                    barrierColor: EditorialMonoclePalette.dialogScrim,
+                    builder: (context) {
+                      return GameMapOptionsDialog(
+                        initialState: mapViewState,
+                        onChanged: setMapViewState,
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ],
           ),
         ),
         if (kCtE2EEnabled) ...buildE2eOverlayTaps(projectedRegion),
