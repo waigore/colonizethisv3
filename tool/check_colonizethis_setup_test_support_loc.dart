@@ -1,11 +1,12 @@
 // Physical-line ratchet for `packages/colonizethis_setup/test/setup/support/`
 // (`repo.colonizethis_setup_test_support_loc`).
 //
-// SPEC: SPEC/program/repo-lint.md (Refs #4273 wave 6 slice D).
+// SPEC: SPEC/program/repo-lint.md (Refs #4273 wave 6 slice D, #4349 slice D).
 //
-// Counts every `*.dart` file under the support tree (physical lines). Ceiling
-// is post-densify measured total plus modest headroom so incidental helper
-// extracts do not fail CI; ratchet downward as later densify shrinks the tree.
+// Counts every `*.dart` file under the support tree (physical lines). Tree
+// ceiling is post-split measured total plus modest headroom so incidental
+// helper extracts do not fail CI. Per-file ceiling keeps fat scenario modules
+// from re-accumulating after topic splits.
 
 import 'dart:io';
 
@@ -14,10 +15,15 @@ import 'package:path/path.dart' as p;
 const String setupTestSupportRelativeDir =
     'packages/colonizethis_setup/test/setup/support';
 
-/// Post–wave-7 slice C densify support-tree ceiling (physical LOC) with headroom.
-/// Measured ≈3995 after migrating five ≥300-line suites into scenario tables;
-/// Slice D will split fat scenario modules and re-ratchet (Refs #4349).
+/// Post–wave-7 slice D support-tree ceiling (physical LOC) with headroom.
+/// Measured 3996 after splitting the six ≥336-line scenario modules
+/// (Refs #4349). Wave-6 was 2700; slice C densify moved suite bodies into
+/// support/ so the tree total cannot return to 2700 without undoing that
+/// migration.
 const int setupTestSupportLocCeiling = 4100;
+
+/// Fail when any support `*.dart` file has this many physical lines or more.
+const int setupTestSupportFilePhysicalLineCeiling = 380;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countSetupTestSupportPhysicalLoc(Directory dir) {
@@ -42,6 +48,7 @@ int runCheckColonizethisSetupTestSupportLoc(
   void Function(String line)? info,
   void Function(String line)? err,
   int ceiling = setupTestSupportLocCeiling,
+  int fileCeiling = setupTestSupportFilePhysicalLineCeiling,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
@@ -55,17 +62,36 @@ int runCheckColonizethisSetupTestSupportLoc(
     return 1;
   }
 
+  var failed = false;
+  for (final entity in supportDir.listSync(recursive: true)) {
+    if (entity is! File || !entity.path.endsWith('.dart')) {
+      continue;
+    }
+    final lines = entity.readAsLinesSync().length;
+    if (lines >= fileCeiling) {
+      final relative = p.relative(entity.path, from: repoRoot);
+      logE(
+        'check_colonizethis_setup_test_support_loc: $relative has $lines '
+        'physical lines (≥ $fileCeiling; Refs #4349).',
+      );
+      failed = true;
+    }
+  }
+  if (failed) {
+    return 1;
+  }
+
   final loc = countSetupTestSupportPhysicalLoc(supportDir);
   if (loc > ceiling) {
     logE(
       'check_colonizethis_setup_test_support_loc: support LOC $loc exceeds '
-      'ceiling $ceiling (Refs #4273).',
+      'ceiling $ceiling (Refs #4273, #4349).',
     );
     return 1;
   }
   logI(
     'check_colonizethis_setup_test_support_loc: support LOC $loc ≤ ceiling '
-    '$ceiling (Refs #4273).',
+    '$ceiling; no file ≥ $fileCeiling lines (Refs #4273, #4349).',
   );
   return 0;
 }
