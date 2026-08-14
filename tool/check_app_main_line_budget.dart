@@ -61,11 +61,15 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4340+#4346+#4350 merge headroom (DLG31002 intel,
 // Consulate shortcut, Move/Invade overlay Military shortcuts).
 // raised for UNIT40001 civilian role gists on Train Civilians rows (Refs #4366).
-// raised for MAP10001 extraction-disc legend (Refs #4367).
+// raised for MAP10001 capital-link disconnected land highlight (Refs #4370).
 // raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
-// raised for combined #4366+#4367+#4369 merge headroom.
-const _maxMainLines = 76000;
+// raised for MAP20001 Build railroad Rail Builder tile shortcut (Refs #4383).
+// raised for combined #4366+#4367+#4369+#4370+#4383 merge headroom.
+// raised for named map resource/improvement/road layers (Refs #4388).
+// raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
+// raised for combined #4370+#4383+#4385+#4388 merge headroom (measured 76_737).
+const _maxMainLines = 76800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
@@ -78,11 +82,10 @@ int runCheckAppMainLineBudget(
     return 1;
   }
 
-  final result = Process.runSync(
-    'python3',
-    [script, '--json'],
-    workingDirectory: repoRoot,
-  );
+  final result = Process.runSync('python3', [
+    script,
+    '--json',
+  ], workingDirectory: repoRoot);
   if (result.exitCode != 0) {
     logE(
       'check_app_main_line_budget: project_stats.py exited ${result.exitCode}',

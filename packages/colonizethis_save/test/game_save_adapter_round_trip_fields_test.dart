@@ -234,6 +234,9 @@ void main() {
           showProvinceOwnershipTint: true,
           showProvinceNamesLayer: false,
           showPlayerTurnEventsFeed: true,
+          showMapResources: false,
+          showMapImprovements: true,
+          showMapRoads: false,
         ),
       );
       harness.adapter.save(harness.box, game);
@@ -245,6 +248,9 @@ void main() {
       expect(loaded.mapViewState.showProvinceNamesLayer, isFalse);
       expect(loaded.mapViewState.showPlayerTurnEventsFeed, isTrue);
       expect(loaded.mapViewState.showPlayersBar, isTrue);
+      expect(loaded.mapViewState.showMapResources, isFalse);
+      expect(loaded.mapViewState.showMapImprovements, isTrue);
+      expect(loaded.mapViewState.showMapRoads, isFalse);
 
       final legacyGameJson = Map<String, dynamic>.from(game.toJson())
         ..remove('mapViewState');

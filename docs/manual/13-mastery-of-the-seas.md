@@ -53,7 +53,7 @@ A move order replaces that fleet’s earlier move order and clears its pending m
 
 Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions. Fleets **in port** must undock (move to an adjacent sea zone) before missions are offered.
 
-**Map shortcut (primary):** Tap your **fleet marker** on the map (`MAP10001`). When multiple fleets share the marker, choose which fleet in `DLG31003` **Select fleet**. What opens next depends on that fleet:
+**Map shortcut (primary):** Tap your **fleet marker** on the map (`MAP10001`). When multiple fleets share the marker, choose which fleet in `DLG31003` **Select fleet** — each row shows that fleet’s ship mix (and a pending mission line when one is already staged) so you can tell stacked fleets apart. What opens next depends on that fleet:
 
 - **Home Fleet** — opens `UNIT30001` Naval Units scoped to that port so you can Split or Train without a dead-end tap.
 - **Sea-going fleet in port** — opens `DLG30001` **Move Fleet** so you can undock immediately.
@@ -109,7 +109,7 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - [ ] Explains the complete merchant and warship roster, each ship’s technology gate, and the Carrack exception.
 - [ ] Documents `UNIT30001` and `UNIT60001` for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints.
 - [ ] Documents `DLG30001` one-hop port⇄sea movement, owned-port docking, capital docking, and sea-zone revelation.
-- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, cancel-pending, move xor mission, and fog-honest Beachhead/Blockade target intel on `DLG31002`.
+- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, cancel-pending, move xor mission, fog-honest Beachhead/Blockade target intel on `DLG31002`, and `DLG31003` ship-mix rows when several fleets share a marker.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing preconditions; Join Home Fleet via dock/transfer only (not mission menu).
 - [ ] Documents `DLG40001` transfer of selected hulls from an eligible capital-port fleet into the Home Fleet.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.

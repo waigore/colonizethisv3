@@ -1,5 +1,6 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:flutter/foundation.dart' show VoidCallback;
 
 import 'ct_region_map_game_mixins.dart';
@@ -15,7 +16,9 @@ void ctRegionMapGameUpdateProps(
   bool? showProvinceOverlay,
   bool? showProvinceOwnershipTint,
   bool? showProvinceNamesLayer,
+  bool? showCapitalLinkDisconnectedHighlight,
   CtMapVisibilityMode? visibilityMode,
+  MapBaseLayerFlags? mapBaseLayerFlags,
   BaseLayerDisplayMode? baseLayerDisplayMode,
   String? selectedTileKey,
   String? selectedCivilianTileKey,
@@ -61,8 +64,19 @@ void ctRegionMapGameUpdateProps(
   if (showProvinceNamesLayer != null) {
     game.showProvinceNamesLayer = showProvinceNamesLayer;
   }
+  if (showCapitalLinkDisconnectedHighlight != null) {
+    game.showCapitalLinkDisconnectedHighlight =
+        showCapitalLinkDisconnectedHighlight;
+  }
   if (visibilityMode != null) {
     game.visibilityMode = visibilityMode;
+  }
+  if (mapBaseLayerFlags != null || baseLayerDisplayMode != null) {
+    final next = resolveMapBaseLayerFlags(
+      flags: mapBaseLayerFlags,
+      mode: baseLayerDisplayMode,
+    );
+    game.mapBaseLayerFlags = next;
   }
   if (baseLayerDisplayMode != null) {
     game.baseLayerDisplayMode = baseLayerDisplayMode;
@@ -126,7 +140,10 @@ void ctRegionMapGameUpdateProps(
       ..showProvinceOverlay = game.showProvinceOverlay
       ..showProvinceOwnershipTint = game.showProvinceOwnershipTint
       ..showProvinceNamesLayer = game.showProvinceNamesLayer
+      ..showCapitalLinkDisconnectedHighlight =
+          game.showCapitalLinkDisconnectedHighlight
       ..visibilityMode = game.visibilityMode
+      ..mapBaseLayerFlags = game.mapBaseLayerFlags
       ..baseLayerDisplayMode = game.baseLayerDisplayMode
       ..selectedTileKey = game.selectedTileKey
       ..selectedCivilianTileKey = game.selectedCivilianTileKey

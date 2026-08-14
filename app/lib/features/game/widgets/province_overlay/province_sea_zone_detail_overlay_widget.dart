@@ -52,6 +52,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.buildPortActionEnabled = false,
     this.buildPortActionHasEngineerUnits = false,
     this.onBuildPortTap,
+    this.showBuildRailroadActionIcon = false,
+    this.buildRailroadActionEnabled = false,
+    this.buildRailroadActionHasRailBuilderUnits = false,
+    this.onBuildRailroadTap,
     this.showPurchaseLandActionIcon = false,
     this.purchaseLandActionEnabled = false,
     this.purchaseLandActionHasMerchantUnits = false,
@@ -114,6 +118,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool buildPortActionEnabled;
   final bool buildPortActionHasEngineerUnits;
   final VoidCallback? onBuildPortTap;
+  final bool showBuildRailroadActionIcon;
+  final bool buildRailroadActionEnabled;
+  final bool buildRailroadActionHasRailBuilderUnits;
+  final VoidCallback? onBuildRailroadTap;
   final bool showPurchaseLandActionIcon;
   final bool purchaseLandActionEnabled;
   final bool purchaseLandActionHasMerchantUnits;
@@ -201,6 +209,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       buildPortActionEnabled: buildPortActionEnabled,
       buildPortActionHasEngineerUnits: buildPortActionHasEngineerUnits,
       onBuildPortTap: onBuildPortTap,
+      showBuildRailroadActionIcon: showBuildRailroadActionIcon,
+      buildRailroadActionEnabled: buildRailroadActionEnabled,
+      buildRailroadActionHasRailBuilderUnits:
+          buildRailroadActionHasRailBuilderUnits,
+      onBuildRailroadTap: onBuildRailroadTap,
       showPurchaseLandActionIcon: showPurchaseLandActionIcon,
       purchaseLandActionEnabled: purchaseLandActionEnabled,
       purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,

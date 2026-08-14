@@ -1,9 +1,9 @@
 // Pins MAP10001 extraction-disc legend visibility + popover (Refs #4367).
 import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend.dart';
 import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend_support.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/region_map_component_shared_palette.dart'
-    show BaseLayerDisplayMode;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,8 +17,7 @@ void main() {
     test('shows in resource-including mode with viewing player', () {
       expect(
         shouldShowExtractionDiscLegend(
-          baseLayerDisplayMode:
-              BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          flags: MapBaseLayerFlags.fullDetail,
           viewingPlayerId: 'gp_player',
         ),
         isTrue,
@@ -28,7 +27,7 @@ void main() {
     test('hides in terrain only even with viewing player', () {
       expect(
         shouldShowExtractionDiscLegend(
-          baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+          flags: MapBaseLayerFlags.terrainOnly,
           viewingPlayerId: 'gp_player',
         ),
         isFalse,
@@ -38,7 +37,7 @@ void main() {
     test('hides in global observe even with resource mode', () {
       expect(
         shouldShowExtractionDiscLegend(
-          baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          flags: MapBaseLayerFlags.resourcesOnly,
           viewingPlayerId: null,
         ),
         isFalse,
@@ -127,10 +126,7 @@ void main() {
         find.textContaining('Gold: yield that reaches your capital'),
         findsOneWidget,
       );
-      expect(
-        find.textContaining('Brown: improved yield'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Brown: improved yield'), findsOneWidget);
       expect(
         find.textContaining('Restore roads, towns, or ports'),
         findsOneWidget,
@@ -181,10 +177,7 @@ void main() {
               builder: (BuildContext ctx) {
                 final AppLocalizations l10n = appL10n(ctx);
                 return Center(
-                  child: ExtractionDiscLegendPanel(
-                    l10n: l10n,
-                    onClose: () {},
-                  ),
+                  child: ExtractionDiscLegendPanel(l10n: l10n, onClose: () {}),
                 );
               },
             ),

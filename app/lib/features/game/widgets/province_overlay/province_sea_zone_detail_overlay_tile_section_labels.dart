@@ -117,6 +117,10 @@ List<Widget> buildTileRoadLabelWidgets({
   required bool buildPortActionEnabled,
   required bool buildPortActionHasEngineerUnits,
   VoidCallback? onBuildPortTap,
+  required bool showBuildRailroadActionIcon,
+  required bool buildRailroadActionEnabled,
+  required bool buildRailroadActionHasRailBuilderUnits,
+  VoidCallback? onBuildRailroadTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   if (roadLevel == null) {
@@ -141,6 +145,15 @@ List<Widget> buildTileRoadLabelWidgets({
     selectedTileKey: selectedTileKey,
     enabled: buildPortActionEnabled,
     hasEngineerUnits: buildPortActionHasEngineerUnits,
+  );
+  final buildRailroadTooltip = provinceOverlayBuildRailroadTooltip(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    currentOrders: currentOrders,
+    selectedTileKey: selectedTileKey,
+    enabled: buildRailroadActionEnabled,
+    hasRailBuilderUnits: buildRailroadActionHasRailBuilderUnits,
   );
   void openDetails() {
     showProvinceTileDetailsDialog(
@@ -184,6 +197,16 @@ List<Widget> buildTileRoadLabelWidgets({
           onPressed: buildPortActionEnabled ? onBuildPortTap : null,
           icon: Icons.anchor,
           enabled: buildPortActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+          ),
+        ),
+      if (showBuildRailroadActionIcon)
+        CtIconAction(
+          tooltip: buildRailroadTooltip,
+          onPressed: buildRailroadActionEnabled ? onBuildRailroadTap : null,
+          icon: Icons.directions_railway,
+          enabled: buildRailroadActionEnabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),

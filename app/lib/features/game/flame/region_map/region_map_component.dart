@@ -1,5 +1,6 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,11 @@ export 'region_map_component_shared_palette.dart'
         CtMapVisibilityMode,
         RegionMapPalette,
         assertCtMapPlayerViewRequired,
-        shouldShowExtractionUnitIndicators;
+        mapBaseLayerFlagsFromDisplayMode,
+        resolveMapBaseLayerFlags,
+        shouldShowExtractionUnitIndicators,
+        shouldShowImprovementLabels,
+        shouldShowResourceIcons;
 export 'region_map_component_shared_visibility.dart'
     show
         extractionIndicatorDisplaySizePx,
@@ -52,6 +57,8 @@ class CtRegionMapComponent extends PositionComponent {
     required this.showProvinceOwnershipTint,
     required this.showProvinceNamesLayer,
     required this.visibilityMode,
+    this.showCapitalLinkDisconnectedHighlight = true,
+    this.mapBaseLayerFlags = MapBaseLayerFlags.fullDetail,
     this.baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
     this.onProvinceSelected,
@@ -79,6 +86,7 @@ class CtRegionMapComponent extends PositionComponent {
   bool showProvinceOverlay;
   bool showProvinceOwnershipTint;
   bool showProvinceNamesLayer;
+  bool showCapitalLinkDisconnectedHighlight;
   CtMapVisibilityMode visibilityMode;
 
   /// When [visibilityMode] is [CtMapVisibilityMode.playerConstrained], gates
@@ -92,6 +100,10 @@ class CtRegionMapComponent extends PositionComponent {
 
   /// Camera zoom from Flame viewfinder; used to keep label size constant on screen.
   double cameraZoom = 1.0;
+
+  /// Paint-boundary flags (Refs #4388). [baseLayerDisplayMode] remains a
+  /// Widgetbook convenience and must not be read by paint predicates.
+  MapBaseLayerFlags mapBaseLayerFlags;
   BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
   void Function(String tileKey)? onMapTileTappedForDetail;

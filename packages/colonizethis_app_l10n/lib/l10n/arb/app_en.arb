@@ -384,7 +384,7 @@
   "@map_displayOptions_title": {
     "description": "Dialog title for map display options."
   },
-  "map_displayOptions_showProvinceOverlay": "Show province overlay",
+  "map_displayOptions_showProvinceOverlay": "Show province and sea borders",
   "@map_displayOptions_showProvinceOverlay": {
     "description": "Toggle for province and sea-zone boundary strokes on the map (no ownership tint)."
   },
@@ -395,6 +395,26 @@
   "map_displayOptions_showProvinceNames": "Show province names",
   "@map_displayOptions_showProvinceNames": {
     "description": "Toggle label for showing land province names on the map."
+  },
+  "map_displayOptions_showCapitalLinkDisconnected": "Highlight land not bound to the capital",
+  "@map_displayOptions_showCapitalLinkDisconnected": {
+    "description": "Toggle for hatch on owned land tiles that will not extract to the capital (Refs #4370)."
+  },
+  "map_displayOptions_mapMarksHeading": "Map marks",
+  "@map_displayOptions_mapMarksHeading": {
+    "description": "Section heading for resource, improvement, and road information-layer toggles."
+  },
+  "map_displayOptions_showMapResources": "Show resources",
+  "@map_displayOptions_showMapResources": {
+    "description": "Toggle for commodity icons and extraction discs on the empire map."
+  },
+  "map_displayOptions_showMapImprovements": "Show improvements",
+  "@map_displayOptions_showMapImprovements": {
+    "description": "Toggle for improvement I{n} labels on the empire map."
+  },
+  "map_displayOptions_showMapRoads": "Show roads and rails",
+  "@map_displayOptions_showMapRoads": {
+    "description": "Toggle for road and rail transport sprites; disabled when improvements are off."
   },
   "common_close": "Close",
   "@common_close": {
@@ -3489,6 +3509,36 @@
       }
     }
   },
+  "provinceOverlay_tileBuildRailroadTooltip": "Build railroad",
+  "@provinceOverlay_tileBuildRailroadTooltip": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip when enabled without cost preview"
+  },
+  "provinceOverlay_tileBuildRailroadTooltipWithCost": "Build railroad ({costs})",
+  "@provinceOverlay_tileBuildRailroadTooltipWithCost": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip with material cost",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": "No Rail Builder available to build railroad",
+  "@provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: no Rail Builder units"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledTooltip": "No Rail Builder can assign railroad work here this turn",
+  "@provinceOverlay_tileBuildRailroadDisabledTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: not assignable this turn"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled for materials/treasury shortfall",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tilePortStatusNone": "Port: None",
   "@provinceOverlay_tilePortStatusNone": {
     "description": "MAP20001 Tile plain-language port status when province has no seaboard port"
@@ -3837,9 +3887,42 @@
   "@provinceOverlay_titleSeaZone": {
     "description": "Province overlay header title shown above the tab strip for a sea zone."
   },
-  "mapCorner_tooltipBaseLayer": "Base layer: terrain / +resources / +improvements",
+  "mapCorner_tooltipBaseLayer": "Map marks: resources, improvements, and roads",
   "@mapCorner_tooltipBaseLayer": {
-    "description": "Tooltip for cycling map base layer display."
+    "description": "Fallback tooltip for cycling map information layers (full-detail preset)."
+  },
+  "mapCorner_tooltipMapMarks": "Map marks: {combination}",
+  "@mapCorner_tooltipMapMarks": {
+    "description": "Tooltip naming the current map information-layer combination.",
+    "placeholders": {
+      "combination": {
+        "type": "String"
+      }
+    }
+  },
+  "mapCorner_mapMarks_terrainOnly": "terrain only",
+  "@mapCorner_mapMarks_terrainOnly": {
+    "description": "Map marks combination: all information layers off."
+  },
+  "mapCorner_mapMarks_resources": "resources",
+  "@mapCorner_mapMarks_resources": {
+    "description": "Map marks combination: resource icons only."
+  },
+  "mapCorner_mapMarks_resourcesAndImprovements": "resources and improvements",
+  "@mapCorner_mapMarks_resourcesAndImprovements": {
+    "description": "Map marks combination: resources and improvement labels."
+  },
+  "mapCorner_mapMarks_full": "resources, improvements, and roads",
+  "@mapCorner_mapMarks_full": {
+    "description": "Map marks combination: full detail."
+  },
+  "mapCorner_mapMarks_improvements": "improvements",
+  "@mapCorner_mapMarks_improvements": {
+    "description": "Map marks combination: improvement labels without resources."
+  },
+  "mapCorner_mapMarks_improvementsAndRoads": "improvements and roads",
+  "@mapCorner_mapMarks_improvementsAndRoads": {
+    "description": "Map marks combination: improvements and roads without resources."
   },
   "mapCorner_tooltipCenterCapital": "Center on capital",
   "@mapCorner_tooltipCenterCapital": {

@@ -60,6 +60,10 @@ Widget buildRevealedTileSection({
   required bool buildPortActionEnabled,
   required bool buildPortActionHasEngineerUnits,
   VoidCallback? onBuildPortTap,
+  required bool showBuildRailroadActionIcon,
+  required bool buildRailroadActionEnabled,
+  required bool buildRailroadActionHasRailBuilderUnits,
+  VoidCallback? onBuildRailroadTap,
   required bool showPurchaseLandActionIcon,
   required bool purchaseLandActionEnabled,
   required bool purchaseLandActionHasMerchantUnits,
@@ -223,6 +227,11 @@ Widget buildRevealedTileSection({
           buildPortActionEnabled: buildPortActionEnabled,
           buildPortActionHasEngineerUnits: buildPortActionHasEngineerUnits,
           onBuildPortTap: onBuildPortTap,
+          showBuildRailroadActionIcon: showBuildRailroadActionIcon,
+          buildRailroadActionEnabled: buildRailroadActionEnabled,
+          buildRailroadActionHasRailBuilderUnits:
+              buildRailroadActionHasRailBuilderUnits,
+          onBuildRailroadTap: onBuildRailroadTap,
           tileConnectivity: tileConnectivity,
         ),
         ...buildTileConnectivityLabelWidgets(

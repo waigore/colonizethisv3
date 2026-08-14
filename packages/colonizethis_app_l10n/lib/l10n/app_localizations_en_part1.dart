@@ -1,8 +1,6 @@
 part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings1 on AppLocalizations {
-
-
   @override
   String get app_title => 'Colonize This';
 
@@ -215,7 +213,8 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get map_displayOptions_title => 'Map display options';
 
   @override
-  String get map_displayOptions_showProvinceOverlay => 'Show province overlay';
+  String get map_displayOptions_showProvinceOverlay =>
+      'Show province and sea borders';
 
   @override
   String get map_displayOptions_showProvinceOwnership =>
@@ -223,6 +222,22 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get map_displayOptions_showProvinceNames => 'Show province names';
+
+  @override
+  String get map_displayOptions_showCapitalLinkDisconnected =>
+      'Highlight land not bound to the capital';
+
+  @override
+  String get map_displayOptions_mapMarksHeading => 'Map marks';
+
+  @override
+  String get map_displayOptions_showMapResources => 'Show resources';
+
+  @override
+  String get map_displayOptions_showMapImprovements => 'Show improvements';
+
+  @override
+  String get map_displayOptions_showMapRoads => 'Show roads and rails';
 
   @override
   String get common_close => 'Close';
@@ -673,5 +688,4 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get province_regiment_musketeers => 'Musketeers';
-
 }

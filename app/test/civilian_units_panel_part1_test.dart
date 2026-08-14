@@ -13,6 +13,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         kWorkTargetBuildImprovement,
         kWorkTargetBuildRoad,
+        kWorkTargetBuildRail,
         kWorkTargetExplore,
         kWorkTargetProspect,
         kWorkTargetPurchaseLand;
@@ -212,21 +213,20 @@ void main() {
       },
     );
 
-    testWidgets(
-      'explore shortcut mode filters explorers and commits explore',
-      (WidgetTester tester) async {
-        await expectCivilianShortcutCommit(
-          tester,
-          gameId: 'g_civ_explore_shortcut',
-          visibleType: kUnitTypeExplorer,
-          hiddenType: kUnitTypeBuilder,
-          unitId: 'e1',
-          workTarget: kWorkTargetExplore,
-          explorerOnly: true,
-          exploreShortcutTargetTileKey: civilianPanelPart1TileKey,
-        );
-      },
-    );
+    testWidgets('explore shortcut mode filters explorers and commits explore', (
+      WidgetTester tester,
+    ) async {
+      await expectCivilianShortcutCommit(
+        tester,
+        gameId: 'g_civ_explore_shortcut',
+        visibleType: kUnitTypeExplorer,
+        hiddenType: kUnitTypeBuilder,
+        unitId: 'e1',
+        workTarget: kWorkTargetExplore,
+        explorerOnly: true,
+        exploreShortcutTargetTileKey: civilianPanelPart1TileKey,
+      );
+    });
 
     testWidgets(
       'build-improvement shortcut mode filters builders and commits',
@@ -246,47 +246,65 @@ void main() {
       },
     );
 
-    testWidgets(
-      'build-road shortcut mode filters engineers and commits',
-      (WidgetTester tester) async {
-        await expectCivilianShortcutCommit(
-          tester,
-          gameId: 'g_civ_build_road_shortcut',
-          visibleType: kUnitTypeEngineer,
-          hiddenType: kUnitTypeBuilder,
-          unitId: 'e_eng',
-          workTarget: kWorkTargetBuildRoad,
-          engineerOnly: true,
-          buildRoadShortcutTargetTileKey: civilianPanelPart1TileKey,
-          expectCloseBeforeUpsert: false,
-          customGameBuilder: (id) => buildCivilianEngineerBuilderShortcutGame(
-            id: id,
-            engineerFirst: true,
-          ),
-        );
-      },
-    );
+    testWidgets('build-road shortcut mode filters engineers and commits', (
+      WidgetTester tester,
+    ) async {
+      await expectCivilianShortcutCommit(
+        tester,
+        gameId: 'g_civ_build_road_shortcut',
+        visibleType: kUnitTypeEngineer,
+        hiddenType: kUnitTypeBuilder,
+        unitId: 'e_eng',
+        workTarget: kWorkTargetBuildRoad,
+        engineerOnly: true,
+        buildRoadShortcutTargetTileKey: civilianPanelPart1TileKey,
+        expectCloseBeforeUpsert: false,
+        customGameBuilder: (id) => buildCivilianEngineerBuilderShortcutGame(
+          id: id,
+          engineerFirst: true,
+        ),
+      );
+    });
 
-    testWidgets(
-      'purchase-land shortcut mode filters merchants and commits',
-      (WidgetTester tester) async {
-        await expectCivilianShortcutCommit(
-          tester,
-          gameId: 'g_civ_purchase_land_shortcut',
-          visibleType: kUnitTypeMerchant,
-          hiddenType: kUnitTypeBuilder,
-          unitId: 'm1',
-          workTarget: kWorkTargetPurchaseLand,
-          merchantOnly: true,
-          purchaseLandShortcutTargetTileKey: civilianPanelPart1TileKey,
-          expectCloseBeforeUpsert: false,
-          customGameBuilder: (id) => buildCivilianMerchantBuilderShortcutGame(
-            id: id,
-            merchantFirst: true,
-          ),
-        );
-      },
-    );
+    testWidgets('build-rail shortcut mode filters rail builders and commits', (
+      WidgetTester tester,
+    ) async {
+      await expectCivilianShortcutCommit(
+        tester,
+        gameId: 'g_civ_build_rail_shortcut',
+        visibleType: kUnitTypeRailBuilder,
+        hiddenType: kUnitTypeBuilder,
+        unitId: 'u_rail',
+        workTarget: kWorkTargetBuildRail,
+        railBuilderOnly: true,
+        buildRailShortcutTargetTileKey: civilianPanelPart1TileKey,
+        expectCloseBeforeUpsert: false,
+        customGameBuilder: (id) => buildCivilianRailBuilderBuilderShortcutGame(
+          id: id,
+          railBuilderFirst: true,
+        ),
+      );
+    });
+
+    testWidgets('purchase-land shortcut mode filters merchants and commits', (
+      WidgetTester tester,
+    ) async {
+      await expectCivilianShortcutCommit(
+        tester,
+        gameId: 'g_civ_purchase_land_shortcut',
+        visibleType: kUnitTypeMerchant,
+        hiddenType: kUnitTypeBuilder,
+        unitId: 'm1',
+        workTarget: kWorkTargetPurchaseLand,
+        merchantOnly: true,
+        purchaseLandShortcutTargetTileKey: civilianPanelPart1TileKey,
+        expectCloseBeforeUpsert: false,
+        customGameBuilder: (id) => buildCivilianMerchantBuilderShortcutGame(
+          id: id,
+          merchantFirst: true,
+        ),
+      );
+    });
 
     testWidgets('Train button emits train-civilians dialog open event', (
       WidgetTester tester,

@@ -1,5 +1,6 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting, VoidCallback;
@@ -26,7 +27,9 @@ mixin CtRegionMapGameFields on FlameGame {
   late bool showProvinceOverlay;
   late bool showProvinceOwnershipTint;
   late bool showProvinceNamesLayer;
+  bool showCapitalLinkDisconnectedHighlight = true;
   late CtMapVisibilityMode visibilityMode;
+  late MapBaseLayerFlags mapBaseLayerFlags;
   late BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
   void Function(String tileKey)? onMapTileTappedForDetail;
@@ -206,7 +209,10 @@ mixin CtRegionMapGameLifecycle on CtRegionMapGameFields, CtRegionMapGameCamera {
       showProvinceOverlay: showProvinceOverlay,
       showProvinceOwnershipTint: showProvinceOwnershipTint,
       showProvinceNamesLayer: showProvinceNamesLayer,
+      showCapitalLinkDisconnectedHighlight:
+          showCapitalLinkDisconnectedHighlight,
       visibilityMode: visibilityMode,
+      mapBaseLayerFlags: mapBaseLayerFlags,
       baseLayerDisplayMode: baseLayerDisplayMode,
       onProvinceSelected: onProvinceSelected,
       onMapTileTappedForDetail: onMapTileTappedForDetail,
