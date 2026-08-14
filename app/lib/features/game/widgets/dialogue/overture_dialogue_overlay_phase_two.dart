@@ -54,12 +54,19 @@ Widget buildOverturePhaseTwoBody({
         itemBuilder: (context, i) {
           final offer = offers[i];
           final bool? decision = accepted[i];
+          final offerer = offererDisplayName(offer.offererGpId);
+          final effects = buildIncomingOvertureEffectLines(
+            offererDisplayName: offerer,
+            stage: offer.stage,
+          );
           return OvertureOfferRow(
             rowIndex: i,
-            offerer: offererDisplayName(offer.offererGpId),
+            offerer: offerer,
             stageLabel: stageLabel(l10n, offer.stage),
             acceptLabel: l10n.game_overture_accept,
             rejectLabel: l10n.game_overture_reject,
+            acceptEffect: effects.acceptEffect,
+            rejectEffect: effects.rejectEffect,
             decision: decision,
             onDecisionChanged: (bool? next) => onDecisionChanged(i, next),
           );
