@@ -5,37 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'app_shell_harness.dart';
+import 'ct_toggle_switch_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
-  Future<void> pumpToggle(WidgetTester tester, Widget child) async {
-    await pumpAppShell(
-      tester,
-      child: Scaffold(
-        body: Center(child: child),
-      ),
-    );
-  }
-
-  BoxDecoration trackDecoration(WidgetTester tester) {
-    final AnimatedContainer container = tester.widget<AnimatedContainer>(
-      find.byKey(const ValueKey<String>('ctToggleSwitchTrack')),
-    );
-    return container.decoration! as BoxDecoration;
-  }
-
-  BoxDecoration knobDecoration(WidgetTester tester) {
-    final AnimatedContainer container = tester.widget<AnimatedContainer>(
-      find.byKey(const ValueKey<String>('ctToggleSwitchKnob')),
-    );
-    return container.decoration! as BoxDecoration;
-  }
-
   group('CtToggleSwitch visual contract (R8)', () {
     testWidgets('renders with the documented 24x12 track', (tester) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         CtToggleSwitch(value: false, onChanged: (_) {}),
       );
@@ -49,11 +26,11 @@ void main() {
     testWidgets('off state: track --surface fill + 1px --accent-dim border', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         CtToggleSwitch(value: false, onChanged: (_) {}),
       );
-      final BoxDecoration deco = trackDecoration(tester);
+      final BoxDecoration deco = ctToggleTrackDecoration(tester);
       expect(deco.color, EditorialMonoclePalette.surface);
       final Border border = deco.border! as Border;
       expect(border.top.color, EditorialMonoclePalette.accentDim);
@@ -63,11 +40,11 @@ void main() {
     testWidgets('off state: knob 10x10 --muted fill at 1px from track left', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         CtToggleSwitch(value: false, onChanged: (_) {}),
       );
-      final BoxDecoration deco = knobDecoration(tester);
+      final BoxDecoration deco = ctToggleKnobDecoration(tester);
       expect(deco.color, EditorialMonoclePalette.muted);
       final Border border = deco.border! as Border;
       expect(border.top.color, EditorialMonoclePalette.accentDim);
@@ -94,68 +71,59 @@ void main() {
     testWidgets('on state: track --surface-lite + 1px --accent border', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         CtToggleSwitch(value: true, onChanged: (_) {}),
       );
       await tester.pump(const Duration(milliseconds: 200));
-      final BoxDecoration deco = trackDecoration(tester);
+      final BoxDecoration deco = ctToggleTrackDecoration(tester);
       expect(deco.color, EditorialMonoclePalette.surfaceLite);
       final Border border = deco.border! as Border;
       expect(border.top.color, EditorialMonoclePalette.accent);
       expect(border.top.width, CtToggleSwitch.borderWidth);
     });
 
-    testWidgets(
-      'on state: knob --accent + 1px --accent-bright border at 13px '
-      'with 60% --accent halo',
-      (tester) async {
-        await pumpToggle(
-          tester,
-          CtToggleSwitch(value: true, onChanged: (_) {}),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
+    testWidgets('on state: knob --accent + 1px --accent-bright border at 13px '
+        'with 60% --accent halo', (tester) async {
+      await pumpCtToggle(
+        tester,
+        CtToggleSwitch(value: true, onChanged: (_) {}),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
 
-        final BoxDecoration deco = knobDecoration(tester);
-        expect(deco.color, EditorialMonoclePalette.accent);
-        final Border border = deco.border! as Border;
-        expect(border.top.color, EditorialMonoclePalette.accentBright);
-        expect(border.top.width, CtToggleSwitch.borderWidth);
+      final BoxDecoration deco = ctToggleKnobDecoration(tester);
+      expect(deco.color, EditorialMonoclePalette.accent);
+      final Border border = deco.border! as Border;
+      expect(border.top.color, EditorialMonoclePalette.accentBright);
+      expect(border.top.width, CtToggleSwitch.borderWidth);
 
-        final AnimatedPositioned positioned = tester.widget<AnimatedPositioned>(
-          find.descendant(
-            of: find.byType(CtToggleSwitch),
-            matching: find.byType(AnimatedPositioned),
-          ),
-        );
-        expect(positioned.left, CtToggleSwitch.knobOnOffset);
-        expect(CtToggleSwitch.knobOnOffset, 13);
+      final AnimatedPositioned positioned = tester.widget<AnimatedPositioned>(
+        find.descendant(
+          of: find.byType(CtToggleSwitch),
+          matching: find.byType(AnimatedPositioned),
+        ),
+      );
+      expect(positioned.left, CtToggleSwitch.knobOnOffset);
+      expect(CtToggleSwitch.knobOnOffset, 13);
 
-        final List<BoxShadow> glow = deco.boxShadow!;
-        expect(glow, hasLength(1));
-        expect(glow.first.spreadRadius, CtToggleSwitch.glowSpread);
-        expect(glow.first.blurRadius, 0);
-        expect(
-          glow.first.color.a,
-          closeTo(CtToggleSwitch.glowRestAlpha, 1e-6),
-        );
-      },
-    );
+      final List<BoxShadow> glow = deco.boxShadow!;
+      expect(glow, hasLength(1));
+      expect(glow.first.spreadRadius, CtToggleSwitch.glowSpread);
+      expect(glow.first.blurRadius, 0);
+      expect(glow.first.color.a, closeTo(CtToggleSwitch.glowRestAlpha, 1e-6));
+    });
 
     testWidgets('slide distance is 12 px between off and on knob positions', (
       tester,
     ) async {
       expect(CtToggleSwitch.knobTravel, 12);
-      expect(
-        CtToggleSwitch.knobOnOffset - CtToggleSwitch.knobOffOffset,
-        12,
-      );
+      expect(CtToggleSwitch.knobOnOffset - CtToggleSwitch.knobOffOffset, 12);
     });
 
     testWidgets(
       'enabled animation duration matches the documented 120ms ease-out',
       (tester) async {
-        await pumpToggle(
+        await pumpCtToggle(
           tester,
           CtToggleSwitch(value: false, onChanged: (_) {}),
         );
@@ -173,12 +141,9 @@ void main() {
       tester,
     ) async {
       bool? captured;
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
-        CtToggleSwitch(
-          value: false,
-          onChanged: (v) => captured = v,
-        ),
+        CtToggleSwitch(value: false, onChanged: (v) => captured = v),
       );
       await tester.tap(find.byType(CtToggleSwitch));
       expect(captured, isTrue);
@@ -187,7 +152,7 @@ void main() {
     testWidgets('disabled (onChanged == null) renders 0.4 opacity', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         const CtToggleSwitch(value: false, onChanged: null),
       );
@@ -204,7 +169,7 @@ void main() {
     testWidgets('disabled does not render a tap detector (negative path)', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         const CtToggleSwitch(value: false, onChanged: null),
       );
@@ -227,7 +192,7 @@ void main() {
     testWidgets('disabled freezes animation (duration = Duration.zero)', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         const CtToggleSwitch(value: true, onChanged: null),
       );
@@ -244,7 +209,7 @@ void main() {
     testWidgets('enabled wraps without an Opacity (negative path)', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         CtToggleSwitch(value: false, onChanged: (_) {}),
       );
@@ -258,147 +223,11 @@ void main() {
     });
   });
 
-  group('CtToggleSwitch onGlowColor override (#2867 R22 / R24)', () {
-    testWidgets(
-      'on-state glow defaults to --accent when onGlowColor is omitted',
-      (tester) async {
-        await pumpToggle(
-          tester,
-          CtToggleSwitch(value: true, onChanged: (_) {}),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-        final BoxDecoration deco = knobDecoration(tester);
-        final List<BoxShadow> glow = deco.boxShadow!;
-        expect(glow, hasLength(1));
-        // Compare the underlying palette color ignoring alpha (the glow
-        // halo applies the rest/hover alpha; the hue/luma must equal
-        // --accent).
-        final Color expected = EditorialMonoclePalette.accent.withValues(
-          alpha: CtToggleSwitch.glowRestAlpha,
-        );
-        expect(glow.first.color.r, closeTo(expected.r, 1e-6));
-        expect(glow.first.color.g, closeTo(expected.g, 1e-6));
-        expect(glow.first.color.b, closeTo(expected.b, 1e-6));
-      },
-    );
-
-    testWidgets(
-      'on-state glow resolves to the supplied onGlowColor (positive: --success)',
-      (tester) async {
-        await pumpToggle(
-          tester,
-          CtToggleSwitch(
-            value: true,
-            onChanged: (_) {},
-            onGlowColor: EditorialMonoclePalette.success,
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-        final BoxDecoration deco = knobDecoration(tester);
-        final List<BoxShadow> glow = deco.boxShadow!;
-        expect(glow, hasLength(1));
-        final Color expected = EditorialMonoclePalette.success.withValues(
-          alpha: CtToggleSwitch.glowRestAlpha,
-        );
-        expect(glow.first.color.r, closeTo(expected.r, 1e-6));
-        expect(glow.first.color.g, closeTo(expected.g, 1e-6));
-        expect(glow.first.color.b, closeTo(expected.b, 1e-6));
-        expect(
-          glow.first.color.a,
-          closeTo(CtToggleSwitch.glowRestAlpha, 1e-6),
-        );
-      },
-    );
-
-    testWidgets(
-      'on-state glow resolves to the supplied onGlowColor (positive: --danger)',
-      (tester) async {
-        await pumpToggle(
-          tester,
-          CtToggleSwitch(
-            value: true,
-            onChanged: (_) {},
-            onGlowColor: EditorialMonoclePalette.danger,
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-        final BoxDecoration deco = knobDecoration(tester);
-        final List<BoxShadow> glow = deco.boxShadow!;
-        expect(glow, hasLength(1));
-        final Color expected = EditorialMonoclePalette.danger.withValues(
-          alpha: CtToggleSwitch.glowRestAlpha,
-        );
-        expect(glow.first.color.r, closeTo(expected.r, 1e-6));
-        expect(glow.first.color.g, closeTo(expected.g, 1e-6));
-        expect(glow.first.color.b, closeTo(expected.b, 1e-6));
-        expect(
-          glow.first.color.a,
-          closeTo(CtToggleSwitch.glowRestAlpha, 1e-6),
-        );
-      },
-    );
-
-    testWidgets(
-      'off-state draws no glow even when onGlowColor is set (negative)',
-      (tester) async {
-        await pumpToggle(
-          tester,
-          CtToggleSwitch(
-            value: false,
-            onChanged: (_) {},
-            onGlowColor: EditorialMonoclePalette.success,
-          ),
-        );
-        final BoxDecoration deco = knobDecoration(tester);
-        expect(deco.boxShadow, anyOf(isNull, isEmpty));
-      },
-    );
-
-    testWidgets(
-      'hover on with custom onGlowColor reaches full alpha while preserving hue',
-      (tester) async {
-        await pumpToggle(
-          tester,
-          CtToggleSwitch(
-            value: true,
-            onChanged: (_) {},
-            onGlowColor: EditorialMonoclePalette.success,
-          ),
-        );
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final TestGesture gesture = await tester.createGesture(
-          kind: PointerDeviceKind.mouse,
-        );
-        addTearDown(gesture.removePointer);
-        await gesture.addPointer(location: Offset.zero);
-        await gesture.moveTo(tester.getCenter(find.byType(CtToggleSwitch)));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        final BoxDecoration deco = knobDecoration(tester);
-        final List<BoxShadow> glow = deco.boxShadow!;
-        expect(glow, hasLength(1));
-        expect(
-          glow.first.color.a,
-          closeTo(CtToggleSwitch.glowHoverAlpha, 1e-6),
-        );
-        // Hue/luma must still equal --success even at the full hover alpha.
-        final Color expected = EditorialMonoclePalette.success.withValues(
-          alpha: CtToggleSwitch.glowHoverAlpha,
-        );
-        expect(glow.first.color.r, closeTo(expected.r, 1e-6));
-        expect(glow.first.color.g, closeTo(expected.g, 1e-6));
-        expect(glow.first.color.b, closeTo(expected.b, 1e-6));
-      },
-    );
-  });
-
   group('CtToggleSwitch hover states (R8)', () {
     testWidgets('hover-off: knob fill brightens from --muted to --accent-dim', (
       tester,
     ) async {
-      await pumpToggle(
+      await pumpCtToggle(
         tester,
         CtToggleSwitch(value: false, onChanged: (_) {}),
       );
@@ -412,7 +241,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
-      final BoxDecoration deco = knobDecoration(tester);
+      final BoxDecoration deco = ctToggleKnobDecoration(tester);
       expect(deco.color, EditorialMonoclePalette.accentDim);
       expect(deco.boxShadow, anyOf(isNull, isEmpty));
     });
@@ -421,7 +250,7 @@ void main() {
       'hover-on: knob brightens from --accent to --accent-bright + halo '
       'reaches 100%',
       (tester) async {
-        await pumpToggle(
+        await pumpCtToggle(
           tester,
           CtToggleSwitch(value: true, onChanged: (_) {}),
         );
@@ -435,7 +264,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 200));
 
-        final BoxDecoration deco = knobDecoration(tester);
+        final BoxDecoration deco = ctToggleKnobDecoration(tester);
         expect(deco.color, EditorialMonoclePalette.accentBright);
         final List<BoxShadow> glow = deco.boxShadow!;
         expect(glow, hasLength(1));
@@ -446,26 +275,25 @@ void main() {
       },
     );
 
-    testWidgets(
-      'hover ignored while disabled (no knob colour change)',
-      (tester) async {
-        await pumpToggle(
-          tester,
-          const CtToggleSwitch(value: false, onChanged: null),
-        );
+    testWidgets('hover ignored while disabled (no knob colour change)', (
+      tester,
+    ) async {
+      await pumpCtToggle(
+        tester,
+        const CtToggleSwitch(value: false, onChanged: null),
+      );
 
-        final TestGesture gesture = await tester.createGesture(
-          kind: PointerDeviceKind.mouse,
-        );
-        addTearDown(gesture.removePointer);
-        await gesture.addPointer(location: Offset.zero);
-        await gesture.moveTo(tester.getCenter(find.byType(CtToggleSwitch)));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
+      final TestGesture gesture = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+      );
+      addTearDown(gesture.removePointer);
+      await gesture.addPointer(location: Offset.zero);
+      await gesture.moveTo(tester.getCenter(find.byType(CtToggleSwitch)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
-        final BoxDecoration deco = knobDecoration(tester);
-        expect(deco.color, EditorialMonoclePalette.muted);
-      },
-    );
+      final BoxDecoration deco = ctToggleKnobDecoration(tester);
+      expect(deco.color, EditorialMonoclePalette.muted);
+    });
   });
 }

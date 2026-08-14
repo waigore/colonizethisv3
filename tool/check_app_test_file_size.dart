@@ -19,10 +19,7 @@ const String _appTestsRelativePath = 'app/test';
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
 const List<String> appTestFileSizeAllowlistForTests = <String>[
   'app/test/app_event_handler_test.dart',
-  'app/test/ct_spacing_features_adoption_test.dart',
-  'app/test/ct_toggle_switch_test.dart',
   'app/test/debug_console_overlay_panel_test.dart',
-  'app/test/diplomacy_detail_screen_test.dart',
   'app/test/diplomacy_dialogs_test.dart',
   'app/test/diplomacy_panel_orders_test.dart',
   'app/test/diplomacy_panel_test.dart',
@@ -35,9 +32,6 @@ const List<String> appTestFileSizeAllowlistForTests = <String>[
   'app/test/move_fleet_dialog_test.dart',
   'app/test/naval_panel_combine_tables.dart',
   'app/test/naval_panel_part1_pins.dart',
-  'app/test/naval_units_panel_interaction_helpers.dart',
-  'app/test/naval_units_panel_test_scenarios.dart',
-  'app/test/overture_dialogue_overlay_test.dart',
   'app/test/panels_320dp_min_viewport_test.dart',
   'app/test/pause_menu_side_menu_specs_test.dart',
   'app/test/province_overlay_extraction_available_test.dart',
