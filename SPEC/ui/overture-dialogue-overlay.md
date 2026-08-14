@@ -249,6 +249,8 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
   When those states render,
   Then no phase-2 Effect keys (`overtureEffectAccept_<i>` / `overtureEffectReject_<i>`) are mounted.
 
+- Given `OVL30001` NAP, Join Empire, and 320 dp NAP+Join-Empire Effect layouts under `AppThemes.editorialMonocle`, when the host golden suite in `app/test/overture_dialogue_overlay_choice_effects_goldens_test.dart` captures each keyed `RepaintBoundary`, then each `matchesGoldenFile` baseline under `app/test/goldens/overture_choice_effects_*.png` matches the committed PNG (Refs #4387).
+
 ---
 
 ## Widgetbook
