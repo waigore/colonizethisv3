@@ -59,10 +59,11 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 Establish Consulate Political shortcut (Refs #4346).
 // raised for combined #4340+#4346+#4350 merge headroom (DLG31002 intel,
 // Consulate shortcut, Move/Invade overlay Military shortcuts).
+// raised for UNIT40001 civilian role gists on Train Civilians rows (Refs #4366).
 // raised for MAP10001 capital-link disconnected land highlight (Refs #4370).
 // raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
-// raised for combined #4370+#4369 merge headroom (capital-link hatch + tile details).
+// raised for combined #4366+#4370+#4369 merge headroom.
 const _maxMainLines = 75700;
 
 int runCheckAppMainLineBudget(

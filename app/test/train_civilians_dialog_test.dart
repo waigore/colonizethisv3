@@ -71,7 +71,8 @@ void main() {
             orders: () => harness.builderOrders(2),
             expectUi: (tester) {
               expect(find.text('Treasury low, Paper low'), findsOneWidget);
-              expect(find.textContaining(' and '), findsNothing);
+              // Comma-join only — not "Treasury low and Paper low".
+              expect(find.text('Treasury low and Paper low'), findsNothing);
             },
           ),
           (

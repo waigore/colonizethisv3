@@ -1,9 +1,8 @@
 // Physical line ratchet for colonizethis_setup lib source (repo rule:
 // `repo.colonizethis_setup_lib_file_size`).
 //
-// Wave 6 (#4273) splits near-cap setup modules so lib files stay below a
-// peer-aligned 400 physical-line ceiling (turn/orders/world already enforce
-// package-local caps). Generated suffixes are excluded.
+// Wave 7 (#4349) lowers the wave-6 400 ceiling to a peer-aligned 300
+// physical-line cap after splitting the remaining over-300 modules.
 import 'dart:convert';
 import 'dart:io';
 
@@ -11,12 +10,12 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-6 post-split target (≤400 physical lines).
-const int setupLibFileSizeCeiling = 400;
+/// Ratchet ceiling for wave-7 post-split target (≤300 physical lines).
+const int setupLibFileSizeCeiling = 300;
 
 const String _setupLibRelativePath = 'packages/colonizethis_setup/lib';
 
-/// Hot files still above the wave-6 ceiling during transition slices. Shrink-only
+/// Hot files still above the wave-7 ceiling during transition slices. Shrink-only
 /// allowlist; remove entries as splits land.
 const List<String> setupLibFileSizeGrandfathered = <String>[];
 
