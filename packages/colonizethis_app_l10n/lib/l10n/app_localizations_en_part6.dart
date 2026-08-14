@@ -104,6 +104,29 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_tileBuildRailroadTooltip => 'Build railroad';
+
+  @override
+  String provinceOverlay_tileBuildRailroadTooltipWithCost(String costs) {
+    return 'Build railroad ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip =>
+      'No Rail Builder available to build railroad';
+
+  @override
+  String get provinceOverlay_tileBuildRailroadDisabledTooltip =>
+      'No Rail Builder can assign railroad work here this turn';
+
+  @override
+  String provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip(
+    String reason,
+  ) {
+    return reason;
+  }
+
+  @override
   String get provinceOverlay_tilePortStatusNone => 'Port: None';
 
   @override

@@ -61,7 +61,8 @@ const _packageName = 'colonizethis_app';
 // Consulate shortcut, Move/Invade overlay Military shortcuts).
 // raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
-const _maxMainLines = 75600;
+// raised for MAP20001 Build railroad Rail Builder tile shortcut (Refs #4383).
+const _maxMainLines = 75800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

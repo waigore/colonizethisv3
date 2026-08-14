@@ -12,7 +12,12 @@ import 'package:colonizethis_map/colonizethis_map.dart'
     show CapitalMarkerView, CellViewData, RegionMapViewData, TownMarkerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart'
-    show GameSaveAdapter, LoadableSaveEntry, LoadableSaveKind, kAutoSaveListLabel, kAutoSaveSlotId;
+    show
+        GameSaveAdapter,
+        LoadableSaveEntry,
+        LoadableSaveKind,
+        kAutoSaveListLabel,
+        kAutoSaveSlotId;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +27,8 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart' show GameMapData, GameService;
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -160,6 +166,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // numbered fragment. The `repo.app_widgetbook_file_naming` gate enforces the
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_build_port_stories.dart';
+part 'catalog_panel_map_build_railroad_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
 part 'catalog_panel_map_stories.dart';

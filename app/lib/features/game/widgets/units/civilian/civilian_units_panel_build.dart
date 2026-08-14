@@ -20,7 +20,10 @@ import 'civilian_units_panel_state_base.dart';
 import 'civilian_units_sort.dart';
 
 mixin CivilianUnitsPanelBuild
-    on ConsumerState<CivilianUnitsPanel>, CivilianUnitsPanelStateBase, CivilianUnitsPanelList {
+    on
+        ConsumerState<CivilianUnitsPanel>,
+        CivilianUnitsPanelStateBase,
+        CivilianUnitsPanelList {
   Widget buildCivilianUnitsPanel(BuildContext context) {
     final l10n = appL10n(context);
     final provinceNames = provinceNamesByPrefixedId(widget.game);
@@ -46,6 +49,7 @@ mixin CivilianUnitsPanelBuild
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
       engineerOnly: widget.engineerOnly,
+      railBuilderOnly: widget.railBuilderOnly,
       merchantOnly: widget.merchantOnly,
     );
     final scopedNw = scopedCivilianUnits(
@@ -54,6 +58,7 @@ mixin CivilianUnitsPanelBuild
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
       engineerOnly: widget.engineerOnly,
+      railBuilderOnly: widget.railBuilderOnly,
       merchantOnly: widget.merchantOnly,
     );
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;

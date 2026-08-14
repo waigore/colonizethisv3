@@ -1,7 +1,6 @@
 /// Tile section builder for [ProvinceSeaZoneDetailOverlay].
 library;
 
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
@@ -44,6 +43,10 @@ Widget buildTileSection({
   required bool buildPortActionEnabled,
   required bool buildPortActionHasEngineerUnits,
   VoidCallback? onBuildPortTap,
+  required bool showBuildRailroadActionIcon,
+  required bool buildRailroadActionEnabled,
+  required bool buildRailroadActionHasRailBuilderUnits,
+  VoidCallback? onBuildRailroadTap,
   required bool showPurchaseLandActionIcon,
   required bool purchaseLandActionEnabled,
   required bool purchaseLandActionHasMerchantUnits,
@@ -81,13 +84,19 @@ Widget buildTileSection({
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          overlayObfuscatedBodyText(l10n.provinceOverlay_tileCoordinatesUnknown),
+          overlayObfuscatedBodyText(
+            l10n.provinceOverlay_tileCoordinatesUnknown,
+          ),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileTerrainUnknown),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileResourceUnknown),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileProspectedUnknown),
-          overlayObfuscatedBodyText(l10n.provinceOverlay_tileImprovementUnknown),
+          overlayObfuscatedBodyText(
+            l10n.provinceOverlay_tileImprovementUnknown,
+          ),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileRoadUnknown),
-          overlayObfuscatedBodyText(l10n.provinceOverlay_tileCivilianUnitsUnknown),
+          overlayObfuscatedBodyText(
+            l10n.provinceOverlay_tileCivilianUnitsUnknown,
+          ),
         ],
       ),
     );
@@ -113,7 +122,8 @@ Widget buildTileSection({
     onProspectWithExplorerTap: onProspectWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+    buildImprovementActionHasBuilderUnits:
+        buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
     currentOrders: currentOrders,
     showBuildRoadActionIcon: showBuildRoadActionIcon,
@@ -124,6 +134,11 @@ Widget buildTileSection({
     buildPortActionEnabled: buildPortActionEnabled,
     buildPortActionHasEngineerUnits: buildPortActionHasEngineerUnits,
     onBuildPortTap: onBuildPortTap,
+    showBuildRailroadActionIcon: showBuildRailroadActionIcon,
+    buildRailroadActionEnabled: buildRailroadActionEnabled,
+    buildRailroadActionHasRailBuilderUnits:
+        buildRailroadActionHasRailBuilderUnits,
+    onBuildRailroadTap: onBuildRailroadTap,
     showPurchaseLandActionIcon: showPurchaseLandActionIcon,
     purchaseLandActionEnabled: purchaseLandActionEnabled,
     purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,

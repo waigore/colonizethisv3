@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
@@ -60,17 +59,19 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final buildRoadState = actionStates.buildRoad;
   final buildFortState = actionStates.buildFort;
   final buildPortState = actionStates.buildPort;
+  final buildRailState = actionStates.buildRail;
   final purchaseLandState = actionStates.purchaseLand;
-  final upgradeTownState = GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    provinceId: displayId,
-    playerView: playerView,
-    workTargetSelectionCache: workTargetSelectionCache,
-    topology: mapData?.combinedTopology,
-    currentOrders: draftOrders,
-    tileMapByRegion: mapData?.tileMapByRegion,
-  );
+  final upgradeTownState =
+      GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        provinceId: displayId,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: mapData?.combinedTopology,
+        currentOrders: draftOrders,
+        tileMapByRegion: mapData?.tileMapByRegion,
+      );
   final establishConsulateState =
       GameMapAreaStateLogicProvinceActions.provinceEstablishConsulateActionState(
         game: game,
@@ -99,6 +100,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     buildRoadEnabled: buildRoadState.enabled,
     buildFortEnabled: buildFortState.enabled,
     buildPortEnabled: buildPortState.enabled,
+    buildRailEnabled: buildRailState.enabled,
     purchaseLandEnabled: purchaseLandState.enabled,
     provinceId: displayId,
     upgradeTownEnabled: upgradeTownState.enabled,
@@ -203,6 +205,9 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     showBuildPortActionIcon: canMutateViaUi && buildPortState.showIcon,
     buildPortActionEnabled: canMutateViaUi && buildPortState.enabled,
     buildPortActionHasEngineerUnits: buildPortState.hasEngineerUnits,
+    showBuildRailroadActionIcon: canMutateViaUi && buildRailState.showIcon,
+    buildRailroadActionEnabled: canMutateViaUi && buildRailState.enabled,
+    buildRailroadActionHasRailBuilderUnits: buildRailState.hasRailBuilderUnits,
     showPurchaseLandActionIcon: canMutateViaUi && purchaseLandState.showIcon,
     purchaseLandActionEnabled: canMutateViaUi && purchaseLandState.enabled,
     purchaseLandActionHasMerchantUnits: purchaseLandState.hasMerchantUnits,
@@ -213,6 +218,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onBuildRoadTap: shortcuts.onBuildRoadTap,
     onBuildFortTap: shortcuts.onBuildFortTap,
     onBuildPortTap: shortcuts.onBuildPortTap,
+    onBuildRailroadTap: shortcuts.onBuildRailroadTap,
     onPurchaseLandTap: shortcuts.onPurchaseLandTap,
     showUpgradeTownControl: canMutateViaUi && upgradeTownState.showControl,
     upgradeTownEnabled: canMutateViaUi && upgradeTownState.enabled,

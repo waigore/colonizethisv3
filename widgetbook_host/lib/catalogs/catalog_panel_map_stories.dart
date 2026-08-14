@@ -122,6 +122,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         ),
       ),
       ...provinceOverlayBuildPortUseCases,
+      ...provinceOverlayBuildRailroadUseCases,
       WidgetbookUseCase(
         name: 'Standalone — tile Purchase land enabled',
         builder: (context) => _provinceOverlayPurchaseLandStory(

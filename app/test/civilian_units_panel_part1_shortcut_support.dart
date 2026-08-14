@@ -19,11 +19,13 @@ Future<void> expectCivilianShortcutCommit(
   bool explorerOnly = false,
   bool builderOnly = false,
   bool engineerOnly = false,
+  bool railBuilderOnly = false,
   bool merchantOnly = false,
   String? prospectShortcutTargetTileKey,
   String? exploreShortcutTargetTileKey,
   String? buildImprovementShortcutTargetTileKey,
   String? buildRoadShortcutTargetTileKey,
+  String? buildRailShortcutTargetTileKey,
   String? purchaseLandShortcutTargetTileKey,
   bool expectCloseBeforeUpsert = true,
   Game Function(String id)? customGameBuilder,
@@ -52,12 +54,14 @@ Future<void> expectCivilianShortcutCommit(
       explorerOnly: explorerOnly,
       builderOnly: builderOnly,
       engineerOnly: engineerOnly,
+      railBuilderOnly: railBuilderOnly,
       merchantOnly: merchantOnly,
       prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
       exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
       buildImprovementShortcutTargetTileKey:
           buildImprovementShortcutTargetTileKey,
       buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+      buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
       availableWorkTargets: {
         unitId: [workTarget],
@@ -83,9 +87,7 @@ Future<void> expectCivilianShortcutCommit(
   if (expectCloseBeforeUpsert) {
     expect(
       events.indexOf(ClosePanelEvent),
-      lessThan(
-        events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent),
-      ),
+      lessThan(events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent)),
     );
   }
 }
