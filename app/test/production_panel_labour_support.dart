@@ -1,4 +1,4 @@
-// Labour / chrome helpers for ProductionPanel part2 (Refs #4352).
+// Labour / chrome helpers for ProductionPanel labour-and-chrome suite (Refs #4352).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

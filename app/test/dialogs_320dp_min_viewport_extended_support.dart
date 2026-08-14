@@ -1,4 +1,5 @@
-// Extended 320 dp dialog pins for part1 (Refs #4352).
+// Extended 320 dp dialog pins: TurnNews, MapOptions, processing, combat-mode
+// (Refs #4352).
 
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
@@ -9,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'dialogs_320dp_min_viewport_support.dart';
 
-void registerDialogs320Part1ExtendedTests() {
+void registerDialogs320ExtendedTests() {
   group('SPEC/ui/mobile-adaptation.md § 7 — TurnNewsDialog @ 320 dp '
       '(Refs #2870 S8/S10)', () {
     // Minimal Game fixture: two GPs so populated digest lines can resolve

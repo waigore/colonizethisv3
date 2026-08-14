@@ -129,8 +129,8 @@ const _kCatalogUnitHostSuiteNames = <String>[
   'new_game_leader_dialog_builder_test.dart',
   'shell_player_guarded_body_test.dart',
   'map_diplomacy_panel_specs_test.dart',
-  'combat_ui_specs_part1_test.dart',
-  'combat_ui_specs_part2_test.dart',
+  'combat_ui_specs_deployment_and_mode_test.dart',
+  'combat_ui_specs_result_and_screen_test.dart',
   'game_to_ui_bus_listener_test.dart',
   'app_event_handler_scope_diplomacy_test.dart',
   'app_event_handler_scope_civilian_work_test.dart',
@@ -177,8 +177,7 @@ const _kCatalogUnitHostSuiteNames = <String>[
   'plains_plantation_terrain_goldens_test.dart',
   'region_map_extraction_disc_indicators_test.dart',
   'region_map_resource_transport_readability_test.dart',
-  'e2e_helpers_barrel_part1_test.dart',
-  'e2e_helpers_barrel_part2_test.dart',
+  'e2e_helpers_barrel_test.dart',
   'e2e_helpers_barrel_pr2731_lifted_test.dart',
   'e2e_test_shared_smoke_test.dart',
   'e2e_low_risk_mirror_barrel_smoke_test.dart',
@@ -491,17 +490,12 @@ WidgetbookUseCase _useCase(
     expect(logs.join('\n'), contains('inline Game( construction'));
   });
 
-  test(
-    'passes when naval part suite uses shared OwFleets factory only',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_naval_part_ok_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(
-        temp,
-        'naval_units_panel_part1_test.dart',
-        '''
+  test('passes when naval part suite uses shared OwFleets factory only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_naval_part_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'naval_units_panel_part1_test.dart', '''
 import 'naval_units_panel_test_support.dart';
 
 Game g() => buildNavalPanelOwFleetsGame(
@@ -511,13 +505,11 @@ Game g() => buildNavalPanelOwFleetsGame(
   oldWorldProvinces: const [],
   fleets: const [],
 );
-''',
-      );
+''');
 
-      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
-      expect(code, 0);
-    },
-  );
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
 
   test('fails when naval part suite re-declares local _pumpNaval', () {
     final temp = Directory.systemTemp.createTempSync(
@@ -679,32 +671,44 @@ Widget host() => MaterialApp(home: const Placeholder());
     expect(logs.join('\n'), contains('inline MaterialApp'));
   });
 
-  test('fails when production part suite reintroduces MaterialApp host', () {
-    final temp = Directory.systemTemp.createTempSync(
-      'check_app_test_no_dup_scaffolding_prod_mat_',
-    );
-    addTearDown(() => temp.deleteSync(recursive: true));
-    _writeGovernedFile(temp, 'production_panel_part2_test.dart', '''
+  test(
+    'fails when production labour-and-chrome suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_panel_labour_and_chrome_test.dart',
+        '''
 Widget host() => MaterialApp(home: const Placeholder());
-''');
+''',
+      );
 
-    final logs = <String>[];
-    final code = runCheckAppTestNoDuplicateScaffolding(
-      temp.path,
-      info: logs.add,
-      err: logs.add,
-    );
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
 
-    expect(code, 1);
-    expect(logs.join('\n'), contains('inline MaterialApp( host'));
-  });
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
 
-  test('passes when production part suite uses buildProductionPanel only', () {
-    final temp = Directory.systemTemp.createTempSync(
-      'check_app_test_no_dup_scaffolding_prod_ok_',
-    );
-    addTearDown(() => temp.deleteSync(recursive: true));
-    _writeGovernedFile(temp, 'production_panel_part1_test.dart', '''
+  test(
+    'passes when production available-and-allocation suite uses buildProductionPanel only',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_ok_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_panel_available_and_allocation_test.dart',
+        '''
 import 'production_panel_test_support.dart';
 
 void main() {
@@ -712,11 +716,13 @@ void main() {
     await tester.pumpWidget(buildProductionPanel(player: productionPanelTestFullPlayer()));
   });
 }
-''');
+''',
+      );
 
-    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
-    expect(code, 0);
-  });
+      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+      expect(code, 0);
+    },
+  );
 
   test('fails when civilian part suite reintroduces MaterialApp host', () {
     final temp = Directory.systemTemp.createTempSync(

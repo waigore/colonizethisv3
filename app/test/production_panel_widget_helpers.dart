@@ -1,4 +1,4 @@
-// Shared ProductionPanel part1/part2 pump and finder helpers (Refs #4352).
+// Shared ProductionPanel pump and finder helpers (Refs #4352).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -12,13 +12,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
-Finder productionNinePatchLabeled(String label) => find.byWidgetPredicate((
-  Widget w,
-) {
-  if (w is! CtNinePatchButton) return false;
-  final child = w.child;
-  return child is Text && child.data == label;
-});
+Finder productionNinePatchLabeled(String label) =>
+    find.byWidgetPredicate((Widget w) {
+      if (w is! CtNinePatchButton) return false;
+      final child = w.child;
+      return child is Text && child.data == label;
+    });
 
 Future<void> pumpProductionPanelSettled(
   WidgetTester tester, {
@@ -45,7 +44,9 @@ Future<void> pumpProductionPanelSettled(
 }
 
 int productionRecipeIndex(String recipeId) {
-  final index = ProductionRecipesCatalog.all.indexWhere((r) => r.id == recipeId);
+  final index = ProductionRecipesCatalog.all.indexWhere(
+    (r) => r.id == recipeId,
+  );
   expect(index, greaterThanOrEqualTo(0));
   return index;
 }

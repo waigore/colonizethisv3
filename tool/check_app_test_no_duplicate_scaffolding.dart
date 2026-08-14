@@ -371,7 +371,8 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// main-menu hosts (`shell_screen`, `shell_screen_pixelart_chrome`,
 /// `main_menu_quit_chip_fidelity`, `new_game_leader_dialog_builder`,
 /// `shell_player_guarded_body`), and `map_diplomacy_panel_specs`, combat
-/// UI specs parts (`combat_ui_specs_part1` / `combat_ui_specs_part2`),
+/// UI specs (`combat_ui_specs_deployment_and_mode` /
+/// `combat_ui_specs_result_and_screen`),
 /// `game_to_ui_bus_listener`, `app_event_handler_scope_diplomacy`,
 /// `app_event_handler_scope_civilian_work`,
 /// `turn_resolution_event_blocking`, `app_event_handler`,
@@ -408,7 +409,7 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`, plains
 /// plantation / extraction-disc / transport-resource goldens), and e2e
 /// helper/smoke suites that pump bare MaterialApp chrome via the same
-/// helper (`e2e_helpers_barrel_part1` / `part2` / `pr2731_lifted`,
+/// helper (`e2e_helpers_barrel` / `pr2731_lifted`,
 /// `e2e_test_shared_smoke`, `e2e_low_risk_mirror_barrel_smoke`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
@@ -423,7 +424,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (!name.endsWith('_test.dart')) {
     return false;
   }
-  return name.startsWith('production_panel_part') ||
+  return name == 'production_panel_available_and_allocation_test.dart' ||
+      name == 'production_panel_labour_and_chrome_test.dart' ||
       name == 'production_panel_cotton_weaving_lock_test.dart' ||
       name == 'production_panel_available_grid_test.dart' ||
       name == 'production_labour_section_test.dart' ||
@@ -567,8 +569,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'new_game_leader_dialog_builder_test.dart' ||
       name == 'shell_player_guarded_body_test.dart' ||
       name == 'map_diplomacy_panel_specs_test.dart' ||
-      name == 'combat_ui_specs_part1_test.dart' ||
-      name == 'combat_ui_specs_part2_test.dart' ||
+      name == 'combat_ui_specs_deployment_and_mode_test.dart' ||
+      name == 'combat_ui_specs_result_and_screen_test.dart' ||
       name == 'game_to_ui_bus_listener_test.dart' ||
       name == 'app_event_handler_scope_diplomacy_test.dart' ||
       name == 'app_event_handler_scope_civilian_work_test.dart' ||
@@ -614,8 +616,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'plains_plantation_terrain_goldens_test.dart' ||
       name == 'region_map_extraction_disc_indicators_test.dart' ||
       name == 'region_map_resource_transport_readability_test.dart' ||
-      name == 'e2e_helpers_barrel_part1_test.dart' ||
-      name == 'e2e_helpers_barrel_part2_test.dart' ||
+      name == 'e2e_helpers_barrel_test.dart' ||
       name == 'e2e_helpers_barrel_pr2731_lifted_test.dart' ||
       name == 'e2e_test_shared_smoke_test.dart' ||
       name == 'e2e_low_risk_mirror_barrel_smoke_test.dart';

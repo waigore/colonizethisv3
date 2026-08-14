@@ -1,4 +1,5 @@
-// ProductionPanel chrome / allocation ACs (part1). SPEC/ui/production-panel.md.
+// ProductionPanel available / allocation ACs. SPEC/ui/production-panel.md.
+// Shared pump/finder helpers: production_panel_widget_helpers.dart (Refs #4352).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -13,7 +14,7 @@ import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
-import 'production_panel_part_helpers.dart';
+import 'production_panel_widget_helpers.dart';
 import 'production_panel_test_support.dart';
 
 void main() {

@@ -1,4 +1,5 @@
-// ProductionPanel labour / layout / chrome ACs (part2). SPEC/ui/production-panel.md.
+// ProductionPanel labour / layout / chrome ACs. SPEC/ui/production-panel.md.
+// Shared pump/finder helpers: production_panel_widget_helpers.dart (Refs #4352).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -18,8 +19,8 @@ import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
 import 'production_panel_test_support.dart';
-import 'production_panel_part_helpers.dart';
-import 'production_panel_part2_labour_support.dart';
+import 'production_panel_widget_helpers.dart';
+import 'production_panel_labour_support.dart';
 
 void main() {
   suppressLogsForTests();

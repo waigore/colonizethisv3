@@ -1,21 +1,17 @@
-// Pin the 320 dp minimum-viewport contract for in-game modal dialogs
-// that share the [CtDialogShell] chrome (Refs #2870 S8/S10).
-// Split into part files under `repo.app_test_file_size` (Refs #4013).
+// Pin the 320 dp minimum-viewport contract for GameParametersDialog and
+// ExitConfirmDialog (Refs #2870 S8/S10, #4352).
+// Extended TurnNews / MapOptions / processing / combat-mode pins live in
+// dialogs_320dp_min_viewport_extended_support.dart.
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 
-import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_parameters_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'dialogs_320dp_min_viewport_support.dart';
-import 'dialogs_320dp_min_viewport_part1_extended_support.dart';
+import 'dialogs_320dp_min_viewport_extended_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -129,6 +125,5 @@ void main() {
     });
   });
 
-
-  registerDialogs320Part1ExtendedTests();
+  registerDialogs320ExtendedTests();
 }

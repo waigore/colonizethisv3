@@ -1,7 +1,7 @@
-// Pins SPEC/ui combat dialog and sub-view contracts (part 2):
+// Pins SPEC/ui combat result dialog and Quick Battle screen contracts:
 // - SPEC/ui/quick-battle-result-dialog.md
 // - SPEC/ui/quick-battle-screen.md (inline result view chrome parity)
-// Split under repo.app_test_file_size (Refs #4013).
+// Shared frames: combat_ui_specs_test_support.dart (Refs #4013, #4352).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

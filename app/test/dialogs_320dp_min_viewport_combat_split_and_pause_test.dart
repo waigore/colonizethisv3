@@ -1,6 +1,6 @@
-// Pin the 320 dp minimum-viewport contract for in-game modal dialogs
-// that share the [CtDialogShell] chrome (Refs #2870 S8/S10).
-// Split into part files under `repo.app_test_file_size` (Refs #4013).
+// Pin the 320 dp minimum-viewport contract for QuickBattleResultDialog,
+// SplitArmy/SplitFleet/TransferToHomeFleet, and PauseMenuPanel
+// (Refs #2870 S8/S10, #4352).
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 
@@ -34,11 +34,7 @@ void main() {
       'casualty bodySmall rows + trailing OK must fit within the ~288 dp '
       'CtDialogShell content column)',
       (WidgetTester tester) async {
-        await pumpDialogs320At(
-          tester,
-          dialog,
-          size: kDialogs320MinViewport,
-        );
+        await pumpDialogs320At(tester, dialog, size: kDialogs320MinViewport);
         expect(
           tester.takeException(),
           isNull,
@@ -76,12 +72,12 @@ void main() {
   group('SPEC/ui/mobile-adaptation.md § 7 — SplitArmyDialog @ 320 dp '
       '(Refs #2870 S8/S10)', () {
     Widget splitArmy() => SplitArmyDialog(
-          army: dialogs320OneLevyArmy,
-          game: dialogs320GameWithOneRegimentArmy(),
-          humanPlayerId: dialogs320Gp1,
-          bus: AppEventBus.create(),
-          isHomeArmy: false,
-        );
+      army: dialogs320OneLevyArmy,
+      game: dialogs320GameWithOneRegimentArmy(),
+      humanPlayerId: dialogs320Gp1,
+      bus: AppEventBus.create(),
+      isHomeArmy: false,
+    );
 
     testWidgets(
       'AC (positive) SplitArmyDialog (non-home) @ 320×640: no RenderFlex '
@@ -123,10 +119,7 @@ void main() {
         tester,
         splitArmy(),
         size: kDialogs320WideRegressionViewport,
-        expectFinders: [
-          find.text('Split Army'),
-          find.text('Confirm Split'),
-        ],
+        expectFinders: [find.text('Split Army'), find.text('Confirm Split')],
       );
     });
   });
@@ -134,12 +127,12 @@ void main() {
   group('SPEC/ui/mobile-adaptation.md § 7 — SplitFleetDialog @ 320 dp '
       '(Refs #2870 S8/S10)', () {
     Widget splitFleet() => SplitFleetDialog(
-          originalFleet: dialogs320OneCarrackAtSea,
-          game: dialogs320MinimalSeaZoneGame(),
-          humanPlayerId: dialogs320Gp1,
-          bus: AppEventBus.create(),
-          isHomeFleet: false,
-        );
+      originalFleet: dialogs320OneCarrackAtSea,
+      game: dialogs320MinimalSeaZoneGame(),
+      humanPlayerId: dialogs320Gp1,
+      bus: AppEventBus.create(),
+      isHomeFleet: false,
+    );
 
     testWidgets(
       'AC (positive) SplitFleetDialog (non-home) @ 320×640: no RenderFlex '
@@ -178,10 +171,7 @@ void main() {
         tester,
         splitFleet(),
         size: kDialogs320WideRegressionViewport,
-        expectFinders: [
-          find.text('Split Fleet'),
-          find.text('Confirm Split'),
-        ],
+        expectFinders: [find.text('Split Fleet'), find.text('Confirm Split')],
       );
     });
   });
@@ -189,12 +179,12 @@ void main() {
   group('SPEC/ui/mobile-adaptation.md § 7 — TransferToHomeFleetDialog @ 320 dp '
       '(Refs #2870 S8/S10)', () {
     Widget transferHome() => TransferToHomeFleetDialog(
-          sourceFleet: dialogs320SourceFleetAtSea,
-          homeFleet: dialogs320HomeFleetInPort,
-          game: dialogs320GameWithCapitalAndSeaZone(),
-          humanPlayerId: dialogs320Gp1,
-          bus: AppEventBus.create(),
-        );
+      sourceFleet: dialogs320SourceFleetAtSea,
+      homeFleet: dialogs320HomeFleetInPort,
+      game: dialogs320GameWithCapitalAndSeaZone(),
+      humanPlayerId: dialogs320Gp1,
+      bus: AppEventBus.create(),
+    );
 
     testWidgets(
       'AC (positive) TransferToHomeFleetDialog @ 320×640: no RenderFlex '

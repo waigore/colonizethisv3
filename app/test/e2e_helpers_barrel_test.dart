@@ -1,5 +1,7 @@
-// AC1 barrel wrapper forwarding smokes (split from part1 under
-// `repo.app_test_file_size`, Refs #4013 / #2336).
+// AC1 barrel public-name pins and wrapper forwarding smokes
+// (Refs #2336, #4013, #4352). Signature pins live in
+// `e2e_helpers_barrel_test_support.dart`; PR #2731 lifted helpers stay in
+// `e2e_helpers_barrel_pr2731_lifted_test.dart`.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -8,10 +10,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 import 'app_shell_harness.dart';
 import 'e2e_helpers_barrel_reexport_smoke_support.dart';
+import 'e2e_helpers_barrel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
-
+  registerE2eHelpersBarrelPart1SignaturePins();
   registerE2eHelpersBarrelReexportSmokeTests();
 
   group('AC1 barrel: wrapper forwarding smokes', () {

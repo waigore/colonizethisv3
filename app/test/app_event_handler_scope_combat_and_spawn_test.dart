@@ -1,3 +1,4 @@
+// AppEventHandlerScope combat-mode and debug spawn ACs (Refs #4352).
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';

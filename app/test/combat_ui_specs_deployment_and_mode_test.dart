@@ -1,8 +1,8 @@
-// Pins SPEC/ui combat dialog and sub-view contracts (part 1):
+// Pins SPEC/ui combat dialog and sub-view contracts:
 // - SPEC/ui/quick-battle-deployment-view.md
 // - SPEC/ui/quick-battle-action-selector.md
 // - SPEC/ui/combat-mode-choice-dialog.md
-// Split under repo.app_test_file_size (Refs #4013).
+// Shared frames: combat_ui_specs_test_support.dart (Refs #4013, #4352).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -17,7 +17,6 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'combat_ui_specs_test_support.dart';
 
 void main() {
-
   suppressLogsForTests();
 
   group(
@@ -29,8 +28,12 @@ void main() {
         await tester.pumpWidget(
           combatUiSpecsFrame(
             combatUiSpecsDeploymentView(
-              attackerGroups: [combatUiSpecsCenterFront(unitIds: const ['a1', 'a2', 'a3'])],
-              defenderGroups: [combatUiSpecsCenterFront(unitIds: const ['d1', 'd2'])],
+              attackerGroups: [
+                combatUiSpecsCenterFront(unitIds: const ['a1', 'a2', 'a3']),
+              ],
+              defenderGroups: [
+                combatUiSpecsCenterFront(unitIds: const ['d1', 'd2']),
+              ],
               attackerName: 'Castile',
               defenderName: 'England',
             ),
@@ -99,7 +102,10 @@ void main() {
             EditorialMonoclePalette.muted,
           );
           expect(
-            tester.widget<Text>(find.text('Center Front: 1 units')).style?.color,
+            tester
+                .widget<Text>(find.text('Center Front: 1 units'))
+                .style
+                ?.color,
             EditorialMonoclePalette.muted,
           );
 
@@ -213,7 +219,11 @@ void main() {
             EditorialMonoclePalette.muted,
           );
 
-          await pumpCombatUiSpecsSelector(tester, cpRemaining: 0, onActionSelected: (_) {});
+          await pumpCombatUiSpecsSelector(
+            tester,
+            cpRemaining: 0,
+            onActionSelected: (_) {},
+          );
           expect(
             tester
                 .widget<Text>(find.textContaining('Command Points: 0'))

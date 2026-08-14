@@ -1,3 +1,5 @@
+// AppEventHandlerScope debug treasury/stockpile credit and flip-province ACs
+// (Refs #4352).
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

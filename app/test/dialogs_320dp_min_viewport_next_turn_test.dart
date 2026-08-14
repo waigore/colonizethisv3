@@ -1,6 +1,5 @@
-// Pin the 320 dp minimum-viewport contract for in-game modal dialogs
-// that share the [CtDialogShell] chrome (Refs #2870 S8/S10).
-// Split into part files under `repo.app_test_file_size` (Refs #4013).
+// Pin the 320 dp minimum-viewport contract for NextTurnConfirmationDialog
+// (Refs #2870 S8/S10, #4352).
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 
@@ -19,11 +18,7 @@ void main() {
       '@ 320 dp (Refs #2870 S8/S10)', () {
     const currentTurn = 7;
     const dialog = NextTurnConfirmationDialog(currentTurn: currentTurn);
-    final content = [
-      find.text('End turn?'),
-      find.text('No'),
-      find.text('Yes'),
-    ];
+    final content = [find.text('End turn?'), find.text('No'), find.text('Yes')];
 
     testWidgets('AC (positive) NextTurnConfirmationDialog @ 320×640: no '
         'RenderFlex overflow exception, title + body + No + Yes render '
@@ -105,9 +100,7 @@ void main() {
           find.text('End turn?'),
           find.text('No'),
           find.text('Yes'),
-          find.text(
-            'These civilians have no work order for the next turn:',
-          ),
+          find.text('These civilians have no work order for the next turn:'),
         ],
       );
       expect(find.text('explorer'), findsOneWidget);
