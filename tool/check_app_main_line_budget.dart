@@ -67,7 +67,9 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4366+#4367+#4369 merge headroom.
 // raised for MAP10001 tappable army stack markers (Refs #4384).
 // raised for army-marker + extraction-legend merge headroom after origin/dev.
-const _maxMainLines = 76400;
+// raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
+// raised for combined #4384+#4385 merge headroom (measured 76_545).
+const _maxMainLines = 76600;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

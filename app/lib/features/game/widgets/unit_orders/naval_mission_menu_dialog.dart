@@ -10,6 +10,7 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'naval_mission_flow.dart';
 import 'move_units_dialog_base.dart';
+import 'unit_picker_composition.dart';
 
 /// Fleet picker when multiple fleets share one map marker (Refs #4213).
 class NavalMissionFleetPickerDialog extends StatefulWidget {
@@ -47,6 +48,10 @@ class _NavalMissionFleetPickerDialogState
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
+    final showLocationContext = fleetPickerShowsLocationContext(
+      widget.game,
+      widget.fleetIds,
+    );
     return CtDialogShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -62,12 +67,15 @@ class _NavalMissionFleetPickerDialogState
               selected: _selected == fleetId,
               semanticsLabel: l10n.naval_fleetLabel(fleetId),
               onTap: () => setState(() => _selected = fleetId),
-              content: Text(
-                l10n.naval_fleetLabel(fleetId),
-                style: moveDialogRowLabelStyle(
-                  theme,
-                  selected: _selected == fleetId,
+              content: UnitPickerCompositionContent(
+                title: l10n.naval_fleetLabel(fleetId),
+                compositionLines: fleetPickerCompositionLines(
+                  game: widget.game,
+                  fleetId: fleetId,
+                  l10n: l10n,
+                  showLocationContext: showLocationContext,
                 ),
+                selected: _selected == fleetId,
               ),
             ),
           const SizedBox(height: CtSpacing.l),
@@ -151,13 +159,9 @@ class NavalMissionMenuDialog extends StatelessWidget {
         label: l10n.naval_mission_sail,
         effectLine: l10n.naval_mission_effect_sail,
         enabled: true,
-        onTap: () => Navigator.pop(
-          context,
-          const NavalMissionMenuChoiceSail(),
-        ),
+        onTap: () => Navigator.pop(context, const NavalMissionMenuChoiceSail()),
       ),
-      for (final option in availability.missions)
-        _missionRow(context, option),
+      for (final option in availability.missions) _missionRow(context, option),
       if (availability.canCancelPending)
         _menuActionRow(
           context: context,
