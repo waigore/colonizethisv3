@@ -12,6 +12,7 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 
+import 'naval_panel_part1_locate_pins.dart';
 import 'naval_panel_part1_pins.dart';
 import 'naval_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
@@ -231,7 +232,9 @@ void main() {
       'AC: NavalFleetsUpdatedEvent is emitted when fleet split completes',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
-        final (bus, latest) = wireNavalSplitUpdatedBus(gameSnapshot: () => game);
+        final (bus, latest) = wireNavalSplitUpdatedBus(
+          gameSnapshot: () => game,
+        );
         final targetFleet = game.worldState.fleets.firstWhere(
           (f) => f.ownerId == humanId && f.shipTypeIds.length >= 2,
         );
