@@ -4,6 +4,8 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement, kWorkTargetCounterSpy;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -118,6 +120,38 @@ void main() {
         plusButtons(tester).where((b) => b.dangerVariant).length,
         CivilianEconomyCatalog.all.length - lockedCount,
       );
+    });
+
+    testWidgets('AC: role gist visible unlocked and locked without raw ids', (
+      WidgetTester tester,
+    ) async {
+      await harness.pumpDialog(
+        tester,
+        panelGame: harness.gameWithCapital(treasury: 10000, paper: 100),
+      );
+      expect(
+        find.text('Explores provinces · Prospects minerals'),
+        findsOneWidget,
+      );
+      expect(find.text('Improves tiles · Upgrades towns'), findsOneWidget);
+      expect(find.text('Builds roads, ports, and forts'), findsOneWidget);
+      expect(
+        find.text('Holds foreign intel · Counter-espionage at home'),
+        findsOneWidget,
+      );
+      expect(find.textContaining(kWorkTargetBuildImprovement), findsNothing);
+      expect(find.textContaining(kWorkTargetCounterSpy), findsNothing);
+
+      await harness.pumpDialog(
+        tester,
+        panelGame: harness.gameWithNoTech(treasury: 10000),
+      );
+      expect(
+        find.text('Purchases land in Minor/Tribe provinces'),
+        findsOneWidget,
+      );
+      expect(find.text('Upgrades roads to railroad'), findsOneWidget);
+      expect(find.textContaining('Requires:'), findsWidgets);
     });
   });
 }
