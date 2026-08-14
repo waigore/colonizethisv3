@@ -75,4 +75,21 @@ void main() {
       expect(restored, state);
     });
   });
+
+  group('MapViewState capital-link highlight (Refs #4370)', () {
+    test('missing JSON field defaults ON', () {
+      final loaded = MapViewState.fromJson({
+        'zoomMultiplier': 1.0,
+        'showProvinceOverlay': true,
+      });
+      expect(loaded.showCapitalLinkDisconnectedHighlight, isTrue);
+    });
+
+    test('round-trips explicit off', () {
+      const state = MapViewState(showCapitalLinkDisconnectedHighlight: false);
+      final restored = MapViewState.fromJson(state.toJson());
+      expect(restored.showCapitalLinkDisconnectedHighlight, isFalse);
+      expect(restored, state);
+    });
+  });
 }

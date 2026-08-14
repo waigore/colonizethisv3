@@ -233,6 +233,7 @@ void main() {
           showProvinceOverlay: false,
           showProvinceOwnershipTint: true,
           showProvinceNamesLayer: false,
+          showCapitalLinkDisconnectedHighlight: false,
           showPlayerTurnEventsFeed: true,
           showMapResources: false,
           showMapImprovements: true,
@@ -246,6 +247,7 @@ void main() {
       expect(loaded.mapViewState.showProvinceOverlay, isFalse);
       expect(loaded.mapViewState.showProvinceOwnershipTint, isTrue);
       expect(loaded.mapViewState.showProvinceNamesLayer, isFalse);
+      expect(loaded.mapViewState.showCapitalLinkDisconnectedHighlight, isFalse);
       expect(loaded.mapViewState.showPlayerTurnEventsFeed, isTrue);
       expect(loaded.mapViewState.showPlayersBar, isTrue);
       expect(loaded.mapViewState.showMapResources, isFalse);
@@ -266,6 +268,10 @@ void main() {
       expect(legacyLoaded!.mapViewState, MapViewState.defaults);
       expect(legacyLoaded.mapViewState.showPlayerTurnEventsFeed, isFalse);
       expect(legacyLoaded.mapViewState.showPlayersBar, isTrue);
+      expect(
+        legacyLoaded.mapViewState.showCapitalLinkDisconnectedHighlight,
+        isTrue,
+      );
 
       final rematerializeId = 'legacyMapViewStateRematerialize';
       harness.adapter.save(

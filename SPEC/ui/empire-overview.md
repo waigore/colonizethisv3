@@ -304,7 +304,7 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 
 | Story | Purpose | Authority |
 |-------|---------|-----------|
-| Defaults — overlay on, ownership off, names on | Pins cartographic defaults plus Map marks all-on. | § Map display options |
+| Defaults — overlay on, ownership off, names on | Pins cartographic defaults (capital-link highlight ON, ownership OFF) plus Map marks all-on. | § Map display options |
 | All toggles on | Ownership tint on with all marks on. | § Map display options |
 | All toggles off | Terrain-only marks + cartographic off. | § Map display options |
 | Resources only | Cycle preset: resources on, improvements/roads off. | § Map display options — cycle presets |

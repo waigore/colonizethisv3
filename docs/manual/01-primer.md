@@ -34,7 +34,7 @@ Later chapters deepen victory counsel; start here so you know the finish line.
 3. **Empire buttons** sit as an always-visible **icon column on the left** of the map (labels on hover): Production (`GAME20001`), Development (`GAME80001`), Trade (`GAME60001`), Civilian Units, Military Units, Naval Units, Diplomacy (`GAME30001`), Technology (`GAME40001`), Victory (`GAME70001`). Icons are defined in the toolbar-icons catalog. Development scans improvable tiles empire-wide and one-tap assigns Builders (Chapter 6); Trade opens the Market + Deal Book desk (Chapter 8); Victory opens mid-campaign standings and conditions (Chapter 15); market clearance still resolves in turn phases.
 4. The top bar carries turn controls, region tabs, and the hamburger that opens `GAME50001` **Game side menu** (Game Parameters read-only + Debug log — not a second empire toolbar).
 5. Tap a province or sea zone to open `MAP20001` **Province / sea-zone detail overlay** for identity, ownership, and local actions.
-6. Map control affordances (stacked-layers cycle, home-to-capital, map options, region minimap, treasury display) use the same icon set; treat them as map chrome, not separate routes. **Map display options** names the information layers (**Show resources**, **Show improvements**, **Show roads and rails**) and cartographic chrome (**Show province and sea borders**, ownership, names). The stacked-layers button is a shortcut through four presets; its tooltip names the current combination. Preferences persist across save and load.
+6. Map control affordances (stacked-layers cycle, home-to-capital, map options, region minimap, treasury display) use the same icon set; treat them as map chrome, not separate routes. **Map display options** names the information layers (**Show resources**, **Show improvements**, **Show roads and rails**) and cartographic chrome (**Show province and sea borders**, ownership, names, and **Highlight land not bound to the capital** — default **ON**; the hatch itself is Chapter 3). The stacked-layers button is a shortcut through four presets; its tooltip names the current combination. Preferences persist across save and load.
 
 New-game setup may show a non-interactive progress wait-gate before you land here; Chapter 2 covers that flow.
 
@@ -62,6 +62,7 @@ Rival Great Powers plan with the same order surface you do. Early turns they typ
 - [ ] Victory at a glance states 31+ OW provinces, calendar halt vs infinite mode, and that only GPs win.
 - [ ] Turn rhythm describes Orders → next turn → resolution → new Orders (or end).
 - [ ] Orientation cites `GAME10001`, `MAP10001`, empire buttons → production/trade/diplomacy/tech IDs, `GAME50001`, `MAP20001`.
+- [ ] Orientation names **Highlight land not bound to the capital** among Map display options (hatch detail in Chapter 3).
 - [ ] Cites `GAME60001` Trade as an operable left-rail destination (details in Chapter 8); does not contradict Chapter 2’s initializing wait-gate.
 - [ ] Sources footer lists the primary paths from the coverage map.
 

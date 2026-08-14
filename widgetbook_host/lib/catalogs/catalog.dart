@@ -9,7 +9,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
-    show CapitalMarkerView, CellViewData, RegionMapViewData, TownMarkerView;
+    show
+        CapitalMarkerView,
+        CellViewData,
+        RegionMapViewData,
+        TileVisibility,
+        TownMarkerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart'
     show
@@ -158,6 +163,7 @@ import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'army_tile_marker_story.dart';
 import 'debug_map_visibility_story.dart';
 import 'fort_map_icon_levels_story.dart';
+import 'capital_link_disconnected_highlight_story.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
@@ -703,6 +709,39 @@ List<WidgetbookNode> get mapWidgetDirectories => [
         name: 'Fort glyphs L1–L3',
         builder: (context) => widgetbookEditorialMonocleApp(
           child: const Center(child: FortMapIconLevelsStory()),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — mixed connected/disconnected',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: CapitalLinkDisconnectedHighlightStory()),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — highlight off',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(
+            child: CapitalLinkDisconnectedHighlightStory(showHighlight: false),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — fogged disconnected',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(
+            child: CapitalLinkDisconnectedHighlightStory(
+              disconnectedVisibility: TileVisibility.fogged,
+              playerConstrained: true,
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — narrow (320 dp)',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(
+            child: CapitalLinkDisconnectedHighlightStory(narrow: true),
+          ),
         ),
       ),
       for (final entry in armyTileMarkerCatalogEntries)
