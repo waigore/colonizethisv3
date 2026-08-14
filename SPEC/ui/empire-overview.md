@@ -292,6 +292,14 @@ Folder: **Game Map Corner Controls** — stories for [GameMapCornerControls](../
 | Home-to-capital disabled (no human capital) | Exercises the disabled-state path when the underlying callback is `null`: tooltip + surface wrap in `IgnorePointer` + `Opacity(0.4)`. | § Corner controls chrome — Disabled state |
 | Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap | Pins § Narrow corner-control measurements: 24 × 24 dp surface, 2 dp gap, glyph unchanged at 22 × 22 dp. | § Narrow corner-control measurements; [mobile-adaptation.md](mobile-adaptation.md) § In-game shell |
 
+Folder: **Extraction disc legend** — chrome host for [ExtractionDiscLegend](../../app/lib/features/game/flame/controls/extraction_disc_legend.dart) above [GameMapCornerControls](../../app/lib/features/game/flame/controls/game_map_corner_controls.dart), registered from [`extractionDiscLegendDirectories`](../../widgetbook_host/lib/catalogs/catalog_game_chrome.dart) (Refs #4367 AC7). Isolated wide/narrow/panel stories remain under **Game Tab Bar**.
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Visible — legend above corner controls | Resource-including mode + viewing player (zero-disc teaching). | § Extraction disc legend |
+| Hidden — terrain only | Legend omitted; corner controls stay, home-to-capital enabled. | § Extraction disc legend |
+| Hidden — global observe | Legend omitted; home-to-capital disabled (`viewingPlayerId == null`). | § Extraction disc legend |
+
 Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../../app/lib/features/game/widgets/dialogs/game_map_options_dialog.dart) registered from [`gameMapOptionsDialogDirectories`](../../widgetbook_host/lib/catalogs/catalog_game_chrome.dart).
 
 | Story | Purpose | Authority |
@@ -299,6 +307,7 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 | Defaults — overlay on, ownership off, names on | Pins cartographic defaults plus Map marks all-on. | § Map display options |
 | All toggles on | Ownership tint on with all marks on. | § Map display options |
 | All toggles off | Terrain-only marks + cartographic off. | § Map display options |
+| Resources only | Cycle preset: resources on, improvements/roads off. | § Map display options — cycle presets |
 | Improvements without resources | Dialog-only combination (resources off, improvements on, roads off). | § Map display options — new legal combinations |
 | Roads disabled when improvements off | Roads switch `onChanged == null`. | § Map display options — roads disable+auto-off |
 
@@ -342,7 +351,7 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 - **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the **bottom-left** of the map area and displays the stacked layers icon (icon-only).
 - **Given** the Empire overview map is in a resource-including base-layer mode and `ShellPlayerContext.viewingPlayerId != null`, **when** the map chrome renders (including zero discs), **then** the UI layer shows the extraction-disc legend above the corner controls with plain gold/brown meanings (Refs #4367).
 - **Given** the player taps the extraction-disc legend, **when** the details popover opens, **then** the UI layer shows both colour meanings and a capital-link counsel line, and dismisses via ×, outside tap, or Esc without staging orders (Refs #4367).
-- **Given** the base layer is **terrain only** or global observe (`viewingPlayerId == null`), **when** the map chrome renders, **then** the UI layer omits the extraction-disc legend (Refs #4367).
+- **Given** the base layer is **terrain only** or global observe (`viewingPlayerId == null`), **when** the map chrome renders, **then** the UI layer omits the extraction-disc legend (Refs #4367). Widget goldens: `app/test/extraction_disc_legend_goldens_test.dart` (`extraction_disc_legend_hidden_terrain_only.png`, `extraction_disc_legend_hidden_global_observe.png`); Widgetbook folder **Extraction disc legend**.
 
 - **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible **immediately to the right** of the base-layer cycle button in the same **bottom-left** horizontal row.
 - **Given** the Empire overview map is visible and the current player has a defined capital tile, **when** the user taps the home-to-capital button, **then** the active region switches (if needed) to the current player's capital region and the map centers on the current player's capital tile with the selection/highlight cursor placed on that tile.
@@ -361,6 +370,7 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 - **Given** the Map display options dialog is visible, **when** the dialog tree is inspected, **then** the dialog is rendered by `GameMapOptionsDialog` inside a `CtDialogShell` (default `--accent-dim` 2px border, no override) with a **Map marks** heading, seven `CtToggleSwitch` rows, and a single `CtNinePatchButton` labelled `Close`, and no Material `AlertDialog`, `SwitchListTile`, or `TextButton` widgets paint anywhere inside the dialog (catalog ban per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Material design ban).
 - **Given** the player has just entered the in-game shell and the map is first shown, **when** no Map display options have been changed yet, **then** the map does not draw the Great Power ownership tint (default matches **Show province ownership** OFF) and does draw the capital-link disconnected hatch where applicable (default matches **Highlight land not bound to the capital** ON).
 - **Given** the Map display options dialog is visible for the first time in a game session, **then** the dialog shows **Show resources**, **Show improvements**, **Show roads and rails**, **Show province and sea borders**, **Show province ownership**, **Show province names**, and **Highlight land not bound to the capital**, with all except **Show province ownership** in the ON state.
+- **Given** `GameMapOptionsDialog` variants for Map marks all-on (defaults, including the renamed **Show province and sea borders** row), terrain-only, resources-only, improvements-without-resources, roads-disabled-when-improvements-off, and `kMinViewportWidth` 320 dp, **when** the host golden suite in `app/test/game_map_options_dialog_goldens_test.dart` captures each keyed `RepaintBoundary`, **then** each `matchesGoldenFile` baseline under `app/test/goldens/game_map_options_dialog_*.png` matches the committed PNG (Refs #4388).
 - **Given** the player turns **Show resources** off, **when** the map re-renders, **then** commodity icons and extraction discs are not painted; improvements and roads follow their own flags.
 - **Given** the player turns **Show improvements** off, **when** the map re-renders, **then** `I{n}` labels are hidden, **Show roads and rails** is off and disabled (`onChanged == null`), and road/rail sprites do not paint; resources are unchanged.
 - **Given** resources are off and improvements are on, **when** the map re-renders, **then** `I{n}` labels paint and resource icons / discs do not.
