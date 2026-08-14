@@ -37,6 +37,10 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
     showProvinceOwnershipTint: state.widget.showProvinceOwnershipTint,
     showProvinceNamesLayer: state.widget.showProvinceNamesLayer,
     visibilityMode: state.widget.visibilityMode,
+    mapBaseLayerFlags: resolveMapBaseLayerFlags(
+      flags: state.widget.mapBaseLayerFlags,
+      mode: state.widget.baseLayerDisplayMode,
+    ),
     baseLayerDisplayMode:
         state.widget.baseLayerDisplayMode ??
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,

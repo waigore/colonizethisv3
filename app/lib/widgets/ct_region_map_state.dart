@@ -45,6 +45,7 @@ class CtRegionMapState extends State<CtRegionMap>
             oldWidget.showProvinceOwnershipTint ||
         widget.showProvinceNamesLayer != oldWidget.showProvinceNamesLayer ||
         widget.visibilityMode != oldWidget.visibilityMode ||
+        widget.mapBaseLayerFlags != oldWidget.mapBaseLayerFlags ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
         widget.onCivilianTileStateChanged !=
@@ -74,6 +75,10 @@ class CtRegionMapState extends State<CtRegionMap>
         showProvinceOwnershipTint: widget.showProvinceOwnershipTint,
         showProvinceNamesLayer: widget.showProvinceNamesLayer,
         visibilityMode: widget.visibilityMode,
+        mapBaseLayerFlags: resolveMapBaseLayerFlags(
+          flags: widget.mapBaseLayerFlags,
+          mode: widget.baseLayerDisplayMode,
+        ),
         baseLayerDisplayMode:
             widget.baseLayerDisplayMode ??
             BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,

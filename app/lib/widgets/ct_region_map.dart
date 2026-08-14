@@ -17,6 +17,7 @@ class CtRegionMap extends StatefulWidget {
     this.showProvinceNamesLayer = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
+    this.mapBaseLayerFlags,
     this.baseLayerDisplayMode,
     this.onProvinceSelected,
     this.onMapTileTappedForDetail,
@@ -48,6 +49,10 @@ class CtRegionMap extends StatefulWidget {
   final bool showProvinceNamesLayer;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
+
+  /// When set, these flags are the paint source of truth (Refs #4388).
+  /// When null, [baseLayerDisplayMode] (or full detail) is used.
+  final MapBaseLayerFlags? mapBaseLayerFlags;
 
   /// When null, full detail (terrain + resources + improvements + roads) for backward compatibility.
   final BaseLayerDisplayMode? baseLayerDisplayMode;

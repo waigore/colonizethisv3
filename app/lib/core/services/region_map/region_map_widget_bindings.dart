@@ -1,5 +1,6 @@
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 
 import '../../../features/game/flame/region_map/ct_region_map_game.dart';
@@ -14,7 +15,8 @@ export '../../../features/game/flame/region_map/region_map.dart'
     show
         BaseLayerDisplayMode,
         CtMapVisibilityMode,
-        assertCtMapPlayerViewRequired;
+        assertCtMapPlayerViewRequired,
+        resolveMapBaseLayerFlags;
 export '../../../features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
 
@@ -28,6 +30,7 @@ typedef CreateCtRegionMapGame =
       required bool showProvinceOwnershipTint,
       required bool showProvinceNamesLayer,
       required CtMapVisibilityMode visibilityMode,
+      required MapBaseLayerFlags mapBaseLayerFlags,
       required BaseLayerDisplayMode baseLayerDisplayMode,
       required void Function(String provinceId)? onProvinceSelected,
       required void Function(String tileKey)? onMapTileTappedForDetail,
@@ -67,6 +70,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
   required bool showProvinceOwnershipTint,
   required bool showProvinceNamesLayer,
   required CtMapVisibilityMode visibilityMode,
+  required MapBaseLayerFlags mapBaseLayerFlags,
   required BaseLayerDisplayMode baseLayerDisplayMode,
   required void Function(String provinceId)? onProvinceSelected,
   required void Function(String tileKey)? onMapTileTappedForDetail,
@@ -105,6 +109,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     showProvinceOwnershipTint: showProvinceOwnershipTint,
     showProvinceNamesLayer: showProvinceNamesLayer,
     visibilityMode: visibilityMode,
+    mapBaseLayerFlags: mapBaseLayerFlags,
     baseLayerDisplayMode: baseLayerDisplayMode,
     onProvinceSelected: onProvinceSelected,
     onMapTileTappedForDetail: onMapTileTappedForDetail,

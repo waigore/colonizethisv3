@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags, MapMarksCombination;
 
 import '../../../../config/app_assets.dart';
 import '../../screens/game/game_screen_shared.dart';
@@ -27,6 +29,7 @@ class GameMapCornerControls extends StatelessWidget {
     required this.onOpenMapDisplayOptions,
     this.homeToCapitalEnabled = true,
     this.narrow = false,
+    this.mapBaseLayerFlags = MapBaseLayerFlags.fullDetail,
     super.key,
   });
 
@@ -34,6 +37,9 @@ class GameMapCornerControls extends StatelessWidget {
   final VoidCallback onCenterOnHomeCapital;
   final VoidCallback onOpenMapDisplayOptions;
   final bool homeToCapitalEnabled;
+
+  /// Current information-layer flags; drives the cycle-button tooltip (Refs #4388).
+  final MapBaseLayerFlags mapBaseLayerFlags;
 
   /// When true, render the row at narrow-viewport measurements per
   /// `SPEC/ui/mobile-adaptation.md` § In-game shell (issue #2870 S3).
@@ -74,7 +80,7 @@ class GameMapCornerControls extends StatelessWidget {
       children: [
         MapCornerIconButton(
           buttonKey: kBaseLayerCycleButtonKey,
-          tooltip: l10n.mapCorner_tooltipBaseLayer,
+          tooltip: mapMarksTooltip(l10n, mapBaseLayerFlags),
           onTap: onCycleBaseLayerDisplayMode,
           assetPath: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
           narrow: narrow,
@@ -98,4 +104,18 @@ class GameMapCornerControls extends StatelessWidget {
       ],
     );
   }
+}
+
+String mapMarksTooltip(AppLocalizations l10n, MapBaseLayerFlags flags) {
+  final combination = switch (flags.combination) {
+    MapMarksCombination.terrainOnly => l10n.mapCorner_mapMarks_terrainOnly,
+    MapMarksCombination.resources => l10n.mapCorner_mapMarks_resources,
+    MapMarksCombination.resourcesAndImprovements =>
+      l10n.mapCorner_mapMarks_resourcesAndImprovements,
+    MapMarksCombination.fullDetail => l10n.mapCorner_mapMarks_full,
+    MapMarksCombination.improvements => l10n.mapCorner_mapMarks_improvements,
+    MapMarksCombination.improvementsAndRoads =>
+      l10n.mapCorner_mapMarks_improvementsAndRoads,
+  };
+  return l10n.mapCorner_tooltipMapMarks(combination);
 }

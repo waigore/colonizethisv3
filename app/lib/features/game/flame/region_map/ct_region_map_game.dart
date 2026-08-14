@@ -1,4 +1,6 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
@@ -29,6 +31,7 @@ class CtRegionMapGame extends FlameGame
     required bool showProvinceOwnershipTint,
     required bool showProvinceNamesLayer,
     required CtMapVisibilityMode visibilityMode,
+    MapBaseLayerFlags? mapBaseLayerFlags,
     BaseLayerDisplayMode baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
     void Function(String provinceId)? onProvinceSelected,
@@ -66,6 +69,9 @@ class CtRegionMapGame extends FlameGame
     this.showProvinceOwnershipTint = showProvinceOwnershipTint;
     this.showProvinceNamesLayer = showProvinceNamesLayer;
     this.visibilityMode = visibilityMode;
+    this.mapBaseLayerFlags =
+        mapBaseLayerFlags ??
+        mapBaseLayerFlagsFromDisplayMode(baseLayerDisplayMode);
     this.baseLayerDisplayMode = baseLayerDisplayMode;
     this.onProvinceSelected = onProvinceSelected;
     this.onMapTileTappedForDetail = onMapTileTappedForDetail;
@@ -110,6 +116,7 @@ class CtRegionMapGame extends FlameGame
     bool? showProvinceOwnershipTint,
     bool? showProvinceNamesLayer,
     CtMapVisibilityMode? visibilityMode,
+    MapBaseLayerFlags? mapBaseLayerFlags,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? selectedTileKey,
     String? selectedCivilianTileKey,
@@ -146,6 +153,7 @@ class CtRegionMapGame extends FlameGame
     showProvinceOwnershipTint: showProvinceOwnershipTint,
     showProvinceNamesLayer: showProvinceNamesLayer,
     visibilityMode: visibilityMode,
+    mapBaseLayerFlags: mapBaseLayerFlags,
     baseLayerDisplayMode: baseLayerDisplayMode,
     selectedTileKey: selectedTileKey,
     selectedCivilianTileKey: selectedCivilianTileKey,

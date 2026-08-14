@@ -14,6 +14,7 @@ export 'src/civilian_unit_type_ids.dart';
 export 'src/current_work.dart';
 export 'src/game.dart';
 export 'src/victory.dart';
+export 'src/map_base_layer_flags.dart';
 export 'src/map_view_state.dart';
 export 'src/general.dart';
 export 'src/minor_nation.dart';

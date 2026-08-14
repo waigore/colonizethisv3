@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
-import '../region_map/region_map_component.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode;
+import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
 import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 
 import '../overlays/game_map_province_detail_side_panel.dart';
@@ -41,7 +41,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.isNarrow,
     required this.game,
     required this.region,
-    required this.baseLayerDisplayMode,
+    required this.mapBaseLayerFlags,
     required this.showProvinceOverlay,
     required this.showProvinceOwnershipTint,
     required this.showProvinceNamesLayer,
@@ -73,7 +73,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final bool isNarrow;
   final ct_models.Game game;
   final RegionMapViewData region;
-  final BaseLayerDisplayMode baseLayerDisplayMode;
+  final MapBaseLayerFlags mapBaseLayerFlags;
   final bool showProvinceOverlay;
   final bool showProvinceOwnershipTint;
   final bool showProvinceNamesLayer;
@@ -127,7 +127,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                       visibilityMode == CtMapVisibilityMode.playerConstrained
                       ? playerView
                       : null,
-                  baseLayerDisplayMode: baseLayerDisplayMode,
+                  mapBaseLayerFlags: mapBaseLayerFlags,
                   onProvinceSelected: null,
                   onMapTileTappedForDetail: inWorkTargetSelectionMode
                       ? null

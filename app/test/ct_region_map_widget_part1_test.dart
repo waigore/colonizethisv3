@@ -17,7 +17,6 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         resolveProvinceLabelPresenceIconIds,
         resolveSeaZoneLabelPrefixIconIds,
         shouldEllipsizeProvinceLabelText,
-        shouldShowExtractionUnitIndicators,
         shouldApplyFogToFeatureOverlay,
         shouldApplyFogToInteriorPlainsVariantBase,
         shouldApplyFogToInteriorPlainsVariantOverlay,
