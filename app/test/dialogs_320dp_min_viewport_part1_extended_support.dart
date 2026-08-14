@@ -156,8 +156,8 @@ void registerDialogs320Part1ExtendedTests() {
     );
 
     testWidgets('AC (positive) GameMapOptionsDialog @ 320×640: no RenderFlex '
-        'overflow exception, title + 6 toggle labels + Close action render '
-        '(all six Expanded labels + 12 dp gap + CtToggleSwitch rows must '
+        'overflow exception, title + 7 toggle labels + Close action render '
+        '(all seven Expanded labels + 12 dp gap + CtToggleSwitch rows must '
         'fit within the ~288 dp content width)', (WidgetTester tester) async {
       await pumpDialogs320At(
         tester,
@@ -183,6 +183,10 @@ void registerDialogs320Part1ExtendedTests() {
       expect(find.text('Show province and sea borders'), findsOneWidget);
       expect(find.text('Show province ownership'), findsOneWidget);
       expect(find.text('Show province names'), findsOneWidget);
+      expect(
+        find.text('Highlight land not bound to the capital'),
+        findsOneWidget,
+      );
       expect(find.text('Close'), findsOneWidget);
     });
 

@@ -27,6 +27,7 @@ mixin CtRegionMapGameFields on FlameGame {
   late bool showProvinceOverlay;
   late bool showProvinceOwnershipTint;
   late bool showProvinceNamesLayer;
+  bool showCapitalLinkDisconnectedHighlight = true;
   late CtMapVisibilityMode visibilityMode;
   late MapBaseLayerFlags mapBaseLayerFlags;
   late BaseLayerDisplayMode baseLayerDisplayMode;
@@ -208,6 +209,8 @@ mixin CtRegionMapGameLifecycle on CtRegionMapGameFields, CtRegionMapGameCamera {
       showProvinceOverlay: showProvinceOverlay,
       showProvinceOwnershipTint: showProvinceOwnershipTint,
       showProvinceNamesLayer: showProvinceNamesLayer,
+      showCapitalLinkDisconnectedHighlight:
+          showCapitalLinkDisconnectedHighlight,
       visibilityMode: visibilityMode,
       mapBaseLayerFlags: mapBaseLayerFlags,
       baseLayerDisplayMode: baseLayerDisplayMode,

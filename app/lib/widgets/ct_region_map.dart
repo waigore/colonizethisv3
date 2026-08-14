@@ -15,6 +15,7 @@ class CtRegionMap extends StatefulWidget {
     this.showProvinceOverlay = true,
     this.showProvinceOwnershipTint = false,
     this.showProvinceNamesLayer = true,
+    this.showCapitalLinkDisconnectedHighlight = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
     this.mapBaseLayerFlags,
@@ -47,6 +48,7 @@ class CtRegionMap extends StatefulWidget {
   final bool showProvinceOverlay;
   final bool showProvinceOwnershipTint;
   final bool showProvinceNamesLayer;
+  final bool showCapitalLinkDisconnectedHighlight;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
 
