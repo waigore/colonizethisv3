@@ -12,7 +12,12 @@ import 'package:colonizethis_map/colonizethis_map.dart'
     show CapitalMarkerView, CellViewData, RegionMapViewData, TownMarkerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart'
-    show GameSaveAdapter, LoadableSaveEntry, LoadableSaveKind, kAutoSaveListLabel, kAutoSaveSlotId;
+    show
+        GameSaveAdapter,
+        LoadableSaveEntry,
+        LoadableSaveKind,
+        kAutoSaveListLabel,
+        kAutoSaveSlotId;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +27,8 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart' show GameMapData, GameService;
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -95,6 +101,8 @@ import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogu
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_component_shared_palette.dart'
+    show BaseLayerDisplayMode;
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
@@ -334,6 +342,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameScreenDirectories,
   ...gameTopBarDirectories,
   ...gameTabBarDirectories,
+  ...extractionDiscLegendDirectories,
   ...playersBarToggleDirectories,
   ...gameMapCornerControlsDirectories,
   ...gameMapEmpireLeftRailDirectories,
