@@ -30,6 +30,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.explorerOnly = false,
     this.builderOnly = false,
     this.engineerOnly = false,
+    this.railBuilderOnly = false,
     this.merchantOnly = false,
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
@@ -37,6 +38,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.buildRoadShortcutTargetTileKey,
     this.buildFortShortcutTargetTileKey,
     this.buildPortShortcutTargetTileKey,
+    this.buildRailShortcutTargetTileKey,
     this.purchaseLandShortcutTargetTileKey,
     this.upgradeTownShortcutTargetTileKey,
   });
@@ -56,6 +58,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional panel filter mode for engineer-only rows.
   final bool engineerOnly;
+
+  /// Optional panel filter mode for Rail Builder-only rows (Refs #4383).
+  final bool railBuilderOnly;
 
   /// Optional panel filter mode for merchant-only rows.
   final bool merchantOnly;
@@ -77,6 +82,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province build-port shortcut flow.
   final String? buildPortShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-railroad shortcut flow.
+  final String? buildRailShortcutTargetTileKey;
 
   /// Optional tile key used by the province purchase-land shortcut flow.
   final String? purchaseLandShortcutTargetTileKey;

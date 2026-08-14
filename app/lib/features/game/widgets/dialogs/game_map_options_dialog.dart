@@ -23,6 +23,10 @@ const ValueKey<String> kGameMapOptionsShowProvinceOwnershipToggleKey =
 const ValueKey<String> kGameMapOptionsShowProvinceNamesToggleKey =
     ValueKey<String>('gameMapOptions:showProvinceNames');
 
+/// Stable key for the capital-link disconnected land highlight toggle.
+const ValueKey<String> kGameMapOptionsShowCapitalLinkDisconnectedToggleKey =
+    ValueKey<String>('gameMapOptions:showCapitalLinkDisconnectedHighlight');
+
 /// Stable key for the "Show resources" [CtToggleSwitch] (Refs #4388).
 const ValueKey<String> kGameMapOptionsShowMapResourcesToggleKey =
     ValueKey<String>('gameMapOptions:showMapResources');
@@ -37,7 +41,8 @@ const ValueKey<String> kGameMapOptionsShowMapRoadsToggleKey = ValueKey<String>(
 );
 
 /// Dark editorial-monocle modal for information-layer and cartographic map
-/// toggles. Implements `Refs #2861` S8 / R9 and `Refs #4388`.
+/// toggles, including the capital-link disconnected land highlight.
+/// Implements `Refs #2861` S8 / R9, `Refs #4388`, and `Refs #4370`.
 class GameMapOptionsDialog extends StatefulWidget {
   const GameMapOptionsDialog({
     super.key,
@@ -143,6 +148,16 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
             value: _state.showProvinceNamesLayer,
             onChanged: (value) =>
                 _update(_state.copyWith(showProvinceNamesLayer: value)),
+          ),
+          CtGap.m,
+          _GameMapOptionsToggleRow(
+            toggleKey: kGameMapOptionsShowCapitalLinkDisconnectedToggleKey,
+            label: l10n.map_displayOptions_showCapitalLinkDisconnected,
+            labelStyle: labelStyle,
+            value: _state.showCapitalLinkDisconnectedHighlight,
+            onChanged: (value) => _update(
+              _state.copyWith(showCapitalLinkDisconnectedHighlight: value),
+            ),
           ),
           CtGap.l,
           Row(

@@ -19,6 +19,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onBuildRoadTap,
   VoidCallback? onBuildFortTap,
   VoidCallback? onBuildPortTap,
+  VoidCallback? onBuildRailroadTap,
   VoidCallback? onPurchaseLandTap,
   VoidCallback? onUpgradeTownTap,
   VoidCallback? onEstablishConsulateTap,
@@ -63,6 +64,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool buildRoadEnabled,
   required bool buildFortEnabled,
   required bool buildPortEnabled,
+  required bool buildRailEnabled,
   required bool purchaseLandEnabled,
   required String provinceId,
   required bool upgradeTownEnabled,
@@ -117,6 +119,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onBuildRoadTap: null,
       onBuildFortTap: null,
       onBuildPortTap: null,
+      onBuildRailroadTap: null,
       onPurchaseLandTap: null,
       onUpgradeTownTap: upgradeTownTap,
       onEstablishConsulateTap: establishConsulateTap,
@@ -126,13 +129,14 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   return (
     onExploreWithExplorerTap: _provinceDetailShortcutTap(
       enabled: exploreEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        selectedRegion: region,
-        workTargetSelectionCache: workTargetSelectionCache,
-      ).enabled,
+      revalidateEnabled: () =>
+          GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: tileKey,
+            selectedRegion: region,
+            workTargetSelectionCache: workTargetSelectionCache,
+          ).enabled,
       emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           explorerOnly: true,
@@ -227,6 +231,26 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
           buildPortShortcutTargetTileKey: tileKey,
+        ),
+      ),
+    ),
+    onBuildRailroadTap: _provinceDetailShortcutTap(
+      enabled: buildRailEnabled,
+      revalidateEnabled: () =>
+          GameMapAreaStateLogicProvinceActions.provinceBuildRailActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: tileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+            topology: topology,
+            currentOrders: draftOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          ).enabled,
+      emit: () => bus.emit(
+        ct_models.OpenCivilianUnitsPanelEvent(
+          railBuilderOnly: true,
+          buildRailShortcutTargetTileKey: tileKey,
         ),
       ),
     ),

@@ -40,6 +40,10 @@ InitGameMapViewData buildInitGameMapViewData({
   /// Optional per-tile transport-blocked extraction units for map overlays.
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
 
+  /// Optional tile keys for viewing-player owned land not in the capital
+  /// connected set (Refs #4370).
+  Set<String>? capitalLinkDisconnectedTileKeys,
+
   /// Optional explicit owner set for civilian tile markers. When null, the
   /// builder falls back to `Player.isHuman` players (legacy single-player
   /// behavior). When provided, only civilians owned by ids in this set get
@@ -63,6 +67,7 @@ InitGameMapViewData buildInitGameMapViewData({
       resourceExtractionEffectiveUnitsByTile:
           resourceExtractionEffectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+      capitalLinkDisconnectedTileKeys: capitalLinkDisconnectedTileKeys,
       civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
   }

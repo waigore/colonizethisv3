@@ -46,13 +46,15 @@ A compact **extraction-disc legend** sits above the bottom-left map tools whenev
 
 A disconnected improved tile with a visible resource icon shows **all brown** discs (no gold) — not silence. That is your cue that the improvement looks productive but extraction is stranded until you restore capital link toward your capital.
 
+**Owned land without discs** (empty plains, towns, roads, zero-yield tiles) can still be cut off. With **Highlight land not bound to the capital** on in **Map display options** (default **ON**), those stranded owned tiles show a muted diagonal hatch on the empire map so you can plan roads and ports at a glance without tapping every tile. Connected owned land stays unmarked. Turn the highlight off in the same dialog if you prefer a cleaner map; the choice is saved with your campaign.
+
 ### Why province identity matters in the UI
 
 Every province and sea zone is identified as **`regionId|localId`** (never a bare local id alone). The overlay and orders use that full identity so Old World `P3` and New World `P3` never collide. When a dialog lists a destination or a report names a province, read the **region** as part of the name of the place — it is not decorative.
 
 ## Counsel
 
-**Counsel.** Hark, my liege: a province painted in your colour is not yet a harvest — ask whether the roads and ports still bind it to your capital.
+**Counsel.** Hark, my liege: a province painted in your colour is not yet a harvest — ask whether the roads and ports still bind it to your capital. The hatch and the brown discs both whisper the same warning: the network is broken.
 
 **Tip.** When two places share a short local label, trust the region prefix in the overlay title before you march or build.
 

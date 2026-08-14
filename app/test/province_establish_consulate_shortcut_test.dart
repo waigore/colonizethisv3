@@ -8,14 +8,15 @@ import 'package:colonizethis_app/features/game/flame/caches/per_player_work_targ
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'province_overlay_test_harness.dart';
+
 const String _kGameId = 'g_consulate_shortcut';
 const String _kHumanPlayerId = 'gp1';
 const String _kMinorId = 'minor1';
@@ -99,20 +100,6 @@ Game _buildGame({
   );
 }
 
-RegionMapViewData _emptyRegion() => const RegionMapViewData(
-  regionId: 'oldWorld',
-  width: 1,
-  height: 1,
-  cellSize: 16,
-  cells: [],
-  capitalMarkers: [],
-  portMarkers: [],
-  factionColors: {},
-  greatPowerFactionIds: {},
-  terrainColors: {},
-  provincePoliticalOwnerByPrefixedProvinceId: {},
-);
-
 void main() {
   suppressLogsForTests();
 
@@ -121,12 +108,12 @@ void main() {
       final game = _buildGame(ownerId: _kMinorId);
       final state =
           GameMapAreaStateLogicProvinceActions.provinceEstablishConsulateActionState(
-        game: game,
-        humanPlayerId: _kHumanPlayerId,
-        provinceId: _kProvinceId,
-        topology: _topology,
-        currentOrders: const Orders(),
-      );
+            game: game,
+            humanPlayerId: _kHumanPlayerId,
+            provinceId: _kProvinceId,
+            topology: _topology,
+            currentOrders: const Orders(),
+          );
       expect(state.showControl, isTrue);
       expect(state.enabled, isTrue);
       expect(state.pending, isFalse);
@@ -200,63 +187,67 @@ void main() {
   });
 
   group('shortcut callback emit', () {
-    test('enabled tap emits ConfirmDialogEvent then Append on confirm', () async {
-      final game = _buildGame(ownerId: _kMinorId);
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-      final confirmFuture = bus
-          .on<ConfirmDialogEvent>()
-          .first
-          .timeout(const Duration(seconds: 2));
-      final appendFuture = bus
-          .on<AppendDiplomaticOrderRequestedEvent>()
-          .first
-          .timeout(const Duration(seconds: 2));
+    test(
+      'enabled tap emits ConfirmDialogEvent then Append on confirm',
+      () async {
+        final game = _buildGame(ownerId: _kMinorId);
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final confirmFuture = bus.on<ConfirmDialogEvent>().first.timeout(
+          const Duration(seconds: 2),
+        );
+        final appendFuture = bus
+            .on<AppendDiplomaticOrderRequestedEvent>()
+            .first
+            .timeout(const Duration(seconds: 2));
 
-      final order = DiplomaticOrder(
-        type: DiplomaticOrderType.establishOverture,
-        targetFactionId: _kMinorId,
-        overtureStage: OvertureStage.tradeConsulate,
-      );
-      final callbacks = buildProvinceDetailShortcutCallbacks(
-        game: game,
-        humanPlayerId: _kHumanPlayerId,
-        region: _emptyRegion(),
-        playerView: buildPlayerView(game, _topology, _kHumanPlayerId),
-        workTargetSelectionCache:
-            PerPlayerWorkTargetSelectionCache(strategies: const {}),
-        draftOrders: const Orders(),
-        mapData: (
-          combinedTopology: _topology,
-          tileMapByRegion: const {},
-          topologyByRegion: const {},
-          warpLinks: null,
-        ),
-        selectedTileKey: _kTileKey,
-        exploreEnabled: false,
-        prospectEnabled: false,
-        buildImprovementEnabled: false,
-        buildRoadEnabled: false,
-        buildFortEnabled: false,
-        buildPortEnabled: false,
-        purchaseLandEnabled: false,
-        provinceId: _kProvinceId,
-        upgradeTownEnabled: false,
-        upgradeTownTargetTileKey: null,
-        establishConsulateEnabled: true,
-        establishConsulatePending: false,
-        establishConsulateOrder: order,
-        establishConsulateTargetName: 'Minor One',
-        bus: bus,
-      );
-      expect(callbacks.onEstablishConsulateTap, isNotNull);
-      callbacks.onEstablishConsulateTap!();
-      final confirm = await confirmFuture;
-      confirm.result(true);
-      final append = await appendFuture;
-      expect(append.order.targetFactionId, _kMinorId);
-      expect(append.order.overtureStage, OvertureStage.tradeConsulate);
-    });
+        final order = DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: _kMinorId,
+          overtureStage: OvertureStage.tradeConsulate,
+        );
+        final callbacks = buildProvinceDetailShortcutCallbacks(
+          game: game,
+          humanPlayerId: _kHumanPlayerId,
+          region: emptyProvinceOverlayRegion(),
+          playerView: buildPlayerView(game, _topology, _kHumanPlayerId),
+          workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(
+            strategies: const {},
+          ),
+          draftOrders: const Orders(),
+          mapData: (
+            combinedTopology: _topology,
+            tileMapByRegion: const {},
+            topologyByRegion: const {},
+            warpLinks: null,
+          ),
+          selectedTileKey: _kTileKey,
+          exploreEnabled: false,
+          prospectEnabled: false,
+          buildImprovementEnabled: false,
+          buildRoadEnabled: false,
+          buildFortEnabled: false,
+          buildPortEnabled: false,
+          buildRailEnabled: false,
+          purchaseLandEnabled: false,
+          provinceId: _kProvinceId,
+          upgradeTownEnabled: false,
+          upgradeTownTargetTileKey: null,
+          establishConsulateEnabled: true,
+          establishConsulatePending: false,
+          establishConsulateOrder: order,
+          establishConsulateTargetName: 'Minor One',
+          bus: bus,
+        );
+        expect(callbacks.onEstablishConsulateTap, isNotNull);
+        callbacks.onEstablishConsulateTap!();
+        final confirm = await confirmFuture;
+        confirm.result(true);
+        final append = await appendFuture;
+        expect(append.order.targetFactionId, _kMinorId);
+        expect(append.order.overtureStage, OvertureStage.tradeConsulate);
+      },
+    );
 
     test('pending tap emits RemoveDiplomaticOrderRequestedEvent', () async {
       final game = _buildGame(ownerId: _kMinorId);
@@ -275,10 +266,11 @@ void main() {
       final callbacks = buildProvinceDetailShortcutCallbacks(
         game: game,
         humanPlayerId: _kHumanPlayerId,
-        region: _emptyRegion(),
+        region: emptyProvinceOverlayRegion(),
         playerView: buildPlayerView(game, _topology, _kHumanPlayerId),
-        workTargetSelectionCache:
-            PerPlayerWorkTargetSelectionCache(strategies: const {}),
+        workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(
+          strategies: const {},
+        ),
         draftOrders: Orders(
           diplomaticOrdersByPlayerId: {
             _kHumanPlayerId: [order],
@@ -297,6 +289,7 @@ void main() {
         buildRoadEnabled: false,
         buildFortEnabled: false,
         buildPortEnabled: false,
+        buildRailEnabled: false,
         purchaseLandEnabled: false,
         provinceId: _kProvinceId,
         upgradeTownEnabled: false,

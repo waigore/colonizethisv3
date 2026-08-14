@@ -57,6 +57,7 @@ class CtRegionMapComponent extends PositionComponent {
     required this.showProvinceOwnershipTint,
     required this.showProvinceNamesLayer,
     required this.visibilityMode,
+    this.showCapitalLinkDisconnectedHighlight = true,
     this.mapBaseLayerFlags = MapBaseLayerFlags.fullDetail,
     this.baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
@@ -85,6 +86,7 @@ class CtRegionMapComponent extends PositionComponent {
   bool showProvinceOverlay;
   bool showProvinceOwnershipTint;
   bool showProvinceNamesLayer;
+  bool showCapitalLinkDisconnectedHighlight;
   CtMapVisibilityMode visibilityMode;
 
   /// When [visibilityMode] is [CtMapVisibilityMode.playerConstrained], gates

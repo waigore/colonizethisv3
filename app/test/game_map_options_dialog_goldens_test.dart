@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'editorial_monocle_dark_token_assertions.dart';
 import 'golden_capture_harness.dart';
 
-const Size _dialogHost = Size(420, 520);
+const Size _dialogHost = Size(420, 580);
 
 Future<void> _pumpOptionsGolden(
   WidgetTester tester, {
@@ -48,7 +48,7 @@ void main() {
     expectEditorialMonocleDarkChrome(tester);
     expect(find.text('Show province and sea borders'), findsOneWidget);
     expect(find.text('Map marks'), findsOneWidget);
-    expect(find.byType(CtToggleSwitch), findsNWidgets(6));
+    expect(find.byType(CtToggleSwitch), findsNWidgets(7));
 
     await expectLater(
       find.byKey(boundaryKey),
@@ -201,7 +201,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Show province and sea borders'), findsOneWidget);
-    expect(find.byType(CtToggleSwitch), findsNWidgets(6));
+    expect(find.byType(CtToggleSwitch), findsNWidgets(7));
 
     await expectLater(
       find.byKey(boundaryKey),
