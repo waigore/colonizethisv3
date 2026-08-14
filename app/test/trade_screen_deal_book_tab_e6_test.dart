@@ -7,68 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'trade_screen_test_support.dart';
-
-const List<Player> _players = <Player>[
-  // ignore: avoid_hardcoded_strings_in_widgets
-  Player(
-    id: kTradeTestHumanPlayerId,
-    displayName: 'England',
-    isHuman: true,
-    treasury: 500,
-  ),
-  // ignore: avoid_hardcoded_strings_in_widgets
-  Player(id: 'gp_a', displayName: 'Aragon', isHuman: false, treasury: 500),
-];
-
-FilledDeal _deal({
-  required String seller,
-  required String buyer,
-  required String commodity,
-  required int qty,
-  required double price,
-  bool frr = false,
-  bool ftp = false,
-  String? sellerOriginTileKey,
-}) {
-  return FilledDeal(
-    sellerFactionId: seller,
-    buyerFactionId: buyer,
-    commodityId: commodity,
-    quantity: qty,
-    pricePerUnit: price,
-    isFirstRightOfRefusalMatch: frr,
-    isFtpMatch: ftp,
-    sellerOriginTileKey: sellerOriginTileKey,
-  );
-}
-
-MarketActivity _activity(String commodity, List<FilledDeal> deals) {
-  final qty = deals.fold<int>(0, (sum, d) => sum + d.quantity);
-  return MarketActivity(
-    totalBidQuantity: qty,
-    totalOfferQuantity: qty,
-    filledQuantity: qty,
-    deals: deals,
-  );
-}
-
-void _expectTotals(WidgetTester tester, {int? bids, int? offers}) {
-  if (bids != null) {
-    final bidsTotals = tester.widget<Text>(
-      find.byKey(TradeScreenDealBookKeys.dealBookBidsTotalsKey),
-    );
-    expect(bidsTotals.data, '${TradeScreenDealBookKeys.dealBookTotalSpentLabel}: $bids');
-  }
-  if (offers != null) {
-    final offersTotals = tester.widget<Text>(
-      find.byKey(TradeScreenDealBookKeys.dealBookOffersTotalsKey),
-    );
-    expect(
-      offersTotals.data,
-      '${TradeScreenDealBookKeys.dealBookTotalReceivedLabel}: $offers',
-    );
-  }
-}
+import 'trade_screen_deal_book_tab_e6_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -80,15 +19,27 @@ void main() {
       (tester) async {
         await pumpTradeScreen(
           tester,
-          game: buildTradeTestGame(players: _players),
+          game: buildTradeTestGame(players: dealBookTestPlayers),
           selectDealBookTab: true,
         );
 
-        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsOneWidget);
-        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsOneWidget);
-        expect(find.text(TradeScreenDealBookKeys.dealBookBidsEmptyText), findsOneWidget);
-        expect(find.text(TradeScreenDealBookKeys.dealBookOffersEmptyText), findsOneWidget);
-        _expectTotals(tester, bids: 0, offers: 0);
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey),
+          findsOneWidget,
+        );
+        expect(
+          find.text(TradeScreenDealBookKeys.dealBookBidsEmptyText),
+          findsOneWidget,
+        );
+        expect(
+          find.text(TradeScreenDealBookKeys.dealBookOffersEmptyText),
+          findsOneWidget,
+        );
+        expectDealBookTotals(tester, bids: 0, offers: 0);
       },
     );
 
@@ -97,10 +48,10 @@ void main() {
       'display (Refs #3093)',
       (tester) async {
         final game = buildTradeTestGame(
-          players: _players,
+          players: dealBookTestPlayers,
           lastTurnActivity: {
-            'timber': _activity('timber', [
-              _deal(
+            'timber': dealBookActivity('timber', [
+              dealBookFilledDeal(
                 seller: 'gp_a',
                 buyer: 'gp_h',
                 commodity: 'timber',
@@ -114,7 +65,7 @@ void main() {
 
         // ignore: avoid_hardcoded_strings_in_widgets
         expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
-        _expectTotals(tester, bids: 150);
+        expectDealBookTotals(tester, bids: 150);
       },
     );
 
@@ -123,10 +74,10 @@ void main() {
       'to the bids panel total spent; unrelated deal is excluded',
       (tester) async {
         final game = buildTradeTestGame(
-          players: _players,
+          players: dealBookTestPlayers,
           lastTurnActivity: {
-            'timber': _activity('timber', [
-              _deal(
+            'timber': dealBookActivity('timber', [
+              dealBookFilledDeal(
                 seller: 'gp_a',
                 buyer: 'gp_h',
                 commodity: 'timber',
@@ -134,8 +85,8 @@ void main() {
                 price: 30.0,
               ),
             ]),
-            'iron': _activity('iron', [
-              _deal(
+            'iron': dealBookActivity('iron', [
+              dealBookFilledDeal(
                 seller: 'gp_a',
                 buyer: 'gp_b',
                 commodity: 'iron',
@@ -149,22 +100,34 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              0,
+            ),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 1),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              1,
+            ),
           ),
           findsNothing,
         );
-        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsNothing);
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey),
+          findsNothing,
+        );
 
         // ignore: avoid_hardcoded_strings_in_widgets
         expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
-        _expectTotals(tester, bids: 150, offers: 0);
-        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsOneWidget);
+        expectDealBookTotals(tester, bids: 150, offers: 0);
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey),
+          findsOneWidget,
+        );
       },
     );
 
@@ -174,10 +137,10 @@ void main() {
       'a combined total',
       (tester) async {
         final game = buildTradeTestGame(
-          players: _players,
+          players: dealBookTestPlayers,
           lastTurnActivity: {
-            'timber': _activity('timber', [
-              _deal(
+            'timber': dealBookActivity('timber', [
+              dealBookFilledDeal(
                 seller: 'gp_h',
                 buyer: 'gp_a',
                 commodity: 'timber',
@@ -185,8 +148,8 @@ void main() {
                 price: 30.0,
               ),
             ]),
-            'iron': _activity('iron', [
-              _deal(
+            'iron': dealBookActivity('iron', [
+              dealBookFilledDeal(
                 seller: 'gp_h',
                 buyer: 'gp_a',
                 commodity: 'iron',
@@ -200,19 +163,28 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideOffers,
+              0,
+            ),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 1),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideOffers,
+              1,
+            ),
           ),
           findsOneWidget,
         );
 
-        _expectTotals(tester, offers: 390);
-        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsOneWidget);
+        expectDealBookTotals(tester, offers: 390);
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey),
+          findsOneWidget,
+        );
       },
     );
 
@@ -221,7 +193,7 @@ void main() {
       'to the total spent (they have not cleared)',
       (tester) async {
         final game = buildTradeTestGame(
-          players: _players,
+          players: dealBookTestPlayers,
           carryForwardBids: <String, List<TradeOrder>>{
             'gp_h': <TradeOrder>[
               TradeOrder(
@@ -237,7 +209,10 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookUnfilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookUnfilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              0,
+            ),
           ),
           findsOneWidget,
         );
@@ -245,13 +220,22 @@ void main() {
         expect(find.text('timber — qty 8 (priority 2)'), findsOneWidget);
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              0,
+            ),
           ),
           findsNothing,
         );
-        _expectTotals(tester, bids: 0);
-        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsNothing);
-        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsOneWidget);
+        expectDealBookTotals(tester, bids: 0);
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey),
+          findsNothing,
+        );
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey),
+          findsOneWidget,
+        );
       },
     );
 
@@ -260,7 +244,7 @@ void main() {
       'isolation: another player\'s carry-forwards never appear',
       (tester) async {
         final game = buildTradeTestGame(
-          players: _players,
+          players: dealBookTestPlayers,
           carryForwardOffers: <String, List<TradeOrder>>{
             'gp_h': <TradeOrder>[
               TradeOrder(
@@ -316,10 +300,10 @@ void main() {
       'the deal so players can audit how a fill cleared',
       (tester) async {
         final game = buildTradeTestGame(
-          players: _players,
+          players: dealBookTestPlayers,
           lastTurnActivity: {
-            'timber': _activity('timber', [
-              _deal(
+            'timber': dealBookActivity('timber', [
+              dealBookFilledDeal(
                 seller: 'M1',
                 buyer: 'gp_h',
                 commodity: 'timber',
@@ -328,7 +312,7 @@ void main() {
                 frr: true,
                 sellerOriginTileKey: 'oldWorld|M1|0|0',
               ),
-              _deal(
+              dealBookFilledDeal(
                 seller: 'gp_a',
                 buyer: 'gp_h',
                 commodity: 'timber',
@@ -343,19 +327,25 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              0,
+            ),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 1),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              1,
+            ),
           ),
           findsOneWidget,
         );
         expect(find.text('First right'), findsOneWidget);
         expect(find.text('Favored partner'), findsOneWidget);
-        _expectTotals(tester, bids: 180);
+        expectDealBookTotals(tester, bids: 180);
       },
     );
 
@@ -371,7 +361,7 @@ void main() {
 
       await pumpTradeScreen(
         tester,
-        game: buildTradeTestGame(players: _players),
+        game: buildTradeTestGame(players: dealBookTestPlayers),
         selectDealBookTab: true,
       );
 
@@ -412,7 +402,7 @@ void main() {
 
         await pumpTradeScreen(
           tester,
-          game: buildTradeTestGame(players: _players),
+          game: buildTradeTestGame(players: dealBookTestPlayers),
           selectDealBookTab: true,
         );
 
