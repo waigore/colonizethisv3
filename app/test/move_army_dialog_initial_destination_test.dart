@@ -1,5 +1,5 @@
 // Pins MoveArmyDialog initialDestinationProvinceId selection (Refs #4350).
-// Reuses move_dialogs_specs_part1 fixture shape so destinations validate.
+// Reuses move_dialogs_specs_army fixture shape so destinations validate.
 
 import 'dart:async';
 

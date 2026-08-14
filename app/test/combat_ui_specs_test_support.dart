@@ -1,4 +1,4 @@
-// Shared combat_ui_specs_part* frames (Refs #4013, #4035 / #4117 slice F).
+// Shared combat UI spec frames (Refs #4013, #4035 / #4117 slice F, #4352).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -12,14 +12,10 @@ import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deplo
 import 'app_shell_harness.dart';
 
 /// Material frame for layout/content pins ([theme] defaults to light).
-Widget combatUiSpecsFrame(
-  Widget child, {
-  ThemeData? theme,
-}) =>
-    buildAppShell(
-      theme: theme ?? ThemeData.light(),
-      child: Scaffold(body: child),
-    );
+Widget combatUiSpecsFrame(Widget child, {ThemeData? theme}) => buildAppShell(
+  theme: theme ?? ThemeData.light(),
+  child: Scaffold(body: child),
+);
 
 /// Editorial-monocle dark frame for palette/token pins.
 Widget combatUiSpecsDarkFrame(Widget child) => buildPanelScaffoldShell(child);
@@ -57,26 +53,24 @@ QuickBattleInput combatUiSpecsStandardQuickBattleInput() {
 QuickBattleGroup combatUiSpecsCenterFront({
   required List<String> unitIds,
   int cohesion = 3,
-}) =>
-    QuickBattleGroup(
-      lane: QuickBattleLane.center,
-      line: QuickBattleLine.front,
-      unitIds: unitIds,
-      cohesion: cohesion,
-    );
+}) => QuickBattleGroup(
+  lane: QuickBattleLane.center,
+  line: QuickBattleLine.front,
+  unitIds: unitIds,
+  cohesion: cohesion,
+);
 
 QuickBattleDeploymentView combatUiSpecsDeploymentView({
   List<QuickBattleGroup> attackerGroups = const [],
   List<QuickBattleGroup> defenderGroups = const [],
   String attackerName = 'Attacker',
   String defenderName = 'Defender',
-}) =>
-    QuickBattleDeploymentView(
-      attackerDeployment: QuickBattleDeployment(groups: attackerGroups),
-      defenderDeployment: QuickBattleDeployment(groups: defenderGroups),
-      attackerName: attackerName,
-      defenderName: defenderName,
-    );
+}) => QuickBattleDeploymentView(
+  attackerDeployment: QuickBattleDeployment(groups: attackerGroups),
+  defenderDeployment: QuickBattleDeployment(groups: defenderGroups),
+  attackerName: attackerName,
+  defenderName: defenderName,
+);
 
 Future<void> pumpCombatUiSpecsSelector(
   WidgetTester tester, {
@@ -140,13 +134,12 @@ Future<void> pumpDarkCombatUiSpecsModeChoice(
   WidgetTester tester, {
   required String provinceName,
   required bool isCapitalSiege,
-}) =>
-    tester.pumpWidget(
-      combatUiSpecsDarkFrame(
-        CombatModeChoiceDialog(
-          bus: AppEventBus.create(),
-          provinceName: provinceName,
-          isCapitalSiege: isCapitalSiege,
-        ),
-      ),
-    );
+}) => tester.pumpWidget(
+  combatUiSpecsDarkFrame(
+    CombatModeChoiceDialog(
+      bus: AppEventBus.create(),
+      provinceName: provinceName,
+      isCapitalSiege: isCapitalSiege,
+    ),
+  ),
+);

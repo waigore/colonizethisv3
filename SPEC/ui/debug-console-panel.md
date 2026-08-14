@@ -171,6 +171,6 @@ and text colour resolves through an `EditorialMonoclePalette` token.
 
 ## Automated verification (`/flip_province`)
 
-- **App handler and JSON persistence parity:** `app/test/app_event_handler_scope_part1_test.dart` / `part2_test.dart` (`applyDebugFlipProvinceOwnership` — success, Orders-phase gate, unknown-to-human, already-owned, ambiguous name, not found, null owner, `Game.fromJson` / `toJson` round-trip).
+- **App handler and JSON persistence parity:** `app/test/app_event_handler_scope_debug_credits_and_flip_test.dart` (`applyDebugFlipProvinceOwnership` — success, Orders-phase gate, unknown-to-human, already-owned, ambiguous name, not found, null owner, `Game.fromJson` / `toJson` round-trip).
 - **Logic downstream after canonical transfer:** `packages/colonizethis_logic/test/debug_flip_province_turn_downstream_test.dart` (`emitProvinceCapturedEvents`, `resolveConnectivity` via `runExtractionPhase`, `findMilitaryVictoryWinner`, `runEndOfTurnPhase`).
 - **Minor Nation and Tribe capital-loss parity:** `app/test/app_event_handler_debug_flip_province_minor_tribe_capital_test.dart` (capital reassignment for Minor Nation and Tribe owners; terminal fall when no eligible reassignment exists in the original capital region; `Game.fromJson` / `toJson` round-trip preserves post-reassignment minor/tribe capital fields).

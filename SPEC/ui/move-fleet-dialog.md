@@ -146,4 +146,4 @@ Catalog folder: **Move Fleet Dialog** (registered in `app/lib/widgetbook/catalog
 
 1. **Default — sea zones + dock:** Minimal `Game`, `MapTopology`, and `Fleet` fixture wired so the dialog renders both sections with at least one warp-zone destination and one capital dock row, plus a fresh `AppEventBus`.
 
-Automated widget tests: `app/test/move_dialogs_specs_part2_test.dart` (fleet pins; army pins in `move_dialogs_specs_part1_test.dart`); broader behavior coverage in `app/test/move_fleet_dialog_test.dart`.
+Automated widget tests: `app/test/move_dialogs_specs_fleet_test.dart` (fleet pins; army pins in `move_dialogs_specs_army_test.dart`); broader behavior coverage in `app/test/move_fleet_dialog_test.dart`.
