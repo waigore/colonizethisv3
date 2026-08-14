@@ -13,6 +13,7 @@ import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_p
 import 'app_shell_harness.dart';
 import 'naval_units_panel_test_scenarios.dart';
 import 'units_panel_test_shared.dart';
+
 /// Builds the canonical [NavalUnitsPanel] host used across the panel's widget
 /// tests: editorial-monocle [buildAppShell] > [Scaffold] wrapping the panel.
 /// When [bus] is omitted a fresh [AppEventBus] is created so tests that do not
@@ -40,7 +41,7 @@ Widget buildNavalPanel({
 
 /// Pumps [buildNavalPanel] (or an optional prebuilt [widget]) and settles.
 ///
-/// Canonical naval panel pump for `naval_units_panel_part*_test.dart` — do not
+/// Canonical naval panel pump for naval panel suites — do not
 /// re-declare a local `_pumpNaval` / `pumpNaval` in part suites (Refs #4035).
 Future<void> pumpNavalPanel(
   WidgetTester tester, {

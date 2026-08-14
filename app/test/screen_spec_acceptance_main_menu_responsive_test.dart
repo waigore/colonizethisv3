@@ -1,5 +1,5 @@
 // Pins SPEC/ui/main-menu.md responsive ≤430 dp body padding / letter-spacing
-// (Refs #2870 S6, #4352 Slice D). Split from screen_spec_acceptance_part2_test.
+// (Refs #2870 S6, #4352 Slice D). Split from screen_spec_acceptance_pixel_art_chrome_test.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
