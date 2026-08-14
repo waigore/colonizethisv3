@@ -104,6 +104,7 @@ RegionMapViewData buildRegionMapViewDataFromParts({
     List<TownMarkerView> towns,
     List<WarpMarkerView> warpMarkers,
     List<FleetTileMarkerView> fleetTileMarkers,
+    List<ArmyTileMarkerView> armyTileMarkers,
   })
   markerData,
 }) {
@@ -121,6 +122,7 @@ RegionMapViewData buildRegionMapViewDataFromParts({
     unitMarkers: cellAndUnitData.unitMarkers,
     civilianTileMarkers: cellAndUnitData.civilianTileMarkers,
     fleetTileMarkers: markerData.fleetTileMarkers,
+    armyTileMarkers: markerData.armyTileMarkers,
     warpMarkers: markerData.warpMarkers,
     townMarkers: markerData.towns,
     provinceUnitPresenceByProvinceId: cellAndUnitData.provincePresenceById,

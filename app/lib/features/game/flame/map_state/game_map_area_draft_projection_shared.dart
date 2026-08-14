@@ -1,6 +1,6 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-/// Shared helpers for fleet/civilian draft projection modules (#4240 Slice D).
+/// Shared helpers for fleet/civilian/army draft projection modules (#4240 Slice D, #4384).
 abstract final class GameMapAreaDraftProjectionShared {
   static int compareTileMarkerMapPosition({
     required int ay,
@@ -51,10 +51,26 @@ abstract final class GameMapAreaDraftProjectionShared {
     );
   }
 
+  static void sortArmyTileMarkersByMapPosition(
+    List<ArmyTileMarkerView> markers,
+  ) {
+    markers.sort(
+      (a, b) => compareTileMarkerMapPosition(
+        ay: a.y,
+        ax: a.x,
+        aTileKey: a.tileKey,
+        by: b.y,
+        bx: b.x,
+        bTileKey: b.tileKey,
+      ),
+    );
+  }
+
   static RegionMapViewData copyRegionMapViewDataMarkerLayers({
     required RegionMapViewData region,
     List<CivilianTileMarkerView>? civilianTileMarkers,
     List<FleetTileMarkerView>? fleetTileMarkers,
+    List<ArmyTileMarkerView>? armyTileMarkers,
   }) {
     return RegionMapViewData(
       regionId: region.regionId,
@@ -70,6 +86,7 @@ abstract final class GameMapAreaDraftProjectionShared {
       unitMarkers: region.unitMarkers,
       civilianTileMarkers: civilianTileMarkers ?? region.civilianTileMarkers,
       fleetTileMarkers: fleetTileMarkers ?? region.fleetTileMarkers,
+      armyTileMarkers: armyTileMarkers ?? region.armyTileMarkers,
       warpMarkers: region.warpMarkers,
       townMarkers: region.townMarkers,
       provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,

@@ -41,6 +41,7 @@
 | Source | Condition | Result |
 |--------|-----------|--------|
 | `MAP20001` Move / Invade | Eligible army ids length > 1 | Picker before `DLG20001`. |
+| `MAP10001` army stack marker | `OpenArmyStackMarkerEvent.fieldArmyIds.length > 1` | Picker before `DLG20001`; Home Army never listed. |
 | Single army | length == 1 | Picker skipped. |
 
 ---
