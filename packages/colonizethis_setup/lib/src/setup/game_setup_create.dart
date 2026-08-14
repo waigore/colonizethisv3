@@ -3,17 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'game_setup_context.dart';
-import 'game_setup_create_capitals.dart';
 import 'game_setup_create_initial_game.dart';
 import 'game_setup_create_ownership.dart';
-import 'game_setup_helpers.dart';
-import 'gp_old_world_resource_redistribution.dart';
-import 'gp_old_world_terrain_redistribution.dart';
-import 'gp_ow_terrain_count_restore.dart';
-import 'gp_starting_grain.dart';
-import 'init_town_roads.dart';
-import 'initial_visibility.dart';
-import 'minor_tribe_starting_development.dart';
+import 'game_setup_create_post_ownership.dart';
 
 /// Result of game setup: the Game and the map data needed for turn resolution.
 class GameSetupResult {
@@ -79,7 +71,7 @@ GameSetupResult createGameFromGeneratedMaps({
   final gpIds = ownership.gpIds;
   final minorIds = ownership.minorIds;
   final tribeIds = ownership.tribeIds;
-  var game = buildInitialGame(
+  final game = buildInitialGame(
     config: config,
     gameId: gameId,
     oldWorldProvinces: oldWorldProvinces,
@@ -90,173 +82,29 @@ GameSetupResult createGameFromGeneratedMaps({
     initialMapZoomMultiplier: initialMapZoomMultiplier,
   );
 
-  // §7d.terrain GP Old World terrain redistribution — after ownership, before capitals/towns.
-  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
-  final gpTerrainRedist = applyGreatPowerOldWorldTerrainRedistribution(
+  final phased = applyPostOwnershipSetupPhases(
     game: game,
-    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-    setupSeedBase: perturbBase,
-  );
-  game = gpTerrainRedist.game;
-  tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
-  // Snapshot N_T after §7d.terrain so §7d.terrain-restore can relocate labels
-  // destroyed by settlement plains conversion (keeps §7d.redist capacity feasible).
-  final gpOwTerrainTargets = countGpOwTerrainByType(
-    game: game,
-    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-  );
-
-  game = assignAllCapitals(
-    game: game,
+    config: config,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    topologyOldWorld: topologyOldWorld,
+    topologyNewWorld: topologyNewWorld,
+    oldWorldProvinces: oldWorldProvinces,
+    newWorldProvinces: newWorldProvinces,
     gpIds: gpIds,
     minorIds: minorIds,
     tribeIds: tribeIds,
-    oldWorldProvinces: oldWorldProvinces,
-    newWorldProvinces: newWorldProvinces,
-    topologyOldWorld: topologyOldWorld,
-    topologyNewWorld: topologyNewWorld,
-    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-    tileMapNewWorld: tileMapByRegion[kRegionNewWorld]!,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  // Apply initial per-player visibility/prospection (knowledge state) after
-  // provinces, capitals, and starting units are set.
-  game = applyInitialVisibility(
-    game: game,
-    tileMapByRegion: tileMapByRegion,
-    topologyByRegion: topologyByRegion,
-  );
-
-  // 7d. Province town assignment. SPEC/program/game-setup-pipeline.md, capital-and-connectivity.md.
-  game = assignProvinceTowns(
-    game: game,
-    topologyByRegion: topologyByRegion,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  // Strip RNG/resources and extraction improvements from town and capital tiles only.
-  // SPEC/game/tile-map-and-generation.md § Town/capital occupancy.
-  final strip = stripResourcesAndExtractionImprovementsOnTileKeys(
-    game,
-    tileMapByRegion,
-    collectTownAndCapitalTileKeys(game),
-  );
-  game = strip.$1;
-  final strippedMaps = strip.$2;
-  if (strippedMaps != null) {
-    for (final e in strippedMaps.entries) {
-      tileMapByRegion[e.key] = e.value;
-    }
-  }
-
-  // §7d.terrain-restore — relocate non-plains labels lost to settlement plains
-  // conversion onto non-settlement plains so §7d.redist capacity stays feasible.
-  tileMapByRegion[kRegionOldWorld] = restoreGpOwTerrainCountsAfterSettlementPlains(
-    game: game,
-    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-    targetCounts: gpOwTerrainTargets,
-  );
-
-  // §7d.redist GP Old World terrain resource redistribution (always-on when OW grids exist).
-  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
-  final gpRedist = applyGreatPowerOldWorldResourceRedistribution(
-    game: game,
-    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-    resourceRules: ResourceRules.defaultRules,
-    setupSeedBase: perturbBase,
-  );
-  game = gpRedist.game;
-  tileMapByRegion[kRegionOldWorld] = gpRedist.tileMap;
-
-  // Great Power starting grain (bootstrap). SPEC/game/tile-map-and-generation.md.
-  final gpGrain = applyGreatPowerStartingGrainBootstrap(
-    game: game,
-    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-    resourceRules: ResourceRules.defaultRules,
-  );
-  game = gpGrain.game;
-  tileMapByRegion[kRegionOldWorld] = gpGrain.tileMap;
-
-  // 7d.dev Minor Nation and Tribe starting developed resources.
-  // SPEC/game/factions.md § Starting developed resources; SPEC/program/game-setup-pipeline.md § 7d.dev.
-  final minorTribeDev = applyMinorTribeStartingDevelopment(
-    game: game,
-    tileMapByRegion: tileMapByRegion,
-  );
-  game = minorTribeDev.game;
-
-  // 7d.bis Init town → capital roads (per-region via config). SPEC/game/capital-and-connectivity.md.
-  game = applyInitTownRoadsToCapitals(
-    game: game,
-    config: config,
-    tileMapByRegion: tileMapByRegion,
-    bootstrapGrainTileKeysByPlayerId: gpGrain.grainKeysByPlayerId,
-  );
-
-  // Apply historically inspired naming from default ruleset (after capitals are set).
-  game = applyNaming(
-    game: game,
-    selectedGreatPowerIds: config.selectedGreatPowerIds,
-    leaderVariantByGpId: config.leaderVariantByGpId,
+    perturbBase: perturbBase,
     namingSeed: namingSeed ?? config.seed,
-    topologyByRegion: topologyByRegion,
+    links: links,
   );
 
-  // Compute 1-character political glyphs per faction for political map layer.
-  final politicalGlyphByPlayerId = buildPoliticalGlyphByPlayerId(
-    game: game,
-    greatPowerIds: gpIds,
-    minorNationIds: minorIds,
-    tribeIds: tribeIds,
-  );
-  game = game.copyWith(politicalGlyphByPlayerId: politicalGlyphByPlayerId);
-
-  // Spawn starting units for each Great Power in their capital provinces.
-  game = addStartingUnits(game: game, config: config);
-
-  // Spawn starting land regiments and home fleets for each Great Power.
-  game = addStartingMilitaryAndNaval(
-    game: game,
-    config: config,
-    topologyOldWorld: topologyOldWorld,
-  );
-  game = ensureMilitaryArmiesForGame(game);
-
-  // Initialize each Great Power's general cap (1 at start) and spawn one
-  // general per GP. SPEC/game/military-generals.md § Count and tech-gated cap.
-  game = syncGeneralCapsFromTech(game);
-
-  // Map tint / UI swatches: runtime player ids (gp1..gpN) → GDD default RGB for
-  // the semantic Great Power in each setup slot (see greatPowerDefaultColorRgb).
-  // Province.ownerId uses gpN; without this, factionOwnershipColorMap misses
-  // greatPowerDefaultColorRgb[gpN] and falls back to regionPalette (wrong hues).
-  final defaultGpColorsByPlayerId = <String, List<int>>{};
-  for (var i = 0; i < gpIds.length; i++) {
-    if (i >= config.selectedGreatPowerIds.length) {
-      break;
-    }
-    final semanticId = config.selectedGreatPowerIds[i];
-    final rgb = greatPowerDefaultColorRgb[semanticId];
-    if (rgb != null) {
-      defaultGpColorsByPlayerId[gpIds[i]] = [rgb.$1, rgb.$2, rgb.$3];
-    }
-  }
-  if (defaultGpColorsByPlayerId.isNotEmpty) {
-    game = game.copyWith(greatPowerColorOverride: defaultGpColorsByPlayerId);
-  }
-
-  final combinedTopology = buildCombinedTopology(
-    topologyByRegion: topologyByRegion,
-    warpLinks: links,
-  );
-
-  gameSetupLog.i('game setup end gameId=${game.id}');
+  gameSetupLog.i('game setup end gameId=${phased.game.id}');
   return GameSetupResult(
-    game: game,
-    tileMapByRegion: tileMapByRegion,
+    game: phased.game,
+    tileMapByRegion: phased.tileMapByRegion,
     topologyByRegion: topologyByRegion,
-    combinedTopology: combinedTopology,
+    combinedTopology: phased.combinedTopology,
     warpLinks: links,
   );
 }
