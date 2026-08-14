@@ -71,10 +71,8 @@ extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
   }
 
   void paintTransportOverlayTiles(Canvas canvas) {
-    if (!shouldRenderTransportOverlay(flags: mapBaseLayerFlags)) {
-      return;
-    }
-    if (!transportOverlayTilesetCache.isLoaded) {
+    if (!shouldRenderTransportOverlay(flags: mapBaseLayerFlags) ||
+        !transportOverlayTilesetCache.isLoaded) {
       return;
     }
     for (final cell in region.cells) {
