@@ -13,6 +13,7 @@ import 'init_game_map_view_markers.dart';
   List<TownMarkerView> towns,
   List<WarpMarkerView> warpMarkers,
   List<FleetTileMarkerView> fleetTileMarkers,
+  List<ArmyTileMarkerView> armyTileMarkers,
 })
 buildMarkerData({
   required Game game,
@@ -62,10 +63,16 @@ buildMarkerData({
         tileMap: tileMap,
         seaZoneIds: seaZoneIds,
       );
+  final armyTileMarkers = InitGameMapViewMarkers.buildArmyTileMarkersForRegion(
+    game: game,
+    regionId: regionId,
+    towns: towns,
+  );
   return (
     ports: ports,
     towns: towns,
     warpMarkers: warpMarkers,
     fleetTileMarkers: fleetTileMarkers,
+    armyTileMarkers: armyTileMarkers,
   );
 }

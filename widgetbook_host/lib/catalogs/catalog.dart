@@ -153,6 +153,7 @@ import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'army_tile_marker_story.dart';
 import 'debug_map_visibility_story.dart';
 import 'fort_map_icon_levels_story.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
@@ -701,6 +702,13 @@ List<WidgetbookNode> get mapWidgetDirectories => [
           child: const Center(child: FortMapIconLevelsStory()),
         ),
       ),
+      for (final entry in armyTileMarkerCatalogEntries)
+        WidgetbookUseCase(
+          name: entry.$1,
+          builder: (context) => widgetbookEditorialMonocleApp(
+            child: Center(child: ArmyTileMarkerStory(kind: entry.$2)),
+          ),
+        ),
     ],
   ),
 ];

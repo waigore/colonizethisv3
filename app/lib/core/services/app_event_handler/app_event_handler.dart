@@ -55,7 +55,7 @@ class AppEventHandlerState {
   final GlobalKey<NavigatorState> navigatorKey;
   final Map<String, DialogBuilder> dialogBuilders;
   final Map<String, Widget Function(BuildContext, Map<String, Object?>?)>
-      panelBuilders;
+  panelBuilders;
   final void Function(ShowSnackBarEvent)? onShowSnackBar;
   final void Function(ShowOverlayEvent)? onShowOverlay;
   final void Function(DismissOverlayEvent)? onDismissOverlay;
@@ -70,7 +70,7 @@ class AppEventHandler {
     required GlobalKey<NavigatorState> navigatorKey,
     Map<String, DialogBuilder>? dialogBuilders,
     Map<String, Widget Function(BuildContext, Map<String, Object?>?)>?
-        panelBuilders,
+    panelBuilders,
     void Function(ShowSnackBarEvent)? onShowSnackBar,
     void Function(ShowOverlayEvent)? onShowOverlay,
     void Function(DismissOverlayEvent)? onDismissOverlay,
@@ -119,7 +119,11 @@ class AppEventHandler {
       case ConfirmDialogEvent():
         appEventHandlerShowConfirmDialog(this, event, nav);
       case DevelopmentDisconnectedAssignDialogEvent():
-        appEventHandlerShowDevelopmentDisconnectedAssignDialog(this, event, nav);
+        appEventHandlerShowDevelopmentDisconnectedAssignDialog(
+          this,
+          event,
+          nav,
+        );
       case NavigateToRouteEvent():
         nav?.pushNamed(event.route, arguments: event.arguments);
       case NavigateToShellEvent():
@@ -138,6 +142,8 @@ class AppEventHandler {
         appEventHandlerOpenNavalUnitsPanel(this, event, nav);
       case OpenNavalMissionMenuEvent():
         appEventHandlerOpenNavalMissionMenu(this, event, nav);
+      case OpenArmyStackMarkerEvent():
+        appEventHandlerOpenArmyStackMarker(this, event, nav);
       case OpenPanelEvent():
         appEventHandlerOpenPanel(this, event, nav);
       case ClosePanelEvent():

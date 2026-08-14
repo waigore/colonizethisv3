@@ -1,3 +1,4 @@
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../core/services/region_map/region_map_widget_bindings.dart';
@@ -59,6 +60,8 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
           fleetIds,
           markerTileKey,
         ),
+    onArmyMarkerTapped: (marker) =>
+        handleCtRegionMapArmyMarkerTapped(state, marker),
     onCivilianTileSelectionCleared: state.widget.onCivilianTileSelectionCleared,
     selectedTileKey: state.widget.selectedTileKey,
     selectedCivilianTileKey: state.widget.selectedCivilianTileKey,
@@ -117,6 +120,21 @@ void handleCtRegionMapFleetMarkerTapped(
       fleetIds: fleetIds,
       initialSelectedFleetId: fleetIds.first,
       tileScopeTileKey: markerTileKey,
+    ),
+  );
+}
+
+void handleCtRegionMapArmyMarkerTapped(
+  CtRegionMapState state,
+  ArmyTileMarkerView marker,
+) {
+  if (marker.armyIds.isEmpty) return;
+  state.widget.bus?.emit(
+    OpenArmyStackMarkerEvent(
+      provinceId: marker.provinceId,
+      armyIds: marker.armyIds,
+      fieldArmyIds: marker.fieldArmyIds,
+      tileKey: marker.tileKey,
     ),
   );
 }
