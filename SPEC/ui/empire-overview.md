@@ -292,6 +292,14 @@ Folder: **Game Map Corner Controls** — stories for [GameMapCornerControls](../
 | Home-to-capital disabled (no human capital) | Exercises the disabled-state path when the underlying callback is `null`: tooltip + surface wrap in `IgnorePointer` + `Opacity(0.4)`. | § Corner controls chrome — Disabled state |
 | Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap | Pins § Narrow corner-control measurements: 24 × 24 dp surface, 2 dp gap, glyph unchanged at 22 × 22 dp. | § Narrow corner-control measurements; [mobile-adaptation.md](mobile-adaptation.md) § In-game shell |
 
+Folder: **Extraction disc legend** — chrome host for [ExtractionDiscLegend](../../app/lib/features/game/flame/controls/extraction_disc_legend.dart) above [GameMapCornerControls](../../app/lib/features/game/flame/controls/game_map_corner_controls.dart), registered from [`extractionDiscLegendDirectories`](../../widgetbook_host/lib/catalogs/catalog_game_chrome.dart) (Refs #4367 AC7). Isolated wide/narrow/panel stories remain under **Game Tab Bar**.
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Visible — legend above corner controls | Resource-including mode + viewing player (zero-disc teaching). | § Extraction disc legend |
+| Hidden — terrain only | Legend omitted; corner controls stay, home-to-capital enabled. | § Extraction disc legend |
+| Hidden — global observe | Legend omitted; home-to-capital disabled (`viewingPlayerId == null`). | § Extraction disc legend |
+
 Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../../app/lib/features/game/widgets/dialogs/game_map_options_dialog.dart) registered from [`gameMapOptionsDialogDirectories`](../../widgetbook_host/lib/catalogs/catalog_game_chrome.dart).
 
 | Story | Purpose | Authority |
@@ -342,7 +350,7 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 - **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the **bottom-left** of the map area and displays the stacked layers icon (icon-only).
 - **Given** the Empire overview map is in a resource-including base-layer mode and `ShellPlayerContext.viewingPlayerId != null`, **when** the map chrome renders (including zero discs), **then** the UI layer shows the extraction-disc legend above the corner controls with plain gold/brown meanings (Refs #4367).
 - **Given** the player taps the extraction-disc legend, **when** the details popover opens, **then** the UI layer shows both colour meanings and a capital-link counsel line, and dismisses via ×, outside tap, or Esc without staging orders (Refs #4367).
-- **Given** the base layer is **terrain only** or global observe (`viewingPlayerId == null`), **when** the map chrome renders, **then** the UI layer omits the extraction-disc legend (Refs #4367).
+- **Given** the base layer is **terrain only** or global observe (`viewingPlayerId == null`), **when** the map chrome renders, **then** the UI layer omits the extraction-disc legend (Refs #4367). Widget goldens: `app/test/extraction_disc_legend_goldens_test.dart` (`extraction_disc_legend_hidden_terrain_only.png`, `extraction_disc_legend_hidden_global_observe.png`); Widgetbook folder **Extraction disc legend**.
 
 - **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible **immediately to the right** of the base-layer cycle button in the same **bottom-left** horizontal row.
 - **Given** the Empire overview map is visible and the current player has a defined capital tile, **when** the user taps the home-to-capital button, **then** the active region switches (if needed) to the current player's capital region and the map centers on the current player's capital tile with the selection/highlight cursor placed on that tile.

@@ -106,6 +106,8 @@ import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogu
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_component_shared_palette.dart'
+    show BaseLayerDisplayMode;
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
@@ -348,6 +350,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameScreenDirectories,
   ...gameTopBarDirectories,
   ...gameTabBarDirectories,
+  ...extractionDiscLegendDirectories,
   ...playersBarToggleDirectories,
   ...gameMapCornerControlsDirectories,
   ...gameMapEmpireLeftRailDirectories,
