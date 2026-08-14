@@ -11,7 +11,8 @@ import 'dialogue_tristate_decision_row.dart';
 ///
 /// Accept / Reject affordances render as two mutually exclusive
 /// `CtToggleSwitch` controls via [DialogueTristateDecisionRow] (Refs #2867 R22,
-/// #4018). Submit stays disabled until every row has a non-null decision (R23).
+/// #4018). Muted Accept/Reject Effect lines follow the toggles (Refs #4387).
+/// Submit stays disabled until every row has a non-null decision (R23).
 class OvertureOfferRow extends StatelessWidget {
   const OvertureOfferRow({
     required this.rowIndex,
@@ -19,6 +20,8 @@ class OvertureOfferRow extends StatelessWidget {
     required this.stageLabel,
     required this.acceptLabel,
     required this.rejectLabel,
+    required this.acceptEffect,
+    required this.rejectEffect,
     required this.decision,
     required this.onDecisionChanged,
     super.key,
@@ -29,6 +32,8 @@ class OvertureOfferRow extends StatelessWidget {
   final String stageLabel;
   final String acceptLabel;
   final String rejectLabel;
+  final String acceptEffect;
+  final String rejectEffect;
 
   /// Current tristate decision: `null` (undecided) / `true` (accept) /
   /// `false` (reject).
@@ -47,6 +52,14 @@ class OvertureOfferRow extends StatelessWidget {
   static String rejectToggleKeyFor(int rowIndex) =>
       'overtureRejectToggle_$rowIndex';
 
+  /// Stable test-grep key for the Accept Effect line in row N.
+  static String acceptEffectKeyFor(int rowIndex) =>
+      'overtureEffectAccept_$rowIndex';
+
+  /// Stable test-grep key for the Reject Effect line in row N.
+  static String rejectEffectKeyFor(int rowIndex) =>
+      'overtureEffectReject_$rowIndex';
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -64,9 +77,31 @@ class OvertureOfferRow extends StatelessWidget {
             decision: decision,
             onDecisionChanged: onDecisionChanged,
           ),
+          ..._buildEffectLines(Theme.of(context)),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildEffectLines(ThemeData theme) {
+    final TextStyle effectStyle =
+        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+          color: EditorialMonoclePalette.muted,
+        );
+    return [
+      const SizedBox(height: CtSpacing.s),
+      Text(
+        acceptEffect,
+        key: ValueKey<String>(acceptEffectKeyFor(rowIndex)),
+        style: effectStyle,
+      ),
+      const SizedBox(height: CtSpacing.xs),
+      Text(
+        rejectEffect,
+        key: ValueKey<String>(rejectEffectKeyFor(rowIndex)),
+        style: effectStyle,
+      ),
+    ];
   }
 
   /// Two-tone offerer/stage labels row. Extracted so `build` stays within
