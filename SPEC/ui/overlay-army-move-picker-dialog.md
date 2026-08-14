@@ -77,4 +77,4 @@ Folder `Overlay Army Move Picker Dialog`:
 - **Given** the user taps Cancel, **when** the gesture completes, **then** the dialog closes with `null` and no `MoveArmyDialog` opens.
 - **Given** the picker at the 320 dp minimum viewport, **when** composition lines build, **then** `WidgetTester.takeException()` is `null` and Confirm remains reachable.
 
-Tests: `app/test/unit_picker_composition_test.dart`, `app/test/unit_picker_composition_widget_test.dart`, `app/test/unit_picker_composition_320dp_test.dart`, `app/test/overlay_army_move_flow_test.dart`.
+Tests: `app/test/unit_picker_composition_test.dart`, `app/test/unit_picker_composition_widget_test.dart`, `app/test/unit_picker_composition_320dp_test.dart`, `app/test/overlay_army_move_flow_test.dart`. Host goldens (editorial-monocle): `app/test/goldens/overlay_army_move_picker_composition.png`, `app/test/goldens/overlay_army_move_picker_composition_320dp.png` (`app/test/unit_picker_composition_goldens_test.dart`).

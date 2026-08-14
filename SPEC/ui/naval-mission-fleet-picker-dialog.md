@@ -81,4 +81,4 @@ Folder `Naval Mission Fleet Picker Dialog`:
 - **Given** the user taps Cancel, **when** the gesture completes, **then** the dialog closes with `null` and no mission menu opens.
 - **Given** the picker at the 320 dp minimum viewport, **when** composition lines build, **then** `WidgetTester.takeException()` is `null` and Confirm remains reachable.
 
-Tests: `app/test/unit_picker_composition_test.dart`, `app/test/unit_picker_composition_widget_test.dart`, `app/test/unit_picker_composition_320dp_test.dart`, `app/test/naval_mission_goldens_test.dart`.
+Tests: `app/test/unit_picker_composition_test.dart`, `app/test/unit_picker_composition_widget_test.dart`, `app/test/unit_picker_composition_320dp_test.dart`, `app/test/naval_mission_goldens_test.dart`. Host goldens (editorial-monocle): `app/test/goldens/naval_mission_fleet_picker.png` (composition summary) and `app/test/goldens/naval_mission_fleet_picker_pending_mission.png` (pending-mission line; `app/test/unit_picker_composition_goldens_test.dart`). Widgetbook **Default — two fleets** already mounts a patrol pending line.

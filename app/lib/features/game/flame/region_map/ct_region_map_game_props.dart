@@ -16,6 +16,7 @@ void ctRegionMapGameUpdateProps(
   bool? showProvinceOverlay,
   bool? showProvinceOwnershipTint,
   bool? showProvinceNamesLayer,
+  bool? showCapitalLinkDisconnectedHighlight,
   CtMapVisibilityMode? visibilityMode,
   MapBaseLayerFlags? mapBaseLayerFlags,
   BaseLayerDisplayMode? baseLayerDisplayMode,
@@ -62,6 +63,10 @@ void ctRegionMapGameUpdateProps(
   }
   if (showProvinceNamesLayer != null) {
     game.showProvinceNamesLayer = showProvinceNamesLayer;
+  }
+  if (showCapitalLinkDisconnectedHighlight != null) {
+    game.showCapitalLinkDisconnectedHighlight =
+        showCapitalLinkDisconnectedHighlight;
   }
   if (visibilityMode != null) {
     game.visibilityMode = visibilityMode;
@@ -135,6 +140,8 @@ void ctRegionMapGameUpdateProps(
       ..showProvinceOverlay = game.showProvinceOverlay
       ..showProvinceOwnershipTint = game.showProvinceOwnershipTint
       ..showProvinceNamesLayer = game.showProvinceNamesLayer
+      ..showCapitalLinkDisconnectedHighlight =
+          game.showCapitalLinkDisconnectedHighlight
       ..visibilityMode = game.visibilityMode
       ..mapBaseLayerFlags = game.mapBaseLayerFlags
       ..baseLayerDisplayMode = game.baseLayerDisplayMode

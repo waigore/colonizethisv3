@@ -35,6 +35,8 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
     showProvinceOverlay: state.widget.showProvinceOverlay,
     showProvinceOwnershipTint: state.widget.showProvinceOwnershipTint,
     showProvinceNamesLayer: state.widget.showProvinceNamesLayer,
+    showCapitalLinkDisconnectedHighlight:
+        state.widget.showCapitalLinkDisconnectedHighlight,
     visibilityMode: state.widget.visibilityMode,
     mapBaseLayerFlags: resolveMapBaseLayerFlags(
       flags: state.widget.mapBaseLayerFlags,
