@@ -1,10 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show
-        BaseLayerDisplayMode,
         CtMapVisibilityMode,
         isRailTransportLevel,
         shouldPaintTransportOverlayForCell,
@@ -28,32 +29,44 @@ CellViewData _cell({
 
 void main() {
   group('transport overlay render policy', () {
-    test('renders only in terrainAndResourcesImprovementsRoads mode', () {
+    test('renders only when roads and improvements flags are on', () {
       expect(
-        shouldRenderTransportOverlay(
-          baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
-        ),
+        shouldRenderTransportOverlay(flags: MapBaseLayerFlags.terrainOnly),
+        isFalse,
+      );
+      expect(
+        shouldRenderTransportOverlay(flags: MapBaseLayerFlags.resourcesOnly),
         isFalse,
       );
       expect(
         shouldRenderTransportOverlay(
-          baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          flags: MapBaseLayerFlags.resourcesAndImprovements,
         ),
         isFalse,
       );
       expect(
-        shouldRenderTransportOverlay(
-          baseLayerDisplayMode:
-              BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
-        ),
-        isFalse,
+        shouldRenderTransportOverlay(flags: MapBaseLayerFlags.fullDetail),
+        isTrue,
       );
       expect(
         shouldRenderTransportOverlay(
-          baseLayerDisplayMode:
-              BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          flags: const MapBaseLayerFlags(
+            showResources: false,
+            showImprovements: true,
+            showRoads: true,
+          ),
         ),
         isTrue,
+      );
+      expect(
+        shouldRenderTransportOverlay(
+          flags: const MapBaseLayerFlags(
+            showResources: true,
+            showImprovements: false,
+            showRoads: true,
+          ),
+        ),
+        isFalse,
       );
     });
 

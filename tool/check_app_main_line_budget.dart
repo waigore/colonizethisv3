@@ -65,8 +65,9 @@ const _packageName = 'colonizethis_app';
 // raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
 // raised for combined #4366+#4367+#4369 merge headroom.
+// raised for named map resource/improvement/road layers (Refs #4388).
 // raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
-const _maxMainLines = 76200;
+const _maxMainLines = 76300;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
@@ -79,11 +80,10 @@ int runCheckAppMainLineBudget(
     return 1;
   }
 
-  final result = Process.runSync(
-    'python3',
-    [script, '--json'],
-    workingDirectory: repoRoot,
-  );
+  final result = Process.runSync('python3', [
+    script,
+    '--json',
+  ], workingDirectory: repoRoot);
   if (result.exitCode != 0) {
     logE(
       'check_app_main_line_budget: project_stats.py exited ${result.exitCode}',

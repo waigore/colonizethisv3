@@ -1,5 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 
 import 'region_map_component_shared_palette.dart';
 import 'region_map_component_shared_visibility_terrain.dart';
@@ -74,11 +76,8 @@ bool shouldApplyFogToInteriorPlainsVariantOverlay({
 }
 
 /// Returns true when transport sprites should render for the selected base mode.
-bool shouldRenderTransportOverlay({
-  required BaseLayerDisplayMode baseLayerDisplayMode,
-}) {
-  return baseLayerDisplayMode ==
-      BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+bool shouldRenderTransportOverlay({required MapBaseLayerFlags flags}) {
+  return flags.paintsRoads;
 }
 
 /// Returns true when a road level should use the rail transport family.
