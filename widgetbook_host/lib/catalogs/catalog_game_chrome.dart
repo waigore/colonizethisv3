@@ -245,10 +245,7 @@ List<WidgetbookNode> get gameTabBarDirectories => [
               return Center(
                 child: SizedBox(
                   width: 280,
-                  child: ExtractionDiscLegendPanel(
-                    l10n: l10n,
-                    onClose: () {},
-                  ),
+                  child: ExtractionDiscLegendPanel(l10n: l10n, onClose: () {}),
                 ),
               );
             },
@@ -359,6 +356,16 @@ List<WidgetbookNode> get gameMapOptionsDialogDirectories => [
             showProvinceOwnershipTint: false,
             showProvinceNamesLayer: false,
             showMapResources: false,
+            showMapImprovements: false,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Resources only',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapResources: true,
             showMapImprovements: false,
             showMapRoads: false,
           ),

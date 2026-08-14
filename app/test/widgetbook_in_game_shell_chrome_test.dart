@@ -145,6 +145,7 @@ void main() {
             'Defaults — overlay on, ownership off, names on',
             'All toggles on',
             'All toggles off',
+            'Resources only',
             'Improvements without resources',
             'Roads disabled when improvements off',
           ],
