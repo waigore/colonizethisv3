@@ -1,14 +1,15 @@
 // Ported from colonizethis_logic (Refs #4090 Slice C).
 import 'package:colonizethis_test/test.dart';
 
-import 'support/game_setup_creation_and_assignment_part2_assignment_scenarios.dart';
+import 'support/game_setup_creation_and_assignment_part2_balance_scenarios.dart';
+import 'support/game_setup_creation_and_assignment_part2_ow_reserve_scenarios.dart';
 import 'support/scenario_runner.dart';
 
 void main() {
   group('GameSetup', () {
-    runLabeledScenarios(
-      gameSetupCreationAndAssignmentPart2AssignmentScenarios(),
-      runRunnableScenario,
-    );
+    runLabeledScenarios([
+      ...gameSetupCreationAndAssignmentPart2OwReserveScenarios(),
+      ...gameSetupCreationAndAssignmentPart2BalanceScenarios(),
+    ], runRunnableScenario);
   });
 }
