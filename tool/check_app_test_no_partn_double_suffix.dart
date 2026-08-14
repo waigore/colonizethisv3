@@ -4,9 +4,10 @@
 // cap. Before this gate they used an awkward double `_test` suffix
 // (`military_units_panel_test_part1_test.dart`), which reads as "a test of a
 // test part" and obscures the family. The single documented convention is
-// `<family>_part<N>_test.dart` (matching the already-clean
-// `province_panel_draft_orders_part2_test.dart` and the repo-lint
-// `order_merge_part1_test.dart` precedent).
+// `<family>_part<N>_test.dart` (the repo-lint
+// `order_merge_part1_test.dart` precedent). After wave-15 AC10, leftover
+// app `_partN` families were concern-renamed; new numbered shards still
+// must use this convention rather than a double `_test` suffix.
 //
 // This gate forbids any `app/test/**` Dart file whose basename matches the
 // `<name>_test_part<N>_test.dart` double-suffix pattern. New split families
@@ -55,12 +56,13 @@ int runCheckAppTestNoPartNDoubleSuffix(
   }
 
   final violations = <String>[];
-  final dartFiles = testDir
-      .listSync(recursive: true, followLinks: false)
-      .whereType<File>()
-      .where((f) => f.path.endsWith('.dart'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final dartFiles =
+      testDir
+          .listSync(recursive: true, followLinks: false)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
 
   for (final file in dartFiles) {
     final fileName = p.basename(file.path);

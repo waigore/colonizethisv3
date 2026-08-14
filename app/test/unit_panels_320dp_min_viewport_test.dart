@@ -35,7 +35,7 @@
 // silhouette. This file mirrors the existing pre-warm pattern from
 // `panels_320dp_min_viewport_test.dart` (DiplomacyPanel group) so the
 // naval pin renders against the same asset surface as
-// `naval_units_panel_part1`.
+// `naval_units_panel_roster_and_draft`.
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // SPEC: `SPEC/ui/civilian-units-panel.md`, `SPEC/ui/military-units-panel.md`,

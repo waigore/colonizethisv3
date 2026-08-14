@@ -224,6 +224,10 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get map_displayOptions_showProvinceNames => 'Show province names';
 
   @override
+  String get map_displayOptions_showCapitalLinkDisconnected =>
+      'Highlight land not bound to the capital';
+
+  @override
   String get map_displayOptions_mapMarksHeading => 'Map marks';
 
   @override

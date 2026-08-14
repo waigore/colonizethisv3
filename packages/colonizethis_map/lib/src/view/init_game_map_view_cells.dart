@@ -32,6 +32,7 @@ class InitGameMapViewCells {
     required Map<String, int>? resourceExtractionUnitsByTile,
     required Map<String, int>? resourceExtractionEffectiveUnitsByTile,
     required Map<String, int>? resourceExtractionBlockedUnitsByTile,
+    Set<String>? capitalLinkDisconnectedTileKeys,
   }) {
     final cells = <CellViewData>[];
     TileMapGrid.forEachIndex(tileMap.height, tileMap.width, (y, x) {
@@ -54,6 +55,8 @@ class InitGameMapViewCells {
       final extractionBlockedUnits = isSea
           ? null
           : resourceExtractionBlockedUnitsByTile?[tileKey];
+      final capitalLinkDisconnected = !isSea &&
+          (capitalLinkDisconnectedTileKeys?.contains(tileKey) ?? false);
       final fullProvinceId = isSea ? null : ProvinceId.full(regionId, localId);
       cells.add(
         CellViewData(
@@ -77,6 +80,7 @@ class InitGameMapViewCells {
           resourceExtractionUnits: extractionUnits,
           resourceExtractionEffectiveUnits: extractionEffectiveUnits,
           resourceExtractionBlockedUnits: extractionBlockedUnits,
+          capitalLinkDisconnected: capitalLinkDisconnected,
           visibility: visibility,
         ),
       );

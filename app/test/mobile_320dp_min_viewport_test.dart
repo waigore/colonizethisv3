@@ -5,113 +5,17 @@
 // scope here per the existing `SPEC/ui/mobile-adaptation.md` § 1 carve-out
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 // Refs #2870 S10. Shared pumps densify residual mid-500 cases (Refs #4021).
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/main_menu.dart';
-
 import 'dialogs_320dp_min_viewport_support.dart';
-import 'min_viewport_harness.dart';
-
-/// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
-/// § 7. Width matches [kMinViewportWidth]; height (640 dp) is the lower end
-/// of the iPhone SE-class mobile envelope mockups target.
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
-
-/// Viewport used by the negative-regression pin: comfortably wider than
-/// every per-screen breakpoint so the same screens render their wide layout
-/// without any responsive concessions. If a future refactor flips the
-/// overflow contract upstream, this control still passes — the contrast
-/// with the 320 dp positive pins keeps the regression signal honest.
-const Size _kWideRegressionViewport = Size(1024, 768);
-
-Widget _wrapMainMenu({
-  MainMenuVariant variant = MainMenuVariant.plain,
-  MainMenuState state = MainMenuState.default_,
-}) {
-  return CtMainMenu(
-    variant: variant,
-    state: state,
-    version: formatDebugAwareVersion('v1.0.0'),
-    onNewGame: () {},
-    onLoadGame: () {},
-    onSettings: () {},
-    onQuit: () {},
-  );
-}
-
-/// Pumps [screen] at [size] and asserts the framework emitted no
-/// exception. We deliberately treat any caught exception as a failure
-/// because Flutter surfaces `RenderFlex` overflows as
-/// `FlutterError`s with `"RenderFlex overflowed"` messages via the
-/// `FlutterError.onError` channel, which `WidgetTester` collects through
-/// `takeException`. This is the same contract several existing tests in
-/// the repo rely on (see `unit_panels_widgetbook_dark_chrome_test.dart`).
-///
-/// When [settleAnimations] is `true` (default) the helper drives
-/// `pumpAndSettle()` to completion. When `false` it pumps a small finite
-/// number of frames instead so screens with **continuous** animations can
-/// still be exercised against the layout overflow contract without the
-/// framework's settle-loop timing out.
-Future<void> _pumpNarrow(
-  WidgetTester tester,
-  Widget screen, {
-  required Size size,
-  bool settleAnimations = true,
-}) async {
-  if (settleAnimations) {
-    await pumpAtMinViewport(tester, size: size, child: screen, settle: true);
-    return;
-  }
-  // Two frames are enough for the layout pass and any one-frame
-  // post-build microtasks to surface a `RenderFlex` overflow exception
-  // through `WidgetTester.takeException()`: the harness pumps the first,
-  // and a second framed pump follows.
-  await pumpAtMinViewport(tester, size: size, child: screen);
-  await tester.pump();
-}
-
-/// Returns the rendered height (logical pixels) of every visible
-/// [CtNinePatchButton] descendant of the current widget tree.
-List<double> _renderedNinePatchButtonHeights(WidgetTester tester) {
-  final Iterable<Element> elements = find.byType(CtNinePatchButton).evaluate();
-  final List<double> heights = <double>[];
-  for (final Element element in elements) {
-    final RenderBox? box = element.renderObject as RenderBox?;
-    if (box == null || !box.hasSize) continue;
-    heights.add(box.size.height);
-  }
-  return heights;
-}
-
-void _expectTouchTargets(WidgetTester tester, {required bool requireButtons}) {
-  expect(tester.takeException(), isNull);
-  final heights = _renderedNinePatchButtonHeights(tester);
-  if (requireButtons) {
-    expect(
-      heights,
-      isNotEmpty,
-      reason:
-          'CtMainMenu must render at least one CtNinePatchButton '
-          '(New Game / Load Game / Settings / Quit).',
-    );
-  }
-  for (final h in heights) {
-    expect(
-      h,
-      greaterThanOrEqualTo(kMinTouchTargetSize),
-      reason:
-          'CtNinePatchButton height $h dp violates the 44 dp '
-          'touch-target minimum at the 320 dp viewport.',
-    );
-  }
-}
+import 'mobile_320dp_min_viewport_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -152,12 +56,12 @@ void main() {
             ),
           ]) {
         testWidgets(c.name, (WidgetTester tester) async {
-          await _pumpNarrow(
+          await pumpMobileNarrow(
             tester,
-            _wrapMainMenu(variant: c.variant, state: c.state),
-            size: _kMinViewport,
+            wrapMainMenuForMinViewport(variant: c.variant, state: c.state),
+            size: kMobileMinViewport,
           );
-          _expectTouchTargets(tester, requireButtons: c.requireButtons);
+          expectMobileTouchTargets(tester, requireButtons: c.requireButtons);
         });
       }
 
@@ -165,7 +69,7 @@ void main() {
       // narrow breakpoint (`kMainMenuNarrowBreakpoint`), so the menu
       // container must paint the compact `kMainMenuBodyPaddingNarrow`
       // padding rather than the default desktop padding. Existing
-      // `screen_spec_acceptance_part2_test.dart` AC pins this at the 430 dp
+      // `screen_spec_acceptance_pixel_art_chrome_test.dart` AC pins this at the 430 dp
       // boundary and at 360 dp; this pin closes the same visual contract
       // at the absolute minimum supported viewport per
       // `SPEC/ui/mobile-adaptation.md` § 4 Main Menu (`≤ 430 dp`) and § 7
@@ -174,7 +78,11 @@ void main() {
         'AC1 (positive) CtMainMenu plain @ 320×640: menu body padding is the '
         'compact kMainMenuBodyPaddingNarrow (≤ 430 dp narrow contract)',
         (WidgetTester tester) async {
-          await _pumpNarrow(tester, _wrapMainMenu(), size: _kMinViewport);
+          await pumpMobileNarrow(
+            tester,
+            wrapMainMenuForMinViewport(),
+            size: kMobileMinViewport,
+          );
 
           expect(tester.takeException(), isNull);
           final Padding bodyPadding = tester.widget<Padding>(
@@ -202,10 +110,10 @@ void main() {
         'AC1 (positive) CtMainMenu pixelArt @ 320×640: compact padding plus '
         'narrow button letter-spacing (≤ 430 dp narrow contract)',
         (WidgetTester tester) async {
-          await _pumpNarrow(
+          await pumpMobileNarrow(
             tester,
-            _wrapMainMenu(variant: MainMenuVariant.pixelArt),
-            size: _kMinViewport,
+            wrapMainMenuForMinViewport(variant: MainMenuVariant.pixelArt),
+            size: kMobileMinViewport,
           );
 
           expect(tester.takeException(), isNull);
@@ -243,10 +151,10 @@ void main() {
         'Negative control: CtMainMenu plain @ 1024×768 also pumps without '
         'exception (regression sentinel for the overflow contract)',
         (WidgetTester tester) async {
-          await _pumpNarrow(
+          await pumpMobileNarrow(
             tester,
-            _wrapMainMenu(),
-            size: _kWideRegressionViewport,
+            wrapMainMenuForMinViewport(),
+            size: kMobileWideRegressionViewport,
           );
 
           expect(tester.takeException(), isNull);
@@ -314,7 +222,7 @@ void main() {
     testWidgets('AC3 (positive) NewGameLeaderSelectionDialog @ 320×640: no '
         'RenderFlex overflow exception, six stacked slot bodies render, '
         'side-by-side row body is not mounted', (WidgetTester tester) async {
-      await pumpDialog(tester, size: _kMinViewport);
+      await pumpDialog(tester, size: kMobileMinViewport);
 
       expect(
         tester.takeException(),
@@ -353,7 +261,7 @@ void main() {
       'six slot labels + Cancel + Start labels render within the '
       '~288 dp content column',
       (WidgetTester tester) async {
-        await pumpDialog(tester, size: _kMinViewport);
+        await pumpDialog(tester, size: kMobileMinViewport);
 
         expect(tester.takeException(), isNull);
         expect(find.text('Choose nations and leaders'), findsOneWidget);
@@ -391,10 +299,10 @@ void main() {
         'kMinTouchTargetSize (SPEC/ui/mobile-adaptation.md § 1)', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, size: _kMinViewport);
+      await pumpDialog(tester, size: kMobileMinViewport);
 
       expect(tester.takeException(), isNull);
-      final List<double> heights = _renderedNinePatchButtonHeights(tester);
+      final List<double> heights = renderedNinePatchButtonHeights(tester);
       // The dialog footer renders exactly two CtNinePatchButtons
       // (Cancel + Start) per the SPEC layout / wireframe. Asserting
       // ≥ 2 keeps the AC robust against future button additions
@@ -425,7 +333,7 @@ void main() {
       '(regression sentinel for the narrow-stacking branch — keeps '
       'the 320 dp positive pins meaningful)',
       (WidgetTester tester) async {
-        await pumpDialog(tester, size: _kWideRegressionViewport);
+        await pumpDialog(tester, size: kMobileWideRegressionViewport);
 
         expect(tester.takeException(), isNull);
         expect(

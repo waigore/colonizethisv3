@@ -411,13 +411,13 @@ Widget host() => MaterialApp(home: const Placeholder());
   );
 
   test(
-    'fails when move_dialogs_specs part suite reintroduces MaterialApp host',
+    'fails when move_dialogs_specs army suite reintroduces MaterialApp host',
     () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_test_no_dup_scaffolding_move_dialogs_mat_',
       );
       addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'move_dialogs_specs_part1_test.dart', '''
+      _writeGovernedFile(temp, 'move_dialogs_specs_army_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
@@ -755,15 +755,19 @@ Widget host() => MaterialApp(home: const Placeholder());
   );
 
   test(
-    'fails when dialogue_overlays_specs part suite reintroduces MaterialApp host',
+    'fails when dialogue_overlays_specs overture suite reintroduces MaterialApp host',
     () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_test_no_dup_scaffolding_dlg_specs_mat_',
       );
       addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'dialogue_overlays_specs_part2_test.dart', '''
+      _writeGovernedFile(
+        temp,
+        'dialogue_overlays_specs_overture_and_call_to_arms_test.dart',
+        '''
 Widget host() => MaterialApp(home: const Placeholder());
-''');
+''',
+      );
 
       final logs = <String>[];
       final code = runCheckAppTestNoDuplicateScaffolding(
