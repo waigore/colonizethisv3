@@ -39,11 +39,11 @@ void main() {
       const orders = ct_models.Orders();
       final viaForwarder =
           GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft(
-        region: region,
-        game: game,
-        orders: orders,
-        humanPlayerId: 'gp1',
-      );
+            region: region,
+            game: game,
+            orders: orders,
+            humanPlayerId: 'gp1',
+          );
       final viaDirect = GameMapAreaCivilianDraftProjection.project(
         region: region,
         game: game,
@@ -79,14 +79,14 @@ void main() {
       const topology = MapTopology();
       final viaForwarder =
           GameMapAreaStateLogicDraftProjection.projectFleetMarkersForHumanDraft(
-        region: region,
-        game: game,
-        orders: orders,
-        humanPlayerId: 'gp1',
-        tileMapByRegion: const {},
-        topologyByRegion: const {},
-        combinedTopology: topology,
-      );
+            region: region,
+            game: game,
+            orders: orders,
+            humanPlayerId: 'gp1',
+            tileMapByRegion: const {},
+            topologyByRegion: const {},
+            combinedTopology: topology,
+          );
       final viaDirect = GameMapAreaFleetDraftProjection.project(
         region: region,
         game: game,
@@ -102,22 +102,19 @@ void main() {
   });
 
   group('GameMapAreaProvinceActionStates (Refs #2575)', () {
-    test(
-      'explore returns hidden state for malformed tile key (negative)',
-      () {
-        final region = _emptyRegion('oldWorld');
-        final state = GameMapAreaProvinceActionStates.explore(
-          game: _gameWithNoUnits(),
-          humanPlayerId: 'gp1',
-          selectedTileKey: 'bad',
-          selectedRegion: region,
-        );
-        expect(
-          state,
-          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
-        );
-      },
-    );
+    test('explore returns hidden state for malformed tile key (negative)', () {
+      final region = _emptyRegion('oldWorld');
+      final state = GameMapAreaProvinceActionStates.explore(
+        game: _gameWithNoUnits(),
+        humanPlayerId: 'gp1',
+        selectedTileKey: 'bad',
+        selectedRegion: region,
+      );
+      expect(
+        state,
+        GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
+      );
+    });
 
     test('buildImprovement returns hidden state for malformed tile key', () {
       final state = GameMapAreaProvinceActionStates.buildImprovement(
@@ -146,30 +143,27 @@ void main() {
       expect(state.enabled, isFalse);
     });
 
-    test(
-      'legacy state-logic constants forward to province-actions module',
-      () {
-        expect(
-          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
-          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
-        );
-        expect(
-          GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
-          GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
-        );
-      },
-    );
+    test('legacy state-logic constants forward to province-actions module', () {
+      expect(
+        GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
+        GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
+      );
+      expect(
+        GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
+        GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
+      );
+    });
 
     test('forwarder buildImprovement parity with direct module call', () {
       final game = _gameWithNoUnits();
       final view = _emptyPlayerView('gp1');
       final viaForwarder =
           GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
-        game: game,
-        humanPlayerId: 'gp1',
-        selectedTileKey: 'bad',
-        playerView: view,
-      );
+            game: game,
+            humanPlayerId: 'gp1',
+            selectedTileKey: 'bad',
+            playerView: view,
+          );
       final viaDirect = GameMapAreaProvinceActionStates.buildImprovement(
         game: game,
         humanPlayerId: 'gp1',
@@ -177,6 +171,21 @@ void main() {
         playerView: view,
       );
       expect(viaForwarder, viaDirect);
+    });
+  });
+
+  group('GameMapAreaArmyDraftProjection (Refs #4384)', () {
+    test('project on empty army set returns the input region unchanged', () {
+      final region = _emptyRegion('oldWorld');
+      final game = _gameWithNoUnits();
+      const orders = ct_models.Orders();
+      final result = GameMapAreaArmyDraftProjection.project(
+        region: region,
+        game: game,
+        orders: orders,
+        humanPlayerId: 'gp1',
+      );
+      expect(identical(result, region), isTrue);
     });
   });
 }
@@ -187,9 +196,7 @@ RegionMapViewData _emptyRegion(String regionId) {
     width: 1,
     height: 1,
     cellSize: 16,
-    cells: const [
-      CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
-    ],
+    cells: const [CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false)],
     capitalMarkers: const [],
     portMarkers: const [],
     factionColors: const {},
@@ -217,11 +224,7 @@ ct_models.Game _gameWithNoUnits() {
       newWorld: const ct_models.RegionData(provinces: [], units: []),
     ),
     players: const [
-      ct_models.Player(
-        id: 'gp1',
-        displayName: 'Human',
-        isHuman: true,
-      ),
+      ct_models.Player(id: 'gp1', displayName: 'Human', isHuman: true),
     ],
     minorNations: const [],
     tribes: const [],
@@ -231,11 +234,7 @@ ct_models.Game _gameWithNoUnits() {
 PlayerView _emptyPlayerView(String playerId) {
   return PlayerView(
     playerId: playerId,
-    player: ct_models.Player(
-      id: playerId,
-      displayName: 'P',
-      isHuman: true,
-    ),
+    player: ct_models.Player(id: playerId, displayName: 'P', isHuman: true),
     ownUnitsById: const {},
     provincesById: const {},
     visibilityByTile: const <String, VisibilityLevel>{},

@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 
@@ -36,6 +35,7 @@ void ctRegionMapGameUpdateProps(
     String markerTileKey,
   )?
   onFleetMarkerTapped,
+  void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
   VoidCallback? onCivilianTileSelectionCleared,
   required PlayerView? playerViewForResources,
   void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
@@ -96,6 +96,7 @@ void ctRegionMapGameUpdateProps(
   game.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
   game.onCivilianTileTapped = onCivilianTileTapped;
   game.onFleetMarkerTapped = onFleetMarkerTapped;
+  game.onArmyMarkerTapped = onArmyMarkerTapped;
   game.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
   game.playerViewForResources = playerViewForResources;
   if (onViewportSnapshotChanged != null) {
@@ -136,7 +137,8 @@ void ctRegionMapGameUpdateProps(
       ..playerViewForResources = game.playerViewForResources
       ..showPlayerTerritoryOutline = game.showPlayerTerritoryOutline
       ..playerTerritoryTileKeys = game.playerTerritoryTileKeys
-      ..onFleetMarkerTapped = onFleetMarkerTapped;
+      ..onFleetMarkerTapped = onFleetMarkerTapped
+      ..onArmyMarkerTapped = onArmyMarkerTapped;
     if (regionChanged || zoomMultiplier != null) {
       (game as CtRegionMapGameCamera).syncCameraZoomFromMultiplier();
     } else {

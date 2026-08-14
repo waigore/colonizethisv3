@@ -8,50 +8,56 @@ import '../../../features/game/flame/region_map/region_map.dart'
 import '../../../features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
 import '../../../features/game/widgets/shell/region_map_game_viewport.dart';
-export '../../../features/game/flame/region_map/ct_region_map_game.dart' show CtRegionMapGame;
+export '../../../features/game/flame/region_map/ct_region_map_game.dart'
+    show CtRegionMapGame;
 export '../../../features/game/flame/region_map/region_map.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode, assertCtMapPlayerViewRequired;
+    show
+        BaseLayerDisplayMode,
+        CtMapVisibilityMode,
+        assertCtMapPlayerViewRequired;
 export '../../../features/game/flame/region_map/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
 
 /// Narrow, non-widget binding surface for region-map Flame integrations.
-typedef CreateCtRegionMapGame = CtRegionMapGame Function({
-  required RegionMapViewData region,
-  required double cellSizePx,
-  required bool showPoliticalOverlay,
-  required bool showProvinceOverlay,
-  required bool showProvinceOwnershipTint,
-  required bool showProvinceNamesLayer,
-  required CtMapVisibilityMode visibilityMode,
-  required BaseLayerDisplayMode baseLayerDisplayMode,
-  required void Function(String provinceId)? onProvinceSelected,
-  required void Function(String tileKey)? onMapTileTappedForDetail,
-  required VoidCallback? onRegionViewChanged,
-  required void Function(String? provinceId)? onProvinceHovered,
-  required void Function(String? tileKey)? onTileHovered,
-  required void Function(String tileKey)? onCivilianTileTapped,
-  required void Function(
-    String locationScopeKey,
-    List<String> fleetIds,
-    String markerTileKey,
-  )?
-  onFleetMarkerTapped,
-  required VoidCallback? onCivilianTileSelectionCleared,
-  required String? selectedTileKey,
-  required String? selectedCivilianTileKey,
-  required String? secondaryHighlightTileKey,
-  required Set<String>? secondaryHighlightTileKeys,
-  required Set<String>? validTileKeys,
-  required void Function(String tileKey)? onTileSelected,
-  required VoidCallback? onWorkTargetSelectionCancelled,
-  required void Function(String provinceId)? onTownIconTapped,
-  required PlayerView? playerViewForResources,
-  required void Function(RegionMapViewportSnapshot viewport)?
-  onViewportSnapshotChanged,
-  required double initialZoomMultiplier,
-  bool showPlayerTerritoryOutline,
-  Set<String>? playerTerritoryTileKeys,
-});
+typedef CreateCtRegionMapGame =
+    CtRegionMapGame Function({
+      required RegionMapViewData region,
+      required double cellSizePx,
+      required bool showPoliticalOverlay,
+      required bool showProvinceOverlay,
+      required bool showProvinceOwnershipTint,
+      required bool showProvinceNamesLayer,
+      required CtMapVisibilityMode visibilityMode,
+      required BaseLayerDisplayMode baseLayerDisplayMode,
+      required void Function(String provinceId)? onProvinceSelected,
+      required void Function(String tileKey)? onMapTileTappedForDetail,
+      required VoidCallback? onRegionViewChanged,
+      required void Function(String? provinceId)? onProvinceHovered,
+      required void Function(String? tileKey)? onTileHovered,
+      required void Function(String tileKey)? onCivilianTileTapped,
+      required void Function(
+        String locationScopeKey,
+        List<String> fleetIds,
+        String markerTileKey,
+      )?
+      onFleetMarkerTapped,
+      required void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
+      required VoidCallback? onCivilianTileSelectionCleared,
+      required String? selectedTileKey,
+      required String? selectedCivilianTileKey,
+      required String? secondaryHighlightTileKey,
+      required Set<String>? secondaryHighlightTileKeys,
+      required Set<String>? validTileKeys,
+      required void Function(String tileKey)? onTileSelected,
+      required VoidCallback? onWorkTargetSelectionCancelled,
+      required void Function(String provinceId)? onTownIconTapped,
+      required PlayerView? playerViewForResources,
+      required void Function(RegionMapViewportSnapshot viewport)?
+      onViewportSnapshotChanged,
+      required double initialZoomMultiplier,
+      bool showPlayerTerritoryOutline,
+      Set<String>? playerTerritoryTileKeys,
+    });
 
 CtRegionMapGame defaultCreateCtRegionMapGame({
   required RegionMapViewData region,
@@ -74,6 +80,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     String markerTileKey,
   )?
   onFleetMarkerTapped,
+  required void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
   required VoidCallback? onCivilianTileSelectionCleared,
   required String? selectedTileKey,
   required String? selectedCivilianTileKey,
@@ -106,6 +113,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     onTileHovered: onTileHovered,
     onCivilianTileTapped: onCivilianTileTapped,
     onFleetMarkerTapped: onFleetMarkerTapped,
+    onArmyMarkerTapped: onArmyMarkerTapped,
     onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
     selectedTileKey: selectedTileKey,
     selectedCivilianTileKey: selectedCivilianTileKey,

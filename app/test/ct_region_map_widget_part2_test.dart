@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show OpenArmyStackMarkerEvent;
 import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
@@ -46,7 +48,10 @@ void main() {
       'onRegionViewChanged fires when camera moves',
       (WidgetTester tester) async {
         var callbackCount = 0;
-        await pumpCtRegionMapTest(tester, onRegionViewChanged: () => callbackCount++);
+        await pumpCtRegionMapTest(
+          tester,
+          onRegionViewChanged: () => callbackCount++,
+        );
         expect(_map, findsOneWidget);
         await tester.drag(_map, const Offset(20, 10));
         await tester.pump();
@@ -193,6 +198,94 @@ void main() {
     );
 
     testWidgets(
+      'tapping army marker emits stack event and does not open MAP20001',
+      (WidgetTester tester) async {
+        const markerTileKey = 'oldWorld|pArmy|0|0';
+        final openedStacks = await pumpAndTapArmyMarker(tester);
+        expect(openedStacks, hasLength(1));
+        expect(openedStacks.single.provinceId, 'oldWorld|pArmy');
+        expect(openedStacks.single.armyIds, ['army_field']);
+        expect(openedStacks.single.fieldArmyIds, ['army_field']);
+        expect(openedStacks.single.tileKey, markerTileKey);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'civilian glyph and army icon on the same town cell hit different flows',
+      (WidgetTester tester) async {
+        const markerTileKey = 'oldWorld|pBoth|0|0';
+        final region = ctRegionMapArmyMarkerRegion(
+          localProvinceId: 'pBoth',
+          markerTileKey: markerTileKey,
+          civilianTileMarkers: [
+            ctRegionMapCivilianMarker(
+              tileKey: markerTileKey,
+              x: 0,
+              y: 0,
+              localProvinceId: 'pBoth',
+            ),
+          ],
+        );
+        final (bus, openedStacks) =
+            ctRegionMapBusCapture<OpenArmyStackMarkerEvent>();
+        String? civilianTileKey;
+        String? detailTileKey;
+        await pumpCtRegionMapTest(
+          tester,
+          region: region,
+          width: 64,
+          height: 64,
+          cellSizePx: 32,
+          bus: bus,
+          onCivilianTileStateChanged: (tileKey) => civilianTileKey = tileKey,
+          onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+        );
+        await tapCtRegionMapCivilianGlyph(tester);
+        expect(civilianTileKey, markerTileKey);
+        expect(openedStacks, isEmpty);
+        expect(detailTileKey, isNull);
+
+        civilianTileKey = null;
+        await tapCtRegionMapArmyIcon(tester);
+        expect(openedStacks, hasLength(1));
+        expect(openedStacks.single.tileKey, markerTileKey);
+        expect(civilianTileKey, isNull);
+        expect(detailTileKey, isNull);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'work target mode ignores army marker taps',
+      (WidgetTester tester) async {
+        const markerTileKey = 'oldWorld|pArmy|0|0';
+        const validTileKey = 'oldWorld|pArmy|0|0';
+        final region = ctRegionMapArmyMarkerRegion(
+          localProvinceId: 'pArmy',
+          markerTileKey: markerTileKey,
+        );
+        final (bus, openedStacks) =
+            ctRegionMapBusCapture<OpenArmyStackMarkerEvent>();
+        var selectedCallCount = 0;
+        await pumpCtRegionMapTest(
+          tester,
+          region: region,
+          width: 64,
+          height: 64,
+          cellSizePx: 32,
+          bus: bus,
+          validTileKeys: {validTileKey},
+          onTileSelected: (_) => selectedCallCount++,
+        );
+        await tapCtRegionMapArmyIcon(tester);
+        expect(openedStacks, isEmpty);
+        expect(selectedCallCount, 1);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
       'tapping non-civilian tile clears civilian selection and still opens tile detail',
       (WidgetTester tester) async {
         const cellSize = 32;
@@ -250,7 +343,10 @@ void main() {
       'tap does not invoke onTileHovered without pointer hover',
       (WidgetTester tester) async {
         String? hoveredTileKey;
-        await pumpCtRegionMapTest(tester, onTileHovered: (key) => hoveredTileKey = key);
+        await pumpCtRegionMapTest(
+          tester,
+          onTileHovered: (key) => hoveredTileKey = key,
+        );
         expect(_map, findsOneWidget);
         await tapCtRegionMap(tester);
         expect(hoveredTileKey, isNull);

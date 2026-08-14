@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -44,6 +43,7 @@ class CtRegionMapGame extends FlameGame
       String markerTileKey,
     )?
     onFleetMarkerTapped,
+    void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
     VoidCallback? onCivilianTileSelectionCleared,
     String? selectedTileKey,
     String? selectedCivilianTileKey,
@@ -74,6 +74,7 @@ class CtRegionMapGame extends FlameGame
     this.onTileHovered = onTileHovered;
     this.onCivilianTileTapped = onCivilianTileTapped;
     this.onFleetMarkerTapped = onFleetMarkerTapped;
+    this.onArmyMarkerTapped = onArmyMarkerTapped;
     this.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
     this.selectedTileKey = selectedTileKey;
     this.selectedCivilianTileKey = selectedCivilianTileKey;
@@ -129,6 +130,7 @@ class CtRegionMapGame extends FlameGame
       String markerTileKey,
     )?
     onFleetMarkerTapped,
+    void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
     VoidCallback? onCivilianTileSelectionCleared,
     required PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
@@ -136,38 +138,38 @@ class CtRegionMapGame extends FlameGame
     bool? showPlayerTerritoryOutline,
     Set<String>? playerTerritoryTileKeys,
     bool clearPlayerTerritoryTileKeys = false,
-  }) =>
-      ctRegionMapGameUpdateProps(
-        this,
-        region: region,
-        showPoliticalOverlay: showPoliticalOverlay,
-        showProvinceOverlay: showProvinceOverlay,
-        showProvinceOwnershipTint: showProvinceOwnershipTint,
-        showProvinceNamesLayer: showProvinceNamesLayer,
-        visibilityMode: visibilityMode,
-        baseLayerDisplayMode: baseLayerDisplayMode,
-        selectedTileKey: selectedTileKey,
-        selectedCivilianTileKey: selectedCivilianTileKey,
-        secondaryHighlightTileKey: secondaryHighlightTileKey,
-        secondaryHighlightTileKeys: secondaryHighlightTileKeys,
-        clearSelectedTileKey: clearSelectedTileKey,
-        clearSelectedCivilianTileKey: clearSelectedCivilianTileKey,
-        clearSecondaryHighlightTileKey: clearSecondaryHighlightTileKey,
-        clearSecondaryHighlightTileKeys: clearSecondaryHighlightTileKeys,
-        validTileKeys: validTileKeys,
-        clearValidTileKeys: clearValidTileKeys,
-        onTileSelected: onTileSelected,
-        onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
-        onCivilianTileTapped: onCivilianTileTapped,
-        onFleetMarkerTapped: onFleetMarkerTapped,
-        onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
-        playerViewForResources: playerViewForResources,
-        onViewportSnapshotChanged: onViewportSnapshotChanged,
-        zoomMultiplier: zoomMultiplier,
-        showPlayerTerritoryOutline: showPlayerTerritoryOutline,
-        playerTerritoryTileKeys: playerTerritoryTileKeys,
-        clearPlayerTerritoryTileKeys: clearPlayerTerritoryTileKeys,
-      );
+  }) => ctRegionMapGameUpdateProps(
+    this,
+    region: region,
+    showPoliticalOverlay: showPoliticalOverlay,
+    showProvinceOverlay: showProvinceOverlay,
+    showProvinceOwnershipTint: showProvinceOwnershipTint,
+    showProvinceNamesLayer: showProvinceNamesLayer,
+    visibilityMode: visibilityMode,
+    baseLayerDisplayMode: baseLayerDisplayMode,
+    selectedTileKey: selectedTileKey,
+    selectedCivilianTileKey: selectedCivilianTileKey,
+    secondaryHighlightTileKey: secondaryHighlightTileKey,
+    secondaryHighlightTileKeys: secondaryHighlightTileKeys,
+    clearSelectedTileKey: clearSelectedTileKey,
+    clearSelectedCivilianTileKey: clearSelectedCivilianTileKey,
+    clearSecondaryHighlightTileKey: clearSecondaryHighlightTileKey,
+    clearSecondaryHighlightTileKeys: clearSecondaryHighlightTileKeys,
+    validTileKeys: validTileKeys,
+    clearValidTileKeys: clearValidTileKeys,
+    onTileSelected: onTileSelected,
+    onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+    onCivilianTileTapped: onCivilianTileTapped,
+    onFleetMarkerTapped: onFleetMarkerTapped,
+    onArmyMarkerTapped: onArmyMarkerTapped,
+    onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
+    playerViewForResources: playerViewForResources,
+    onViewportSnapshotChanged: onViewportSnapshotChanged,
+    zoomMultiplier: zoomMultiplier,
+    showPlayerTerritoryOutline: showPlayerTerritoryOutline,
+    playerTerritoryTileKeys: playerTerritoryTileKeys,
+    clearPlayerTerritoryTileKeys: clearPlayerTerritoryTileKeys,
+  );
 
   void setCameraCenterWorld(double x, double y) =>
       ctRegionMapGameSetCameraCenterWorld(this, x, y);

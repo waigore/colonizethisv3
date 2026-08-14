@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -61,6 +60,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.onTileTapped,
     this.onCivilianTileTapped,
     this.onFleetMarkerTapped,
+    this.onArmyMarkerTapped,
     this.onCivilianTileSelectionCleared,
     this.selectedTileKey,
     this.selectedCivilianTileKey,
@@ -105,6 +105,7 @@ class CtRegionMapComponent extends PositionComponent {
     String markerTileKey,
   )?
   onFleetMarkerTapped;
+  void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped;
   VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
   String? selectedCivilianTileKey;

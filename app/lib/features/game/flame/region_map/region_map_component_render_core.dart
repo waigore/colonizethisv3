@@ -6,6 +6,7 @@ import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 import 'region_map_component_render_core_land_sea.dart';
 import 'region_map_component_render_core_overlays.dart';
+import 'region_map_component_render_markers_army.dart';
 import 'region_map_component_render_markers_selection.dart';
 import 'region_map_component_render_markers_settlements.dart';
 import 'region_map_component_render_markers_units.dart';
@@ -42,6 +43,7 @@ extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     paintTowns(canvas);
     paintWarpZones(canvas);
     paintCivilianTileMarkers(canvas);
+    paintArmyTileMarkers(canvas);
     paintFleetTileMarkers(canvas);
     if (session.hoveredTileX != null && session.hoveredTileY != null) {
       paintSelector(canvas);
@@ -206,10 +208,12 @@ extension CtRegionMapRenderCoreBaseTilesHelpers on CtRegionMapComponent {
     canvas.drawImageRect(tileset.image, srcRect, dstRect, Paint());
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.fogged) {
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.fogged) {
       canvas.drawRect(
         dstRect,
-        Paint()..color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
+        Paint()
+          ..color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
       );
     }
     return true;

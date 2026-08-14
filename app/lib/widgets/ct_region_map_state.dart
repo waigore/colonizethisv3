@@ -6,7 +6,8 @@ import 'ct_region_map.dart';
 import 'ct_region_map_state_handlers.dart';
 import 'ct_region_map_viewport.dart';
 
-class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin {
+class CtRegionMapState extends State<CtRegionMap>
+    with CtRegionMapViewportMixin {
   late CtRegionMapGame game;
   final SubscriptionTracker subscriptions = SubscriptionTracker();
   double _scaleGestureStartMultiplier = 1.0;
@@ -60,7 +61,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled ||
         widget.playerViewForResources != oldWidget.playerViewForResources ||
-        widget.showPlayerTerritoryOutline != oldWidget.showPlayerTerritoryOutline ||
+        widget.showPlayerTerritoryOutline !=
+            oldWidget.showPlayerTerritoryOutline ||
         widget.playerTerritoryTileKeys != oldWidget.playerTerritoryTileKeys ||
         widget.onViewportSnapshotChanged !=
             oldWidget.onViewportSnapshotChanged ||
@@ -99,6 +101,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
               fleetIds,
               markerTileKey,
             ),
+        onArmyMarkerTapped: (marker) =>
+            handleCtRegionMapArmyMarkerTapped(this, marker),
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
