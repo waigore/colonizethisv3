@@ -74,6 +74,33 @@ Orders diplomacyPendingOrders(DiplomaticOrder order) {
   );
 }
 
+Game diplomacyColonyGame({List<BoycottState> boycotts = const []}) {
+  return buildDiplomacyPanelTestGame().copyWith(
+    colonyStates: const [
+      ColonyState(
+        tribeId: 't1',
+        colonyOfGpId: diplomacyOrdersHumanId,
+        sinceTurn: 1,
+      ),
+    ],
+    tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
+    boycottStates: boycotts,
+  );
+}
+
+Game diplomacyMinorEmbassyGame({List<SubsidyState> subsidies = const []}) {
+  return buildDiplomacyRichPanelTestGame().copyWith(
+    overtureStates: const [
+      OvertureState(
+        gpId: diplomacyOrdersHumanId,
+        targetId: diplomacyOrdersMinorId,
+        stage: OvertureStage.embassy,
+      ),
+    ],
+    subsidyStates: subsidies,
+  );
+}
+
 Future<ConfirmDialogEvent> awaitConfirmOnDiplomacyActionTap(
   WidgetTester tester, {
   required Game game,
@@ -83,10 +110,9 @@ Future<ConfirmDialogEvent> awaitConfirmOnDiplomacyActionTap(
   bool tall = false,
 }) async {
   final eventBus = bus ?? AppEventBus.create();
-  final confirmFuture = eventBus
-      .on<ConfirmDialogEvent>()
-      .first
-      .timeout(const Duration(seconds: 2));
+  final confirmFuture = eventBus.on<ConfirmDialogEvent>().first.timeout(
+    const Duration(seconds: 2),
+  );
   await pumpDiplomacyOrdersPanel(
     tester,
     game: game,

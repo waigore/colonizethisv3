@@ -17,54 +17,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 
-import 'app_shell_harness.dart';
-
-Future<void> _pumpBody(WidgetTester tester, Widget body) async {
-  await tester.pumpWidget(
-    buildAppShell(child: Scaffold(body: body)),
-  );
-}
-
-Border _headerBorder(WidgetTester tester, Type headerType) {
-  final DecoratedBox decoratedBox = tester.widget<DecoratedBox>(
-    find.descendant(
-      of: find.byType(headerType),
-      matching: find.byType(DecoratedBox),
-    ),
-  );
-  return (decoratedBox.decoration as BoxDecoration).border! as Border;
-}
-
-UnitsPanelShell _emptyShell({
-  String title = 'Civilian Units',
-  String emptyMessage = 'No civilian units',
-  List<Widget> actions = const [],
-}) {
-  return UnitsPanelShell(
-    title: title,
-    actions: actions,
-    hasContent: false,
-    listChildren: const [],
-    emptyMessage: emptyMessage,
-  );
-}
-
-Future<void> _pumpActionRow(
-  WidgetTester tester, {
-  double width = 420,
-  required List<UnitsEntityAction> actions,
-}) async {
-  await _pumpBody(
-    tester,
-    SizedBox(
-      width: width,
-      child: UnitsEntityActionRow(
-        details: const Text('Left details'),
-        actions: actions,
-      ),
-    ),
-  );
-}
+import 'units_panel_shared_widgets_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -84,7 +37,7 @@ void main() {
     testWidgets('renders label via CtSectionLabel (#2866)', (
       WidgetTester tester,
     ) async {
-      await _pumpBody(
+      await pumpUnitsSharedBody(
         tester,
         const RegionSectionHeader(label: 'Old World'),
       );
@@ -96,7 +49,7 @@ void main() {
       'leftBar variant renders a left accent-dim bar without CtSectionLabel '
       '(Refs #3514)',
       (WidgetTester tester) async {
-        await _pumpBody(
+        await pumpUnitsSharedBody(
           tester,
           const RegionSectionHeader(
             label: 'New World',
@@ -109,7 +62,10 @@ void main() {
         expect(find.text('NEW WORLD'), findsOneWidget);
         expect(find.byType(CtSectionLabel), findsNothing);
 
-        final Border border = _headerBorder(tester, RegionSectionHeader);
+        final Border border = unitsSharedHeaderBorder(
+          tester,
+          RegionSectionHeader,
+        );
         expect(border.left.width, RegionSectionHeader.leftBarWidth);
         expect(border.left.color, EditorialMonoclePalette.accentDim);
         expect(border.bottom, BorderSide.none);
@@ -120,7 +76,7 @@ void main() {
       'bottomBorderMuted variant renders a 1dp --border bottom border '
       'without CtSectionLabel (Refs #3514)',
       (WidgetTester tester) async {
-        await _pumpBody(
+        await pumpUnitsSharedBody(
           tester,
           const RegionSectionHeader(
             label: 'Old World',
@@ -138,7 +94,10 @@ void main() {
         expect(label.style?.color, EditorialMonoclePalette.muted);
         expect(label.style?.fontWeight, FontWeight.w600);
 
-        final Border border = _headerBorder(tester, RegionSectionHeader);
+        final Border border = unitsSharedHeaderBorder(
+          tester,
+          RegionSectionHeader,
+        );
         expect(border.bottom.width, RegionSectionHeader.bottomBorderWidth);
         expect(border.bottom.color, EditorialMonoclePalette.border);
         expect(border.left, BorderSide.none);
@@ -148,7 +107,7 @@ void main() {
 
   group('LocationSectionHeader', () {
     testWidgets('shows label and region', (WidgetTester tester) async {
-      await _pumpBody(
+      await pumpUnitsSharedBody(
         tester,
         const LocationSectionHeader(
           label: 'Province A',
@@ -158,39 +117,36 @@ void main() {
       expect(find.text('Province A — New World'), findsOneWidget);
     });
 
-    testWidgets(
-      'renders semi-bold fg-at-0.8 chrome per mockup .province-label '
-      '(Refs #3514)',
-      (WidgetTester tester) async {
-        await _pumpBody(
-          tester,
-          const LocationSectionHeader(
-            label: 'Province A',
-            regionLabel: 'New World',
-          ),
-        );
+    testWidgets('renders semi-bold fg-at-0.8 chrome per mockup .province-label '
+        '(Refs #3514)', (WidgetTester tester) async {
+      await pumpUnitsSharedBody(
+        tester,
+        const LocationSectionHeader(
+          label: 'Province A',
+          regionLabel: 'New World',
+        ),
+      );
 
-        final Text text = tester.widget<Text>(
-          find.text('Province A — New World'),
-        );
-        expect(text.style?.fontWeight, FontWeight.w600);
-        expect(
-          text.style?.color,
-          EditorialMonoclePalette.fg.withValues(
-            alpha: LocationSectionHeader.labelOpacity,
-          ),
-        );
-      },
-    );
+      final Text text = tester.widget<Text>(
+        find.text('Province A — New World'),
+      );
+      expect(text.style?.fontWeight, FontWeight.w600);
+      expect(
+        text.style?.color,
+        EditorialMonoclePalette.fg.withValues(
+          alpha: LocationSectionHeader.labelOpacity,
+        ),
+      );
+    });
   });
 
   group('UnitsPanelShell', () {
     testWidgets('shows title and empty message when no content', (
       WidgetTester tester,
     ) async {
-      await _pumpBody(
+      await pumpUnitsSharedBody(
         tester,
-        _emptyShell(title: 'Test Panel', emptyMessage: 'Nothing here'),
+        emptyUnitsPanelShell(title: 'Test Panel', emptyMessage: 'Nothing here'),
       );
       expect(find.text('Test Panel'), findsOneWidget);
       expect(find.text('Nothing here'), findsOneWidget);
@@ -199,7 +155,7 @@ void main() {
     testWidgets('shows list children when hasContent', (
       WidgetTester tester,
     ) async {
-      await _pumpBody(
+      await pumpUnitsSharedBody(
         tester,
         UnitsPanelShell(
           title: 'With rows',
@@ -217,14 +173,12 @@ void main() {
     });
 
     testWidgets('forwards trailing actions', (WidgetTester tester) async {
-      await _pumpBody(
+      await pumpUnitsSharedBody(
         tester,
-        _emptyShell(
+        emptyUnitsPanelShell(
           title: 'T',
           emptyMessage: 'E',
-          actions: [
-            TextButton(onPressed: () {}, child: const Text('Action')),
-          ],
+          actions: [TextButton(onPressed: () {}, child: const Text('Action'))],
         ),
       );
       expect(find.text('Action'), findsOneWidget);
@@ -233,7 +187,7 @@ void main() {
     testWidgets(
       'renders title via CtTopBar (showBackButton: false; #2866 S1 chrome)',
       (WidgetTester tester) async {
-        await _pumpBody(tester, _emptyShell());
+        await pumpUnitsSharedBody(tester, emptyUnitsPanelShell());
 
         final Finder topBarFinder = find.byType(CtTopBar);
         expect(topBarFinder, findsOneWidget);
@@ -258,7 +212,10 @@ void main() {
 
         // Title text colour resolves to the canonical --accent token.
         final Text titleText = tester.widget(
-          find.descendant(of: topBarFinder, matching: find.text('Civilian Units')),
+          find.descendant(
+            of: topBarFinder,
+            matching: find.text('Civilian Units'),
+          ),
         );
         expect(titleText.style?.color, EditorialMonoclePalette.accent);
       },
@@ -267,9 +224,9 @@ void main() {
     testWidgets(
       'wraps multiple trailing actions in a Row inside CtTopBar trailing slot',
       (WidgetTester tester) async {
-        await _pumpBody(
+        await pumpUnitsSharedBody(
           tester,
-          _emptyShell(
+          emptyUnitsPanelShell(
             actions: [
               TextButton(onPressed: () {}, child: const Text('Tile')),
               TextButton(onPressed: () {}, child: const Text('Train')),
@@ -300,9 +257,9 @@ void main() {
           onPressed: () {},
           child: const Text('Train'),
         );
-        await _pumpBody(
+        await pumpUnitsSharedBody(
           tester,
-          _emptyShell(actions: [soloAction], emptyMessage: 'E'),
+          emptyUnitsPanelShell(actions: [soloAction], emptyMessage: 'E'),
         );
 
         final CtTopBar topBar = tester.widget(find.byType(CtTopBar));
@@ -313,7 +270,7 @@ void main() {
     testWidgets(
       'renders empty message in italic --muted (#2866 S1 dark-theme palette)',
       (WidgetTester tester) async {
-        await _pumpBody(tester, _emptyShell());
+        await pumpUnitsSharedBody(tester, emptyUnitsPanelShell());
 
         final Text emptyText = tester.widget(find.text('No civilian units'));
         expect(emptyText.style?.color, EditorialMonoclePalette.muted);
@@ -321,32 +278,29 @@ void main() {
       },
     );
 
-    testWidgets(
-      'omits the empty message when hasContent is true',
-      (WidgetTester tester) async {
-        await _pumpBody(
-          tester,
-          const UnitsPanelShell(
-            title: 'Civilian Units',
-            hasContent: true,
-            listChildren: [
-              ListTile(title: Text('Row one')),
-            ],
-            emptyMessage: 'No civilian units',
-          ),
-        );
+    testWidgets('omits the empty message when hasContent is true', (
+      WidgetTester tester,
+    ) async {
+      await pumpUnitsSharedBody(
+        tester,
+        const UnitsPanelShell(
+          title: 'Civilian Units',
+          hasContent: true,
+          listChildren: [ListTile(title: Text('Row one'))],
+          emptyMessage: 'No civilian units',
+        ),
+      );
 
-        expect(find.text('Row one'), findsOneWidget);
-        expect(find.text('No civilian units'), findsNothing);
-      },
-    );
+      expect(find.text('Row one'), findsOneWidget);
+      expect(find.text('No civilian units'), findsNothing);
+    });
   });
 
   group('UnitsEntityActionRow', () {
     testWidgets('renders details with text action label on wide width', (
       WidgetTester tester,
     ) async {
-      await _pumpActionRow(
+      await pumpUnitsEntityActionRow(
         tester,
         actions: [
           UnitsEntityAction(
@@ -366,7 +320,7 @@ void main() {
     testWidgets('switches action button to icon-only on narrow width', (
       WidgetTester tester,
     ) async {
-      await _pumpActionRow(
+      await pumpUnitsEntityActionRow(
         tester,
         width: 220,
         actions: [
@@ -388,7 +342,7 @@ void main() {
       'neutral -> CtActionTextButton, danger -> CtDangerTextButton, '
       'iconOnly -> CtCircularLocateButton, and no CtNinePatchButton',
       (WidgetTester tester) async {
-        await _pumpActionRow(
+        await pumpUnitsEntityActionRow(
           tester,
           actions: [
             UnitsEntityAction(
@@ -426,7 +380,7 @@ void main() {
     testWidgets(
       'disabled action (onPressed == null) renders a disabled pill (#3514)',
       (WidgetTester tester) async {
-        await _pumpActionRow(
+        await pumpUnitsEntityActionRow(
           tester,
           actions: const [
             UnitsEntityAction(

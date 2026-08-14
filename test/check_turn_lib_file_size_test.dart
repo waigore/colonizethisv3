@@ -13,8 +13,19 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckTurnLibFileSize', () {
-    test('passes on current repo tree under wave-4 ceiling', () {
-      expect(runCheckTurnLibFileSize('.'), 0);
+    test(
+      'passes on current repo tree under wave-7 300 physical-line ceiling',
+      () {
+        expect(runCheckTurnLibFileSize('.'), 0);
+      },
+    );
+
+    test('ceiling is 300 after #4342 Slice D ratchet', () {
+      expect(turnLibFileSizeCeiling, 300);
+    });
+
+    test('grandfather allowlist is empty after #4342', () {
+      expect(turnLibFileSizeGrandfathered, isEmpty);
     });
 
     test('fails when a turn lib file exceeds the ceiling', () {
