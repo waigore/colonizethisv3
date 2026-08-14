@@ -58,7 +58,7 @@ Game buildNavalPanelNamedSeaZoneGame({
 }
 
 /// OW capital + optional extra provinces / fleets for naval panel scenarios
-/// (Refs #4013 densify of `naval_units_panel_part{3,4}_test.dart`).
+/// (Refs #4013 densify of naval panel concern suites).
 Game buildNavalPanelOwFleetsGame({
   required String gameId,
   required String humanId,

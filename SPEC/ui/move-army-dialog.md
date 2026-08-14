@@ -173,4 +173,4 @@ Catalog folder: **Move Army Dialog** (registered in `widgetbook_host/lib/catalog
 4. **Invasion vs generals — balanced (#4233):** Two generals, one staged invasion in `draftOrders`; select **Rival City** to show `Invasions this turn: 2 · Generals: 2`.
 5. **Invasion vs generals — over capacity warn (#4233):** One general, one staged invasion; select **Rival City** to show the soft over-capacity warning while Confirm stays enabled.
 
-Automated widget tests: `app/test/move_dialogs_specs_part1_test.dart` (army pins; fleet pins in `move_dialogs_specs_part2_test.dart`); invasion intel pins in `app/test/move_army_invasion_intel_test.dart` (#4216).
+Automated widget tests: `app/test/move_dialogs_specs_army_test.dart` (army pins; fleet pins in `move_dialogs_specs_fleet_test.dart`); invasion intel pins in `app/test/move_army_invasion_intel_test.dart` (#4216).

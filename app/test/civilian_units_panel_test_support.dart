@@ -1,4 +1,4 @@
-// Shared scenario Games + host re-exports for `civilian_units_panel_part*`.
+// Shared scenario Games + host re-exports for civilian panel suites.
 //
 // The three part files previously inlined ~14 near-identical `Game(` builders
 // (OW Alpha province + one/few civilians). Named factories below keep each

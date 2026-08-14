@@ -271,7 +271,8 @@ After any fleet operation (split or combine):
 |------|-------------|
 | `app/lib/features/game/widgets/units/naval/naval_units_panel.dart` | Main panel with combine/split UI |
 | `app/lib/features/game/widgets/unit_orders/split_fleet_dialog.dart` | Split fleet modal dialog |
-| `app/test/naval_units_panel_test.dart` | Tests for fleet management |
+| `app/test/naval_units_panel_roster_and_draft_test.dart` | Roster, locate, and draft-move subtitle |
+| `app/test/naval_units_panel_combine_and_mockup_test.dart` | Combine selection and UNIT30001 mockup fidelity |
 
 ### Key Implementation Details
 

@@ -14,7 +14,7 @@ import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 
 import 'map_view_fixture.dart';
 
-/// Shared by `ct_region_map_widget_part*_test.dart` (Refs #4013 / #4021).
+/// Shared by `ct_region_map_widget_*_test.dart` (Refs #4013 / #4021 / #4352).
 CtRegionMapComponent ctRegionMapComponentFromTester(WidgetTester tester) {
   final finder = find.byWidgetPredicate(
     (w) => w.runtimeType.toString().startsWith('GameWidget<'),

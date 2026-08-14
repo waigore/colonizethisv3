@@ -246,8 +246,20 @@ bool _isGovernedTradeScreenFile(String relativePath) {
 }
 
 /// True for units-panel suites that must call shared Game factories
-/// (Refs #4021). Covers civilian/military/naval part + specialty suites that
+/// (Refs #4021). Covers civilian/military/naval concern + specialty suites that
 /// previously re-declared private `Game(` builders.
+const _governedCivilianUnitsPanelTests = {
+  'civilian_units_panel_list_and_shortcuts_test.dart',
+  'civilian_units_panel_locate_and_cancel_test.dart',
+  'civilian_units_panel_pending_work_test.dart',
+  'civilian_units_panel_row_card_r30_test.dart',
+};
+
+const _governedNavalUnitsPanelTests = {
+  'naval_units_panel_roster_and_draft_test.dart',
+  'naval_units_panel_combine_and_mockup_test.dart',
+};
+
 bool _isGovernedUnitsPanelPartFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -256,26 +268,24 @@ bool _isGovernedUnitsPanelPartFile(String relativePath) {
   if (!name.endsWith('_test.dart')) {
     return false;
   }
-  if (name.startsWith('civilian_units_panel_part') ||
-      name.startsWith('naval_units_panel_part') ||
+  if (_governedCivilianUnitsPanelTests.contains(name) ||
+      _governedNavalUnitsPanelTests.contains(name) ||
       name.startsWith('military_units_panel_army') ||
       name == 'military_units_panel_test.dart' ||
-      name == 'military_units_panel_display_test.dart' ||
-      name == 'civilian_units_panel_row_card_r30_test.dart') {
+      name == 'military_units_panel_display_test.dart') {
     return true;
   }
   return false;
 }
 
-/// True for `naval_units_panel_part*_test.dart` — must call shared
-/// [pumpNavalPanel] (Refs #4035).
+/// True for naval roster/combine suites — must call shared
+/// [pumpNavalPanel] (Refs #4035, #4352).
 bool _isGovernedNavalUnitsPanelPartFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
   }
   final name = p.basename(relativePath);
-  return name.startsWith('naval_units_panel_part') &&
-      name.endsWith('_test.dart');
+  return _governedNavalUnitsPanelTests.contains(name);
 }
 
 /// True for military panel suites that must call shared [pumpMilitaryPanel]
@@ -317,14 +327,15 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// commodity-breakdown dialog suites
 /// (`production_commodity_breakdown_dialog_spec` /
 /// `production_commodity_breakdown_dialog_wide_full_width`), move-dialogs
-/// specs part suites, `game_map_options_dialog_test`, next-turn / turn-news
+/// specs army/fleet suites, `game_map_options_dialog_test`, next-turn / turn-news
 /// dialog suites, pause-menu / side-menu spec suites, save/load dialog
 /// suites (`save_game_name_dialog` / `load_game_list_dialog`), exit-confirm /
 /// turn-resolution-processing dialog suites, `diplomacy_dialogs_test`, and
 /// dialogue-overlay suites (`tribe_first_contact_overlay`,
 /// `call_to_arms_dialogue_overlay_dark_chrome`, `overture_dialogue_overlay`,
 /// `overture_dialogue_intro`, `intervention_dialogue_overlay`,
-/// `dialogue_overlays_specs_part*`), victory overlay suites,
+/// `dialogue_overlays_specs_view_and_intro` /
+/// `dialogue_overlays_specs_overture_and_call_to_arms`), victory overlay suites,
 /// `debug_console_overlay_panel_test`, and province-overlay suites
 /// (`province_overlay_test`, `province_overlay_header_l10n_test`,
 /// `province_overlay_consulate_gate_tooltip_test`,
@@ -371,12 +382,13 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// main-menu hosts (`shell_screen`, `shell_screen_pixelart_chrome`,
 /// `main_menu_quit_chip_fidelity`, `new_game_leader_dialog_builder`,
 /// `shell_player_guarded_body`), and `map_diplomacy_panel_specs`, combat
-/// UI specs parts (`combat_ui_specs_part1` / `combat_ui_specs_part2`),
+/// UI specs (`combat_ui_specs_deployment_and_mode` /
+/// `combat_ui_specs_result_and_screen`),
 /// `game_to_ui_bus_listener`, `app_event_handler_scope_diplomacy`,
 /// `app_event_handler_scope_civilian_work`,
 /// `turn_resolution_event_blocking`, `app_event_handler`,
 /// `game_session_clear_ui_path`, `new_game_setup_flow`,
-/// `app_wave5_shared_helpers`, `screen_spec_acceptance_part2`,
+/// `app_wave5_shared_helpers`, `screen_spec_acceptance_pixel_art_chrome`,
 /// `widgetbook_dlg60001_shel30001_stories`,
 /// `widgetbook_main_menu_stories_editorial_monocle`,
 /// `widgetbook_diplomacy_standing_chips_stories`,
@@ -396,8 +408,8 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `widgetbook_technology_screen_mobile_viewport`,
 /// `widgetbook_turn_news_mobile_viewport`, `tech_gp_pennant_goldens`,
 /// `themes_and_widgetbook`, colonial GameScreen hosts migrated onto
-/// `buildGameScreenHost` (`game_screen_branches`, `game_screen_narrow_part1`,
-/// `game_screen_narrow_part2`, `game_screen_s13_mockup_fidelity`,
+/// `buildGameScreenHost` (`game_screen_branches`, `game_screen_narrow_shell_chrome`,
+/// `game_screen_narrow_flows`, `game_screen_s13_mockup_fidelity`,
 /// `game_screen_side_menu_toggle`, `game_screen_overture_pending`,
 /// `game_screen_turn_resolution_branches`, `game_screen_intervention_flow`),
 /// ShellScreen colonial frames in `shell_game_screen_specs` (via
@@ -405,10 +417,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// (`debug_log_viewer` via `buildAppShell(theme:)`), Flame region-map
 /// suites densified onto `ctRegionMapTestHarness` (`ct_region_map_test_support`
 /// via `buildAppShellMaterialApp(applyEditorialTheme: false)`, plus
-/// `ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`, plains
+/// `ct_region_map_widget_camera_and_view` / `port_and_sea_plates`, `region_map_zoom_fit`, plains
 /// plantation / extraction-disc / transport-resource goldens), and e2e
 /// helper/smoke suites that pump bare MaterialApp chrome via the same
-/// helper (`e2e_helpers_barrel_part1` / `part2` / `pr2731_lifted`,
+/// helper (`e2e_helpers_barrel` / `pr2731_lifted`,
 /// `e2e_test_shared_smoke`, `e2e_low_risk_mirror_barrel_smoke`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
@@ -423,7 +435,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (!name.endsWith('_test.dart')) {
     return false;
   }
-  return name.startsWith('production_panel_part') ||
+  return name == 'production_panel_available_and_allocation_test.dart' ||
+      name == 'production_panel_labour_and_chrome_test.dart' ||
       name == 'production_panel_cotton_weaving_lock_test.dart' ||
       name == 'production_panel_available_grid_test.dart' ||
       name == 'production_labour_section_test.dart' ||
@@ -432,9 +445,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'production_allocation_row_buttons_test.dart' ||
       name == 'production_allocation_row_chrome_test.dart' ||
       name == 'production_panel_icons_test.dart' ||
-      name.startsWith('naval_units_panel_part') ||
-      name.startsWith('civilian_units_panel_part') ||
-      name == 'civilian_units_panel_row_card_r30_test.dart' ||
+      _governedNavalUnitsPanelTests.contains(name) ||
+      _governedCivilianUnitsPanelTests.contains(name) ||
       name == 'game_map_narrow_detail_overlay_test.dart' ||
       name == 'military_units_panel_test.dart' ||
       name == 'military_units_panel_display_test.dart' ||
@@ -459,7 +471,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'production_commodity_breakdown_dialog_spec_test.dart' ||
       name ==
           'production_commodity_breakdown_dialog_wide_full_width_test.dart' ||
-      name.startsWith('move_dialogs_specs_part') ||
+      name == 'move_dialogs_specs_army_test.dart' ||
+      name == 'move_dialogs_specs_fleet_test.dart' ||
       name == 'game_map_options_dialog_test.dart' ||
       name == 'next_turn_confirmation_dialog_test.dart' ||
       name == 'turn_news_dialog_test.dart' ||
@@ -475,7 +488,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'overture_dialogue_overlay_test.dart' ||
       name == 'overture_dialogue_intro_test.dart' ||
       name == 'intervention_dialogue_overlay_test.dart' ||
-      name.startsWith('dialogue_overlays_specs_part') ||
+      name == 'dialogue_overlays_specs_view_and_intro_test.dart' ||
+      name == 'dialogue_overlays_specs_overture_and_call_to_arms_test.dart' ||
       name == 'victory_overlay_test.dart' ||
       name == 'victory_overlay_narrow_test.dart' ||
       name == 'debug_console_overlay_panel_test.dart' ||
@@ -567,8 +581,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'new_game_leader_dialog_builder_test.dart' ||
       name == 'shell_player_guarded_body_test.dart' ||
       name == 'map_diplomacy_panel_specs_test.dart' ||
-      name == 'combat_ui_specs_part1_test.dart' ||
-      name == 'combat_ui_specs_part2_test.dart' ||
+      name == 'combat_ui_specs_deployment_and_mode_test.dart' ||
+      name == 'combat_ui_specs_result_and_screen_test.dart' ||
       name == 'game_to_ui_bus_listener_test.dart' ||
       name == 'app_event_handler_scope_diplomacy_test.dart' ||
       name == 'app_event_handler_scope_civilian_work_test.dart' ||
@@ -577,7 +591,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_session_clear_ui_path_test.dart' ||
       name == 'new_game_setup_flow_test.dart' ||
       name == 'app_wave5_shared_helpers_test.dart' ||
-      name == 'screen_spec_acceptance_part2_test.dart' ||
+      name == 'screen_spec_acceptance_pixel_art_chrome_test.dart' ||
       name == 'widgetbook_dlg60001_shel30001_stories_test.dart' ||
       name == 'widgetbook_main_menu_stories_editorial_monocle_test.dart' ||
       name == 'widgetbook_diplomacy_standing_chips_stories_test.dart' ||
@@ -599,8 +613,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'tech_gp_pennant_goldens_test.dart' ||
       name == 'themes_and_widgetbook_test.dart' ||
       name == 'game_screen_branches_test.dart' ||
-      name == 'game_screen_narrow_part1_test.dart' ||
-      name == 'game_screen_narrow_part2_test.dart' ||
+      name == 'game_screen_narrow_shell_chrome_test.dart' ||
+      name == 'game_screen_narrow_flows_test.dart' ||
       name == 'game_screen_s13_mockup_fidelity_test.dart' ||
       name == 'game_screen_side_menu_toggle_test.dart' ||
       name == 'game_screen_overture_pending_test.dart' ||
@@ -608,14 +622,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_screen_intervention_flow_test.dart' ||
       name == 'shell_game_screen_specs_test.dart' ||
       name == 'debug_log_viewer_test.dart' ||
-      name == 'ct_region_map_widget_part2_test.dart' ||
-      name == 'ct_region_map_widget_part3_test.dart' ||
+      name == 'ct_region_map_widget_camera_and_view_test.dart' ||
+      name == 'ct_region_map_widget_port_and_sea_plates_test.dart' ||
       name == 'region_map_zoom_fit_test.dart' ||
       name == 'plains_plantation_terrain_goldens_test.dart' ||
       name == 'region_map_extraction_disc_indicators_test.dart' ||
       name == 'region_map_resource_transport_readability_test.dart' ||
-      name == 'e2e_helpers_barrel_part1_test.dart' ||
-      name == 'e2e_helpers_barrel_part2_test.dart' ||
+      name == 'e2e_helpers_barrel_test.dart' ||
       name == 'e2e_helpers_barrel_pr2731_lifted_test.dart' ||
       name == 'e2e_test_shared_smoke_test.dart' ||
       name == 'e2e_low_risk_mirror_barrel_smoke_test.dart';
