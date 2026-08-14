@@ -10,7 +10,7 @@ This chapter covers how an army attacks, how you choose between a swift resoluti
 
 ### Attacking a province
 
-1. Open `UNIT20001` **Military units panel**, select a non-Home army, and choose **Move** to open `DLG20001` **Move army dialog** — or from `MAP20001` tap **Invade** on the foreign province you are studying (or **Move** on an owned province that already holds a field army). When several armies can act, `DLG20002` picks the army first; Invade preselects that province on `DLG20001`. Invasion rows show known defender totals, **Unopposed capture**, or **Defenders unknown**, plus open-field or siege labels when intel allows.
+1. Open `UNIT20001` **Military units panel**, select a non-Home army, and choose **Move** to open `DLG20001` **Move army dialog** — or from `MAP20001` tap **Invade** on the foreign province you are studying (or **Move** on an owned province that already holds a field army). When several armies can act, `DLG20002` picks the army first and lists each army’s regiment mix; Invade preselects that province on `DLG20001`. Invasion rows show known defender totals, **Unopposed capture**, or **Defenders unknown**, plus open-field or siege labels when intel allows.
 2. Select a legal destination. Your own provinces appear separately from invasion targets. An enemy province may require a declaration of war; confirm that declaration and the move together when the dialog asks.
 3. End the turn. When the army finishes in an enemy-controlled province, every regiment in that army attacks together. Great Powers initiate these attacks; Minor Nations and Tribes defend.
 4. An enemy province with no combat-capable defenders can be captured without a battle when your army arrives during a war. Otherwise, the combat phase creates a battle.
@@ -103,7 +103,7 @@ AI-controlled Quick Battles use the non-interactive path and default actions. Yo
 ## Acceptance criteria for this chapter
 
 - [ ] Explains how a non-Home army attacks an enemy province, including declaration-of-war confirmation and unopposed capture.
-- [ ] Documents `MAP20001` Military **Invade** / **Move** as an alternate path into `DLG20001` (with optional `DLG20002`).
+- [ ] Documents `MAP20001` Military **Invade** / **Move** as an alternate path into `DLG20001` (with optional `DLG20002` showing each army’s regiment mix).
 - [ ] Documents `CMPT10001` combat-mode choice, including the capital-siege Quick-Battle-only restriction.
 - [ ] Documents `CMPT20001` Quick Battle deployment, Command Points, the five current actions, default actions, and the result flow.
 - [ ] Explains deterministic Auto-Resolve and attacker victory, defender victory, stalemate, and mutual annihilation.

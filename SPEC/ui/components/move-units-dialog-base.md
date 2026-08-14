@@ -41,9 +41,11 @@ Subclasses (`_MoveArmyDialogState`, `_MoveFleetDialogState`) implement these mem
 
 Exposed constants: `MoveDialogDestinationRow.selectedBorderWidth = 2`, `idleBorderWidth = 1`; `MoveDialogRadioDot.outerDiameter = 14`, `innerDiameter = 6`.
 
+`UnitPickerCompositionContent` fills `content` for `DLG20002` / `DLG31003` unit pickers: title (`bodyMedium`) plus muted `bodySmall` composition lines (`maxLines` + ellipsis at 320 dp). Strings come from `unit_picker_composition.dart`. Implementation: `unit_picker_composition_row.dart` (Refs #4385).
+
 ### Style helpers
 
-`moveDialogTitleTextStyle(theme)`, `moveDialogEmptyTextStyle(theme)`, `moveDialogRowLabelStyle(theme, selected:)` — the shared text styles for the title, empty copy, and row label respectively.
+`moveDialogTitleTextStyle(theme)`, `moveDialogEmptyTextStyle(theme)`, `moveDialogRowLabelStyle(theme, selected:)`, `moveDialogCompositionTextStyle(theme)` — title, empty copy, row label, and muted picker composition lines.
 
 ---
 
@@ -94,6 +96,8 @@ The trailing `Wrap` lets Cancel/Confirm flow onto a second run at narrow viewpor
 |-----------|------|------------------------|
 | `DLG20001` | [`move-army-dialog.md`](../move-army-dialog.md) | Owned/invasion groups; invasion rows append a `--danger` italic declare-war trigger; Confirm may open a war-confirmation sub-dialog. |
 | `DLG30001` | [`move-fleet-dialog.md`](../move-fleet-dialog.md) | Sea-zone/port groups; each row adds a trailing locate `CtIconAction`; rows carry CT_E2E keys. |
+| `DLG20002` | [`overlay-army-move-picker-dialog.md`](../overlay-army-move-picker-dialog.md) | Army picker rows; `content` is `UnitPickerCompositionContent` (per-army type counts). |
+| `DLG31003` | [`naval-mission-fleet-picker-dialog.md`](../naval-mission-fleet-picker-dialog.md) | Fleet picker rows; same content helper (ships / mission / mixed location). |
 
 ---
 
@@ -112,11 +116,12 @@ The trailing `Wrap` lets Cancel/Confirm flow onto a second run at narrow viewpor
 - `app/test/move_units_dialog_base_test.dart` — widget-level contract tests pinning the idle/selected outline widths, the radio-dot fill, the trailing slot, and the tap callback.
 - `app/test/move_dialogs_specs_part1_test.dart` / `move_dialogs_specs_part2_test.dart` — pin army/fleet consumer dialogs over this chrome (section labels, confirm/cancel, declare-war flow, locate).
 - `app/test/move_dialogs_320dp_min_viewport_test.dart` — pins both dialogs at `kMinViewportWidth = 320` dp without overflow.
+- `app/test/unit_picker_composition_test.dart` / `unit_picker_composition_320dp_test.dart` — `DLG20002` / `DLG31003` composition content in `MoveDialogDestinationRow`.
 
 ---
 
 ## Related
 
-- Consumer screens: [`move-army-dialog.md`](../move-army-dialog.md), [`move-fleet-dialog.md`](../move-fleet-dialog.md).
+- Consumer screens: [`move-army-dialog.md`](../move-army-dialog.md), [`move-fleet-dialog.md`](../move-fleet-dialog.md), [`overlay-army-move-picker-dialog.md`](../overlay-army-move-picker-dialog.md), [`naval-mission-fleet-picker-dialog.md`](../naval-mission-fleet-picker-dialog.md).
 - Catalog: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtDialogShell*, § *CtSectionLabel*, § *CtNinePatchButton*, § *Editorial-monocle palette*.
 - Tracking issue: [#3546](https://github.com/waigore/colonizethisv3/issues/3546).

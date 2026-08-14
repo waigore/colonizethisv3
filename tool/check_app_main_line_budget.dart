@@ -66,7 +66,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 Tile details disclosure dialog + connectivity teaching (Refs #4369).
 // raised for combined #4366+#4367+#4369 merge headroom.
 // raised for named map resource/improvement/road layers (Refs #4388).
-const _maxMainLines = 76100;
+// raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
+const _maxMainLines = 76300;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
