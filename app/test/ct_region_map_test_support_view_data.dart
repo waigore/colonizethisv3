@@ -1,7 +1,8 @@
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' show kUnitTypeBuilder;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kUnitTypeBuilder;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -123,6 +124,7 @@ RegionMapViewData ctRegionMapMiniLandStrip({
   List<CivilianTileMarkerView> civilianTileMarkers = const [],
   List<TownMarkerView> townMarkers = const [],
   List<FleetTileMarkerView> fleetTileMarkers = const [],
+  List<ArmyTileMarkerView> armyTileMarkers = const [],
   bool sea = false,
 }) {
   final template = base.cells.firstWhere((c) => c.isSea == sea);
@@ -153,6 +155,7 @@ RegionMapViewData ctRegionMapMiniLandStrip({
     unitMarkers: const [],
     civilianTileMarkers: civilianTileMarkers,
     fleetTileMarkers: fleetTileMarkers,
+    armyTileMarkers: armyTileMarkers,
     warpMarkers: const [],
   );
 }
@@ -190,6 +193,27 @@ FleetTileMarkerView ctRegionMapFleetMarker({
     locationScopeKey: locationScopeKey,
     fleetIds: [fleetId],
     stackCount: 1,
+  );
+}
+
+ArmyTileMarkerView ctRegionMapArmyMarker({
+  required String tileKey,
+  required int x,
+  required int y,
+  required String provinceId,
+  List<String> armyIds = const ['army_field'],
+  List<String> fieldArmyIds = const ['army_field'],
+  bool hasHomeArmy = false,
+}) {
+  return ArmyTileMarkerView(
+    tileKey: tileKey,
+    x: x,
+    y: y,
+    provinceId: provinceId,
+    armyIds: armyIds,
+    fieldArmyIds: fieldArmyIds,
+    stackCount: armyIds.length,
+    hasHomeArmy: hasHomeArmy,
   );
 }
 

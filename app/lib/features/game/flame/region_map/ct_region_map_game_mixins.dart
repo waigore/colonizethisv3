@@ -43,6 +43,7 @@ mixin CtRegionMapGameFields on FlameGame {
     String markerTileKey,
   )?
   onFleetMarkerTapped;
+  void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped;
   VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
   String? selectedCivilianTileKey;
@@ -220,6 +221,7 @@ mixin CtRegionMapGameLifecycle on CtRegionMapGameFields, CtRegionMapGameCamera {
       onTileHovered: onTileHovered,
       onCivilianTileTapped: onCivilianTileTapped,
       onFleetMarkerTapped: onFleetMarkerTapped,
+      onArmyMarkerTapped: onArmyMarkerTapped,
       onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
       selectedTileKey: selectedTileKey,
       selectedCivilianTileKey: selectedCivilianTileKey,

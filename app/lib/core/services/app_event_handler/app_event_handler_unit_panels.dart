@@ -10,7 +10,9 @@ import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
 import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
 import '../../../features/game/widgets/units/military/military_units_panel.dart';
 import '../../../features/game/widgets/units/naval/naval_units_panel.dart';
+import '../../../features/game/widgets/unit_orders/army_stack_marker_action.dart';
 import '../../../features/game/widgets/unit_orders/naval_mission_flow.dart';
+import '../../../features/game/widgets/unit_orders/overlay_army_move_flow.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
@@ -186,5 +188,54 @@ Future<void> appEventHandlerOpenNavalMissionMenu(
     locationScopeKey: event.locationScopeKey,
     preselectedFleetId: event.initialSelectedFleetId,
     tileScopeTileKey: event.tileScopeTileKey,
+  );
+}
+
+Future<void> appEventHandlerOpenArmyStackMarker(
+  AppEventHandler handler,
+  OpenArmyStackMarkerEvent event,
+  NavigatorState? nav,
+) async {
+  if (nav == null) return;
+  final ctx = nav.context;
+  if (!ctx.mounted) return;
+  final container = ProviderScope.containerOf(ctx);
+  final shell = container.read(shellPlayerContextProvider);
+  final action = resolveArmyStackMarkerAction(
+    canMutateViaUi: shell.canMutateViaUi,
+    fieldArmyIds: event.fieldArmyIds,
+  );
+  switch (action.kind) {
+    case ArmyStackMarkerKind.observeBlocked:
+      handler.state.onShowSnackBar?.call(
+        const ShowSnackBarEvent(
+          message: 'Observe mode: UI actions are read-only.',
+        ),
+      );
+      return;
+    case ArmyStackMarkerKind.openMilitaryRoster:
+      await appEventHandlerOpenMilitaryUnitsPanel(
+        handler,
+        const OpenMilitaryUnitsPanelEvent(),
+        nav,
+      );
+      return;
+    case ArmyStackMarkerKind.overlayMove:
+      break;
+  }
+  final game = container.read(currentGameProvider);
+  if (game == null) return;
+  if (!ctx.mounted) return;
+  final humanPlayerId = resolveShellPanelPlayerId(shell, game);
+  final mapData = container.read(gameServiceProvider).getMapData(game.id);
+  final draftOrders = container.read(currentOrdersProvider);
+  await showOverlayArmyMoveFlow(
+    context: ctx,
+    game: game,
+    topology: mapData?.combinedTopology ?? const MapTopology(),
+    humanPlayerId: humanPlayerId,
+    draftOrders: draftOrders,
+    bus: container.read(appEventBusProvider),
+    armyIds: action.moveArmyIds,
   );
 }

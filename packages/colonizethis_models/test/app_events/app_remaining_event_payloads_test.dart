@@ -63,6 +63,15 @@ void main() {
       );
       expect(const OpenProvinceDetailPanelEvent('r1|p1').provinceId, 'r1|p1');
       expect(
+        const OpenArmyStackMarkerEvent(
+          provinceId: 'oldWorld|p1',
+          armyIds: ['army_home', 'army_field'],
+          fieldArmyIds: ['army_field'],
+          tileKey: 'oldWorld|p1|0|0',
+        ).fieldArmyIds,
+        ['army_field'],
+      );
+      expect(
         const GrantOrSubsidySubmittedEvent(
           targetFactionId: 'B',
           amount: 10,

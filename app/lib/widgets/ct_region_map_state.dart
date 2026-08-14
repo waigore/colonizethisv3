@@ -110,6 +110,8 @@ class CtRegionMapState extends State<CtRegionMap>
               fleetIds,
               markerTileKey,
             ),
+        onArmyMarkerTapped: (marker) =>
+            handleCtRegionMapArmyMarkerTapped(this, marker),
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
