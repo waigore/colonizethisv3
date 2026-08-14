@@ -265,21 +265,21 @@ List<WidgetbookNode> get extractionDiscLegendDirectories => [
       WidgetbookUseCase(
         name: 'Visible — legend above corner controls',
         builder: (context) => _extractionDiscLegendChromeStory(
-          mode: BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          flags: MapBaseLayerFlags.fullDetail,
           viewingPlayerId: 'gp_player',
         ),
       ),
       WidgetbookUseCase(
         name: 'Hidden — terrain only',
         builder: (context) => _extractionDiscLegendChromeStory(
-          mode: BaseLayerDisplayMode.terrainOnly,
+          flags: MapBaseLayerFlags.terrainOnly,
           viewingPlayerId: 'gp_player',
         ),
       ),
       WidgetbookUseCase(
         name: 'Hidden — global observe',
         builder: (context) => _extractionDiscLegendChromeStory(
-          mode: BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          flags: MapBaseLayerFlags.fullDetail,
           viewingPlayerId: null,
         ),
       ),
@@ -288,7 +288,7 @@ List<WidgetbookNode> get extractionDiscLegendDirectories => [
 ];
 
 Widget _extractionDiscLegendChromeStory({
-  required BaseLayerDisplayMode mode,
+  required MapBaseLayerFlags flags,
   required String? viewingPlayerId,
 }) {
   final GlobalKey anchor = GlobalKey();
@@ -298,7 +298,7 @@ Widget _extractionDiscLegendChromeStory({
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (shouldShowExtractionDiscLegend(
-          baseLayerDisplayMode: mode,
+          flags: flags,
           viewingPlayerId: viewingPlayerId,
         )) ...[
           ExtractionDiscLegend(
@@ -314,6 +314,7 @@ Widget _extractionDiscLegendChromeStory({
           onCenterOnHomeCapital: () {},
           onOpenMapDisplayOptions: () {},
           homeToCapitalEnabled: viewingPlayerId != null,
+          mapBaseLayerFlags: flags,
         ),
       ],
     ),
@@ -419,6 +420,28 @@ List<WidgetbookNode> get gameMapOptionsDialogDirectories => [
             showProvinceOverlay: false,
             showProvinceOwnershipTint: false,
             showProvinceNamesLayer: false,
+            showMapResources: false,
+            showMapImprovements: false,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Improvements without resources',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapResources: false,
+            showMapImprovements: true,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Roads disabled when improvements off',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapImprovements: false,
+            showMapRoads: false,
           ),
         ),
       ),

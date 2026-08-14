@@ -4,10 +4,10 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend.dart';
 import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend_support.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/region_map_component_shared_palette.dart'
-    show BaseLayerDisplayMode;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,7 +16,7 @@ import 'golden_capture_harness.dart';
 import 'widget_test_pumps.dart';
 
 Widget _legendCornerChrome({
-  required BaseLayerDisplayMode mode,
+  required MapBaseLayerFlags flags,
   required String? viewingPlayerId,
 }) {
   final GlobalKey anchor = GlobalKey();
@@ -29,7 +29,7 @@ Widget _legendCornerChrome({
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (shouldShowExtractionDiscLegend(
-            baseLayerDisplayMode: mode,
+            flags: flags,
             viewingPlayerId: viewingPlayerId,
           )) ...[
             ExtractionDiscLegend(
@@ -45,6 +45,7 @@ Widget _legendCornerChrome({
             onCenterOnHomeCapital: () {},
             onOpenMapDisplayOptions: () {},
             homeToCapitalEnabled: viewingPlayerId != null,
+            mapBaseLayerFlags: flags,
           ),
         ],
       ),
@@ -61,7 +62,7 @@ const List<String> _cornerIconAssets = <String>[
 Future<void> _pumpHiddenLegendGolden(
   WidgetTester tester, {
   required GlobalKey boundaryKey,
-  required BaseLayerDisplayMode mode,
+  required MapBaseLayerFlags flags,
   required String? viewingPlayerId,
 }) async {
   await pumpGoldenHost(
@@ -71,7 +72,7 @@ Future<void> _pumpHiddenLegendGolden(
     includeLocalizations: true,
     scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
     center: false,
-    child: _legendCornerChrome(mode: mode, viewingPlayerId: viewingPlayerId),
+    child: _legendCornerChrome(flags: flags, viewingPlayerId: viewingPlayerId),
   );
   await pumpSettleCapped(tester);
   final BuildContext context = tester.element(
@@ -190,7 +191,7 @@ void main() {
     await _pumpHiddenLegendGolden(
       tester,
       boundaryKey: boundaryKey,
-      mode: BaseLayerDisplayMode.terrainOnly,
+      flags: MapBaseLayerFlags.terrainOnly,
       viewingPlayerId: 'gp_player',
     );
     expect(find.byKey(kExtractionDiscLegendKey), findsNothing);
@@ -210,7 +211,7 @@ void main() {
     await _pumpHiddenLegendGolden(
       tester,
       boundaryKey: boundaryKey,
-      mode: BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+      flags: MapBaseLayerFlags.fullDetail,
       viewingPlayerId: null,
     );
     expect(find.byKey(kExtractionDiscLegendKey), findsNothing);
