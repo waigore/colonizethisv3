@@ -47,6 +47,7 @@ void main() {
           showProvinceOverlay: false,
           showProvinceOwnershipTint: true,
           showProvinceNamesLayer: false,
+          showCapitalLinkDisconnectedHighlight: false,
           showPlayerTurnEventsFeed: true,
           showPlayersBar: false,
         ),
@@ -56,6 +57,10 @@ void main() {
       expect(roundTrip.mapViewState.showProvinceOverlay, isFalse);
       expect(roundTrip.mapViewState.showProvinceOwnershipTint, isTrue);
       expect(roundTrip.mapViewState.showProvinceNamesLayer, isFalse);
+      expect(
+        roundTrip.mapViewState.showCapitalLinkDisconnectedHighlight,
+        isFalse,
+      );
       expect(roundTrip.mapViewState.showPlayerTurnEventsFeed, isTrue);
       expect(roundTrip.mapViewState.showPlayersBar, isFalse);
       expect(roundTrip.mapViewState.showMapResources, isTrue);
@@ -68,6 +73,7 @@ void main() {
       expect(legacy.mapViewState, MapViewState.defaults);
       expect(legacy.mapViewState.showPlayerTurnEventsFeed, isFalse);
       expect(legacy.mapViewState.showPlayersBar, isTrue);
+      expect(legacy.mapViewState.showCapitalLinkDisconnectedHighlight, isTrue);
 
       // Defaults are still written so legacy implicit true becomes explicit
       // on the next save (Refs #3986).
