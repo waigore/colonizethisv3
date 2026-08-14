@@ -1,6 +1,6 @@
-// Pins SPEC/ui movement dialog contracts (part 1):
+// Pins SPEC/ui movement dialog contracts:
 // - SPEC/ui/move-army-dialog.md
-// Split under repo.app_test_file_size (Refs #4013).
+// Concern split under repo.app_test_file_size (Refs #4013, #4352).
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart'

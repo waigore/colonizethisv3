@@ -1,6 +1,6 @@
-// Pins SPEC/ui movement dialog contracts (part 2):
+// Pins SPEC/ui movement dialog contracts:
 // - SPEC/ui/move-fleet-dialog.md
-// Split under repo.app_test_file_size (Refs #4013).
+// Concern split under repo.app_test_file_size (Refs #4013, #4352).
 
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';

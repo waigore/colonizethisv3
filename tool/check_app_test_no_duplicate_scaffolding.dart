@@ -317,14 +317,15 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// commodity-breakdown dialog suites
 /// (`production_commodity_breakdown_dialog_spec` /
 /// `production_commodity_breakdown_dialog_wide_full_width`), move-dialogs
-/// specs part suites, `game_map_options_dialog_test`, next-turn / turn-news
+/// specs army/fleet suites, `game_map_options_dialog_test`, next-turn / turn-news
 /// dialog suites, pause-menu / side-menu spec suites, save/load dialog
 /// suites (`save_game_name_dialog` / `load_game_list_dialog`), exit-confirm /
 /// turn-resolution-processing dialog suites, `diplomacy_dialogs_test`, and
 /// dialogue-overlay suites (`tribe_first_contact_overlay`,
 /// `call_to_arms_dialogue_overlay_dark_chrome`, `overture_dialogue_overlay`,
 /// `overture_dialogue_intro`, `intervention_dialogue_overlay`,
-/// `dialogue_overlays_specs_part*`), victory overlay suites,
+/// `dialogue_overlays_specs_view_and_intro` /
+/// `dialogue_overlays_specs_overture_and_call_to_arms`), victory overlay suites,
 /// `debug_console_overlay_panel_test`, and province-overlay suites
 /// (`province_overlay_test`, `province_overlay_header_l10n_test`,
 /// `province_overlay_consulate_gate_tooltip_test`,
@@ -377,7 +378,7 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `app_event_handler_scope_civilian_work`,
 /// `turn_resolution_event_blocking`, `app_event_handler`,
 /// `game_session_clear_ui_path`, `new_game_setup_flow`,
-/// `app_wave5_shared_helpers`, `screen_spec_acceptance_part2`,
+/// `app_wave5_shared_helpers`, `screen_spec_acceptance_pixel_art_chrome`,
 /// `widgetbook_dlg60001_shel30001_stories`,
 /// `widgetbook_main_menu_stories_editorial_monocle`,
 /// `widgetbook_diplomacy_standing_chips_stories`,
@@ -397,8 +398,8 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `widgetbook_technology_screen_mobile_viewport`,
 /// `widgetbook_turn_news_mobile_viewport`, `tech_gp_pennant_goldens`,
 /// `themes_and_widgetbook`, colonial GameScreen hosts migrated onto
-/// `buildGameScreenHost` (`game_screen_branches`, `game_screen_narrow_part1`,
-/// `game_screen_narrow_part2`, `game_screen_s13_mockup_fidelity`,
+/// `buildGameScreenHost` (`game_screen_branches`, `game_screen_narrow_shell_chrome`,
+/// `game_screen_narrow_flows`, `game_screen_s13_mockup_fidelity`,
 /// `game_screen_side_menu_toggle`, `game_screen_overture_pending`,
 /// `game_screen_turn_resolution_branches`, `game_screen_intervention_flow`),
 /// ShellScreen colonial frames in `shell_game_screen_specs` (via
@@ -461,7 +462,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'production_commodity_breakdown_dialog_spec_test.dart' ||
       name ==
           'production_commodity_breakdown_dialog_wide_full_width_test.dart' ||
-      name.startsWith('move_dialogs_specs_part') ||
+      name == 'move_dialogs_specs_army_test.dart' ||
+      name == 'move_dialogs_specs_fleet_test.dart' ||
       name == 'game_map_options_dialog_test.dart' ||
       name == 'next_turn_confirmation_dialog_test.dart' ||
       name == 'turn_news_dialog_test.dart' ||
@@ -477,7 +479,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'overture_dialogue_overlay_test.dart' ||
       name == 'overture_dialogue_intro_test.dart' ||
       name == 'intervention_dialogue_overlay_test.dart' ||
-      name.startsWith('dialogue_overlays_specs_part') ||
+      name == 'dialogue_overlays_specs_view_and_intro_test.dart' ||
+      name == 'dialogue_overlays_specs_overture_and_call_to_arms_test.dart' ||
       name == 'victory_overlay_test.dart' ||
       name == 'victory_overlay_narrow_test.dart' ||
       name == 'debug_console_overlay_panel_test.dart' ||
@@ -579,7 +582,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_session_clear_ui_path_test.dart' ||
       name == 'new_game_setup_flow_test.dart' ||
       name == 'app_wave5_shared_helpers_test.dart' ||
-      name == 'screen_spec_acceptance_part2_test.dart' ||
+      name == 'screen_spec_acceptance_pixel_art_chrome_test.dart' ||
       name == 'widgetbook_dlg60001_shel30001_stories_test.dart' ||
       name == 'widgetbook_main_menu_stories_editorial_monocle_test.dart' ||
       name == 'widgetbook_diplomacy_standing_chips_stories_test.dart' ||
@@ -601,8 +604,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'tech_gp_pennant_goldens_test.dart' ||
       name == 'themes_and_widgetbook_test.dart' ||
       name == 'game_screen_branches_test.dart' ||
-      name == 'game_screen_narrow_part1_test.dart' ||
-      name == 'game_screen_narrow_part2_test.dart' ||
+      name == 'game_screen_narrow_shell_chrome_test.dart' ||
+      name == 'game_screen_narrow_flows_test.dart' ||
       name == 'game_screen_s13_mockup_fidelity_test.dart' ||
       name == 'game_screen_side_menu_toggle_test.dart' ||
       name == 'game_screen_overture_pending_test.dart' ||

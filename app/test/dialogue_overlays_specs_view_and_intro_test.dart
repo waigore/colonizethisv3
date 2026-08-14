@@ -19,7 +19,7 @@
 /// Refs GitHub #2753.
 library;
 
-// Split under repo.app_test_file_size (Refs #4013) — part 1:
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
 // CtDialogueView + GameStartIntroOverlay.
 
 import 'dart:io' show File;

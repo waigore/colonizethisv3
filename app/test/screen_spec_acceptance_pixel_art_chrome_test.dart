@@ -1,7 +1,7 @@
-// Pins SPEC/ui/main-menu.md acceptance criteria (part 2):
+// Pins SPEC/ui/main-menu.md acceptance criteria:
 // pixelArt chrome (collage, footer Quit, wood-panel gradients), scroll brackets.
 // Responsive ≤430 dp ACs live in screen_spec_acceptance_main_menu_responsive_test.
-// Split under repo.app_test_file_size (Refs #4013, #4352).
+// Concern split under repo.app_test_file_size (Refs #4013, #4352).
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -23,7 +23,7 @@ import 'screen_spec_acceptance_test_support.dart';
 void main() {
   suppressLogsForTests();
 
-  group('CtMainMenu — SPEC/ui/main-menu.md acceptance criteria (part 2)', () {
+  group('CtMainMenu — SPEC/ui/main-menu.md acceptance criteria (pixelArt chrome)', () {
     testWidgets(
       'AC Variant rendering (pixelArt): collage, compass rose, fleur-de-lis, brass divider all present',
       (WidgetTester tester) async {

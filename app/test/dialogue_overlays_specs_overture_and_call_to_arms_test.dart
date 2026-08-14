@@ -20,7 +20,7 @@
 /// (Refs #4021).
 library;
 
-// Split under repo.app_test_file_size (Refs #4013) — part 2:
+// Concern split under repo.app_test_file_size (Refs #4013, #4352):
 // OvertureDialogueOverlay + CallToArmsDialogueOverlay.
 
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_call_row.dart';

@@ -1,5 +1,5 @@
-// In-game shell chrome (part1). SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
-// In-file surface/treasury/options helpers densify mid-size fixtures (Refs #4021).
+// In-game shell chrome. SPEC/ui/in-game-shell-narrow.md, empire-buttons.md.
+// In-file surface/treasury/options helpers densify mid-size fixtures (Refs #4021, #4352).
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
@@ -32,7 +32,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_screen_narrow_part1');
+    Hive.init('./.dart_tool/test_hive_game_screen_narrow_shell_chrome');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 

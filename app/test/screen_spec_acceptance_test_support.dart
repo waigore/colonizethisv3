@@ -1,4 +1,4 @@
-// Shared CtMainMenu frames and finders for screen_spec_acceptance_part*_test
+// Shared CtMainMenu frames and finders for screen_spec_acceptance_*_test
 // (Refs #4013). Pins SPEC/ui/main-menu.md under colonial / editorial themes.
 
 import 'package:colonizethis_app/config/themes.dart';

@@ -1,4 +1,4 @@
-// In-game shell flows (part2). SPEC/ui/in-game-shell-narrow.md, next-turn / pause / back.
+// In-game shell flows. SPEC/ui/in-game-shell-narrow.md, next-turn / pause / back.
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
@@ -29,7 +29,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_screen_narrow_part2');
+    Hive.init('./.dart_tool/test_hive_game_screen_narrow_flows');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
