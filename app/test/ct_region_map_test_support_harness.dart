@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show
-        BaseLayerDisplayMode,
-        CtMapVisibilityMode,
-        RegionMapViewportSnapshot;
+    show BaseLayerDisplayMode, CtMapVisibilityMode, RegionMapViewportSnapshot;
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'app_shell_harness.dart';
@@ -23,6 +20,7 @@ Widget ctRegionMapTestHarness({
   bool showProvinceOverlay = true,
   bool showProvinceOwnershipTint = false,
   bool showProvinceNamesLayer = true,
+  bool showCapitalLinkDisconnectedHighlight = true,
   CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
   BaseLayerDisplayMode? baseLayerDisplayMode,
   String? centerOnTileKey,
@@ -68,6 +66,8 @@ Widget ctRegionMapTestHarness({
       showProvinceOverlay: showProvinceOverlay,
       showProvinceOwnershipTint: showProvinceOwnershipTint,
       showProvinceNamesLayer: showProvinceNamesLayer,
+      showCapitalLinkDisconnectedHighlight:
+          showCapitalLinkDisconnectedHighlight,
       visibilityMode: visibilityMode,
       playerViewForResources: playerViewForResources,
       baseLayerDisplayMode: baseLayerDisplayMode,
@@ -118,6 +118,7 @@ Future<void> pumpCtRegionMapTest(
   bool showProvinceOverlay = true,
   bool showProvinceOwnershipTint = false,
   bool showProvinceNamesLayer = true,
+  bool showCapitalLinkDisconnectedHighlight = true,
   CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
   BaseLayerDisplayMode? baseLayerDisplayMode,
   String? centerOnTileKey,
@@ -154,6 +155,8 @@ Future<void> pumpCtRegionMapTest(
       showProvinceOverlay: showProvinceOverlay,
       showProvinceOwnershipTint: showProvinceOwnershipTint,
       showProvinceNamesLayer: showProvinceNamesLayer,
+      showCapitalLinkDisconnectedHighlight:
+          showCapitalLinkDisconnectedHighlight,
       visibilityMode: visibilityMode,
       baseLayerDisplayMode: baseLayerDisplayMode,
       centerOnTileKey: centerOnTileKey,
@@ -168,7 +171,8 @@ Future<void> pumpCtRegionMapTest(
       secondaryHighlightTileKey: secondaryHighlightTileKey,
       secondaryHighlightTileKeys: secondaryHighlightTileKeys,
       onRegionViewChanged: onRegionViewChanged,
-      playerViewForResources: playerViewForResources ??
+      playerViewForResources:
+          playerViewForResources ??
           (playerConstrained ? ctRegionMapTestPlayerView : null),
       bus: bus,
       validTileKeys: validTileKeys,
