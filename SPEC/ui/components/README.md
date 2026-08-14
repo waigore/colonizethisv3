@@ -17,7 +17,7 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | `CtGameFeatureScreenShell` | [`ct-game-feature-screen-shell.md`](ct-game-feature-screen-shell.md) | `GAME20001` (production), `GAME30001` (diplomacy), `GAME40001` (technology), `GAME60001` (trade). |
 | `CtPanelWithTopBar` | [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md) | `CtScreenShell`, `UnitsPanelShell`. |
 | `CtTransferList` | [`ct-transfer-list.md`](ct-transfer-list.md) | `DLG40001` (transfer to home fleet), Split Fleet dialog, Split Army dialog. |
-| `MoveUnitsDialogState` / `MoveDialogDestinationRow` | [`move-units-dialog-base.md`](move-units-dialog-base.md) | `DLG20001` (move army dialog), `DLG30001` (move fleet dialog). |
+| `MoveUnitsDialogState` / `MoveDialogDestinationRow` | [`move-units-dialog-base.md`](move-units-dialog-base.md) | `DLG20001` (move army), `DLG30001` (move fleet), `DLG20002` / `DLG31003` unit pickers. |
 | `ProductionAllocationRow` | [`production-allocation-row.md`](production-allocation-row.md) | `GAME20001` (production panel). |
 | `ResourceIconTooltip` (convention) | [`resource-icon-tooltip.md`](resource-icon-tooltip.md) | `UNIT50001` (train military dialog), `UNIT60001` (train naval dialog), and any icon-only resource glyph. |
 | `TrainDialogChrome` | [`train-dialog-chrome.md`](train-dialog-chrome.md) | `UNIT40001` (train civilians dialog), `UNIT50001` (train military dialog), `UNIT60001` (train naval dialog). |

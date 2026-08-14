@@ -4,16 +4,24 @@ import 'package:flutter/material.dart';
 /// Title text style shared by the move dialogs — dark-theme `titleMedium`
 /// in `--accent` with 0.05em letter spacing (#2867 R2/R5).
 TextStyle moveDialogTitleTextStyle(ThemeData theme) {
-  return (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)).copyWith(
-    color: EditorialMonoclePalette.accent,
-    letterSpacing: 0.05 * 16,
-    fontWeight: FontWeight.w600,
-  );
+  return (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
+      .copyWith(
+        color: EditorialMonoclePalette.accent,
+        letterSpacing: 0.05 * 16,
+        fontWeight: FontWeight.w600,
+      );
 }
 
 /// Empty-state body style shared by the move dialogs (`--muted` body).
 TextStyle moveDialogEmptyTextStyle(ThemeData theme) {
   return (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
+    color: EditorialMonoclePalette.muted,
+  );
+}
+
+/// Muted `bodySmall` composition lines under unit-picker titles (Refs #4385).
+TextStyle moveDialogCompositionTextStyle(ThemeData theme) {
+  return (theme.textTheme.bodySmall ?? const TextStyle()).copyWith(
     color: EditorialMonoclePalette.muted,
   );
 }

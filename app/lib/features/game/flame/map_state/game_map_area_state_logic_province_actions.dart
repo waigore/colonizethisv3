@@ -153,6 +153,27 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     tileMapByRegion: tileMapByRegion,
   );
 
+  static ({bool showIcon, bool enabled, bool hasRailBuilderUnits})
+  provinceBuildRailActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) => GameMapAreaProvinceActionStates.buildRail(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
+
   static ({bool showIcon, bool enabled, bool hasMerchantUnits})
   provincePurchaseLandActionState({
     required ct_models.Game game,

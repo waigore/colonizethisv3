@@ -7,6 +7,7 @@ import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'move_units_dialog_base.dart';
+import 'unit_picker_composition.dart';
 
 /// Army picker when several field armies can Move/Invade from MAP20001 (Refs #4350).
 class OverlayArmyMovePickerDialog extends StatefulWidget {
@@ -59,12 +60,14 @@ class _OverlayArmyMovePickerDialogState
               selected: _selected == armyId,
               semanticsLabel: l10n.military_units_army(armyId),
               onTap: () => setState(() => _selected = armyId),
-              content: Text(
-                l10n.military_units_army(armyId),
-                style: moveDialogRowLabelStyle(
-                  theme,
-                  selected: _selected == armyId,
+              content: UnitPickerCompositionContent(
+                title: l10n.military_units_army(armyId),
+                compositionLines: armyPickerCompositionLines(
+                  game: widget.game,
+                  armyId: armyId,
+                  l10n: l10n,
                 ),
+                selected: _selected == armyId,
               ),
             ),
           const SizedBox(height: CtSpacing.l),

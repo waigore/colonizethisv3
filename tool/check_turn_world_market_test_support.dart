@@ -49,10 +49,11 @@ String? turnWorldMarketTestSupportImportViolationReason(
     return null;
   }
   if (!_directWorldMarketHandlerUse.hasMatch(content)) {
-    // Phase-handler integration files (basename contains `_phase_`) must
-    // drive the phase via a shared runner even when they never spell the
-    // handler symbol (group titles alone do not count as invocation).
+    // Phase-handler suites (`*_phase_*_test.dart`) must drive the phase via
+    // a shared runner even when they never spell the handler symbol. Sibling
+    // `*_cases.dart` fixture modules are not suites (Refs #4039 / #4342).
     if (fileName.contains('_phase_') &&
+        fileName.endsWith('_test.dart') &&
         !_sharedWorldMarketRunnerUse.hasMatch(content)) {
       return 'phase-handler suite must call `runWorldMarketPhase` / '
           '`runWorldMarketPhasePipeline` (or a support wrapper that does) '
@@ -98,9 +99,7 @@ int runCheckTurnWorldMarketTestSupport(
   }
 
   if (violations.isEmpty) {
-    logI(
-      'check_turn_world_market_test_support: no direct handler violations.',
-    );
+    logI('check_turn_world_market_test_support: no direct handler violations.');
     return 0;
   }
   logE(

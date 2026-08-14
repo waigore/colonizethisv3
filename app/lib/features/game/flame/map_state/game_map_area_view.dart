@@ -1,14 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../widgets/shell/shell_player_context.dart';
-import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
 import '../region_map/region_map_viewport_snapshot.dart';
 
 import 'game_map_area_state_logic.dart';
@@ -22,18 +19,9 @@ import 'package:colonizethis_logic/ai_api.dart';
 /// viewport snapshot handling (Refs #3699 Theme 3).
 mixin GameMapAreaView on ConsumerState<GameMapArea>, GameMapAreaStateBase {
   void cycleBaseLayerDisplayMode() {
-    setState(() {
-      baseLayerDisplayMode = switch (baseLayerDisplayMode) {
-        BaseLayerDisplayMode.terrainOnly =>
-          BaseLayerDisplayMode.terrainAndResources,
-        BaseLayerDisplayMode.terrainAndResources =>
-          BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
-        BaseLayerDisplayMode.terrainAndResourcesImprovementLabels =>
-          BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-        BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads =>
-          BaseLayerDisplayMode.terrainOnly,
-      };
-    });
+    setMapViewState(
+      mapViewState.withMapBaseLayerFlags(mapViewState.mapBaseLayerFlags.cycled),
+    );
   }
 
   void setMapViewState(ct_models.MapViewState next) {
@@ -141,9 +129,7 @@ mixin GameMapAreaView on ConsumerState<GameMapArea>, GameMapAreaStateBase {
   void onRegionViewportSnapshot(RegionMapViewportSnapshot snapshot) {
     final clampedMultiplier = snapshot.zoomMultiplier.clamp(0.5, 8.0);
     if ((clampedMultiplier - mapViewState.zoomMultiplier).abs() > 0.001) {
-      setMapViewState(
-        mapViewState.copyWith(zoomMultiplier: clampedMultiplier),
-      );
+      setMapViewState(mapViewState.copyWith(zoomMultiplier: clampedMultiplier));
     }
     pendingRegionViewport = snapshot;
     if (regionViewportFrameScheduled) return;

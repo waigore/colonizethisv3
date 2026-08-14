@@ -11,35 +11,38 @@ import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-/// Stable key for the "Show province overlay" [CtToggleSwitch] inside
-/// [GameMapOptionsDialog]. Used by widget tests and E2E lookups.
+/// Stable key for the "Show province and sea borders" [CtToggleSwitch].
 const ValueKey<String> kGameMapOptionsShowProvinceOverlayToggleKey =
     ValueKey<String>('gameMapOptions:showProvinceOverlay');
 
-/// Stable key for the "Show province ownership" [CtToggleSwitch] inside
-/// [GameMapOptionsDialog].
+/// Stable key for the "Show province ownership" [CtToggleSwitch].
 const ValueKey<String> kGameMapOptionsShowProvinceOwnershipToggleKey =
     ValueKey<String>('gameMapOptions:showProvinceOwnership');
 
-/// Stable key for the "Show province names" [CtToggleSwitch] inside
-/// [GameMapOptionsDialog].
+/// Stable key for the "Show province names" [CtToggleSwitch].
 const ValueKey<String> kGameMapOptionsShowProvinceNamesToggleKey =
     ValueKey<String>('gameMapOptions:showProvinceNames');
 
-/// Dark editorial-monocle modal that lets the player toggle the three global
-/// in-game map view layers — province overlay strokes, Great Power ownership
-/// tint, and province name labels. Implements `Refs #2861` S8 / R9 (universal
-/// dialog pattern from `Refs #2867` R1) by painting a [CtDialogShell] frame
-/// containing a title, three [CtToggleSwitch] rows, and a single
-/// [CtNinePatchButton] **Close** action. Material `AlertDialog` / `Dialog` and
-/// `SwitchListTile` chrome is not used here per
-/// `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban.
-///
-/// The dialog manages local state synchronised with the host map area. Each
-/// toggle updates local state immediately so the affordance reflects the new
-/// value within the same dialog session and invokes [onChanged] so the host
-/// can persist the change in [MapViewState] (savegame map view state per
-/// `SPEC/ui/empire-overview.md`).
+/// Stable key for the capital-link disconnected land highlight toggle.
+const ValueKey<String> kGameMapOptionsShowCapitalLinkDisconnectedToggleKey =
+    ValueKey<String>('gameMapOptions:showCapitalLinkDisconnectedHighlight');
+
+/// Stable key for the "Show resources" [CtToggleSwitch] (Refs #4388).
+const ValueKey<String> kGameMapOptionsShowMapResourcesToggleKey =
+    ValueKey<String>('gameMapOptions:showMapResources');
+
+/// Stable key for the "Show improvements" [CtToggleSwitch] (Refs #4388).
+const ValueKey<String> kGameMapOptionsShowMapImprovementsToggleKey =
+    ValueKey<String>('gameMapOptions:showMapImprovements');
+
+/// Stable key for the "Show roads and rails" [CtToggleSwitch] (Refs #4388).
+const ValueKey<String> kGameMapOptionsShowMapRoadsToggleKey = ValueKey<String>(
+  'gameMapOptions:showMapRoads',
+);
+
+/// Dark editorial-monocle modal for information-layer and cartographic map
+/// toggles, including the capital-link disconnected land highlight.
+/// Implements `Refs #2861` S8 / R9, `Refs #4388`, and `Refs #4370`.
 class GameMapOptionsDialog extends StatefulWidget {
   const GameMapOptionsDialog({
     super.key,
@@ -51,9 +54,7 @@ class GameMapOptionsDialog extends StatefulWidget {
   /// dialog opens.
   final MapViewState initialState;
 
-  /// Called with the new [MapViewState] every time the user toggles one of the
-  /// three layer switches. The host is expected to persist the value (e.g.
-  /// via the in-memory game state's `mapViewState` field).
+  /// Called with the new [MapViewState] every time the user toggles a switch.
   final ValueChanged<MapViewState> onChanged;
 
   @override
@@ -75,8 +76,11 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
     final theme = Theme.of(context);
     final titleStyle = (theme.textTheme.titleMedium ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.accent);
+    final headingStyle = (theme.textTheme.bodySmall ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.muted);
     final labelStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.fg);
+    final roadsEnabled = _state.showMapImprovements;
 
     return CtDialogShell(
       child: Column(
@@ -85,6 +89,40 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
         children: [
           Text(l10n.map_displayOptions_title, style: titleStyle),
           CtGap.ml,
+          Text(l10n.map_displayOptions_mapMarksHeading, style: headingStyle),
+          CtGap.m,
+          _GameMapOptionsToggleRow(
+            toggleKey: kGameMapOptionsShowMapResourcesToggleKey,
+            label: l10n.map_displayOptions_showMapResources,
+            labelStyle: labelStyle,
+            value: _state.showMapResources,
+            onChanged: (value) =>
+                _update(_state.copyWith(showMapResources: value)),
+          ),
+          CtGap.m,
+          _GameMapOptionsToggleRow(
+            toggleKey: kGameMapOptionsShowMapImprovementsToggleKey,
+            label: l10n.map_displayOptions_showMapImprovements,
+            labelStyle: labelStyle,
+            value: _state.showMapImprovements,
+            onChanged: (value) => _update(
+              _state.copyWith(
+                showMapImprovements: value,
+                showMapRoads: value ? _state.showMapRoads : false,
+              ),
+            ),
+          ),
+          CtGap.m,
+          _GameMapOptionsToggleRow(
+            toggleKey: kGameMapOptionsShowMapRoadsToggleKey,
+            label: l10n.map_displayOptions_showMapRoads,
+            labelStyle: labelStyle,
+            value: _state.showMapRoads && roadsEnabled,
+            onChanged: roadsEnabled
+                ? (value) => _update(_state.copyWith(showMapRoads: value))
+                : null,
+          ),
+          CtGap.l,
           _GameMapOptionsToggleRow(
             toggleKey: kGameMapOptionsShowProvinceOverlayToggleKey,
             label: l10n.map_displayOptions_showProvinceOverlay,
@@ -110,6 +148,16 @@ class _GameMapOptionsDialogState extends State<GameMapOptionsDialog> {
             value: _state.showProvinceNamesLayer,
             onChanged: (value) =>
                 _update(_state.copyWith(showProvinceNamesLayer: value)),
+          ),
+          CtGap.m,
+          _GameMapOptionsToggleRow(
+            toggleKey: kGameMapOptionsShowCapitalLinkDisconnectedToggleKey,
+            label: l10n.map_displayOptions_showCapitalLinkDisconnected,
+            labelStyle: labelStyle,
+            value: _state.showCapitalLinkDisconnectedHighlight,
+            onChanged: (value) => _update(
+              _state.copyWith(showCapitalLinkDisconnectedHighlight: value),
+            ),
           ),
           CtGap.l,
           Row(
@@ -140,7 +188,7 @@ class _GameMapOptionsToggleRow extends StatelessWidget {
   final String label;
   final TextStyle labelStyle;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {

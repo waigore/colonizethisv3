@@ -19,9 +19,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'panel_fixtures/core.dart';
 
 export 'diplomacy_panel_test_support.dart'
-    show
-        CivilianPanelBusDialogHost,
-        buildCivilianPanel;
+    show CivilianPanelBusDialogHost, buildCivilianPanel;
 export 'panel_fixtures/civilian.dart' show buildCivilianPanelTestGame;
 
 /// Idle civilian [Unit] at [tileKey] in [provinceId].
@@ -52,8 +50,7 @@ Game buildCivilianOwUnitsGame({
   required List<Unit> units,
   List<Province> extraProvinces = const [],
   Map<String, String> resourceByTileKey = const {},
-  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
-      const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
 }) {
   return buildPanelTestGame(
     id: id,
@@ -178,17 +175,11 @@ Game buildCivilianDualBuilderLowStockGame({
         id: humanId,
         displayName: 'Human',
         isHuman: true,
-        stockpile: const Stockpile(
-          quantities: {'lumber': 1, 'castIron': 1},
-        ),
+        stockpile: const Stockpile(quantities: {'lumber': 1, 'castIron': 1}),
       ),
     ],
     oldWorldProvinces: [
-      Province(
-        id: provinceId,
-        regionId: 'oldWorld',
-        displayName: 'Alpha',
-      ),
+      Province(id: provinceId, regionId: 'oldWorld', displayName: 'Alpha'),
     ],
     oldWorldUnits: [
       civilianIdleUnit(
@@ -207,7 +198,9 @@ Game buildCivilianDualBuilderLowStockGame({
       ),
     ],
     tileKeysByRegionAndProvince: {
-      'oldWorld': {provinceId: [tileA, tileB]},
+      'oldWorld': {
+        provinceId: [tileA, tileB],
+      },
     },
     playerVisibilityByTile: {
       humanId: {tileA: 'fullyVisible', tileB: 'fullyVisible'},
@@ -267,11 +260,7 @@ Game buildCivilianPendingProjectionGame({
       ),
     ],
     extraProvinces: const [
-      Province(
-        id: 'oldWorld|p2',
-        regionId: 'oldWorld',
-        displayName: 'Beta',
-      ),
+      Province(id: 'oldWorld|p2', regionId: 'oldWorld', displayName: 'Beta'),
     ],
   );
 }
@@ -294,11 +283,7 @@ Orders civilianSinglePendingWorkOrder({
   return civilianPendingWorkOrders(
     humanId: humanId,
     workOrders: [
-      WorkOrder(
-        unitId: unitId,
-        target: target,
-        targetTileKey: targetTileKey,
-      ),
+      WorkOrder(unitId: unitId, target: target, targetTileKey: targetTileKey),
     ],
   );
 }
