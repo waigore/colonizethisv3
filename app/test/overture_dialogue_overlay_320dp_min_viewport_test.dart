@@ -40,6 +40,7 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show OvertureOffer;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -125,6 +126,14 @@ void main() {
       expect(find.text(overtureAcceptLabel), findsOneWidget);
       expect(find.text(overtureRejectLabel), findsOneWidget);
       expect(find.text(overtureSubmitLabel), findsOneWidget);
+      expect(
+        find.byKey(ValueKey(OvertureOfferRow.acceptEffectKeyFor(0))),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey(OvertureOfferRow.rejectEffectKeyFor(0))),
+        findsOneWidget,
+      );
     });
 
     testWidgets('AC (positive) OvertureDialogueOverlay (two pending offers) @ '
@@ -153,6 +162,36 @@ void main() {
       // row count, mirroring the call-to-arms 320 dp pin contract).
       expect(find.text(overtureAcceptLabel), findsNWidgets(2));
       expect(find.text(overtureRejectLabel), findsNWidgets(2));
+      expect(find.text(overtureSubmitLabel), findsOneWidget);
+    });
+
+    testWidgets('AC (positive) Join Empire offer @ 320×640: Effect lines wrap, '
+        'Submit remains reachable, takeException is null (Refs #4387).', (
+      WidgetTester tester,
+    ) async {
+      await pumpDialogs320At(
+        tester,
+        OvertureDialogueOverlay(
+          game: overtureGame(),
+          pendingOvertures: const [
+            OvertureOffer(
+              offererGpId: 'gp_portugal',
+              targetFactionId: 'gp_player',
+              stage: OvertureStage.joinEmpire,
+            ),
+          ],
+          skipIntroForTest: true,
+          onDecisions: (_) {},
+          child: const SizedBox.expand(),
+        ),
+        size: _kMinViewport,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byKey(ValueKey(OvertureOfferRow.acceptEffectKeyFor(0))),
+        findsOneWidget,
+      );
       expect(find.text(overtureSubmitLabel), findsOneWidget);
     });
 

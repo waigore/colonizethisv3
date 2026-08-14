@@ -77,6 +77,8 @@ Internal state ownership (phase 1 — intro):
 |                       + Text(game_overture_accept))       |
 |                   Row(CtToggleSwitch(--danger  glow)      |
 |                       + Text(game_overture_reject))       |
+|                 Text(Accept Effect, bodySmall, --muted)   |
+|                 Text(Reject Effect, bodySmall, --muted)   |
 |             Align(centerRight)                            |
 |               CtNinePatchButton(game_callToArms_submit)   |
 +-----------------------------------------------------------+
@@ -92,7 +94,7 @@ Phase 2 chrome uses the dark editorial-monocle tokens from `SPEC/ui/pixel-art-ui
 - **Intro line:** `Text(game_overture_intro)` rendered with `theme.textTheme.bodyMedium` color overridden to `EditorialMonoclePalette.muted` and `fontStyle: FontStyle.italic` per #2867 R5.
 - **Offer row label:** The offerer name and stage label are split into two `Text` widgets within a flex row so they can carry distinct colors (#2867 R22). The offerer name renders in `EditorialMonoclePalette.accent`; the stage label renders in `EditorialMonoclePalette.muted`. A `Text(": ")` separator (also `--muted`) keeps the formatted line readable. The full `game_overture_offerLine` localized template is no longer composed in the widget — the per-offer row composes the two parts directly.
 - **Accept / Reject toggles (#2867 R22):** Each per-offer body renders the decision controls as two mutually exclusive `CtToggleSwitch` widgets — one labeled Accept (`game_overture_accept`) and one labeled Reject (`game_overture_reject`). The Accept toggle passes `onGlowColor: EditorialMonoclePalette.success` so its on-state knob halo paints the canonical `--success` glow; the Reject toggle passes `onGlowColor: EditorialMonoclePalette.danger` so its on-state knob halo paints `--danger`. The labels beside each toggle render in the matching palette token (`--success` for Accept, `--danger` for Reject) using `theme.textTheme.bodySmall`. Toggling is tristate-aware: tapping a currently-off toggle commits the row's `_accepted[i]` slot to `true` (Accept) or `false` (Reject) and turns the opposite toggle off via the shared state slot; tapping a currently-on toggle reverts the row to `null` (undecided) so the #2867 R23 Submit gate re-engages. Toggle keys are stable for tests: `overtureAcceptToggle_<i>` and `overtureRejectToggle_<i>` per row index `i`.
-- **Offer row layout (stacked at narrow widths):** Each per-offer body is a `Column(crossAxisAlignment: stretch)` containing the labels `Row` above an end-aligned `Wrap(alignment: WrapAlignment.end, spacing: 12, runSpacing: 8)` that holds the two labeled `CtToggleSwitch` rows (Accept-side + Reject-side). The stacked `Column(Row + Wrap)` mirrors `SPEC/ui/call-to-arms-dialogue-overlay.md` § Layout / wireframe so the two toggle rows flow onto a second run at narrow viewports (`kMinViewportWidth` 320 dp) instead of overflowing horizontally, and the labels `Row` always has the full content column width to wrap on (issue #2870 S8 / S10; `SPEC/ui/mobile-adaptation.md` § 7).
+- **Offer row layout (stacked at narrow widths):** Each per-offer body is a `Column(crossAxisAlignment: stretch)` containing the labels `Row` above an end-aligned `Wrap(alignment: WrapAlignment.end, spacing: 12, runSpacing: 8)` that holds the two labeled `CtToggleSwitch` rows (Accept-side + Reject-side), then two muted `bodySmall` **Effect** lines (Accept then Reject) from `buildIncomingOvertureEffectLines` (Refs #4387). The stacked `Column` mirrors `SPEC/ui/call-to-arms-dialogue-overlay.md` so toggles and Effect lines wrap at 320 dp (`kMinViewportWidth`; `SPEC/ui/mobile-adaptation.md` § 7). Effect lines are read-only; they do not change Submit gating or `OvertureDecision` payloads.
 
 Error mode renders the same `Stack` but the `CtDialogShell` body is the localized error message (`l10n.game_overture_loadError`) plus a single Continue button (`l10n.game_intervention_continue`).
 
@@ -107,7 +109,7 @@ Error mode renders the same `Stack` but the `CtDialogShell` body is the localize
 | Presenting line (phase 1) | `!_introDone && _view!.currentLine != null && _view!.pendingSingleOptionLabel == null` | Line text + right-aligned Continue button; tap calls `_view!.advanceLine()`. |
 | Presenting choice (phase 1) | `!_introDone && _view!.currentLine == null && _view!.currentChoice != null` (only choices with `n >= 2` options) | The retained `_view!.contextLine.text` (the immediately preceding intro line) **above** a vertical stack of one `CtNinePatchButton` per `choice.options[i]`; tap calls `_view!.selectOption(i)`. Rendered via the shared `CtDialogueLineChoiceBody` so the intro line and the option(s) appear together (Refs #3628). |
 | Transient (phase 1) | `!_introDone && _view!.currentLine == null && _view!.currentChoice == null` | When `_view!.contextLine != null`, the retained line text above a `CtLoadingIndicator`; otherwise `CtLoadingIndicator` alone, inside the shell. |
-| Offer list (phase 2) | `_introDone && _loadError == null` | Title + intro + one Accept/Reject `CtToggleSwitch` row per `pendingOvertures[i]`; every entry starts undecided (`_accepted[i] == null`, so both toggles render in their off state). Tapping the Accept toggle commits `_accepted[i] = true` (Accept on, Reject off); tapping the Reject toggle commits `_accepted[i] = false` (Reject on, Accept off); tapping a currently-on toggle reverts the row to `null`. Submit is **disabled** while any entry is still `null` (issue #2867 R23); when every entry is non-null, Submit becomes enabled and a tap calls `onDecisions(...)` with one `OvertureDecision` per offer using the resolved `_accepted!` value. |
+| Offer list (phase 2) | `_introDone && _loadError == null` | Title + intro + one Accept/Reject `CtToggleSwitch` row per `pendingOvertures[i]` plus muted Accept/Reject Effect lines; every entry starts undecided (`_accepted[i] == null`, so both toggles render in their off state). Tapping the Accept toggle commits `_accepted[i] = true` (Accept on, Reject off); tapping the Reject toggle commits `_accepted[i] = false` (Reject on, Accept off); tapping a currently-on toggle reverts the row to `null`. Submit is **disabled** while any entry is still `null` (issue #2867 R23); when every entry is non-null, Submit becomes enabled and a tap calls `onDecisions(...)` with one `OvertureDecision` per offer using the resolved `_accepted!` value. Yarn intro and error Continue do not mount Effect keys. |
 | Error | `_loadError != null` | Localized error text (`game_overture_loadError`) + single Continue button; tapping Continue invokes `_submit()` immediately (so the host advances even when the Yarn asset is broken). |
 
 Exactly one variant is rendered at a time. Phase 2 is the only state in which Accept / Reject toggles are interactive; phase 1 has no offer rows.
@@ -129,7 +131,7 @@ Exactly one variant is rendered at a time. Phase 2 is the only state in which Ac
 | Yarn Continue / options | Phase 1 intro | Jenny runner advances | — |
 | Accept `CtToggleSwitch` (`overtureAcceptToggle_<i>`) | Phase 2 | When tapped while off, sets `_accepted[i] = true` (which turns the Reject toggle off via shared state); when tapped while on, sets `_accepted[i] = null` (reverts to undecided) | Re-evaluates Submit enable state. |
 | Reject `CtToggleSwitch` (`overtureRejectToggle_<i>`) | Phase 2 | When tapped while off, sets `_accepted[i] = false`; when tapped while on, sets `_accepted[i] = null` (reverts to undecided) | Re-evaluates Submit enable state. |
-| Submit | Phase 2; **disabled** until every `_accepted[i]` is non-null (#2867 R23) | `onDecisions(List<OvertureDecision>)` once | Host calls `resumeOvertureDecisions` and clears pending state. |
+| Submit | Phase 2; **disabled** until every `_accepted[i]` is non-null (#2867 R23) | `onDecisions(List<OvertureDecision>)` once | Host calls `resumeOvertureDecisions` and clears pending state. Effect lines do not participate. |
 
 No direct `AppEventBus` or `Navigator` usage in the overlay.
 
@@ -146,7 +148,7 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 - `CtDialogueView` ([`ct-dialogue-view.md`](ct-dialogue-view.md)) — the Jenny adapter that owns line / choice state during phase 1.
 - `jenny.DialogueRunner` — Jenny's runner; receives the single `CtDialogueView` in `dialogueViews:`.
 - `EditorialMonoclePalette` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) — `accent` (title + offerer name), `muted` (intro + stage label + colon separator) phase-2 colors per the dark editorial-monocle palette.
-- Localized strings via `appL10n(context)`: `game_overture_loadError`, `game_intervention_continue`, `game_overture_title`, `game_overture_intro`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` (shared Submit label). The `game_overture_offerLine(offerer, stage)` template is **no longer** consumed by phase 2 — the offer row paints `offerer` and `stage` as two distinct `Text` widgets so they can carry different colors per #2867 R22.
+- Localized strings via `appL10n(context)`: `game_overture_loadError`, `game_intervention_continue`, `game_overture_title`, `game_overture_intro`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` (shared Submit label). The `game_overture_offerLine(offerer, stage)` template is **no longer** consumed by phase 2 — the offer row paints `offerer` and `stage` as two distinct `Text` widgets so they can carry different colors per #2867 R22. Phase-2 Effect lines come from `buildIncomingOvertureEffectLines` in `colonizethis_diplomacy` (target-side inverse of `buildDiplomacyConfirmPreviewLines`; Refs #4387).
 
 ---
 
@@ -229,7 +231,23 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 - Given an `OvertureDialogueOverlay` is mounted in phase 2 (`skipIntroForTest: true`) with one or more pending overtures at a `kMinViewportWidth × 640` (320 × 640 dp) viewport,
   When the widget tree settles,
-  Then `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow exception escapes the framework — the same contract pinned by `dialogs_320dp_min_viewport_test.dart` and `call_to_arms_dialogue_overlay_320dp_min_viewport_test.dart`), every per-offer body lays out as the stacked `Column(Row(offerer + ": " + stage) + Wrap(Accept toggle + Reject toggle))` from § Layout / wireframe so the labeled `CtToggleSwitch` rows flow onto a second run rather than overflowing horizontally, and the localized `game_overture_title`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` labels still render end-to-end so the layout actually exercises the phase-2 body at the minimum viewport (`SPEC/ui/mobile-adaptation.md` § 7 / Refs #2870 S8 + S10 for OVL30001).
+  Then `WidgetTester.takeException()` is `null` (no `RenderFlex` overflow exception escapes the framework — the same contract pinned by `dialogs_320dp_min_viewport_test.dart` and `call_to_arms_dialogue_overlay_320dp_min_viewport_test.dart`), every per-offer body lays out as the stacked `Column(Row(offerer + ": " + stage) + Wrap(Accept toggle + Reject toggle) + Accept/Reject Effect lines)` from § Layout / wireframe so the labeled `CtToggleSwitch` rows and Effect lines wrap rather than overflowing horizontally, Submit remains reachable, and the localized `game_overture_title`, `game_overture_accept`, `game_overture_reject`, and `game_callToArms_submit` labels still render end-to-end so the layout actually exercises the phase-2 body at the minimum viewport (`SPEC/ui/mobile-adaptation.md` § 7 / Refs #2870 S8 + S10 for OVL30001).
+
+- Given `OVL30001` phase 2 with a pending NAP offer,
+  When the offer row renders,
+  Then a muted Accept Effect states that a Non-Aggression Pact with the offerer is established and there is no treasury charge, and a Reject Effect states that the offer lapses and the stage does not advance (no standing/score penalty; Refs #4387).
+
+- Given a pending Join Empire offer in phase 2,
+  When the offer row renders,
+  Then the Accept Effect states in plain language that the human realm is absorbed and provinces transfer to the offerer, with no raw `OvertureStage` enum or id in the copy.
+
+- Given Consulate or Embassy offers in phase 2,
+  When those rows render,
+  Then Accept Effects state the stage is established and that the human pays nothing.
+
+- Given Yarn intro or the degraded error Continue path,
+  When those states render,
+  Then no phase-2 Effect keys (`overtureEffectAccept_<i>` / `overtureEffectReject_<i>`) are mounted.
 
 ---
 
@@ -237,6 +255,6 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 Catalog directory: `Overture Dialogue Overlay` (registered in `app/lib/widgetbook/catalog.dart` via `overtureDialogueOverlayDirectories` in `catalog_part4.dart`). Required use cases:
 
-1. **Default — two pending overtures** — wraps a localized `widgetbook_gameShell` child in `OvertureDialogueOverlay` with `skipIntroForTest: true` so the story renders phase 2 immediately without depending on the production Yarn asset. The story exercises Accept/Reject toggles and the Submit button across two offers from different offerers.
+1. **Default — two pending overtures** — wraps a localized `widgetbook_gameShell` child in `OvertureDialogueOverlay` with `skipIntroForTest: true` so the story renders phase 2 immediately without depending on the production Yarn asset. The story exercises Accept/Reject toggles, muted Accept/Reject Effect lines, and the Submit button across two offers from different offerers.
 
 The story analyzes cleanly with no hardcoded UI strings: title, intro, offer line, Accept, Reject, and Submit labels are sourced from `appL10n(context)`.
