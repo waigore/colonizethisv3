@@ -1,6 +1,7 @@
-
-import 'package:flutter/material.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
+import 'package:flutter/material.dart';
 
 /// Visibility mode for the region map. SPEC/ui/map-widget.md.
 enum CtMapVisibilityMode { full, playerConstrained }
@@ -27,10 +28,32 @@ enum BaseLayerDisplayMode {
   terrainAndResourcesImprovementsRoads,
 }
 
-bool shouldShowExtractionUnitIndicators({
-  required BaseLayerDisplayMode baseLayerDisplayMode,
-}) =>
-    baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
+/// Widgetbook/debug convenience: exclusive enum → paint flags (Refs #4388).
+MapBaseLayerFlags mapBaseLayerFlagsFromDisplayMode(BaseLayerDisplayMode? mode) {
+  if (mode == null) return MapBaseLayerFlags.fullDetail;
+  return switch (mode) {
+    BaseLayerDisplayMode.terrainOnly => MapBaseLayerFlags.terrainOnly,
+    BaseLayerDisplayMode.terrainAndResources => MapBaseLayerFlags.resourcesOnly,
+    BaseLayerDisplayMode.terrainAndResourcesImprovementLabels =>
+      MapBaseLayerFlags.resourcesAndImprovements,
+    BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads =>
+      MapBaseLayerFlags.fullDetail,
+  };
+}
+
+MapBaseLayerFlags resolveMapBaseLayerFlags({
+  MapBaseLayerFlags? flags,
+  BaseLayerDisplayMode? mode,
+}) => flags ?? mapBaseLayerFlagsFromDisplayMode(mode);
+
+bool shouldShowExtractionUnitIndicators({required MapBaseLayerFlags flags}) =>
+    flags.showResources;
+
+bool shouldShowResourceIcons({required MapBaseLayerFlags flags}) =>
+    flags.showResources;
+
+bool shouldShowImprovementLabels({required MapBaseLayerFlags flags}) =>
+    flags.showImprovements;
 
 /// Palette tokens for [CtRegionMapComponent] render passes (Refs #4117).
 abstract final class RegionMapPalette {
@@ -55,7 +78,12 @@ abstract final class RegionMapPalette {
   static const double sinNormalizedMid = 0.5;
   static const Color provinceBorderLandColor = Color.fromRGBO(0, 0, 0, 0.35);
   static const Color provinceBorderSeaLandColor = Color.fromRGBO(0, 0, 0, 0.25);
-  static const Color provinceBorderSeaZoneColor = Color.fromRGBO(130, 200, 255, 0.55);
+  static const Color provinceBorderSeaZoneColor = Color.fromRGBO(
+    130,
+    200,
+    255,
+    0.55,
+  );
   static const Color provinceLabelShadowColor = Color(0x8A000000);
   static const double foggedResourceIconModulateAlpha = 0.6;
   static const double extractionIndicatorSizeBoostPx = 2.0;
@@ -74,6 +102,11 @@ abstract final class RegionMapPalette {
   static const double provinceLabelTextIconGapPx = 4;
   static const String provinceLabelCapitalIconId = 'map_capital_star';
   static const String seaZoneLabelWarpIconId = 'map_warp_zone';
-  static const Color seaZoneLabelPlateColor = Color.fromRGBO(173, 216, 230, 0.55);
+  static const Color seaZoneLabelPlateColor = Color.fromRGBO(
+    173,
+    216,
+    230,
+    0.55,
+  );
   static const Color seaZoneLabelTextColor = Color(0xFF000000);
 }
