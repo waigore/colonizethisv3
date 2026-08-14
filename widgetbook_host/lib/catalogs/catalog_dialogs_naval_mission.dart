@@ -4,7 +4,8 @@
 // in the developer-facing Widgetbook app, not in widget unit tests.
 part of 'catalog.dart';
 
-({Game game, MapTopology topology, Fleet fleet}) _navalMissionMenuStoryFixture() {
+({Game game, MapTopology topology, Fleet fleet})
+_navalMissionMenuStoryFixture() {
   const playerId = 'gp_naval_mission_story';
   const originSea = 'oldWorld|sea_origin';
   const topology = MapTopology(
@@ -25,11 +26,7 @@ part of 'catalog.dart';
       newWorld: const RegionData(),
     ),
     players: const [
-      Player(
-        id: playerId,
-        displayName: 'Catalog Admiral',
-        isHuman: true,
-      ),
+      Player(id: playerId, displayName: 'Catalog Admiral', isHuman: true),
     ],
   );
   final fleet = Fleet(
@@ -42,12 +39,8 @@ part of 'catalog.dart';
   return (game: game, topology: topology, fleet: fleet);
 }
 
-({
-  Game game,
-  MapTopology topology,
-  Fleet fleet,
-  List<String> targetProvinceIds,
-}) _navalMissionTargetStoryFixture() {
+({Game game, MapTopology topology, Fleet fleet, List<String> targetProvinceIds})
+_navalMissionTargetStoryFixture() {
   const playerId = 'gp_naval_target_story';
   const enemyId = 'gp_naval_target_enemy';
   const originSea = 'oldWorld|sea_origin';
@@ -121,16 +114,8 @@ part of 'catalog.dart';
       ),
     ],
     players: const [
-      Player(
-        id: playerId,
-        displayName: 'Catalog Admiral',
-        isHuman: true,
-      ),
-      Player(
-        id: enemyId,
-        displayName: 'Enemy Power',
-        isHuman: false,
-      ),
+      Player(id: playerId, displayName: 'Catalog Admiral', isHuman: true),
+      Player(id: enemyId, displayName: 'Enemy Power', isHuman: false),
     ],
   );
   final fleet = Fleet(
@@ -150,25 +135,92 @@ part of 'catalog.dart';
 
 ({Game game, List<String> fleetIds}) _navalMissionFleetPickerStoryFixture() {
   const playerId = 'gp_naval_picker_story';
+  final fleets = [
+    Fleet(
+      id: 'f_picker_a',
+      ownerId: playerId,
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|sea_picker',
+      ships: const [ShipInstance(id: 'ship_a', typeId: 'sloop')],
+      mission: FleetMission.patrol,
+    ),
+    Fleet(
+      id: 'f_picker_b',
+      ownerId: playerId,
+      regionId: 'oldWorld',
+      seaZoneId: 'oldWorld|sea_picker',
+      ships: const [ShipInstance(id: 'ship_b', typeId: 'carrack')],
+    ),
+  ];
   final game = Game(
     id: 'g_naval_picker_story',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: const RegionData(),
       newWorld: const RegionData(),
+      fleets: fleets,
     ),
     players: const [
-      Player(
-        id: playerId,
-        displayName: 'Catalog Admiral',
-        isHuman: true,
-      ),
+      Player(id: playerId, displayName: 'Catalog Admiral', isHuman: true),
     ],
   );
-  return (
-    game: game,
-    fleetIds: const ['f_picker_a', 'f_picker_b'],
+  return (game: game, fleetIds: const ['f_picker_a', 'f_picker_b']);
+}
+
+({Game game, List<String> armyIds}) _overlayArmyMovePickerStoryFixture() {
+  const playerId = 'gp_army_picker_story';
+  const province = 'oldWorld|p_picker';
+  final game = Game(
+    id: 'g_army_picker_story',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: const [
+          Province(
+            id: province,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            displayName: 'Picker',
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'u_pike',
+            type: 'pikemen',
+            ownerId: playerId,
+            locationProvinceId: province,
+          ),
+          Unit(
+            id: 'u_levy',
+            type: 'peasant_levies',
+            ownerId: playerId,
+            locationProvinceId: province,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      armies: const [
+        Army(
+          id: 'army_a',
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: province,
+          regimentUnitIds: ['u_pike'],
+        ),
+        Army(
+          id: 'army_b',
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: province,
+          regimentUnitIds: ['u_levy'],
+        ),
+      ],
+    ),
+    players: const [
+      Player(id: playerId, displayName: 'Catalog Marshal', isHuman: true),
+    ],
   );
+  return (game: game, armyIds: const ['army_a', 'army_b']);
 }
 
 /// Naval mission assign dialogs. SPEC/ui/naval-mission-*-dialog.md (Refs #4213).
@@ -357,6 +409,34 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        name: 'Narrow — two fleets',
+        builder: (context) {
+          final fixture = _navalMissionFleetPickerStoryFixture();
+          return SizedBox(
+            width: 320,
+            height: 640,
+            child: _moveDialogStoryFrame(
+              open: (innerContext) {
+                return ElevatedButton(
+                  onPressed: () {
+                    showDialog<String>(
+                      context: innerContext,
+                      builder: (_) => NavalMissionFleetPickerDialog(
+                        game: fixture.game,
+                        humanPlayerId: 'gp_naval_picker_story',
+                        fleetIds: fixture.fleetIds,
+                      ),
+                    );
+                  },
+                  // ignore: avoid_hardcoded_strings_in_widgets
+                  child: const Text('Open Naval Mission Fleet Picker'),
+                );
+              },
+            ),
+          );
+        },
+      ),
     ],
   ),
   WidgetbookFolder(
@@ -365,6 +445,7 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
       WidgetbookUseCase(
         name: 'Default — two armies',
         builder: (context) {
+          final fixture = _overlayArmyMovePickerStoryFixture();
           return _moveDialogStoryFrame(
             open: (innerContext) {
               return ElevatedButton(
@@ -372,9 +453,9 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
                   showDialog<String>(
                     context: innerContext,
                     builder: (_) => OverlayArmyMovePickerDialog(
-                      game: demoGameForOverlay,
-                      humanPlayerId: demoGameForOverlay.players.first.id,
-                      armyIds: const ['army_a', 'army_b'],
+                      game: fixture.game,
+                      humanPlayerId: fixture.game.players.first.id,
+                      armyIds: fixture.armyIds,
                     ),
                   );
                 },
@@ -382,6 +463,34 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
                 child: const Text('Open Overlay Army Move Picker'),
               );
             },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow — two armies',
+        builder: (context) {
+          final fixture = _overlayArmyMovePickerStoryFixture();
+          return SizedBox(
+            width: 320,
+            height: 640,
+            child: _moveDialogStoryFrame(
+              open: (innerContext) {
+                return ElevatedButton(
+                  onPressed: () {
+                    showDialog<String>(
+                      context: innerContext,
+                      builder: (_) => OverlayArmyMovePickerDialog(
+                        game: fixture.game,
+                        humanPlayerId: fixture.game.players.first.id,
+                        armyIds: fixture.armyIds,
+                      ),
+                    );
+                  },
+                  // ignore: avoid_hardcoded_strings_in_widgets
+                  child: const Text('Open Overlay Army Move Picker'),
+                );
+              },
+            ),
           );
         },
       ),
