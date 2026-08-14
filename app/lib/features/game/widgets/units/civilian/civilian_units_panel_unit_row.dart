@@ -33,6 +33,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     required this.buildRoadShortcutTargetTileKey,
     required this.buildFortShortcutTargetTileKey,
     required this.buildPortShortcutTargetTileKey,
+    required this.buildRailShortcutTargetTileKey,
     required this.purchaseLandShortcutTargetTileKey,
     required this.upgradeTownShortcutTargetTileKey,
     this.readOnly = false,
@@ -55,6 +56,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   final String? buildRoadShortcutTargetTileKey;
   final String? buildFortShortcutTargetTileKey;
   final String? buildPortShortcutTargetTileKey;
+  final String? buildRailShortcutTargetTileKey;
   final String? purchaseLandShortcutTargetTileKey;
   final String? upgradeTownShortcutTargetTileKey;
   final bool readOnly;
@@ -85,17 +87,19 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
           UnitStatus.working => l10n.province_unitStatus_working,
         };
     final showActions = !isTileScope || isSelectedInTileScope;
-    final inExplorerShortcutMode = civilianUnitsPanelUnitRowInExplorerShortcutMode(
-      prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-      exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-      buildImprovementShortcutTargetTileKey:
-          buildImprovementShortcutTargetTileKey,
-      buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
-      buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
-                buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
-      purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
-      upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
-    );
+    final inExplorerShortcutMode =
+        civilianUnitsPanelUnitRowInExplorerShortcutMode(
+          prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+          exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+          buildImprovementShortcutTargetTileKey:
+              buildImprovementShortcutTargetTileKey,
+          buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+          buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+          buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+          buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
+          purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+          upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
+        );
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
     final rowActions = buildCivilianUnitsPanelUnitRowActions(
@@ -117,7 +121,8 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
           buildImprovementShortcutTargetTileKey,
       buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
-                buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+      buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+      buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
       upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
     );

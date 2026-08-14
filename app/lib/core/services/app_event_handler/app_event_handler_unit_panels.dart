@@ -54,17 +54,16 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
           explorerOnly: event.explorerOnly,
           builderOnly: event.builderOnly,
           engineerOnly: event.engineerOnly,
+          railBuilderOnly: event.railBuilderOnly,
           merchantOnly: event.merchantOnly,
           prospectShortcutTargetTileKey: event.prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: event.exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
               event.buildImprovementShortcutTargetTileKey,
-          buildRoadShortcutTargetTileKey:
-              event.buildRoadShortcutTargetTileKey,
-          buildFortShortcutTargetTileKey:
-              event.buildFortShortcutTargetTileKey,
-          buildPortShortcutTargetTileKey:
-              event.buildPortShortcutTargetTileKey,
+          buildRoadShortcutTargetTileKey: event.buildRoadShortcutTargetTileKey,
+          buildFortShortcutTargetTileKey: event.buildFortShortcutTargetTileKey,
+          buildPortShortcutTargetTileKey: event.buildPortShortcutTargetTileKey,
+          buildRailShortcutTargetTileKey: event.buildRailShortcutTargetTileKey,
           purchaseLandShortcutTargetTileKey:
               event.purchaseLandShortcutTargetTileKey,
           upgradeTownShortcutTargetTileKey:
