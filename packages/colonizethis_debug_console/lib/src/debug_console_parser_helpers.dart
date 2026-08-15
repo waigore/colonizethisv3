@@ -12,11 +12,14 @@ const int kDebugConsoleMaxTreasuryCreditAmount = 9999;
   List<String> tokens,
   int position,
 ) {
-  final parsedCount = tokens.length >= position ? int.tryParse(tokens[position - 1]) : 1;
+  final parsedCount = tokens.length >= position
+      ? int.tryParse(tokens[position - 1])
+      : 1;
   if (parsedCount == null) {
     return (
       count: 0,
-      error: 'Count must be an integer between 1 and $kDebugConsoleMaxSpawnCount.',
+      error:
+          'Count must be an integer between 1 and $kDebugConsoleMaxSpawnCount.',
     );
   }
   if (parsedCount < 1 || parsedCount > kDebugConsoleMaxSpawnCount) {
@@ -52,4 +55,65 @@ String? canonicalIdForInput(String input, Iterable<String> candidates) {
     }
   }
   return null;
+}
+
+/// Shared spawn-by-supported-id path for `/spawn_regiment` and `/spawn_ship`.
+({String? typeId, int count, String? error}) parseSpawnBySupportedId({
+  required List<String> tokens,
+  required String usage,
+  required String unknownIdMessage,
+  required Set<String> supportedIds,
+}) {
+  if (tokens.length < 2) {
+    return (typeId: null, count: 0, error: usage);
+  }
+  final typeId = tokens[1].trim().toLowerCase();
+  if (!supportedIds.contains(typeId)) {
+    return (typeId: null, count: 0, error: unknownIdMessage);
+  }
+  final countResult = parseOptionalCount(tokens, 3);
+  if (countResult.error != null) {
+    return (typeId: null, count: 0, error: countResult.error);
+  }
+  return (typeId: typeId, count: countResult.count, error: null);
+}
+
+/// Shared credit-by-canonical-id path for `/add_worker` and `/add_resource`.
+({String? canonicalId, int requested, int credited, String? error})
+parseCreditByCanonicalId({
+  required List<String> tokens,
+  required String usage,
+  required String unknownIdMessage,
+  required Iterable<String> candidates,
+}) {
+  if (tokens.length < 3) {
+    return (canonicalId: null, requested: 0, credited: 0, error: usage);
+  }
+  final canonicalId = canonicalIdForInput(
+    tokens[1].trim().toLowerCase(),
+    candidates,
+  );
+  if (canonicalId == null) {
+    return (
+      canonicalId: null,
+      requested: 0,
+      credited: 0,
+      error: unknownIdMessage,
+    );
+  }
+  final amountResult = parseAmountWithClamp(tokens[2]);
+  if (amountResult.error != null) {
+    return (
+      canonicalId: null,
+      requested: 0,
+      credited: 0,
+      error: amountResult.error,
+    );
+  }
+  return (
+    canonicalId: canonicalId,
+    requested: amountResult.requested,
+    credited: amountResult.credited,
+    error: null,
+  );
 }

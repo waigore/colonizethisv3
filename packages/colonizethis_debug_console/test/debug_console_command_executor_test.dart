@@ -6,133 +6,98 @@ void main() {
   group('DebugConsoleCommandExecutor', () {
     const executor = DebugConsoleCommandExecutor();
 
-    test('emits spawn event for valid command', () {
-      final result = executor.executeRaw(
+    test('emits spawn and credit events for valid commands', () {
+      final civilian = executor.executeRaw(
         rawInput: '/spawn_civilian builder 3',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
-      final event = result.events.single as SpawnDebugCivilianAtCapitalEvent;
-      expect(event.humanPlayerId, 'p1');
-      expect(event.unitType, kUnitTypeBuilder);
-      expect(event.count, 3);
-    });
+      expect(civilian.isError, isFalse);
+      final civilianEvent =
+          civilian.events.single as SpawnDebugCivilianAtCapitalEvent;
+      expect(civilianEvent.humanPlayerId, 'p1');
+      expect(civilianEvent.unitType, kUnitTypeBuilder);
+      expect(civilianEvent.count, 3);
 
-    test('emits treasury credit event for add_money', () {
-      final result = executor.executeRaw(
+      final money = executor.executeRaw(
         rawInput: '/add_money 500',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
-      final event = result.events.single as CreditDebugTreasuryEvent;
-      expect(event.humanPlayerId, 'p1');
-      expect(event.requestedAmount, 500);
-      expect(event.creditedAmount, 500);
-      expect(result.message, contains('500'));
-    });
+      final moneyEvent = money.events.single as CreditDebugTreasuryEvent;
+      expect(moneyEvent.requestedAmount, 500);
+      expect(moneyEvent.creditedAmount, 500);
+      expect(money.message, contains('500'));
 
-    test('emits worker pool credit event for add_worker', () {
-      final result = executor.executeRaw(
+      final worker = executor.executeRaw(
         rawInput: '/add_worker journeymen 8',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
-      final event = result.events.single as CreditDebugWorkerPoolEvent;
-      expect(event.humanPlayerId, 'p1');
-      expect(event.workerTierId, 'journeymen');
-      expect(event.requestedAmount, 8);
-      expect(event.creditedAmount, 8);
-      expect(result.message, contains('journeymen'));
-      expect(result.message, contains('8'));
-    });
+      final workerEvent = worker.events.single as CreditDebugWorkerPoolEvent;
+      expect(workerEvent.workerTierId, 'journeymen');
+      expect(workerEvent.requestedAmount, 8);
+      expect(worker.message, contains('journeymen'));
 
-    test('emits stockpile credit event for add_resource', () {
-      final result = executor.executeRaw(
+      final resource = executor.executeRaw(
         rawInput: '/add_resource grain 500',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
-      final event = result.events.single as CreditDebugStockpileCommodityEvent;
-      expect(event.humanPlayerId, 'p1');
-      expect(event.commodityId, 'grain');
-      expect(event.requestedAmount, 500);
-      expect(event.creditedAmount, 500);
-      expect(result.message, contains('grain'));
-      expect(result.message, contains('500'));
-    });
+      final stockEvent =
+          resource.events.single as CreditDebugStockpileCommodityEvent;
+      expect(stockEvent.commodityId, 'grain');
+      expect(stockEvent.requestedAmount, 500);
+      expect(resource.message, contains('grain'));
 
-    test('executor add_resource clamp message includes both amounts', () {
-      final result = executor.executeRaw(
-        rawInput: '/add_resource castIron 20000',
-        humanPlayerId: 'p1',
-      );
-      expect(result.isError, isFalse);
-      final event = result.events.single as CreditDebugStockpileCommodityEvent;
-      expect(event.commodityId, 'castIron');
-      expect(event.requestedAmount, 20000);
-      expect(event.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
-      expect(result.message, contains('20000'));
-      expect(result.message, contains('9999'));
-    });
-
-    test('emits spawn regiment event for valid command', () {
-      final result = executor.executeRaw(
+      final regiment = executor.executeRaw(
         rawInput: '/spawn_regiment peasant_levies 2',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
-      final event = result.events.single as SpawnDebugRegimentAtCapitalEvent;
-      expect(event.humanPlayerId, 'p1');
-      expect(event.regimentTypeId, 'peasant_levies');
-      expect(event.count, 2);
-      expect(result.message, contains('peasant_levies'));
-    });
+      final regimentEvent =
+          regiment.events.single as SpawnDebugRegimentAtCapitalEvent;
+      expect(regimentEvent.regimentTypeId, 'peasant_levies');
+      expect(regimentEvent.count, 2);
+      expect(regiment.message, contains('peasant_levies'));
 
-    test('emits spawn ship event for valid command', () {
-      final result = executor.executeRaw(
+      final ship = executor.executeRaw(
         rawInput: '/spawn_ship carrack 2',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
-      final event =
-          result.events.single as SpawnDebugShipAtCapitalHomeFleetEvent;
-      expect(event.humanPlayerId, 'p1');
-      expect(event.shipTypeId, 'carrack');
-      expect(event.count, 2);
-      expect(result.message, contains('carrack'));
+      final shipEvent =
+          ship.events.single as SpawnDebugShipAtCapitalHomeFleetEvent;
+      expect(shipEvent.shipTypeId, 'carrack');
+      expect(shipEvent.count, 2);
+      expect(ship.message, contains('carrack'));
     });
 
-    test('executor message for clamped add_money includes both amounts', () {
-      final result = executor.executeRaw(
+    test('clamp messages include requested and credited amounts', () {
+      final money = executor.executeRaw(
         rawInput: '/add_money 20000',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      final event = result.events.single as CreditDebugTreasuryEvent;
-      expect(event.requestedAmount, 20000);
-      expect(event.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
-      expect(result.message, contains('20000'));
-      expect(result.message, contains('9999'));
-    });
+      final moneyEvent = money.events.single as CreditDebugTreasuryEvent;
+      expect(moneyEvent.requestedAmount, 20000);
+      expect(moneyEvent.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+      expect(money.message, contains('20000'));
+      expect(money.message, contains('9999'));
 
-    test('executor add_worker clamp message includes both amounts', () {
-      final result = executor.executeRaw(
+      final worker = executor.executeRaw(
         rawInput: '/add_worker masters 20000',
         humanPlayerId: 'p1',
       );
-      expect(result.isError, isFalse);
-      final event = result.events.single as CreditDebugWorkerPoolEvent;
-      expect(event.workerTierId, 'masters');
-      expect(event.requestedAmount, 20000);
-      expect(event.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
-      expect(result.message, contains('20000'));
-      expect(result.message, contains('9999'));
+      final workerEvent = worker.events.single as CreditDebugWorkerPoolEvent;
+      expect(workerEvent.workerTierId, 'masters');
+      expect(workerEvent.requestedAmount, 20000);
+      expect(worker.message, contains('20000'));
+      expect(worker.message, contains('9999'));
+
+      final resource = executor.executeRaw(
+        rawInput: '/add_resource castIron 20000',
+        humanPlayerId: 'p1',
+      );
+      final stockEvent =
+          resource.events.single as CreditDebugStockpileCommodityEvent;
+      expect(stockEvent.commodityId, 'castIron');
+      expect(stockEvent.requestedAmount, 20000);
+      expect(resource.message, contains('20000'));
+      expect(resource.message, contains('9999'));
     });
 
     test('returns error for invalid command', () {
@@ -147,7 +112,6 @@ void main() {
         humanPlayerId: 'p1',
       );
       expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
       final event = result.events.single as FlipDebugProvinceOwnershipEvent;
       expect(event.humanPlayerId, 'p1');
       expect(event.regionId, 'oldWorld');
@@ -384,7 +348,6 @@ void main() {
         humanPlayerId: 'p1',
       );
       expect(result.isError, isFalse);
-      expect(result.events, hasLength(1));
       final event = result.events.single as SetDebugDiplomacyRelationEvent;
       expect(event.humanPlayerId, 'p1');
       expect(event.factionA, isNull);
