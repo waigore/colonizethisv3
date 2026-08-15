@@ -1,4 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart' show AppEvent, AppEventBus;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show AppEvent, AppEventBus;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -15,6 +16,11 @@ Finder ctRegionMapFinder() => find.byType(CtRegionMap);
 
 Future<void> tapCtRegionMap(WidgetTester tester) async {
   await tester.tap(ctRegionMapFinder());
+  await tester.pump();
+}
+
+Future<void> tapCtRegionMapSecondary(WidgetTester tester) async {
+  await tester.tap(ctRegionMapFinder(), buttons: kSecondaryButton);
   await tester.pump();
 }
 

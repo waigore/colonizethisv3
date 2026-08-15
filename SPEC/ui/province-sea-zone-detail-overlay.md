@@ -293,7 +293,7 @@ When `explorerConsulateGateBlocksMinorTribeProvince` is true for the human and o
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | Close | Overlay open | `overlayOpen = false` | Scrim may remain per provider rules. |
-| Tile shortcuts (Explore / Prospect / Build improvement / Build road) | Province intel + unit/work gates | Opens civilian panel shortcuts / work orders | Per Interaction section. |
+| Tile shortcuts (Explore / Prospect / Build improvement / Build road) | Province intel + unit/work gates | Opens civilian panel shortcuts / work orders | Per Interaction section. Same Explore / Prospect / Build improvement events from `MAP30001` / `MAP30002` ([tile-context-radial.md](tile-context-radial.md)). |
 | Tile transport/connectivity text cluster or **Tile details** | Revealed land tile (province) | Opens dismissible Tile details helper | Shows caption/gloss/port/capital-link/(E of F when E>0); no order staging. |
 | Political **Upgrade town** shortcut | Human-owned province, level &lt; 4, Builder + tech/afford gates | `OpenCivilianUnitsPanelEvent(builderOnly: true, upgradeTownShortcutTargetTileKey: <townTileKey>)` | Opens Builder-only civilian panel for direct `upgrade_town` assign. |
 | Political **Establish Consulate** | Missing Consulate gate applies and canonical Consulate probe accepts | `ConfirmDialogEvent`; confirm emits `AppendDiplomaticOrderRequestedEvent` with Establish Overture / Trade Consulate | Dismiss emits nothing; overlay stays open. |

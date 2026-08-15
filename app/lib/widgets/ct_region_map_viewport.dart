@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +12,28 @@ mixin CtRegionMapViewportMixin on State<CtRegionMap> {
   CtRegionMapGame get regionMapGame;
   double get scaleGestureStartMultiplier;
   set scaleGestureStartMultiplier(double value);
+
+  Timer? _tileRadialHoldTimer;
+  Offset? _tileRadialHoldOrigin;
+
+  void cancelTileRadialHoldTimer() {
+    _tileRadialHoldTimer?.cancel();
+    _tileRadialHoldTimer = null;
+    _tileRadialHoldOrigin = null;
+  }
+
+  void _armTileRadialHold(Offset localPosition) {
+    cancelTileRadialHoldTimer();
+    _tileRadialHoldOrigin = localPosition;
+    _tileRadialHoldTimer = Timer(const Duration(milliseconds: 500), () {
+      final origin = _tileRadialHoldOrigin;
+      _tileRadialHoldTimer = null;
+      _tileRadialHoldOrigin = null;
+      if (origin == null || !mounted) return;
+      regionMapGame.suppressNextPrimaryTap = true;
+      regionMapGame.handleSecondaryFromLocal(origin);
+    });
+  }
 
   Widget buildRegionMapViewport() {
     return Focus(
@@ -41,6 +65,25 @@ mixin CtRegionMapViewportMixin on State<CtRegionMap> {
               regionMapGame.zoomBy(factor);
             }
           },
+          onPointerDown: (event) {
+            if (event.buttons == kSecondaryMouseButton) {
+              cancelTileRadialHoldTimer();
+              regionMapGame.handleSecondaryFromLocal(event.localPosition);
+              return;
+            }
+            if (event.buttons == kPrimaryButton) {
+              _armTileRadialHold(event.localPosition);
+            }
+          },
+          onPointerMove: (event) {
+            final origin = _tileRadialHoldOrigin;
+            if (origin == null) return;
+            if ((event.localPosition - origin).distance > kTouchSlop) {
+              cancelTileRadialHoldTimer();
+            }
+          },
+          onPointerUp: (_) => cancelTileRadialHoldTimer(),
+          onPointerCancel: (_) => cancelTileRadialHoldTimer(),
           child: MouseRegion(
             onHover: (event) =>
                 regionMapGame.updateHoverFromLocal(event.localPosition),

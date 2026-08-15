@@ -33,7 +33,7 @@ Later chapters deepen victory counsel; start here so you know the finish line.
 2. The map area is `MAP10001` **Empire overview / map area**: pan, zoom, region tabs (Old World / New World), and selection of provinces and sea zones. When resource icons are on, gold and brown discs near the bottom-left map tools teach extraction colours (Chapter 3). When **Show improvements** is on, owned improved tiles show **1 of 1** / **1 of 2** marks (Chapter 3).
 3. **Empire buttons** sit as an always-visible **icon column on the left** of the map (labels on hover), in this order: Production (`GAME20001`), Trade (`GAME60001`), Development (`GAME80001`), Civilian Units (`UNIT10001` **Civilian units panel**), Military Units (`UNIT20001` **Military units panel**), Naval Units (`UNIT30001` **Naval units panel**), Diplomacy (`GAME30001`), Technology (`GAME40001`), Victory (`GAME70001`). Trade is the Trade screen (Chapter 8). Victory opens mid-campaign standings and conditions (Chapter 15).
 4. The top bar carries turn controls, region tabs, and the hamburger that opens `GAME50001` **Game side menu** (Game Parameters read-only + Debug log — not a second empire toolbar).
-5. Tap a province or sea zone to open `MAP20001` **Province sea-zone overlay** for identity, ownership, and local actions.
+5. Tap a province or sea zone to open `MAP20001` **Province sea-zone overlay** for identity, ownership, and local actions. Right-click a tile (or press and hold on a touch screen) to open `MAP30001`, a small ring of nearby actions: **Explore**, **Prospect**, **Build improvement**, and **More**. **More** opens `MAP30002` **More tile actions**, which starts with **Province details** — the same panel as a tap.
 6. The buttons on the map change what you see. They are map tools, not separate screens. **Map display options** prints seven switches: **Show resources**, **Show improvements**, **Show roads and rails**, **Show province and sea borders**, **Show province ownership**, **Show province names**, and **Highlight land not bound to the capital**. Defaults: all **ON** except **Show province ownership** **OFF**. The hatch itself is Chapter 3. A shortcut button cycles four presets; its tooltip names the current combination. Preferences persist across save and load.
 
 You may see a short “please wait” screen before the map appears (Chapter 2).
@@ -62,6 +62,7 @@ Rival Great Powers issue the same kinds of orders you do. A chosen **leader** ch
 - [ ] Victory at a glance states 31+ OW provinces, calendar halt vs infinite mode, and that only GPs win.
 - [ ] Turn rhythm describes choose actions → **Next turn** → the game carries out the turn → choose actions again (or end).
 - [ ] Orientation cites `GAME10001`, `MAP10001` **Empire overview / map area**, empire buttons in Production / Trade / Development order with unit-panel IDs `UNIT10001` / `UNIT20001` / `UNIT30001`, `GAME50001`, `MAP20001` **Province sea-zone overlay**.
+- [ ] Orientation names right-click / press-and-hold `MAP30001` and **More** `MAP30002` **Province details**.
 - [ ] Orientation names **Highlight land not bound to the capital** among Map display options (hatch detail in Chapter 3).
 - [ ] Cites `GAME60001` Trade as an operable left-side icon destination (details in Chapter 8); does not contradict Chapter 2’s initializing wait screen.
 - [ ] Sources footer lists the primary paths from the coverage map.
@@ -77,4 +78,7 @@ Rival Great Powers issue the same kinds of orders you do. A chosen **leader** ch
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/empire-overview.md`
 - `SPEC/ui/screen-registry.md`
+- `SPEC/ui/tile-context-radial.md`
+- `SPEC/ui/tile-more-actions-dialog.md`
+- `SPEC/ui/components/tile-radial-catalog.md`
 - `SPEC/ai/ai-personalities.md`

@@ -80,7 +80,8 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4414+#4415+#4407+#4416+#4409 merge headroom (measured 78_506).
 // raised for CMPT10001 force/fort/Details on combat mode choice (Refs #4438; measured 78_737).
 // raised for MAP20001 Station spy Civilian shortcut + #4438 merge (Refs #4439; measured 79_147).
-const _maxMainLines = 79200;
+// raised for MAP30001 tile context radial + More dialog (Refs #4440; measured 80_223).
+const _maxMainLines = 80400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

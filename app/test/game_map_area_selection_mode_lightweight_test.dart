@@ -215,6 +215,7 @@ void main() {
 
     var regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
     expect(regionMap.onMapTileTappedForDetail, isNotNull);
+    expect(regionMap.onMapTileSecondaryForRadial, isNotNull);
     expect(regionMap.onCivilianTileStateChanged, isNotNull);
     expect(regionMap.bus, isNotNull);
 
@@ -230,6 +231,7 @@ void main() {
     expect(find.text('Select a tile, or click cancel'), findsOneWidget);
     regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
     expect(regionMap.onMapTileTappedForDetail, isNull);
+    expect(regionMap.onMapTileSecondaryForRadial, isNull);
     expect(regionMap.onCivilianTileStateChanged, isNull);
     expect(regionMap.bus, isNull);
   });

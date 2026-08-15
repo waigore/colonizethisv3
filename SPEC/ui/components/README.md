@@ -11,6 +11,7 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | Component | File | Consumed by |
 |-----------|------|-------------|
 | Combat mode choice intel | [`combat-mode-choice-intel.md`](combat-mode-choice-intel.md) | `CMPT10001` (combat mode choice dialog). |
+| Tile radial catalog | [`tile-radial-catalog.md`](tile-radial-catalog.md) | `MAP30001` (tile context radial), `MAP30002` (more tile actions). |
 | `CtDarkScaffold` | [`ct-dark-scaffold.md`](ct-dark-scaffold.md) | `CtGameFeatureScreenShell` (dark-chrome path) and any dark-theme screen. |
 | `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention). |
 | `TitledDialogueChrome` / `buildTitledDialogueChrome` | [`titled-dialogue-chrome.md`](titled-dialogue-chrome.md) | `OVL10001` (game-start intro), `OVL80001` (tribe first contact). |

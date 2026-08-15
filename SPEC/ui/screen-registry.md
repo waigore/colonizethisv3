@@ -14,7 +14,7 @@ Major flows only; keep this table small.
 |------|------|----------------------------|
 | `SHEL` | App shell, main menu, initializing, pause menu | `1` menu/shell route, `3` game initializing, `4` pause menu panel |
 | `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route, `7` victory route, `9` counsel route |
-| `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
+| `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay, `3` tile radial / more actions |
 | `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military, `6` train naval |
 | `DIPL` | Diplomacy panels and grant flows | `1` diplomacy panel/screen, `2` grant/subsidy dialog |
 | `PROD` | Production surfaces | `1` production panel/screen, `2` commodity breakdown dialog |
@@ -48,6 +48,8 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME90001` | Counsel screen | [counsel-panel.md](counsel-panel.md) | `app/lib/features/game/screens/counsel/counsel_screen.dart` | Counsel Panel | active |
 | `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/map_state/game_map_area.dart` | Map Widget | active |
 | `MAP20001` | Province sea-zone overlay | [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) | `app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart` | Province Overlay | active |
+| `MAP30001` | Tile context radial | [tile-context-radial.md](tile-context-radial.md) | `app/lib/features/game/widgets/map_radial/tile_context_radial.dart` | Tile Context Radial | active |
+| `MAP30002` | More tile actions | [tile-more-actions-dialog.md](tile-more-actions-dialog.md) | `app/lib/features/game/widgets/map_radial/tile_more_actions_dialog.dart` | More Tile Actions | active |
 | `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart` | Civilian Units Panel | active |
 | `UNIT20001` | Military units panel | [military-units-panel.md](military-units-panel.md) | `app/lib/features/game/widgets/units/military/military_units_panel.dart` | Military Units Panel | active |
 | `UNIT30001` | Naval units panel | [naval-units-panel.md](naval-units-panel.md) | `app/lib/features/game/widgets/units/naval/naval_units_panel.dart` | Naval Units Panel | active |

@@ -6144,5 +6144,29 @@
       "amount": {"type": "int"},
       "count": {"type": "int"}
     }
+  },
+  "tileRadial_explore": "Explore",
+  "@tileRadial_explore": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Explore (Refs #4440)."
+  },
+  "tileRadial_prospect": "Prospect",
+  "@tileRadial_prospect": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Prospect (Refs #4440)."
+  },
+  "tileRadial_buildImprovement": "Build improvement",
+  "@tileRadial_buildImprovement": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build improvement (Refs #4440)."
+  },
+  "tileRadial_more": "More",
+  "@tileRadial_more": {
+    "description": "MAP30001 More spoke label (Refs #4440)."
+  },
+  "tileRadial_moreTitle": "More tile actions",
+  "@tileRadial_moreTitle": {
+    "description": "MAP30002 dialog title (Refs #4440)."
+  },
+  "tileRadial_provinceDetails": "Province details",
+  "@tileRadial_provinceDetails": {
+    "description": "MAP30002 first row; opens MAP20001 (Refs #4440)."
   }
 }
