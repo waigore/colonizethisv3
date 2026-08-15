@@ -44,7 +44,7 @@ Capital link, roads, rails, ports, and town rules that decide connectivity are C
 - **One pending WorkOrder per civilian unit per turn.**
 - **Per-tile exclusivity:** at most one of your Builder/Engineer/Merchant development or purchase works (pending or in progress) on a given tile — else **Tile already has development or purchase work for this player**.
 - **Cancel** in-progress or pending work from the civilian panel (confirm dialog): the order clears; **materials already spent are not refunded**.
-- Extraction yield is bounded by `min(improvement level, tech cap, transport/town caps where applicable)`, connectivity to the capital, and prospecting for minerals. Default tech cap is often **1** until cap techs unlock; design exceptions include horses (cap 1) and wool (cap 3) — see `SPEC/game/tech-and-extraction-cap.md`. Capital grain may include a scenario **+5 grain/turn** bonus when configured.
+- Extraction yield is bounded by `min(improvement level, tech cap, transport/town caps where applicable)`, connectivity to the capital, and prospecting for minerals. Default tech cap is often **1** until cap techs unlock; design exceptions include horses (cap 1) and wool (cap 3) — see `SPEC/game/tech-and-extraction-cap.md`. Capital grain may include a scenario **+5 grain/turn** bonus when configured. On `MAP10001`, owned improved tiles show that same cap as **1 of 1** (muted, already at the limit) or **1 of 2** (still room to raise) so you need not open Development to know whether another improve step is legal.
 
 Work completes in **Build/work**; do not expect the improvement to extract on the same click.
 
@@ -62,7 +62,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 
 ## Consequences
 
-- Building past the tech extraction cap wastes materials for no extra yield.
+- Building past the tech extraction cap wastes materials for no extra yield. If the map already shows a muted **1 of 1**, do not send a Builder there until a gathering tech raises the cap.
 - Ignoring exclusivity and one-work-per-unit rules floods the panel with rejected orders.
 - Purchasing land without embassy or while at war fails at assign; waiting until completion to check treasury causes surprise shortfalls if you spend elsewhere the same turn.
 - Disconnecting improved tiles from the capital starves Extraction even when the map looks developed.
@@ -74,7 +74,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - [ ] Covers work targets: improvement, town, road, port, fort, rail, purchase_land (explore/prospect cross-ref Ch. 4).
 - [ ] States assign-time Insufficient treasury/materials checks and one-order / per-tile exclusivity.
 - [ ] Documents cancel without material refund; purchase_land debit-at-completion.
-- [ ] Explains extraction caps / tech caps and connectivity dependency at player level, and points to Chapter 3 for the on-map hatch of land not bound to the capital.
+- [ ] Explains extraction caps / tech caps and connectivity dependency at player level, and points to Chapter 3 for the on-map hatch of land not bound to the capital and for `{n} of {cap}` improvement marks.
 - [ ] Explains `MAP20001` Extraction/Available as post-resolution projection from current world state (new-game visibility, mid-turn draft orders unchanged until resolution).
 - [ ] Distinguishes province-overlay Extraction/Available from stockpile-centric `GAME20001` Production.
 - [ ] Explains `MAP20001` Extraction `effective (full)` brackets, capital grain bonus annotation, and the muted partial-yield reason line when connectivity or path limits apply (cross-ref Chapter 3).

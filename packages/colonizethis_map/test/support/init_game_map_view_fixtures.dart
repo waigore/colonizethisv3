@@ -95,6 +95,7 @@ Game minimalGame({
   Map<String, String> portsByProvinceSeaboard = const {},
   Map<String, String> seaZoneDisplayNameById = const {},
   Map<String, List<int>>? greatPowerColorOverride,
+  TileMapState tileState = const TileMapState(),
 }) {
   return Game(
     id: id,
@@ -106,6 +107,7 @@ Game minimalGame({
       fleets: fleets,
       armies: armies,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
+      tileState: tileState,
     ),
     players: players,
     minorNations: minorNations,
@@ -137,6 +139,8 @@ class DualRegionViewScenario {
     Map<String, int>? resourceExtractionEffectiveUnitsByTile,
     Map<String, int>? resourceExtractionBlockedUnitsByTile,
     Set<String>? civilianMarkerOwnerIds,
+    String? viewingFactionId,
+    Map<String, bool>? viewingTechUnlocked,
   }) {
     return buildInitGameMapViewData(
       game: game,
@@ -154,6 +158,8 @@ class DualRegionViewScenario {
       resourceExtractionBlockedUnitsByTile:
           resourceExtractionBlockedUnitsByTile,
       civilianMarkerOwnerIds: civilianMarkerOwnerIds,
+      viewingFactionId: viewingFactionId,
+      viewingTechUnlocked: viewingTechUnlocked,
     );
   }
 }
@@ -275,6 +281,8 @@ InitGameMapViewData buildViewDataForScenario(
   Map<String, int>? resourceExtractionEffectiveUnitsByTile,
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
   Set<String>? civilianMarkerOwnerIds,
+  String? viewingFactionId,
+  Map<String, bool>? viewingTechUnlocked,
 }) {
   return scenario.buildViewData(
     cellSize: cellSize,
@@ -288,5 +296,7 @@ InitGameMapViewData buildViewDataForScenario(
         resourceExtractionEffectiveUnitsByTile,
     resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
     civilianMarkerOwnerIds: civilianMarkerOwnerIds,
+    viewingFactionId: viewingFactionId,
+    viewingTechUnlocked: viewingTechUnlocked,
   );
 }

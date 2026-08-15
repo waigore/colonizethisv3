@@ -9,7 +9,10 @@
 | Part | Extension (name) | Primary responsibility |
 |------|-------------------|-------------------------|
 | `region_map_component_render_orchestrator.dart` | `_CtRegionMapRenderOrchestrator` | Visibility helpers, `_renderRegionMap` **call order** (stacking) |
-| `region_map_component_render_core.dart` | `_CtRegionMapRenderCore` | Terrain / tile Wang passes, transport bitmask overlay (between land base and L2 feature tiles), resource overlay, corner labels |
+| `region_map_component_render_core.dart` | `_CtRegionMapRenderCore` | Terrain / tile Wang passes, resource overlay, corner labels |
+| `region_map_component_render_core_land_sea.dart` | `CtRegionMapRenderCoreTiles` | Sea and land base tile passes |
+| `region_map_component_render_core_transport_feature.dart` | `CtRegionMapRenderCoreTransportFeature` | Transport bitmask overlay, L1 plains resource variants, L2 feature overlays |
+| `region_map_component_render_core_overlays.dart` | `CtRegionMapRenderCoreOverlays` | Resource icons, extraction discs, improvement corner labels |
 | `region_map_component_render_political.dart` | `_CtRegionMapRenderPolitical` | GP ownership tint, province/faction borders, province names, hovered-province glow |
 | `region_map_component_render_markers_selection.dart` | `CtRegionMapRenderMarkersSelection` | Valid-tile glow, tile selection highlights, hover selector |
 | `region_map_component_render_markers_settlements.dart` | `CtRegionMapRenderMarkersSettlements*` | Capitals, towns, warp zones |

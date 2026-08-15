@@ -123,6 +123,16 @@ Compact teaching chrome for gold vs brown **extraction discs** (Refs #4367; disc
 - **Narrow (`< kNarrowBreakpoint`):** Collapses to a tappable two-disc chip; popover stacks above the bottom province sheet when open.
 - **Tap:** Opens a dismissible floating panel (cargo-hold family: ×, outside tap, Esc) restating both meanings plus one counsel line about restoring roads/towns/ports toward the capital. No orders staged; no new screen ID (extends `MAP10001`).
 
+### Improvement headroom legend (in-game map only)
+
+Compact teaching chrome for `{n} of {cap}` improvement marks (Refs #4408; paint contract in [map-widget.md](map-widget.md) § Improvement headroom). No new screen ID.
+
+- **Placement:** Above the extraction-disc legend (when present) and the bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/controls/game_map_corner_controls.dart) row ([ImprovementHeadroomLegend](../../app/lib/features/game/flame/controls/improvement_headroom_legend.dart)). Must not cover Next turn.
+- **Visibility:** Shown when **Show improvements** is on **and** `ShellPlayerContext.viewingPlayerId != null`. Hidden when improvements are off and in **global observe**. Independent of resource icons. `#4388` flags stay “improvements on/off”.
+- **Wide:** Sample muted `1 of 1` plus “at this court’s limit”; sample accented `1 of 2` plus “can still raise”.
+- **Narrow (`< kNarrowBreakpoint`):** Collapses to a tappable `{n} of {cap}` chip.
+- **Tap:** Opens a dismissible floating panel (extraction-legend family: ×, outside tap, Esc) restating that `{n} of {cap}` is improvement level versus what this court can extract now, and that muted means at the current limit.
+
 ### Tile owner / sight hover readout (in-game map only)
 
 Compact MAP10001 teaching chrome (Refs #4406). No new screen ID; does not default-on GP tint (`#1521`) or the players bar (`#3986`); not a second always-visible legend beside extraction discs.
@@ -308,6 +318,15 @@ Folder: **Extraction disc legend** — chrome host for [ExtractionDiscLegend](..
 | Hidden — terrain only | Legend omitted; corner controls stay, home-to-capital enabled. | § Extraction disc legend |
 | Hidden — global observe | Legend omitted; home-to-capital disabled (`viewingPlayerId == null`). | § Extraction disc legend |
 
+Folder: **Improvement headroom legend** — chrome host for [ImprovementHeadroomLegend](../../app/lib/features/game/flame/controls/improvement_headroom_legend.dart) above corner controls, registered from [`improvementHeadroomLegendDirectories`](../../widgetbook_host/lib/catalogs/catalog_improvement_headroom.dart) (Refs #4408). Folder: **Improvement headroom marks** — map-tile goldens for at-cap, has-headroom, foreign `{level}`-only, owned hidden-resource `{level}`-only, unimproved unmarked, unrevealed, and improvements-off.
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Visible — legend above corner controls | Improvements on + viewing player. | § Improvement headroom legend |
+| Hidden — improvements off | Legend omitted; corner controls stay. | § Improvement headroom legend |
+| Hidden — global observe | Legend omitted. | § Improvement headroom legend |
+| 320 dp narrow | Chip does not overflow or cover Next turn. | § Improvement headroom legend |
+
 Folder: **Map tile hover readout** — isolated MAP10001 owner/sight chrome ([MapTileHoverReadout](../../app/lib/features/game/flame/controls/map_tile_hover_readout.dart)), registered from [`mapTileHoverReadoutDirectories`](../../widgetbook_host/lib/catalogs/catalog_game_chrome.dart) (Refs #4406).
 
 | Story | Purpose | Authority |
@@ -393,8 +412,10 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 - **Given** the Map display options dialog is visible for the first time in a game session, **then** the dialog shows **Show resources**, **Show improvements**, **Show roads and rails**, **Show province and sea borders**, **Show province ownership**, **Show province names**, and **Highlight land not bound to the capital**, with all except **Show province ownership** in the ON state.
 - **Given** `GameMapOptionsDialog` variants for Map marks all-on (defaults, including the renamed **Show province and sea borders** row), terrain-only, resources-only, improvements-without-resources, roads-disabled-when-improvements-off, and `kMinViewportWidth` 320 dp, **when** the host golden suite in `app/test/game_map_options_dialog_goldens_test.dart` captures each keyed `RepaintBoundary`, **then** each `matchesGoldenFile` baseline under `app/test/goldens/game_map_options_dialog_*.png` matches the committed PNG (Refs #4388).
 - **Given** the player turns **Show resources** off, **when** the map re-renders, **then** commodity icons and extraction discs are not painted; improvements and roads follow their own flags.
-- **Given** the player turns **Show improvements** off, **when** the map re-renders, **then** `I{n}` labels are hidden, **Show roads and rails** is off and disabled (`onChanged == null`), and road/rail sprites do not paint; resources are unchanged.
-- **Given** resources are off and improvements are on, **when** the map re-renders, **then** `I{n}` labels paint and resource icons / discs do not.
+- **Given** the player turns **Show improvements** off, **when** the map re-renders, **then** improvement marks are hidden, **Show roads and rails** is off and disabled (`onChanged == null`), and road/rail sprites do not paint; resources are unchanged.
+- **Given** resources are off and improvements are on, **when** the map re-renders, **then** improvement marks paint and resource icons / discs do not.
+- **Given** **Show improvements** is on and a viewing player is present, **when** the map chrome renders, **then** the UI layer shows a compact improvement-headroom teaching chip that opens a dismissible panel (× / outside tap / Esc) explaining `{n} of {cap}` as level versus this court’s current extraction limit; no new screen ID. Pins: `app/test/improvement_headroom_legend_test.dart`; goldens `app/test/improvement_headroom_legend_goldens_test.dart`; Widgetbook folder **Improvement headroom legend**.
+- **Given** a 320 dp-wide viewport, **when** marks and the teaching chip render, **then** they do not overflow horizontally or block Next turn. Golden: `app/test/goldens/improvement_headroom_legend_320dp.png`.
 - **Given** the Map display options dialog is visible, **when** the user toggles `Show province and sea borders` OFF, **then** the UI layer updates the global province-overlay visibility state so that all in-game Empire overview maps stop drawing province and sea-zone boundary strokes until that toggle is ON again (the Great Power ownership tint is unchanged and follows `Show province ownership`).
 - **Given** the user has toggled `Show province and sea borders` OFF in the Map display options dialog and then closed the dialog, **when** the user reopens the Map display options dialog in the same app session, **then** that toggle appears in the OFF state and the in-game maps continue to omit province and sea-zone boundary strokes.
 - **Given** the Map display options dialog is visible, **when** the user toggles `Show province ownership` OFF, **then** the UI layer updates global state so all in-game Empire overview maps stop drawing the Great Power land ownership tint until `Show province ownership` is toggled ON again (boundary strokes are unchanged and follow `Show province overlay`).
