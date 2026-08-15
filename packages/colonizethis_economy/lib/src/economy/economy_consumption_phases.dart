@@ -19,6 +19,46 @@ class ConsumptionUnknownShipTypeException implements Exception {
       'ConsumptionUnknownShipTypeException: unknown ship type $shipTypeId';
 }
 
+/// Food units each peasant consumes per turn in [consumeWorkerFood].
+const int kWorkerFoodPerPeasant = 1;
+
+/// Food units each trained worker consumes per turn in [consumeWorkerFood].
+const int kWorkerFoodPerTrainedTier = 2;
+
+/// Grain then meat — the same order [consumeFoodUnits] deducts.
+List<String> get workerFoodCommodityIdsInConsumeOrder => [
+  CommodityCatalog.grain.id,
+  CommodityCatalog.meat.id,
+];
+
+/// Per-tier food units used by [consumeWorkerFood].
+int workerFoodPerUnitForTier(WorkerTier tier) {
+  switch (tier) {
+    case WorkerTier.peasant:
+      return kWorkerFoodPerPeasant;
+    case WorkerTier.apprentice:
+    case WorkerTier.journeyman:
+    case WorkerTier.master:
+      return kWorkerFoodPerTrainedTier;
+  }
+}
+
+/// Luxury commodity id consumed by [assignWorkerLuxury] for [tier].
+///
+/// Peasant has no luxury. Trained ids match `_allocateConsumption`.
+String? workerLuxuryCommodityIdForTier(WorkerTier tier) {
+  switch (tier) {
+    case WorkerTier.peasant:
+      return null;
+    case WorkerTier.apprentice:
+      return CommodityCatalog.refinedSugar.id;
+    case WorkerTier.journeyman:
+      return CommodityCatalog.cigars.id;
+    case WorkerTier.master:
+      return CommodityCatalog.furHats.id;
+  }
+}
+
 /// Consumes up to [required] food units (grain then meat) from [stockpile].
 /// Returns a record of (updatedStockpile, unitsConsumed).
 (Stockpile, int) consumeFoodUnits({
@@ -183,10 +223,22 @@ WorkerFoodFedCounts consumeWorkerFood({
     return consumed ~/ foodPerUnit;
   }
 
-  final fedMasters = feedGroup(count: workers.masters, foodPerUnit: 2);
-  final fedJourneymen = feedGroup(count: workers.journeymen, foodPerUnit: 2);
-  final fedApprentices = feedGroup(count: workers.apprentices, foodPerUnit: 2);
-  final fedPeasants = feedGroup(count: workers.peasants, foodPerUnit: 1);
+  final fedMasters = feedGroup(
+    count: workers.masters,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.master),
+  );
+  final fedJourneymen = feedGroup(
+    count: workers.journeymen,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.journeyman),
+  );
+  final fedApprentices = feedGroup(
+    count: workers.apprentices,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.apprentice),
+  );
+  final fedPeasants = feedGroup(
+    count: workers.peasants,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.peasant),
+  );
 
   return (
     stockpile: current,

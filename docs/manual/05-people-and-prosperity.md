@@ -23,9 +23,9 @@ On **Production screen**, the **Labour this turn** line under the worker grid pr
 
 ### Recruit, train, and disband
 
-On `GAME20001`, use **Labour Controls**:
+On `GAME20001`, use **Labour Controls**. Each row shows the catalog cost (for example fabric ×2, or £200 + paper ×2 + 1 peasant), how much labour that worker gives, and what food or luxury they eat. Locked trained tiers show **Requires:** with the technology names. If **+** will not press, hover or long-press it — the hint names the shortage (treasury, materials, peasants, or technology). New workers staff **next** Production, not the same resolved turn.
 
-1. **Recruit peasant** or **Train** a higher tier — both queue a `RecruitWorkerOrder` for **Build/work**. There is **no** direct tier-to-tier promotion: train always consumes **one peasant** from the reserved pool.
+1. **Recruit peasant** or **Train** a higher tier — both queue a recruit or train worker decree for **Build/work**. There is **no** direct tier-to-tier promotion: train always consumes **one peasant** from the reserved pool.
 2. Costs (v1 catalog — treat as fixed until a ruleset ships otherwise):
 
 | Target | Cost |
@@ -35,7 +35,7 @@ On `GAME20001`, use **Labour Controls**:
 | Journeyman | £500 + paper ×5 (consumes 1 peasant) |
 | Master | £1000 + paper ×10 (consumes 1 peasant) |
 
-3. **Tech gates** (both techs required): Apprentice → `apprentice_workers` + `sugar_refining`; Journeyman → `trained_journeymen` + `cigar_production`; Master → `master_artisans` + `hat_production`. Locked tiers show as locked in the panel until researched.
+3. **Tech gates** (both technologies required): Apprentice needs Apprentice Workers and Sugar Refining; Journeyman needs Trained Journeymen and Cigar Production; Master needs Master Artisans and Hat Production. Locked rows print **Requires:** with those names until you research them.
 4. **Peasant reservation:** available peasants = pool peasants minus pending consumes from recruit/train **and** military/naval builds. Civilian unit builds do **not** consume peasants.
 5. **Disband** a trained worker is an **immediate Orders-phase** action: that tier −1, peasants +1, **no refund**. It is not queued for Build/work.
 

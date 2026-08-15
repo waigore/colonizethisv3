@@ -2,6 +2,7 @@
 // SPEC/ui/production-panel.md § Labour Controls, SPEC/game/workers-and-population.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -56,10 +57,9 @@ void main() {
     });
 
     test('ignores orders for other players', () {
-      final orders = productionLabourOrdersWithRecruits(
-        [WorkerTier.master],
-        id: 'other_gp',
-      );
+      final orders = productionLabourOrdersWithRecruits([
+        WorkerTier.master,
+      ], id: 'other_gp');
       final counts = queuedRecruitWorkerCountsByTier(
         currentOrders: orders,
         playerId: productionLabourTestPlayerId,
@@ -104,82 +104,84 @@ void main() {
   });
 
   group('canAppendRecruitWorkerOrder', () {
-    for (final case_ in <
-      ({
-        String name,
-        Player player,
-        WorkerTier tier,
-        Orders orders,
-        bool expected,
-      })
-    >[
-      (
-        name: 'peasant recruit succeeds when fabric ≥ 2',
-        player: productionLabourGpWithPool(
-          stockpile: {CommodityCatalog.fabric.id: 2},
-        ),
-        tier: WorkerTier.peasant,
-        orders: const Orders(),
-        expected: true,
-      ),
-      (
-        name: 'peasant recruit fails when fabric < 2',
-        player: productionLabourGpWithPool(
-          stockpile: {CommodityCatalog.fabric.id: 1},
-        ),
-        tier: WorkerTier.peasant,
-        orders: const Orders(),
-        expected: false,
-      ),
-      (
-        name: 'apprentice train fails when tech locked',
-        player: productionLabourGpWithPool(
-          peasants: 1,
-          treasury: 200,
-          stockpile: {CommodityCatalog.paper.id: 2},
-        ),
-        tier: WorkerTier.apprentice,
-        orders: const Orders(),
-        expected: false,
-      ),
-      (
-        name: 'apprentice train succeeds with full tech + cost coverage',
-        player: productionLabourGpWithPool(
-          peasants: 1,
-          treasury: 200,
-          stockpile: {CommodityCatalog.paper.id: 2},
-          techUnlocked: productionLabourApprenticeTech,
-        ),
-        tier: WorkerTier.apprentice,
-        orders: const Orders(),
-        expected: true,
-      ),
-      (
-        name:
-            'apprentice train fails when peasant ledger exhausted by pending military builds',
-        player: productionLabourGpWithPool(
-          peasants: 1,
-          treasury: 200,
-          stockpile: {CommodityCatalog.paper.id: 2},
-          techUnlocked: productionLabourApprenticeTech,
-        ),
-        tier: WorkerTier.apprentice,
-        orders: productionLabourOrdersWithMilitaryBuilds(1),
-        expected: false,
-      ),
-      (
-        name: 'second apprentice train fails when only one peasant available',
-        player: productionLabourGpWithPool(
-          peasants: 1,
-          treasury: 1000,
-          stockpile: {CommodityCatalog.paper.id: 20},
-          techUnlocked: productionLabourApprenticeTech,
-        ),
-        tier: WorkerTier.apprentice,
-        orders: productionLabourOrdersWithRecruits([WorkerTier.apprentice]),
-        expected: false,
-      ),
-    ]) {
+    for (final case_
+        in <
+          ({
+            String name,
+            Player player,
+            WorkerTier tier,
+            Orders orders,
+            bool expected,
+          })
+        >[
+          (
+            name: 'peasant recruit succeeds when fabric ≥ 2',
+            player: productionLabourGpWithPool(
+              stockpile: {CommodityCatalog.fabric.id: 2},
+            ),
+            tier: WorkerTier.peasant,
+            orders: const Orders(),
+            expected: true,
+          ),
+          (
+            name: 'peasant recruit fails when fabric < 2',
+            player: productionLabourGpWithPool(
+              stockpile: {CommodityCatalog.fabric.id: 1},
+            ),
+            tier: WorkerTier.peasant,
+            orders: const Orders(),
+            expected: false,
+          ),
+          (
+            name: 'apprentice train fails when tech locked',
+            player: productionLabourGpWithPool(
+              peasants: 1,
+              treasury: 200,
+              stockpile: {CommodityCatalog.paper.id: 2},
+            ),
+            tier: WorkerTier.apprentice,
+            orders: const Orders(),
+            expected: false,
+          ),
+          (
+            name: 'apprentice train succeeds with full tech + cost coverage',
+            player: productionLabourGpWithPool(
+              peasants: 1,
+              treasury: 200,
+              stockpile: {CommodityCatalog.paper.id: 2},
+              techUnlocked: productionLabourApprenticeTech,
+            ),
+            tier: WorkerTier.apprentice,
+            orders: const Orders(),
+            expected: true,
+          ),
+          (
+            name:
+                'apprentice train fails when peasant ledger exhausted by pending military builds',
+            player: productionLabourGpWithPool(
+              peasants: 1,
+              treasury: 200,
+              stockpile: {CommodityCatalog.paper.id: 2},
+              techUnlocked: productionLabourApprenticeTech,
+            ),
+            tier: WorkerTier.apprentice,
+            orders: productionLabourOrdersWithMilitaryBuilds(1),
+            expected: false,
+          ),
+          (
+            name:
+                'second apprentice train fails when only one peasant available',
+            player: productionLabourGpWithPool(
+              peasants: 1,
+              treasury: 1000,
+              stockpile: {CommodityCatalog.paper.id: 20},
+              techUnlocked: productionLabourApprenticeTech,
+            ),
+            tier: WorkerTier.apprentice,
+            orders: productionLabourOrdersWithRecruits([WorkerTier.apprentice]),
+            expected: false,
+          ),
+        ]) {
       test(case_.name, () {
         expect(
           _canAppend(
@@ -195,8 +197,9 @@ void main() {
 
   group('orders mutation helpers', () {
     test('append / pop LIFO + empty-list cleanup', () {
-      final withPeasant =
-          productionLabourOrdersWithRecruits([WorkerTier.peasant]);
+      final withPeasant = productionLabourOrdersWithRecruits([
+        WorkerTier.peasant,
+      ]);
       final appended = ordersWithAppendedRecruitWorkerOrder(
         currentOrders: withPeasant,
         playerId: productionLabourTestPlayerId,
@@ -231,7 +234,8 @@ void main() {
         tier: WorkerTier.master,
       );
       expect(
-        unchanged.recruitWorkerOrdersByPlayerId[productionLabourTestPlayerId]!
+        unchanged
+            .recruitWorkerOrdersByPlayerId[productionLabourTestPlayerId]!
             .length,
         1,
       );
@@ -242,28 +246,32 @@ void main() {
         tier: WorkerTier.peasant,
       );
       expect(
-        cleared.recruitWorkerOrdersByPlayerId
-            .containsKey(productionLabourTestPlayerId),
+        cleared.recruitWorkerOrdersByPlayerId.containsKey(
+          productionLabourTestPlayerId,
+        ),
         isFalse,
       );
     });
   });
 
   group('disband helpers', () {
-    test('disband journeyman increments peasants and decrements journeymen', () {
-      final updated = playerWithImmediateDisband(
-        player: productionLabourGpWithPool(
-          peasants: 0,
-          journeymen: 1,
-          treasury: 500,
-        ),
-        tier: WorkerTier.journeyman,
-      );
-      expect(updated, isNotNull);
-      expect(updated!.workerPool.peasants, 1);
-      expect(updated.workerPool.journeymen, 0);
-      expect(updated.treasury, 500);
-    });
+    test(
+      'disband journeyman increments peasants and decrements journeymen',
+      () {
+        final updated = playerWithImmediateDisband(
+          player: productionLabourGpWithPool(
+            peasants: 0,
+            journeymen: 1,
+            treasury: 500,
+          ),
+          tier: WorkerTier.journeyman,
+        );
+        expect(updated, isNotNull);
+        expect(updated!.workerPool.peasants, 1);
+        expect(updated.workerPool.journeymen, 0);
+        expect(updated.treasury, 500);
+      },
+    );
 
     for (final case_ in <({String name, Player player, WorkerTier tier})>[
       (
@@ -279,42 +287,87 @@ void main() {
     ]) {
       test(case_.name, () {
         expect(
-          playerWithImmediateDisband(
-            player: case_.player,
-            tier: case_.tier,
-          ),
+          playerWithImmediateDisband(player: case_.player, tier: case_.tier),
           isNull,
         );
       });
     }
 
-    test('gameWithImmediateDisband updates matching player or nulls missing', () {
-      final next = gameWithImmediateDisband(
-        game: productionLabourEmptyGame(
-          players: [
-            productionLabourGpWithPool(masters: 1).copyWith(id: 'gp_a'),
-            productionLabourGpWithPool(masters: 1).copyWith(id: 'gp_b'),
-          ],
-        ),
-        playerId: 'gp_a',
-        tier: WorkerTier.master,
-      );
-      expect(next, isNotNull);
-      final updatedA = next!.players.firstWhere((p) => p.id == 'gp_a');
-      final unchangedB = next.players.firstWhere((p) => p.id == 'gp_b');
-      expect(updatedA.workerPool.masters, 0);
-      expect(updatedA.workerPool.peasants, 1);
-      expect(unchangedB.workerPool.masters, 1);
-      expect(unchangedB.workerPool.peasants, 0);
-
-      expect(
-        gameWithImmediateDisband(
-          game: productionLabourEmptyGame(),
-          playerId: 'missing',
+    test(
+      'gameWithImmediateDisband updates matching player or nulls missing',
+      () {
+        final next = gameWithImmediateDisband(
+          game: productionLabourEmptyGame(
+            players: [
+              productionLabourGpWithPool(masters: 1).copyWith(id: 'gp_a'),
+              productionLabourGpWithPool(masters: 1).copyWith(id: 'gp_b'),
+            ],
+          ),
+          playerId: 'gp_a',
           tier: WorkerTier.master,
+        );
+        expect(next, isNotNull);
+        final updatedA = next!.players.firstWhere((p) => p.id == 'gp_a');
+        final unchangedB = next.players.firstWhere((p) => p.id == 'gp_b');
+        expect(updatedA.workerPool.masters, 0);
+        expect(updatedA.workerPool.peasants, 1);
+        expect(unchangedB.workerPool.masters, 1);
+        expect(unchangedB.workerPool.peasants, 0);
+
+        expect(
+          gameWithImmediateDisband(
+            game: productionLabourEmptyGame(),
+            playerId: 'missing',
+            tier: WorkerTier.master,
+          ),
+          isNull,
+        );
+      },
+    );
+  });
+
+  group('recruitWorkerAppendCheck refusal reasons', () {
+    test('insufficient materials names fabric for peasant', () {
+      final check = recruitWorkerAppendCheck(
+        player: productionLabourGpWithPool(
+          stockpile: {CommodityCatalog.fabric.id: 1},
         ),
-        isNull,
+        currentOrders: const Orders(),
+        candidateTier: WorkerTier.peasant,
       );
+      expect(check.canAppend, isFalse);
+      expect(check.reason, kRecruitWorkerInsufficientMaterials);
+      expect(check.insufficientMaterialIds, {CommodityCatalog.fabric.id});
+    });
+
+    test('insufficient treasury for apprentice when tech and peasants ok', () {
+      final check = recruitWorkerAppendCheck(
+        player: productionLabourGpWithPool(
+          peasants: 1,
+          treasury: 50,
+          stockpile: {CommodityCatalog.paper.id: 10},
+          techUnlocked: productionLabourApprenticeTech,
+        ),
+        currentOrders: const Orders(),
+        candidateTier: WorkerTier.apprentice,
+      );
+      expect(check.canAppend, isFalse);
+      expect(check.reason, kRecruitWorkerInsufficientTreasury);
+    });
+
+    test('insufficient workers when military reservation consumes peasant', () {
+      final check = recruitWorkerAppendCheck(
+        player: productionLabourGpWithPool(
+          peasants: 1,
+          treasury: 200,
+          stockpile: {CommodityCatalog.paper.id: 2},
+          techUnlocked: productionLabourApprenticeTech,
+        ),
+        currentOrders: productionLabourOrdersWithMilitaryBuilds(1),
+        candidateTier: WorkerTier.apprentice,
+      );
+      expect(check.canAppend, isFalse);
+      expect(check.reason, kRecruitWorkerInsufficientWorkers);
     });
   });
 

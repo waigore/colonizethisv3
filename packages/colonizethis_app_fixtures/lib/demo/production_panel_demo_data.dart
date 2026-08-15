@@ -7,39 +7,35 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 
 /// Full stockpile: enough of every commodity for recipes (and worker luxuries).
 Stockpile get _fullStockpile => Stockpile(
-      quantities: {
-        CommodityCatalog.grain.id: 200,
-        CommodityCatalog.meat.id: 200,
-        CommodityCatalog.timber.id: 100,
-        CommodityCatalog.iron.id: 100,
-        CommodityCatalog.wool.id: 80,
-        CommodityCatalog.cotton.id: 80,
-        CommodityCatalog.coal.id: 60,
-        CommodityCatalog.sugarCane.id: 80,
-        CommodityCatalog.tobacco.id: 60,
-        CommodityCatalog.furs.id: 60,
-        CommodityCatalog.copper.id: 60,
-        CommodityCatalog.tin.id: 60,
-        CommodityCatalog.horses.id: 50,
-        CommodityCatalog.lumber.id: 50,
-        CommodityCatalog.castIron.id: 50,
-        CommodityCatalog.fabric.id: 50,
-        CommodityCatalog.refinedSugar.id: 50,
-        CommodityCatalog.cigars.id: 20,
-        CommodityCatalog.furHats.id: 20,
-        CommodityCatalog.steel.id: 30,
-        CommodityCatalog.paper.id: 30,
-        CommodityCatalog.bronze.id: 30,
-      },
-    );
+  quantities: {
+    CommodityCatalog.grain.id: 200,
+    CommodityCatalog.meat.id: 200,
+    CommodityCatalog.timber.id: 100,
+    CommodityCatalog.iron.id: 100,
+    CommodityCatalog.wool.id: 80,
+    CommodityCatalog.cotton.id: 80,
+    CommodityCatalog.coal.id: 60,
+    CommodityCatalog.sugarCane.id: 80,
+    CommodityCatalog.tobacco.id: 60,
+    CommodityCatalog.furs.id: 60,
+    CommodityCatalog.copper.id: 60,
+    CommodityCatalog.tin.id: 60,
+    CommodityCatalog.horses.id: 50,
+    CommodityCatalog.lumber.id: 50,
+    CommodityCatalog.castIron.id: 50,
+    CommodityCatalog.fabric.id: 50,
+    CommodityCatalog.refinedSugar.id: 50,
+    CommodityCatalog.cigars.id: 20,
+    CommodityCatalog.furHats.id: 20,
+    CommodityCatalog.steel.id: 30,
+    CommodityCatalog.paper.id: 30,
+    CommodityCatalog.bronze.id: 30,
+  },
+);
 
 /// All worker tiers present; effective labour is high.
-WorkerPool get _fullWorkerPool => const WorkerPool(
-      peasants: 10,
-      apprentices: 5,
-      journeymen: 2,
-      masters: 1,
-    );
+WorkerPool get _fullWorkerPool =>
+    const WorkerPool(peasants: 10, apprentices: 5, journeymen: 2, masters: 1);
 
 /// Player with abundant resources and workers for "full availability" story.
 Player fullAvailabilityProductionPlayer() {
@@ -54,32 +50,25 @@ Player fullAvailabilityProductionPlayer() {
       workerPool: _fullWorkerPool,
     );
   }
-  return base.copyWith(
-    stockpile: _fullStockpile,
-    workerPool: _fullWorkerPool,
-    );
+  return base.copyWith(stockpile: _fullStockpile, workerPool: _fullWorkerPool);
 }
 
 /// Limited stockpile: only enough for a few runs of some recipes.
 /// Grain covers debug-init military/navy upkeep so worker effective labour matches pool size.
 Stockpile get _partialStockpile => Stockpile(
-      quantities: {
-        CommodityCatalog.grain.id: 500,
-        CommodityCatalog.timber.id: 6,
-        CommodityCatalog.iron.id: 4,
-        CommodityCatalog.coal.id: 2,
-        CommodityCatalog.wool.id: 2,
-        CommodityCatalog.sugarCane.id: 4,
-      },
-    );
+  quantities: {
+    CommodityCatalog.grain.id: 500,
+    CommodityCatalog.timber.id: 6,
+    CommodityCatalog.iron.id: 4,
+    CommodityCatalog.coal.id: 2,
+    CommodityCatalog.wool.id: 2,
+    CommodityCatalog.sugarCane.id: 4,
+  },
+);
 
 /// Few workers, peasants only — effective labour = 2.
-WorkerPool get _partialWorkerPool => const WorkerPool(
-      peasants: 2,
-      apprentices: 0,
-      journeymen: 0,
-      masters: 0,
-    );
+WorkerPool get _partialWorkerPool =>
+    const WorkerPool(peasants: 2, apprentices: 0, journeymen: 0, masters: 0);
 
 /// Player with limited resources and workers for "partial availability" story.
 Player partialAvailabilityProductionPlayer() {
@@ -132,34 +121,58 @@ Player _labourReadinessDemoPlayer({
       workerPool: workerPool,
     );
   }
-  return base.copyWith(
-    stockpile: stockpile,
-    workerPool: workerPool,
-  );
+  return base.copyWith(stockpile: stockpile, workerPool: workerPool);
 }
 
 /// Peasants with insufficient grain — food shortfall reason on labour summary.
 /// SPEC/ui/production-panel.md § Labour readiness (Refs #4237 S2).
 Player foodShortfallLabourReadinessPlayer() => _labourReadinessDemoPlayer(
-      stockpile: const Stockpile().applyDelta('grain', 2),
-      workerPool: const WorkerPool(peasants: 4),
-    );
+  stockpile: const Stockpile().applyDelta('grain', 2),
+  workerPool: const WorkerPool(peasants: 4),
+);
 
 /// Masters fed but missing fur hats — luxury shortfall reason on labour summary.
 /// SPEC/ui/production-panel.md § Labour readiness (Refs #4237 S3).
 Player luxuryShortfallLabourReadinessPlayer() => _labourReadinessDemoPlayer(
-      stockpile: const Stockpile()
-          .applyDelta('grain', 10)
-          .applyDelta('meat', 10),
-      workerPool: const WorkerPool(masters: 2),
-    );
+  stockpile: const Stockpile().applyDelta('grain', 10).applyDelta('meat', 10),
+  workerPool: const WorkerPool(masters: 2),
+);
 
 /// Workers present but no food — zero effective labour with primary reason.
 /// SPEC/ui/production-panel.md § Labour readiness (Refs #4237 S6).
 Player zeroLabourReadinessPlayer() => _labourReadinessDemoPlayer(
-      stockpile: const Stockpile(),
-      workerPool: const WorkerPool(peasants: 4, masters: 1),
-    );
+  stockpile: const Stockpile(),
+  workerPool: const WorkerPool(peasants: 4, masters: 1),
+);
+
+/// Apprentice unlocked with recruit/train catalog resources so Labour
+/// Controls rows show cost + upkeep gists. Master stays tech-locked.
+/// SPEC/ui/production-panel.md § Labour Controls (Refs #4432).
+Player labourCostGistProductionPlayer() {
+  final base = _labourReadinessDemoPlayer(
+    stockpile: const Stockpile()
+        .applyDelta(CommodityCatalog.fabric.id, 10)
+        .applyDelta(CommodityCatalog.paper.id, 20),
+    workerPool: const WorkerPool(peasants: 4, apprentices: 1),
+  );
+  return base.copyWith(
+    treasury: 5000,
+    techUnlocked: const {
+      kTechIdApprenticeWorkers: true,
+      kTechIdSugarRefining: true,
+    },
+  );
+}
+
+/// Trained worker techs missing so Labour Controls show `Requires:` names.
+/// SPEC/ui/production-panel.md § Labour Controls (Refs #4432).
+Player labourLockedTierProductionPlayer() {
+  final base = _labourReadinessDemoPlayer(
+    stockpile: const Stockpile().applyDelta(CommodityCatalog.fabric.id, 4),
+    workerPool: const WorkerPool(peasants: 2),
+  );
+  return base.copyWith(treasury: 0, techUnlocked: const <String, bool>{});
+}
 
 /// Stockpile/worker presets for fast widget tests (avoid `demoGameForOverlay` / debug init).
 Stockpile get productionPanelTestFullStockpile => _fullStockpile;
