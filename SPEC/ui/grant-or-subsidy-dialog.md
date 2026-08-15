@@ -10,7 +10,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `GrantOrSubsidyDialog` | `StatelessWidget` | `game` (`Game`), `humanPlayerId` (`String`), `targetFactionId` (`String`), `isSubsidy` (`bool`), `bus` (`AppEventBus`) | Bus-registered modal (id `grant_or_subsidy`) opened by `DiplomacyPanel` via `OpenDialogEvent('grant_or_subsidy', {targetFactionId, isSubsidy})`. Emits exactly one `GrantOrSubsidySubmittedEvent` on submit. |
+| `GrantOrSubsidyDialog` | `StatelessWidget` | `game` (`Game`), `humanPlayerId` (`String`), `targetFactionId` (`String`), `isSubsidy` (`bool`), `bus` (`AppEventBus`) | Bus-registered modal (id `grant_or_subsidy`) opened by `DiplomacyPanel` via `OpenDialogEvent('grant_or_subsidy', {targetFactionId, isSubsidy})`. Emits exactly one `GrantOrSubsidySubmittedEvent` on submit. Does **not** emit `AppendDiplomaticOrderRequestedEvent`, `NegotiationMoodUpdateEvent`, or `ConfirmDialogEvent`. |
 
 Implementation: `app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart` (private `_GrantSubsidyAmountBody` holds the stepper state). Wrapped in `CtDialogShell`. The mode (`isSubsidy: true` vs `false`) drives the **title**, the **unit** (£ amount for grant; `%` for subsidy), and the **step / range constants**: grant uses `grantAidAmountStep` / `grantAidDefaultAmount` (treasury-bounded); subsidy uses `kSubsidyPercentStep` (5), `kSubsidyPercentMin` (5), `kSubsidyPercentMax` (20), and `kSubsidyPercentDefault` (5) from `colonizethis_logic` and is **treasury-independent** (Refs #3753 R3). Dialog id constant: `grantOrSubsidyDialogId`.
 
@@ -27,7 +27,8 @@ Implementation: `app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart`
 |                                                  |
 |         [ − ]    £ 1,000    [ + ]                |  stepper (− muted on --bg-deep / + accent on --surface-lite)
 |        (Treasury below minimum £500.)            |  italic --danger, shown only when canAdjust=false (grant mode)
-|                                                  |
+|        Cost: £1,000 from your treasury…          |  bodySmall --muted; live Cost/Effect when Submit enabled (Refs #4415)
+|        Effect: Standing with {name} improves…    |
 |              [ Cancel ]    [ Submit ]            |
 +--------------------------------------------------+
 ```
@@ -42,6 +43,8 @@ Subsidy mode (`isSubsidy == true`) reuses the same chrome but flips the unit to 
 | ------------------------------------------------ |
 |         [ − ]      10%      [ + ]                |  stepper, step 5%, clamped 5–20%
 |                                                  |  no below-minimum hint (treasury-independent)
+|        Cost: No per-turn gold charge.            |  live Cost/Effect (always, subsidy Submit is enabled)
+|        Effect: 5% subsidy with {name}…           |
 |              [ Cancel ]    [ Submit ]            |
 +--------------------------------------------------+
 ```
@@ -55,6 +58,7 @@ Subsidy mode (`isSubsidy == true`) reuses the same chrome but flips the unit to 
   - **Amount:** Grant mode renders `Text(diplomacy_currencyAmount(amount))` (e.g. `£1,000`); subsidy mode renders `Text('$amount%')` (e.g. `10%`; Refs #3753 R3). Either way the label uses the dark-theme `headlineSmall` slot (display font), color `EditorialMonoclePalette.fg`, `letterSpacing == amountFontSize * 0.04`, minimum content width 80 dp. Stable widget key `Key('grantOrSubsidyDialogAmount')`.
   - **Plus button:** keyed `diplo_amount_plus`. Surface fill `EditorialMonoclePalette.surfaceLite`, 1 dp `EditorialMonoclePalette.accentDim` outline, label `+` painted in `EditorialMonoclePalette.accent` using a monospace `TextStyle`. Disabled (`onPressed == null`) when `canAdjust == false`.
 - **Below-minimum hint:** `diplomacy_treasuryBelowMinimum(step)` rendered with the dark-theme `bodySmall` slot, color `EditorialMonoclePalette.danger`, `fontStyle == FontStyle.italic`. Shown only when `canAdjust == false`. This is a **grant-mode** affordance only — subsidy mode is treasury-independent (`canAdjust` is always `true` for subsidy; Refs #3753 R3), so the hint never renders in subsidy mode. Stable widget key `Key('grantOrSubsidyDialogWarning')`.
+- **Cost / Effect preview (Refs #4415):** When Submit is enabled, the dialog shows the same first-order lines as `buildDiplomacyConfirmPreviewLines` for the current grant amount or subsidy percent (bodySmall, `EditorialMonoclePalette.muted`, wrap inside the shell). Lines update when the stepper changes the amount. When Submit is disabled (grant treasury below one step, displayed amount `0`), Cost / Effect lines are **absent** and the UI layer does **not** call the preview builder with amount `0`. Stable widget key `Key('grantOrSubsidyDialogPreview')`.
 - **Footer:** Right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Submit (`game_callToArms_submit`). Submit enabled only when `_canSubmit` is true. (Cancel keeps the standard brass label; Submit follows the catalog `CtNinePatchButton` enabled/disabled treatment.)
 
 All colors resolve from `EditorialMonoclePalette` tokens; no hard-coded hex literals are permitted in the implementation (mirrors the regression guard pattern adopted by other DLG*/OVL* dark-chrome slices under #2867).
@@ -90,10 +94,10 @@ The dialog **does not** mutate game state. All effects flow through the emitted 
 | Action | Behavior |
 |--------|----------|
 | Cancel | `Navigator.of(context).pop()`; no event emitted. |
-| Submit (enabled) | `Navigator.of(context).pop()` then `bus.emit(GrantOrSubsidySubmittedEvent(targetFactionId, amount, isSubsidy))`. The dialog pops first to avoid use-after-dispose if the listener triggers a navigation. |
+| Submit (enabled) | `Navigator.of(context).pop()` then `bus.emit(GrantOrSubsidySubmittedEvent(targetFactionId, amount, isSubsidy))`. The dialog pops first to avoid use-after-dispose if the listener appends an order. |
 | Submit (disabled) | No-op (`enabled: false` on the `CtNinePatchButton`). |
 
-The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/diplomacy/grant_or_subsidy_listener.dart`) shows a `ConfirmDialogEvent` and, on confirm, materializes the corresponding diplomatic order; see [orders.md](../program/orders.md) § DiplomaticOrder. The confirmation `message` reflects the mode's unit: grant reads `Grant aid of £{amount} to {target}?`; subsidy reads `Set subsidy of {amount}% to {target}?` (the submitted `amount` carries the subsidy **percentage** for `DiplomaticOrderType.setSubsidy`; Refs #3753 R3).
+The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/diplomacy/grant_or_subsidy_listener.dart`) is the **sole** emitter of `AppendDiplomaticOrderRequestedEvent` and `NegotiationMoodUpdateEvent` for grant/subsidy. On submit it appends the matching diplomatic order immediately (no `ConfirmDialogEvent`); see [orders.md](../program/orders.md) § DiplomaticOrder and [diplomacy-panel.md](diplomacy-panel.md) § Submitting an action. Cost / Effect copy lives on this dialog (Refs #4415). `amount` on subsidy is the **percentage** for `DiplomaticOrderType.setSubsidy` (Refs #3753 R3). When `GrantOrSubsidyListener(readOnly: true)`, the listener does not subscribe, so observe mode emits neither append, mood, nor confirm.
 
 ---
 
@@ -131,9 +135,17 @@ The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/dipl
 
 - Given the user taps Cancel, when the gesture completes, then no `GrantOrSubsidySubmittedEvent` is emitted and the dialog is removed from the widget tree.
 
-- Given a `GrantOrSubsidySubmittedEvent` with `isSubsidy == true` and `amount == 10`, when the `grant_or_subsidy_listener.dart` listener handles it, then it emits a `ConfirmDialogEvent` whose `message` contains `10%` and does **not** contain a `£` currency glyph (Refs #3753 R3).
+- Given `DIPL20001` is open in grant mode with a valid amount `A`, when the dialog renders, then it shows the Cost and Effect lines `buildDiplomacyConfirmPreviewLines` would produce for `grantAid` of `A`, and those lines update when the stepper changes `A` (Refs #4415).
 
-- Given a `GrantOrSubsidySubmittedEvent` with `isSubsidy == false` and `amount == 1000`, when the listener handles it, then it emits a `ConfirmDialogEvent` whose `message` contains `£1000` (grant aid keeps the £ unit).
+- Given `DIPL20001` is open in subsidy mode with a valid percent `P`, when the dialog renders, then it shows the Cost / Effect lines for `setSubsidy` of `P` and updates them when the stepper changes `P` (Refs #4415).
+
+- Given `DIPL20001` is open in grant mode with `treasury < grantAidAmountStep` (Submit disabled, displayed amount `0`), when the dialog renders, then Cost / Effect preview lines are absent and the below-minimum hint remains; the UI layer does not invoke `buildDiplomacyConfirmPreviewLines` with amount `0` (Refs #4415).
+
+- Given Submit is enabled and `GrantOrSubsidyListener` is not read-only, when the player taps **Submit**, then `DIPL20001` closes, the dialog emits `GrantOrSubsidySubmittedEvent`, the listener emits `AppendDiplomaticOrderRequestedEvent` for that grant/subsidy and does **not** emit `ConfirmDialogEvent` (Refs #4415).
+
+- Given Submit is enabled and `GrantOrSubsidyListener` is not read-only, when the player taps **Submit**, then the listener emits `NegotiationMoodUpdateEvent` after the append, with `leaderId` = target faction id, `offerQualityDelta` = `0.7` (grant) or `0.5` (subsidy), `stallCounter` = `0`, `currentMood` = tracked portrait mood or `kDefaultMood`, and `seed` = `(globalGameSeed ?? 0) ^ (turnNumber * kDeterministicHashMixPrime32) ^ amount` (Refs #4415).
+
+- Given `GrantOrSubsidyListener` is constructed with `readOnly: true`, when `GrantOrSubsidySubmittedEvent` is emitted, then the UI layer emits no `AppendDiplomaticOrderRequestedEvent`, no `NegotiationMoodUpdateEvent`, and no `ConfirmDialogEvent` (Refs #4415).
 
 - Given the user taps `diplo_amount_plus` while `amount == _maxAffordable()`, when the gesture completes, then `amount` does not exceed `_maxAffordable()` (clamped to that ceiling).
 
@@ -155,7 +167,7 @@ The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/dipl
 
 ### 320 dp viewport pin (#2870 S8/S10)
 
-- **Grant mode @ 320×640 (positive):** Given the viewport width equals `kMinViewportWidth` (320 dp) and the height is at least 640 dp, and the dialog is mounted in grant mode (`isSubsidy: false`) against a two-GP `Game` fixture with the human GP's `treasury == 5 * grantAidAmountStep` (so both stepper buttons are enabled and the below-minimum hint stays unmounted), when the dialog renders inside the running editorial-monocle theme, then `WidgetTester.takeException()` returns `null`, the keyed `grantOrSubsidyDialogTitle` renders the `Grant aid` text, the keyed `grantOrSubsidyDialogTreasury` body row renders, the keyed `grantOrSubsidyDialogThinDivider` divider mounts, the keyed `grantOrSubsidyDialogAmount` label and both keyed stepper buttons (`diplo_amount_minus` / `diplo_amount_plus`) mount inside the centered stepper `Row`, the keyed `grantOrSubsidyDialogWarning` is **absent**, and the trailing right-aligned `Cancel` + `Submit` `CtNinePatchButton` labels render — all within the ~288 dp `CtDialogShell` content column (`maxWidth: 480` clamped by outer `Dialog.insetPadding: 16` × 2) without horizontal overflow.
+- **Grant mode @ 320×640 (positive):** Given the viewport width equals `kMinViewportWidth` (320 dp) and the height is at least 640 dp, and the dialog is mounted in grant mode (`isSubsidy: false`) against a two-GP `Game` fixture with the human GP's `treasury == 5 * grantAidAmountStep` (so both stepper buttons are enabled and the below-minimum hint stays unmounted), when the dialog renders inside the running editorial-monocle theme, then `WidgetTester.takeException()` returns `null`, the keyed `grantOrSubsidyDialogTitle` renders the `Grant aid` text, the keyed `grantOrSubsidyDialogTreasury` body row renders, the keyed `grantOrSubsidyDialogThinDivider` divider mounts, the keyed `grantOrSubsidyDialogAmount` label and both keyed stepper buttons (`diplo_amount_minus` / `diplo_amount_plus`) mount inside the centered stepper `Row`, the keyed `grantOrSubsidyDialogPreview` Cost / Effect lines wrap inside the shell, the keyed `grantOrSubsidyDialogWarning` is **absent**, and the trailing right-aligned `Cancel` + `Submit` `CtNinePatchButton` labels render — all within the ~288 dp `CtDialogShell` content column (`maxWidth: 480` clamped by outer `Dialog.insetPadding: 16` × 2) without horizontal overflow.
 
 - **Subsidy mode @ 320×640 (positive):** Given the same viewport and fixture but `isSubsidy: true`, when the dialog renders, then `WidgetTester.takeException()` returns `null`, the title slot flips to `Set subsidy`, the keyed `grantOrSubsidyDialogAmount` shows a `%` value, the keyed `grantOrSubsidyDialogWarning` is absent (subsidy mode is treasury-independent; Refs #3753 R3), and both `Cancel` and `Submit` `CtNinePatchButton` labels render within the ~288 dp content column without horizontal overflow.
 
@@ -171,7 +183,8 @@ Pinning test: `app/test/grant_or_subsidy_dialog_320dp_min_viewport_test.dart`. T
 
 Catalog folder: **Grant or Subsidy Dialog** (registered in `app/lib/widgetbook/catalog.dart`). Use cases:
 
-1. **Grant mode — treasury sufficient:** Minimal `Game` + two players; human treasury 5000; demo opener calls `showDialog` with `isSubsidy: false`. Stepper opens at the snapped default amount.
-2. **Subsidy mode — percent stepper:** Minimal `Game` + two players; human treasury 0; demo opener calls `showDialog` with `isSubsidy: true`. The percent stepper (5–20%, step 5) opens at `kSubsidyPercentDefault` (5%) and both step buttons stay enabled (subsidy is treasury-independent; Refs #3753 R3).
+1. **Grant mode — treasury sufficient:** Minimal `Game` + two players; human treasury 5000; demo opener calls `showDialog` with `isSubsidy: false`. Stepper opens at the snapped default amount; Cost / Effect lines are visible (Refs #4415).
+2. **Subsidy mode — percent stepper:** Minimal `Game` + two players; human treasury 0; demo opener calls `showDialog` with `isSubsidy: true`. The percent stepper (5–20%, step 5) opens at `kSubsidyPercentDefault` (5%) and both step buttons stay enabled (subsidy is treasury-independent; Refs #3753 R3); Cost / Effect lines are visible.
+3. **Grant mode — treasury below minimum:** Human treasury below `grantAidAmountStep`; below-minimum hint shown; Cost / Effect lines absent (Refs #4415).
 
 Automated widget tests: `app/test/diplomacy_dialogs_test.dart` (covers stepper, default amount, submit emit, treasury-below-minimum disable, and Cancel); `app/test/grant_or_subsidy_dialog_320dp_min_viewport_test.dart` (320 dp minimum-viewport pin per § 320 dp viewport pin above).
