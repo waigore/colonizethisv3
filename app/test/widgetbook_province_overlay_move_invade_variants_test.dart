@@ -22,6 +22,7 @@ void main() {
   group('Province Overlay Move/Invade Widgetbook variants (Refs #4350)', () {
     for (final useCaseName in [
       'Standalone — Military Move enabled',
+      'Standalone — Military Move detach enabled',
       'Standalone — Military Move disabled',
       'Standalone — Military Move hidden',
       'Standalone — Military Invade enabled',
@@ -40,7 +41,9 @@ void main() {
       });
     }
 
-    testWidgets('enabled Move story shows enabled Move control', (tester) async {
+    testWidgets('enabled Move story shows enabled Move control', (
+      tester,
+    ) async {
       final useCase = findWidgetbookUseCase(
         provinceOverlayDirectories,
         folderName: folderName,
@@ -74,10 +77,7 @@ void main() {
         size: const Size(800, 640),
       );
       await tester.pumpAndSettle();
-      expect(
-        find.widgetWithText(CtActionTextButton, 'Invade'),
-        findsNothing,
-      );
+      expect(find.widgetWithText(CtActionTextButton, 'Invade'), findsNothing);
     });
   });
 }

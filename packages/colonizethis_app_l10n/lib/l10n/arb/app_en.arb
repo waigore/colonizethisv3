@@ -2763,6 +2763,14 @@
   "@splitArmy_title": {
     "description": "Split army dialog title."
   },
+  "splitArmy_detachTitle": "Detach a field army",
+  "@splitArmy_detachTitle": {
+    "description": "Split dialog title when detaching from the Home Army to march."
+  },
+  "splitArmy_detachConfirm": "Detach and choose destination",
+  "@splitArmy_detachConfirm": {
+    "description": "Split dialog confirm label for the map detach-then-move flow."
+  },
   "technologyPanel_title": "Technology - {playerName}",
   "@technologyPanel_title": {
     "description": "Technology panel title with player display name.",

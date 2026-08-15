@@ -22,7 +22,7 @@ Players reorganize **regiments** between **armies** in the same province, analog
 
 ## Split army
 
-- **Trigger:** Expanded army row shows **Split Army** (including Home Army).
+- **Trigger:** Expanded army row shows **Split Army** (including Home Army). `MAP20001` Military **Move** / **Invade** and a non-empty Home Army map marker also open this dialog on the detach-then-move path (confirm label **Detach and choose destination**); confirm still emits `ArmySplitRequestedEvent` and does not auto-pick composition.
 - **UX:** Reuse the same **transfer-list** pattern as naval split ([naval-units-fleet-management.md](naval-units-fleet-management.md) § Reusable Transfer Component): **one row per regiment type** with counts (like ship types in Split Fleet); confirm resolves types to concrete regiment unit ids in army list order and creates a **new** army in the **same** province with the chosen regiments.
 - **Composite contract:** The transfer-list scaffold (props, layout, narrow-stack threshold at `kCtTransferListSideBySideMinWidth = 360 dp`) lives in [`components/ct-transfer-list.md`](components/ct-transfer-list.md); the Split Army dialog only configures regiment-type labels and the per-army `canConfirm` rule (Refs #2914 S9).
 
