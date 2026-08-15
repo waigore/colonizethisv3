@@ -2499,6 +2499,24 @@ abstract class AppLocalizations {
   /// Counsel line in the extraction-disc legend details popover.
   String get mapExtractionDisc_detailsCounsel;
 
+  /// Compact legend label for improvement marks that still have headroom.
+  String get mapImprovementHeadroom_legendHeadroom;
+
+  /// Compact legend label for improvement marks already at the current cap.
+  String get mapImprovementHeadroom_legendAtCap;
+
+  /// Semantics / accessibility label for the improvement-headroom legend.
+  String get mapImprovementHeadroom_legendSemantics;
+
+  /// Details popover line explaining `{n} of {cap}`.
+  String get mapImprovementHeadroom_detailsMeaning;
+
+  /// Details popover line explaining muted at-cap marks.
+  String get mapImprovementHeadroom_detailsMuted;
+
+  /// Counsel line in the improvement-headroom legend details popover.
+  String get mapImprovementHeadroom_detailsCounsel;
+
   /// Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).
   String mapControls_cargoHold(String used, String capacity);
 
