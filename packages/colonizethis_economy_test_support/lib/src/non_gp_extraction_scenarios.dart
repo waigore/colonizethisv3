@@ -5,7 +5,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'extraction_fixture_support.dart';
-import 'non_gp_extraction_expectations.dart';
+import 'non_gp_extraction_pins.dart';
 /// One row for `computeNonGreatPowerExtraction` scenario tables.
 typedef NonGpExtractionScenario = ({String label, Game game, Map<String, TileMapResult> tileMapByRegion, Map<String, ConnectivityResult> connectivityByFactionId, void Function(Map<String, Map<CommodityId, int>> result) verify, String? refs});
 NonGpExtractionScenario nonGpExtractionRow({required String label, required Game game, required Map<String, TileMapResult> tileMapByRegion, required Map<String, ConnectivityResult> connectivityByFactionId, required NonGpExtractionExpectation expect, String? refs}) => (label: label, game: game, tileMapByRegion: tileMapByRegion, connectivityByFactionId: connectivityByFactionId, verify: (result) => assertNonGpExtractionExpectation(result, expect), refs: refs);

@@ -83,3 +83,20 @@ See `colonizethis_economy/REFACTOR_TRACE.md` phase-3 slices 35–37 for the cano
 Barrel: `colonizethis_economy_test_support.dart` — removed Slice C expectations exports; scenario modules remain the public table API.
 
 Deferred (out of Slice C scope): remaining expectations modules (`boycott_blocked_commodities`, `game_lookup_helpers`, `lock_recovery_minor_bids`, `province_extraction_snapshot`, `purchased_tile`, `resource_extractor`, `town_manufacturing_bonus`, `trade_order_suggester`, treasury/validator/deal-matcher families).
+
+## Wave 2 Slice A — leaf leftovers + Development panel runner (Refs #4410)
+
+Pattern: merge pin types/assert helpers from leftover `*_expectations.dart` into the paired `*_scenarios.dart` (or a same-folder `*_pins.dart` when the pair would exceed 220 lines); relocate `runDevelopmentPanelReadModelExpectation` into the consumer test; delete emptied expectation modules; re-export public pin types from the surviving sibling.
+
+| module | destination | runners relocated to | expectations deleted |
+|--------|-------------|----------------------|----------------------|
+| `boycott_blocked_commodities_*` | `boycott_blocked_commodities_scenarios.dart` | (thin `run*` stayed in scenarios) | `boycott_blocked_commodities_expectations.dart` |
+| `lock_recovery_minor_bids_*` | `lock_recovery_minor_bids_scenarios.dart` | (thin `run*` stayed in scenarios) | `lock_recovery_minor_bids_expectations.dart` |
+| `world_market_context_base_*` | `world_market_context_base_scenarios.dart` | n/a (assert helper only) | `world_market_context_base_expectations.dart` |
+| `price_discovery_*` | `price_discovery_scenarios.dart` | (thin `run*` stayed in scenarios) | `price_discovery_expectations.dart` |
+| `game_lookup_helpers_*` | `game_lookup_helpers_scenarios.dart` | (thin `run*` stayed in scenarios) | `game_lookup_helpers_expectations.dart` |
+| `frr_profit_*` | `first_right_profit_scenarios.dart` | (thin `run*` stayed in scenarios) | `frr_profit_expectations.dart` |
+| `non_gp_extraction_*` | `non_gp_extraction_pins.dart` (pair 193+45 > 220) | (thin `runNonGpExtractionScenario` stayed in scenarios) | `non_gp_extraction_expectations.dart` |
+| `development_panel_read_model_*` | table-only `development_panel_read_model_scenarios.dart` | `economy/development_panel_read_model_test.dart` | `development_panel_read_model_expectations.dart` |
+
+Still deferred (Slices B–D): `province_extraction_snapshot`, `purchased_tile`, `resource_extractor`, `town_manufacturing_bonus`, `trade_order_suggester`, `non_gp_auto_offers`, remaining treasury/validator/deal-matcher/FRR-credits families, LOC ratchet, `repo.economy_test_support_no_expectations_modules`.
