@@ -50,6 +50,13 @@ logs/
 out/
 .test_output.txt
 
+# Candidate transport overlay atlases may be committed for review (Refs #1819).
+# `out/` above ignores any directory named out, including pytool/out.
+!pytool/out/
+pytool/out/**
+!pytool/out/transport_overlay_atlases_64/
+!pytool/out/transport_overlay_atlases_64/**
+
 # Flutter generated
 **/generated_plugin_registrant.dart
 
