@@ -36,7 +36,9 @@ void main() {
 
     test('land_enclosure gives grain cap 2', () {
       expect(
-        extractionCapForResourceForUnlocked({kTechIdLandEnclosure: true}, 'grain'),
+        extractionCapForResourceForUnlocked({
+          kTechIdLandEnclosure: true,
+        }, 'grain'),
         equals(2),
       );
     });
@@ -103,10 +105,7 @@ void main() {
     });
 
     test('scrub forest hard cap applies only to timber, not furs', () {
-      expect(
-        terrainExtractionHardCap('furs', TerrainType.scrubForest),
-        isNull,
-      );
+      expect(terrainExtractionHardCap('furs', TerrainType.scrubForest), isNull);
     });
 
     test('scrub timber capped at 1 even with circular_saw (tech cap 4)', () {
@@ -163,16 +162,19 @@ void main() {
       );
     });
 
-    test('clampExtractionCapForTerrain leaves non-capped terrain unchanged', () {
-      expect(
-        clampExtractionCapForTerrain(3, 'timber', TerrainType.hardwoodForest),
-        equals(3),
-      );
-      expect(
-        clampExtractionCapForTerrain(2, 'grain', TerrainType.plains),
-        equals(2),
-      );
-    });
+    test(
+      'clampExtractionCapForTerrain leaves non-capped terrain unchanged',
+      () {
+        expect(
+          clampExtractionCapForTerrain(3, 'timber', TerrainType.hardwoodForest),
+          equals(3),
+        );
+        expect(
+          clampExtractionCapForTerrain(2, 'grain', TerrainType.plains),
+          equals(2),
+        );
+      },
+    );
   });
 
   group('unlockingTechByShipId', () {
@@ -181,6 +183,31 @@ void main() {
     });
     test('carrack has no unlocking tech (buildable from start)', () {
       expect(unlockingTechByShipId['carrack'], isNull);
+    });
+  });
+
+  group('unlock maps cached (Refs #4412 AC2)', () {
+    test(
+      'unlockingTechByRegimentId returns the same instance on consecutive reads',
+      () {
+        expect(
+          identical(unlockingTechByRegimentId, unlockingTechByRegimentId),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'unlockingTechByShipId returns the same instance on consecutive reads',
+      () {
+        expect(identical(unlockingTechByShipId, unlockingTechByShipId), isTrue);
+      },
+    );
+
+    test('cached maps still match catalog-derived unlock ids', () {
+      expect(unlockingTechByShipId['fluyte'], kTechIdSuperiorHullDesign);
+      expect(unlockingTechByShipId.containsKey('carrack'), isFalse);
+      expect(unlockingTechByRegimentId, isNotEmpty);
     });
   });
 
