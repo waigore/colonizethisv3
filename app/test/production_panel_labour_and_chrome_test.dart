@@ -384,15 +384,7 @@ void main() {
           );
         }
         // The peasant tier label parenthetical must also appear.
-        expect(
-          find.text(
-            l10n.production_labourTierLabel(
-              l10n.production_workers_peasants,
-              l10n.production_labourTierUnlocked,
-            ),
-          ),
-          findsOneWidget,
-        );
+        expect(find.text(l10n.production_workers_peasants), findsWidgets);
       },
     );
   });

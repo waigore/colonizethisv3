@@ -6,6 +6,7 @@ export 'src/economy/commodity_totals.dart';
 export 'src/economy/cost_check.dart';
 export 'src/economy/economy_consumption.dart';
 export 'src/economy/economy_consumption_phases.dart';
+export 'src/economy/economy_worker_consumption_rates.dart';
 export 'src/economy/game_lookup_helpers.dart';
 export 'src/economy/tile_extraction_pipeline.dart';
 export 'src/economy/town_manufacturing_bonus.dart';

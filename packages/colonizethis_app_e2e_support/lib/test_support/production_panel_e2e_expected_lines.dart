@@ -193,13 +193,10 @@ String _labourTierDisplayName(WorkerTier tier, AppLocalizations l10n) {
 /// `_buildWorkerSection`, gated on a non-null `currentOrders`). Mirrors the
 /// `CtSectionLabel` header plus one [ProductionLabourSection] row per tier.
 ///
-/// Per-row order matches `_ProductionLabourTierRow.build`: the tier label, an
-/// optional `Queued: N` segment (only when `queuedCount > 0`), then — when
-/// [canEdit] is true — the `Disband` label. The Disband label is emitted for
-/// every tier: trained tiers render a real [CtDangerTextButton] and the
-/// peasant row reserves an opacity-0 [CtDangerTextButton] placeholder that the
-/// pre-order text collector still visits. `CtSectionLabel` upper-cases its
-/// text, matching the other section headers in this mirror.
+/// Per-row order matches `ProductionLabourTierRow.build`: the tier name,
+/// upkeep gist, optional `Requires:` gist, optional `Queued: N`, then —
+/// when [canEdit] is true — the `Disband` label. Cost gist uses `Text.rich`
+/// (`data == null`) so the pre-order [Text] collector skips it.
 List<String> productionLabourControlsExpectedTexts({
   required Player player,
   required Orders currentOrders,
@@ -215,10 +212,16 @@ List<String> productionLabourControlsExpectedTexts({
   );
   for (final row in rows) {
     final tierName = _labourTierDisplayName(row.tier, l10n);
-    final state = row.techUnlocked
-        ? l10n.production_labourTierUnlocked
-        : l10n.production_labourTierLocked;
-    out.add(l10n.production_labourTierLabel(tierName, state));
+    out.add(tierName);
+    out.add(labourUpkeepGist(tier: row.tier, l10n: l10n));
+    final requires = labourRequiresGist(
+      tier: row.tier,
+      techUnlocked: row.techUnlocked,
+      l10n: l10n,
+    );
+    if (requires != null) {
+      out.add(requires);
+    }
     if (row.queuedCount > 0) {
       out.add(l10n.production_labourQueued(row.queuedCount));
     }

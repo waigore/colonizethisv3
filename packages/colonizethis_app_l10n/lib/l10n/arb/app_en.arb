@@ -4612,6 +4612,80 @@
   "@production_labourControlsSectionLabel": {
     "description": "Title of the Labour Controls subsection in the Production panel Available subpanel."
   },
+  "production_labourCostMaterial": "{name} ×{quantity}",
+  "@production_labourCostMaterial": {
+    "description": "One material cost fragment on a Labour Controls row (commodity display name and catalog quantity).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourCostPeasantConsume": "1 peasant",
+  "@production_labourCostPeasantConsume": {
+    "description": "Peasant-consume fragment on a trained-tier Labour Controls cost gist."
+  },
+  "production_labourUpkeepLabour": "{n} labour / turn",
+  "@production_labourUpkeepLabour": {
+    "description": "Labour-per-turn fragment of a Labour Controls upkeep gist.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourUpkeepFoodOr": "{a} or {b}",
+  "@production_labourUpkeepFoodOr": {
+    "description": "Peasant food-upkeep fragment (one food unit: grain or meat).",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourUpkeepFoodAnd": "{a} + {b}",
+  "@production_labourUpkeepFoodAnd": {
+    "description": "Trained-tier food-upkeep fragment (two food units: grain + meat).",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourRequires": "Requires: {names}",
+  "@production_labourRequires": {
+    "description": "Tech-lock gist on a Labour Controls row listing catalog tech display names.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourStaffsNextProduction": "New workers staff next Production",
+  "@production_labourStaffsNextProduction": {
+    "description": "Staffing-timing clause for an enabled Labour Controls + tooltip."
+  },
+  "production_labourAppendEnabledTooltip": "{action}. {timing}",
+  "@production_labourAppendEnabledTooltip": {
+    "description": "Enabled + tooltip: recruit/train action plus next-Production staffing note.",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "timing": {
+        "type": "String"
+      }
+    }
+  },
   "production_workerCount": "{name}: {count}",
   "@production_workerCount": {
     "description": "Worker type and count in production panel.",
