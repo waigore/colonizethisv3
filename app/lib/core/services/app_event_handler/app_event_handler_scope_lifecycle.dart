@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_intel.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/production/force_feeding_readiness_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_force_feeding.dart';
@@ -192,6 +193,7 @@ mixin AppEventHandlerScopeDialogBuilders
       provinceName: params?['provinceName'] as String? ?? '',
       isCapitalSiege: params?['isCapitalSiege'] == true,
       landForceFeedingWarning: landForceFeedingWarning,
+      intel: combatModeChoiceIntelFromParams(params),
     );
   }
 

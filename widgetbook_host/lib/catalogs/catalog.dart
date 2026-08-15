@@ -43,6 +43,7 @@ import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/providers/region_minimap_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_intel.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_action_selector.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
@@ -181,6 +182,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 part 'catalog_panel_map_build_port_stories.dart';
 part 'catalog_panel_map_build_railroad_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';
+part 'catalog_panel_map_station_spy_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
 part 'catalog_panel_map_political_sight_stories.dart';
 part 'catalog_panel_map_stories.dart';
@@ -191,6 +193,7 @@ part 'catalog_panels_intervention.dart';
 part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_screens_combat.dart';
+part 'catalog_screens_combat_mode_choice.dart';
 part 'catalog_dialogs.dart';
 part 'catalog_dialogs_grant_or_subsidy.dart';
 part 'catalog_dialogs_move_army_invasion_intel.dart';
@@ -343,6 +346,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...playersBarDirectories,
   ...exitConfirmDialogDirectories,
   ...combatUiDirectories,
+  ...combatModeChoiceDirectories,
   ...moveArmyDialogDirectories,
   ...moveFleetDialogDirectories,
   ...navalMissionDialogDirectories,

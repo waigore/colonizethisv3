@@ -31,7 +31,7 @@ void main() {
       await pumpGoldenHost(
         tester,
         boundaryKey: boundaryKey,
-        physicalSize: const Size(360, 320),
+        physicalSize: const Size(360, 480),
         settle: false,
         includeLocalizations: true,
         scaffoldBackgroundColor:

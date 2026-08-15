@@ -14,12 +14,8 @@ import 'province_sea_zone_detail_overlay_military_section.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 
-({
-  Widget economic,
-  Widget military,
-  Widget civilian,
-  Widget naval,
-}) buildProvinceIntelGatedUnitSections({
+({Widget economic, Widget military, Widget civilian, Widget naval})
+buildProvinceIntelGatedUnitSections({
   required AppLocalizations l10n,
   required Game game,
   required bool showsFullIntel,
@@ -44,6 +40,7 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order
   bool invadeArmyEnabled = false,
   String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
+  ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
   String? provinceDisplayName,
   void Function(String?)? onHighlightTile,
   void Function(Iterable<String>?)? onHighlightTiles,
@@ -52,7 +49,8 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order
   Map<String, int> townProductionBonusByCommodity = const {},
   required Map<String, List<({String tileKey, String terrain, String impBase})>>
   byResImproved,
-  required Map<String, List<({String tileKey, String terrain})>> byResImprovable,
+  required Map<String, List<({String tileKey, String terrain})>>
+  byResImprovable,
   required List<String> resourceKeysSorted,
 }) {
   final economic = showsFullIntel
@@ -117,6 +115,7 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order
           humanPlayerId: humanPlayerId,
           playerView: playerView,
           draftOrders: draftOrders,
+          stationSpy: stationSpy,
         )
       : buildOverlaySection(
           l10n.provinceOverlay_sectionCivilian,
