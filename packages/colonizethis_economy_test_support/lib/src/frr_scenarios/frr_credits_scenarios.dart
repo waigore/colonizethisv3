@@ -3,7 +3,6 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart' show FirstRightCreditsResult, PurchasedTileIndex, computeFirstRightCredits, kFirstRightMaxProfitRate;
 import 'package:colonizethis_models/colonizethis_models.dart' show FilledDeal;
 import 'package:colonizethis_test/test.dart';
-import 'frr_credits_expectations.dart';
 import 'frr_credits_test_support.dart';
 import 'frr_d5_test_support.dart';
 /// One row for `computeFirstRightCredits` scenario tables.

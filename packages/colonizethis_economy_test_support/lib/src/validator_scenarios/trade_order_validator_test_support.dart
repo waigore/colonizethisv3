@@ -2,7 +2,6 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 // dart format off
 import '../trade_order_factory.dart';
-import 'validator_expectations.dart';
 import 'validator_scenario.dart';
 /// Shared helpers for `TradeOrderValidator` tests per
 /// `SPEC/program/world-market-resolution.md` § Trade order validation.

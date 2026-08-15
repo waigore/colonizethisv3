@@ -112,4 +112,23 @@ Pattern: relocate mid-size `run*` bodies into consumer tests; merge leftover pin
 | `non_gp_auto_offers_*` | `non_gp_auto_offers_test_support.dart` | (thin `runNonGpAutoOffersScenario` stayed in scenarios) | `non_gp_auto_offers_expectations.dart` |
 | `province_extraction_snapshot_*` | `province_extraction_snapshot_pins.dart` (pair 144+97 > 220) | `economy/province_extraction_snapshot_builder_test.dart` (thin `run*` wrappers) | `province_extraction_snapshot_expectations.dart` |
 
-Still deferred (Slices C–D): `purchased_tile`, `trade_order_suggester`, remaining treasury/validator/deal-matcher/FRR-credits families, LOC ratchet, `repo.economy_test_support_no_expectations_modules`.
+## Wave 2 Slice C — world-market families (Refs #4410)
+
+Pattern: merge leftover pin types/assert helpers into a same-folder sibling that stays ≤220 (not the near-cap table files). Split `purchased_tile` index vs riches rather than dumping both into one destination.
+
+| module | destination | runners relocated to | expectations deleted |
+|--------|-------------|----------------------|----------------------|
+| `deal_matcher_*` | `deal_matcher_scenario.dart` | (thin `runDealMatcherScenario` stayed) | `deal_matcher_expectations.dart` |
+| `validator_*` | `validator_scenario.dart` | (thin `runTradeOrderValidatorScenario` stayed) | `validator_expectations.dart` |
+| `treasury_*` | `treasury_test_support.dart` | n/a (assert helpers only) | `treasury_expectations.dart` |
+| `treasury_player_context_*` | `treasury_player_context_scenarios.dart` | (thin `runPlayerContextScenario` stayed) | `treasury_player_context_expectations.dart` |
+| `trade_order_suggester_*` | `trade_order_suggester_test_support.dart` | (thin `runTradeOrderSuggesterScenario` stayed) | `trade_order_suggester_expectations.dart` |
+| `frr_credits_*` | `frr_credits_test_support.dart` | (thin `runFrrCreditsScenario` stayed) | `frr_credits_expectations.dart` |
+| `purchased_tile_*` (index) | `purchased_tile_index_test_support.dart` | n/a (assert helpers only) | (split; file deleted below) |
+| `purchased_tile_*` (riches) | `purchased_tile_riches_test_support.dart` | n/a (assert helpers only) | `purchased_tile_expectations.dart` |
+
+## Wave 2 Slice D — CI ratchet (Refs #4410)
+
+- `economyTestSupportLocCeiling` 7150 → 6590 (measured 6540; slack 50).
+- Added `repo.economy_test_support_no_expectations_modules` (`tool/check_economy_test_support_no_expectations_modules.dart`).
+- `SPEC/program/repo-lint.md` and `tool/ct_repo_lint_manifest.yaml` match the new ceiling and gate.

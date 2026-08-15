@@ -2,7 +2,9 @@
 /// Shared fixtures for the `computePurchasedTileRichesCredits` unit tests
 /// (Refs #2991 C5, #3823, #3856, #3939).
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import '../purchased_tile_fixture_support.dart';
 /// Post-conquest: province owned by `gpB`; purchased entry still maps to `gpA`.
 Game postConquestPurchasedTileRichesGame() {
@@ -75,5 +77,96 @@ Game purchasedTileScenario({required Resource resource, required int improvement
     tileState = tileState.setRoadLevel(tileKey, roadLevel);
   }
   return minorPurchasedTileGame(minorDisplayName: 'Minor 1', tileState: tileState, portsByProvinceSeaboard: portsByProvinceSeaboard);
+}
+/// Data-driven expectations for [PurchasedTileRichesScenario] rows.
+class PurchasedTileRichesExpectation {
+  const PurchasedTileRichesExpectation({this.indexLength, this.creditsLength, this.creditsEmpty = false, this.treasuryCreditEmpty = false, this.equalsEmpty = false, this.isEmpty, this.singleCredit, this.treasuryCreditByGpId, this.treasuryCreditCloseTo, this.totalTreasuryCredit, this.totalTreasuryCreditCloseTo, this.deterministicRichesRerun = false});
+  final int? indexLength;
+  final int? creditsLength;
+  final bool creditsEmpty;
+  final bool treasuryCreditEmpty;
+  final bool equalsEmpty;
+  final bool? isEmpty;
+  final PurchasedTileRichesCreditExpectation? singleCredit;
+  final Map<String, int>? treasuryCreditByGpId;
+  final Map<String, int>? treasuryCreditCloseTo;
+  final int? totalTreasuryCredit;
+  final int? totalTreasuryCreditCloseTo;
+  final bool deterministicRichesRerun;
+}
+class PurchasedTileRichesCreditExpectation {
+  const PurchasedTileRichesCreditExpectation({this.tileKey, this.owningGpId, this.sourceFactionId, this.commodityId, this.units, this.treasuryDelta, this.treasuryDeltaCloseTo});
+  final String? tileKey;
+  final String? owningGpId;
+  final String? sourceFactionId;
+  final String? commodityId;
+  final int? units;
+  final int? treasuryDelta;
+  final int? treasuryDeltaCloseTo;
+}
+void assertPurchasedTileRichesExpectation(PurchasedTileRichesResult result, PurchasedTileIndex index, Game game, PurchasedTileRichesExpectation expectation, {Map<String, TileMapResult> tileMapByRegion = const {}, double richesCashMultiplier = 1.0}) {
+  if (expectation.indexLength != null) {
+    expect(index.length, expectation.indexLength);
+  }
+  if (expectation.creditsEmpty) {
+    expect(result.credits, isEmpty);
+  }
+  if (expectation.treasuryCreditEmpty) {
+    expect(result.treasuryCreditByGpId, isEmpty);
+  }
+  if (expectation.creditsLength != null) {
+    expect(result.credits, hasLength(expectation.creditsLength));
+  }
+  if (expectation.equalsEmpty) {
+    expect(result, equals(PurchasedTileRichesResult.empty));
+  }
+  if (expectation.isEmpty != null) {
+    expect(result.isEmpty, expectation.isEmpty);
+  }
+  if (expectation.singleCredit != null) {
+    final credit = result.credits.single;
+    final pin = expectation.singleCredit!;
+    if (pin.tileKey != null) {
+      expect(credit.tileKey, equals(pin.tileKey));
+    }
+    if (pin.owningGpId != null) {
+      expect(credit.owningGpId, equals(pin.owningGpId));
+    }
+    if (pin.sourceFactionId != null) {
+      expect(credit.sourceFactionId, equals(pin.sourceFactionId));
+    }
+    if (pin.commodityId != null) {
+      expect(credit.commodityId, equals(pin.commodityId));
+    }
+    if (pin.units != null) {
+      expect(credit.units, equals(pin.units));
+    }
+    if (pin.treasuryDelta != null) {
+      expect(credit.treasuryDelta, equals(pin.treasuryDelta));
+    }
+    if (pin.treasuryDeltaCloseTo != null) {
+      expect(credit.treasuryDelta, equals(pin.treasuryDeltaCloseTo));
+    }
+  }
+  if (expectation.treasuryCreditByGpId != null) {
+    expect(result.treasuryCreditByGpId, equals(expectation.treasuryCreditByGpId));
+  }
+  if (expectation.treasuryCreditCloseTo != null) {
+    for (final entry in expectation.treasuryCreditCloseTo!.entries) {
+      expect(result.treasuryCreditByGpId[entry.key], equals(entry.value));
+    }
+  }
+  if (expectation.totalTreasuryCredit != null) {
+    expect(result.totalTreasuryCredit, equals(expectation.totalTreasuryCredit));
+  }
+  if (expectation.totalTreasuryCreditCloseTo != null) {
+    expect(result.totalTreasuryCredit, equals(expectation.totalTreasuryCreditCloseTo));
+  }
+  if (expectation.deterministicRichesRerun) {
+    final r2 = computePurchasedTileRichesCredits(game: game, tileMapByRegion: tileMapByRegion, purchasedTileIndex: index, richesCashMultiplier: richesCashMultiplier);
+    expect(result.credits.length, equals(r2.credits.length));
+    expect(result.totalTreasuryCredit, equals(r2.totalTreasuryCredit));
+    expect(result.treasuryCreditByGpId, equals(r2.treasuryCreditByGpId));
+  }
 }
 // dart format on

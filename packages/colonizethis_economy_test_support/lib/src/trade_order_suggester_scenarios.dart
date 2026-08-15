@@ -2,7 +2,6 @@
 // Table-driven TradeOrderSuggester scenarios (Refs #3856, #3939 slices 14 / 46).
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'trade_order_suggester_expectations.dart';
 import 'trade_order_suggester_test_support.dart';
 /// One row in a TradeOrderSuggester scenario table.
 typedef TradeOrderSuggesterScenario = ({String label, TradeSuggestionContext Function() buildContext, void Function(TradeSuggestionContext context, TradeSuggestionResult result) verify, String? refs});
