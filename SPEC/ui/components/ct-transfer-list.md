@@ -42,7 +42,7 @@ Column(min, stretch)
     Expanded(left panel — CtPanel: title · [subtitle?] · Divider · ListView · Divider · total)
     SizedBox(16) · Expanded(right panel — mirror)
   SizedBox(16)
-  Row(end)                                -- right-aligned action row
+  Align(end) · Wrap(end, spacing: 8)      -- shrink-wrap Cancel/Confirm; second run if needed
     [Cancel?] · Confirm(enabled: canConfirm)
 ```
 
@@ -64,7 +64,7 @@ Row chrome — left panel: `[Expanded(label) [>] [>>]]`; right panel: `[[<<] [<]
 1. **Local state only.** Two local count maps mirror the initial inputs; zero-count rows are cleaned up after every move. The composite never mutates host game state — persisted side effects flow through `onConfirm` only.
 2. **Move semantics.** `>` / `<` move one unit across; `>>` / `<<` move every remaining unit of that row. `onChanged` fires after each accepted move with deep-copied maps.
 3. **Confirm gate.** Confirm fires only when `canConfirm` returns `true`. The default (`rightTotal > 0`) suits split flows; `TransferToHomeFleetDialog` overrides it to require a positive source-side delta.
-4. **Narrow stack.** Below `kCtTransferListSideBySideMinWidth` (`360` dp) the side panels stack vertically and the action row switches from a right-aligned `Row` to a `Wrap(alignment: end)` so the Cinzel `CtNinePatchButton` pair never overflows the ~`288` dp `CtDialogShell` content column at `kMinViewportWidth = 320` dp.
+4. **Narrow stack.** Below `kCtTransferListSideBySideMinWidth` (`360` dp) the side panels stack vertically. The action row is always a `Wrap(alignment: end)` so a long `confirmLabel` (e.g. Home Army detach) never overflows the 520 dp split shell or the ~`288` dp column at `kMinViewportWidth = 320` dp.
 5. **Empty per-side.** With zero rows, the list area renders the per-side empty label centered in `Theme.bodyMedium` tinted by `colorScheme.onSurfaceVariant`.
 
 ---
@@ -93,7 +93,7 @@ Consumer specs link back here instead of duplicating the wireframe.
 - **Given** default `canConfirm` and `initialRightCounts = {}`, **When** the tree settles, **Then** Confirm reports `enabled == false`.
 - **Given** the same instance with `initialLeftCounts = { 'carrack': 2 }`, **When** the user taps the left-side `>` for `carrack`, **Then** counts become `left = { 'carrack': 1 }` / `right = { 'carrack': 1 }`, `onChanged` fires once with those maps, and Confirm reports `enabled == true`.
 - **Given** the host constrains `maxWidth == 320` dp, **When** the tree settles, **Then** the side panels mount inside a single `Column` (no `Row` ancestor between them) and the action row uses a `Wrap` ancestor.
-- **Given** the host constrains `maxWidth == 600` dp, **When** the tree settles, **Then** the side panels mount inside one `Row` (each in an `Expanded`) and the action row uses a single right-aligned `Row`.
+- **Given** the host constrains `maxWidth == 600` dp, **When** the tree settles, **Then** the side panels mount inside one `Row` (each in an `Expanded`) and the action row uses a right-aligned `Wrap`.
 - **Given** `onCancel == null`, **When** the action row builds, **Then** no Cancel button is mounted and only Confirm is present.
 - **Given** the source `app/lib/widgets/ct_transfer_list.dart`, **When** read, **Then** it contains `kCtTransferListSideBySideMinWidth = 360` and does **not** contain `Colors.black54` (canonical scrim contract regression guard).
 

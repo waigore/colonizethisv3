@@ -9,6 +9,8 @@ import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
 import '../caches/per_player_army_move_picker_cache.dart';
 import '../map_state/province_army_move_action_state.dart';
+import '../map_state/province_army_move_home_army.dart';
+import '../../widgets/unit_orders/home_army_detach_then_move_flow.dart';
 import '../../widgets/unit_orders/overlay_army_move_flow.dart';
 
 /// Move / Invade control props for [ProvinceSeaZoneDetailOverlay] (Refs #4350).
@@ -42,7 +44,8 @@ ProvinceArmyMoveOverlayControls buildProvinceArmyMoveOverlayControls({
 }) {
   final armyCache = armyMovePickerCache ?? PerPlayerArmyMovePickerCache();
   final provinceTileKeys =
-      game.worldState.tileKeysByRegionAndProvince[region.regionId]?[displayId] ??
+      game.worldState.tileKeysByRegionAndProvince[region
+          .regionId]?[displayId] ??
       const <String>[];
   final showsFullMilitaryIntel =
       omniscientDetail ||
@@ -83,19 +86,34 @@ ProvinceArmyMoveOverlayControls buildProvinceArmyMoveOverlayControls({
       case ProvinceArmyMoveDisabledReason.noDestinations:
       case ProvinceArmyMoveDisabledReason.none:
         return l10n.provinceOverlay_invadeArmyAction(
-          game.worldState.allProvincesById[displayId]?.displayName ??
-              displayId,
+          game.worldState.allProvincesById[displayId]?.displayName ?? displayId,
         );
     }
   }
 
+  final topology = mapData?.combinedTopology ?? const MapTopology();
   VoidCallback? moveTap;
   if (canMutateViaUi && armyMoveState.moveEnabled) {
     moveTap = () {
+      if (usesHomeArmyDetachFlow(
+        enabled: armyMoveState.moveEnabled,
+        eligibleArmyIds: armyMoveState.eligibleMoveArmyIds,
+      )) {
+        showHomeArmyDetachThenMoveFlow(
+          context: context,
+          game: game,
+          topology: topology,
+          humanPlayerId: humanPlayerId,
+          draftOrders: draftOrders,
+          bus: bus,
+          playerView: playerView,
+        );
+        return;
+      }
       showOverlayArmyMoveFlow(
         context: context,
         game: game,
-        topology: mapData?.combinedTopology ?? const MapTopology(),
+        topology: topology,
         humanPlayerId: humanPlayerId,
         draftOrders: draftOrders,
         bus: bus,
@@ -107,10 +125,26 @@ ProvinceArmyMoveOverlayControls buildProvinceArmyMoveOverlayControls({
   VoidCallback? invadeTap;
   if (canMutateViaUi && armyMoveState.invadeEnabled) {
     invadeTap = () {
+      if (usesHomeArmyDetachFlow(
+        enabled: armyMoveState.invadeEnabled,
+        eligibleArmyIds: armyMoveState.eligibleInvadeArmyIds,
+      )) {
+        showHomeArmyDetachThenMoveFlow(
+          context: context,
+          game: game,
+          topology: topology,
+          humanPlayerId: humanPlayerId,
+          draftOrders: draftOrders,
+          bus: bus,
+          playerView: playerView,
+          initialDestinationProvinceId: displayId,
+        );
+        return;
+      }
       showOverlayArmyMoveFlow(
         context: context,
         game: game,
-        topology: mapData?.combinedTopology ?? const MapTopology(),
+        topology: topology,
         humanPlayerId: humanPlayerId,
         draftOrders: draftOrders,
         bus: bus,
