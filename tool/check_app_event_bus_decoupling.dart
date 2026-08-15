@@ -168,6 +168,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // within the province overlay (Refs #4369). Same local-by-design rationale
   // as tech detail / research breakdown dialogs.
   'app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart',
+  // MAP30002 More tile actions — overflow list plus Province details after
+  // a map secondary gesture (Refs #4440). Same local-by-design rationale as
+  // MAP20001 Tile details — `SPEC/program/app-ui-wiring.md` § "Tile context
+  // More dialog".
+  'app/lib/features/game/widgets/map_radial/game_map_tile_radial_host.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate
@@ -258,7 +263,8 @@ int runCheckAppEventBusDecoupling(
     postFrameBusEmitViolations.addAll(visitor.postFrameBusEmitViolations);
   }
 
-  final total = singletonViolations.length +
+  final total =
+      singletonViolations.length +
       navigatorKeyViolations.length +
       dialogViolations.length +
       postFrameBusEmitViolations.length;
@@ -266,9 +272,7 @@ int runCheckAppEventBusDecoupling(
     logI('check_app_event_bus_decoupling: no violations found.');
     return 0;
   }
-  logE(
-    'check_app_event_bus_decoupling: found $total violation(s):',
-  );
+  logE('check_app_event_bus_decoupling: found $total violation(s):');
   if (singletonViolations.isNotEmpty) {
     logE(
       ' AppEventBus() singleton calls (use appEventBusProvider or '
