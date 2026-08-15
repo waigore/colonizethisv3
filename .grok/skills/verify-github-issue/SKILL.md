@@ -7,4 +7,4 @@ description: Verifies one open GitHub issue against acceptance criteria, specs, 
 
 Source of truth: `.cursor/skills/verify-github-issue/SKILL.md` (plus `reference.md`). OpenCode: `.opencode/skills/verify-github-issue/SKILL.md`.
 
-Read the SKILL.md and reference.md in full. Enforce latest-`dev` verification, merged fix required for Complete, UI widget golden + gist proof, hard-fail rules, and `gh issue comment` only (no relabels).
+Read the SKILL.md and reference.md in full. Enforce latest-`dev` verification, merged fix required for Complete, UI widget golden + gist proof, hard-fail rules, `gh issue comment` only (no relabels), and the handbook style + accuracy audit (same two checks as `review-game-manual-agent`) when the issue updates the manual.
