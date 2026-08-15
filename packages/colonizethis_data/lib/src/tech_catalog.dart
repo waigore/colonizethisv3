@@ -1,5 +1,5 @@
 /// Full tech catalog (113 techs). SPEC/game/tech-tree.md and category sub-docs.
-/// Imported by tech_extraction.dart. Do not export; use colonizethis_data public API.
+/// Imported by tech_catalog_query.dart. Do not export; use colonizethis_data public API.
 library;
 
 import 'tech_definition.dart';

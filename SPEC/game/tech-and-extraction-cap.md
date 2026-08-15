@@ -14,9 +14,9 @@ Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<Stri
 
 The **max effective extraction level** (1–4) per resource or improvement type is **derived from the tech tree catalog**: which techs grant which max improvement level for each resource (grain, timber, iron, coal, etc.). Effective extraction per tile = min(improvement level, **owner’s tech cap** for that resource). The improvement level on the tile is unchanged; only the amount that counts for extraction is capped.
 
-The System resolves caps with a **resource-specific** mapping in `packages/colonizethis_data/lib/src/tech_extraction.dart` (`_extractionCapByResourceByTechId`, consumed by `extractionCapForResourceForUnlocked`). For a given resource, the cap is the highest level granted by unlocked techs for that resource. If no cap-raising tech is unlocked for that resource, the cap is **1**.
+The System resolves caps with a **resource-specific** mapping in `packages/colonizethis_data/lib/src/tech_extraction_caps.dart` (`_extractionCapByResourceByTechId`, consumed by `extractionCapForResourceForUnlocked`; re-exported from `tech_extraction.dart`). For a given resource, the cap is the highest level granted by unlocked techs for that resource. If no cap-raising tech is unlocked for that resource, the cap is **1**.
 
-Some resources may be intentionally capped below 4 by design. These exceptions must be declared in `extractionCapDesignExceptions` in `tech_extraction.dart` and mirrored in this SPEC:
+Some resources may be intentionally capped below 4 by design. These exceptions must be declared in `extractionCapDesignExceptions` in `tech_extraction_caps.dart` and mirrored in this SPEC:
 - `horses`: cap 1 (no extraction upgrade chain in current design)
 - `wool`: cap 3 (current design chain ends at `scientific_sheep_breeding`)
 
