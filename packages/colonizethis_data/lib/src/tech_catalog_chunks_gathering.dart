@@ -3,7 +3,13 @@ import 'tech_definition.dart';
 import 'tech_ids.dart';
 
 void addTechCatalogGathering(Map<String, TechDefinition> m) {
-  // --- Gathering (26) ---
+  addTechCatalogGatheringEra1(m);
+  addTechCatalogGatheringEra2(m);
+  addTechCatalogGatheringEra3And4(m);
+}
+
+void addTechCatalogGatheringEra1(Map<String, TechDefinition> m) {
+  // --- Gathering era 1 (7) ---
   m[kTechIdCropRotation] = TechDefinition(
     id: kTechIdCropRotation,
     era: 1,
@@ -56,6 +62,10 @@ void addTechCatalogGathering(Map<String, TechDefinition> m) {
     displayName: 'Coal Mining',
     prerequisiteIds: [kTechIdMineEngineering],
   );
+}
+
+void addTechCatalogGatheringEra2(Map<String, TechDefinition> m) {
+  // --- Gathering era 2 (8) ---
   m[kTechIdWindSawMill] = TechDefinition(
     id: kTechIdWindSawMill,
     era: 2,
@@ -120,6 +130,10 @@ void addTechCatalogGathering(Map<String, TechDefinition> m) {
     displayName: 'Large Copper and Tin Mines',
     prerequisiteIds: [kTechIdCopperAndTinMining],
   );
+}
+
+void addTechCatalogGatheringEra3And4(Map<String, TechDefinition> m) {
+  // --- Gathering era 3–4 (11) ---
   m[kTechIdCircularSaw] = TechDefinition(
     id: kTechIdCircularSaw,
     era: 3,

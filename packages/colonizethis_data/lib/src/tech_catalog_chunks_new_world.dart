@@ -3,7 +3,12 @@ import 'tech_definition.dart';
 import 'tech_ids.dart';
 
 void addTechCatalogNewWorld(Map<String, TechDefinition> m) {
-  // --- New World (28) ---
+  addTechCatalogNewWorldPlantations(m);
+  addTechCatalogNewWorldHarvestAndOre(m);
+}
+
+void addTechCatalogNewWorldPlantations(Map<String, TechDefinition> m) {
+  // --- New World plantations: sugar, tobacco, cotton (15) ---
   m[kTechIdDiscoveryOfSugar] = TechDefinition(
     id: kTechIdDiscoveryOfSugar,
     era: 1,
@@ -124,6 +129,10 @@ void addTechCatalogNewWorld(Map<String, TechDefinition> m) {
     displayName: 'Cotton Gin',
     prerequisiteIds: [kTechIdLargeCottonPlantations, kTechIdTrainedJourneymen],
   );
+}
+
+void addTechCatalogNewWorldHarvestAndOre(Map<String, TechDefinition> m) {
+  // --- New World harvest and ore: furs, spices, precious metals/gems (13) ---
   m[kTechIdDiscoveryOfFurs] = TechDefinition(
     id: kTechIdDiscoveryOfFurs,
     era: 1,
