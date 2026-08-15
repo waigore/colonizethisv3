@@ -25,10 +25,14 @@ void main() {
       const civilians = OpenCivilianUnitsPanelEvent(
         tileScopeTileKey: 'r1|p1|1|1',
         explorerOnly: true,
+        spyOnly: true,
+        relocateShortcutTargetTileKey: 'r1|p1|2|2',
       );
       expect(civilians.tileScopeTileKey, 'r1|p1|1|1');
       expect(civilians.explorerOnly, isTrue);
       expect(civilians.builderOnly, isFalse);
+      expect(civilians.spyOnly, isTrue);
+      expect(civilians.relocateShortcutTargetTileKey, 'r1|p1|2|2');
     });
 
     test('ConfirmDialogEvent invokes its result callback', () {
@@ -44,17 +48,19 @@ void main() {
       expect(answer, isTrue);
     });
 
-    test('DevelopmentDisconnectedAssignDialogEvent invokes its result callback',
-        () {
-      DevelopmentDisconnectedAssignChoice? answer;
-      final event = DevelopmentDisconnectedAssignDialogEvent(
-        roadFirstEnabled: true,
-        onResult: (v) => answer = v,
-      );
-      expect(event.roadFirstEnabled, isTrue);
-      event.result(DevelopmentDisconnectedAssignChoice.roadFirst);
-      expect(answer, DevelopmentDisconnectedAssignChoice.roadFirst);
-    });
+    test(
+      'DevelopmentDisconnectedAssignDialogEvent invokes its result callback',
+      () {
+        DevelopmentDisconnectedAssignChoice? answer;
+        final event = DevelopmentDisconnectedAssignDialogEvent(
+          roadFirstEnabled: true,
+          onResult: (v) => answer = v,
+        );
+        expect(event.roadFirstEnabled, isTrue);
+        event.result(DevelopmentDisconnectedAssignChoice.roadFirst);
+        expect(answer, DevelopmentDisconnectedAssignChoice.roadFirst);
+      },
+    );
 
     test('CombatModeChosenEvent retains chosen mode', () {
       const event = CombatModeChosenEvent(CombatMode.quickBattle);

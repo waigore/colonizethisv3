@@ -32,6 +32,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.engineerOnly = false,
     this.railBuilderOnly = false,
     this.merchantOnly = false,
+    this.spyOnly = false,
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
     this.buildImprovementShortcutTargetTileKey,
@@ -41,6 +42,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.buildRailShortcutTargetTileKey,
     this.purchaseLandShortcutTargetTileKey,
     this.upgradeTownShortcutTargetTileKey,
+    this.relocateShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -64,6 +66,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional panel filter mode for merchant-only rows.
   final bool merchantOnly;
+
+  /// Optional panel filter mode for Spy-only rows (Refs #4439).
+  final bool spyOnly;
 
   /// Optional tile key used by the province prospect shortcut flow.
   final String? prospectShortcutTargetTileKey;
@@ -91,6 +96,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province upgrade-town shortcut flow.
   final String? upgradeTownShortcutTargetTileKey;
+
+  /// Optional tile key used by the province Station spy Relocate shortcut.
+  final String? relocateShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.

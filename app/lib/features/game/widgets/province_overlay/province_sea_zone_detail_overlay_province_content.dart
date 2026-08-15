@@ -83,6 +83,7 @@ OverlayContent provinceContent({
   bool invadeArmyEnabled = false,
   String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
+  ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
   required bool establishConsulatePending,
@@ -247,6 +248,7 @@ OverlayContent provinceContent({
     invadeArmyEnabled: invadeArmyEnabled,
     invadeArmyTooltip: invadeArmyTooltip,
     onInvadeArmyTap: onInvadeArmyTap,
+    stationSpy: stationSpy,
     provinceDisplayName: province?.displayName,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
@@ -257,42 +259,13 @@ OverlayContent provinceContent({
     byResImprovable: tileIntel.byResImprovable,
     resourceKeysSorted: tileIntel.resourceKeysSorted,
   );
-  final economic = unitSections.economic;
-  final militarySection = unitSections.military;
-  final civilianSection = unitSections.civilian;
-  final naval = unitSections.naval;
-
-  final tabLabels = [
-    l10n.provinceOverlay_sectionPolitical,
-    l10n.provinceOverlay_sectionTile,
-    l10n.provinceOverlay_sectionEconomic,
-    l10n.provinceOverlay_sectionMilitary,
-    l10n.provinceOverlay_sectionCivilian,
-    l10n.provinceOverlay_sectionNaval,
-  ];
-  final tabViews = [
-    political,
-    tileSection,
-    economic,
-    militarySection,
-    civilianSection,
-    naval,
-  ];
-  final sections = Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      political,
-      tileSection,
-      economic,
-      militarySection,
-      civilianSection,
-      naval,
-    ],
-  );
-  return OverlayContent(
-    tabLabels: tabLabels,
-    tabViews: tabViews,
-    sections: sections,
+  return overlayProvinceSectionBundle(
+    l10n: l10n,
+    political: political,
+    tileSection: tileSection,
+    economic: unitSections.economic,
+    military: unitSections.military,
+    civilian: unitSections.civilian,
+    naval: unitSections.naval,
   );
 }

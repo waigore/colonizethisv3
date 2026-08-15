@@ -78,6 +78,7 @@ The 1.5 dp `--accent-dim` top border required by the same row is provided by `Pr
 - **Close control** on `ProvinceSeaZoneDetailOverlay` → `mapProvincePanelProvider.notifier.closeOverlay()` (`overlayOpen = false`).
 - **Secondary highlight** (locate/list cursor) → `setSecondaryHighlight(tileKey)` on the same provider.
 - **Explore / prospect / build shortcuts** (when enabled) → `appEventBusProvider` emits `OpenCivilianUnitsPanelEvent` with the appropriate shortcut tile key (`explorerOnly` / `builderOnly` flags). Each handler revalidates action state before emit (no-op when disabled).
+- **Station spy** (when enabled) → `OpenCivilianUnitsPanelEvent(spyOnly: true, relocateShortcutTargetTileKey: <exact selected tile>)`. Relocate on an eligible Spy commits that tile without map pick.
 - **No `Navigator` / route changes** inside this slot.
 
 ---

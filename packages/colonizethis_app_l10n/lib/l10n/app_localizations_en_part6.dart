@@ -241,6 +241,17 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get provinceOverlay_moveArmyAction => 'Move';
 
   @override
+  String get provinceOverlay_stationSpyAction => 'Station spy';
+
+  @override
+  String get provinceOverlay_stationSpyDisabledNoIdleSpyTooltip =>
+      'No idle Spy can relocate here.';
+
+  @override
+  String get provinceOverlay_stationSpyDisabledNotOccupiableTooltip =>
+      'This tile cannot be occupied.';
+
+  @override
   String provinceOverlay_invadeArmyAction(String provinceName) {
     return 'Invade $provinceName';
   }
