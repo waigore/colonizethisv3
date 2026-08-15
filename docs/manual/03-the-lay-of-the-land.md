@@ -15,7 +15,7 @@ Your decrees land on **provinces**, **sea zones**, and **tiles**. Reading the ma
 ### Reading provinces and sea zones
 
 1. On `GAME10001` / `MAP10001`, select a land province or sea zone.
-2. `MAP20001` **Province / sea-zone detail overlay** shows the place’s display name, ownership, and local details. On the **Tile** section, action-critical rows (coordinates, resource, prospected, improvement, transport level, civilians) stay on the default surface; road captions, port status, capital-link teaching, and per-tile extraction live under **Tile details** (tap the transport line or the named control). A **stranded** tile that cannot extract still shows one default capital-link warning when full production would be greater than zero. When a Minor or Tribe province bars exploration for lack of a Consulate, its Political section also offers the focused **Establish Consulate** shortcut; unavailable attempts explain what your court still lacks. On a hostile coastal province at war with you, the Naval section can start **Blockade** or **Beachhead** when a sea-going fleet is at sea beside that coast (Chapter 13).
+2. `MAP20001` **Province / sea-zone detail overlay** shows the place’s display name, ownership, and local details. On the **Tile** section, action-critical rows (coordinates, resource, prospected, improvement, transport level, civilians) stay on the default surface; road captions, port status, capital-link teaching, and per-tile extraction live under **Tile details** (tap the transport line or the named control). A **stranded** tile that cannot extract still shows one default capital-link warning when full production would be greater than zero. When a Minor or Tribe province bars exploration for lack of a Consulate, its Political section also offers the focused **Establish Consulate** shortcut; unavailable attempts explain what your court still lacks. On a hostile coastal province at war with you, the Naval section can start **Blockade** or **Beachhead** when a sea-going fleet is at sea beside that coast (Chapter 13). You can also right-click a tile (or press and hold on a touch screen) to open `MAP30001` without opening that panel first. The ring offers **Explore**, **Prospect**, and **Build improvement** when those actions are possible on that tile. **More** (`MAP30002`) always starts with **Province details**, which opens the same panel as a tap.
 3. Town and port icons on the map mark development and seaboard access (`SPEC/ui/town-port-icons.md`). When a province has a **fort** (wood, stone, or modern), a smaller **fort glyph** appears offset near the town icon on `MAP10001` — your own forts always show when the town tile is revealed; foreign forts appear only when you have full military intelligence for that province (the same gate as invasion fort lines on `DLG20001`). Your **armies** appear as a regiment icon in the **bottom-right** of that same town tile, so you can still tap the town, fort, or a civilian on the cell. A stack badge appears when more than one of your armies shares the town (the Home Army counts, even with no regiments yet). Tap the army icon to move a field army, to detach a marching force from a non-empty Home Army, or to open the military roster when the Home Army is empty — you do not need `MAP20001` first (Chapter 11). Expect those town sites to sit on **plains** terrain at setup — setup prefers plains among eligible candidates and converts the chosen town tile to plains (clearing any surface resource) when no natural plains exists. Layered terrain rendering paints the tile art beneath political ownership (`SPEC/ui/layered-terrain-rendering.md`).
 4. Political ownership glyphs and GP tinting (when present on the game) help you see who holds which province at a glance.
 
@@ -87,6 +87,7 @@ AI courts value capital-connected extraction and contested border provinces when
 
 - [ ] Explains OW/NW separate graphs, P–P / P–S / S–S edges, and warp-only cross-region links.
 - [ ] Documents map selection → `MAP20001` overlay and points to town/port and terrain rendering specs.
+- [ ] Documents `MAP30001` right-click / press-and-hold tile acts and `MAP30002` **Province details**.
 - [ ] Summarizes region resource rules and prospect-required minerals (detail deferred to Ch. 4/6 as appropriate).
 - [ ] Explains capital connectivity’s effect on extraction usefulness.
 - [ ] Documents plains placement for capitals and per-province town tiles (including neutral provinces; prefer plains, convert-if-needed).
@@ -111,6 +112,9 @@ AI courts value capital-connected extraction and contested border provinces when
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/empire-overview.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/tile-context-radial.md`
+- `SPEC/ui/tile-more-actions-dialog.md`
+- `SPEC/ui/components/tile-radial-catalog.md`
 - `SPEC/ui/layered-terrain-rendering.md`
 - `SPEC/ui/town-port-icons.md`
 - `SPEC/ui/game-screen.md`

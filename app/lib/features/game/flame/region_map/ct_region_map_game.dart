@@ -37,6 +37,8 @@ class CtRegionMapGame extends FlameGame
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
     void Function(String provinceId)? onProvinceSelected,
     void Function(String tileKey)? onMapTileTappedForDetail,
+    void Function(String tileKey, Offset localPosition)?
+    onMapTileSecondaryForRadial,
     VoidCallback? onRegionViewChanged,
     void Function(String? provinceId)? onProvinceHovered,
     void Function(String? tileKey)? onTileHovered,
@@ -78,6 +80,7 @@ class CtRegionMapGame extends FlameGame
     this.baseLayerDisplayMode = baseLayerDisplayMode;
     this.onProvinceSelected = onProvinceSelected;
     this.onMapTileTappedForDetail = onMapTileTappedForDetail;
+    this.onMapTileSecondaryForRadial = onMapTileSecondaryForRadial;
     this.onRegionViewChanged = onRegionViewChanged;
     this.onProvinceHovered = onProvinceHovered;
     this.onTileHovered = onTileHovered;
@@ -149,6 +152,8 @@ class CtRegionMapGame extends FlameGame
     bool? showPlayerTerritoryOutline,
     Set<String>? playerTerritoryTileKeys,
     bool clearPlayerTerritoryTileKeys = false,
+    void Function(String tileKey, Offset localPosition)?
+    onMapTileSecondaryForRadial,
   }) => ctRegionMapGameUpdateProps(
     this,
     region: region,
@@ -182,6 +187,7 @@ class CtRegionMapGame extends FlameGame
     showPlayerTerritoryOutline: showPlayerTerritoryOutline,
     playerTerritoryTileKeys: playerTerritoryTileKeys,
     clearPlayerTerritoryTileKeys: clearPlayerTerritoryTileKeys,
+    onMapTileSecondaryForRadial: onMapTileSecondaryForRadial,
   );
 
   void setCameraCenterWorld(double x, double y) =>
@@ -202,6 +208,9 @@ class CtRegionMapGame extends FlameGame
 
   void updateHoverFromLocal(Offset localPosition) =>
       ctRegionMapGameUpdateHoverFromLocal(this, localPosition);
+
+  void handleSecondaryFromLocal(Offset localPosition) =>
+      handleRegionMapSecondaryFromLocal(localPosition);
 
   @override
   void onGameResize(Vector2 size) {

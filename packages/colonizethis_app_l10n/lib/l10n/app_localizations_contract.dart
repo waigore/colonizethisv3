@@ -2334,6 +2334,24 @@ abstract class AppLocalizations {
   /// Combined semantics for the MAP10001 owner/sight hover readout.
   String mapHover_semantics(String summary);
 
+  /// MAP30001 / MAP30002 Explore wedge label (Refs #4440).
+  String get tileRadial_explore;
+
+  /// MAP30001 / MAP30002 Prospect wedge label (Refs #4440).
+  String get tileRadial_prospect;
+
+  /// MAP30001 / MAP30002 Build improvement wedge label (Refs #4440).
+  String get tileRadial_buildImprovement;
+
+  /// MAP30001 More spoke label (Refs #4440).
+  String get tileRadial_more;
+
+  /// MAP30002 dialog title (Refs #4440).
+  String get tileRadial_moreTitle;
+
+  /// MAP30002 Province details row (Refs #4440).
+  String get tileRadial_provinceDetails;
+
   /// Political section region row (Old World / New World label).
   String provinceOverlay_region(String region);
 

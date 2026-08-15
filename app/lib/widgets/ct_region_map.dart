@@ -22,6 +22,7 @@ class CtRegionMap extends StatefulWidget {
     this.baseLayerDisplayMode,
     this.onProvinceSelected,
     this.onMapTileTappedForDetail,
+    this.onMapTileSecondaryForRadial,
     this.onRegionViewChanged,
     this.onProvinceHovered,
     this.onTileHovered,
@@ -60,6 +61,8 @@ class CtRegionMap extends StatefulWidget {
   final BaseLayerDisplayMode? baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
   final void Function(String tileKey)? onMapTileTappedForDetail;
+  final void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
   final void Function(String? tileKey)? onTileHovered;

@@ -28,6 +28,8 @@ Widget ctRegionMapTestHarness({
   void Function(String?)? onProvinceHovered,
   void Function(String?)? onTileHovered,
   void Function(String)? onMapTileTappedForDetail,
+  void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial,
   void Function(String)? onCivilianTileStateChanged,
   VoidCallback? onCivilianTileSelectionCleared,
   String? selectedTileKey,
@@ -76,6 +78,7 @@ Widget ctRegionMapTestHarness({
       onProvinceHovered: onProvinceHovered,
       onTileHovered: onTileHovered,
       onMapTileTappedForDetail: onMapTileTappedForDetail,
+      onMapTileSecondaryForRadial: onMapTileSecondaryForRadial,
       onCivilianTileStateChanged: onCivilianTileStateChanged,
       onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
       selectedTileKey: selectedTileKey,
@@ -126,6 +129,8 @@ Future<void> pumpCtRegionMapTest(
   void Function(String?)? onProvinceHovered,
   void Function(String?)? onTileHovered,
   void Function(String)? onMapTileTappedForDetail,
+  void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial,
   void Function(String)? onCivilianTileStateChanged,
   VoidCallback? onCivilianTileSelectionCleared,
   String? selectedTileKey,
@@ -164,6 +169,7 @@ Future<void> pumpCtRegionMapTest(
       onProvinceHovered: onProvinceHovered,
       onTileHovered: onTileHovered,
       onMapTileTappedForDetail: onMapTileTappedForDetail,
+      onMapTileSecondaryForRadial: onMapTileSecondaryForRadial,
       onCivilianTileStateChanged: onCivilianTileStateChanged,
       onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
       selectedTileKey: selectedTileKey,

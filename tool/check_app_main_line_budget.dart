@@ -86,8 +86,10 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 Station spy Civilian shortcut + #4438 merge (Refs #4439; measured 79_147).
 // raised for MAP20001 Naval Blockade/Beachhead overlay + #4439 merge (Refs #4413; measured 79_517).
 // raised for combined #4438+#4432+#4439 merge headroom (measured 79_441).
-// raised for combined #4413+#4438+#4432+#4439 merge headroom (measured 79_811).
-const _maxMainLines = 80000;
+// raised for MAP30001 tile context radial + More dialog (Refs #4440; measured 80_223).
+// raised for combined #4440+#4432 merge headroom (measured 80_517).
+// raised for combined #4413+#4440 merge headroom (measured 80_940).
+const _maxMainLines = 81100;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

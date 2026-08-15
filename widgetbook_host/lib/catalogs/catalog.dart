@@ -43,6 +43,10 @@ import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/providers/region_minimap_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_context_radial.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_more_actions_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_catalog.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_spoke_view.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_intel.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_action_selector.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
@@ -197,6 +201,7 @@ part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_screens_combat.dart';
 part 'catalog_screens_combat_mode_choice.dart';
+part 'catalog_tile_radial.dart';
 part 'catalog_dialogs.dart';
 part 'catalog_dialogs_grant_or_subsidy.dart';
 part 'catalog_dialogs_move_army_invasion_intel.dart';
@@ -366,6 +371,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...improvementHeadroomLegendDirectories,
   ...improvementHeadroomMarkDirectories,
   ...mapTileHoverReadoutDirectories,
+  ...tileRadialDirectories,
   ...playersBarToggleDirectories,
   ...gameMapCornerControlsDirectories,
   ...gameMapEmpireLeftRailDirectories,
