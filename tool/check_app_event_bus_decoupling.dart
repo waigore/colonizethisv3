@@ -163,6 +163,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
   // (Refs #4213, #4343).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
+  // Overlay Blockade/Beachhead extracted picker + target confirm helpers
+  // (`pickNavalMissionFleetId` / `confirmNavalTargetedMission`). Same
+  // local-by-design rationale as `naval_mission_flow.dart`
+  // (Refs #4213, #4413).
+  'app/lib/features/game/widgets/unit_orders/naval_mission_flow_support.dart',
   // MAP20001 Tile teaching helper — read-only connectivity/port/caption
   // details opened from transport cluster tap or named Tile details action
   // within the province overlay (Refs #4369). Same local-by-design rationale

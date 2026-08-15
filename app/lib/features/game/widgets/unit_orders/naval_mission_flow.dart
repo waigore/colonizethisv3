@@ -12,8 +12,8 @@ import 'package:flutter/material.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../panels/tree_builders/fleet_mission_label.dart';
 import 'move_fleet_dialog.dart';
+import 'naval_mission_flow_support.dart';
 import 'naval_mission_menu_dialog.dart';
-import 'naval_mission_target_dialog.dart';
 
 /// Map fleet-marker tap: pick fleet when stacked, then route to the legal action.
 ///
@@ -33,7 +33,7 @@ Future<void> showNavalFleetMarkerFlow({
 }) async {
   if (fleetIds.isEmpty) return;
 
-  final selectedFleetId = await _pickFleetId(
+  final selectedFleetId = await pickNavalMissionFleetId(
     context: context,
     game: game,
     humanPlayerId: humanPlayerId,
@@ -91,12 +91,14 @@ Future<void> showNavalMissionFlow({
   required List<String> fleetIds,
   String? preselectedFleetId,
   PlayerView? playerView,
+  FleetMission? initialMission,
+  String? initialTargetProvinceId,
 }) async {
   if (fleetIds.isEmpty) return;
   final resolvedPlayerView =
       playerView ?? buildPlayerView(game, topology, humanPlayerId);
 
-  final selectedFleetId = await _pickFleetId(
+  final selectedFleetId = await pickNavalMissionFleetId(
     context: context,
     game: game,
     humanPlayerId: humanPlayerId,
@@ -117,6 +119,26 @@ Future<void> showNavalMissionFlow({
   );
 
   if (!availability.baseGatesPass && !availability.canCancelPending) {
+    return;
+  }
+
+  final overlayMission = initialMission;
+  if (overlayMission != null &&
+      (overlayMission == FleetMission.blockade ||
+          overlayMission == FleetMission.beachhead)) {
+    await confirmNavalTargetedMission(
+      context: context,
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: bus,
+      fleet: fleet,
+      mission: overlayMission,
+      targets: overlayMission == FleetMission.blockade
+          ? availability.blockadeTargetProvinceIds
+          : availability.beachheadTargetProvinceIds,
+      playerView: resolvedPlayerView,
+      initialTargetProvinceId: initialTargetProvinceId,
+    );
     return;
   }
 
@@ -148,31 +170,19 @@ Future<void> showNavalMissionFlow({
         bus: bus,
       );
     case NavalMissionMenuChoiceMission(:final mission):
-      if (mission == FleetMission.blockade || mission == FleetMission.beachhead) {
-        final targets = mission == FleetMission.blockade
-            ? availability.blockadeTargetProvinceIds
-            : availability.beachheadTargetProvinceIds;
-        final targetId = await showDialog<String>(
+      if (mission == FleetMission.blockade ||
+          mission == FleetMission.beachhead) {
+        await confirmNavalTargetedMission(
           context: context,
-          builder: (ctx) => NavalMissionTargetDialog(
-            game: game,
-            mission: mission,
-            fleet: fleet,
-            targetProvinceIds: targets,
-            humanPlayerId: humanPlayerId,
-            playerView: resolvedPlayerView,
-          ),
-        );
-        if (targetId == null || !context.mounted) return;
-        bus.emit(
-          NavalMissionRequestedEvent(
-            humanPlayerId: humanPlayerId,
-            missionOrder: NavalMissionOrder(
-              fleetId: fleet.id,
-              mission: mission.name,
-              targetProvinceId: targetId,
-            ),
-          ),
+          game: game,
+          humanPlayerId: humanPlayerId,
+          bus: bus,
+          fleet: fleet,
+          mission: mission,
+          targets: mission == FleetMission.blockade
+              ? availability.blockadeTargetProvinceIds
+              : availability.beachheadTargetProvinceIds,
+          playerView: resolvedPlayerView,
         );
       } else {
         bus.emit(
@@ -207,27 +217,6 @@ Future<bool?> showMoveFleetDialogForFleet({
       bus: bus,
     ),
   );
-}
-
-Future<String?> _pickFleetId({
-  required BuildContext context,
-  required Game game,
-  required String humanPlayerId,
-  required List<String> fleetIds,
-  String? preselectedFleetId,
-}) async {
-  if (fleetIds.length > 1) {
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => NavalMissionFleetPickerDialog(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        fleetIds: fleetIds,
-        initialFleetId: preselectedFleetId,
-      ),
-    );
-  }
-  return fleetIds.first;
 }
 
 /// Menu selection for [showNavalMissionFlow].

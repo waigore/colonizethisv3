@@ -7,6 +7,8 @@ import '../../../../config/constants.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import '../../flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
 import 'province_sea_zone_detail_overlay_chrome.dart';
 import 'province_sea_zone_detail_overlay_province_content.dart';
 import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
@@ -73,6 +75,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.invadeArmyEnabled = false,
     this.invadeArmyTooltip = '',
     this.onInvadeArmyTap,
+    this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
     this.stationSpy = kProvinceOverlayStationSpyHidden,
     this.showEstablishConsulateControl = false,
     this.establishConsulateEnabled = false,
@@ -140,6 +143,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool invadeArmyEnabled;
   final String invadeArmyTooltip;
   final VoidCallback? onInvadeArmyTap;
+  final ProvinceNavalMissionOverlayControls navalMission;
   final ProvinceOverlayStationSpyProps stationSpy;
   final bool showEstablishConsulateControl;
   final bool establishConsulateEnabled;
@@ -234,6 +238,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       invadeArmyEnabled: invadeArmyEnabled,
       invadeArmyTooltip: invadeArmyTooltip,
       onInvadeArmyTap: onInvadeArmyTap,
+      navalMission: navalMission,
       stationSpy: stationSpy,
       showEstablishConsulateControl: showEstablishConsulateControl,
       establishConsulateEnabled: establishConsulateEnabled,

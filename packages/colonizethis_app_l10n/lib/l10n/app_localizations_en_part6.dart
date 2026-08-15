@@ -269,6 +269,16 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'No field army can reach this province this turn.';
 
   @override
+  String get provinceOverlay_blockadeAction => 'Blockade';
+
+  @override
+  String get provinceOverlay_beachheadAction => 'Beachhead';
+
+  @override
+  String get provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip =>
+      'A fleet must be at sea beside this coast. Fleets in port cannot take missions.';
+
+  @override
   String get provinceOverlay_selectArmyTitle => 'Select army';
 
   @override

@@ -8,11 +8,14 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import 'province_overlay_unit_partition.dart';
 import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_province_content_intel.dart';
+import 'province_sea_zone_detail_overlay_province_content_tabs.dart';
 import 'province_sea_zone_detail_overlay_province_content_unit_sections.dart';
 import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
@@ -83,6 +86,8 @@ OverlayContent provinceContent({
   bool invadeArmyEnabled = false,
   String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
+  ProvinceNavalMissionOverlayControls navalMission =
+      ProvinceNavalMissionOverlayControls.hidden,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
@@ -248,6 +253,7 @@ OverlayContent provinceContent({
     invadeArmyEnabled: invadeArmyEnabled,
     invadeArmyTooltip: invadeArmyTooltip,
     onInvadeArmyTap: onInvadeArmyTap,
+    navalMission: navalMission,
     stationSpy: stationSpy,
     provinceDisplayName: province?.displayName,
     onHighlightTile: onHighlightTile,
@@ -259,13 +265,13 @@ OverlayContent provinceContent({
     byResImprovable: tileIntel.byResImprovable,
     resourceKeysSorted: tileIntel.resourceKeysSorted,
   );
-  return overlayProvinceSectionBundle(
+  return assembleProvinceOverlayTabContent(
     l10n: l10n,
     political: political,
     tileSection: tileSection,
     economic: unitSections.economic,
-    military: unitSections.military,
-    civilian: unitSections.civilian,
+    militarySection: unitSections.military,
+    civilianSection: unitSections.civilian,
     naval: unitSections.naval,
   );
 }

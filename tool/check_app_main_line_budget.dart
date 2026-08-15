@@ -74,6 +74,9 @@ const _packageName = 'colonizethis_app';
 // raised for MAP10001 improvement headroom marks + teaching chip (Refs #4408; measured 77_976).
 // raised for DIPL20001 grant/subsidy Submit-commit + Deal Book player copy
 // merge headroom (Refs #4415, #4414; measured 78_020).
+// raised for DIPL20001 grant/subsidy Submit-commit + Deal Book player copy
+// merge headroom (Refs #4415, #4414; measured 78_020).
+// raised for MAP20001 Naval Blockade/Beachhead overlay (Refs #4413).
 // raised for Home Army detach-then-move from map overlay (Refs #4407; measured 78_256).
 // raised for SHEL10002 Quick Start (Refs #4416; measured 77_621).
 // raised for Declare War named third-party courts on confirm (Refs #4409; measured 78_068).
@@ -81,10 +84,12 @@ const _packageName = 'colonizethis_app';
 // raised for CMPT10001 force/fort/Details on combat mode choice (Refs #4438; measured 78_737).
 // raised for GAME20001 Labour row cost/upkeep (Refs #4432; measured 78_800).
 // raised for MAP20001 Station spy Civilian shortcut + #4438 merge (Refs #4439; measured 79_147).
+// raised for MAP20001 Naval Blockade/Beachhead overlay + #4439 merge (Refs #4413; measured 79_517).
 // raised for combined #4438+#4432+#4439 merge headroom (measured 79_441).
 // raised for MAP30001 tile context radial + More dialog (Refs #4440; measured 80_223).
 // raised for combined #4440+#4432 merge headroom (measured 80_517).
-const _maxMainLines = 80600;
+// raised for combined #4413+#4440 merge headroom (measured 80_940).
+const _maxMainLines = 81100;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

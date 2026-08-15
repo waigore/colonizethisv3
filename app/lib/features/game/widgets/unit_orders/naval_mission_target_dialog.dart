@@ -22,6 +22,7 @@ class NavalMissionTargetDialog extends StatefulWidget {
     required this.targetProvinceIds,
     required this.humanPlayerId,
     this.playerView,
+    this.initialTargetProvinceId,
   });
 
   static const screenId = NavalMissionDialogIds.targetDialog;
@@ -32,6 +33,7 @@ class NavalMissionTargetDialog extends StatefulWidget {
   final List<String> targetProvinceIds;
   final String humanPlayerId;
   final PlayerView? playerView;
+  final String? initialTargetProvinceId;
 
   @override
   State<NavalMissionTargetDialog> createState() =>
@@ -41,6 +43,30 @@ class NavalMissionTargetDialog extends StatefulWidget {
 class _NavalMissionTargetDialogState
     extends MoveUnitsDialogState<NavalMissionTargetDialog> {
   String? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    final preferred = widget.initialTargetProvinceId;
+    if (preferred != null && widget.targetProvinceIds.contains(preferred)) {
+      _selected = preferred;
+    }
+  }
+
+  @override
+  void didUpdateWidget(NavalMissionTargetDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTargetProvinceId != widget.initialTargetProvinceId ||
+        oldWidget.targetProvinceIds != widget.targetProvinceIds) {
+      final preferred = widget.initialTargetProvinceId;
+      if (preferred != null && widget.targetProvinceIds.contains(preferred)) {
+        _selected = preferred;
+      } else if (_selected != null &&
+          !widget.targetProvinceIds.contains(_selected)) {
+        _selected = null;
+      }
+    }
+  }
 
   @override
   String get moveDialogTitle {

@@ -54,6 +54,7 @@
 |--------|-----------|--------|
 | Map fleet marker | `OpenNavalMissionMenuEvent` → `showNavalFleetMarkerFlow` → at-sea branch → `showNavalMissionFlow` | Menu after optional `DLG31003`; Home Fleet / in-port never reach this dialog (Refs #4343). |
 | `UNIT30001` **Mission** action | Sea-going at-sea non-Home fleet row | Same flow with single `fleetIds` entry. |
+| `MAP20001` overlay Blockade / Beachhead | Overlay Naval shortcut with `initialMission` set | This dialog is **not** mounted; flow continues at `DLG31002` (Refs #4413). Marker/panel paths still open this dialog. |
 | Early exit | `!availability.baseGatesPass && !availability.canCancelPending` | `showNavalMissionFlow` returns before dialog mounts (panel / edge cases only). |
 
 ---

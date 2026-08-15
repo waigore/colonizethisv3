@@ -62,6 +62,8 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 
 **Panel parity:** In `UNIT30001` **Naval Units**, tap **Mission** on an eligible at-sea fleet row for the same `DLG31001` flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
+**Overlay shortcut:** On a foreign coastal province at war with you, `MAP20001` Naval offers **Blockade** and **Beachhead**. One eligible at-sea fleet skips `DLG31001` and opens `DLG31002` with that province already selected. Several eligible fleets open `DLG31003` first. If a fleet is at sea but not beside this coast, the controls stay visible and disabled until a fleet is at sea beside the coast — fleets in port cannot take missions. A fogged naval roster (`???`) still shows these actions when the Political owner is known. Map-marker and panel **Mission** still open `DLG31001` as usual.
+
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
 - **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port. Use the target-row harbor line to compare empty harbors against ports with fleets already docked.
 - **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs. Target intel helps you compare landing coasts; it does not mean the fleet captures the province this turn.
@@ -109,7 +111,7 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - [ ] Explains the complete merchant and warship roster, each ship’s technology gate, and the Carrack exception.
 - [ ] Documents `UNIT30001` and `UNIT60001` for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints.
 - [ ] Documents `DLG30001` one-hop port⇄sea movement, owned-port docking, capital docking, and sea-zone revelation.
-- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, cancel-pending, move xor mission, fog-honest Beachhead/Blockade target intel on `DLG31002`, and `DLG31003` ship-mix rows when several fleets share a marker.
+- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, `MAP20001` Naval **Blockade** / **Beachhead** overlay entry (skip `DLG31001` when the mission is known; `DLG31003` when several fleets qualify), cancel-pending, move xor mission, fog-honest Beachhead/Blockade target intel on `DLG31002`, and `DLG31003` ship-mix rows when several fleets share a marker.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing preconditions; Join Home Fleet via dock/transfer only (not mission menu).
 - [ ] Documents `DLG40001` transfer of selected hulls from an eligible capital-port fleet into the Home Fleet.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.
@@ -130,5 +132,6 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - `SPEC/ui/naval-mission-target-dialog.md`
 - `SPEC/ui/naval-mission-fleet-picker-dialog.md`
 - `SPEC/ui/map-widget.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ai/phase-planner-dispatch.md`
 - `SPEC/ai/ai-personalities.md`

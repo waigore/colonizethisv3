@@ -10,7 +10,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `NavalMissionTargetDialog` | `StatefulWidget` | `game`, `mission`, `fleet`, `targetProvinceIds`, `humanPlayerId`, `playerView?` | Local `showDialog` after Blockade/Beachhead selection. Returns selected full `targetProvinceId` string or `null`. |
+| `NavalMissionTargetDialog` | `StatefulWidget` | `game`, `mission`, `fleet`, `targetProvinceIds`, `humanPlayerId`, `playerView?`, `initialTargetProvinceId?` | Local `showDialog` after Blockade/Beachhead selection. Returns selected full `targetProvinceId` string or `null`. When `initialTargetProvinceId` is in `targetProvinceIds`, that row starts selected (overlay MAP20001 preselect; Refs #4413). |
 
 `targetProvinceIds` are pre-filtered by `navalMissionAvailabilityForFleet` (adjacent at-war provinces; beachhead = hostile coastal). Missing `playerView` degrades to name + unknown intel (same as `DLG20001` without a view).
 
@@ -49,6 +49,7 @@ Uses [`MoveUnitsDialogState`](components/move-units-dialog-base.md) scaffold (`C
 | Source | Condition | Result |
 |--------|-----------|--------|
 | `NavalMissionMenuDialog` via `showNavalMissionFlow` | User chose Blockade or Beachhead | Opens with `blockadeTargetProvinceIds` or `beachheadTargetProvinceIds`; flow forwards `humanPlayerId` and `PlayerView` (built from map topology when omitted by caller). |
+| `MAP20001` overlay Blockade / Beachhead | `showNavalMissionFlow` with `initialMission` + `initialTargetProvinceId` | Skips `DLG31001`; opens with the viewed province preselected when that id is in the target list (Refs #4413). |
 
 ---
 
