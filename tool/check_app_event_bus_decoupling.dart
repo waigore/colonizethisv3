@@ -150,6 +150,9 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // (Refs #4350).
   'app/lib/features/game/widgets/unit_orders/show_move_army_dialog.dart',
   'app/lib/features/game/widgets/unit_orders/overlay_army_move_flow.dart',
+  // Home Army detach-then-move: Split then DLG20001 for the new field army.
+  // Same local-by-design rationale as overlay Move/Invade (Refs #4407).
+  'app/lib/features/game/widgets/unit_orders/home_army_detach_then_move_flow.dart',
   // Military Counsel invade Agree reuses the move-army declare-war copy and
   // chrome — same local-by-design rationale as
   // `move_army_dialog_declare_war.dart` (Refs #4307).

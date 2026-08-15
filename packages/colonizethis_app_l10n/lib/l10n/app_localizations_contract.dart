@@ -1799,6 +1799,12 @@ abstract class AppLocalizations {
   /// Split army dialog title.
   String get splitArmy_title;
 
+  /// Split dialog title when detaching from the Home Army to march.
+  String get splitArmy_detachTitle;
+
+  /// Split dialog confirm label for the map detach-then-move flow.
+  String get splitArmy_detachConfirm;
+
   /// Technology panel title with player display name.
   String technologyPanel_title(String playerName);
 

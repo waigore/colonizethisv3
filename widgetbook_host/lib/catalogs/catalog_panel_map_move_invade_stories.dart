@@ -14,6 +14,17 @@ List<WidgetbookUseCase> get provinceOverlayMoveInvadeUseCases => [
     ),
   ),
   WidgetbookUseCase(
+    name: 'Standalone — Military Move detach enabled',
+    builder: (context) => _provinceOverlayMoveInvadeStory(
+      showMoveArmyControl: true,
+      moveArmyEnabled: true,
+      showInvadeArmyControl: false,
+      invadeArmyEnabled: false,
+      moveArmyTooltip:
+          'Detach a field army from the Home Army, then choose where it marches.',
+    ),
+  ),
+  WidgetbookUseCase(
     name: 'Standalone — Military Move disabled',
     builder: (context) => _provinceOverlayMoveInvadeStory(
       showMoveArmyControl: true,
