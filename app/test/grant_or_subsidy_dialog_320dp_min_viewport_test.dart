@@ -181,6 +181,10 @@ void main() {
           find.byKey(const Key('grantOrSubsidyDialogWarning')),
           findsNothing,
         );
+        expect(
+          find.byKey(const Key('grantOrSubsidyDialogPreview')),
+          findsOneWidget,
+        );
       },
     );
 
@@ -218,6 +222,10 @@ void main() {
         expect(
           find.byKey(const Key('grantOrSubsidyDialogWarning')),
           findsNothing,
+        );
+        expect(
+          find.byKey(const Key('grantOrSubsidyDialogPreview')),
+          findsOneWidget,
         );
       },
     );
@@ -261,6 +269,10 @@ void main() {
         expect(
           find.byKey(const Key('grantOrSubsidyDialogWarning')),
           findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('grantOrSubsidyDialogPreview')),
+          findsNothing,
         );
         expect(find.text('Cancel'), findsOneWidget);
         expect(find.text('Submit'), findsOneWidget);
