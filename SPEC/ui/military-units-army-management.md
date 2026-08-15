@@ -41,3 +41,5 @@ Players reorganize **regiments** between **armies** in the same province, analog
 - Given the user checks armies in **different** provinces, when the user views **Combine**, then **Combine** is disabled.
 
 - Given the human player has **no** land armies (edge case only if state is invalid), when the land section renders, then the UI layer shows the empty land state per [military-units-panel.md](military-units-panel.md) (e.g. no army rows).
+
+- Given Split Army opens from the map detach-then-move path, when the dialog renders, then the UI layer shows title **Detach a field army** and confirm **Detach and choose destination** (`app/test/home_army_detach_split_goldens_test.dart`).
