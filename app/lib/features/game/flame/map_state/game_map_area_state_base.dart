@@ -50,6 +50,9 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   /// Anchor for the extraction-disc legend popover (Refs #4367).
   final GlobalKey extractionDiscLegendAnchorKey = GlobalKey();
 
+  /// Anchor for the improvement-headroom legend popover (Refs #4408).
+  final GlobalKey improvementHeadroomLegendAnchorKey = GlobalKey();
+
   String get mapPlayerId =>
       ref.read(shellPlayerContextProvider).mapPlayerIdFor(widget.game);
 

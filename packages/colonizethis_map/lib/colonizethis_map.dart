@@ -33,6 +33,7 @@ export 'src/render/tile_map_visualization_shared.dart'
         tileMapResourceGlyphs;
 export 'src/view/town_icon_style.dart';
 export 'src/view/init_game_map_view_data.dart';
+export 'src/view/init_game_map_view_improvement_cap.dart';
 export 'src/sea_zone_centroid_tile.dart';
 export 'src/port_icon_placement.dart';
 export 'src/gp_ownership_tint.dart';

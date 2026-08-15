@@ -1,5 +1,7 @@
 export 'extraction_disc_legend.dart';
 export 'extraction_disc_legend_support.dart';
+export 'improvement_headroom_legend.dart';
+export 'improvement_headroom_legend_support.dart';
 export 'map_tile_hover_readout.dart';
 export 'map_tile_hover_readout_copy.dart';
 export 'map_tile_sight.dart';

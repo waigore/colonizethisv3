@@ -4003,6 +4003,30 @@
   "@mapExtractionDisc_detailsCounsel": {
     "description": "Counsel line in the extraction-disc legend popover (Refs #4367)."
   },
+  "mapImprovementHeadroom_legendHeadroom": "Can still raise",
+  "@mapImprovementHeadroom_legendHeadroom": {
+    "description": "Compact MAP10001 legend label for improvement marks with remaining headroom (Refs #4408)."
+  },
+  "mapImprovementHeadroom_legendAtCap": "At this court's limit",
+  "@mapImprovementHeadroom_legendAtCap": {
+    "description": "Compact MAP10001 legend label for improvement marks already at the tech/terrain cap (Refs #4408)."
+  },
+  "mapImprovementHeadroom_legendSemantics": "Improvement level versus this court's extraction limit",
+  "@mapImprovementHeadroom_legendSemantics": {
+    "description": "Semantics label for the improvement-headroom legend control (Refs #4408)."
+  },
+  "mapImprovementHeadroom_detailsMeaning": "The corner mark is improvement level versus what this court can extract now (for example 1 of 1 or 1 of 2).",
+  "@mapImprovementHeadroom_detailsMeaning": {
+    "description": "Improvement-headroom legend popover meaning (Refs #4408)."
+  },
+  "mapImprovementHeadroom_detailsMuted": "Muted marks are already at the current limit; raising them further wastes materials.",
+  "@mapImprovementHeadroom_detailsMuted": {
+    "description": "Improvement-headroom legend popover muted-at-cap meaning (Refs #4408)."
+  },
+  "mapImprovementHeadroom_detailsCounsel": "Empty farms stay on Development and the province overlay — the map only marks tiles that already have an improvement.",
+  "@mapImprovementHeadroom_detailsCounsel": {
+    "description": "Counsel line in the improvement-headroom legend popover (Refs #4408)."
+  },
   "mapControls_cargoHold": "{used}/{capacity}",
   "@mapControls_cargoHold": {
     "description": "Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).",

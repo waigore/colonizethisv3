@@ -50,6 +50,13 @@ InitGameMapViewData buildInitGameMapViewData({
   /// markers; pass all faction ids in global observe and the observed GP id in
   /// player observe per SPEC/ui/observe-mode.md.
   Set<String>? civilianMarkerOwnerIds,
+
+  /// Viewing-player faction id used to store [CellViewData.improvementTechCap].
+  /// Omit in global observe so caps are not shown (Refs #4408).
+  String? viewingFactionId,
+
+  /// Viewing player's `techUnlocked` map for extraction-cap lookup.
+  Map<String, bool>? viewingTechUnlocked,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
   final viewByRegion = <String, RegionMapViewData>{};
@@ -66,9 +73,12 @@ InitGameMapViewData buildInitGameMapViewData({
       resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
       resourceExtractionEffectiveUnitsByTile:
           resourceExtractionEffectiveUnitsByTile,
-      resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+      resourceExtractionBlockedUnitsByTile:
+          resourceExtractionBlockedUnitsByTile,
       capitalLinkDisconnectedTileKeys: capitalLinkDisconnectedTileKeys,
       civilianMarkerOwnerIds: civilianMarkerOwnerIds,
+      viewingFactionId: viewingFactionId,
+      viewingTechUnlocked: viewingTechUnlocked,
     );
   }
 

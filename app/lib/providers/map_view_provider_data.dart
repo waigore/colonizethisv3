@@ -97,6 +97,10 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       capitalLinkDisconnectedTileKeys:
           extractionMaps.capitalLinkDisconnectedTileKeys,
       civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
+      viewingFactionId: shell.panelPlayerId,
+      viewingTechUnlocked: shell.panelPlayerId == null
+          ? null
+          : game.playerById(shell.panelPlayerId!)?.techUnlocked,
     );
     return applyMapFortVisibility(
       data: base,

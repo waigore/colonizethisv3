@@ -37,6 +37,7 @@ class CellViewData {
     this.ownerFactionId,
     this.provinceDisplayName,
     this.improvementLevel,
+    this.improvementTechCap,
     this.roadLevel,
     this.resourceExtractionUnits,
     this.resourceExtractionEffectiveUnits,
@@ -71,6 +72,11 @@ class CellViewData {
 
   /// Improvement level 0–4 for land tiles. From WorldState.tileState.improvementByTile. Null for sea or when not populated.
   final int? improvementLevel;
+
+  /// Viewing-player extraction cap for this owned land cell (`extractionCapForResourceOnTerrain`).
+  /// Null for sea, foreign/unowned land, global observe, or cells without resource/terrain.
+  /// SPEC/program/map-visualization.md (Refs #4408).
+  final int? improvementTechCap;
 
   /// Road level 0/1/2/4 for land tiles. From WorldState.tileState.roadLevelByTile. Null for sea or when not populated.
   final int? roadLevel;
