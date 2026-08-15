@@ -10,16 +10,16 @@ Before the first Orders phase, you choose your court: which Great Power you are,
 
 1. The app shell is **Shell screen**; from it you reach **Main menu (CtMainMenu)**.
 2. Tap **Quick Start** (above **New Game**). You play **England** at turn 0, with a **random** map and five AI courts. You do not open leader selection.
-3. Setup runs the same wait-gate as New Game → Start. While waiting, **Game initializing** shows coarse progress. It is a **non-interactive wait-gate**.
-4. Navigation lands on **Game screen**. On first entry for that game id, **Game start intro** may appear; dismiss it to play.
+3. You may see a short **Game initializing** screen before the map appears. It shows coarse progress. There is no form to fill; wait until it finishes. This is the same wait as after **Start** on New Game.
+4. You then reach **Game screen**. The first time you enter this new campaign, **Game start intro** may appear; dismiss it to play.
 
 ### Main menu → New Game
 
 1. The app shell is **Shell screen**; from it you reach **Main menu (CtMainMenu)**. Tap **New Game**.
-2. The shell opens **New game leader selection** (does not mutate the live game until you confirm Start).
+2. The menu opens **New game leader selection**. Nothing in the campaign changes until you confirm **Start**.
 3. Configure slots, options, and seed as below, then **Start**. Cancel returns you to the menu without creating a game.
-4. Setup runs (world generation, ownership, capitals, naming, optional advanced-start bootstrap). While waiting, **Game initializing** shows coarse progress (creating maps, building the world, saving). It is a **non-interactive wait-gate** — there is no form to fill; wait until it finishes.
-5. Navigation lands on **Game screen**. On first entry for that game id, **Game start intro** may appear; dismiss it to play. The app remembers dismissal per game id so it does not loop every resume.
+4. Setup runs (world generation, ownership, capitals, naming, optional advanced-start bootstrap). While waiting, **Game initializing** shows coarse progress (creating maps, building the world, saving). You may see a short 'please wait' screen before the map appears — there is no form to fill; wait until it finishes.
+5. You then reach **Game screen**. The first time you enter this new campaign, **Game start intro** may appear; dismiss it to play. The app remembers that dismissal for this campaign so the intro does not loop every resume.
 
 ### Leader selection (**New game leader selection**) — step by step
 
