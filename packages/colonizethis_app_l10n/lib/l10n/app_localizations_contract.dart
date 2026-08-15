@@ -1731,6 +1731,26 @@ abstract class AppLocalizations {
     int amount,
   );
 
+  /// Deal Book leftover-order section heading.
+  String get tradeDealBook_unfilledHeading;
+
+  /// Deal Book leftover-section empty line when the panel has fills.
+  String get tradeDealBook_unfilledEmpty;
+
+  /// Deal Book filled buy/sale row in player language.
+  String tradeDealBook_filledRow(
+    String commodity,
+    int quantity,
+    int unitPrice,
+    int notional,
+  );
+
+  /// Deal Book leftover order row (no priority on the default surface).
+  String tradeDealBook_unfilledRow(String commodity, int quantity);
+
+  /// Deal Book panel totals with treasury mark.
+  String tradeDealBook_totalsLine(String label, int amount);
+
   /// Player turn event feed line when overseas profit treasury was credited.
   String eventFeed_overseasProfitCredited(int amount, int count);
 
