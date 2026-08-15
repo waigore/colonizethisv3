@@ -12,6 +12,8 @@ import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
 import 'province_sea_zone_detail_overlay_economic_section.dart';
 import 'province_sea_zone_detail_overlay_military_section.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 
 ({
@@ -44,6 +46,8 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order
   bool invadeArmyEnabled = false,
   String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
+  ProvinceNavalMissionOverlayControls navalMission =
+      ProvinceNavalMissionOverlayControls.hidden,
   String? provinceDisplayName,
   void Function(String?)? onHighlightTile,
   void Function(Iterable<String>?)? onHighlightTiles,
@@ -122,19 +126,16 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order
           l10n.provinceOverlay_sectionCivilian,
           overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
-  final naval = showsFullIntel
-      ? buildNavalSection(
-          l10n: l10n,
-          game: game,
-          fleets: fleetsInPort,
-          humanPlayerId: humanPlayerId,
-          draftOrders: draftOrders,
-          pendingNavalPortProvinceId: provinceId,
-        )
-      : buildOverlaySection(
-          l10n.provinceOverlay_sectionNaval,
-          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
-        );
+  final naval = buildNavalSection(
+    l10n: l10n,
+    game: game,
+    fleets: showsFullIntel ? fleetsInPort : const [],
+    humanPlayerId: humanPlayerId,
+    draftOrders: draftOrders,
+    pendingNavalPortProvinceId: showsFullIntel ? provinceId : null,
+    rosterObfuscated: !showsFullIntel,
+    navalMission: navalMission,
+  );
   return (
     economic: economic,
     military: militarySection,

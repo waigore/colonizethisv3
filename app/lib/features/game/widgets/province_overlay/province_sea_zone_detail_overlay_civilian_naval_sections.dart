@@ -1,10 +1,13 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import '../../flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
@@ -88,6 +91,9 @@ Widget buildNavalSection({
   required String humanPlayerId,
   required Orders draftOrders,
   String? pendingNavalPortProvinceId,
+  bool rosterObfuscated = false,
+  ProvinceNavalMissionOverlayControls navalMission =
+      ProvinceNavalMissionOverlayControls.hidden,
 }) {
   final pending = pendingNavalPortProvinceId == null
       ? const <String>[]
@@ -98,14 +104,19 @@ Widget buildNavalSection({
           humanPlayerId: humanPlayerId,
           l10n: l10n,
         );
+  final missionActions = _navalMissionActions(l10n, navalMission);
+  final hasRoster = fleets.isNotEmpty || pending.isNotEmpty;
   return buildOverlaySection(
     l10n.provinceOverlay_sectionNaval,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (fleets.isEmpty && pending.isEmpty) overlayEmptyBodyDashText(),
-        if (fleets.isNotEmpty)
+        if (rosterObfuscated)
+          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown)
+        else if (!hasRoster && missionActions.isEmpty)
+          overlayEmptyBodyDashText(),
+        if (!rosterObfuscated && fleets.isNotEmpty)
           ...fleets.map((f) {
             final ownerName = ownerNameForProvinceOverlay(l10n, game, f.ownerId);
             final byType = <String, int>{};
@@ -130,7 +141,7 @@ Widget buildNavalSection({
               style: TextStyle(color: EditorialMonoclePalette.fg),
             );
           }),
-        if (pending.isNotEmpty) ...[
+        if (!rosterObfuscated && pending.isNotEmpty) ...[
           const SizedBox(height: CtSpacing.m / 2),
           ...pending.map(
             (line) => Padding(
@@ -142,7 +153,46 @@ Widget buildNavalSection({
             ),
           ),
         ],
+        ...missionActions,
       ],
     ),
   );
+}
+
+List<Widget> _navalMissionActions(
+  AppLocalizations l10n,
+  ProvinceNavalMissionOverlayControls navalMission,
+) {
+  if (!navalMission.showBlockade && !navalMission.showBeachhead) {
+    return const [];
+  }
+  return [
+    Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (navalMission.showBlockade)
+            CtActionTextButton(
+              label: l10n.provinceOverlay_blockadeAction,
+              tooltip: navalMission.blockadeTooltip,
+              enabled: navalMission.blockadeEnabled,
+              onPressed: navalMission.blockadeEnabled
+                  ? navalMission.onBlockadeTap
+                  : null,
+            ),
+          if (navalMission.showBeachhead)
+            CtActionTextButton(
+              label: l10n.provinceOverlay_beachheadAction,
+              tooltip: navalMission.beachheadTooltip,
+              enabled: navalMission.beachheadEnabled,
+              onPressed: navalMission.beachheadEnabled
+                  ? navalMission.onBeachheadTap
+                  : null,
+            ),
+        ],
+      ),
+    ),
+  ];
 }

@@ -16,6 +16,7 @@ import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.
 import 'province_detail_overlay_host_support_army_move.dart';
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
+import 'province_detail_overlay_host_support_naval_mission.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
 
@@ -170,6 +171,18 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     bus: bus,
     isSeaZone: isSeaZone,
   );
+  final navalMission = buildProvinceNavalMissionOverlayControls(
+    context: context,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+    displayId: displayId,
+    draftOrders: draftOrders,
+    mapData: mapData,
+    canMutateViaUi: canMutateViaUi,
+    bus: bus,
+    isSeaZone: isSeaZone,
+  );
 
   return ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -233,6 +246,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     invadeArmyEnabled: armyMove.invadeEnabled,
     invadeArmyTooltip: armyMove.invadeTooltip,
     onInvadeArmyTap: armyMove.onInvadeTap,
+    navalMission: navalMission,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,
     establishConsulateEnabled:

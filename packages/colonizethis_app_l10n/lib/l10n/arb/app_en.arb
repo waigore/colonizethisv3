@@ -3445,6 +3445,18 @@
   "@provinceOverlay_invadeArmyDisabledCannotReachTooltip": {
     "description": "Disabled Invade tooltip when province missing from army-move cache (Refs #4350)."
   },
+  "provinceOverlay_blockadeAction": "Blockade",
+  "@provinceOverlay_blockadeAction": {
+    "description": "MAP20001 Naval Blockade control label (Refs #4413)."
+  },
+  "provinceOverlay_beachheadAction": "Beachhead",
+  "@provinceOverlay_beachheadAction": {
+    "description": "MAP20001 Naval Beachhead control label (Refs #4413). Does not imply capture this turn."
+  },
+  "provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip": "A fleet must be at sea beside this coast. Fleets in port cannot take missions.",
+  "@provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip": {
+    "description": "Disabled Blockade/Beachhead tooltip when no adjacent at-sea fleet (Refs #4413)."
+  },
   "provinceOverlay_selectArmyTitle": "Select army",
   "@provinceOverlay_selectArmyTitle": {
     "description": "DLG20002 overlay army picker title (Refs #4350)."

@@ -2340,6 +2340,15 @@ abstract class AppLocalizations {
   /// Disabled Invade — no field army can reach this province (cache). Refs #4350.
   String get provinceOverlay_invadeArmyDisabledCannotReachTooltip;
 
+  /// MAP20001 Naval Blockade control label. Refs #4413.
+  String get provinceOverlay_blockadeAction;
+
+  /// MAP20001 Naval Beachhead control label. Refs #4413.
+  String get provinceOverlay_beachheadAction;
+
+  /// Disabled Blockade/Beachhead — fleet must be at sea beside this coast. Refs #4413.
+  String get provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip;
+
   /// Multi-army picker title for overlay Move/Invade. Refs #4350.
   String get provinceOverlay_selectArmyTitle;
 

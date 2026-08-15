@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import 'province_overlay_unit_partition.dart';
@@ -82,6 +84,8 @@ OverlayContent provinceContent({
   bool invadeArmyEnabled = false,
   String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
+  ProvinceNavalMissionOverlayControls navalMission =
+      ProvinceNavalMissionOverlayControls.hidden,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
   required bool establishConsulatePending,
@@ -241,6 +245,7 @@ OverlayContent provinceContent({
     invadeArmyEnabled: invadeArmyEnabled,
     invadeArmyTooltip: invadeArmyTooltip,
     onInvadeArmyTap: onInvadeArmyTap,
+    navalMission: navalMission,
     provinceDisplayName: province?.displayName,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,

@@ -70,7 +70,8 @@ const _packageName = 'colonizethis_app';
 // raised for named map resource/improvement/road layers (Refs #4388).
 // raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
 // raised for combined #4370+#4383+#4384+#4385+#4388 merge headroom (measured 77_122).
-const _maxMainLines = 77200;
+// raised for MAP20001 Naval Blockade/Beachhead overlay (Refs #4413).
+const _maxMainLines = 77600;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
