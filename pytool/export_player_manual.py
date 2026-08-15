@@ -70,7 +70,7 @@ Welcome, my liege. This handbook is your national adviser: it immerses you in th
 
 ## Tone
 
-Body prose is clear modern English for an experienced turn-based strategy player. The framing is a **vizier advising a young monarch**: patient, empathetic, encouraging. Archaic 16th–17th century flourishes appear only in exhortation, warning, or instruction **callouts**.
+Body prose is everyday modern English a 12th-grade reader can follow. UI-engineering words and genre jargon are banned. The framing is a **vizier advising a young monarch**: patient, empathetic, encouraging. Archaic 16th–17th century flourishes appear only in exhortation, warning, or instruction **callouts**.
 
 ## Table of contents
 

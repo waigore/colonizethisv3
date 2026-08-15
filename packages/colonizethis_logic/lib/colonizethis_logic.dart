@@ -54,6 +54,7 @@ export 'package:colonizethis_orders/src/orders/unit_type_helpers.dart'
 
 // Diplomacy
 export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_confirm_preview.dart';
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_declare_war_third_party_preview.dart';
 export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 export 'package:colonizethis_diplomacy/src/diplomacy/break_alliance_resolver.dart'
     show applyVoluntaryAllianceBreak;

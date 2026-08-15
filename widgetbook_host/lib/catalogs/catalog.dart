@@ -48,6 +48,7 @@ import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deplo
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -191,6 +192,7 @@ part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_screens_combat.dart';
 part 'catalog_dialogs.dart';
+part 'catalog_dialogs_grant_or_subsidy.dart';
 part 'catalog_dialogs_move_army_invasion_intel.dart';
 part 'catalog_dialogs_naval_mission.dart';
 part 'catalog_primitives.dart';

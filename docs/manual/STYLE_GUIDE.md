@@ -14,19 +14,32 @@ Do **not** document unimplemented behavior as operable. Do **not** write min-max
 
 | Register | Where | Voice |
 |----------|-------|-------|
-| Body | Purpose, How it is done, Consequences, Sources | Clear modern English; experienced TBS player; vizier advising a young monarch (patient, empathetic, encouraging) |
-| Callout | Counsel exhortations, warnings, hard instructions | Optional archaic 16th–17th century high-society flourishes (“Hark, my liege…”) |
-| Forbidden | Body how-to, Purpose, orientation, Consequences, chapter-local AC bullets | Continuous archaic pastiche; code identifiers as player vocabulary; contradicting SPEC; UI-engineering, engine jargon, and genre jargon listed under **Banned classes** |
+| Body | Purpose, How it is done, Consequences, Sources | Everyday modern English a 12th-grade reader can follow; vizier advising a young monarch (patient, empathetic, encouraging) |
+| Callout | Counsel exhortations, warnings, hard instructions | Optional archaic 16th–17th century high-society flourishes (“Hark, my liege…”) — meaning must still pass the reading-level test |
+| Forbidden | Entire chapter | UI-engineering words; genre or engine jargon not printed on screen; continuous archaic pastiche in how-to steps; code identifiers as player vocabulary; contradicting SPEC |
 
 ### Exemplar (tone)
 
-> Your provinces are the breath of the realm. Before you march, ensure the roads and ports that bind them remain yours — else an army stranded inland is a banner without a nation.
+> Your provinces are the breath of the realm. Before you march, make sure the roads and ports that connect them still belong to you. An army cut off inland is a banner without a nation.
 >
-> **Counsel.** Hark, my liege: the Home Army guards the capital and will not march. Raise field armies if you mean to project force.
+> **Counsel.** Hark, my liege: the Home Army guards the capital and will not march. Raise field armies if you mean to send troops away from home.
 
-## Reading-level gate
+## Reading level and banned language (strict)
 
-Write **Purpose**, **How it is done**, **The other courts**, **Consequences**, and chapter-local AC bullets in everyday English a **12th-grade reader** can follow. Define **game nouns on first use** (then use the noun freely). Counsel callouts may still use the existing archaic register.
+The handbook is for a **broad player audience**, not for designers or genre veterans.
+
+**Target reader:** a 12th-grade reader (about 17–18) who has never played a turn-based strategy game and does not know UI, design, or simulation-engine terms.
+
+**Pass test (required):** read each sentence as that reader. If they would need a designer or genre glossary to follow it, the sentence fails. Game-world nouns (province, Great Power, decree) pass only after a plain-English definition on first use in that chapter.
+
+This contract is **not advisory**. A chapter update that leaves a failing sentence is incomplete.
+
+### Required
+
+- Everyday words. Short, direct sentences. One action per how-to step.
+- Name things as the player sees them: button label, tab name, screen title, map tool.
+- Teach the game’s own nouns in plain English the first time they appear in the chapter.
+- Prefer common words: map, button, menu, screen, turn, Next turn, army, road, port.
 
 Examples of first-use teaching:
 
@@ -34,22 +47,32 @@ Examples of first-use teaching:
 - **decree** — an action you choose on your turn.
 - **Old World** / **New World** — the two maps.
 
-Do not assume the reader already knows those terms.
+Do not assume the reader already knows those terms. Counsel callouts may still use the existing archaic register; the meaning must still pass the reading-level test.
 
-## Banned classes in player prose
+### Banned classes (not a closed list)
 
-These classes are forbidden in Purpose, How it is done, orientation, Consequences, and chapter-local AC bullets. They are **not** banned in `## Sources` path bullets (those are machine-parseable paths, not player vocabulary).
+Treat these as **classes**. The examples show the class; any word in the same class is banned even if it is not listed. They are **not** banned in `## Sources` path bullets (those are machine-parseable paths, not player vocabulary).
 
-| Class | Do not write | Write instead |
-|-------|----------------|---------------|
-| **Code identifiers as player vocabulary** | `ownerId`, `greatPowerPowerScore`, inline `SPEC/ai/…` paths in body prose | What the player owns, sees, or is told |
-| **UI-engineering** | `host`, `chrome`, generic `overlays`, `widget` as a screen name, `wait-gate`, `left-rail`, `glyph`, `desk`, engineer catalog pointers | The printed screen title, the control the player taps, “please wait” if a wait screen is in scope |
-| **Engine jargon** | “the engine resolves…”, “Orders phase” / “phases” when cited UI SPECs do not print that phrase | “After you confirm **Next turn**, the game carries out…” |
-| **Genre jargon not printed on the cited screens** | `parity`, `HUD`, `power score` (unless the screen prints it) | Everyday wording: armies keep pace; the top bar / **Next turn** shows year and turn |
+| Class | What it is | Examples (not exhaustive) | Use instead |
+|-------|------------|---------------------------|-------------|
+| UI-engineering / design-system | Layout or interaction terms a player would not say while pointing at the screen | chrome, affordance, left-rail, rail, glyph, locator, widget, viewport, host, wait-gate, cartographic, extraction-disc, teaching chip, desk (as “Deal Book desk”) | The on-screen name, or “button,” “menu,” “map tools,” “left-side icons” |
+| Genre / engine jargon | Specialist strategy-game or simulation words the player cannot read in the game | HUD, TBS, 4X, resolver, tick, ownerId, capital connectivity, parity, growth-stage, personality parameters, power score (unless the screen prints that phrase), “the engine resolves,” “Orders phase” when the UI only says Orders | What happens in play, in everyday words |
+| Code identifiers | Type names, file paths, raw screen IDs used as the name of a thing | `WorkOrder`, `ArmyMoveOrder`, `SPEC/…`, `app/lib` | Player decree language; screen titles. Authoring chapters may still *cite* screen IDs per **Screen-ID citation**; never speak them as vocabulary |
 
-## Rewrite examples
+**“Overlay”** is allowed only when it is the visible title of that surface. Do not use it as a generic word for “panel that opens.”
 
-Normative mappings (chapter 1 is the worked example). Use the **player wording** in body prose.
+If the game prints a word, use that printed word. Do not invent a designer synonym.
+
+### Rewrite examples
+
+| Fails | Passes |
+|-------|--------|
+| Map control affordances use the same icon set; treat them as map chrome. | The buttons on the map change what you see (resources, roads, borders). They are map tools, not separate screens. |
+| The engine resolves movement, combat, and end-of-turn checks. | After you confirm **Next turn**, the game carries out movement, fighting, and the rest. You see the results when that finishes — not when you tap. |
+| Minor Nations keep military parity with the strongest Great Power. | Minor Nations keep their armies as strong as the strongest Great Power, so they are hard to conquer casually. |
+| Secure capital connectivity, then assign civilian work. | Make sure your land still links to the capital by road or port, then give your workers something to do. |
+
+Chapter 1 is the worked example. Use the **player wording** in body prose:
 
 | Banned or unclear | Player wording |
 |-------------------|----------------|
@@ -71,11 +94,15 @@ Normative mappings (chapter 1 is the worked example). Use the **player wording**
 | “without the empire rail” | “without the icons on the left of the map.” |
 | “left-rail” / “wait-gate” in chapter ACs | “left-side icons”; “initializing wait screen.” |
 
+### Hard fail
+
+Do not treat a chapter as updated, and do not run `export-player-manual`, while any added or edited sentence fails this section. When you edit a section, the **whole section** must pass (no mix of jargon and plain speech).
+
 ## Player-angle framing (required)
 
 Every update must answer, explicitly or by structure:
 
-1. **Why** the player uses this mechanic (goal, victory pressure, enjoyment).
+1. **Why** the player uses this part of the game (goal, victory pressure, enjoyment).
 2. **How** it changes their chances of winning or surviving.
 3. **What** they do in the UI (screen ID, control, result) — not a restatement of an internal engine note.
 

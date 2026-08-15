@@ -1,12 +1,93 @@
 // dart format off
-// Table-driven town manufacturing bonus scenarios (Refs #3939 phase 3).
+// Table-driven town manufacturing bonus scenarios (Refs #3939 phase 3, #4410).
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
-import 'extraction_fixture_support.dart';
-import 'town_manufacturing_bonus_expectations.dart';
+import 'package:colonizethis_test/test.dart';
+/// Data-driven expectations for province-level town manufacturing bonus rows.
+class TownManufacturingBonusProvinceExpectation {
+  const TownManufacturingBonusProvinceExpectation({this.isEmpty = false, this.commodityAmounts = const {}, this.absentCommodities = const [], this.techGated});
+  final bool isEmpty;
+  final Map<CommodityId, int> commodityAmounts;
+  final List<CommodityId> absentCommodities;
+  /// When set, re-runs [computeTownManufacturingBonusForProvince] with
+  /// [techUnlocked] using the parent row's level/delivered inputs
+  /// (Refs #3939 slice 60).
+  final ({Map<String, bool> techUnlocked, Map<CommodityId, int> withTechCommodityAmounts, List<CommodityId> withTechAbsentCommodities})? techGated;
+}
+void assertTownManufacturingBonusProvinceExpectation(Map<CommodityId, int> bonus, TownManufacturingBonusProvinceExpectation expectation, {int? townDevelopmentLevel, Map<CommodityId, int>? townConnectedDeliveredRawByCommodity}) {
+  if (expectation.isEmpty) {
+    expect(bonus, isEmpty);
+  }
+  for (final commodity in expectation.absentCommodities) {
+    expect(bonus[commodity], isNull);
+  }
+  for (final entry in expectation.commodityAmounts.entries) {
+    expect(bonus[entry.key], entry.value);
+  }
+  final techGated = expectation.techGated;
+  if (techGated != null) {
+    final withTech = computeTownManufacturingBonusForProvince(townDevelopmentLevel: townDevelopmentLevel!, townConnectedDeliveredRawByCommodity: townConnectedDeliveredRawByCommodity!, techUnlocked: techGated.techUnlocked);
+    for (final commodity in techGated.withTechAbsentCommodities) {
+      expect(withTech[commodity], isNull);
+    }
+    for (final entry in techGated.withTechCommodityAmounts.entries) {
+      expect(withTech[entry.key], entry.value);
+    }
+  }
+}
+/// One auto-offer row expectation for [townManufacturingBonusToAutoOffers].
+class TownManufacturingAutoOfferExpectation {
+  const TownManufacturingAutoOfferExpectation({required this.commodityId, required this.type, required this.priority, required this.quantity});
+  final CommodityId commodityId;
+  final TradeOrderType type;
+  final int priority;
+  final int quantity;
+}
+/// Data-driven expectations for game-level town manufacturing bonus rows.
+class TownManufacturingBonusGameExpectation {
+  const TownManufacturingBonusGameExpectation({this.factionBonus, this.deliveredRawGreaterThanZero, this.autoOffers, this.previewMatchesLive = false, this.previewEmpty = false, this.previewProvinceMatchesFactionCommodity});
+  final Map<String, Map<CommodityId, int>>? factionBonus;
+  final Map<String, CommodityId>? deliveredRawGreaterThanZero;
+  final Map<String, TownManufacturingAutoOfferExpectation>? autoOffers;
+  final bool previewMatchesLive;
+  final bool previewEmpty;
+  final ({String provinceId, String factionId, CommodityId commodityId})? previewProvinceMatchesFactionCommodity;
+}
+void assertTownManufacturingBonusGameExpectation({required TownManufacturingBonusGameExpectation expectation, Map<String, Map<CommodityId, int>>? bonusByFactionId, Map<String, Map<CommodityId, int>>? bonusByProvinceId, Map<String, Map<CommodityId, int>>? deliveredRawByProvince, Map<String, List<TradeOrder>>? autoOffers, Map<String, Map<CommodityId, int>>? previewByProvince}) {
+  if (expectation.factionBonus != null) {
+    for (final entry in expectation.factionBonus!.entries) {
+      for (final commodityEntry in entry.value.entries) {
+        expect(bonusByFactionId![entry.key]?[commodityEntry.key], commodityEntry.value);
+      }
+    }
+  }
+  if (expectation.deliveredRawGreaterThanZero != null) {
+    for (final entry in expectation.deliveredRawGreaterThanZero!.entries) {
+      expect(deliveredRawByProvince![entry.key]?[entry.value], greaterThan(0));
+    }
+  }
+  if (expectation.autoOffers != null) {
+    expect(autoOffers!.keys, equals(expectation.autoOffers!.keys.toList()));
+    for (final entry in expectation.autoOffers!.entries) {
+      final offer = autoOffers[entry.key]!.single;
+      expect(offer.commodityId, entry.value.commodityId);
+      expect(offer.type, entry.value.type);
+      expect(offer.priority, entry.value.priority);
+      expect(offer.quantity, entry.value.quantity);
+    }
+  }
+  if (expectation.previewMatchesLive) {
+    expect(previewByProvince, bonusByProvinceId);
+  }
+  if (expectation.previewEmpty) {
+    expect(previewByProvince, isEmpty);
+  }
+  final previewPin = expectation.previewProvinceMatchesFactionCommodity;
+  if (previewPin != null) {
+    expect(previewByProvince![previewPin.provinceId]?[previewPin.commodityId], bonusByFactionId![previewPin.factionId]?[previewPin.commodityId]);
+  }
+}
 /// One row in [townManufacturingBonusProvinceScenarios].
 typedef TownManufacturingBonusProvinceScenario = ({String label, int townDevelopmentLevel, Map<CommodityId, int> townConnectedDeliveredRawByCommodity, Map<String, bool>? techUnlocked, void Function(Map<CommodityId, int> bonus) verify, String? refs});
 /// Compact province-bonus row (Refs #3939 slice 47 / 57).
@@ -47,105 +128,8 @@ void runTownManufacturingBonusProvinceScenario(TownManufacturingBonusProvinceSce
 enum TownManufacturingBonusGamePin { gpTownTimberBonus, minorDeliveredRaw, autoOffersMinor, previewMatchesLive, previewEmpty }
 /// One row in [townManufacturingBonusGameScenarios] (Refs #3939 slice 63).
 typedef TownManufacturingBonusGameScenario = ({String label, TownManufacturingBonusGamePin pin, TownManufacturingBonusGameExpectation expect, String? refs});
-void runTownManufacturingBonusGameScenario(TownManufacturingBonusGameScenario scenario) {
-  runTownManufacturingBonusGamePin(scenario.pin, scenario.expect);
-}
 const _ow = 'oldWorld';
 const _gpProvinceId = '$_ow|p1';
-const _gpTownKey = '$_gpProvinceId|0|0';
-const _gpTimberTile = '$_gpProvinceId|1|0';
-({Game game, Map<String, TileMapResult> tileMaps}) _gpTownTimberFixture() {
-  final tileMaps = {
-    _ow: TileMapResult(
-      width: 2,
-      height: 1,
-      grid: const [
-        ['p1', 'p1'],
-      ],
-      resourceGrid: const [
-        [null, Resource.timber],
-      ],
-      terrainGrid: const [
-        [null, TerrainType.hardwoodForest],
-      ],
-    ),
-  };
-  return (
-    game: spainExtractorGame(
-      techUnlocked: {kTechIdCircularSaw: true},
-      oldWorld: RegionData(provinces: [owP1Province(townTileKey: _gpTownKey)]),
-      tileKeysByRegionAndProvince: {
-        _ow: {
-          _gpProvinceId: [_gpTownKey, _gpTimberTile],
-        },
-      },
-      tileState: tileStateFromSpecs(const [TileImprovementSpec(_gpTimberTile, 4, 4), TileImprovementSpec(_gpTownKey, 0, 1)]),
-    ),
-    tileMaps: tileMaps,
-  );
-}
-void runTownManufacturingBonusGamePin(TownManufacturingBonusGamePin pin, TownManufacturingBonusGameExpectation expect) {
-  switch (pin) {
-    case TownManufacturingBonusGamePin.gpTownTimberBonus:
-      final f = _gpTownTimberFixture();
-      final live = computeTownManufacturingBonusForGame(game: f.game, tileMapByRegion: f.tileMaps, gpConnectivityByPlayerId: connectivityFor({_gpTownKey, _gpTimberTile}), nonGpConnectivityByFactionId: const {});
-      assertTownManufacturingBonusGameExpectation(expectation: expect, bonusByFactionId: live.bonusByFactionId, deliveredRawByProvince: live.deliveredRawByProvince);
-    case TownManufacturingBonusGamePin.minorDeliveredRaw:
-      const tileKey = 'oldWorld|m1|0|0';
-      final game = nonGpMinorM1Game(
-        id: 'g_town_bonus_minor',
-        townDev: 4,
-        townTileKey: tileKey,
-        tileSpecs: const [TileImprovementSpec(tileKey, 1, 1)],
-        players: const [Player(id: 'gpA', displayName: 'GP A', isHuman: true)],
-        tileKeysByRegionAndProvince: {
-          'oldWorld': {
-            'oldWorld|m1': [tileKey],
-          },
-        },
-      );
-      final delivered = computeTownConnectedDeliveredRawByProvince(
-        game: game,
-        tileMapByRegion: {'oldWorld': singleTileMap(Resource.timber, province: 'm1')},
-        gpConnectivityByPlayerId: const {},
-        nonGpConnectivityByFactionId: connectivityByFaction({
-          'm1': {tileKey},
-        }),
-        townConnectedByProvinceId: const {
-          'oldWorld|m1': {tileKey},
-        },
-      );
-      assertTownManufacturingBonusGameExpectation(expectation: expect, deliveredRawByProvince: delivered);
-    case TownManufacturingBonusGamePin.autoOffersMinor:
-      final game = TestFixtures.minimalGame(minorNations: const [MinorNation(id: 'm1')]);
-      final offers = townManufacturingBonusToAutoOffers(
-        game: game,
-        bonusByFactionId: {
-          'm1': {'lumber': 2},
-        },
-      );
-      assertTownManufacturingBonusGameExpectation(expectation: expect, autoOffers: offers);
-    case TownManufacturingBonusGamePin.previewMatchesLive:
-      final f = _gpTownTimberFixture();
-      const topology = MapTopology();
-      final live = computeTownManufacturingBonusForGame(
-        game: f.game,
-        tileMapByRegion: f.tileMaps,
-        gpConnectivityByPlayerId: resolveConnectivity(game: f.game, tileMapByRegion: f.tileMaps, topology: topology),
-        nonGpConnectivityByFactionId: resolveNonGreatPowerConnectivity(game: f.game, tileMapByRegion: f.tileMaps, topology: topology),
-      );
-      assertTownManufacturingBonusGameExpectation(
-        expectation: expect,
-        bonusByProvinceId: live.bonusByProvinceId,
-        bonusByFactionId: live.bonusByFactionId,
-        previewByProvince: previewTownManufacturingBonusByProvince(game: f.game, topology: topology, tileMapByRegion: f.tileMaps),
-      );
-    case TownManufacturingBonusGamePin.previewEmpty:
-      final game = TestFixtures.minimalGame();
-      final preview = previewTownManufacturingBonusByProvince(game: game, topology: const MapTopology(), tileMapByRegion: null);
-      assertTownManufacturingBonusGameExpectation(expectation: expect, previewByProvince: preview);
-  }
-}
 /// Canonical fixture-backed scenarios for game-level town manufacturing bonus.
 List<TownManufacturingBonusGameScenario> townManufacturingBonusGameScenarios() => [
   (
