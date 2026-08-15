@@ -91,3 +91,4 @@ Folder `Combat Mode Choice Dialog`. Use cases: **Regular province**; **Capital s
 - Given width `kMinViewportWidth` (320 dp) with force/fort/meanings and both buttons, when the UI layer renders, then there is no horizontal overflow.
 - Given Auto-Resolve or Quick Battle tap, when the player chooses, then the dialog emits the matching `CombatModeChosenEvent` once and pops.
 - Given editorial-monocle, when the UI layer renders, then title is `--accent` 0.05, body `--muted`, Auto-Resolve label `--muted`, Quick Battle label `--accent`, one `CtDialogShell`, zero Material buttons.
+- Given CMPT10001 attacker-full, attacker-unknown, defender-full, Details-open, capital-siege, and 320 dp intel variants under `AppThemes.editorialMonocle`, when `app/test/combat_mode_choice_intel_goldens_test.dart` captures each keyed `RepaintBoundary`, then each `matchesGoldenFile` baseline under `app/test/goldens/combat_mode_choice_*.png` matches the committed PNG (Refs #4438).
