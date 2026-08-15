@@ -351,6 +351,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameTopBarDirectories,
   ...gameTabBarDirectories,
   ...extractionDiscLegendDirectories,
+  ...mapTileHoverReadoutDirectories,
   ...playersBarToggleDirectories,
   ...gameMapCornerControlsDirectories,
   ...gameMapEmpireLeftRailDirectories,

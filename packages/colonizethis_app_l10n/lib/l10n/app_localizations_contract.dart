@@ -2263,6 +2263,30 @@ abstract class AppLocalizations {
   /// Political section owner display name when a province/tile is unowned.
   String get provinceOverlay_ownerUnclaimed;
 
+  /// Political / hover Sight row (`Sight: {phrase}`).
+  String provinceOverlay_sight(String phrase);
+
+  /// Sight phrase when `TileVisibility.visible`.
+  String get mapSight_fullyVisible;
+
+  /// Sight phrase when `TileVisibility.fogged`.
+  String get mapSight_foggedTerrainOnly;
+
+  /// Sight phrase when `TileVisibility.unrevealed`.
+  String get mapSight_unknownNoIntel;
+
+  /// Hover readout place line.
+  String mapHover_place(String name);
+
+  /// Hover readout identity line for sea cells (not an owner row).
+  String get mapHover_seaZoneIdentity;
+
+  /// Extra hover line for warp sea zones.
+  String get mapHover_warpPassage;
+
+  /// Combined semantics for the MAP10001 owner/sight hover readout.
+  String mapHover_semantics(String summary);
+
   /// Political section region row (Old World / New World label).
   String provinceOverlay_region(String region);
 

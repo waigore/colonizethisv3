@@ -19,6 +19,10 @@ Your decrees land on **provinces**, **sea zones**, and **tiles**. Reading the ma
 3. Town and port icons on the map mark development and seaboard access (`SPEC/ui/town-port-icons.md`). When a province has a **fort** (wood, stone, or modern), a smaller **fort glyph** appears offset near the town icon on `MAP10001` — your own forts always show when the town tile is revealed; foreign forts appear only when you have full military intelligence for that province (the same gate as invasion fort lines on `DLG20001`). Your **armies** appear as a regiment icon in the **bottom-right** of that same town tile, so you can still tap the town, fort, or a civilian on the cell. A stack badge appears when more than one of your armies shares the town (the Home Army counts, even with no regiments yet). Tap the army icon to move a field army, or to open the military roster when only the Home Army is there — you do not need `MAP20001` first (Chapter 11). Expect those town sites to sit on **plains** terrain at setup — setup prefers plains among eligible candidates and converts the chosen town tile to plains (clearing any surface resource) when no natural plains exists. Layered terrain rendering paints the tile art beneath political ownership (`SPEC/ui/layered-terrain-rendering.md`).
 4. Political ownership glyphs and GP tinting (when present on the game) help you see who holds which province at a glance.
 
+### Hovering a tile: place, owner, and sight
+
+On `MAP10001`, rest the pointer on a tile (without tapping) to read a compact panel: the **place name**, **who holds it** (`Owner:` or Unclaimed; sea tiles say they are a sea zone), and **how much your court can see** — Fully visible, Fogged — terrain only, or Unknown — no intel yet. Warp sea adds a line that the water is the passage to the other world. The panel vanishes when the pointer leaves. While you are picking a work tile, only the selection prompt remains. On a touch device, tap the tile and read **Sight** on `MAP20001` Political (the first tab). Ownership on this readout stays true even on black unknown land; it does not name hidden terrain or resources.
+
 ### Terrain, resources, and what is hidden
 
 Tiles carry **terrain** and optional **resources**. Extraction only happens where ownership, improvements, connectivity, and tech caps allow (Chapters 6–7). Region rules matter:
@@ -85,6 +89,7 @@ AI courts value capital-connected extraction and contested border provinces when
 - [ ] Documents the default-on map highlight for owned land not bound to the capital (Map display options).
 - [ ] Explains named Map display options for resources, improvements, and roads, and the stacked-layers cycle as a shortcut.
 - [ ] Explains prefixed province identity (`regionId|localId`) as the UI naming contract.
+- [ ] Documents MAP10001 hover place/owner/sight readout and MAP20001 Political Sight.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources

@@ -323,6 +323,36 @@ void main() {
     );
 
     testWidgets(
+      'onTileHovered still reports unrevealed tiles in player-constrained mode',
+      (WidgetTester tester) async {
+        final region = ctRegionMapWithUniformVisibility(
+          base: ctRegionMapTestOldWorldRegion(),
+          visibility: TileVisibility.unrevealed,
+        );
+        String? hoveredTileKey;
+        String? hoveredProvinceId;
+        await pumpCtRegionMapTest(
+          tester,
+          region: region,
+          visibilityMode: CtMapVisibilityMode.playerConstrained,
+          playerConstrained: true,
+          onTileHovered: (key) => hoveredTileKey = key,
+          onProvinceHovered: (id) => hoveredProvinceId = id,
+        );
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.addPointer();
+        await gesture.moveTo(tester.getCenter(_map));
+        await tester.pump();
+        expect(hoveredTileKey, isNotNull);
+        expect(hoveredTileKey!, startsWith('${region.regionId}|'));
+        expect(hoveredProvinceId, isNull);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
       'map throws StateError when terrain tileset fails to load (no silent fallback)',
       (WidgetTester tester) async {
         await pumpCtRegionMapTest(tester);

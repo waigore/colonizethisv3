@@ -831,6 +831,37 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_ownerUnclaimed => 'Unclaimed';
 
   @override
+  String provinceOverlay_sight(String phrase) {
+    return 'Sight: $phrase';
+  }
+
+  @override
+  String get mapSight_fullyVisible => 'Fully visible';
+
+  @override
+  String get mapSight_foggedTerrainOnly => 'Fogged — terrain only';
+
+  @override
+  String get mapSight_unknownNoIntel => 'Unknown — no intel yet';
+
+  @override
+  String mapHover_place(String name) {
+    return 'Place: $name';
+  }
+
+  @override
+  String get mapHover_seaZoneIdentity => 'Sea zone';
+
+  @override
+  String get mapHover_warpPassage =>
+      'This water is the passage to the other world';
+
+  @override
+  String mapHover_semantics(String summary) {
+    return summary;
+  }
+
+  @override
   String provinceOverlay_region(String region) {
     return 'Region: $region';
   }
