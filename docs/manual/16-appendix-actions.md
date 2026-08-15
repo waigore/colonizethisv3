@@ -12,7 +12,7 @@ Use this ledger to issue every decree available to your court, check its price a
 |---|---|---|---|---|
 | Civilian move (`MoveOrder`) | **Spy:** `MAP20001` Civilian **Station spy** then `UNIT10001` **Relocate** (posts to the selected tile, no second map pick), or `UNIT10001` idle Spy **Relocate** then map destination (soft warn if last Spy leaves foreign intel). Other civilians: implicit leg of `WorkOrder` only (Chs. 4, 6). | Civilian must be yours; destination land, visible, occupiable; xor with `WorkOrder` on same unit. | **Movement** | Chs. 4–5 |
 | Army move / invasion (`ArmyMoveOrder`) | **Map:** tap your army stack marker on `MAP10001` (town-tile bottom-right) → `DLG20001` (or `DLG20002` when several field armies share the tile — rows show each army’s regiment mix). A non-empty Home Army in that stack with no marching field army opens Split Army then `DLG20001` for the new army. Empty Home-Army-only marker opens `UNIT20001`. **Overlay:** `MAP20001` Military **Move** / **Invade** (optional `DLG20002`, or the same detach path; Invade preselects the viewed province). **Panel:** `UNIT20001` → **Move** on a non-Home Army → `DLG20001`. Invasion confirmation may add Declare War. | Free. Home Army cannot leave capital; own destinations or adjacent valid foreign targets only; war must exist or be declared in the same draft. | **Diplomacy**, then **Movement**; battle follows if contested. | Chs. 11–12 |
-| Civilian work (`WorkOrder`) | `UNIT10001` **Civilian Units** → idle unit **Assign** → target → highlighted valid map tile; `MAP20001` shortcuts may open filtered assignment. | One pending work per unit; target, occupancy, terrain, ownership, technology, materials, and tile reservation must pass. | Implicit move: **Movement**; assignment/progress: **Build / work**. | Chs. 4, 6 |
+| Civilian work (`WorkOrder`) | `UNIT10001` **Civilian Units** → idle unit **Assign** → target → highlighted valid map tile; `MAP20001` shortcuts may open filtered assignment; `MAP30001` **Explore** / **Prospect** / **Build improvement** (right-click or press-and-hold a tile) uses the same shortcuts; **More** (`MAP30002`) **Province details** opens `MAP20001`. | One pending work per unit; target, occupancy, terrain, ownership, technology, materials, and tile reservation must pass. | Implicit move: **Movement**; assignment/progress: **Build / work**. | Chs. 4, 6 |
 | Recruit / train worker (`RecruitWorkerOrder`) | `GAME20001` **Production** → **Labour Controls** → tier **+**. Each row shows catalog cost and food/labour upkeep; locked tiers print **Requires:** technology names. | Peasant: fabric ×2. Higher tiers consume one peasant, need paper/treasury and required technologies; queued military/naval builds share the peasant reserve. Hover a disabled **+** to see the shortage. | **Build / work** | Ch. 5 |
 | Research (`ResearchOrder`) | `GAME40001` **Technology** → **Slots** → choose technology and funding. **Cancel** clears the slot and forfeits its progress. | Funding is paid from treasury; technology must be researchable, not complete, and fit an available slot. | **Research** | Ch. 9 |
 | Build civilian (`BuildUnitOrder`) | `UNIT10001` → **Train** → `UNIT40001` **Train civilians** (each row shows a muted role gist under the type name). | Treasury + paper; Merchant/Rail Builder need their unlocks; capital tile required. | **Build / work**; unit appears at capital. | Ch. 5 |
@@ -26,9 +26,9 @@ Use this ledger to issue every decree available to your court, check its price a
 
 | Target and unit | Cost / key refusal | Result |
 |---|---|---|
-| `explore` — Explorer | Free; province must be partly revealed and occupiable. | Reveals province on completion. |
-| `prospect` — Explorer | Free; mineral-eligible, visible, occupiable unprospected tile. | One-turn completion marks tile prospected. |
-| `build_improvement` — Builder | Lumber + cast iron; resource required; mineral must be prospected; level/tech cap applies. | Raises improvement level. |
+| `explore` — Explorer | Free; province must be partly revealed and occupiable. **`MAP30001` Explore** (right-click or press-and-hold) opens the same Explorer shortcut as `MAP20001`. | Reveals province on completion. |
+| `prospect` — Explorer | Free; mineral-eligible, visible, occupiable unprospected tile. **`MAP30001` Prospect** opens the same Explorer shortcut as `MAP20001`. | One-turn completion marks tile prospected. |
+| `build_improvement` — Builder | Lumber + cast iron; resource required; mineral must be prospected; level/tech cap applies. **`MAP30001` Build improvement** opens the same Builder shortcut as `MAP20001`. | Raises improvement level. |
 | `upgrade_town` — Builder | National Bureaucracy, materials, and province town tile; availability reflects current validator rules. **`MAP20001` Upgrade town** on the Political Town development row opens Builder-only assignment for the province town tile when eligible. | Raises town development. |
 | `build_road` — Engineer | Lumber + metal; terrain/road technology limits. | Raises transport level. |
 | `build_port` — Engineer | Lumber + metal; valid coastal/river tile. **`MAP20001` Build port** shortcut on the Road / transport row opens Engineer-only assignment for the selected coastal tile when eligible; Port status (**None** / **Present**) is under **Tile details**. **`GAME80001` Counsel** → `GAME90001` Development tab can **Agree** a ranked port when the courts would dig one this turn. | Creates port and transport level 4. |
@@ -112,4 +112,6 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/ui/naval-mission-menu-dialog.md`
 - `SPEC/ui/naval-mission-target-dialog.md`
 - `SPEC/ui/map-widget.md`
-- `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/tile-context-radial.md`
+- `SPEC/ui/tile-more-actions-dialog.md`
+- `SPEC/ui/components/tile-radial-catalog.md`

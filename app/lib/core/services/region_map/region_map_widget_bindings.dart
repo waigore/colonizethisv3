@@ -2,6 +2,7 @@ import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/material.dart' show Offset;
 
 import '../../../features/game/flame/region_map/ct_region_map_game.dart';
 import '../../../features/game/flame/region_map/region_map.dart'
@@ -35,6 +36,8 @@ typedef CreateCtRegionMapGame =
       required BaseLayerDisplayMode baseLayerDisplayMode,
       required void Function(String provinceId)? onProvinceSelected,
       required void Function(String tileKey)? onMapTileTappedForDetail,
+      required void Function(String tileKey, Offset localPosition)?
+      onMapTileSecondaryForRadial,
       required VoidCallback? onRegionViewChanged,
       required void Function(String? provinceId)? onProvinceHovered,
       required void Function(String? tileKey)? onTileHovered,
@@ -76,6 +79,8 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
   required BaseLayerDisplayMode baseLayerDisplayMode,
   required void Function(String provinceId)? onProvinceSelected,
   required void Function(String tileKey)? onMapTileTappedForDetail,
+  void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial,
   required VoidCallback? onRegionViewChanged,
   required void Function(String? provinceId)? onProvinceHovered,
   required void Function(String? tileKey)? onTileHovered,
@@ -116,6 +121,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     baseLayerDisplayMode: baseLayerDisplayMode,
     onProvinceSelected: onProvinceSelected,
     onMapTileTappedForDetail: onMapTileTappedForDetail,
+    onMapTileSecondaryForRadial: onMapTileSecondaryForRadial,
     onRegionViewChanged: onRegionViewChanged,
     onProvinceHovered: onProvinceHovered,
     onTileHovered: onTileHovered,

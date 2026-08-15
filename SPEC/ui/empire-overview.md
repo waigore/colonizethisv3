@@ -141,6 +141,10 @@ Compact MAP10001 teaching chrome (Refs #4406). No new screen ID; does not defaul
 - **Visibility:** Shown while `onTileHovered` reports a tile key and work-target selection is **off**. Hidden on pointer leave and while work-target selection is active.
 - **Copy:** Place + Owner (or Sea zone identity) + Sight phrases from [map-widget.md](map-widget.md) § Hover; warp water adds one passage line. Owner uses `ownerNameForProvinceOverlay`.
 
+### Tile context radial (in-game map only)
+
+Right-click or long-press a tile (after army / fleet / civilian markers miss) opens `MAP30001` for overlay Tile shortcuts (Explore, Prospect, Build improvement) plus More. Primary tap still opens `MAP20001`. Details: [tile-context-radial.md](tile-context-radial.md), [tile-more-actions-dialog.md](tile-more-actions-dialog.md).
+
 **Acceptance (narrow corner controls):**
 
 - **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`), **when** `GameMapCornerControls` is constructed with `narrow: true` and lays out the three corner buttons, **then** every visible corner button paints a **24 × 24 dp** square surface.

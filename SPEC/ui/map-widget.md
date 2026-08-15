@@ -295,6 +295,7 @@ The map widget exposes callbacks so the parent (e.g. Empire overview) can react;
 |----------|---------|
 | **onProvinceSelected** | Invoked when the user taps/clicks a province (e.g. with prefixed province id). Province details (what to show, where) are defined by the parent/screen; the map widget only reports selection. |
 | **onMapTileTappedForDetail** | Optional. Invoked when the user **taps/clicks** a tile for the **province/sea zone detail** flow with full tile key `regionId|provinceId|x|y`. The **embedding shell** (not the reusable map) connects this to shared UI state (e.g. Riverpod `mapProvincePanelProvider`). The map widget does **not** import the detail overlay. See [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md). |
+| **onMapTileSecondaryForRadial** | Optional. Right-click or long-press (~500 ms) after army / fleet / civilian marker miss. Reports tile key plus local offset. Shell hosts `MAP30001` / `MAP30002`. Does not start marker flows. See [tile-context-radial.md](tile-context-radial.md). |
 | **onRegionViewChanged** | Optional: viewport or zoom level changed (e.g. for syncing with sidebar or URL). |
 | **onProvinceHovered** | Optional: invoked when hover enters or leaves a province (prefixed province id, or null when leaving). Enables e.g. tooltips. |
 | **onTileSelected** | Optional. When the map is in **work target selection mode** (see below), invoked when the user taps/clicks a tile with the tile key `regionId|provinceId|x|y`. Used by the Civilian Units panel assign flow. |

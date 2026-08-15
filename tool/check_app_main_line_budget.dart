@@ -82,7 +82,9 @@ const _packageName = 'colonizethis_app';
 // raised for GAME20001 Labour row cost/upkeep (Refs #4432; measured 78_800).
 // raised for MAP20001 Station spy Civilian shortcut + #4438 merge (Refs #4439; measured 79_147).
 // raised for combined #4438+#4432+#4439 merge headroom (measured 79_441).
-const _maxMainLines = 79600;
+// raised for MAP30001 tile context radial + More dialog (Refs #4440; measured 80_223).
+// raised for combined #4440+#4432 merge headroom (measured 80_517).
+const _maxMainLines = 80600;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

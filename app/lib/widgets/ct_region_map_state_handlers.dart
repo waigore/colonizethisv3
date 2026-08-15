@@ -48,6 +48,7 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
     onProvinceSelected: state.widget.onProvinceSelected,
     onMapTileTappedForDetail: state.widget.onMapTileTappedForDetail,
+    onMapTileSecondaryForRadial: state.widget.onMapTileSecondaryForRadial,
     onRegionViewChanged: state.widget.onRegionViewChanged,
     onProvinceHovered: state.widget.onProvinceHovered,
     onTileHovered: state.widget.onTileHovered,

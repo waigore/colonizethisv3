@@ -47,9 +47,7 @@ void emitDebug() {
       File(p.join(root.path, 'app/lib/.keep'))
         ..createSync(recursive: true)
         ..writeAsStringSync('');
-      File(
-        p.join(root.path, 'widgetbook_host/lib/catalogs/catalog_demo.dart'),
-      )
+      File(p.join(root.path, 'widgetbook_host/lib/catalogs/catalog_demo.dart'))
         ..createSync(recursive: true)
         ..writeAsStringSync('''
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -66,61 +64,54 @@ final bus = AppEventBus();
     });
 
     test('passes when production code uses AppEventBus.create()', () {
-      final root = _writeAppFile(
-        'app/lib/features/shell/good_flow.dart',
-        '''
+      final root = _writeAppFile('app/lib/features/shell/good_flow.dart', '''
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final bus = AppEventBus.create();
-''',
-      );
+''');
       final code = runCheckAppEventBusDecoupling(root.path);
       expect(code, 0);
     });
   });
 
   group('appNavigatorKey choke-point check', () {
-    test('fails when app/lib/providers/ reads appNavigatorKey.currentContext',
-        () {
-      final root = _writeAppFile(
-        'app/lib/providers/leaky_provider.dart',
-        '''
+    test(
+      'fails when app/lib/providers/ reads appNavigatorKey.currentContext',
+      () {
+        final root = _writeAppFile('app/lib/providers/leaky_provider.dart', '''
 import '../app.dart' show appNavigatorKey;
 
 void doStuff() {
   final ctx = appNavigatorKey.currentContext;
   if (ctx == null) return;
 }
-''',
-      );
-      final stderrLines = <String>[];
-      final code = runCheckAppEventBusDecoupling(
-        root.path,
-        err: stderrLines.add,
-      );
-      expect(code, 1);
-      expect(
-        stderrLines.join('\n'),
-        contains('appNavigatorKey property access'),
-      );
-      expect(
-        stderrLines.join('\n'),
-        contains('app/lib/providers/leaky_provider.dart:4'),
-      );
-    });
+''');
+        final stderrLines = <String>[];
+        final code = runCheckAppEventBusDecoupling(
+          root.path,
+          err: stderrLines.add,
+        );
+        expect(code, 1);
+        expect(
+          stderrLines.join('\n'),
+          contains('appNavigatorKey property access'),
+        );
+        expect(
+          stderrLines.join('\n'),
+          contains('app/lib/providers/leaky_provider.dart:4'),
+        );
+      },
+    );
 
     test('fails when app/lib/features/ reads appNavigatorKey.currentState', () {
-      final root = _writeAppFile(
-        'app/lib/features/shell/leaky_flow.dart',
-        '''
+      final root = _writeAppFile('app/lib/features/shell/leaky_flow.dart', '''
 import 'package:colonizethis_app/app.dart' show appNavigatorKey;
 
 void doStuff() {
   final state = appNavigatorKey.currentState;
   state?.pop();
 }
-''',
-      );
+''');
       final stderrLines = <String>[];
       final code = runCheckAppEventBusDecoupling(
         root.path,
@@ -133,29 +124,21 @@ void doStuff() {
       );
     });
 
-    test(
-      'allows appNavigatorKey access under app/lib/core/services/',
-      () {
-        final root = _writeAppFile(
-          'app/lib/core/services/some_service.dart',
-          '''
+    test('allows appNavigatorKey access under app/lib/core/services/', () {
+      final root = _writeAppFile('app/lib/core/services/some_service.dart', '''
 import '../../app.dart' show appNavigatorKey;
 
 void doStuff() {
   final ctx = appNavigatorKey.currentContext;
   if (ctx == null) return;
 }
-''',
-        );
-        final code = runCheckAppEventBusDecoupling(root.path);
-        expect(code, 0);
-      },
-    );
+''');
+      final code = runCheckAppEventBusDecoupling(root.path);
+      expect(code, 0);
+    });
 
     test('allows appNavigatorKey access in app/lib/app.dart itself', () {
-      final root = _writeAppFile(
-        'app/lib/app.dart',
-        '''
+      final root = _writeAppFile('app/lib/app.dart', '''
 import 'package:flutter/widgets.dart';
 
 final appNavigatorKey = GlobalKey<NavigatorState>();
@@ -164,54 +147,48 @@ void boot() {
   final ctx = appNavigatorKey.currentContext;
   if (ctx == null) return;
 }
-''',
-      );
+''');
       final code = runCheckAppEventBusDecoupling(root.path);
       expect(code, 0);
     });
   });
 
   group('features/ showDialog allow-list check', () {
-    test(
-      'fails when a new file under app/lib/features/ calls showDialog',
-      () {
-        final root = _writeAppFile(
-          'app/lib/features/game/widgets/new_panel.dart',
-          '''
+    test('fails when a new file under app/lib/features/ calls showDialog', () {
+      final root = _writeAppFile(
+        'app/lib/features/game/widgets/new_panel.dart',
+        '''
 import 'package:flutter/material.dart';
 
 Future<void> open(BuildContext context) {
   return showDialog<void>(context: context, builder: (_) => const Text('x'));
 }
 ''',
-        );
-        final stderrLines = <String>[];
-        final code = runCheckAppEventBusDecoupling(
-          root.path,
-          err: stderrLines.add,
-        );
-        expect(code, 1);
-        expect(
-          stderrLines.join('\n'),
-          contains(
-            'showDialog / showModalBottomSheet in features/ outside the '
-            'documented local-by-design allow-list',
-          ),
-        );
-        expect(
-          stderrLines.join('\n'),
-          contains('app/lib/features/game/widgets/new_panel.dart:4'),
-        );
-      },
-    );
+      );
+      final stderrLines = <String>[];
+      final code = runCheckAppEventBusDecoupling(
+        root.path,
+        err: stderrLines.add,
+      );
+      expect(code, 1);
+      expect(
+        stderrLines.join('\n'),
+        contains(
+          'showDialog / showModalBottomSheet in features/ outside the '
+          'documented local-by-design allow-list',
+        ),
+      );
+      expect(
+        stderrLines.join('\n'),
+        contains('app/lib/features/game/widgets/new_panel.dart:4'),
+      );
+    });
 
-    test(
-      'fails when a new file under app/lib/features/ calls '
-      'showModalBottomSheet',
-      () {
-        final root = _writeAppFile(
-          'app/lib/features/game/widgets/new_sheet.dart',
-          '''
+    test('fails when a new file under app/lib/features/ calls '
+        'showModalBottomSheet', () {
+      final root = _writeAppFile(
+        'app/lib/features/game/widgets/new_sheet.dart',
+        '''
 import 'package:flutter/material.dart';
 
 Future<void> open(BuildContext context) {
@@ -221,19 +198,39 @@ Future<void> open(BuildContext context) {
   );
 }
 ''',
-        );
-        final code = runCheckAppEventBusDecoupling(root.path);
-        expect(code, 1);
-      },
-    );
+      );
+      final code = runCheckAppEventBusDecoupling(root.path);
+      expect(code, 1);
+    });
+
+    test('allows showDialog inside the documented local-by-design files', () {
+      // `new_game_setup_flow_dialogs_error.dart` is in the allow-list per
+      // SPEC/program/app-ui-wiring.md § "Local by design".
+      final root = _writeAppFile(
+        'app/lib/features/shell/new_game_setup_flow_dialogs_error.dart',
+        '''
+import 'package:flutter/material.dart';
+
+Future<void> open(BuildContext context) {
+  return showDialog<void>(context: context, builder: (_) => const Text('x'));
+}
+''',
+      );
+      final stdoutLines = <String>[];
+      final code = runCheckAppEventBusDecoupling(
+        root.path,
+        info: stdoutLines.add,
+      );
+      expect(code, 0);
+      expect(stdoutLines.join('\n'), contains('no violations found'));
+    });
 
     test(
-      'allows showDialog inside the documented local-by-design files',
+      'allows showDialog in GameMapTileRadialHost (MAP30002 local-by-design)',
       () {
-        // `new_game_setup_flow_dialogs_error.dart` is in the allow-list per
-        // SPEC/program/app-ui-wiring.md § "Local by design".
         final root = _writeAppFile(
-          'app/lib/features/shell/new_game_setup_flow_dialogs_error.dart',
+          'app/lib/features/game/widgets/map_radial/'
+              'game_map_tile_radial_host.dart',
           '''
 import 'package:flutter/material.dart';
 
@@ -253,16 +250,13 @@ Future<void> open(BuildContext context) {
     );
 
     test('ignores showDialog outside features/ (e.g. shell widgets root)', () {
-      final root = _writeAppFile(
-        'app/lib/widgets/some_widget.dart',
-        '''
+      final root = _writeAppFile('app/lib/widgets/some_widget.dart', '''
 import 'package:flutter/material.dart';
 
 Future<void> open(BuildContext context) {
   return showDialog<void>(context: context, builder: (_) => const Text('x'));
 }
-''',
-      );
+''');
       final code = runCheckAppEventBusDecoupling(root.path);
       expect(code, 0);
     });
@@ -345,12 +339,10 @@ class P {
       expect(code, 1);
     });
 
-    test(
-      'allows a bare deferred ClosePanelEvent emit (scoped auto-close)',
-      () {
-        final root = _writeAppFile(
-          'app/lib/features/game/widgets/auto_close_panel.dart',
-          '''
+    test('allows a bare deferred ClosePanelEvent emit (scoped auto-close)', () {
+      final root = _writeAppFile(
+        'app/lib/features/game/widgets/auto_close_panel.dart',
+        '''
 import 'package:flutter/material.dart';
 
 class P {
@@ -364,16 +356,15 @@ class P {
   }
 }
 ''',
-        );
-        final stdoutLines = <String>[];
-        final code = runCheckAppEventBusDecoupling(
-          root.path,
-          info: stdoutLines.add,
-        );
-        expect(code, 0);
-        expect(stdoutLines.join('\n'), contains('no violations found'));
-      },
-    );
+      );
+      final stdoutLines = <String>[];
+      final code = runCheckAppEventBusDecoupling(
+        root.path,
+        info: stdoutLines.add,
+      );
+      expect(code, 0);
+      expect(stdoutLines.join('\n'), contains('no violations found'));
+    });
 
     test('allows non-bus post-frame work (setState / layout)', () {
       final root = _writeAppFile(

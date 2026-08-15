@@ -4,9 +4,11 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting, VoidCallback;
+import 'package:flutter/material.dart' show Offset;
 
 import 'ct_region_map_game_state.dart';
 import 'region_map_component.dart';
+import 'region_map_component_secondary.dart';
 import 'region_map_viewport_snapshot.dart'
     show
         RegionMapViewportSnapshot,
@@ -33,6 +35,9 @@ mixin CtRegionMapGameFields on FlameGame {
   late BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
   void Function(String tileKey)? onMapTileTappedForDetail;
+  void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial;
+  bool suppressNextPrimaryTap = false;
   VoidCallback? onRegionViewChanged;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
@@ -263,6 +268,10 @@ mixin CtRegionMapGameLifecycle on CtRegionMapGameFields, CtRegionMapGameCamera {
   }
 
   void handleRegionMapTapUp(TapUpInfo info) {
+    if (suppressNextPrimaryTap) {
+      suppressNextPrimaryTap = false;
+      return;
+    }
     final z = camera.viewfinder.zoom;
     if (z <= 0 || !z.isFinite) return;
     final widgetPos = info.eventPosition.widget;
@@ -271,5 +280,20 @@ mixin CtRegionMapGameLifecycle on CtRegionMapGameFields, CtRegionMapGameCamera {
     state.mapComponent.handleTapAtWorld(world);
     onRegionViewChanged?.call();
     emitViewportSnapshot();
+  }
+
+  void handleRegionMapSecondaryFromLocal(Offset localPosition) {
+    if (!state.mapLoaded || size == Vector2.zero()) return;
+    final z = camera.viewfinder.zoom;
+    if (z <= 0 || !z.isFinite) return;
+    final screen = Vector2(localPosition.dx, localPosition.dy);
+    final halfView = size / 2;
+    final world = camera.viewfinder.position + (screen - halfView) / z;
+    final tileKey = ctRegionMapComponentTileKeyForSecondaryAtWorld(
+      state.mapComponent,
+      world,
+    );
+    if (tileKey == null) return;
+    onMapTileSecondaryForRadial?.call(tileKey, localPosition);
   }
 }
