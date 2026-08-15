@@ -8,7 +8,7 @@ This composite is **not** a screen and has **no** stable screen ID. It is the ca
 
 ## Purpose
 
-Consolidates the dual-panel quantity-transfer chrome shared by `SplitArmyDialog`, `SplitFleetDialog`, and `TransferToHomeFleetDialog`. Callers configure per-side titles, initial counts, item labels, and a `canConfirm` hook; the composite owns the side panels, per-row one / move-all controls, running totals, the Cancel / Confirm action row, and the narrow-viewport stack rule honouring `kMinViewportWidth = 320` dp (per [`mobile-adaptation.md`](../mobile-adaptation.md) § 7). Tracking issue: [#2914](https://github.com/waigore/colonizethisv3/issues/2914) S9.
+Consolidates the dual-panel quantity-transfer chrome shared by `SplitArmyDialog`, `SplitFleetDialog`, and `TransferToHomeFleetDialog`. Callers configure per-side titles, initial counts, item labels, and a `canConfirm` hook; the composite owns the side panels, per-row one / move-all controls, running totals, the Cancel / Confirm action row, and the narrow-viewport stack rule honouring `kMinViewportWidth = 320` dp (per [`mobile-adaptation.md`](../mobile-adaptation.md) § 7).
 
 ---
 
@@ -64,7 +64,7 @@ Row chrome — left panel: `[Expanded(label) [>] [>>]]`; right panel: `[[<<] [<]
 1. **Local state only.** Two local count maps mirror the initial inputs; zero-count rows are cleaned up after every move. The composite never mutates host game state — persisted side effects flow through `onConfirm` only.
 2. **Move semantics.** `>` / `<` move one unit across; `>>` / `<<` move every remaining unit of that row. `onChanged` fires after each accepted move with deep-copied maps.
 3. **Confirm gate.** Confirm fires only when `canConfirm` returns `true`. The default (`rightTotal > 0`) suits split flows; `TransferToHomeFleetDialog` overrides it to require a positive source-side delta.
-4. **Narrow stack.** Below `kCtTransferListSideBySideMinWidth` (`360` dp) the side panels stack vertically. The action row is always a `Wrap(alignment: end)` so a long `confirmLabel` (e.g. Home Army detach) never overflows the 520 dp split shell or the ~`288` dp column at `kMinViewportWidth = 320` dp.
+4. **Narrow stack.** Below `kCtTransferListSideBySideMinWidth` (`360` dp) panels stack vertically. Action row is `Wrap(alignment: end)` so a long `confirmLabel` (Home Army detach) never overflows the 520 dp split shell or ~`288` dp column at `kMinViewportWidth = 320` dp.
 5. **Empty per-side.** With zero rows, the list area renders the per-side empty label centered in `Theme.bodyMedium` tinted by `colorScheme.onSurfaceVariant`.
 
 ---
