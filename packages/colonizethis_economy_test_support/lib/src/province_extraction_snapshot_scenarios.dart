@@ -5,7 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'extraction_fixture_support.dart';
-import 'province_extraction_snapshot_expectations.dart';
+import 'province_extraction_snapshot_pins.dart';
 
 /// One row for `computeProvinceExtractionSnapshots` scenario tables.
 typedef ProvinceExtractionSnapshotScenario = ({
@@ -44,10 +44,6 @@ ProvinceExtractionSnapshotScenario provinceSnapScenario({
   expectTileKeys: expectTileKeys,
   refs: refs,
 );
-
-void runProvinceExtractionSnapshotScenario(ProvinceExtractionSnapshotScenario scenario) {
-  assertProvinceExtractionSnapshot(scenario);
-}
 
 /// Canonical GP Extraction snapshot pins (transport / town / disconnect / capital).
 List<ProvinceExtractionSnapshotScenario> provinceExtractionSnapshotScenarios() {
@@ -116,10 +112,6 @@ typedef ProvinceImprovableCountsScenario = ({
   ProvinceImprovableCountsPin pin,
   String? refs,
 });
-
-void runProvinceImprovableCountsScenario(ProvinceImprovableCountsScenario scenario) {
-  assertProvinceImprovableCounts(scenario.pin);
-}
 
 ProvinceImprovableCountsScenario provinceImprovableCountsScenario({
   required String label,

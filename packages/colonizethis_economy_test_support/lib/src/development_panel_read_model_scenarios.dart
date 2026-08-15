@@ -1,7 +1,5 @@
 // dart format off
-// Table-driven Development panel read-model scenarios (Refs #4175, #4014).
-
-import 'development_panel_read_model_expectations.dart';
+// Table-driven Development panel read-model scenarios (Refs #4175, #4014, #4410).
 
 enum DevelopmentPanelReadModelTarget {
   ownedProvinceListsImprovableGrain,
@@ -15,12 +13,6 @@ typedef DevelopmentPanelReadModelScenario = ({
   DevelopmentPanelReadModelTarget target,
   String? refs,
 });
-
-void runDevelopmentPanelReadModelScenario(
-  DevelopmentPanelReadModelScenario scenario,
-) {
-  runDevelopmentPanelReadModelExpectation(scenario.target);
-}
 
 List<DevelopmentPanelReadModelScenario> developmentPanelReadModelScenarios() =>
     [

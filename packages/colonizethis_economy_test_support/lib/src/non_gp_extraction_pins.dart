@@ -1,5 +1,5 @@
 // dart format off
-// Compact non-GP extraction result assertions (Refs #3939 phase 3 slice 12).
+// Compact non-GP extraction result assertions (Refs #3939 phase 3 slice 12, #4410).
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 /// Data-driven expectations for `computeNonGreatPowerExtraction` scenario rows.

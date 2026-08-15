@@ -1,7 +1,6 @@
 // Table-driven DealMatcher scenarios (Refs #3836, #3939).
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
 /// Empty-input and basic-fill scenarios from `world_market_deal_matcher_test.dart`.
