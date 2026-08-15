@@ -21,6 +21,7 @@ CellViewData _cellFromJson(Map<String, dynamic> json) {
     ownerFactionId: json['ownerFactionId'] as String?,
     provinceDisplayName: json['provinceDisplayName'] as String?,
     improvementLevel: json['improvementLevel'] as int?,
+    improvementTechCap: json['improvementTechCap'] as int?,
     roadLevel: json['roadLevel'] as int?,
     resourceExtractionUnits: json['resourceExtractionUnits'] as int?,
     resourceExtractionEffectiveUnits:

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 import 'region_map_component_render_core.dart';
-import 'region_map_component_render_core_overlays.dart';
+import 'region_map_component_render_core_transport_feature.dart';
 
 extension CtRegionMapRenderCoreTiles on CtRegionMapComponent {
   void paintTiles(Canvas canvas) {
@@ -48,7 +48,8 @@ extension CtRegionMapRenderCoreBaseTilesSea on CtRegionMapComponent {
     final top = cell.y * cellSize;
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.unrevealed) {
       final paint = Paint()..color = Colors.black;
       canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
       return;
@@ -81,10 +82,17 @@ extension CtRegionMapRenderCoreBaseTilesSea on CtRegionMapComponent {
         final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
         canvas.drawImageRect(tileset.image, srcRect, dstRect, Paint());
         if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.fogged) {
+            regionMapComponentVisibilityForTerrain(this, cell) ==
+                TileVisibility.fogged) {
           canvas.drawRect(
             dstRect,
-            Paint()..color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
+            Paint()
+              ..color = Color.fromRGBO(
+                0,
+                0,
+                0,
+                RegionMapPalette.fogOverlayOpacity,
+              ),
           );
         }
       }
@@ -111,7 +119,8 @@ extension CtRegionMapRenderCoreBaseTilesLand on CtRegionMapComponent {
     final top = cell.y * cellSize;
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.unrevealed) {
       final paint = Paint()..color = Colors.black;
       canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
       return;
@@ -134,7 +143,8 @@ extension CtRegionMapRenderCoreBaseTilesLand on CtRegionMapComponent {
     final terrain = terrainNullable;
 
     final isPlains =
-        terrain == TerrainType.plains || regionMapComponentIsFeatureTerrain(terrain);
+        terrain == TerrainType.plains ||
+        regionMapComponentIsFeatureTerrain(terrain);
     final isDesert = terrain == TerrainType.desert;
 
     final nearDesertCorner = getCornerValues(
@@ -148,7 +158,8 @@ extension CtRegionMapRenderCoreBaseTilesLand on CtRegionMapComponent {
       (c) =>
           !c.isSea &&
           (c.terrainType == TerrainType.plains ||
-              (c.terrainType != null && regionMapComponentIsFeatureTerrain(c.terrainType!))),
+              (c.terrainType != null &&
+                  regionMapComponentIsFeatureTerrain(c.terrainType!))),
     );
 
     if (isPlains && !nearDesertCorner.same && nearDesertCorner.value) {

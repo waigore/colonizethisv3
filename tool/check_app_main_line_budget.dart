@@ -71,8 +71,10 @@ const _packageName = 'colonizethis_app';
 // raised for DLG20002 / DLG31003 unit-picker composition lines (Refs #4385).
 // raised for combined #4370+#4383+#4384+#4385+#4388 merge headroom (measured 77_122).
 // raised for MAP10001 owner/sight hover readout + MAP20001 Political Sight (Refs #4406; measured 77_490).
+// raised for MAP10001 improvement headroom marks + teaching chip (Refs #4408; measured 77_976).
 // raised for SHEL10002 Quick Start (Refs #4416; measured 77_621).
-const _maxMainLines = 78000;
+// raised for combined #4408+#4416 merge headroom (measured 78_107).
+const _maxMainLines = 78200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

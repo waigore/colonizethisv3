@@ -132,6 +132,22 @@ mixin GameMapAreaBuildMapStack
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (shouldShowImprovementHeadroomLegend(
+                flags: mapViewState.mapBaseLayerFlags,
+                viewingPlayerId: shell.viewingPlayerId,
+              )) ...[
+                ImprovementHeadroomLegend(
+                  key: improvementHeadroomLegendAnchorKey,
+                  narrow: isNarrow,
+                  anchorKey: improvementHeadroomLegendAnchorKey,
+                  chromeBottomY:
+                      (context.findRenderObject() as RenderBox?)
+                          ?.localToGlobal(Offset.zero)
+                          .dy ??
+                      0,
+                ),
+                SizedBox(height: isNarrow ? 2 : 4),
+              ],
               if (shouldShowExtractionDiscLegend(
                 flags: mapViewState.mapBaseLayerFlags,
                 viewingPlayerId: shell.viewingPlayerId,

@@ -11,6 +11,7 @@ import '../region_data_access.dart';
 import '../tile_key_util.dart';
 import '../tile_map_grid.dart';
 import 'init_game_map_view_data.dart';
+import 'init_game_map_view_improvement_cap.dart';
 
 /// Stateless builders for the per-cell view data and the unit/civilian marker
 /// overlays of a single region.
@@ -33,6 +34,8 @@ class InitGameMapViewCells {
     required Map<String, int>? resourceExtractionEffectiveUnitsByTile,
     required Map<String, int>? resourceExtractionBlockedUnitsByTile,
     Set<String>? capitalLinkDisconnectedTileKeys,
+    String? viewingFactionId,
+    Map<String, bool>? viewingTechUnlocked,
   }) {
     final cells = <CellViewData>[];
     TileMapGrid.forEachIndex(tileMap.height, tileMap.width, (y, x) {
@@ -55,9 +58,13 @@ class InitGameMapViewCells {
       final extractionBlockedUnits = isSea
           ? null
           : resourceExtractionBlockedUnitsByTile?[tileKey];
-      final capitalLinkDisconnected = !isSea &&
+      final capitalLinkDisconnected =
+          !isSea &&
           (capitalLinkDisconnectedTileKeys?.contains(tileKey) ?? false);
       final fullProvinceId = isSea ? null : ProvinceId.full(regionId, localId);
+      final ownerFactionId = fullProvinceId != null
+          ? ownerByProvinceId[fullProvinceId]
+          : null;
       cells.add(
         CellViewData(
           x: x,
@@ -67,15 +74,21 @@ class InitGameMapViewCells {
           terrainTypeId: terrain?.name,
           terrainType: terrain,
           resourceId: resource?.name,
-          ownerFactionId: fullProvinceId != null
-              ? ownerByProvinceId[fullProvinceId]
-              : null,
+          ownerFactionId: ownerFactionId,
           provinceDisplayName: isSea
               ? null
               : (fullProvinceId != null
                     ? provinceDisplayNameById[fullProvinceId]
                     : null),
           improvementLevel: isSea ? null : improvement,
+          improvementTechCap: improvementTechCapForCell(
+            isSea: isSea,
+            ownerFactionId: ownerFactionId,
+            viewingFactionId: viewingFactionId,
+            techUnlocked: viewingTechUnlocked,
+            resourceId: resource?.name,
+            terrainType: terrain,
+          ),
           roadLevel: isSea ? null : road,
           resourceExtractionUnits: extractionUnits,
           resourceExtractionEffectiveUnits: extractionEffectiveUnits,
