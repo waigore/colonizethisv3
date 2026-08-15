@@ -6,6 +6,13 @@ Before the first Orders phase, you choose your court: which Great Power you are,
 
 ## How it is done
 
+### Main menu → Quick Start
+
+1. The app shell is **Shell screen**; from it you reach **Main menu (CtMainMenu)**.
+2. Tap **Quick Start** (above **New Game**). You play **England** at turn 0, with a **random** map and five AI courts. You do not open leader selection.
+3. Setup runs the same wait-gate as New Game → Start. While waiting, **Game initializing** shows coarse progress. It is a **non-interactive wait-gate**.
+4. Navigation lands on **Game screen**. On first entry for that game id, **Game start intro** may appear; dismiss it to play.
+
 ### Main menu → New Game
 
 1. The app shell is **Shell screen**; from it you reach **Main menu (CtMainMenu)**. Tap **New Game**.
