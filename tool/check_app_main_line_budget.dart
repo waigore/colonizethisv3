@@ -75,7 +75,8 @@ const _packageName = 'colonizethis_app';
 // raised for DIPL20001 grant/subsidy Submit-commit + Deal Book player copy
 // merge headroom (Refs #4415, #4414; measured 78_020).
 // raised for Home Army detach-then-move from map overlay (Refs #4407; measured 78_256).
-// raised for combined #4414+#4415+#4407 merge headroom (measured 78_283).
+// raised for Declare War named third-party courts on confirm (Refs #4409; measured 78_068).
+// raised for combined #4414+#4415+#4407+#4409 merge headroom (measured 78_375).
 const _maxMainLines = 78400;
 
 int runCheckAppMainLineBudget(
