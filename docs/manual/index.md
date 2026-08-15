@@ -14,9 +14,9 @@ The manual is **player-facing documentation**. Game Design Documents under `SPEC
 
 ## Tone
 
-Body prose is clear modern English for an experienced turn-based strategy player. The framing is a **vizier advising a young monarch**: patient, empathetic, encouraging. Archaic 16th–17th century flourishes (“Hark, my liege…”) appear only in exhortation, warning, or instruction **callouts** — not in ordinary how-to steps.
+Body prose is everyday modern English a **12th-grade reader** can follow. UI-engineering words and genre jargon are banned. The framing is a **vizier advising a young monarch**: patient, empathetic, encouraging. Archaic 16th–17th century flourishes (“Hark, my liege…”) appear only in exhortation, warning, or instruction **callouts** — not in ordinary how-to steps.
 
-Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_GUIDE.md`](STYLE_GUIDE.md).
+Full tone, reading level, chapter template, Sources footers, and draft-marking rules: [`STYLE_GUIDE.md`](STYLE_GUIDE.md).
 
 ## Table of contents
 
@@ -43,8 +43,8 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 
 | # | Must document (low-level) | Primary sources |
 |---|---------------------------|-----------------|
-| 1 | Premise (1500–1850, Old & New Worlds, Great Powers / Minor Nations / Tribes); victory at a glance; turn rhythm; orientation tour of game screen, toolbar, empire buttons, side menu, map | `SPEC/game/victory.md`, `SPEC/game/turn-time-mapping.md`, `SPEC/game/factions.md`; `SPEC/ui/game-screen.md`, `SPEC/ui/game-toolbar-icons.md`, `SPEC/ui/empire-buttons.md`, `SPEC/ui/game-side-menu.md`, `SPEC/ui/map-widget.md` |
-| 2 | Main menu → New Game → leader selection; human/AI GP slots; leader bonuses; advanced starts; capital auto-choice; game-start intro overlay | `SPEC/game/game-setup.md`, `SPEC/game/factions.md`, `SPEC/game/leader-bonuses.md`, `SPEC/game/advanced-starts.md`, `SPEC/game/capital-choice-phase.md`, `SPEC/game/naming.md`; `SPEC/ui/main-menu.md`, `SPEC/ui/new-game-leader-selection-dialog.md`, `SPEC/ui/game-initializing.md`, `SPEC/ui/game-start-intro-overlay.md` |
+| 1 | Premise (1500–1850, Old & New Worlds, Great Powers / Minor Nations / Tribes); victory at a glance; turn rhythm; orientation tour of game screen, empire buttons, side menu, map | `SPEC/game/victory.md`, `SPEC/game/turn-time-mapping.md`, `SPEC/game/factions.md`; `SPEC/ui/game-screen.md`, `SPEC/ui/empire-buttons.md`, `SPEC/ui/game-side-menu.md`, `SPEC/ui/map-widget.md`, `SPEC/ui/empire-overview.md`, `SPEC/ui/screen-registry.md`; `SPEC/ai/ai-personalities.md` |
+| 2 | Main menu → Quick Start (default campaign) or New Game → leader selection; human/AI GP slots; leader bonuses; advanced starts; capital auto-choice; game-start intro overlay | `SPEC/game/game-setup.md`, `SPEC/game/factions.md`, `SPEC/game/leader-bonuses.md`, `SPEC/game/advanced-starts.md`, `SPEC/game/capital-choice-phase.md`, `SPEC/game/naming.md`; `SPEC/ui/main-menu.md`, `SPEC/ui/new-game-leader-selection-dialog.md`, `SPEC/ui/game-initializing.md`, `SPEC/ui/game-start-intro-overlay.md` |
 | 3 | Reading the map; provinces and sea zones; terrain and resources; capital and connectivity; province overlay and town/port icons; province identity as the UI names places | `SPEC/game/world-model.md`, `SPEC/game/map-topology.md`, `SPEC/game/tile-map-and-generation.md`, `SPEC/game/resource-terrain-region-rules.md`, `SPEC/game/capital-and-connectivity.md`; `SPEC/ui/map-widget.md`, `SPEC/ui/empire-overview.md`, `SPEC/ui/province-sea-zone-detail-overlay.md`, `SPEC/ui/layered-terrain-rendering.md`, `SPEC/ui/town-port-icons.md` |
 | 4 | Fog levels; Explorer work (`explore`, `prospect`); fleets into new sea zones; tribe first contact; where discoveries are reported | `SPEC/game/fog-and-exploration.md`; `SPEC/ui/tribe-first-contact-overlay.md`, `SPEC/ui/player-turn-event-feed.md`, map rendering specs |
 | 5 | Population and worker tiers; Recruit/Train; disband; civilian roster via civilians panel and train dialog | `SPEC/game/workers-and-population.md`, `SPEC/game/civilian-units.md`; `SPEC/ui/civilian-units-panel.md`, `SPEC/ui/train-civilians-dialog.md` |
@@ -87,3 +87,4 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 - Style guide and chapter template: [`STYLE_GUIDE.md`](STYLE_GUIDE.md)
 - Cursor rule: `.cursor/rules/colonizethis-game-manual.mdc`
 - Updater skill: `.cursor/skills/update-game-manual/SKILL.md`
+- Review skill: `.cursor/skills/review-game-manual-agent/SKILL.md`

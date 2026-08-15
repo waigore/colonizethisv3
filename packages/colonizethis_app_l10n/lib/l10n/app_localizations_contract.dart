@@ -38,6 +38,12 @@ abstract class AppLocalizations {
   /// Subtitle shown on the main menu after the player has won their last game.
   String get mainMenu_subtitleAfterVictory;
 
+  /// Main menu button label to begin a default campaign without opening leader selection.
+  String get mainMenu_quickStart;
+
+  /// Muted helper under Quick Start explaining the default campaign (England, turn 0, random map, five AI courts).
+  String get mainMenu_quickStartHelper;
+
   /// Main menu button label to start a new game.
   String get mainMenu_newGame;
 

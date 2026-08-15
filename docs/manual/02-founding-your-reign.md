@@ -6,6 +6,13 @@ Before the first Orders phase, you choose your court: which Great Power you are,
 
 ## How it is done
 
+### Main menu → Quick Start
+
+1. The app shell is `SHEL10001` **Shell screen**; from it you reach `SHEL10002` **Main menu**.
+2. Tap **Quick Start** (above **New Game**). You play **England** at turn 0, with a **random** map and five AI courts. You do not open leader selection.
+3. Setup runs the same wait-gate as New Game → Start. While waiting, `SHEL30001` **Game initializing** shows coarse progress. It is a **non-interactive wait-gate**.
+4. Navigation lands on `GAME10001`. On first entry for that game id, `OVL10001` **Game start intro** may appear; dismiss it to play.
+
 ### Main menu → New Game
 
 1. The app shell is `SHEL10001` **Shell screen**; from it you reach `SHEL10002` **Main menu**. Tap **New Game**.
@@ -99,7 +106,7 @@ AI Great Powers receive leaders and optional blessed profiles from the same dial
 
 ## Acceptance criteria for this chapter
 
-- [ ] Documents shell `SHEL10001` → Main menu `SHEL10002` → New Game → `DLG10001` → setup → `GAME10001` / `OVL10001`.
+- [ ] Documents shell `SHEL10001` → Main menu `SHEL10002` → **Quick Start** (default campaign) or **New Game** → `DLG10001` → setup → `GAME10001` / `OVL10001`.
 - [ ] Explains human slot 0 vs AI slots, nation uniqueness, leader pick, AI profiles.
 - [ ] Covers leader combat bonuses (Napoleon / Frederick / none).
 - [ ] Covers advanced start presets and when the control is disabled.

@@ -6,6 +6,7 @@ void main() {
     test('no-argument requests instantiate as UIActionEvent', () {
       for (final event in const <UIActionEvent>[
         NavigateToShellEvent(),
+        QuickStartNewGameEvent(),
         PopNavigationEvent(),
         ClosePanelEvent(),
         OpenPauseMenuPanelEvent(),
