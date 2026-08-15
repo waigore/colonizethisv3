@@ -127,6 +127,34 @@ class ImprovementHeadroomLegendPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return DecoratedBox(
+      key: kImprovementHeadroomLegendPanelKey,
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.surface,
+        border: Border.all(color: EditorialMonoclePalette.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(CtSpacing.m),
+        child: _ImprovementHeadroomLegendPanelBody(
+          l10n: l10n,
+          onClose: onClose,
+        ),
+      ),
+    );
+  }
+}
+
+class _ImprovementHeadroomLegendPanelBody extends StatelessWidget {
+  const _ImprovementHeadroomLegendPanelBody({
+    required this.l10n,
+    required this.onClose,
+  });
+
+  final AppLocalizations l10n;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
     final TextStyle rowStyle =
         (Theme.of(context).textTheme.bodySmall ?? const TextStyle()).copyWith(
           color: EditorialMonoclePalette.fg,
@@ -138,54 +166,41 @@ class ImprovementHeadroomLegendPanel extends StatelessWidget {
       fontStyle: FontStyle.italic,
     );
 
-    return DecoratedBox(
-      key: kImprovementHeadroomLegendPanelKey,
-      decoration: BoxDecoration(
-        color: EditorialMonoclePalette.surface,
-        border: Border.all(color: EditorialMonoclePalette.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(CtSpacing.m),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        l10n.mapImprovementHeadroom_detailsMeaning,
-                        style: rowStyle,
-                      ),
-                      const SizedBox(height: CtSpacing.s),
-                      Text(
-                        l10n.mapImprovementHeadroom_detailsMuted,
-                        style: rowStyle,
-                      ),
-                    ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    l10n.mapImprovementHeadroom_detailsMeaning,
+                    style: rowStyle,
                   ),
-                ),
-                CtIconAction(
-                  key: closeButtonKey,
-                  icon: Icons.close,
-                  tooltip: l10n.common_close,
-                  semanticLabel: l10n.common_close,
-                  onPressed: onClose,
-                ),
-              ],
+                  const SizedBox(height: CtSpacing.s),
+                  Text(
+                    l10n.mapImprovementHeadroom_detailsMuted,
+                    style: rowStyle,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: CtSpacing.s),
-            Text(
-              l10n.mapImprovementHeadroom_detailsCounsel,
-              style: counselStyle,
+            CtIconAction(
+              key: ImprovementHeadroomLegendPanel.closeButtonKey,
+              icon: Icons.close,
+              tooltip: l10n.common_close,
+              semanticLabel: l10n.common_close,
+              onPressed: onClose,
             ),
           ],
         ),
-      ),
+        const SizedBox(height: CtSpacing.s),
+        Text(l10n.mapImprovementHeadroom_detailsCounsel, style: counselStyle),
+      ],
     );
   }
 }
