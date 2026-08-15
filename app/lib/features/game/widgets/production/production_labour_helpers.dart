@@ -3,6 +3,7 @@
 
 export 'production_labour_recruit_economy_mutations.dart';
 export 'production_labour_recruit_economy_projection.dart';
+export 'production_labour_tier_gists.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -15,12 +16,11 @@ import 'production_labour_recruit_economy_projection.dart';
 /// `true` in [player]'s `techUnlocked` map. Peasant has no tech gate and
 /// therefore always returns `true`.
 ///
-/// Used by the Labour Controls row label parenthetical
-/// (`(unlocked)` / `(locked)`) per `SPEC/ui/production-panel.md`
-/// § Labour Controls (12-A) — Tech-gate parenthetical. This is a
-/// **display-only** signal; the existing `canAppendRecruitWorkerOrder`
-/// affordance remains authoritative for the **+** stepper enabled flag and
-/// for the resolver's validation chain.
+/// Used by the Labour Controls row unlock predicate
+/// per `SPEC/ui/production-panel.md` § Labour Controls (12-A) — Cost,
+/// upkeep, and tech gist. This is a **display-only** signal; the existing
+/// `canAppendRecruitWorkerOrder` affordance remains authoritative for the
+/// **+** stepper enabled flag and for the resolver's validation chain.
 bool isWorkerTierTechUnlocked({
   required Player player,
   required WorkerTier tier,
@@ -82,6 +82,8 @@ class ProductionLabourTierRowData {
     required this.canPop,
     required this.canDisband,
     required this.techUnlocked,
+    this.appendRefusalReason,
+    this.insufficientMaterialIds = const <String>{},
   });
 
   final WorkerTier tier;
@@ -92,10 +94,16 @@ class ProductionLabourTierRowData {
   final bool canDisband;
 
   /// Display-only flag mirroring [isWorkerTierTechUnlocked] for [tier] on
-  /// the viewed player. Drives the Labour Controls row label parenthetical
-  /// (`(unlocked)` / `(locked)`) per `SPEC/ui/production-panel.md`
-  /// § Labour Controls (12-A) — Tech-gate parenthetical.
+  /// the viewed player. Drives `Requires:` vs unlocked cost gist per
+  /// `SPEC/ui/production-panel.md` § Labour Controls (12-A).
   final bool techUnlocked;
+
+  /// First [canAffordRecruitWorker] reason when [canAppend] is false.
+  final String? appendRefusalReason;
+
+  /// Material ids that fail the candidate cost when [appendRefusalReason]
+  /// is insufficient materials.
+  final Set<String> insufficientMaterialIds;
 }
 
 /// Pure builder that maps a [Player] + [Orders] snapshot to one row data
@@ -110,23 +118,24 @@ List<ProductionLabourTierRowData> buildProductionLabourRowData({
     currentOrders: currentOrders,
     playerId: player.id,
   );
+  final projected = projectedEconomyAfterQueuedRecruitWorkerOrders(
+    player: player,
+    currentOrders: currentOrders,
+  );
   final rows = <ProductionLabourTierRowData>[];
   for (final tier in kProductionLabourTierOrder) {
     final poolCount = workerPoolTierCount(player.workerPool, tier);
     final queuedCount = queued[tier] ?? 0;
-    final canAppend = canEdit &&
-        canAppendRecruitWorkerOrder(
-          player: player,
-          currentOrders: currentOrders,
-          candidateTier: tier,
-        );
-    final canPop = canEdit && queuedCount > 0;
-    final canDisband =
-        canEdit && tier != WorkerTier.peasant && poolCount > 0;
-    final techUnlocked = isWorkerTierTechUnlocked(
+    final append = recruitWorkerAppendCheck(
       player: player,
-      tier: tier,
+      currentOrders: currentOrders,
+      candidateTier: tier,
+      projected: projected,
     );
+    final canAppend = canEdit && append.canAppend;
+    final canPop = canEdit && queuedCount > 0;
+    final canDisband = canEdit && tier != WorkerTier.peasant && poolCount > 0;
+    final techUnlocked = isWorkerTierTechUnlocked(player: player, tier: tier);
     rows.add(
       ProductionLabourTierRowData(
         tier: tier,
@@ -136,6 +145,8 @@ List<ProductionLabourTierRowData> buildProductionLabourRowData({
         canPop: canPop,
         canDisband: canDisband,
         techUnlocked: techUnlocked,
+        appendRefusalReason: canAppend ? null : append.reason,
+        insufficientMaterialIds: append.insufficientMaterialIds,
       ),
     );
   }

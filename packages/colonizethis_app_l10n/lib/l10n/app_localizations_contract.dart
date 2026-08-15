@@ -2803,6 +2803,30 @@ abstract class AppLocalizations {
   /// Available subpanel.
   String get production_labourControlsSectionLabel;
 
+  /// One material cost fragment on a Labour Controls row.
+  String production_labourCostMaterial(String name, int quantity);
+
+  /// Peasant-consume fragment on a trained-tier Labour Controls cost gist.
+  String get production_labourCostPeasantConsume;
+
+  /// Labour-per-turn fragment of a Labour Controls upkeep gist.
+  String production_labourUpkeepLabour(int n);
+
+  /// Peasant food-upkeep fragment (grain or meat).
+  String production_labourUpkeepFoodOr(String a, String b);
+
+  /// Trained-tier food-upkeep fragment (grain + meat).
+  String production_labourUpkeepFoodAnd(String a, String b);
+
+  /// Tech-lock gist listing catalog tech display names.
+  String production_labourRequires(String names);
+
+  /// Staffing-timing clause for an enabled Labour Controls + tooltip.
+  String get production_labourStaffsNextProduction;
+
+  /// Enabled + tooltip: recruit/train action plus staffing note.
+  String production_labourAppendEnabledTooltip(String action, String timing);
+
   /// Worker type and count in production panel.
   String production_workerCount(String name, int count);
 
