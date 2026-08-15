@@ -22,6 +22,7 @@ Future<void> _pumpPixelArtMainMenu(WidgetTester tester) async {
       variant: MainMenuVariant.pixelArt,
       state: MainMenuState.default_,
       version: 'v1.0.0',
+      onQuickStart: () {},
       onNewGame: () {},
       onLoadGame: () {},
       onSettings: () {},
