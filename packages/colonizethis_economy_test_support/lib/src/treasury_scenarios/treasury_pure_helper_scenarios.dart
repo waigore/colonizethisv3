@@ -4,7 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'treasury_expectations.dart';
 import 'treasury_test_support.dart';
 /// One row in [capBidQuantityForBudgetsScenarios].
 typedef CapBidQuantityScenario = ({String label, int bidQuantity, int remainingCargoBudget, int remainingTreasuryBudget, int? unitPrice, int expected, String? refs});

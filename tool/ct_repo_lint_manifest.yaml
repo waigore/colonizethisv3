@@ -218,10 +218,17 @@ rules:
 
   - rule_id: repo.economy_test_support_loc
     group: testing
-    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 7150 (Refs #4108)
+    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 6590 (Refs #4410)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_support_loc.dart
+
+  - rule_id: repo.economy_test_support_no_expectations_modules
+    group: testing
+    title: colonizethis_economy_test_support/lib must not contain *_expectations.dart modules (Refs #4410)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_support_no_expectations_modules.dart
 
   - rule_id: repo.economy_test_support_file_size
     group: testing

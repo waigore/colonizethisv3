@@ -1,6 +1,6 @@
 // dart format off
 // Context-from-game validator scenarios (Refs #3123, #3290, #3939 phase 3 slice 30).
-import 'validator_expectations.dart';
+import 'validator_scenario.dart';
 /// One row for `TradeOrderValidatorContextScenario` tables (Refs #3979).
 typedef TradeOrderValidatorContextScenario = ({String label, ValidatorContextExpectation expect, String? refs});
 /// Compact expect-wired row (Refs #3939 slice 59, #3979).
