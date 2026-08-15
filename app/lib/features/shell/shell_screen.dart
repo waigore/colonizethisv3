@@ -31,6 +31,7 @@ class ShellScreen extends ConsumerWidget {
       variant: MainMenuVariant.pixelArt,
       state: MainMenuState.default_,
       version: appDisplayVersion(),
+      onQuickStart: () => bus.emit(const QuickStartNewGameEvent()),
       onNewGame: () =>
           bus.emit(const OpenDialogEvent(newGameLeaderSelectionDialogId)),
       resumeGameVisible: resumeAvailable,
@@ -45,8 +46,7 @@ class ShellScreen extends ConsumerWidget {
           bus.emit(const NavigateToRouteEvent(Routes.game));
         }
       },
-      onLoadGame: () =>
-          bus.emit(const OpenDialogEvent(loadGameListDialogId)),
+      onLoadGame: () => bus.emit(const OpenDialogEvent(loadGameListDialogId)),
       onSettings: () => bus.emit(const OpenDialogEvent(settingsDialogId)),
       onQuit: () {
         SystemNavigator.pop();

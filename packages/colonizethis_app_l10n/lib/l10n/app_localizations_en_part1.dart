@@ -24,6 +24,13 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       'Congratulations, you won your last game.';
 
   @override
+  String get mainMenu_quickStart => 'Quick Start';
+
+  @override
+  String get mainMenu_quickStartHelper =>
+      'Play as England, turn 0, random map, five AI courts.';
+
+  @override
   String get mainMenu_newGame => 'New Game';
 
   @override

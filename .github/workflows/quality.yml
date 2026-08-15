@@ -710,7 +710,9 @@ jobs:
     needs: changes
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Models-root DAG fan-out (and similar CORE-wide plans) can exceed 30m on
+    # sequential PACKAGE_TEST_MAX_JOBS=1; keep aligned with the quality job.
+    timeout-minutes: 45
     steps:
       - name: Skip when no package paths changed
         if: needs.changes.outputs.packages_changed != 'true'
