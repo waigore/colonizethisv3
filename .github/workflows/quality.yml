@@ -837,6 +837,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends python3-pil
           cd pytool && python3 test_wang_incremental_assets_and_preview.py
 
+      - name: Transport overlay candidate seams (Python, Refs #1819)
+        run: python3 pytool/test_transport_overlay_candidate_seams.py
+
       - name: Plantation field retune gate (Python, Refs #3961)
         run: cd pytool && python3 test_plantation_field_retune_3961_gate.py
 
