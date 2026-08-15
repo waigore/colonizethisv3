@@ -61,6 +61,21 @@ void main() {
         );
       },
     );
+
+    test(
+      'quick-start handler file does not read the global appNavigatorKey in code',
+      () {
+        final codeOnly =
+            File('lib/features/shell/quick_start_new_game_handler.dart')
+                .readAsLinesSync()
+                .where((l) => !l.trimLeft().startsWith('///'))
+                .where((l) => !l.trimLeft().startsWith('//'))
+                .join('\n');
+
+        expect(codeOnly.contains('appNavigatorKey'), isFalse);
+        expect(codeOnly.contains('runNewGameSetupAfterLeaderPick'), isTrue);
+      },
+    );
   });
 
   group('core→shell layering (Refs #3546)', () {
@@ -79,8 +94,9 @@ void main() {
         isEmpty,
         reason:
             'core/services must not import features/shell; inject feature '
-            'dialog builders via AppEventHandlerScope.extraDialogBuilders at '
-            'the composition root instead.',
+            'dialog builders via AppEventHandlerScope.extraDialogBuilders and '
+            'action handlers via extraActionHandlers at the composition root '
+            'instead.',
       );
     });
 

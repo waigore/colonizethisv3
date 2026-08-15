@@ -28,6 +28,14 @@
   "@mainMenu_subtitleAfterVictory": {
     "description": "Subtitle shown on the main menu after the player has won their last game."
   },
+  "mainMenu_quickStart": "Quick Start",
+  "@mainMenu_quickStart": {
+    "description": "Main menu button label to begin a default campaign without opening leader selection."
+  },
+  "mainMenu_quickStartHelper": "Play as England, turn 0, random map, five AI courts.",
+  "@mainMenu_quickStartHelper": {
+    "description": "Muted helper under Quick Start explaining the default campaign (England, turn 0, random map, five AI courts)."
+  },
   "mainMenu_newGame": "New Game",
   "@mainMenu_newGame": {
     "description": "Main menu button label to start a new game."

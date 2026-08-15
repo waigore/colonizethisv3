@@ -38,6 +38,14 @@ typedef DialogBuilder =
 typedef NavigatorKeyDialogBuilder =
     DialogBuilder Function(GlobalKey<NavigatorState> navigatorKey);
 
+/// Feature-layer [UIActionEvent] handler that needs the app navigator key.
+///
+/// Injected at the composition root via
+/// [AppEventHandlerScope.extraActionHandlers] so `core/services/` does not
+/// import `features/shell/`. Refs #4416.
+typedef NavigatorKeyActionHandler =
+    void Function(GlobalKey<NavigatorState> navigatorKey);
+
 /// Mutable session fields shared by de-parted [AppEventHandler] libraries.
 class AppEventHandlerState {
   AppEventHandlerState({
@@ -49,6 +57,7 @@ class AppEventHandlerState {
     this.onShowOverlay,
     this.onDismissOverlay,
     this.onNotify,
+    this.extraActionHandlers = const {},
   });
 
   final AppEventBus bus;
@@ -56,6 +65,7 @@ class AppEventHandlerState {
   final Map<String, DialogBuilder> dialogBuilders;
   final Map<String, Widget Function(BuildContext, Map<String, Object?>?)>
   panelBuilders;
+  final Map<Type, NavigatorKeyActionHandler> extraActionHandlers;
   final void Function(ShowSnackBarEvent)? onShowSnackBar;
   final void Function(ShowOverlayEvent)? onShowOverlay;
   final void Function(DismissOverlayEvent)? onDismissOverlay;
@@ -75,6 +85,7 @@ class AppEventHandler {
     void Function(ShowOverlayEvent)? onShowOverlay,
     void Function(DismissOverlayEvent)? onDismissOverlay,
     void Function(NotifyEvent)? onNotify,
+    Map<Type, NavigatorKeyActionHandler>? extraActionHandlers,
   }) : state = AppEventHandlerState(
          bus: bus,
          navigatorKey: navigatorKey,
@@ -84,6 +95,7 @@ class AppEventHandler {
          onShowOverlay: onShowOverlay,
          onDismissOverlay: onDismissOverlay,
          onNotify: onNotify,
+         extraActionHandlers: extraActionHandlers ?? const {},
        );
 
   /// Session fields shared by de-parted implementation libraries (Refs #4117).
@@ -149,7 +161,7 @@ class AppEventHandler {
       case ClosePanelEvent():
         nav?.maybePop();
       case _:
-        return;
+        state.extraActionHandlers[event.runtimeType]?.call(state.navigatorKey);
     }
   }
 

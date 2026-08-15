@@ -40,8 +40,8 @@ The shell does not own the menu UI: visual layout, asset choices, and per-state 
 | |   state:   default                               | |
 | |   version: appDisplayVersion()                   | |
 | |   resumeGameVisible: <auto-save available?>      | |
-| |   onNewGame / onResumeGame / onLoadGame /        | |
-| |   onSettings / onQuit  -> shell callbacks below  | |
+| |   onQuickStart / onNewGame / onResumeGame /      | |
+| |   onLoadGame / onSettings / onQuit               | |
 | +--------------------------------------------------+ |
 +------------------------------------------------------+
 ```
@@ -76,6 +76,7 @@ The shell never renders an "afterVictory" subtitle by itself — that detail is 
 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
+| Quick Start (`onQuickStart`) | Always | `QuickStartNewGameEvent` on `AppEventBus` | Composition-root handler runs `runNewGameSetupAfterLeaderPick` with shared template `seed == 0`; does not open DLG10001; shell does not call setup or read `appNavigatorKey`. |
 | New Game (`onNewGame`) | Always | `OpenDialogEvent(newGameLeaderSelectionDialogId)` on `AppEventBus` | Opens leader-selection dialog per [`app-ui-wiring.md`](../program/app-ui-wiring.md); no `Navigator.pushNamed` from shell. |
 | Resume game (`onResumeGame`) | `resumeGameVisible == true` | `NavigateToRouteEvent(Routes.game)` after `loadAutoSaveSession()` | Resets `observeSessionProvider`; sets `currentGameProvider`; restores `currentOrdersProvider` and `productionDesiredOutputProvider` from the session draft envelope. |
 | Load game (`onLoadGame`) | Always enabled on the product path | `OpenDialogEvent(load_game_list)` | Opens [load-game-list-dialog.md](load-game-list-dialog.md); empty store shows empty list. |
@@ -89,7 +90,7 @@ All cross-screen transitions use `AppEventBus` per [`app-ui-wiring.md`](../progr
 ## Components
 
 - [`CtMainMenu`](main-menu.md) — the only direct child widget.
-- `AppEventBus` (read via `appEventBusProvider`) — for `OpenDialogEvent`, `NavigateToRouteEvent`, `NavigateToShellEvent`.
+- `AppEventBus` (read via `appEventBusProvider`) — for `QuickStartNewGameEvent`, `OpenDialogEvent`, `NavigateToRouteEvent`, `NavigateToShellEvent`.
 - Providers: `appEventBusProvider`, `mainMenuAutoSaveAvailableProvider`, `gameServiceProvider`, `currentGameProvider`, `observeSessionProvider`.
 - `appDisplayVersion()` — debug-aware version string.
 - No Material buttons, dialogs, or `Navigator.push` calls live in this widget.
@@ -109,6 +110,10 @@ All cross-screen transitions use `AppEventBus` per [`app-ui-wiring.md`](../progr
 - Given the app navigator is at `Routes.shell` and `mainMenuAutoSaveAvailableProvider` returns `true`,
   When `ShellScreen.build` runs,
   Then the widget tree contains exactly one `CtMainMenu` with `resumeGameVisible == true`.
+
+- Given `ShellScreen` is mounted with a bus listener subscribed to `OpenDialogEvent` and `QuickStartNewGameEvent`,
+  When the user taps the Quick Start control,
+  Then the shell emits exactly one `QuickStartNewGameEvent` and does not emit `OpenDialogEvent(newGameLeaderSelectionDialogId)` and does not call `Navigator.pushNamed` from the widget itself.
 
 - Given `ShellScreen` is mounted with a bus listener subscribed to `OpenDialogEvent`,
   When the user taps the New Game control,

@@ -8,7 +8,7 @@
 
 ## Scope
 
-- **In scope:** Shell flow after the user confirms **Start** on the **new game setup dialog** (`new_game_leader_selection`, `NewGameLeaderSelectionDialog`): nation + leader per slot and **game / world seed** (see [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md)). Then show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate). Province assignment follows the **locked assigner** pipeline in [game-setup-pipeline.md](../program/game-setup-pipeline.md) and [locked-province-assigner.md](../program/locked-province-assigner.md).
+- **In scope:** Shell flow after the user confirms **Start** on the **new game setup dialog** (`new_game_leader_selection`, `NewGameLeaderSelectionDialog`) **or** taps **Quick Start** on [`main-menu.md`](main-menu.md) (`QuickStartNewGameEvent` → the same `runNewGameSetupAfterLeaderPick` path with `seed == 0`). Nation + leader per slot and **game / world seed** apply to the dialog path (see [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md)). Then show progress, run setup on the **main isolate** with **async yields** between coarse steps (Option A — no background isolate). Province assignment follows the **locked assigner** pipeline in [game-setup-pipeline.md](../program/game-setup-pipeline.md) and [locked-province-assigner.md](../program/locked-province-assigner.md).
 - **Out of scope:** Cancel mid-setup; fine-grained per-tile progress.
 
 ---

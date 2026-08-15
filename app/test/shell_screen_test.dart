@@ -8,6 +8,7 @@ import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_dialog_builder.dart';
+import 'package:colonizethis_app/features/shell/quick_start_new_game_handler.dart';
 import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
 import 'package:colonizethis_app/features/shell/save_load/save_load_dialog_builders.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
@@ -30,6 +31,7 @@ class _DummyGameService extends GameService {
   Game? _loadedGame;
   List<String> _ids = const [];
   List<LoadableSaveEntry> _loadable = const [];
+  GameSetupConfig? lastCreateConfig;
 
   @override
   List<String> listGameIds() => _ids;
@@ -63,6 +65,7 @@ class _DummyGameService extends GameService {
 
   @override
   Game createNewGame({String? id, config}) {
+    lastCreateConfig = config;
     final game = Game(
       id: id ?? 'game_1',
       worldState: const WorldState(
@@ -129,6 +132,7 @@ void main() {
           newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
           loadGameListDialogId: buildLoadGameListDialog,
         },
+        extraActionHandlers: {QuickStartNewGameEvent: handleQuickStartNewGame},
         child: app,
       ),
       child: const ShellScreen(),
@@ -171,6 +175,26 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('In game'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ShellScreen Quick Start skips leader dialog and navigates to game',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Quick Start'), findsOneWidget);
+      await tester.tap(find.text('Quick Start'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Slot 1'), findsNothing);
+      expect(find.text('In game'), findsOneWidget);
+      expect(dummyService.lastCreateConfig?.seed, 0);
+      expect(
+        dummyService.lastCreateConfig?.selectedGreatPowerIds,
+        GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+      );
     },
   );
 
