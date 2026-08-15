@@ -54,7 +54,7 @@ Civilians are map units. Open `UNIT10001` **Civilian units panel** from the left
 
 Training queues a `BuildUnitOrder`. Units appear at the **capital tile** after **Build/work** resolves (after recruit/train workers in that phase). Use the panel thereafter to select units, assign work (Chapters 4 and 6), or relocate Spies.
 
-**Spies — station and relocate.** On `UNIT10001`, an idle Spy shows **Relocate** to pick a legal foreign (or own) land tile on the map; **Assign** still offers **counter-espionage** on owned provinces only. While a Spy holds a foreign province, status reads **Holding intel**; leaving when yours is the last Spy there warns that full intel will fog after the turn ends. End-turn confirmation does **not** nag idle Spies — stationing is strategic portfolio, not wasted capacity.
+**Spies — station and relocate.** On the selected tile’s province panel (`MAP20001`), tap **Station spy** in the Civilian section when it is available, then tap **Relocate** on an idle Spy. That posts the Spy to the tile you already selected, without picking again on the map. You can still open `UNIT10001` and tap **Relocate** to pick any legal land tile. **Assign** still offers **counter-espionage** on owned provinces only. While a Spy holds a foreign province, status reads **Holding intel**; leaving when yours is the last Spy there warns that full intel will fog after the turn ends. End-turn confirmation does **not** nag idle Spies — stationing is a chosen post, not wasted capacity.
 
 ## Counsel
 
@@ -82,6 +82,7 @@ AI economies allocate production labour and may recruit peasants when cast-iron 
 - [ ] Documents immediate disband (no refund) vs queued RecruitWorkerOrder.
 - [ ] Documents peasant reservation vs military/naval builds.
 - [ ] Documents `UNIT40001` civilian train roster and capital spawn timing.
+- [ ] Documents `MAP20001` **Station spy** then `UNIT10001` **Relocate**, plus map Relocate pick and idle-Spy exclusion from end-turn nag.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources
@@ -94,6 +95,7 @@ AI economies allocate production labour and may recruit peasants when cast-iron 
 - `SPEC/program/turn-resolution-phase-details.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/civilian-units-panel.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/train-civilians-dialog.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/economy-planner.md`

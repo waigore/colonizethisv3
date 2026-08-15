@@ -2384,6 +2384,15 @@ abstract class AppLocalizations {
   /// MAP20001 Military Move control label. Refs #4350.
   String get provinceOverlay_moveArmyAction;
 
+  /// MAP20001 Civilian Station spy control label. Refs #4439.
+  String get provinceOverlay_stationSpyAction;
+
+  /// Disabled Station spy — no eligible idle Spy. Refs #4439.
+  String get provinceOverlay_stationSpyDisabledNoIdleSpyTooltip;
+
+  /// Disabled Station spy — selected tile not occupiable. Refs #4439.
+  String get provinceOverlay_stationSpyDisabledNotOccupiableTooltip;
+
   /// MAP20001 Military Invade control label. Refs #4350.
   String provinceOverlay_invadeArmyAction(String provinceName);
 
