@@ -42,7 +42,7 @@ Column(min, stretch)
     Expanded(left panel — CtPanel: title · [subtitle?] · Divider · ListView · Divider · total)
     SizedBox(16) · Expanded(right panel — mirror)
   SizedBox(16)
-  Row(end)                                -- right-aligned action row
+  Align(end) · Wrap(end, spacing: 8)      -- shrink-wrap Cancel/Confirm; second run if needed
     [Cancel?] · Confirm(enabled: canConfirm)
 ```
 

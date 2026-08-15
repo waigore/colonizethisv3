@@ -69,19 +69,24 @@ mixin CtTransferListLayout on CtTransferListStateBase, CtTransferListMutations {
         ? null
         : CtNinePatchButton(
             onPressed: widget.onCancel,
+            shrinkWrap: true,
             child: Text(widget.cancelLabel),
           );
     final confirm = CtNinePatchButton(
       onPressed: handleConfirm,
       enabled: canConfirm,
+      shrinkWrap: true,
       child: Text(widget.confirmLabel),
     );
-    return Wrap(
-      alignment: WrapAlignment.end,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
-      children: [?cancel, confirm],
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [?cancel, confirm],
+      ),
     );
   }
 
