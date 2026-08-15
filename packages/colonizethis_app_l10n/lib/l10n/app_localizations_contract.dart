@@ -744,6 +744,21 @@ abstract class AppLocalizations {
   /// Combat mode button label.
   String get quickBattle_quickBattle;
 
+  /// One-line meaning under Auto-Resolve on CMPT10001 (Refs #4438).
+  String get quickBattle_autoResolveMeaning;
+
+  /// One-line meaning under Quick Battle on CMPT10001 (Refs #4438).
+  String get quickBattle_quickBattleMeaning;
+
+  /// Incoming enemy force line on CMPT10001 when the human is defending (Refs #4438).
+  String combatMode_attackersRegiments(int count);
+
+  /// Expands regiment-type mix on CMPT10001 (Refs #4438).
+  String get combatMode_details;
+
+  /// Collapses regiment-type mix on CMPT10001 (Refs #4438).
+  String get combatMode_hideDetails;
+
   /// Quick battle winner line when attacker wins.
   String quickBattle_attackerWins(String name);
 

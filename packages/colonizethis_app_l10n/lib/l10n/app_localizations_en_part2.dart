@@ -138,6 +138,23 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get quickBattle_quickBattle => 'Quick Battle';
 
   @override
+  String get quickBattle_autoResolveMeaning => 'Decides the battle at once.';
+
+  @override
+  String get quickBattle_quickBattleMeaning => 'You give orders in the fight.';
+
+  @override
+  String combatMode_attackersRegiments(int count) {
+    return 'Attackers: $count regiments';
+  }
+
+  @override
+  String get combatMode_details => 'Details';
+
+  @override
+  String get combatMode_hideDetails => 'Hide';
+
+  @override
   String quickBattle_attackerWins(String name) {
     return '$name wins';
   }
@@ -684,7 +701,8 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
       'Explores provinces · Prospects minerals';
 
   @override
-  String get trainCivilians_roleGistBuilder => 'Improves tiles · Upgrades towns';
+  String get trainCivilians_roleGistBuilder =>
+      'Improves tiles · Upgrades towns';
 
   @override
   String get trainCivilians_roleGistEngineer =>
@@ -699,8 +717,7 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
       'Purchases land in Minor/Tribe provinces';
 
   @override
-  String get trainCivilians_roleGistRailBuilder =>
-      'Upgrades roads to railroad';
+  String get trainCivilians_roleGistRailBuilder => 'Upgrades roads to railroad';
 
   @override
   String get trainMilitary_title => 'Train Military';
