@@ -287,6 +287,98 @@ List<WidgetbookNode> get extractionDiscLegendDirectories => [
   ),
 ];
 
+/// MAP10001 owner/sight hover readout variants (Refs #4406).
+List<WidgetbookNode> get mapTileHoverReadoutDirectories => [
+  WidgetbookFolder(
+    name: 'Map tile hover readout',
+    children: [
+      WidgetbookUseCase(
+        name: 'Fully visible owned land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Wessex',
+          identity: 'Owner: England',
+          sight: 'Fully visible',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Fogged rival land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Normandy',
+          identity: 'Owner: France',
+          sight: 'Fogged — terrain only',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Unrevealed land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Virginia',
+          identity: 'Owner: Spain',
+          sight: 'Unknown — no intel yet',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Unclaimed land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Wilderness',
+          identity: 'Owner: Unclaimed',
+          sight: 'Fully visible',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Sea zone',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Mid-Atlantic',
+          identity: 'Sea zone',
+          sight: 'Fully visible',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Warp sea',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Azores Passage',
+          identity: 'Sea zone',
+          sight: 'Fully visible',
+          warp: 'This water is the passage to the other world',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: '320 dp narrow',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Wessex',
+          identity: 'Owner: England',
+          sight: 'Fully visible',
+          viewportWidth: 320,
+        ),
+      ),
+    ],
+  ),
+];
+
+Widget _mapTileHoverReadoutStory({
+  required String place,
+  required String identity,
+  required String sight,
+  String? warp,
+  double viewportWidth = 400,
+}) {
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: SizedBox(
+      width: viewportWidth,
+      child: MapTileHoverReadout(
+        copy: MapTileHoverReadoutCopy(
+          placeLine: 'Place: $place',
+          identityLine: identity,
+          sightLine: 'Sight: $sight',
+          warpLine: warp,
+        ),
+      ),
+    ),
+  );
+}
+
 Widget _extractionDiscLegendChromeStory({
   required MapBaseLayerFlags flags,
   required String? viewingPlayerId,

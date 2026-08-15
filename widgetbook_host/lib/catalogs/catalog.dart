@@ -180,6 +180,7 @@ part 'catalog_panel_map_build_port_stories.dart';
 part 'catalog_panel_map_build_railroad_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
+part 'catalog_panel_map_political_sight_stories.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
 part 'catalog_panels_counsel.dart';
@@ -351,6 +352,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameTopBarDirectories,
   ...gameTabBarDirectories,
   ...extractionDiscLegendDirectories,
+  ...mapTileHoverReadoutDirectories,
   ...playersBarToggleDirectories,
   ...gameMapCornerControlsDirectories,
   ...gameMapEmpireLeftRailDirectories,

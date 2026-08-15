@@ -3702,6 +3702,53 @@
   "@provinceOverlay_ownerUnclaimed": {
     "description": "Political section owner display name when a province/tile is unowned."
   },
+  "provinceOverlay_sight": "Sight: {phrase}",
+  "@provinceOverlay_sight": {
+    "description": "Political and hover Sight row (Refs #4406).",
+    "placeholders": {
+      "phrase": {
+        "type": "String"
+      }
+    }
+  },
+  "mapSight_fullyVisible": "Fully visible",
+  "@mapSight_fullyVisible": {
+    "description": "Sight phrase for TileVisibility.visible (Refs #4406)."
+  },
+  "mapSight_foggedTerrainOnly": "Fogged — terrain only",
+  "@mapSight_foggedTerrainOnly": {
+    "description": "Sight phrase for TileVisibility.fogged (Refs #4406)."
+  },
+  "mapSight_unknownNoIntel": "Unknown — no intel yet",
+  "@mapSight_unknownNoIntel": {
+    "description": "Sight phrase for TileVisibility.unrevealed (Refs #4406)."
+  },
+  "mapHover_place": "Place: {name}",
+  "@mapHover_place": {
+    "description": "MAP10001 hover readout place line (Refs #4406).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mapHover_seaZoneIdentity": "Sea zone",
+  "@mapHover_seaZoneIdentity": {
+    "description": "MAP10001 hover identity line for sea cells (Refs #4406)."
+  },
+  "mapHover_warpPassage": "This water is the passage to the other world",
+  "@mapHover_warpPassage": {
+    "description": "MAP10001 hover extra line for warp sea (Refs #4406)."
+  },
+  "mapHover_semantics": "{summary}",
+  "@mapHover_semantics": {
+    "description": "Combined semantics for the MAP10001 owner/sight hover readout (Refs #4406).",
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_region": "Region: {region}",
   "@provinceOverlay_region": {
     "description": "Political section region row (Old World / New World label).",

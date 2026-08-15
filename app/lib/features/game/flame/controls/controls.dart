@@ -1,5 +1,8 @@
 export 'extraction_disc_legend.dart';
 export 'extraction_disc_legend_support.dart';
+export 'map_tile_hover_readout.dart';
+export 'map_tile_hover_readout_copy.dart';
+export 'map_tile_sight.dart';
 export 'game_map_controls.dart';
 export 'game_map_corner_controls.dart';
 export 'game_map_empire_left_rail.dart';

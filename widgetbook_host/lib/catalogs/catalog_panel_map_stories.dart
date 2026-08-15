@@ -173,6 +173,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
       ),
       ...provinceOverlayMoveInvadeUseCases,
       ...provinceOverlayEstablishConsulateUseCases,
+      ...provinceOverlayPoliticalSightUseCases,
       WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
