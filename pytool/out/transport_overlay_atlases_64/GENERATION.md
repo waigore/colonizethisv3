@@ -19,7 +19,7 @@ Default `--out-dir` is this folder. `--rebuild-atlas` does not call the API.
 
 - Pixflux (`POST /v2/create-image-pixflux`) for each family's 64×64 straight seed
 - inpaint-v3 (`POST /v2/inpaint-v3`) for masks `1..15` (mask `0` is transparent)
-- Shared N/E/S/W edge contracts; interiors inpainted; contract edges reinforced
+- Shared N/E/S/W edge contracts; interiors inpainted on the 14px plus only; bleed clipped; rail-tie periods wrap
 - Rail seed corridor extended to tile edges so N↔S / E↔W joins lock
 
 ## Intermediates

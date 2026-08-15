@@ -296,7 +296,7 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 **Generation pattern:**
 
 1. Pixflux **64x64** straight seed, centered **14px** corridor; wrap corridor edges so N↔S and E↔W joins match.
-2. Lock cardinal contracts (`N=1`, `E=2`, `S=4`, `W=8`); compose masks `0..15`; inpaint-v3 the interior; reinforce contract edges.
+2. Lock cardinal contracts (`N=1`, `E=2`, `S=4`, `W=8`); compose masks `0..15`; inpaint-v3 the **14px plus** interior (not a 32px square); clip bleed; reinforce contract edges. Repeat sparse rail-tie periods so N↔S wraps.
 3. Pack a 4×4 256×256 atlas (JSON bounding boxes unchanged). Default `--out-dir` is `pytool/out/transport_overlay_atlases_64/`. Writing into `app/assets/images/terrain/tilesets/` requires `--allow-shipped-out-dir`.
 
 **Shipped vs candidate:** Shipped PNGs stay at `app/assets/images/terrain/tilesets/tileset_transport_{road,rail}_64.png`. Candidates: `pytool/out/transport_overlay_atlases_64/`. Intermediates: `pytool/out/transport_edge_contracts_64/`. Do not retarget `map_terrain_tilesets.json` until a later promotion.
@@ -310,6 +310,7 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 - Given `--rebuild-atlas` and no `--allow-shipped-out-dir`, when `--out-dir` is omitted, then the System writes `tileset_transport_{road,rail}_64.png` under `pytool/out/transport_overlay_atlases_64/` and does not modify shipped tileset PNGs or `map_terrain_tilesets.json`.
 - Given `--out-dir` resolves to `app/assets/images/terrain/tilesets` and `--allow-shipped-out-dir` is omitted, when the System starts, then it exits non-zero without writing atlas PNGs.
 - Given two candidate tiles whose masks share a complementary cardinal (N↔S or E↔W), when their shared 64-pixel edges are compared, then those edges match the family contract (identical RGBA, or per-channel delta ≤ 2) and the 14px corridor on that edge is not fully transparent.
+- Given a candidate mask tile `1..15`, when opaque pixels are counted, then none lie outside the 14px plus for that mask.
 
 ---
 

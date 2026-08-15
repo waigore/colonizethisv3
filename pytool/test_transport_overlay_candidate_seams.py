@@ -140,6 +140,50 @@ class TransportOverlayCandidateSeamsTest(unittest.TestCase):
         self.assertTrue(SHIPPED_RAIL.is_file())
         self.assertTrue(SHIPPED_JSON.is_file())
 
+    def test_clip_plus_removes_square_hub(self) -> None:
+        blob = Image.new("RGBA", (self.mod.TILE, self.mod.TILE), (0, 0, 0, 0))
+        px = blob.load()
+        for y in range(16, 48):
+            for x in range(16, 48):
+                px[x, y] = (160, 110, 70, 255)
+        leak_before = self.mod.plus_leak_count(blob, 15)
+        self.assertGreater(leak_before, 0)
+        clipped = self.mod.clip_to_mask_plus(blob, 15)
+        self.assertEqual(self.mod.plus_leak_count(clipped, 15), 0)
+        self.assertGreater(clipped.getpixel((self.mod.CORRIDOR_START, 20))[3], 0)
+        self.assertEqual(clipped.getpixel((16, 16))[3], 0)
+
+    def test_unclipped_square_hub_fails_family_plus_check(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            family_dir = Path(tmp) / "road"
+            self._write_family(family_dir)
+            dirty = Image.open(family_dir / "tile_mask_15.png").convert("RGBA")
+            px = dirty.load()
+            px[16, 16] = (255, 0, 0, 255)
+            dirty.save(family_dir / "tile_mask_15.png")
+            errors = self.mod.check_family_seams(family_dir)
+            self.assertTrue(any("outside the 14px plus" in err for err in errors))
+
+    def test_rail_period_repeats_sparse_edge_ties(self) -> None:
+        seed = Image.new("RGBA", (self.mod.TILE, self.mod.TILE), (0, 0, 0, 0))
+        px = seed.load()
+        rail = (80, 80, 90, 255)
+        tie = (140, 100, 80, 255)
+        for y in range(self.mod.TILE):
+            px[self.mod.CORRIDOR_START, y] = rail
+            px[self.mod.CORRIDOR_END - 1, y] = rail
+        for origin in range(20, 48, 7):
+            for y in range(origin, min(origin + 3, self.mod.TILE)):
+                for x in range(self.mod.CORRIDOR_START, self.mod.CORRIDOR_END):
+                    px[x, y] = tie
+        straight = self.mod.normalize_straight(seed)
+        edge_opaque = sum(
+            1
+            for x in range(self.mod.CORRIDOR_START, self.mod.CORRIDOR_END)
+            if straight.getpixel((x, 0))[3] > 0
+        )
+        self.assertGreaterEqual(edge_opaque, self.mod.CORRIDOR_PX - 1)
+
     def test_committed_candidates_pass_seam_check_when_present(self) -> None:
         for family in ("road", "rail"):
             atlas = CANDIDATE_DIR / f"tileset_transport_{family}_64.png"

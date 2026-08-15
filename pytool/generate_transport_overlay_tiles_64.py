@@ -60,22 +60,24 @@ FAMILY_PLANS = (
         key="road",
         seed_prompt=(
             "pixel art top-down dirt road straight segment, centered 14px wide corridor, "
-            "64x64 tile, transparent background, crisp strategy game terrain style"
+            "64x64 tile, transparent background, no grass or sand lot outside the corridor, "
+            "crisp strategy game overlay"
         ),
         center_fill_prompt=(
-            "fill the center of this top-down road tile so the existing edge road segments connect "
-            "seamlessly through the center. preserve edge contracts and transparent background."
+            "connect the existing 14px dirt-road corridor through the plus-shaped interior only. "
+            "do not paint outside the corridor, no asphalt, no parking lot, keep transparent background."
         ),
     ),
     FamilyPlan(
         key="rail",
         seed_prompt=(
             "pixel art top-down railroad straight segment, centered 14px wide corridor, "
-            "64x64 tile, transparent background, wooden ties and steel rails"
+            "64x64 tile, transparent background, wooden ties evenly spaced from top to bottom, "
+            "steel rails, no ballast platform or bridge deck"
         ),
         center_fill_prompt=(
-            "fill the center of this top-down railroad tile so the existing edge rail segments connect "
-            "seamlessly through the center. preserve edge contracts and transparent background."
+            "connect the existing 14px rail corridor through the plus-shaped interior only. "
+            "even wooden ties and steel rails, no gravel platform, keep transparent background."
         ),
     ),
 )
@@ -201,11 +203,58 @@ def _extend_corridor_to_edges(image: Image.Image) -> None:
             px[x, y] = px[x, last]
 
 
+def _corridor_row_opaque_count(px: Any, y: int) -> int:
+    return sum(1 for x in range(CORRIDOR_START, CORRIDOR_END) if px[x, y][3] > 0)
+
+
+def maybe_repeat_corridor_period(image: Image.Image) -> None:
+    """Tile a mid-corridor period so sparse edge caps (e.g. rail ties) wrap."""
+    px = image.load()
+    opaque_counts = [_corridor_row_opaque_count(px, y) for y in range(TILE)]
+    sparse_edge = opaque_counts[0] <= 4 and opaque_counts[TILE - 1] <= 4
+    dense_mid = max(opaque_counts[16:48]) >= CORRIDOR_PX - 1
+    if not (sparse_edge and dense_mid):
+        return
+    best_p = 0
+    best_score = 0.0
+    for period in range(4, 13):
+        score = 0
+        samples = 0
+        for y in range(18, 50 - period):
+            samples += 1
+            if opaque_counts[y] == opaque_counts[y + period]:
+                score += 1
+        if samples == 0:
+            continue
+        ratio = score / samples
+        if ratio > best_score:
+            best_score = ratio
+            best_p = period
+    if best_p == 0 or best_score < 0.5:
+        return
+    start = max(
+        range(18, 49 - best_p),
+        key=lambda origin: (
+            sum(opaque_counts[origin : origin + best_p]),
+            opaque_counts[origin],
+        ),
+    )
+    period_rows = [
+        [px[x, start + offset] for x in range(CORRIDOR_START, CORRIDOR_END)]
+        for offset in range(best_p)
+    ]
+    for y in range(TILE):
+        src = period_rows[y % best_p]
+        for index, x in enumerate(range(CORRIDOR_START, CORRIDOR_END)):
+            px[x, y] = src[index]
+
+
 def normalize_straight(seed: Image.Image) -> Image.Image:
     normalized = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
     column = seed.crop((CORRIDOR_START, 0, CORRIDOR_END, TILE))
     normalized.paste(column, (CORRIDOR_START, 0), column)
     _extend_corridor_to_edges(normalized)
+    maybe_repeat_corridor_period(normalized)
     _force_corridor_wrap_ns(normalized)
     return normalized
 
@@ -249,12 +298,91 @@ def compose_mask_contract(mask: int, contracts: dict[str, Image.Image]) -> Image
     return tile
 
 
+def pixel_in_mask_plus(mask: int, x: int, y: int) -> bool:
+    if mask == 0:
+        return False
+    on_v = CORRIDOR_START <= x < CORRIDOR_END
+    on_h = CORRIDOR_START <= y < CORRIDOR_END
+    need_v = (mask & (MASK_N | MASK_S)) != 0
+    need_h = (mask & (MASK_E | MASK_W)) != 0
+    if on_v and need_v:
+        y_min = 0 if (mask & MASK_N) else (CORRIDOR_START if need_h else HALF)
+        y_max = TILE if (mask & MASK_S) else (CORRIDOR_END if need_h else HALF)
+        if y_min <= y < y_max:
+            return True
+    if on_h and need_h:
+        x_min = 0 if (mask & MASK_W) else (CORRIDOR_START if need_v else HALF)
+        x_max = TILE if (mask & MASK_E) else (CORRIDOR_END if need_v else HALF)
+        if x_min <= x < x_max:
+            return True
+    return False
+
+
+def clip_to_mask_plus(tile: Image.Image, mask: int) -> Image.Image:
+    out = tile.copy()
+    dest = out.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            if dest[x, y][3] > 0 and not pixel_in_mask_plus(mask, x, y):
+                dest[x, y] = (0, 0, 0, 0)
+    return out
+
+
+def fill_transparent_plus_pixels(tile: Image.Image, mask: int) -> Image.Image:
+    out = tile.copy()
+    dest = out.load()
+    changed = True
+    while changed:
+        changed = False
+        updates: list[tuple[int, int, tuple[int, int, int, int]]] = []
+        for y in range(TILE):
+            for x in range(TILE):
+                if dest[x, y][3] > 0 or not pixel_in_mask_plus(mask, x, y):
+                    continue
+                for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+                    nx = x + dx
+                    ny = y + dy
+                    if 0 <= nx < TILE and 0 <= ny < TILE and dest[nx, ny][3] > 0:
+                        updates.append((x, y, dest[nx, ny]))
+                        break
+        for x, y, color in updates:
+            if dest[x, y][3] == 0:
+                dest[x, y] = color
+                changed = True
+    return out
+
+
+def plus_leak_count(tile: Image.Image, mask: int) -> int:
+    px = tile.load()
+    leak = 0
+    for y in range(TILE):
+        for x in range(TILE):
+            if px[x, y][3] > 0 and not pixel_in_mask_plus(mask, x, y):
+                leak += 1
+    return leak
+
+
+def inpaint_mask_for_mask(mask: int) -> Image.Image:
+    image = Image.new("L", (TILE, TILE), 0)
+    px = image.load()
+    inset = 2
+    for y in range(inset, TILE - inset):
+        for x in range(inset, TILE - inset):
+            if pixel_in_mask_plus(mask, x, y):
+                px[x, y] = 255
+    return image
+
+
 def center_mask_for_inpaint() -> Image.Image:
-    mask = Image.new("L", (TILE, TILE), 0)
-    for y in range(16, 48):
-        for x in range(16, 48):
-            mask.putpixel((x, y), 255)
-    return mask
+    return inpaint_mask_for_mask(MASK_N | MASK_E | MASK_S | MASK_W)
+
+
+def finalize_mask_tile(tile: Image.Image, mask: int, contract_base: Image.Image) -> Image.Image:
+    if mask == 0:
+        return Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
+    reinforced = reinforce_contract_edges(tile, contract_base)
+    filled = fill_transparent_plus_pixels(reinforced, mask)
+    return clip_to_mask_plus(filled, mask)
 
 
 def run_inpaint_v3(api_key: str, base_tile: Image.Image, mask_image: Image.Image, prompt: str) -> Image.Image:
@@ -376,24 +504,63 @@ def seed_and_write_contracts(
     straight.save(straight_path)
     for dir_key, image in contracts.items():
         image.save(family_contract_dir / f"edge_contract_{dir_key}.png")
-    center_mask_for_inpaint().save(family_contract_dir / "center_mask.png")
+    inpaint_mask_for_mask(MASK_N | MASK_E | MASK_S | MASK_W).save(
+        family_contract_dir / "center_mask.png",
+    )
 
 
-def load_contract_assets(family_contract_dir: Path) -> tuple[dict[str, Image.Image], Image.Image]:
+def load_contract_assets(family_contract_dir: Path) -> dict[str, Image.Image]:
     straight_path = family_contract_dir / "straight_seed_normalized.png"
     if not straight_path.is_file():
         raise RuntimeError(
             f"Missing {straight_path}. Run with --init-seed for this family first.",
         )
     straight = Image.open(straight_path).convert("RGBA")
+    return build_contracts(straight)
+
+
+def refresh_normalized_seed_and_contracts(family_contract_dir: Path) -> dict[str, Image.Image]:
+    straight_path = family_contract_dir / "straight_seed_normalized.png"
+    if not straight_path.is_file():
+        raise RuntimeError(
+            f"Missing {straight_path}. Run with --init-seed for this family first.",
+        )
+    seed = Image.open(straight_path).convert("RGBA")
+    straight = normalize_straight(seed)
     contracts = build_contracts(straight)
-    center_mask_path = family_contract_dir / "center_mask.png"
-    if center_mask_path.is_file():
-        center_mask = Image.open(center_mask_path).convert("L")
-    else:
-        center_mask = center_mask_for_inpaint()
-        center_mask.save(center_mask_path)
-    return contracts, center_mask
+    family_contract_dir.mkdir(parents=True, exist_ok=True)
+    straight.save(straight_path)
+    for dir_key, image in contracts.items():
+        image.save(family_contract_dir / f"edge_contract_{dir_key}.png")
+    inpaint_mask_for_mask(MASK_N | MASK_E | MASK_S | MASK_W).save(
+        family_contract_dir / "center_mask.png",
+    )
+    return contracts
+
+
+def merge_inpaint_into_plus(
+    composed: Image.Image,
+    inpainted: Image.Image,
+    mask: int,
+) -> Image.Image:
+    mixed = composed.copy()
+    dest = mixed.load()
+    src = inpainted.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            if dest[x, y][3] == 0 and pixel_in_mask_plus(mask, x, y) and src[x, y][3] > 0:
+                dest[x, y] = src[x, y]
+    return mixed
+
+
+def refresh_family_tiles_from_seed(family_contract_dir: Path) -> None:
+    contracts = refresh_normalized_seed_and_contracts(family_contract_dir)
+    for mask in range(16):
+        tile_path = family_contract_dir / f"tile_mask_{mask:02d}.png"
+        composed = compose_mask_contract(mask, contracts)
+        final_tile = finalize_mask_tile(composed, mask, composed)
+        final_tile.save(tile_path)
+        verify_written_tile(tile_path, mask=mask)
 
 
 def build_atlas_from_tiles(family_contract_dir: Path, atlas_path: Path) -> None:
@@ -471,7 +638,7 @@ def check_family_seams(
     max_delta: int = MAX_SEAM_DELTA,
 ) -> list[str]:
     errors: list[str] = []
-    contracts, _ = load_contract_assets(family_contract_dir)
+    contracts = load_contract_assets(family_contract_dir)
     tiles: dict[int, Image.Image] = {}
     for mask in range(16):
         tile_path = family_contract_dir / f"tile_mask_{mask:02d}.png"
@@ -508,6 +675,12 @@ def check_family_seams(
                     f"{family_contract_dir.name} mask={mask} {cardinal} "
                     "14px corridor edge is fully transparent",
                 )
+        leak = plus_leak_count(tile, mask)
+        if leak > 0:
+            errors.append(
+                f"{family_contract_dir.name} mask={mask} has {leak} opaque pixels "
+                "outside the 14px plus",
+            )
 
     pair_masks = {"N": MASK_N, "S": MASK_S, "E": MASK_E, "W": MASK_W}
     for cardinal, bit in CARDINALS:
@@ -572,6 +745,15 @@ def check_atlas_seams(atlas_path: Path, *, max_delta: int = MAX_SEAM_DELTA) -> l
             errors.append(
                 f"{atlas_path.name} mask={left_mask} {cardinal} "
                 "14px corridor edge is fully transparent",
+            )
+    for mask, tile in tiles.items():
+        if mask == 0:
+            continue
+        leak = plus_leak_count(tile, mask)
+        if leak > 0:
+            errors.append(
+                f"{atlas_path.name} mask={mask} has {leak} opaque pixels "
+                "outside the 14px plus",
             )
     return errors
 
@@ -647,7 +829,7 @@ def process_family_masks(
     if process_masks:
         if not api_key:
             raise RuntimeError("PIXELLAB_API_KEY is required to generate mask tiles")
-        contracts, center_mask = load_contract_assets(family_contract_dir)
+        contracts = load_contract_assets(family_contract_dir)
         state = load_state(state_path)
         family_state = get_family_state(state, family.key)
         completed = set(int(x) for x in family_state.get("completed_masks", []))
@@ -666,10 +848,11 @@ def process_family_masks(
                 inpainted = run_inpaint_v3(
                     api_key,
                     composed,
-                    center_mask,
+                    inpaint_mask_for_mask(mask),
                     family.center_fill_prompt,
                 )
-                final_tile = reinforce_contract_edges(inpainted, composed)
+                mixed = merge_inpaint_into_plus(composed, inpainted, mask)
+                final_tile = finalize_mask_tile(mixed, mask, composed)
 
             final_tile.save(tile_out)
             verify_written_tile(tile_out, mask=mask)
@@ -680,6 +863,7 @@ def process_family_masks(
             print(f"[{family.key}] wrote+verified {tile_out.name}")
 
     if rebuild_atlas:
+        refresh_family_tiles_from_seed(family_contract_dir)
         build_atlas_from_tiles(family_contract_dir, atlas_path)
         seam_errors = check_family_seams(family_contract_dir)
         if seam_errors:
