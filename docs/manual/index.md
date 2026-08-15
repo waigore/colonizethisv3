@@ -14,9 +14,9 @@ The manual is **player-facing documentation**. Game Design Documents under `SPEC
 
 ## Tone
 
-Body prose is clear modern English for an experienced turn-based strategy player. The framing is a **vizier advising a young monarch**: patient, empathetic, encouraging. Archaic 16th–17th century flourishes (“Hark, my liege…”) appear only in exhortation, warning, or instruction **callouts** — not in ordinary how-to steps.
+Body prose is everyday modern English a **12th-grade reader** can follow. UI-engineering words and genre jargon are banned. The framing is a **vizier advising a young monarch**: patient, empathetic, encouraging. Archaic 16th–17th century flourishes (“Hark, my liege…”) appear only in exhortation, warning, or instruction **callouts** — not in ordinary how-to steps.
 
-Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_GUIDE.md`](STYLE_GUIDE.md).
+Full tone, reading level, chapter template, Sources footers, and draft-marking rules: [`STYLE_GUIDE.md`](STYLE_GUIDE.md).
 
 ## Table of contents
 
@@ -87,3 +87,4 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 - Style guide and chapter template: [`STYLE_GUIDE.md`](STYLE_GUIDE.md)
 - Cursor rule: `.cursor/rules/colonizethis-game-manual.mdc`
 - Updater skill: `.cursor/skills/update-game-manual/SKILL.md`
+- Review skill: `.cursor/skills/review-game-manual-agent/SKILL.md`
