@@ -30,6 +30,8 @@ buildCellAndUnitData({
   required Map<String, int>? resourceExtractionBlockedUnitsByTile,
   Set<String>? capitalLinkDisconnectedTileKeys,
   Set<String>? civilianMarkerOwnerIds,
+  String? viewingFactionId,
+  Map<String, bool>? viewingTechUnlocked,
 }) {
   final cells = InitGameMapViewCells.buildCellViewDataList(
     regionId: regionId,
@@ -44,6 +46,8 @@ buildCellAndUnitData({
         resourceExtractionEffectiveUnitsByTile,
     resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
     capitalLinkDisconnectedTileKeys: capitalLinkDisconnectedTileKeys,
+    viewingFactionId: viewingFactionId,
+    viewingTechUnlocked: viewingTechUnlocked,
   );
   final provinceToTile = InitGameMapViewCells.buildProvinceToRepresentativeTile(
     tileMap: tileMap,

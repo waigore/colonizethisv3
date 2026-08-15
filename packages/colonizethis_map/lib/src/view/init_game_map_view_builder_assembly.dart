@@ -25,6 +25,8 @@ RegionMapViewData buildRegionViewData({
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
   Set<String>? capitalLinkDisconnectedTileKeys,
   Set<String>? civilianMarkerOwnerIds,
+  String? viewingFactionId,
+  Map<String, bool>? viewingTechUnlocked,
 }) {
   final provinceMeta = buildProvinceMetadata(
     game: game,
@@ -50,6 +52,8 @@ RegionMapViewData buildRegionViewData({
     resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
     capitalLinkDisconnectedTileKeys: capitalLinkDisconnectedTileKeys,
     civilianMarkerOwnerIds: civilianMarkerOwnerIds,
+    viewingFactionId: viewingFactionId,
+    viewingTechUnlocked: viewingTechUnlocked,
   );
   final markerData = buildMarkerData(
     game: game,

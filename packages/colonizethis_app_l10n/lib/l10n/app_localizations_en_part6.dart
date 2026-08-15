@@ -216,6 +216,28 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'Restore roads, towns, or ports toward your capital before treating a brown-disc tile as productive.';
 
   @override
+  String get mapImprovementHeadroom_legendHeadroom => 'Can still raise';
+
+  @override
+  String get mapImprovementHeadroom_legendAtCap => "At this court's limit";
+
+  @override
+  String get mapImprovementHeadroom_legendSemantics =>
+      "Improvement level versus this court's extraction limit";
+
+  @override
+  String get mapImprovementHeadroom_detailsMeaning =>
+      'The corner mark is improvement level versus what this court can extract now (for example 1 of 1 or 1 of 2).';
+
+  @override
+  String get mapImprovementHeadroom_detailsMuted =>
+      'Muted marks are already at the current limit; raising them further wastes materials.';
+
+  @override
+  String get mapImprovementHeadroom_detailsCounsel =>
+      'Empty farms stay on Development and the province overlay — the map only marks tiles that already have an improvement.';
+
+  @override
   String get provinceOverlay_moveArmyAction => 'Move';
 
   @override

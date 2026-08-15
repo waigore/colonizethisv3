@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 import '../caches/resource_icon_cache.dart';
@@ -8,7 +9,21 @@ import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 import 'region_map_component_render_core.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
-    show PlayerView, resourceIdVisibleInPlayerView;
+    show resourceIdVisibleInPlayerView;
+
+/// Paint colour for an improvement corner mark (Refs #4408).
+Color improvementMarkPaintColor({
+  required ImprovementCornerMark mark,
+  required bool fogged,
+}) {
+  if (mark.muted || fogged) {
+    return EditorialMonoclePalette.muted;
+  }
+  if (mark.hasCapDenominator) {
+    return RegionMapPalette.mapSelectionGold;
+  }
+  return Colors.black;
+}
 
 extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
   void paintL1PlainsInteriorResourceVariantOverlays(Canvas canvas) {
@@ -257,17 +272,64 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
 
     if (showImprovementLabels) {
       for (final cell in region.cells) {
-        if (cell.isSea) continue;
-        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            regionMapComponentVisibilityForTerrain(this, cell) ==
-                TileVisibility.unrevealed) {
-          continue;
-        }
-        final imp = cell.improvementLevel ?? 0;
-        if (imp <= 0) continue;
-        _paintTileCornerLabel(canvas, cell, 'I$imp', alignEnd: false);
+        _paintImprovementMarkForCell(canvas, cell);
       }
     }
+  }
+
+  void _paintImprovementMarkForCell(Canvas canvas, CellViewData cell) {
+    if (cell.isSea) {
+      return;
+    }
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.unrevealed) {
+      return;
+    }
+    final resourceVisible = _resourceIdForMapIcon(cell) != null;
+    final mark = resolveImprovementCornerMark(
+      improvementLevel: cell.improvementLevel ?? 0,
+      improvementTechCap: cell.improvementTechCap,
+      resourceVisible: resourceVisible,
+      unrevealed: false,
+      showImprovements: true,
+    );
+    if (mark == null) {
+      return;
+    }
+    final fogged =
+        visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.fogged;
+    final color = improvementMarkPaintColor(mark: mark, fogged: fogged);
+    final pad = math.max(1.0, cellSize * 0.06);
+    final maxWidth = cellSize - 2 * pad;
+    var text = mark.text;
+    if (mark.hasCapDenominator) {
+      final compact = resolveImprovementCornerMark(
+        improvementLevel: cell.improvementLevel ?? 0,
+        improvementTechCap: cell.improvementTechCap,
+        resourceVisible: resourceVisible,
+        unrevealed: false,
+        showImprovements: true,
+        compact: true,
+      );
+      if (compact != null && _improvementMarkLayoutWidth(text) > maxWidth) {
+        text = compact.text;
+      }
+    }
+    _paintTileCornerLabel(canvas, cell, text, alignEnd: false, color: color);
+  }
+
+  double _improvementMarkLayoutWidth(String text) {
+    final fontSize = math.max(8.0, cellSize * 0.25);
+    final painter = TextPainter(textDirection: TextDirection.ltr);
+    painter.text = TextSpan(
+      text: text,
+      style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
+    );
+    painter.layout();
+    return painter.width;
   }
 
   void _paintTileCornerLabel(
@@ -275,6 +337,7 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
     CellViewData cell,
     String text, {
     required bool alignEnd,
+    required Color color,
   }) {
     final tileLeft = cell.x * cellSize;
     final tileTop = cell.y * cellSize;
@@ -284,7 +347,7 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
     textPainter.text = TextSpan(
       text: text,
       style: TextStyle(
-        color: Colors.black,
+        color: color,
         fontSize: fontSize,
         fontWeight: FontWeight.w600,
       ),

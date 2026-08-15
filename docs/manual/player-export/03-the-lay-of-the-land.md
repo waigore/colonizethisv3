@@ -26,7 +26,7 @@ Tiles carry **terrain** and optional **resources**. Extraction only happens wher
 - Some commodities are **Old World only** (e.g. grain, meat, wool, horses), some **New World only** (e.g. sugar cane, tobacco, cotton, furs, spices, precious metals/gems), some **both** (e.g. timber, iron, copper, tin, coal).
 - **Prospect-required** minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until an Explorer **prospects** the tile. Other resources are knowable from terrain once the tile is revealed. Fog and exploration are Chapter 4.
 
-Open **Map display options** (gear, **Empire overview / map area**) to name what is painted: **Show resources** (commodity icons and extraction discs), **Show improvements** (`I{n}` labels), and **Show roads and rails**. Turning improvements off also turns roads off and greys that switch until improvements are on again. The stacked-layers button cycles four presets (terrain only → resources → resources and improvements → all three) and jumps to terrain only from any other combination. Those choices persist when you save.
+Open **Map display options** (gear, **Empire overview / map area**) to name what is painted: **Show resources** (commodity icons and extraction discs), **Show improvements** (`1 of 1` / `1 of 2` marks on your improved tiles), and **Show roads and rails**. Turning improvements off also turns roads off and greys that switch until improvements are on again. The stacked-layers button cycles four presets (terrain only → resources → resources and improvements → all three) and jumps to terrain only from any other combination. Those choices persist when you save.
 
 ### Capital and connectivity
 
@@ -45,6 +45,12 @@ When resource icons are visible on the empire map (**Empire overview / map area*
 A compact **extraction-disc legend** sits above the bottom-left map tools whenever resource icons are on and you are viewing as a player (normal play or player observe) — including on turn 1 before any discs are painted. Tap the legend for a short panel that restates both colours and counsel to restore roads, towns, or ports toward the capital. The legend hides in **terrain only** and in **global observe**.
 
 A disconnected improved tile with a visible resource icon shows **all brown** discs (no gold) — not silence. That is your cue that the improvement looks productive but extraction is stranded until you restore capital link toward your capital.
+
+### Improvement marks on **Empire overview / map area**
+
+When **Show improvements** is on, owned revealed tiles that already have an improvement show a compact **level versus this court’s current extraction limit** — for example **1 of 1** or **1 of 2** — in the tile’s top-left corner. Muted **1 of 1** means the tile is already at the legal cap (early grain farms often are). A brighter **1 of 2** means another Builder step is still legal. Foreign improved tiles, and your own improved tiles whose resource is still hidden, show the level only (`2`), without your court’s cap. Unimproved tiles stay unmarked; empty farms are listed on **Development screen** Development and **Province sea-zone overlay**, not as a `0 of 1` on the map.
+
+A compact **improvement legend** sits above the bottom-left map tools whenever improvements are on and you are viewing as a player. Tap it to read that `{n} of {cap}` is level versus what this court can extract now, and that muted means at the current limit. The legend hides when improvements are off and in **global observe**.
 
 **Owned land without discs** (empty plains, towns, roads, zero-yield tiles) can still be cut off. With **Highlight land not bound to the capital** on in **Map display options** (default **ON**), those stranded owned tiles show a muted diagonal hatch on **Empire overview / map area** so you can plan roads and ports at a glance without tapping every tile. Connected owned land stays unmarked. Turn the highlight off in the same dialog if you prefer a cleaner map; the choice is saved with your campaign.
 
