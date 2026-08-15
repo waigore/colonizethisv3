@@ -91,6 +91,34 @@ void main() {
     expect(body, isNot(contains('France')));
   });
 
+  test(
+    'declare war omits a same-turn draft Alliance without a persisted treaty',
+    () {
+      final game = _fourGpGame();
+      const draftAlliance = DiplomaticOrder(
+        type: DiplomaticOrderType.alliance,
+        targetFactionId: _franceId,
+      );
+      final draft = Orders(
+        diplomaticOrdersByPlayerId: {
+          _spainId: [draftAlliance],
+        },
+      );
+      expect(
+        draft.diplomaticOrdersByPlayerId[_spainId],
+        contains(draftAlliance),
+      );
+      final body = buildDiplomacyConfirmPreviewLines(
+        order: _declareOnSpain,
+        game: game,
+        humanPlayerId: _humanId,
+        targetDisplayName: 'Spain',
+      ).join('\n');
+      expect(body, isNot(contains('France')));
+      expect(body, contains('War with Spain'));
+    },
+  );
+
   test('declare war omits a court with no persisted formal alliance', () {
     final game = _fourGpGame();
     final body = buildDiplomacyConfirmPreviewLines(
