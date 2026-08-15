@@ -97,103 +97,122 @@ void main() {
       expect(offer?.priority, TradeScreenMarketKeys.marketRowDefaultPriority);
     });
 
-    testWidgets('per-commodity mutual exclusion + cross-commodity coexistence', (
-      tester,
-    ) async {
-      final ProviderContainer container = await tradeE8PumpMarket(tester);
+    testWidgets(
+      'per-commodity mutual exclusion + cross-commodity coexistence',
+      (tester) async {
+        final ProviderContainer container = await tradeE8PumpMarket(tester);
 
-      await tradeE8TapBid(tester, kTradeE8Timber);
-      await tradeE8IncrementCommodity(tester, kTradeE8Timber, 2);
-      expect(
-        tradeE8StagedOrder(container, kTradeE8Timber)?.type,
-        TradeOrderType.bid,
-      );
-      expect(tradeE8StagedOrder(container, kTradeE8Timber)?.quantity, 3);
+        await tradeE8TapBid(tester, kTradeE8Timber);
+        await tradeE8IncrementCommodity(tester, kTradeE8Timber, 2);
+        expect(
+          tradeE8StagedOrder(container, kTradeE8Timber)?.type,
+          TradeOrderType.bid,
+        );
+        expect(tradeE8StagedOrder(container, kTradeE8Timber)?.quantity, 3);
 
-      await tradeE8TapOffer(tester, kTradeE8Timber);
-      final TradeOrder? flipped = tradeE8StagedOrder(container, kTradeE8Timber);
-      expect(flipped?.type, TradeOrderType.offer);
-      expect(flipped?.quantity, 3);
-      expect(
-        container
-            .read(currentOrdersProvider)
-            .tradeOrdersByPlayerId[kTradeE8HumanPlayerId]!
-            .where((TradeOrder o) => o.commodityId == kTradeE8Timber)
-            .length,
-        1,
-      );
+        await tradeE8TapOffer(tester, kTradeE8Timber);
+        final TradeOrder? flipped = tradeE8StagedOrder(
+          container,
+          kTradeE8Timber,
+        );
+        expect(flipped?.type, TradeOrderType.offer);
+        expect(flipped?.quantity, 3);
+        expect(
+          container
+              .read(currentOrdersProvider)
+              .tradeOrdersByPlayerId[kTradeE8HumanPlayerId]!
+              .where((TradeOrder o) => o.commodityId == kTradeE8Timber)
+              .length,
+          1,
+        );
 
-      await tradeE8TapBid(tester, kTradeE8Timber);
-      await tradeE8TapOffer(tester, kTradeE8Fabric);
-      expect(
-        tradeE8StagedOrder(container, kTradeE8Timber)?.type,
-        TradeOrderType.bid,
-      );
-      expect(
-        tradeE8StagedOrder(container, kTradeE8Fabric)?.type,
-        TradeOrderType.offer,
-      );
-      expect(tradeE8StagedRowCountForPlayer(container), 2);
-    });
+        await tradeE8TapBid(tester, kTradeE8Timber);
+        await tradeE8TapOffer(tester, kTradeE8Fabric);
+        expect(
+          tradeE8StagedOrder(container, kTradeE8Timber)?.type,
+          TradeOrderType.bid,
+        );
+        expect(
+          tradeE8StagedOrder(container, kTradeE8Fabric)?.type,
+          TradeOrderType.offer,
+        );
+        expect(tradeE8StagedRowCountForPlayer(container), 2);
+      },
+    );
   });
 
-  group('AC #4 — Deal Book renders previous-turn filled + carry-forward rows '
-      'with correct quantities, prices, and treasury totals (#2993 E8 (d))', () {
-    testWidgets('Given a partial timber bid (filled 5 of 10 at price 8.4, '
-        'displayed as floor=8) plus a carry-forward fabric offer of qty '
-        '3 (no fills), when the player opens the Deal Book tab, then '
-        'the bids panel shows the timber filled row + timber '
-        'carry-forward row + total spent of 40 (= 5 × floor(8.4)), and '
-        'the offers panel shows the fabric carry-forward row with total '
-        'received of 0', (tester) async {
-      await tradeE8PumpMarket(
-        tester,
-        worldMarketState: tradeE8PartialTimberDealBookMarket(),
-      );
-      await tradeE8SwitchToDealBook(tester);
-      for (final finder in <Finder>[
-        find.byKey(
-          TradeScreenDealBookKeys.dealBookFilledRowKey(
-            TradeScreenDealBookKeys.dealBookSideBids,
+  group(
+    'AC #4 — Deal Book renders previous-turn filled + carry-forward rows '
+    'with correct quantities, prices, and treasury totals (#2993 E8 (d))',
+    () {
+      testWidgets('Given a partial timber bid (filled 5 of 10 at price 8.4, '
+          'displayed as floor=8) plus a carry-forward fabric offer of qty '
+          '3 (no fills), when the player opens the Deal Book tab, then '
+          'the bids panel shows the timber filled row + timber '
+          'carry-forward row + total spent of 40 (= 5 × floor(8.4)), and '
+          'the offers panel shows the fabric carry-forward row with total '
+          'received of 0', (tester) async {
+        await tradeE8PumpMarket(
+          tester,
+          worldMarketState: tradeE8PartialTimberDealBookMarket(),
+        );
+        await tradeE8SwitchToDealBook(tester);
+        for (final finder in <Finder>[
+          find.byKey(
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              0,
+            ),
+          ),
+          find.text('Timber — 5 at £8 = £40'),
+          find.byKey(
+            TradeScreenDealBookKeys.dealBookUnfilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideBids,
+              0,
+            ),
+          ),
+          find.text('Timber — 5'),
+          find.byKey(
+            TradeScreenDealBookKeys.dealBookUnfilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideOffers,
+              0,
+            ),
+          ),
+          find.text('Fabric — 3'),
+        ]) {
+          expect(finder, findsOneWidget);
+        }
+        expectTradeE8DealBookTotals(
+          tester,
+          bidsTotal: TradeScreenDealBookKeys.formatTotalsLine(
+            TradeScreenDealBookKeys.dealBookTotalSpentLabel,
+            40,
+          ),
+          offersTotal: TradeScreenDealBookKeys.formatTotalsLine(
+            TradeScreenDealBookKeys.dealBookTotalReceivedLabel,
             0,
           ),
-        ),
-        find.text('timber — qty 5 × 8 = 40'),
-        find.byKey(
-          TradeScreenDealBookKeys.dealBookUnfilledRowKey(
-            TradeScreenDealBookKeys.dealBookSideBids,
-            0,
+        );
+        expect(
+          find.byKey(
+            TradeScreenDealBookKeys.dealBookFilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideOffers,
+              0,
+            ),
           ),
-        ),
-        find.text('timber — qty 5 (priority 1)'),
-        find.byKey(
-          TradeScreenDealBookKeys.dealBookUnfilledRowKey(
-            TradeScreenDealBookKeys.dealBookSideOffers,
-            0,
-          ),
-        ),
-        find.text('fabric — qty 3 (priority 1)'),
-      ]) {
-        expect(finder, findsOneWidget);
-      }
-      expectTradeE8DealBookTotals(
-        tester,
-        bidsTotal: '${TradeScreenDealBookKeys.dealBookTotalSpentLabel}: 40',
-        offersTotal: '${TradeScreenDealBookKeys.dealBookTotalReceivedLabel}: 0',
-      );
-      expect(
-        find.byKey(
-          TradeScreenDealBookKeys.dealBookFilledRowKey(
-            TradeScreenDealBookKeys.dealBookSideOffers,
-            0,
-          ),
-        ),
-        findsNothing,
-      );
-      expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsNothing);
-      expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsNothing);
-    });
-  });
+          findsNothing,
+        );
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey),
+          findsNothing,
+        );
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey),
+          findsNothing,
+        );
+      });
+    },
+  );
 
   group('AC #5 — Cross-commodity cargo cap: capacity 10 with attempted bids '
       'totalling 12 across commodities clamps the indicator to 0, caps the '
@@ -260,7 +279,10 @@ void main() {
 
         await tradeE8TapBid(tester, kTradeE8Fabric);
 
-        final TradeOrder? fabric = tradeE8StagedOrder(container, kTradeE8Fabric);
+        final TradeOrder? fabric = tradeE8StagedOrder(
+          container,
+          kTradeE8Fabric,
+        );
         expect(fabric?.type, TradeOrderType.bid);
         expect(fabric?.quantity, 1);
         expectTradeE8CargoSaturated(tester);
@@ -289,7 +311,10 @@ void main() {
         canMutateViaUi: false,
       );
 
-      expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsOneWidget);
+      expect(
+        find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
+        findsOneWidget,
+      );
 
       await tester.tap(
         find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(kTradeE8Timber)),

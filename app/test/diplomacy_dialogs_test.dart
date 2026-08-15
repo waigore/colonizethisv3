@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_body.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -186,4 +187,203 @@ void main() {
     expect(submittedCalled, isFalse);
     expect(find.text('Grant aid'), findsNothing);
   });
+
+  testWidgets(
+    'GrantOrSubsidyDialog shows live Cost/Effect for grant and updates on step',
+    (WidgetTester tester) async {
+      final game = buildDiplomacyScreenTestGame();
+      final humanPlayerId = game.players.first.id;
+      final targetFactionId = game.players[1].id;
+      final targetName = game.players[1].displayName;
+      final bus = AppEventBus.create();
+
+      await tester.pumpWidget(
+        buildAppShell(
+          child: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                child: const Text('Open'),
+                onPressed: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (ctx) => GrantOrSubsidyDialog(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      targetFactionId: targetFactionId,
+                      isSubsidy: false,
+                      bus: bus,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('grantOrSubsidyDialogPreview')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Cost: £1000 from your treasury when the grant resolves.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Effect: Standing with $targetName improves when the grant resolves.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('diplo_amount_plus')));
+      await tester.pump();
+
+      expect(
+        find.text('Cost: £2000 from your treasury when the grant resolves.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Cost: £1000 from your treasury when the grant resolves.'),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'GrantOrSubsidyDialog shows subsidy Cost/Effect without a second confirm path',
+    (WidgetTester tester) async {
+      final game = buildDiplomacyScreenTestGame();
+      final humanPlayerId = game.players.first.id;
+      final targetFactionId = game.players[1].id;
+      final targetName = game.players[1].displayName;
+      final bus = AppEventBus.create();
+
+      await tester.pumpWidget(
+        buildAppShell(
+          child: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                child: const Text('Open'),
+                onPressed: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (ctx) => GrantOrSubsidyDialog(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      targetFactionId: targetFactionId,
+                      isSubsidy: true,
+                      bus: bus,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cost: No per-turn gold charge.'), findsOneWidget);
+      expect(
+        find.text(
+          'Effect: 5% subsidy with $targetName while active; '
+          'market terms are affected.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('diplo_amount_plus')));
+      await tester.pump();
+
+      expect(
+        find.text(
+          'Effect: 10% subsidy with $targetName while active; '
+          'market terms are affected.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'GrantOrSubsidyDialog omits Cost/Effect when grant treasury is below minimum',
+    (WidgetTester tester) async {
+      final base = buildDiplomacyScreenTestGame();
+      final humanPlayerId = base.players.first.id;
+      final targetFactionId = base.players[1].id;
+      final game = base.copyWith(
+        players: [
+          base.players.first.copyWith(treasury: 500),
+          ...base.players.skip(1),
+        ],
+      );
+      final bus = AppEventBus.create();
+
+      await tester.pumpWidget(
+        buildAppShell(
+          child: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                child: const Text('Open'),
+                onPressed: () {
+                  showDialog<void>(
+                    context: context,
+                    builder: (ctx) => GrantOrSubsidyDialog(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      targetFactionId: targetFactionId,
+                      isSubsidy: false,
+                      bus: bus,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('grantOrSubsidyDialogPreview')),
+        findsNothing,
+      );
+      expect(find.textContaining('Cost:'), findsNothing);
+      expect(
+        find.byKey(const Key('grantOrSubsidyDialogWarning')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'GrantSubsidyAmountBody does not call preview builder when grant amount is 0',
+    (WidgetTester tester) async {
+      final invokedAmounts = <int>[];
+      await tester.pumpWidget(
+        buildAppShell(
+          child: GrantSubsidyAmountBody(
+            title: 'Grant aid',
+            treasury: 0,
+            isSubsidy: false,
+            onCancel: () {},
+            onSubmit: (_) {},
+            previewLinesForAmount: (amount) {
+              invokedAmounts.add(amount);
+              return const <String>['Cost: £0'];
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(invokedAmounts, isEmpty);
+      expect(find.text('Cost: £0'), findsNothing);
+    },
+  );
 }

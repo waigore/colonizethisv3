@@ -368,13 +368,13 @@ img.pixel { image-rendering:pixelated; image-rendering:crisp-edges; }
         <div class="deal-panel" id="deal-bids-panel">
           <div class="deal-panel-title">Your bids</div>
           <div id="deal-bids-content"></div>
-          <div class="deal-totals" id="deal-bids-totals">Total spent: 180</div>
+          <div class="deal-totals" id="deal-bids-totals">Total spent: £180</div>
         </div>
         <!-- Your offers -->
         <div class="deal-panel" id="deal-offers-panel">
           <div class="deal-panel-title">Your offers</div>
           <div id="deal-offers-content"></div>
-          <div class="deal-totals" id="deal-offers-totals">Total received: 1,160</div>
+          <div class="deal-totals" id="deal-offers-totals">Total received: £1,160</div>
         </div>
       </div>
     </div>
@@ -563,19 +563,19 @@ function buildDealBook() {
         filled.forEach((d, i) => {
           const total = (d.qty * d.price).toFixed(0);
           html += '<div class="deal-fill-row">'
-            + '<span class="deal-fill-info">' + d.commodity + ' &mdash; qty ' + d.qty + ' &times; ' + d.price.toFixed(1) + ' = ' + total + '</span>'
+            + '<span class="deal-fill-info">' + d.commodity + ' &mdash; ' + d.qty + ' at &pound;' + Math.floor(d.price) + ' = &pound;' + total + '</span>'
             + (d.tags ? '<span class="deal-tags">' + d.tags + '</span>' : '')
             + '</div>';
         });
       }
 
       /* Unfilled section */
-      html += '<div class="deal-section-label">Unfilled (carry-forward)</div>';
+      html += '<div class="deal-section-label">Still open</div>';
       if (unfilled.length === 0) {
-        html += '<div class="deal-empty">No orders carrying forward.</div>';
+        html += '<div class="deal-empty">None still open.</div>';
       } else {
         unfilled.forEach((u, i) => {
-          html += '<div class="deal-unfill-row">' + u.commodity + ' &mdash; qty ' + u.qty + ' (priority ' + u.priority + ')</div>';
+          html += '<div class="deal-unfill-row">' + u.commodity + ' &mdash; ' + u.qty + '</div>';
         });
       }
     }
