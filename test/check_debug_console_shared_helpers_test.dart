@@ -19,37 +19,82 @@ void main() {
       '${temp.path}/packages/colonizethis_debug_console/lib/src',
     )..createSync(recursive: true);
 
-    File('${srcDir.path}/debug_console_parser_helpers.dart').writeAsStringSync('''
+    File('${srcDir.path}/debug_console_parser_helpers.dart').writeAsStringSync(
+      '''
 int parseOptionalCount(List<String> tokens, int position) => 1;
 ({int requested, int credited, String? error}) parseAmountWithClamp(String token) =>
     (requested: 1, credited: 1, error: null);
 String? canonicalIdForInput(String input, Iterable<String> candidates) => null;
-''');
+({String? typeId, int count, String? error}) parseSpawnBySupportedId({
+  required List<String> tokens,
+  required String usage,
+  required String unknownIdMessage,
+  required Set<String> supportedIds,
+}) {
+  parseOptionalCount(tokens, 3);
+  return (typeId: 'x', count: 1, error: null);
+}
+({String? canonicalId, int requested, int credited, String? error})
+parseCreditByCanonicalId({
+  required List<String> tokens,
+  required String usage,
+  required String unknownIdMessage,
+  required Iterable<String> candidates,
+}) {
+  parseAmountWithClamp('1');
+  return (canonicalId: 'x', requested: 1, credited: 1, error: null);
+}
+''',
+    );
 
-    File('${srcDir.path}/debug_console_command_parser.dart').writeAsStringSync('''
+    File('${srcDir.path}/debug_console_command_parser.dart').writeAsStringSync(
+      '''
 class DebugConsoleCommandParser {
   void _parseSpawnCivilian(List<String> tokens) {
     final count = 1;
   }
   void _parseSpawnRegiment(List<String> tokens) {
-    parseOptionalCount(tokens, 3);
+    parseSpawnBySupportedId(
+      tokens: tokens,
+      usage: '',
+      unknownIdMessage: '',
+      supportedIds: <String>{},
+    );
   }
   void _parseSpawnShip(List<String> tokens) {
-    parseOptionalCount(tokens, 3);
+    parseSpawnBySupportedId(
+      tokens: tokens,
+      usage: '',
+      unknownIdMessage: '',
+      supportedIds: <String>{},
+    );
   }
   void _parseAddMoney(List<String> tokens) {
     parseAmountWithClamp('1');
   }
   void _parseAddWorker(List<String> tokens) {
-    parseAmountWithClamp('1');
+    parseCreditByCanonicalId(
+      tokens: tokens,
+      usage: '',
+      unknownIdMessage: '',
+      candidates: <String>[],
+    );
   }
   void _parseAddResource(List<String> tokens) {
-    parseAmountWithClamp('1');
+    parseCreditByCanonicalId(
+      tokens: tokens,
+      usage: '',
+      unknownIdMessage: '',
+      candidates: <String>[],
+    );
   }
 }
-''');
+''',
+    );
 
-    File('${srcDir.path}/debug_console_executor_helpers.dart').writeAsStringSync('''
+    File(
+      '${srcDir.path}/debug_console_executor_helpers.dart',
+    ).writeAsStringSync('''
 void dispatchDebugConsoleSessionEvents() {}
 String creditExecutorMessage({
   required String what,
@@ -58,7 +103,9 @@ String creditExecutorMessage({
 }) => '';
 ''');
 
-    File('${srcDir.path}/debug_console_command_executor.dart').writeAsStringSync('''
+    File(
+      '${srcDir.path}/debug_console_command_executor.dart',
+    ).writeAsStringSync('''
 class DebugConsoleCommandExecutor {
   void _executeInvocation() {
     dispatchDebugConsoleSessionEvents();
