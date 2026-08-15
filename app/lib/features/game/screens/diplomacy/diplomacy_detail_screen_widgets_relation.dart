@@ -12,7 +12,8 @@ import '../../widgets/diplomacy/diplomacy_panel.dart';
 /// Body of the "Current relation" card. Renders a one-line summary with a
 /// War/Peace state (colored badge label) and the one-word relation label.
 class DiplomacyDetailRelationSummary extends StatelessWidget {
-  const DiplomacyDetailRelationSummary({super.key, 
+  const DiplomacyDetailRelationSummary({
+    super.key,
     required this.relation,
     required this.l10n,
     this.standingChips = const DiplomaticStandingChips(),
@@ -31,9 +32,9 @@ class DiplomacyDetailRelationSummary extends StatelessWidget {
     if (rel == null) {
       return Text(
         '—',
-        style: diplomacyDetailRelationSummaryDisplayStyle(context).copyWith(
-          color: EditorialMonoclePalette.muted,
-        ),
+        style: diplomacyDetailRelationSummaryDisplayStyle(
+          context,
+        ).copyWith(color: EditorialMonoclePalette.muted),
       );
     }
     final Widget summaryRow = DiplomacyDetailRelationSummaryRow(
@@ -58,7 +59,8 @@ class DiplomacyDetailRelationSummary extends StatelessWidget {
 /// One-line War/Peace state, relation meter, one-word ladder label, and the
 /// optional formal-alliance badge.
 class DiplomacyDetailRelationSummaryRow extends StatelessWidget {
-  const DiplomacyDetailRelationSummaryRow({super.key, 
+  const DiplomacyDetailRelationSummaryRow({
+    super.key,
     required this.relation,
     required this.l10n,
   });
@@ -90,10 +92,9 @@ class DiplomacyDetailRelationSummaryRow extends StatelessWidget {
       children: <Widget>[
         Text(
           stateLabel,
-          style: diplomacyDetailRelationSummaryDisplayStyle(context).copyWith(
-            color: stateColor,
-            fontWeight: FontWeight.w600,
-          ),
+          style: diplomacyDetailRelationSummaryDisplayStyle(
+            context,
+          ).copyWith(color: stateColor, fontWeight: FontWeight.w600),
         ),
         // SPEC/ui/diplomacy-detail-screen.md § Current relation (Refs #3753
         // R13.5): the same 10-step gradient meter used on the panel row sits
@@ -117,6 +118,31 @@ class DiplomacyDetailRelationSummaryRow extends StatelessWidget {
 
 TextStyle diplomacyDetailRelationSummaryDisplayStyle(BuildContext context) {
   final ThemeData theme = Theme.of(context);
-  return (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
-      .copyWith(letterSpacing: 0.02);
+  return (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14)).copyWith(
+    letterSpacing: 0.02,
+  );
+}
+
+/// Compact treaty roster of other GPs formally allied with the viewed court.
+class DiplomacyDetailFormalAlliesLine extends StatelessWidget {
+  const DiplomacyDetailFormalAlliesLine({
+    super.key,
+    required this.names,
+    required this.l10n,
+  });
+
+  final List<String> names;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        l10n.diplomacy_detail_formalAllies(names.join(', ')),
+        style: (Theme.of(context).textTheme.bodySmall ?? const TextStyle())
+            .copyWith(color: EditorialMonoclePalette.muted),
+      ),
+    );
+  }
 }

@@ -3,11 +3,25 @@
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_military_invade_confirm.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
+
+final Game _counselConfirmGame = Game(
+  id: 'counsel-confirm',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: const RegionData(),
+    newWorld: const RegionData(),
+  ),
+  players: const [
+    Player(id: 'gp1', displayName: 'England', isHuman: true),
+    Player(id: 'gp2', displayName: 'Rival Empire', isHuman: false),
+  ],
+);
 
 void main() {
   suppressLogsForTests();
@@ -44,6 +58,9 @@ void main() {
           context,
           lookupAppLocalizations(const Locale('en')),
           'Rival Empire',
+          game: _counselConfirmGame,
+          humanPlayerId: 'gp1',
+          targetFactionId: 'gp2',
         ),
       ),
     );
@@ -74,6 +91,9 @@ void main() {
             context,
             lookupAppLocalizations(const Locale('en')),
             'Rival Empire',
+            game: _counselConfirmGame,
+            humanPlayerId: 'gp1',
+            targetFactionId: 'gp2',
           );
         },
       ),
@@ -99,6 +119,9 @@ void main() {
             context,
             lookupAppLocalizations(const Locale('en')),
             'Rival Empire',
+            game: _counselConfirmGame,
+            humanPlayerId: 'gp1',
+            targetFactionId: 'gp2',
           );
         },
       ),

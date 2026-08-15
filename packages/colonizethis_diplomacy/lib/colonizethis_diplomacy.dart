@@ -6,6 +6,7 @@ export 'src/diplomacy/alliance_resolver.dart';
 export 'src/diplomacy/boycott_resolver.dart';
 export 'src/diplomacy/break_alliance_resolver.dart';
 export 'src/diplomacy/diplomacy_confirm_preview.dart';
+export 'src/diplomacy/diplomacy_declare_war_third_party_preview.dart';
 export 'src/diplomacy/incoming_overture_effect_preview.dart';
 export 'src/diplomacy/diplomacy_event_logging.dart';
 export 'src/diplomacy/diplomacy_logging.dart';
