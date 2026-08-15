@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// SPEC: SPEC/program/repo-lint.md (Refs #4014, #4049, #4108).
+/// SPEC: SPEC/program/repo-lint.md (Refs #4014, #4049, #4108, #4410).
 ///
 /// Physical-line ceiling for `colonizethis_economy_test_support/lib` so
 /// densification waves cannot silently regenerate toward the old soft
@@ -12,9 +12,9 @@ const String economyTestSupportRelativeDir =
     'packages/colonizethis_economy_test_support/lib';
 
 /// Ratchet ceiling for support physical LOC (`find … | xargs cat | wc -l`).
-/// #4108 densify measured 6,749 (Refs #4108; phase-7 was ≤7,495).
+/// #4410 wave 2 measured 6,540 (Refs #4410; #4108 was ≤7,150).
 /// Lower this constant as further densify slices land.
-const int economyTestSupportLocCeiling = 7150;
+const int economyTestSupportLocCeiling = 6590;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countEconomyTestSupportPhysicalLoc(Directory dir) {
@@ -55,13 +55,13 @@ int runCheckEconomyTestSupportLoc(
   if (loc > ceiling) {
     logE(
       'check_economy_test_support_loc: support LOC $loc exceeds ceiling '
-      '$ceiling (#4108 target ≤7150; Refs #4014, #4049, #4108).',
+      '$ceiling (#4410 target ≤6590; Refs #4014, #4049, #4108, #4410).',
     );
     return 1;
   }
   logI(
     'check_economy_test_support_loc: support LOC $loc ≤ ceiling $ceiling '
-    '(#4108 target ≤7150; Refs #4014, #4049, #4108).',
+    '(#4410 target ≤6590; Refs #4014, #4049, #4108, #4410).',
   );
   return 0;
 }

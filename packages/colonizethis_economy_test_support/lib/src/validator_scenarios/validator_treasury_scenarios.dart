@@ -3,7 +3,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'trade_order_validator_test_support.dart';
-import 'validator_expectations.dart';
 import 'validator_scenario.dart';
 int _catalogTimberBudgetForQty2() {
   final int? catalogTimber = ResourceRules.defaultRules.defaultMarketPriceForCommodityId('timber');

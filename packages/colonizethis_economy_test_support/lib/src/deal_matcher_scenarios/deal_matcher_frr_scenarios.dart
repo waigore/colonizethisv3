@@ -1,7 +1,6 @@
 // FRR DealMatcher scenarios (Refs #3836, #3939).
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import '../frr_scenarios/frr_d5_test_support.dart';
-import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
 

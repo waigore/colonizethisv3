@@ -3,10 +3,34 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'boycott_blocked_commodities_expectations.dart';
 import 'boycott_blocked_commodities_test_support.dart';
 import 'trade_order_factory.dart';
+/// Data-driven expectations for [BoycottBlockedCommoditiesScenario] rows.
+class BoycottBlockedCommoditiesExpectation {
+  const BoycottBlockedCommoditiesExpectation({
+    this.blockedCommodityIds,
+    this.isEmpty,
+  });
+  final Set<CommodityId>? blockedCommodityIds;
+  final bool? isEmpty;
+}
+void assertBoycottBlockedCommoditiesExpectation(
+  Set<CommodityId> blocked,
+  BoycottBlockedCommoditiesExpectation expectation,
+) {
+  if (expectation.isEmpty != null) {
+    if (expectation.isEmpty!) {
+      expect(blocked, isEmpty);
+    } else {
+      expect(blocked, isNotEmpty);
+    }
+  }
+  if (expectation.blockedCommodityIds != null) {
+    expect(blocked, equals(expectation.blockedCommodityIds));
+  }
+}
 const _boycottColonyStates = [ColonyState(tribeId: 't1', colonyOfGpId: 'gpA', sinceTurn: 1)];
 const _boycottActiveStates = [BoycottState(gpId: 'gpA', targetGpId: 'gpC', sinceTurn: 1)];
 BoycottBlockedCommoditiesScenario _boycottColonyRow({required String label, required BoycottBlockedCommoditiesExpectation expect, List<ColonyState> colonyStates = _boycottColonyStates, List<BoycottState> boycottStates = _boycottActiveStates, String buyerPlayerId = 'gpC', bool useDefaultTileMaps = true, bool useDefaultTopology = true, Map<String, ConnectivityResult>? connectivityByFactionId, Map<String, List<TradeOrder>>? autoOffersByFactionId, String? refs}) => (label: label, buildGame: () => gameWithColonyTribeBoycottTest(colonyStates: colonyStates, boycottStates: boycottStates), buyerPlayerId: buyerPlayerId, useDefaultTileMaps: useDefaultTileMaps, useDefaultTopology: useDefaultTopology, connectivityByFactionId: connectivityByFactionId, autoOffersByFactionId: autoOffersByFactionId, verify: (blocked) => assertBoycottBlockedCommoditiesExpectation(blocked, expect), refs: refs);
