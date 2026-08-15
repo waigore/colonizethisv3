@@ -10,12 +10,14 @@ import 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
 import 'diplomacy_dialogs_grant_subsidy_chrome_stepper.dart';
 
 class GrantSubsidyAmountBody extends StatefulWidget {
-  const GrantSubsidyAmountBody({super.key, 
+  const GrantSubsidyAmountBody({
+    super.key,
     required this.title,
     required this.treasury,
     required this.isSubsidy,
     required this.onCancel,
     required this.onSubmit,
+    required this.previewLinesForAmount,
   });
 
   final String title;
@@ -23,17 +25,16 @@ class GrantSubsidyAmountBody extends StatefulWidget {
   final bool isSubsidy;
   final VoidCallback onCancel;
   final void Function(int amount) onSubmit;
+  final List<String> Function(int amount) previewLinesForAmount;
 
   @override
-  State<GrantSubsidyAmountBody> createState() =>
-      GrantSubsidyAmountBodyState();
+  State<GrantSubsidyAmountBody> createState() => GrantSubsidyAmountBodyState();
 }
 
 class GrantSubsidyAmountBodyState extends State<GrantSubsidyAmountBody> {
   late int _amount;
 
-  int get _step =>
-      widget.isSubsidy ? kSubsidyPercentStep : grantAidAmountStep;
+  int get _step => widget.isSubsidy ? kSubsidyPercentStep : grantAidAmountStep;
 
   /// Lowest selectable value. Subsidy is a fixed 5% floor (Refs #3753 R3);
   /// Grant Aid uses the £ step as its floor.
@@ -126,6 +127,12 @@ class GrantSubsidyAmountBodyState extends State<GrantSubsidyAmountBody> {
           CtGap.m,
           GrantSubsidyBelowMinimumWarning(
             text: l10n.diplomacy_treasuryBelowMinimum(_step),
+          ),
+        ],
+        if (_canSubmit) ...[
+          CtGap.m,
+          GrantSubsidyConfirmPreview(
+            lines: widget.previewLinesForAmount(_amount),
           ),
         ],
         CtGap.l,

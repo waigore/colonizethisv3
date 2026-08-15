@@ -180,6 +180,11 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_detail_currentRelation => 'Current relation';
 
   @override
+  String diplomacy_detail_formalAllies(String names) {
+    return 'Formal allies: $names';
+  }
+
+  @override
   String get diplomacy_detail_noDossier => 'No dossier evidence yet.';
 
   @override

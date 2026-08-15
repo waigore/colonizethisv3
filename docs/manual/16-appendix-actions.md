@@ -43,13 +43,13 @@ Most begin at `GAME30001` **Diplomacy** → select faction → choose an action 
 
 | Decree | Cost / key refusal | Result |
 |---|---|---|
-| Declare War | Must be at peace; may accompany an invasion. | War before Movement. |
+| Declare War | Must be at peace; may accompany an invasion. Confirm names other courts that may be called to defend or asked to intervene. | War before Movement. |
 | Offer Peace | Must be at war; target must accept. | Peace if accepted. |
 | Alliance | Great Power only; peace; no existing formal alliance. | Treaty if accepted. |
 | Break Alliance | Formal alliance required. `GAME30001` panel **Break Alliance** confirmation is immediate for the human player. | Treaty ends immediately; same-pair alliance/overture/aid/subsidy blocked until next turn. |
 | Establish Overture | `GAME30001`, or `MAP20001` Political **Establish Consulate** for a Consulate-gated Minor/Tribe province. One stage at a time; relation, treasury, target, and technology gates apply. | Target accepts/rejects in Diplomacy; pending Consulate may be cancelled from the same map control. |
-| Grant Aid | Embassy; positive £1,000 steps; sufficient treasury. `DIPL20001` **Grant or subsidy** dialog. | Transfer and relation effect in Diplomacy. |
-| Set Subsidy | Embassy; Minor/Tribe only; 5–20% in steps of 5. `DIPL20001`. | No treasury charge; active market/relation effect. |
+| Grant Aid | Embassy; positive £1,000 steps; sufficient treasury. `DIPL20001` **Grant or subsidy** dialog — **Submit** stages the pending transfer (Cost / Effect shown there; no second confirmation). | Transfer and relation effect in Diplomacy. |
+| Set Subsidy | Embassy; Minor/Tribe only; 5–20% in steps of 5. `DIPL20001` **Submit** stages the pending subsidy (no second confirmation). | No treasury charge; active market/relation effect. |
 | Boycott | Great Power target; own at least one colony; peace; no existing boycott. | Colonial trade embargo. |
 | Revoke Boycott | Active boycott required. | Ends embargo. |
 
@@ -101,6 +101,8 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/game/military-armies.md`
 - `SPEC/game/ships-and-naval.md`
 - `SPEC/game/diplomacy.md`
+- `SPEC/ui/diplomacy-panel.md`
+- `SPEC/ui/grant-or-subsidy-dialog.md`
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/military-units-army-management.md`
 - `SPEC/ui/move-army-dialog.md`
