@@ -13,6 +13,36 @@ import 'ai_parameter_victory_config_params_colonial.dart';
 final List<AiParameter>
 victoryConfigParamsMilitaryStallColonial = <AiParameter>[
   victoryConfigIntParam(
+    'kStalledOldWorldProvinceThreshold',
+    kStalledOldWorldProvinceThreshold,
+    'OW holdings at or below this count are treated as stalled expansion.',
+  ),
+  victoryConfigIntParam(
+    'kStalledDiplomacyGoalPenalty',
+    kStalledDiplomacyGoalPenalty,
+    'Diplomacy goal penalty while OW expansion is stalled.',
+  ),
+  victoryConfigIntParam(
+    'kStalledTradeGoalPenalty',
+    kStalledTradeGoalPenalty,
+    'Trade goal penalty while OW expansion is stalled.',
+  ),
+  victoryConfigIntParam(
+    'kStalledConquerGoalBonus',
+    kStalledConquerGoalBonus,
+    'Extra conquer goal weight while OW expansion is stalled.',
+  ),
+  victoryConfigIntParam(
+    'kStalledConquestArmyMovePasses',
+    kStalledConquestArmyMovePasses,
+    'Conquest army-move passes per turn while OW holdings are stalled.',
+  ),
+  victoryConfigIntParam(
+    'kStalledConquestFieldArmySplitCap',
+    kStalledConquestFieldArmySplitCap,
+    'Max field armies from Home Army splits while OW expansion is stalled.',
+  ),
+  victoryConfigIntParam(
     'kStalledMinRegimentCountWhenAtWar',
     kStalledMinRegimentCountWhenAtWar,
     'Regiment floor while stalled and at war.',

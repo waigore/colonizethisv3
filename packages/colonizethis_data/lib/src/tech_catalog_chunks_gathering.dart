@@ -2,8 +2,14 @@ import 'tech_catalog_cost.dart';
 import 'tech_definition.dart';
 import 'tech_ids.dart';
 
-void addTechCatalogChunk1(Map<String, TechDefinition> m) {
-  // --- Gathering (26) ---
+void addTechCatalogGathering(Map<String, TechDefinition> m) {
+  addTechCatalogGatheringEra1(m);
+  addTechCatalogGatheringEra2(m);
+  addTechCatalogGatheringEra3And4(m);
+}
+
+void addTechCatalogGatheringEra1(Map<String, TechDefinition> m) {
+  // --- Gathering era 1 (7) ---
   m[kTechIdCropRotation] = TechDefinition(
     id: kTechIdCropRotation,
     era: 1,
@@ -56,6 +62,10 @@ void addTechCatalogChunk1(Map<String, TechDefinition> m) {
     displayName: 'Coal Mining',
     prerequisiteIds: [kTechIdMineEngineering],
   );
+}
+
+void addTechCatalogGatheringEra2(Map<String, TechDefinition> m) {
+  // --- Gathering era 2 (8) ---
   m[kTechIdWindSawMill] = TechDefinition(
     id: kTechIdWindSawMill,
     era: 2,
@@ -120,6 +130,10 @@ void addTechCatalogChunk1(Map<String, TechDefinition> m) {
     displayName: 'Large Copper and Tin Mines',
     prerequisiteIds: [kTechIdCopperAndTinMining],
   );
+}
+
+void addTechCatalogGatheringEra3And4(Map<String, TechDefinition> m) {
+  // --- Gathering era 3–4 (11) ---
   m[kTechIdCircularSaw] = TechDefinition(
     id: kTechIdCircularSaw,
     era: 3,
@@ -168,9 +182,6 @@ void addTechCatalogChunk1(Map<String, TechDefinition> m) {
     displayName: 'Large Precious Stone Mines',
     prerequisiteIds: [kTechIdPreciousStoneMining, kTechIdUniversity],
   );
-}
-
-void addTechCatalogChunk2(Map<String, TechDefinition> m) {
   m[kTechIdExtractionOfPreciousMetals] = TechDefinition(
     id: kTechIdExtractionOfPreciousMetals,
     era: 3,
@@ -210,127 +221,5 @@ void addTechCatalogChunk2(Map<String, TechDefinition> m) {
     cost: techCatalogCostForTier(4),
     displayName: 'Efficient Extraction of Copper & Tin',
     prerequisiteIds: [kTechIdLargeCoalMines, kTechIdLargeCopperAndTinMines],
-  );
-
-  // --- New World (28) ---
-  m[kTechIdDiscoveryOfSugar] = TechDefinition(
-    id: kTechIdDiscoveryOfSugar,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Discovery of Sugar',
-    discoveryResourceIds: ['sugarCane'],
-  );
-  m[kTechIdSugarPlanting] = TechDefinition(
-    id: kTechIdSugarPlanting,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Sugar Planting',
-    prerequisiteIds: [kTechIdDiscoveryOfSugar],
-  );
-  m[kTechIdSugarRefining] = TechDefinition(
-    id: kTechIdSugarRefining,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Sugar Refining',
-    prerequisiteIds: [kTechIdDiscoveryOfSugar],
-  );
-  m[kTechIdLargeSugarPlantations] = TechDefinition(
-    id: kTechIdLargeSugarPlantations,
-    era: 2,
-    category: 'new-world',
-    cost: techCatalogCostForTier(2),
-    displayName: 'Large Sugar Plantations',
-    prerequisiteIds: [kTechIdSugarPlanting],
-  );
-  m[kTechIdSugarIndustry] = TechDefinition(
-    id: kTechIdSugarIndustry,
-    era: 3,
-    category: 'new-world',
-    cost: techCatalogCostForTier(3),
-    displayName: 'Sugar Industry',
-    prerequisiteIds: [kTechIdLargeSugarPlantations],
-  );
-  m[kTechIdDiscoveryOfTobacco] = TechDefinition(
-    id: kTechIdDiscoveryOfTobacco,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Discovery of Tobacco',
-    discoveryResourceIds: ['tobacco'],
-  );
-  m[kTechIdTobaccoPlanting] = TechDefinition(
-    id: kTechIdTobaccoPlanting,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Tobacco Planting',
-    prerequisiteIds: [kTechIdDiscoveryOfTobacco],
-  );
-  m[kTechIdCigarProduction] = TechDefinition(
-    id: kTechIdCigarProduction,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Cigar Production',
-    prerequisiteIds: [kTechIdDiscoveryOfTobacco],
-  );
-  m[kTechIdLargeTobaccoPlantations] = TechDefinition(
-    id: kTechIdLargeTobaccoPlantations,
-    era: 2,
-    category: 'new-world',
-    cost: techCatalogCostForTier(2),
-    displayName: 'Large Tobacco Plantations',
-    prerequisiteIds: [kTechIdTobaccoPlanting, kTechIdSeedDrill],
-  );
-  m[kTechIdTobaccoIndustry] = TechDefinition(
-    id: kTechIdTobaccoIndustry,
-    era: 3,
-    category: 'new-world',
-    cost: techCatalogCostForTier(3),
-    displayName: 'Tobacco Industry',
-    prerequisiteIds: [kTechIdEarlySteamEngine, kTechIdLargeTobaccoPlantations],
-  );
-  m[kTechIdDiscoveryOfCotton] = TechDefinition(
-    id: kTechIdDiscoveryOfCotton,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Discovery of Cotton',
-    discoveryResourceIds: ['cotton'],
-  );
-  m[kTechIdCottonPlanting] = TechDefinition(
-    id: kTechIdCottonPlanting,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Cotton Planting',
-    prerequisiteIds: [kTechIdDiscoveryOfCotton],
-  );
-  m[kTechIdCottonWeaving] = TechDefinition(
-    id: kTechIdCottonWeaving,
-    era: 1,
-    category: 'new-world',
-    cost: techCatalogCostForTier(1),
-    displayName: 'Cotton Weaving',
-    prerequisiteIds: [kTechIdDiscoveryOfCotton],
-  );
-  m[kTechIdLargeCottonPlantations] = TechDefinition(
-    id: kTechIdLargeCottonPlantations,
-    era: 2,
-    category: 'new-world',
-    cost: techCatalogCostForTier(2),
-    displayName: 'Large Cotton Plantations',
-    prerequisiteIds: [kTechIdCottonPlanting],
-  );
-  m[kTechIdCottonGin] = TechDefinition(
-    id: kTechIdCottonGin,
-    era: 3,
-    category: 'new-world',
-    cost: techCatalogCostForTier(3),
-    displayName: 'Cotton Gin',
-    prerequisiteIds: [kTechIdLargeCottonPlantations, kTechIdTrainedJourneymen],
   );
 }
