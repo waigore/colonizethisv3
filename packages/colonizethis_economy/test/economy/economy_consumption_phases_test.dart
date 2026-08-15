@@ -148,4 +148,32 @@ void main() {
       runFoodUnitsScenario(scenario);
     }, labelOf: (s) => s.label);
   });
+
+  group('worker upkeep helpers', () {
+    test('food per unit matches consumeWorkerFood constants', () {
+      expect(
+        workerFoodPerUnitForTier(WorkerTier.peasant),
+        kWorkerFoodPerPeasant,
+      );
+      expect(
+        workerFoodPerUnitForTier(WorkerTier.apprentice),
+        kWorkerFoodPerTrainedTier,
+      );
+      expect(
+        workerFoodPerUnitForTier(WorkerTier.master),
+        kWorkerFoodPerTrainedTier,
+      );
+    });
+
+    test('luxury ids match consumption allocation', () {
+      expect(workerLuxuryCommodityIdForTier(WorkerTier.peasant), isNull);
+      expect(workerLuxuryCommodityIdForTier(WorkerTier.apprentice), _sugarId);
+      expect(workerLuxuryCommodityIdForTier(WorkerTier.journeyman), 'cigars');
+      expect(workerLuxuryCommodityIdForTier(WorkerTier.master), 'furHats');
+    });
+
+    test('food commodity order is grain then meat', () {
+      expect(workerFoodCommodityIdsInConsumeOrder, [_grainId, _meatId]);
+    });
+  });
 }

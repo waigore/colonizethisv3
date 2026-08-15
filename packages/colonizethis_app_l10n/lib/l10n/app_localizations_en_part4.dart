@@ -417,6 +417,43 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get production_labourControlsSectionLabel => 'Labour Controls';
 
   @override
+  String production_labourCostMaterial(String name, int quantity) {
+    return '$name ×$quantity';
+  }
+
+  @override
+  String get production_labourCostPeasantConsume => '1 peasant';
+
+  @override
+  String production_labourUpkeepLabour(int n) {
+    return '$n labour / turn';
+  }
+
+  @override
+  String production_labourUpkeepFoodOr(String a, String b) {
+    return '$a or $b';
+  }
+
+  @override
+  String production_labourUpkeepFoodAnd(String a, String b) {
+    return '$a + $b';
+  }
+
+  @override
+  String production_labourRequires(String names) {
+    return 'Requires: $names';
+  }
+
+  @override
+  String get production_labourStaffsNextProduction =>
+      'New workers staff next Production';
+
+  @override
+  String production_labourAppendEnabledTooltip(String action, String timing) {
+    return '$action. $timing';
+  }
+
+  @override
   String production_workerCount(String name, int count) {
     return '$name: $count';
   }
