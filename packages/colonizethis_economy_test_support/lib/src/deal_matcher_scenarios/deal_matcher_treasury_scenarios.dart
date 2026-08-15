@@ -1,6 +1,5 @@
 // Table-driven DealMatcher scenarios (Refs #3836, #3939).
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
 

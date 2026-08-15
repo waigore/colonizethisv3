@@ -28,6 +28,7 @@ Widget wrapMainMenuForMinViewport({
     variant: variant,
     state: state,
     version: formatDebugAwareVersion('v1.0.0'),
+    onQuickStart: () {},
     onNewGame: () {},
     onLoadGame: () {},
     onSettings: () {},

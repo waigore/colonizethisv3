@@ -48,6 +48,7 @@ mixin AppEventHandlerScopeLifecycle
       bus: bus,
       navigatorKey: appNavigatorKey,
       dialogBuilders: dialogBuilders(),
+      extraActionHandlers: widget.extraActionHandlers,
       onShowSnackBar: showSnackBarForEvent,
     );
     handler!.bind();
@@ -71,7 +72,8 @@ mixin AppEventHandlerScopeLifecycle
   Widget build(BuildContext context) => widget.child;
 }
 
-mixin AppEventHandlerScopeDialogBuilders on ConsumerState<AppEventHandlerScope> {
+mixin AppEventHandlerScopeDialogBuilders
+    on ConsumerState<AppEventHandlerScope> {
   Map<String, DialogBuilder> dialogBuilders() {
     return {
       trainCiviliansDialogId: buildTrainCiviliansDialog,

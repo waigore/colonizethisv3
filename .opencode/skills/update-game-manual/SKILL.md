@@ -1,6 +1,6 @@
 ---
 name: update-game-manual
-description: Updates the ColonizeThis player game manual under docs/manual/ when player UX or gameplay changes—maps affected chapters via Sources footers, preserves vizier tone and player-angle framing, enforces chapter template and draft-marking. Use when SPEC/game, SPEC/ui, allowlisted SPEC/program files, orders, screens, or manual chapters change; when create-github-issue/plan-feature issues include manual ACs; or when the user asks to refresh the game manual.
+description: Updates the ColonizeThis player game manual under docs/manual/ when player UX or gameplay changes—maps affected chapters via Sources footers, preserves vizier tone and grade-12 reading level (UI-engineering and genre jargon banned), player-angle framing, chapter template, and draft-marking. Use when SPEC/game, SPEC/ui, allowlisted SPEC/program files, orders, screens, or manual chapters change; when create-github-issue/plan-feature issues include manual ACs; or when the user asks to refresh the game manual.
 ---
 
 # Update the player game manual (ColonizeThis)
@@ -21,7 +21,7 @@ Cursor copy: [`.cursor/skills/update-game-manual/SKILL.md`](../../../.cursor/ski
 
 1. List changed repo-relative SPEC paths.
 2. Map to chapters by **exact match** on `## Sources` bullets under `docs/manual/`.
-3. Update prose per style guide (player angle, tone, template, draft marking).
+3. Update prose per style guide (player angle, tone, grade-12 reading level, template, draft marking). The reading-level gate is a hard fail.
 4. Refresh Sources footers; complete the skill checklist in the Cursor SKILL.md.
 
 ## Output

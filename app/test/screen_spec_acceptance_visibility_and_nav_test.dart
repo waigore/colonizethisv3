@@ -18,10 +18,11 @@ void main() {
     'CtMainMenu — SPEC/ui/main-menu.md acceptance criteria (visibility and nav)',
     () {
       testWidgets(
-        'AC Visibility: displays New Game, Load Game, Settings, Quit',
+        'AC Visibility: displays Quick Start, New Game, Load Game, Settings, Quit',
         (WidgetTester tester) async {
           await tester.pumpWidget(
             buildScreenSpecMainMenu(
+              onQuickStart: () {},
               onNewGame: () {},
               onLoadGame: () {},
               onSettings: () {},
@@ -30,6 +31,11 @@ void main() {
           );
           await tester.pumpAndSettle();
 
+          expect(find.text('Quick Start'), findsOneWidget);
+          expect(
+            find.text('Play as England, turn 0, random map, five AI courts.'),
+            findsOneWidget,
+          );
           expect(find.text('New Game'), findsOneWidget);
           expect(find.text('Load Game'), findsOneWidget);
           expect(find.text('Settings'), findsOneWidget);
@@ -42,6 +48,7 @@ void main() {
       ) async {
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -60,6 +67,7 @@ void main() {
             buildScreenSpecMainMenu(
               resumeGameVisible: true,
               onResumeGame: () {},
+              onQuickStart: () {},
               onNewGame: () {},
               onLoadGame: () {},
               onSettings: () {},
@@ -80,6 +88,7 @@ void main() {
           buildScreenSpecMainMenu(
             resumeGameVisible: true,
             onResumeGame: () => called = true,
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -98,6 +107,7 @@ void main() {
       ) async {
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -116,6 +126,7 @@ void main() {
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
             state: MainMenuState.noSaves,
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () => loadCalled = true,
             onSettings: () {},
@@ -134,6 +145,7 @@ void main() {
       ) async {
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -156,6 +168,7 @@ void main() {
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
             state: MainMenuState.afterVictory,
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -170,12 +183,35 @@ void main() {
         );
       });
 
+      testWidgets('AC Navigation: tapping Quick Start invokes onQuickStart', (
+        WidgetTester tester,
+      ) async {
+        var quickStartCalled = false;
+        var newGameCalled = false;
+        await tester.pumpWidget(
+          buildScreenSpecMainMenu(
+            onQuickStart: () => quickStartCalled = true,
+            onNewGame: () => newGameCalled = true,
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Quick Start'));
+        await tester.pumpAndSettle();
+        expect(quickStartCalled, isTrue);
+        expect(newGameCalled, isFalse);
+      });
+
       testWidgets('AC Navigation: tapping New Game invokes onNewGame', (
         WidgetTester tester,
       ) async {
         var called = false;
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
+            onQuickStart: () {},
             onNewGame: () => called = true,
             onLoadGame: () {},
             onSettings: () {},
@@ -189,12 +225,30 @@ void main() {
         expect(called, isTrue);
       });
 
+      testWidgets('AC Layout: Quick Start sits above New Game', (
+        WidgetTester tester,
+      ) async {
+        await tester.pumpWidget(
+          buildScreenSpecMainMenu(
+            onNewGame: () {},
+            onLoadGame: () {},
+            onSettings: () {},
+            onQuit: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+        final quickDy = tester.getTopLeft(find.text('Quick Start')).dy;
+        final newDy = tester.getTopLeft(find.text('New Game')).dy;
+        expect(quickDy, lessThan(newDy));
+      });
+
       testWidgets('AC Navigation: tapping Load Game invokes onLoadGame', (
         WidgetTester tester,
       ) async {
         var called = false;
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () => called = true,
             onSettings: () {},
@@ -214,6 +268,7 @@ void main() {
         var called = false;
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () => called = true,
@@ -233,6 +288,7 @@ void main() {
         var called = false;
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -253,6 +309,7 @@ void main() {
         await tester.pumpWidget(
           buildScreenSpecMainMenu(
             variant: MainMenuVariant.pixelArt,
+            onQuickStart: () {},
             onNewGame: () => newGameCalled = true,
             onLoadGame: () {},
             onSettings: () {},
@@ -276,6 +333,7 @@ void main() {
             buildScreenSpecMainMenu(
               variant: MainMenuVariant.pixelArt,
               state: MainMenuState.noSaves,
+              onQuickStart: () {},
               onNewGame: () {},
               onLoadGame: () => loadCalled = true,
               onSettings: () {},

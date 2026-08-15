@@ -14,6 +14,7 @@ void main() {
   testWidgets('buildScreenSpecMainMenu hosts CtMainMenu', (tester) async {
     await tester.pumpWidget(
       buildScreenSpecMainMenu(
+        onQuickStart: () {},
         onNewGame: () {},
         onLoadGame: () {},
         onSettings: () {},

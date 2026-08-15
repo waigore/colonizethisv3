@@ -18,6 +18,7 @@ class MainMenuBodyContent extends StatelessWidget {
     required this.resumeGameVisible,
     required this.narrow,
     required this.version,
+    required this.onQuickStart,
     required this.onNewGame,
     required this.onResumeGame,
     required this.onLoadGame,
@@ -33,6 +34,7 @@ class MainMenuBodyContent extends StatelessWidget {
   final bool resumeGameVisible;
   final bool narrow;
   final String version;
+  final VoidCallback onQuickStart;
   final VoidCallback onNewGame;
   final VoidCallback? onResumeGame;
   final VoidCallback onLoadGame;
@@ -93,6 +95,22 @@ class MainMenuBodyContent extends StatelessWidget {
   Widget _buttonsRegion(BuildContext context) {
     final l10n = appL10n(context);
     final List<Widget> buttons = <Widget>[
+      MainMenuButton(
+        label: l10n.mainMenu_quickStart,
+        variant: variant,
+        narrow: narrow,
+        onPressed: onQuickStart,
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 6, bottom: 6),
+        child: Text(
+          l10n.mainMenu_quickStartHelper,
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: EditorialMonoclePalette.muted),
+        ),
+      ),
       MainMenuButton(
         label: l10n.mainMenu_newGame,
         variant: variant,

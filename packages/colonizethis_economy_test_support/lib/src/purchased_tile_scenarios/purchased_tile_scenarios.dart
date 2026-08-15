@@ -2,6 +2,5 @@
 
 export 'purchased_tile_index_scenarios.dart';
 export 'purchased_tile_index_test_support.dart';
-export 'purchased_tile_expectations.dart';
 export 'purchased_tile_riches_scenarios.dart';
 export 'purchased_tile_riches_test_support.dart';
