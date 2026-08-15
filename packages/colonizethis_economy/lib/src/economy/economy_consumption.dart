@@ -132,21 +132,21 @@ _allocateConsumption({
   final (s1, mastersWithLuxury) = assignWorkerLuxury(
     stockpile: current,
     foodFedCount: fed.fedMasters,
-    luxuryId: CommodityCatalog.furHats.id,
+    luxuryId: workerLuxuryCommodityIdForTier(WorkerTier.master)!,
   );
   current = s1;
 
   final (s2, journeymenWithLuxury) = assignWorkerLuxury(
     stockpile: current,
     foodFedCount: fed.fedJourneymen,
-    luxuryId: CommodityCatalog.cigars.id,
+    luxuryId: workerLuxuryCommodityIdForTier(WorkerTier.journeyman)!,
   );
   current = s2;
 
   final (s3, apprenticesWithLuxury) = assignWorkerLuxury(
     stockpile: current,
     foodFedCount: fed.fedApprentices,
-    luxuryId: CommodityCatalog.refinedSugar.id,
+    luxuryId: workerLuxuryCommodityIdForTier(WorkerTier.apprentice)!,
   );
   current = s3;
 

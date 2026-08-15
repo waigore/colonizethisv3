@@ -123,7 +123,9 @@ void main() {
         ),
       );
       await tester.tap(
-        find.bySemanticsLabel(productionLabourPlusVerb(WorkerTier.apprentice)),
+        find.byKey(
+          const ValueKey<String>('production_labour_plus_apprentices'),
+        ),
         warnIfMissed: false,
       );
       await pumpSyncFrames(tester);
@@ -160,7 +162,7 @@ void main() {
       );
     });
 
-    testWidgets('tier labels suffix unlocked/locked from techUnlocked map', (
+    testWidgets('tier labels omit unlock parentheticals and show gists', (
       WidgetTester tester,
     ) async {
       await pumpProductionLabourSection(
@@ -168,24 +170,24 @@ void main() {
         player: productionLabourSectionGpWithPool(peasants: 1),
       );
       expect(
-        find.text(
-          l10n.production_labourTierLabel(
-            productionLabourTierName(WorkerTier.peasant),
-            l10n.production_labourTierUnlocked,
-          ),
-        ),
+        find.text(productionLabourTierName(WorkerTier.peasant)),
+        findsOneWidget,
+      );
+      expect(find.textContaining('(unlocked)'), findsNothing);
+      expect(find.textContaining('(locked)'), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('production_labour_cost_peasants')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('production_labour_upkeep_peasants')),
         findsOneWidget,
       );
       for (final tier in productionLabourTrainedTiers) {
         expect(
-          find.text(
-            l10n.production_labourTierLabel(
-              productionLabourTierName(tier),
-              l10n.production_labourTierLocked,
-            ),
-          ),
+          find.byKey(ValueKey<String>('production_labour_requires_${tier.id}')),
           findsOneWidget,
-          reason: '${productionLabourTierName(tier)} must render (locked) suffix',
+          reason: '${tier.id} must show Requires: when tech-locked',
         );
       }
       await pumpProductionLabourSection(
@@ -199,13 +201,10 @@ void main() {
         ),
       );
       expect(
-        find.text(
-          l10n.production_labourTierLabel(
-            productionLabourTierName(WorkerTier.apprentice),
-            l10n.production_labourTierUnlocked,
-          ),
+        find.byKey(
+          const ValueKey<String>('production_labour_requires_apprentices'),
         ),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
@@ -262,7 +261,9 @@ void main() {
         player: productionLabourSectionGpWithPool(journeymen: 1),
       );
 
-      final disbandFinder = productionLabourDisbandFinder(WorkerTier.journeyman);
+      final disbandFinder = productionLabourDisbandFinder(
+        WorkerTier.journeyman,
+      );
       final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
       addTearDown(gesture.removePointer);
       await gesture.addPointer(location: Offset.zero);
@@ -294,21 +295,16 @@ void main() {
           ),
         );
 
-        Offset centreFor(WorkerTier tier, String semantic) {
+        Offset centreFor(WorkerTier tier, String keySuffix) {
           return tester.getCenter(
-            find.descendant(
-              of: find.byKey(productionLabourRowKey(tier)),
-              matching: find.bySemanticsLabel(semantic),
+            find.byKey(
+              ValueKey<String>('production_labour_${keySuffix}_${tier.id}'),
             ),
           );
         }
 
-        Offset minus(WorkerTier tier) => centreFor(
-          tier,
-          l10n.production_labourDequeueTier(productionLabourTierName(tier)),
-        );
-        Offset plus(WorkerTier tier) =>
-            centreFor(tier, productionLabourPlusVerb(tier));
+        Offset minus(WorkerTier tier) => centreFor(tier, 'minus');
+        Offset plus(WorkerTier tier) => centreFor(tier, 'plus');
 
         final peasantMinus = minus(WorkerTier.peasant);
         final peasantPlus = plus(WorkerTier.peasant);
