@@ -2,118 +2,98 @@
 
 ## Purpose
 
-Before the first Orders phase, you choose your court: which Great Power you are, who leads it, which rivals sit beside you, and whether the campaign begins at dawn (turn 0) or mid-century. Setup paints the world, auto-chooses capitals, and presents a short intro — then the map is yours. Getting this screen right shapes bonuses, AI temperaments, and how much infrastructure already exists when you take the throne.
+Before you choose your first actions on the map, you choose your court: which **Great Power** (playable nation) you are, who leads it, which rival courts sit beside you, and whether the campaign begins at turn 0 or later. Setup builds the world, chooses capitals for you, and may show a short intro — then the map is yours. This screen sets combat bonuses, how bold or cautious rival courts are, and how much is already built when you take the throne.
 
 ## How it is done
 
 ### Main menu → Quick Start
 
-1. The app shell is `SHEL10001` **Shell screen**; from it you reach `SHEL10002` **Main menu**.
-2. Tap **Quick Start** (above **New Game**). You play **England** at turn 0, with a **random** map and five AI courts. You do not open leader selection.
-3. You may see a short `SHEL30001` **Game initializing** screen before the map appears. It shows coarse progress. There is no form to fill; wait until it finishes. This is the same wait as after **Start** on New Game.
-4. You then reach `GAME10001`. The first time you enter this new campaign, `OVL10001` **Game start intro** may appear; dismiss it to play.
+1. From `SHEL10001` **Shell screen** you see `SHEL10002` **Main menu**.
+2. Tap **Quick Start** (the button above **New Game**; the small line under it says **Play as England, turn 0, random map, five AI courts.**). You do not open leader selection.
+3. You may see `SHEL30001` **Game initializing** — the same wait screen as after **New Game** **Start**, with no form to fill. It shows one step at a time: Generating Old World map, Generating New World map, Linking Old World and New World, Building the world, Saving game.
+4. When it finishes you arrive on `GAME10001` **Game screen**. The first time this campaign opens in the session, `OVL10001` **Game start intro** may appear; tap **I shall.** to continue.
 
 ### Main menu → New Game
 
-1. The app shell is `SHEL10001` **Shell screen**; from it you reach `SHEL10002` **Main menu**. Tap **New Game**.
-2. The menu opens `DLG10001` **New game leader selection**. Nothing in the campaign changes until you confirm **Start**.
-3. Configure slots, options, and seed as below, then **Start**. Cancel returns you to the menu without creating a game.
-4. Setup runs (world generation, ownership, capitals, naming, optional advanced-start bootstrap). While waiting, `SHEL30001` **Game initializing** shows coarse progress (creating maps, building the world, saving). You may see a short 'please wait' screen before the map appears — there is no form to fill; wait until it finishes.
-5. You then reach `GAME10001`. The first time you enter this new campaign, `OVL10001` **Game start intro** may appear; dismiss it to play. The app remembers that dismissal for this campaign so the intro does not loop every resume.
+1. On `SHEL10002` **Main menu**, tap **New Game**.
+2. The menu opens `DLG10001` **New game leader selection**. Nothing is created until you tap **Start**. **Cancel** returns you to the menu with no new campaign.
+3. After **Start**, `SHEL30001` **Game initializing** shows one step at a time (Generating Old World map, Generating New World map, Linking Old World and New World, Building the world, Saving game). You cannot fill a form or cancel while it runs.
+4. When it finishes you arrive on `GAME10001` **Game screen**. The first time this campaign opens in the session, `OVL10001` **Game start intro** may appear; tap **I shall.**
+5. If setup fails, an error dialog offers **Retry** and **Close**. **Retry** with seed **0** still rolls a new random world. **Retry** with a non-zero seed tries that seed plus one for each failed try. **Close** returns you to the menu with no campaign.
 
 ### Leader selection (`DLG10001`) — step by step
 
-Default product flow uses **six Great Power slots**. Slot **0** is the **human** slot; slots **1–5** are **AI** (the dialog does not currently expose flipping human/AI indices — that default matches setup config).
+The dialog has **six** slots. **Slot 1** is yours (it shows **YOU**). **Slots 2–6** are rival courts. You cannot switch which slot is yours. For each slot, pick a **nation** (each Great Power only once) and a **Leader**. If two slots share a nation, those nation menus get a red border and **Start** stays off. Leaders stay fixed for the whole campaign.
 
-For each slot:
+On **Slots 2–6** only, an **AI Profile** menu sits under the nation and leader. The printed default is **Normal**. Other named profiles, when listed, change how bold or cautious that rival court is — not how you win. **Slot 1** has no **AI Profile** menu.
 
-1. Choose the **nation** (Great Power id). Nations must be unique across slots; duplicates disable Start and highlight offending dropdowns.
-2. Choose a **leader** variant for that nation. Leaders are fixed for the whole campaign (no mid-game change).
-3. For **AI slots only**, optionally choose an **AI Profile**: `Normal` or a blessed profile name. Blessed profiles tune personality parameters for that GP; missing/unknown profiles fall back to normal AI at runtime.
+Global options on the same dialog:
 
-Global options on the same dialog (when enabled by config):
+- **Infinite mode (no victory condition)** — the helper says **The game will continue indefinitely** (detail in Chapters 1 and 15).
+- **Terrain variation** — printed as a percent; helper **0% flat — 100% extreme** (default 50%).
+- **Game seed** — helper **Enter 0 for a random seed**; the field opens already filled. **0** means a random world. A non-zero seed builds that same world again.
+- **Advanced start** — printed choices **None (Turn 0)**, **50 Turns In (1598)**, **100 Turns In (1698)**. When the control is greyed out, the helper reads **Advanced start requires the standard six-power campaign profile.** A greyed-out control still begins at turn 0.
 
-- **Infinite mode** toggle — bypasses the calendar campaign halt (see Chapter 1 / 15).
-- **Terrain variation** slider — affects generation knobs passed into setup.
-- **Map seed** — non-zero uses that seed; zero/missing derives from time at generation.
-- **Advanced start** dropdown — interactive only when the locked full-init profile is active; otherwise shown disabled. Presets: **none** (turn 0), **turns50** (~1598), **turns100** (~1698). Advanced starts bootstrap tech, economy, and (at higher tier) New World presence per `SPEC/game/advanced-starts.md`.
-
-**Start** stays disabled while any slot is empty, duplicated, or has an invalid leader variant.
+**Start** stays off while any slot is empty, two slots share a nation, or a slot has no valid leader.
 
 ### Leader bonuses (what you are choosing)
 
-Leaders grant **land combat** modifiers only (not naval, not economy/research):
-
-| Leader pattern | Land combat effect |
-|----------------|--------------------|
-| Napoleon (key/substring) | +25% melee strength |
-| Frederick (key/substring) | +15% melee strength |
-| Reserve / unknown | No bonus |
-
-Both auto-resolve and quick battle apply the same lookup for attacker and defender sides.
+A leader whose name includes **Napoleon** adds +25% melee strength in land battles. **Frederick** adds +15%. Other leaders add none. The bonus applies in land fighting (including Quick Battle). It does not help fleets, workshops, or research.
 
 ### Capital auto-choice (what the game does for you)
 
-After provinces are assigned, each Great Power receives an **auto-chosen capital**: a **sea-bound** province plus capital tile, with capital ports and initial roads placed per capital rules. **Current product:** there is **no** in-game UI to confirm or override that choice after setup. Minor Nations and Tribes get capitals at setup without player choice. Province and capital **names** come from the naming ruleset.
+After provinces are assigned, each Great Power receives an auto-chosen capital: a province that touches the sea, plus a capital town tile, with ports and the first roads placed for you. There is **no** in-game screen to confirm or change that choice after setup. **Minor Nations** (smaller Old World countries) and **Tribes** (New World peoples) also get capitals at setup without your choice.
 
-Setup places each capital tile on **plains** when the selection rules allow it — within each candidate class, plains tiles are preferred before other terrain. If the winning site is not plains (including when no plains exists among eligible candidates), setup **converts that selected tile to plains** and clears any resource or extraction improvement on it. The same plains preference and convert-if-needed rule applies to every province **town** tile (including neutral provinces without an owner): towns anchor on arable ground so roads and early extraction can grow from a predictable spine.
+Setup prefers **plains** for each capital tile. If the chosen tile is not plains, setup turns that tile into plains and clears any resource or improvement that was on it. The same plains preference applies to every province town tile (including unowned provinces): towns sit on farmland so grain and roads can start there.
 
-### Advanced start bootstrap (prospecting and development)
+Places you will see on the map are named during setup. Chapter 3 explains how `MAP20001` **Province sea-zone overlay** shows those names.
 
-When you pick **turns50** or **turns100** on the locked profile, setup runs a mid-century bootstrap after world generation — tech, treasury, civilians, fleets, diplomacy, and (at 100-turn) New World colonization — before your first Orders phase.
+### Advanced start (what you receive)
 
-**Bootstrap prospecting** is a dedicated setup pass that runs **after** any 100-turn NW colonization assigns ownership and **before** the improvements-and-roads pass:
+Choosing **50 Turns In (1598)** or **100 Turns In (1698)** starts you later, with more treasury, workers, known technology, civilians, and (at 100 turns) New World land already held. Some owned minerals are already known, so you did not send an Explorer for them. Seeing New World coasts is not the same as knowing minerals. Chapter 4 covers explore and prospect during play.
 
-1. For each Great Power, setup collects **prospect-required mineral tiles** in provinces you **own** at that moment into **one combined pool** per GP (not separate per region).
-2. Setup marks a **tier fraction** of that pool as already prospected in your `playerProspectedTiles` record:
-   - **turns50:** at least **50%** of prospect-required minerals in your combined **Old World owned** pool.
-   - **turns100:** at least **75%** in your combined **Old World + New World owned** pool (NW minerals count only after colonization assigns those provinces to you).
-3. **Minor nations** receive the same tier fraction on minerals in their **OW-owned** provinces; those entries are recorded in buyer Great Powers' prospected sets (round-robin assignment).
-4. **Development** (improvement level 1 and roads on developable tiles) runs **after** prospecting so prospected minerals are eligible alongside grain, timber, wool, and other non-mineral resources.
+What you start with on the usual six-nation campaign:
 
-**What this is not:**
+- **50 Turns In (1598):** turn 50; about **20,000** treasury; **16** peasant workers; **23** known technologies; a consulate (first diplomatic office) with each Old World minor nation; no New World land owned yet. At least **half** of the minerals in land you already own (Old World) that would need an Explorer to identify are already known. About **a quarter** of owned land that can take farms, mines, and workshops is already improved with roads.
+- **100 Turns In (1698):** turn 100; about **40,000** treasury; **16** peasants and **4** apprentices; **45** known technologies; an embassy (a stronger diplomatic office) with each Old World minor nation and with tribes you have met; **six** New World provinces per Great Power. At least **three-quarters** of those same minerals in land you own (Old World and New World) are already known. About **half** of owned land that can take farms, mines, and workshops is already improved with roads.
 
-- **NW reveal** (contiguous flood-fill visibility from the warp entry) is separate — seeing New World coasts does **not** prospect minerals for you.
-- Bootstrap prospecting is **not** Explorer **prospect** work during play. Minerals you already know on owned tiles at turn 50 or 100 may have been marked at setup, not by an Explorer you trained. Chapter 4 **Charting the Unknown** covers in-game explore and prospect orders.
-
-### Naming and identity
-
-Places you will see in the UI are named during setup, but their **identity** remains region-scoped (`regionId|localId`). Chapter 3 explains why that matters when the overlay titles a province.
+Minor nations already know a share of minerals in their **own** Old World provinces (the same half / three-quarters rule). Separately, Great Powers may already have bought and improved some minor-nation land, taking turns around the table. Those two facts are not the same thing.
 
 ## Counsel
 
-**Counsel.** Hark, my liege: pick a leader for the wars you expect, not for vanity — the bonus never feeds your stockpile.
+**Counsel.** Hark, my liege: pick a leader for the wars you expect, not for vanity — the bonus never fills your storehouses.
 
-**Counsel.** Hark, my liege: capitals and towns are rooted on **plains** — arable ground where grain, roads, and your first extraction spine can take hold. A fortress on barren rock is a crown without a harvest.
+**Counsel.** Hark, my liege: capitals and towns sit on **plains** so grain and roads can start there.
 
-**Tip.** If you want a longer campaign past 1800, enable Infinite mode here; you cannot flip it mid-reign.
+**Tip.** If you want a longer campaign past 1800, enable **Infinite mode (no victory condition)** here; you cannot flip it mid-reign.
 
-**Warning.** Advanced starts assume the locked full-init profile. On atypical configs the control is inert — do not assume mid-game infrastructure appeared if Start ran with advanced start disabled.
+**Warning.** If **Advanced start** is greyed out, you still begin at turn 0. Do not expect later-year treasury, workers, or New World land from that Start.
 
-**Tip.** Do not confuse New World **visibility** with mineral **prospecting** on advanced starts — flood-fill reveal opens the map; bootstrap prospecting marks owned minerals before Builders improve them.
+**Tip.** New World **visibility** is not the same as already-known minerals. Seeing a coast does not mean you already know the ore under it.
 
 ## The other courts
 
-AI Great Powers receive leaders and optional blessed profiles from the same dialog. Their planners still obey the same order and diplomacy rules; profiles bias temperament and priorities (`SPEC/ai/ai-personalities.md`, `SPEC/ai/ai-profile-overrides.md`), not alternate victory conditions. Fully-AI observer games are a setup tool path (empty human slot set) — the standard New Game flow keeps you as slot 0.
+Rival Great Powers receive a leader from the same dialog, and you may give them an **AI Profile**. They issue the same kinds of actions you do. A leader and profile change how bold or cautious they are — not how you win. The usual **New Game** / **Quick Start** path keeps **Slot 1** as you.
 
 ## Consequences
 
 - A strong combat leader shortens some land wars and does nothing for fleets or factories.
-- Advanced start compresses early exploration and tech catch-up; rivals begin closer to mid-game posture.
-- Bootstrap prospecting on advanced starts means some owned minerals are already known when you take the throne — that knowledge came from setup, not from Explorer turns you issued.
-- Auto-chosen capitals fix your first ports and road spine — connectivity strategy starts from that seed, not from a blank map.
+- Starting later skips some early exploring and research; rival courts also begin further along.
+- On an advanced start, some owned minerals are already known when you take the throne — that knowledge came from setup, not from Explorer work you ordered.
+- Auto-chosen capitals fix your first ports and roads — later road-and-port links start from that place, not from a blank map.
 - Capitals and province towns sit on **plains** tiles at setup; a converted site may have lost a surface resource that once sat on that tile.
 
 ## Acceptance criteria for this chapter
 
-- [ ] Documents shell `SHEL10001` → Main menu `SHEL10002` → **Quick Start** (default campaign) or **New Game** → `DLG10001` → setup → `GAME10001` / `OVL10001`.
-- [ ] Explains human slot 0 vs AI slots, nation uniqueness, leader pick, AI profiles.
-- [ ] Covers leader combat bonuses (Napoleon / Frederick / none).
-- [ ] Covers advanced start presets and when the control is disabled.
-- [ ] Explains advanced-start bootstrap prospecting (tier fractions, OW vs NW owned scope, prospect-before-development order) and distinguishes it from NW reveal and Explorer prospect work (cross-ref Ch. 4).
+- [ ] Documents `SHEL10001` **Shell screen** → `SHEL10002` **Main menu** → **Quick Start** (default campaign) or **New Game** → `DLG10001` **New game leader selection** → setup → `GAME10001` **Game screen** / `OVL10001` **Game start intro** (**I shall.**).
+- [ ] Explains printed **Slot 1** **YOU** vs **Slots 2–6**, nation uniqueness, leader pick, **AI Profile** on rival slots only.
+- [ ] Covers leader combat bonuses (Napoleon / Frederick / none) in land fighting, including Quick Battle.
+- [ ] Covers advanced start printed choices **None (Turn 0)**, **50 Turns In (1598)**, **100 Turns In (1698)** and the greyed-out helper.
+- [ ] Explains advanced-start player-visible posture (treasury, workers, techs, consulates vs embassies, New World land at 100 turns, half / three-quarters of owned minerals already known) and distinguishes that knowledge from seeing New World coasts and from Explorer prospect work (cross-ref Ch. 4).
+- [ ] Separates minor-nation own-province mineral knowledge from Great Powers buying and improving some minor tiles.
 - [ ] States capital is auto-chosen (sea-bound) with no post-setup override UI.
 - [ ] Explains capital and province town plains placement (prefer plains; convert selected tile and clear resource if needed).
-- [ ] Documents `SHEL30001` Game initializing as a real initializing wait screen (no draft marker).
+- [ ] Documents `SHEL30001` Game initializing as a real initializing wait screen (no draft marker), including the five steps and the error dialog (**Retry** / **Close**).
 - [ ] Sources match the chapter coverage map.
 
 ## Sources
