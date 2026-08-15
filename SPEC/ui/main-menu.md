@@ -16,6 +16,7 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 | `variant` | `plain` \| `pixelArt` | Both variants use the **Ct-* component catalog** (CtNinePatchButton, CtScreenShell). **plain:** theme scaffold color only (no background illustration, no compass rose, no fleur-de-lis, no brass divider, no scroll brackets — see the **Variant rendering** table below). **pixelArt:** dark editorial-monocle layout per mockup `SPEC/ui/mockups/SHEL10002-main-menu.html` (dark SVG collage, CtCompassRose emblem, fleur-de-lis-flanked title, CtBrassDivider, wood-panel `CtNinePatchButton`, scroll brackets, footer Quit chip). |
 | `state` | `default` \| `afterVictory` \| `noSaves` | **default:** no subtitle; Load Game enabled. **afterVictory:** show subtitle "Congratulations, you won your last game." **noSaves:** legacy Widgetbook variant; Load Game stays **enabled** (empty load dialog) on the product path. |
 | `version` | string | Version text shown in footer (e.g. `v1.0.0`). The shell passes this through the shared debug-aware formatter so `CT_DEBUG_CONSOLE=true` renders `v1.0.0 (debug)`. |
+| `onQuickStart` | callback | Invoked when user taps Quick Start. Always enabled. |
 | `onNewGame` | callback | Invoked when user taps New Game. |
 | `resumeGameVisible` | bool | When true, show **Resume game** between New Game and Load Game. When false, omit the control entirely (not disabled). |
 | `onResumeGame` | callback | Invoked when user taps **Resume game** (only when `resumeGameVisible` is true). |
@@ -34,14 +35,15 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 ## How this spec satisfies UXD 03a
 
-**User stories.** The main menu supports: single tap **New Game** (one action to start fresh); **Load Game** (continue or pick a save); **Settings** (open from menu); **Quit** (exit app). Return-from-in-game is satisfied by the shell/navigation: pause and Victory Screen (03l) navigate back to this screen, which is the destination.
+**User stories.** The main menu supports: single tap **Quick Start** (one action to begin a default campaign with a random map); **New Game** (open leader selection to customize nations, leaders, seed, and options); **Load Game** (continue or pick a save); **Settings** (open from menu); **Quit** (exit app). Return-from-in-game is satisfied by the shell/navigation: pause and Victory Screen (03l) navigate back to this screen, which is the destination.
 
 **Acceptance criteria (Given–When–Then).**
 
 Visibility:
 
 - Given the app shell has finished initialisation and any splash screen has dismissed, when the shell mounts the first user-facing screen, then the UI layer renders `CtMainMenu` as that first screen.
-- Given `CtMainMenu` is mounted in any `state` (`default`, `afterVictory`, `noSaves`), when the user views the menu, then the UI layer displays the **New Game**, **Load Game**, **Settings**, and **Quit** controls.
+- Given `CtMainMenu` is mounted in any `state` (`default`, `afterVictory`, `noSaves`), when the user views the menu, then the UI layer displays the **Quick Start**, **New Game**, **Load Game**, **Settings**, and **Quit** controls.
+- Given the button column builds, when the user views the actions, then **Quick Start** is immediately above **New Game**, is always enabled, and a muted helper line under Quick Start states that the player is England on turn 0 with a random map and five AI courts.
 
 Resume game visibility:
 
@@ -58,6 +60,8 @@ Load Game state:
 
 Navigation (widget exposes callbacks; shell performs routing):
 
+- Given `CtMainMenu` is rendered with non-null `onQuickStart`, when the user taps **Quick Start**, then the widget invokes `onQuickStart` and performs no routing inside the widget itself.
+- Given the shell has wired `onQuickStart`, when `onQuickStart` fires, then the shell emits `QuickStartNewGameEvent` (a typed `UIActionEvent`) and does **not** emit `OpenDialogEvent(id: 'new_game_leader_selection')`, does **not** call `runNewGameSetupAfterLeaderPick`, and does **not** read `appNavigatorKey`. The composition-root handler (injected via `AppEventHandlerScope.extraActionHandlers`) then runs `runNewGameSetupAfterLeaderPick` with a `GameSetupConfig` identical to `GameSetupConfig.defaultConfig` except `seed == 0` (time-derived random world). `CT_E2E` / `CT_E2E_LOCKED_FULL_INIT` templates are the same shared resolver as DLG10001 Start, still with `seed == 0`.
 - Given `CtMainMenu` is rendered with non-null `onNewGame`, when the user taps **New Game**, then the widget invokes `onNewGame` and performs no routing inside the widget itself.
 - Given the shell has wired `onNewGame`, when `onNewGame` fires, then the shell emits `OpenDialogEvent(id: 'new_game_leader_selection')` to mount `NewGameLeaderSelectionDialog` per [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md), then on confirm navigates to [Game Initializing](game-initializing.md) and on initialisation complete to [Empire overview](empire-overview.md).
 - Given `CtMainMenu` is rendered with `resumeGameVisible: true` and a non-null `onResumeGame`, when the user taps **Resume game**, then the widget invokes `onResumeGame`.
@@ -97,7 +101,7 @@ Variant rendering (mockup-aligned dark editorial-monocle):
 
 **Shell behaviour.** Shell responsibility (first screen after splash, callback wiring, clear in-memory game state on return from game) is defined in the dedicated UI spec [shell-screen.md](shell-screen.md) and the app TDD: [ctdev-app.md](../program/ctdev-app.md) (app screens and navigation). For Flutter shell and route ownership see [repo-and-packages.md](../program/repo-and-packages.md).
 
-**Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onResumeGame` (when resume is shown), `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
+**Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onQuickStart`, `onNewGame`, `onResumeGame` (when resume is shown), `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
 
 **Automated tests.** Widget tests in `app/test/screen_spec_acceptance_visibility_and_nav_test.dart` (visibility, Load Game state/tooltip, Resume, navigation) and `app/test/screen_spec_acceptance_pixel_art_chrome_test.dart` (pixelArt chrome, scroll brackets) assert the acceptance criteria above. Shared frames live in `app/test/screen_spec_acceptance_test_support.dart`. Responsive ≤430 dp ACs live in `app/test/screen_spec_acceptance_main_menu_responsive_test.dart`. Run: `flutter test test/screen_spec_acceptance_visibility_and_nav_test.dart test/screen_spec_acceptance_pixel_art_chrome_test.dart test/screen_spec_acceptance_main_menu_responsive_test.dart` from the app package.
 
@@ -123,9 +127,11 @@ Positions, layout, and hierarchy (per UXD 03a; mockup `SPEC/ui/mockups/SHEL10002
 |                                                      |        --muted italic)
 |                ====<>====                            |       CtBrassDivider
 |                                                      |   <- buttons_region
-|   |  [ New Game ]                  |                 |       (wood-panel buttons,
-|   |  [ Resume Game ] (if auto-save)|                 |        scroll brackets at
-|   |  [ Load Game ]   (or tooltip)  |                 |        left/right gutters)
+|   |  [ Quick Start ]               |                 |       (wood-panel buttons,
+|   |  Play as England, turn 0, …   |                 |        muted helper)
+|   |  [ New Game ]                  |                 |        scroll brackets at
+|   |  [ Resume Game ] (if auto-save)|                 |        left/right gutters)
+|   |  [ Load Game ]   (or tooltip)  |                 |
 |   |  [ Settings ]                  |                 |
 |                                                      |
 |                                       v3.0.0  [Quit] |   <- footer_region
@@ -175,6 +181,7 @@ For both variants the widget contract (`variant`, `state`, `version`, callbacks,
 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
+| Quick Start | Always | `onQuickStart` | Shell emits `QuickStartNewGameEvent`; composition-root handler runs default setup (`seed == 0`). |
 | New Game | Always | `onNewGame` | Shell opens leader-selection dialog. |
 | Resume game | `resumeGameVisible == true` | `onResumeGame` | Shell loads auto-save and navigates to game. |
 | Load Game | Saves exist | `onLoadGame` | Shell loads game or no-op when disabled. |

@@ -190,6 +190,7 @@ void main() {
               variant: MainMenuVariant.plain,
               state: MainMenuState.default_,
               version: formatDebugAwareVersion('v1.0.0'),
+              onQuickStart: () {},
               onNewGame: () {},
               onLoadGame: () {},
               onSettings: () {},

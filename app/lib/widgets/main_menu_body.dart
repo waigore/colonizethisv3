@@ -14,6 +14,7 @@ class MainMenuBody extends StatelessWidget {
     required this.loadGameEnabled,
     required this.resumeGameVisible,
     required this.version,
+    required this.onQuickStart,
     required this.onNewGame,
     required this.onResumeGame,
     required this.onLoadGame,
@@ -28,6 +29,7 @@ class MainMenuBody extends StatelessWidget {
   final bool loadGameEnabled;
   final bool resumeGameVisible;
   final String version;
+  final VoidCallback onQuickStart;
   final VoidCallback onNewGame;
   final VoidCallback? onResumeGame;
   final VoidCallback onLoadGame;
@@ -58,6 +60,7 @@ class MainMenuBody extends StatelessWidget {
                     resumeGameVisible: resumeGameVisible,
                     narrow: narrow,
                     version: version,
+                    onQuickStart: onQuickStart,
                     onNewGame: onNewGame,
                     onResumeGame: onResumeGame,
                     onLoadGame: onLoadGame,

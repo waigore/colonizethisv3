@@ -1,7 +1,48 @@
 // dart format off
 // Table-driven FirstRightProfit scenarios (Refs #3856, #3939 slices 14 / 45).
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'frr_profit_expectations.dart';
+import 'package:colonizethis_test/test.dart';
+/// Data-driven expectations for [computeFirstRightProfitRate] scenario rows.
+class FrrProfitRateExpectation {
+  const FrrProfitRateExpectation({required this.expected});
+  final double expected;
+}
+void assertFrrProfitRateExpectation(double result, FrrProfitRateExpectation expectation) {
+  final expected = expectation.expected;
+  if (expected == kFirstRightMaxProfitRate || expected == 0.0) {
+    expect(result, expected);
+  } else {
+    expect(result, closeTo(expected, 1e-12));
+  }
+}
+/// Data-driven expectations for [computeFirstRightProfit] scenario rows.
+class FrrProfitExpectation {
+  const FrrProfitExpectation({this.expectZero = false, this.profitRate, this.profitTreasury});
+  final bool expectZero;
+  final double? profitRate;
+  final double? profitTreasury;
+}
+void assertFrrProfitExpectation(FirstRightProfit result, FrrProfitExpectation expectation) {
+  if (expectation.expectZero) {
+    expect(result, FirstRightProfit.zero);
+    expect(result.profitTreasury, 0.0);
+    return;
+  }
+  if (expectation.profitRate != null) {
+    expect(result.profitRate, closeTo(expectation.profitRate!, 1e-12));
+  }
+  if (expectation.profitTreasury != null) {
+    expect(result.profitTreasury, closeTo(expectation.profitTreasury!, 1e-12));
+  }
+}
+/// Data-driven expectations for [computeEmbassyKickback] scenario rows.
+class EmbassyKickbackExpectation {
+  const EmbassyKickbackExpectation({required this.expected});
+  final double expected;
+}
+void assertEmbassyKickbackExpectation(double result, EmbassyKickbackExpectation expectation) {
+  expect(result, closeTo(expectation.expected, 1e-12));
+}
 /// One row for [computeFirstRightProfitRate] scenario tables.
 typedef FirstRightProfitRateScenario = ({String label, int score, void Function(double result) verify, String? refs});
 FirstRightProfitRateScenario frrProfitRateRow(String label, int score, double expected) => (label: label, score: score, refs: null, verify: (result) => assertFrrProfitRateExpectation(result, FrrProfitRateExpectation(expected: expected)));

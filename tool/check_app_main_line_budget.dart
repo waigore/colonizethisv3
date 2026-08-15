@@ -75,9 +75,10 @@ const _packageName = 'colonizethis_app';
 // raised for DIPL20001 grant/subsidy Submit-commit + Deal Book player copy
 // merge headroom (Refs #4415, #4414; measured 78_020).
 // raised for MAP20001 Naval Blockade/Beachhead overlay (Refs #4413).
+// raised for SHEL10002 Quick Start (Refs #4416; measured 77_621).
 // raised for Declare War named third-party courts on confirm (Refs #4409; measured 78_068).
-// raised for combined #4414+#4415+#4413+#4409 merge headroom (measured 78_478).
-const _maxMainLines = 78500;
+// raised for combined #4414+#4415+#4413+#4416+#4409 merge headroom (measured 78_609).
+const _maxMainLines = 78700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
