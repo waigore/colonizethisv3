@@ -4,6 +4,7 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'diplomacy_declare_war_third_party_preview.dart';
 import 'diplomacy_relation_constants.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_resolver.dart';
@@ -17,7 +18,14 @@ List<String> buildDiplomacyConfirmPreviewLines({
 }) {
   switch (order.type) {
     case DiplomaticOrderType.declareWar:
-      return _declareWar(targetDisplayName);
+      return [
+        ..._declareWar(targetDisplayName),
+        ...declareWarThirdPartyPreviewLines(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          targetFactionId: order.targetFactionId,
+        ),
+      ];
     case DiplomaticOrderType.offerPeace:
       return _offerPeace(targetDisplayName);
     case DiplomaticOrderType.alliance:
@@ -39,9 +47,15 @@ List<String> buildDiplomacyConfirmPreviewLines({
     case DiplomaticOrderType.revokeBoycott:
       return _revokeBoycott(targetDisplayName);
     case DiplomaticOrderType.grantAid:
-      return _grantAid(targetDisplayName, order.amount ?? grantAidDefaultAmount);
+      return _grantAid(
+        targetDisplayName,
+        order.amount ?? grantAidDefaultAmount,
+      );
     case DiplomaticOrderType.setSubsidy:
-      return _setSubsidy(targetDisplayName, order.amount ?? kSubsidyPercentDefault);
+      return _setSubsidy(
+        targetDisplayName,
+        order.amount ?? kSubsidyPercentDefault,
+      );
   }
 }
 
@@ -50,13 +64,12 @@ String buildDiplomacyConfirmPreviewMessage({
   required Game game,
   required String humanPlayerId,
   required String targetDisplayName,
-}) =>
-    buildDiplomacyConfirmPreviewLines(
-      order: order,
-      game: game,
-      humanPlayerId: humanPlayerId,
-      targetDisplayName: targetDisplayName,
-    ).join('\n');
+}) => buildDiplomacyConfirmPreviewLines(
+  order: order,
+  game: game,
+  humanPlayerId: humanPlayerId,
+  targetDisplayName: targetDisplayName,
+).join('\n');
 
 List<String> _declareWar(String target) => [
   'Effect: War with $target begins when this turn resolves. You may move and fight against them before then only where rules already allow.',

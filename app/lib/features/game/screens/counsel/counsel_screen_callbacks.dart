@@ -7,7 +7,8 @@ import 'package:colonizethis_logic/industry_counsel_api.dart'
     show TradeCounselBookResult;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart' show OrderEngine;
-import 'package:colonizethis_turn/colonizethis_turn.dart' show projectOrderEffects;
+import 'package:colonizethis_turn/colonizethis_turn.dart'
+    show projectOrderEffects;
 import 'package:flutter/material.dart';
 
 import '../../../../config/routes.dart';
@@ -184,6 +185,9 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
                 context,
                 l10n,
                 ownerLabel,
+                game: displayGame,
+                humanPlayerId: humanPlayerId,
+                targetFactionId: destination.ownerFactionId,
               );
               if (ok != true || !context.mounted) return;
             }
@@ -229,9 +233,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
             );
             if (workOrder == null) {
               bus.emit(
-                ShowSnackBarEvent(
-                  message: l10n.developmentCounsel_agreeFailed,
-                ),
+                ShowSnackBarEvent(message: l10n.developmentCounsel_agreeFailed),
               );
               return;
             }

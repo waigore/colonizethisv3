@@ -254,6 +254,60 @@ ProviderScope _diplomacyDetailScreenProviderScopeAlliance() {
   );
 }
 
+ProviderScope _diplomacyDetailScreenProviderScopeFormalAllies() {
+  const humanId = 'gp_human';
+  const rivalId = 'gp_rival';
+  const allyId = 'gp_france';
+  final game = Game(
+    id: 'wb_diplomacy_detail_formal_allies',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 6),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    turnTimeMapping: TurnTimeMapping.gdd01,
+    players: [
+      Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
+      Player(id: rivalId, displayName: 'Spain', isHuman: false, treasury: 0),
+      Player(id: allyId, displayName: 'France', isHuman: false, treasury: 0),
+    ],
+    diplomacyRelations: [
+      DiplomacyRelation(
+        factionId1: humanId,
+        factionId2: rivalId,
+        score: 40,
+        state: RelationState.atPeace,
+      ),
+      DiplomacyRelation(
+        factionId1: rivalId,
+        factionId2: allyId,
+        formalAlliance: true,
+      ),
+    ],
+    diplomaticHistoryEvents: const [],
+    dossierEvidenceEntries: const [],
+  );
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+    ],
+    child: _diplomacyDetailEditorialApp(
+      DiplomacyDetailScreen(
+        game: game,
+        humanPlayerId: humanId,
+        factionId: rivalId,
+        factionDisplayName: 'Spain',
+        kind: FactionKind.greatPower,
+        relation: game.diplomacyRelations.first,
+      ),
+    ),
+  );
+}
+
 ProviderScope _diplomacyDetailScreenProviderScopeColonyTribe() {
   const humanId = 'gp1';
   const tribeId = 't1';
@@ -295,7 +349,11 @@ ProviderScope _diplomacyDetailScreenProviderScopeColonyTribe() {
       DiplomacyRelation(factionId1: humanId, factionId2: 'gp2', score: 40),
     ],
     overtureStates: const [
-      OvertureState(gpId: humanId, targetId: tribeId, stage: OvertureStage.embassy),
+      OvertureState(
+        gpId: humanId,
+        targetId: tribeId,
+        stage: OvertureStage.embassy,
+      ),
     ],
     colonyStates: const [
       ColonyState(tribeId: tribeId, colonyOfGpId: humanId, sinceTurn: 5),
@@ -383,7 +441,11 @@ ProviderScope _diplomacyDetailScreenProviderScopeSubsidizedMinor() {
       DiplomacyRelation(factionId1: humanId, factionId2: minorId, score: 80),
     ],
     overtureStates: const [
-      OvertureState(gpId: humanId, targetId: minorId, stage: OvertureStage.embassy),
+      OvertureState(
+        gpId: humanId,
+        targetId: minorId,
+        stage: OvertureStage.embassy,
+      ),
     ],
     subsidyStates: const [
       SubsidyState(payerId: humanId, targetId: minorId, percent: 10),
@@ -442,6 +504,10 @@ List<WidgetbookNode> get diplomacyDetailScreenDirectories => [
       WidgetbookUseCase(
         name: 'Formal alliance — GP with treaty badge',
         builder: (context) => _diplomacyDetailScreenProviderScopeAlliance(),
+      ),
+      WidgetbookUseCase(
+        name: 'Formal allies — other-court treaties',
+        builder: (context) => _diplomacyDetailScreenProviderScopeFormalAllies(),
       ),
       WidgetbookUseCase(
         name: 'Colony Tribe — standing chips + relation meter',
