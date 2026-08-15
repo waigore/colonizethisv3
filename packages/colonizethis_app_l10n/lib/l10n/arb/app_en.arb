@@ -4175,6 +4175,15 @@
   "@diplomacy_detail_currentRelation": {
     "description": "Label above current diplomatic relation summary."
   },
+  "diplomacy_detail_formalAllies": "Formal allies: {names}",
+  "@diplomacy_detail_formalAllies": {
+    "description": "GAME30002 CURRENT RELATION line listing other GP display names with a persisted formal alliance with the viewed court.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "diplomacy_detail_noDossier": "No dossier evidence yet.",
   "@diplomacy_detail_noDossier": {
     "description": "Empty state for dossier evidence list."

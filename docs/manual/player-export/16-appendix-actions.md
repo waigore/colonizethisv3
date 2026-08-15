@@ -43,7 +43,7 @@ Most begin at **Diplomacy screen** → select faction → choose an action → c
 
 | Decree | Cost / key refusal | Result |
 |---|---|---|
-| Declare War | Must be at peace; may accompany an invasion. | War before Movement. |
+| Declare War | Must be at peace; may accompany an invasion. Confirm names other courts that may be called to defend or asked to intervene. | War before Movement. |
 | Offer Peace | Must be at war; target must accept. | Peace if accepted. |
 | Alliance | Great Power only; peace; no existing formal alliance. | Treaty if accepted. |
 | Break Alliance | Formal alliance required. **Diplomacy screen** panel **Break Alliance** confirmation is immediate for the human player. | Treaty ends immediately; same-pair alliance/overture/aid/subsidy blocked until next turn. |

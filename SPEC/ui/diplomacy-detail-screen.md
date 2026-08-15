@@ -95,6 +95,7 @@ Outgoing subsidy/grant pending copy from the diplomacy **list** row is **not** d
 | Formal alliance | `relation != null`, `relation.formalAlliance == true` | The `CURRENT RELATION` summary appends a `DiplomacyAllianceBadge` (`ALLIANCE` chip, `--accent` text on a translucent accent overlay) after the relation-state/score words — the same treaty marker as [diplomacy-panel.md](diplomacy-panel.md) § Formal alliance indicator. |
 | Informal Allied (no treaty) | `relation != null`, `relation.formalAlliance == false` | No `DiplomacyAllianceBadge` is rendered, even when the relation score is in the informal `RelationLevel.allied` band (76–100); only the one-word `Friendly` label appears. |
 | Diplomatic standing chips | Any active overture/treaty/colony/boycott/overseas state for the faction | The `CURRENT RELATION` card renders a `DiplomacyStandingChipCluster` below the relation summary with the same chips as [diplomacy-panel.md](diplomacy-panel.md) § Diplomatic standing chip cluster (Refs #3753 R12). When no standing chip applies, the cluster renders nothing. |
+| Formal allies roster | `kind == FactionKind.greatPower` and at least one other GP holds a **persisted** formal alliance with the viewed court | A muted `diplomacy_detail_formalAllies` line lists those courts’ display names (sorted; excludes the human and the viewed court; no draft `Alliance`; no already-at-war-with-human filter). Omit the line when none (Refs #4409). |
 
 History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPair`.
 
@@ -178,6 +179,8 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
   When the golden test in `app/test/diplomacy_detail_screen_goldens_test.dart` captures the screen's keyed `RepaintBoundary`,
   Then the captured boundary matches its committed baseline `app/test/goldens/diplomacy_detail_colony_tribe.png` via `matchesGoldenFile`, the `CURRENT RELATION` card renders a `DiplomacyStandingChipCluster` with colony and boycott chips, exactly one `RelationMeter` is present, and outgoing subsidy copy is absent (Refs #3753 S17 / R12).
 
+- Given `GAME30002` is opened for a GP that has at least one other-GP persisted formal ally, when CURRENT RELATION renders, then a Formal allies line lists those courts’ display names (persisted treaties only; not draft `Alliance` orders). Given that ally is already at war with the human, the Formal allies line still names that court while Declare War confirm on the same GP omits it (Refs #4409). When there are none, the line is omitted.
+
 - Given the screen is mounted under `AppThemes.editorialMonocle` for a subsidized Minor with overseas tile holdings and relation score 80,
   When the golden test in `app/test/diplomacy_detail_screen_goldens_test.dart` captures the screen's keyed `RepaintBoundary`,
   Then the captured boundary matches its committed baseline `app/test/goldens/diplomacy_detail_subsidized_minor.png` via `matchesGoldenFile`, the overseas holdings chip renders, exactly one `RelationMeter` is present, and the dossier section is absent (Refs #3753 S17 / R3 / R8 / R12).
@@ -189,6 +192,7 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
 - **Folder:** `Diplomacy Detail Screen`
 - **Default use case:** `ProviderScope` with `appEventBusProvider` → `AppEventBus.create()`; renders `DiplomacyDetailScreen` with a minimal inline `Game` fixture (human GP + rival GP, one peace relation, one history event, one dossier entry) inside `MaterialApp`.
 - **Formal alliance use case:** `Formal alliance — GP with treaty badge` renders a GP target whose relation carries `formalAlliance: true`, proving the `ALLIANCE` treaty badge appears in the `CURRENT RELATION` card (Refs #3625, AC4).
+- **Formal allies use case:** `Formal allies — other-court treaties` renders a GP target that holds a persisted formal alliance with a third Great Power, proving the Formal allies roster line (Refs #4409).
 - **Colony Tribe use case:** `Colony Tribe — standing chips + relation meter` renders a Tribe target with colony, embassy, and boycott standing chips plus the 10-step `RelationMeter` in the `CURRENT RELATION` card (Refs #3753 S17 / R12).
 - **Subsidized Minor use case:** `Subsidized Minor — overseas chip + relation meter` renders a Minor target with embassy and overseas-holdings chips plus the relation meter; no dossier section (Refs #3753 S17 / R3 / R8 / R12).
 
