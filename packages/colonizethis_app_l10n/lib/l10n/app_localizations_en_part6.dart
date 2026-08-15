@@ -296,4 +296,26 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
 
   @override
   String get splitArmy_detachConfirm => 'Detach and choose destination';
+
+  @override
+  String get tradeDealBook_unfilledHeading => 'Still open';
+
+  @override
+  String get tradeDealBook_unfilledEmpty => 'None still open.';
+
+  @override
+  String tradeDealBook_filledRow(
+    String commodity,
+    int quantity,
+    int unitPrice,
+    int notional,
+  ) => '$commodity — $quantity at £$unitPrice = £$notional';
+
+  @override
+  String tradeDealBook_unfilledRow(String commodity, int quantity) =>
+      '$commodity — $quantity';
+
+  @override
+  String tradeDealBook_totalsLine(String label, int amount) =>
+      '$label: £$amount';
 }
