@@ -46,7 +46,6 @@ class TileContextRadial extends StatelessWidget {
       anchor: anchor,
       size: needed,
     );
-    final spokeCount = wedges.length + 1;
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
         const SingleActivator(LogicalKeyboardKey.escape): onDismiss,
@@ -55,67 +54,19 @@ class TileContextRadial extends StatelessWidget {
         autofocus: true,
         child: Stack(
           children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onDismiss,
-                onPanStart: (_) => onDismiss(),
-              ),
-            ),
+            _TileRadialDismissScrim(onDismiss: onDismiss),
             Positioned(
               left: topLeft.dx,
               top: topLeft.dy,
               width: needed.width,
               height: needed.height,
-              child: KeyedSubtree(
-                key: kTileContextRadialKey,
-                child: Stack(
-                  children: [
-                    Center(
-                      child: SizedBox(
-                        width: kTileRadialHubSize,
-                        height: kTileRadialHubSize,
-                        child: Padding(
-                          padding: const EdgeInsets.all(CtSpacing.s),
-                          child: Center(
-                            child: Text(
-                              placeLine,
-                              textAlign: TextAlign.center,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(color: EditorialMonoclePalette.fg),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    for (var i = 0; i < wedges.length; i++)
-                      _spokeAt(
-                        index: i,
-                        spokeCount: spokeCount,
-                        size: needed,
-                        child: _TileRadialWedgeButton(
-                          view: wedges[i],
-                          onPressed: wedges[i].enabled
-                              ? () => onWedge(wedges[i].action)
-                              : null,
-                        ),
-                      ),
-                    _spokeAt(
-                      index: wedges.length,
-                      spokeCount: spokeCount,
-                      size: needed,
-                      child: _TileRadialWedgeButton(
-                        label: l10n.tileRadial_more,
-                        tooltip: l10n.tileRadial_more,
-                        enabled: true,
-                        buttonKey: kTileRadialMoreKey,
-                        onPressed: onMore,
-                      ),
-                    ),
-                  ],
-                ),
+              child: _TileRadialMenu(
+                placeLine: placeLine,
+                wedges: wedges,
+                moreLabel: l10n.tileRadial_more,
+                size: needed,
+                onWedge: onWedge,
+                onMore: onMore,
               ),
             ),
           ],
@@ -123,24 +74,126 @@ class TileContextRadial extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _spokeAt({
-    required int index,
-    required int spokeCount,
-    required Size size,
-    required Widget child,
-  }) {
-    final angle = -math.pi / 2 + (2 * math.pi * index / spokeCount);
-    final cx = size.width / 2 + kTileRadialSpokeRadius * math.cos(angle);
-    final cy = size.height / 2 + kTileRadialSpokeRadius * math.sin(angle);
-    return Positioned(
-      left: cx - kTileRadialWedgeMinSize / 2,
-      top: cy - kTileRadialWedgeMinSize / 2,
-      width: kTileRadialWedgeMinSize * 2.2,
-      height: kTileRadialWedgeMinSize,
-      child: child,
+class _TileRadialDismissScrim extends StatelessWidget {
+  const _TileRadialDismissScrim({required this.onDismiss});
+
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onDismiss,
+        onPanStart: (_) => onDismiss(),
+      ),
     );
   }
+}
+
+class _TileRadialMenu extends StatelessWidget {
+  const _TileRadialMenu({
+    required this.placeLine,
+    required this.wedges,
+    required this.moreLabel,
+    required this.size,
+    required this.onWedge,
+    required this.onMore,
+  });
+
+  final String placeLine;
+  final List<TileRadialSpokeView> wedges;
+  final String moreLabel;
+  final Size size;
+  final ValueChanged<TileRadialCatalogAction> onWedge;
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final spokeCount = wedges.length + 1;
+    return KeyedSubtree(
+      key: kTileContextRadialKey,
+      child: Stack(
+        children: [
+          _TileRadialHub(placeLine: placeLine),
+          for (var i = 0; i < wedges.length; i++)
+            _spokeAt(
+              index: i,
+              spokeCount: spokeCount,
+              size: size,
+              child: _TileRadialWedgeButton(
+                view: wedges[i],
+                onPressed: wedges[i].enabled
+                    ? () => onWedge(wedges[i].action)
+                    : null,
+              ),
+            ),
+          _spokeAt(
+            index: wedges.length,
+            spokeCount: spokeCount,
+            size: size,
+            child: _TileRadialWedgeButton(
+              label: moreLabel,
+              tooltip: moreLabel,
+              enabled: true,
+              buttonKey: kTileRadialMoreKey,
+              onPressed: onMore,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TileRadialHub extends StatelessWidget {
+  const _TileRadialHub({required this.placeLine});
+
+  final String placeLine;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        width: kTileRadialHubSize,
+        height: kTileRadialHubSize,
+        child: Padding(
+          padding: const EdgeInsets.all(CtSpacing.s),
+          child: Center(
+            child: Text(
+              placeLine,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: EditorialMonoclePalette.fg,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Widget _spokeAt({
+  required int index,
+  required int spokeCount,
+  required Size size,
+  required Widget child,
+}) {
+  final angle = -math.pi / 2 + (2 * math.pi * index / spokeCount);
+  final cx = size.width / 2 + kTileRadialSpokeRadius * math.cos(angle);
+  final cy = size.height / 2 + kTileRadialSpokeRadius * math.sin(angle);
+  return Positioned(
+    left: cx - kTileRadialWedgeMinSize / 2,
+    top: cy - kTileRadialWedgeMinSize / 2,
+    width: kTileRadialWedgeMinSize * 2.2,
+    height: kTileRadialWedgeMinSize,
+    child: child,
+  );
 }
 
 class _TileRadialWedgeButton extends StatelessWidget {
