@@ -1,8 +1,13 @@
 // Diplomacy detail: history + dossier for one faction. SPEC/ui/diplomacy-detail-screen.md.
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
-    show diplomaticHistoryForPair, getOverture, greatPowerPowerScore;
-import 'package:colonizethis_economy/colonizethis_economy.dart' show PurchasedTileIndex;
+    show
+        diplomaticHistoryForPair,
+        formalAllyDisplayNames,
+        getOverture,
+        greatPowerPowerScore;
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show PurchasedTileIndex;
 import 'package:colonizethis_logic/turn_time_api.dart' show turnToYear;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -73,6 +78,13 @@ class DiplomacyDetailScreen extends ConsumerWidget {
     // SPEC/ui/diplomacy-detail-screen.md § Current relation (Refs #3753 R12):
     // the CURRENT RELATION card shows the same overture/treaty/colony/boycott/
     // overseas chip cluster as the diplomacy-panel.md row.
+    final List<String> formalAllyNames = kind == FactionKind.greatPower
+        ? formalAllyDisplayNames(
+            game: game,
+            viewedGpId: factionId,
+            humanPlayerId: humanPlayerId,
+          )
+        : const <String>[];
     final DiplomaticStandingChips standingChips = diplomaticStandingChips(
       game: game,
       humanPlayerId: humanPlayerId,
@@ -116,6 +128,11 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                         l10n: l10n,
                         standingChips: standingChips,
                       ),
+                      if (formalAllyNames.isNotEmpty)
+                        DiplomacyDetailFormalAlliesLine(
+                          names: formalAllyNames,
+                          l10n: l10n,
+                        ),
                     ],
                   ),
                 ),
