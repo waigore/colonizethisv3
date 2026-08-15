@@ -15,13 +15,13 @@ const _excludedPaths = <String>{
   _civilianUnitTypeIdsRelPath,
 
   /// Archetype display names; values may match civilian spellings by coincidence.
-  'packages/colonizethis_data/lib/src/ai_personality_config.dart',
+  'packages/colonizethis_data/lib/src/ai_personality_tables.dart',
 
   /// Hand-maintained app l10n part files (no `flutter gen-l10n` output here):
   /// English display strings such as the naval composition role label
   /// `naval_units_compositionRoleMerchant` are user-facing labels, not
   /// civilian unit-type ids; the same coincident-spelling carve-out as
-  /// `ai_personality_config.dart` applies. App code reaches civilian unit
+  /// `ai_personality_tables.dart` applies. App code reaches civilian unit
   /// types via `kUnitType*` constants from `colonizethis_models`; the l10n
   /// values here are independent translation strings.
   'packages/colonizethis_app_l10n/lib/l10n/app_localizations_en_part1.dart',
