@@ -15,13 +15,12 @@
 /// widget tests can pin the affordance.
 library;
 
-
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-
-import 'package:colonizethis_models/colonizethis_models.dart';
-
+import '../../../../widgets/commodity_display_name.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'trade_screen_contract_deal_book.dart';
@@ -57,6 +56,7 @@ class DealBookPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DealBookPanelStyles styles = DealBookPanelStyles.of(context);
+    final AppLocalizations l10n = appL10n(context);
     final bool panelEmpty = filledRows.isEmpty && unfilledRows.isEmpty;
     return CtPanel(
       padding: const EdgeInsets.all(CtSpacing.ml),
@@ -69,11 +69,10 @@ class DealBookPanel extends StatelessWidget {
           if (panelEmpty)
             Text(emptyText, key: emptyKey, style: styles.muted)
           else
-            ..._buildSections(styles),
+            ..._buildSections(styles, l10n),
           const SizedBox(height: 12),
           Text(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            '$totalsLabel: $totalsAmount',
+            l10n.tradeDealBook_totalsLine(totalsLabel, totalsAmount),
             key: totalsKey,
             style: styles.totals,
           ),
@@ -82,22 +81,31 @@ class DealBookPanel extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildSections(DealBookPanelStyles styles) {
+  List<Widget> _buildSections(
+    DealBookPanelStyles styles,
+    AppLocalizations l10n,
+  ) {
     return <Widget>[
-      Text(TradeScreenDealBookKeys.dealBookFilledHeading, style: styles.sectionHeading),
+      Text(
+        TradeScreenDealBookKeys.dealBookFilledHeading,
+        style: styles.sectionHeading,
+      ),
       const SizedBox(height: 4),
       ..._buildFilledRows(styles),
       const SizedBox(height: 8),
-      Text(TradeScreenDealBookKeys.dealBookUnfilledHeading, style: styles.sectionHeading),
+      Text(l10n.tradeDealBook_unfilledHeading, style: styles.sectionHeading),
       const SizedBox(height: 4),
-      ..._buildUnfilledRows(styles),
+      ..._buildUnfilledRows(styles, l10n),
     ];
   }
 
   List<Widget> _buildFilledRows(DealBookPanelStyles styles) {
     if (filledRows.isEmpty) {
       return <Widget>[
-        Text(TradeScreenDealBookKeys.dealBookFilledEmptyText, style: styles.muted),
+        Text(
+          TradeScreenDealBookKeys.dealBookFilledEmptyText,
+          style: styles.muted,
+        ),
       ];
     }
     return <Widget>[
@@ -116,10 +124,13 @@ class DealBookPanel extends StatelessWidget {
     ];
   }
 
-  List<Widget> _buildUnfilledRows(DealBookPanelStyles styles) {
+  List<Widget> _buildUnfilledRows(
+    DealBookPanelStyles styles,
+    AppLocalizations l10n,
+  ) {
     if (unfilledRows.isEmpty) {
       return <Widget>[
-        Text(TradeScreenDealBookKeys.dealBookUnfilledEmptyText, style: styles.muted),
+        Text(l10n.tradeDealBook_unfilledEmpty, style: styles.muted),
       ];
     }
     return <Widget>[
@@ -172,15 +183,12 @@ class DealBookPanelStyles {
 }
 
 /// Single filled-deal row inside a Deal Book panel. Lays out
-/// `commodity — qty × price = notional` with optional FRR / FTP tags so
-/// the player can audit how the deal cleared per
+/// `{displayName} — qty at £price = £notional` with optional FRR / FTP
+/// tags so the player can audit how the deal cleared per
 /// `SPEC/game/world-market.md` § Matching + § First Right of Refusal.
-
-
-
-
 class DealBookFilledRow extends StatelessWidget {
-  const DealBookFilledRow({super.key, 
+  const DealBookFilledRow({
+    super.key,
     required this.rowKey,
     required this.deal,
     required this.rowStyle,
@@ -198,11 +206,10 @@ class DealBookFilledRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = appL10n(context);
     final int unitPrice = deal.pricePerUnit.floor();
     final int notional = deal.quantity * unitPrice;
-    final String priceText = TradeScreenDealBookKeys.formatFilledDealUnitPrice(
-      deal.pricePerUnit,
-    );
+    final String name = commodityDisplayName(l10n, deal.commodityId);
     final List<String> tags = <String>[
       if (deal.isFirstRightOfRefusalMatch) matchTagFirstRight,
       if (deal.isFtpMatch) matchTagFavoredPartner,
@@ -214,9 +221,12 @@ class DealBookFilledRow extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: Text(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            '${deal.commodityId} — qty ${deal.quantity} × $priceText '
-            '= $notional',
+            l10n.tradeDealBook_filledRow(
+              name,
+              deal.quantity,
+              unitPrice,
+              notional,
+            ),
             style: rowStyle,
             overflow: TextOverflow.ellipsis,
           ),
@@ -234,11 +244,12 @@ class DealBookFilledRow extends StatelessWidget {
   }
 }
 
-/// Single carry-forward order row inside a Deal Book panel. The order
-/// has not cleared yet so there is no per-unit price or notional —
-/// `commodity — qty N (priority P)` is the canonical readout.
+/// Single leftover order row inside a Deal Book panel. The order has
+/// not cleared yet so there is no per-unit price or notional —
+/// `{displayName} — quantity` is the player-facing readout (Refs #4414).
 class DealBookUnfilledRow extends StatelessWidget {
-  const DealBookUnfilledRow({super.key, 
+  const DealBookUnfilledRow({
+    super.key,
     required this.rowKey,
     required this.order,
     required this.rowStyle,
@@ -250,10 +261,12 @@ class DealBookUnfilledRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = appL10n(context);
     return Text(
-      // ignore: avoid_hardcoded_strings_in_widgets
-      '${order.commodityId} — qty ${order.quantity} '
-      '(priority ${order.priority})',
+      l10n.tradeDealBook_unfilledRow(
+        commodityDisplayName(l10n, order.commodityId),
+        order.quantity,
+      ),
       key: rowKey,
       style: rowStyle,
       overflow: TextOverflow.ellipsis,

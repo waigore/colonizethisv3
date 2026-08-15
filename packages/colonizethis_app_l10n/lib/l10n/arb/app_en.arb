@@ -6017,6 +6017,40 @@
       "amount": {"type": "int"}
     }
   },
+  "tradeDealBook_unfilledHeading": "Still open",
+  "@tradeDealBook_unfilledHeading": {
+    "description": "Deal Book leftover-order section heading (Refs #4414)."
+  },
+  "tradeDealBook_unfilledEmpty": "None still open.",
+  "@tradeDealBook_unfilledEmpty": {
+    "description": "Deal Book leftover-section empty line when the panel has fills but no leftovers (Refs #4414)."
+  },
+  "tradeDealBook_filledRow": "{commodity} — {quantity} at £{unitPrice} = £{notional}",
+  "@tradeDealBook_filledRow": {
+    "description": "Deal Book filled buy/sale row in player language (Refs #4414).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"},
+      "unitPrice": {"type": "int"},
+      "notional": {"type": "int"}
+    }
+  },
+  "tradeDealBook_unfilledRow": "{commodity} — {quantity}",
+  "@tradeDealBook_unfilledRow": {
+    "description": "Deal Book leftover order row; no priority on the default surface (Refs #4414).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"}
+    }
+  },
+  "tradeDealBook_totalsLine": "{label}: £{amount}",
+  "@tradeDealBook_totalsLine": {
+    "description": "Deal Book panel totals with treasury mark (Refs #4414).",
+    "placeholders": {
+      "label": {"type": "String"},
+      "amount": {"type": "int"}
+    }
+  },
   "eventFeed_overseasProfitCredited": "Overseas profit credited: £{amount} from {count} rival purchase(s). Tap to open Deal Book.",
   "@eventFeed_overseasProfitCredited": {
     "description": "Player turn event feed line when overseas profit treasury was credited.",

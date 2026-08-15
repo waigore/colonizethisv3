@@ -58,7 +58,10 @@ void expectDealBookTotals(WidgetTester tester, {int? bids, int? offers}) {
     );
     expect(
       bidsTotals.data,
-      '${TradeScreenDealBookKeys.dealBookTotalSpentLabel}: $bids',
+      TradeScreenDealBookKeys.formatTotalsLine(
+        TradeScreenDealBookKeys.dealBookTotalSpentLabel,
+        bids,
+      ),
     );
   }
   if (offers != null) {
@@ -67,7 +70,10 @@ void expectDealBookTotals(WidgetTester tester, {int? bids, int? offers}) {
     );
     expect(
       offersTotals.data,
-      '${TradeScreenDealBookKeys.dealBookTotalReceivedLabel}: $offers',
+      TradeScreenDealBookKeys.formatTotalsLine(
+        TradeScreenDealBookKeys.dealBookTotalReceivedLabel,
+        offers,
+      ),
     );
   }
 }

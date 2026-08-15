@@ -63,7 +63,7 @@ void main() {
         await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
+        expect(find.text('Timber — 5 at £30 = £150'), findsOneWidget);
         expectDealBookTotals(tester, bids: 150);
       },
     );
@@ -121,7 +121,7 @@ void main() {
         );
 
         // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
+        expect(find.text('Timber — 5 at £30 = £150'), findsOneWidget);
         expectDealBookTotals(tester, bids: 150, offers: 0);
         expect(
           find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey),
@@ -216,7 +216,9 @@ void main() {
           findsOneWidget,
         );
         // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('timber — qty 8 (priority 2)'), findsOneWidget);
+        expect(find.text('Timber — 8'), findsOneWidget);
+        expect(find.textContaining('(priority'), findsNothing);
+        expect(find.textContaining('timber — qty'), findsNothing);
         expect(
           find.byKey(
             TradeScreenDealBookKeys.dealBookFilledRowKey(
@@ -290,7 +292,8 @@ void main() {
           findsOneWidget,
         );
         // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('timber — qty 99 (priority 1)'), findsNothing);
+        expect(find.text('Timber — 99'), findsNothing);
+        expect(find.textContaining('(priority'), findsNothing);
       },
     );
 

@@ -243,6 +243,28 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   ) => '$commodity × $quantity — £$amount credited';
 
   @override
+  String get tradeDealBook_unfilledHeading => 'Still open';
+
+  @override
+  String get tradeDealBook_unfilledEmpty => 'None still open.';
+
+  @override
+  String tradeDealBook_filledRow(
+    String commodity,
+    int quantity,
+    int unitPrice,
+    int notional,
+  ) => '$commodity — $quantity at £$unitPrice = £$notional';
+
+  @override
+  String tradeDealBook_unfilledRow(String commodity, int quantity) =>
+      '$commodity — $quantity';
+
+  @override
+  String tradeDealBook_totalsLine(String label, int amount) =>
+      '$label: £$amount';
+
+  @override
   String eventFeed_overseasProfitCredited(int amount, int count) =>
       'Overseas profit credited: £$amount from $count rival purchase(s). '
       'Tap to open Deal Book.';

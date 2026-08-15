@@ -402,7 +402,7 @@ Game _tradeScreenDealBookStoryGame({
 /// `WorldMarketState` for the empty Deal Book story — no filled deals
 /// and no carry-forwards. Proves the per-side empty-state copy
 /// (`dealBookBidsEmpty` / `dealBookOffersEmpty`) renders together with
-/// the always-mounted `Total spent: 0` / `Total received: 0` rows
+/// the always-mounted `Total spent: £0` / `Total received: £0` rows
 /// (Refs #2993 E6).
 WorldMarketState _tradeScreenDealBookEmptyState() {
   return const WorldMarketState();
