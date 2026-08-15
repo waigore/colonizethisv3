@@ -177,6 +177,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
         seaZoneId: displayId,
         humanPlayerId: humanPlayerId,
         draftOrders: draftOrders,
+        selectedTileKey: selectedTileKey,
       );
     }
     return provinceContent(

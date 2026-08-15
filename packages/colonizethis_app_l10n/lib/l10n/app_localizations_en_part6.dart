@@ -247,4 +247,35 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
 
   @override
   String get provinceOverlay_selectArmyTitle => 'Select army';
+
+  @override
+  String provinceOverlay_sight(String phrase) {
+    return 'Sight: $phrase';
+  }
+
+  @override
+  String get mapSight_fullyVisible => 'Fully visible';
+
+  @override
+  String get mapSight_foggedTerrainOnly => 'Fogged — terrain only';
+
+  @override
+  String get mapSight_unknownNoIntel => 'Unknown — no intel yet';
+
+  @override
+  String mapHover_place(String name) {
+    return 'Place: $name';
+  }
+
+  @override
+  String get mapHover_seaZoneIdentity => 'Sea zone';
+
+  @override
+  String get mapHover_warpPassage =>
+      'This water is the passage to the other world';
+
+  @override
+  String mapHover_semantics(String summary) {
+    return summary;
+  }
 }

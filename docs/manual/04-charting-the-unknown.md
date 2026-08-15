@@ -18,6 +18,8 @@ Each tile you care about sits in one of three intel states for your court (order
 
 Political ownership on the map remains authoritative even when a province is fogged — fog hides detail, not who holds the claim.
 
+On `MAP10001`, hovering a tile names that sight level in the same three phrases (Fully visible / Fogged — terrain only / Unknown — no intel yet). Tapping opens `MAP20001`, whose Political section repeats a **Sight** row for the selected tile. Touch courts without a pointer use that overlay row.
+
 **Setup defaults:** Old World fogged (owned tiles fully visible); New World unknown. Sea zones adjacent to coasts you **fully own** become fully visible at setup and again each end of turn.
 
 ### Bootstrap prospecting (advanced start)
@@ -73,6 +75,7 @@ Rival courts race the same fog. AI civilian planners score Explorer **explore** 
 ## Acceptance criteria for this chapter
 
 - [ ] Documents unknown / fogged / fully visible and own-province never-decay rule.
+- [ ] Documents MAP10001 hover sight phrases and MAP20001 Political Sight row.
 - [ ] Documents bootstrap prospecting on advanced starts vs in-game Explorer `prospect` (cross-ref Ch. 2).
 - [ ] Documents Explorer `explore` (partial-reveal gate, free, ≤3 turns, province reveal on complete) and `prospect` (eligible terrain, free, 1 turn, completion-only).
 - [ ] Documents Consulate gate for Minor/Tribe explore/prospect.

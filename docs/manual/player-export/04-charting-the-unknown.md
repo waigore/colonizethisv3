@@ -18,6 +18,8 @@ Each tile you care about sits in one of three intel states for your court (order
 
 Political ownership on the map remains authoritative even when a province is fogged — fog hides detail, not who holds the claim.
 
+On **Empire overview / map area**, hovering a tile names that sight level in the same three phrases (Fully visible / Fogged — terrain only / Unknown — no intel yet). Tapping opens **Province sea-zone overlay**, whose Political section repeats a **Sight** row for the selected tile. Touch courts without a pointer use that overlay row.
+
 **Setup defaults:** Old World fogged (owned tiles fully visible); New World unknown. Sea zones adjacent to coasts you **fully own** become fully visible at setup and again each end of turn.
 
 ### Bootstrap prospecting (advanced start)

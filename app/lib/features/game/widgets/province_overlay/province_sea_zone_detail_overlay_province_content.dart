@@ -20,6 +20,7 @@ import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section.dart';
+import 'package:colonizethis_app/features/game/flame/controls/map_tile_sight.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show ProvinceImprovableCommodityCount;
@@ -195,6 +196,11 @@ OverlayContent provinceContent({
     l10n: l10n,
     name: province?.displayName ?? provinceId,
     ownerName: ownerNameForProvinceOverlay(l10n, game, province?.ownerId),
+    sightPhrase: mapTileSightPhraseForSelectedTile(
+      l10n: l10n,
+      region: region,
+      selectedTileKey: selectedTileKey,
+    ),
     regionLabel: provinceOverlayRegionLabel(l10n, regionId),
     isCapital: provinceOverlayIsCapital(game, provinceId),
     townDevelopmentLevel:
