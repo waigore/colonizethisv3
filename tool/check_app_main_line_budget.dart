@@ -78,8 +78,10 @@ const _packageName = 'colonizethis_app';
 // raised for SHEL10002 Quick Start (Refs #4416; measured 77_621).
 // raised for Declare War named third-party courts on confirm (Refs #4409; measured 78_068).
 // raised for combined #4414+#4415+#4407+#4416+#4409 merge headroom (measured 78_506).
+// raised for CMPT10001 force/fort/Details on combat mode choice (Refs #4438; measured 78_737).
 // raised for GAME20001 Labour row cost/upkeep (Refs #4432; measured 78_800).
-const _maxMainLines = 78800;
+// raised for combined #4438+#4432 merge headroom (measured 79_028).
+const _maxMainLines = 79200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
