@@ -15,6 +15,7 @@ import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'province_overlay_unit_partition.dart';
 import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_province_content_intel.dart';
+import 'province_sea_zone_detail_overlay_province_content_tabs.dart';
 import 'province_sea_zone_detail_overlay_province_content_unit_sections.dart';
 import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
@@ -262,42 +263,13 @@ OverlayContent provinceContent({
     byResImprovable: tileIntel.byResImprovable,
     resourceKeysSorted: tileIntel.resourceKeysSorted,
   );
-  final economic = unitSections.economic;
-  final militarySection = unitSections.military;
-  final civilianSection = unitSections.civilian;
-  final naval = unitSections.naval;
-
-  final tabLabels = [
-    l10n.provinceOverlay_sectionPolitical,
-    l10n.provinceOverlay_sectionTile,
-    l10n.provinceOverlay_sectionEconomic,
-    l10n.provinceOverlay_sectionMilitary,
-    l10n.provinceOverlay_sectionCivilian,
-    l10n.provinceOverlay_sectionNaval,
-  ];
-  final tabViews = [
-    political,
-    tileSection,
-    economic,
-    militarySection,
-    civilianSection,
-    naval,
-  ];
-  final sections = Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      political,
-      tileSection,
-      economic,
-      militarySection,
-      civilianSection,
-      naval,
-    ],
-  );
-  return OverlayContent(
-    tabLabels: tabLabels,
-    tabViews: tabViews,
-    sections: sections,
+  return assembleProvinceOverlayTabContent(
+    l10n: l10n,
+    political: political,
+    tileSection: tileSection,
+    economic: unitSections.economic,
+    militarySection: unitSections.military,
+    civilianSection: unitSections.civilian,
+    naval: unitSections.naval,
   );
 }
