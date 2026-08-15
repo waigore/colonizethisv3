@@ -673,6 +673,7 @@ The Market tab's `#3093`-era read-only chrome (sectioned grouping, row icons, se
 - **Given** a Deal Book panel with at least one filled row and an empty leftover list, **when** the panel renders, **then** the UI layer shows **None still open.** in the leftover section (not `No orders carrying forward.`) and does not replace the panel-level empty copy `No bids placed last turn.` / `No offers placed last turn.`
 - **Given** a filled row with `isFirstRightOfRefusalMatch` or `isFtpMatch`, **when** the row renders, **then** the existing **First right** / **Favored partner** tags still appear.
 - **Given** a 320 dp-wide viewport, **when** a leftover row with a long display name such as `Refined sugar` renders, **then** the UI layer does not overflow horizontally.
+- **Given** `app/test/trade_screen_deal_book_player_copy_goldens_test.dart` runs without `--update-goldens`, **when** the suite completes, **then** the UI layer matches `app/test/goldens/trade_deal_book_filled_bid_row.png` (AC-1), `trade_deal_book_filled_offer_row.png` (AC-2), `trade_deal_book_still_open_leftover.png` (AC-3), `trade_deal_book_none_still_open.png` (AC-4), and `trade_deal_book_filled_row_match_tags.png` (AC-5).
 
 ### Trade static key surface (`#4035`)
 
