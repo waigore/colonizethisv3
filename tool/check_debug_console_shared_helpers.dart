@@ -68,35 +68,77 @@ int runCheckDebugConsoleSharedHelpers(
       '${p.relative(parserHelpersPath, from: repoRoot)} must define canonicalIdForInput',
     );
   }
+  if (!_definesTopLevelFunction(parserHelpersUnit, 'parseSpawnBySupportedId')) {
+    violations.add(
+      '${p.relative(parserHelpersPath, from: repoRoot)} must define parseSpawnBySupportedId',
+    );
+  }
+  if (!_definesTopLevelFunction(
+    parserHelpersUnit,
+    'parseCreditByCanonicalId',
+  )) {
+    violations.add(
+      '${p.relative(parserHelpersPath, from: repoRoot)} must define parseCreditByCanonicalId',
+    );
+  }
 
-  for (final methodName in [
-    '_parseSpawnCivilian',
-    '_parseSpawnRegiment',
-    '_parseSpawnShip',
-  ]) {
+  if (!_functionInvokesFunction(
+    parserHelpersUnit,
+    functionName: 'parseSpawnBySupportedId',
+    invokedName: 'parseOptionalCount',
+  )) {
+    violations.add(
+      'debug_console_parser_helpers.dart:parseSpawnBySupportedId must call parseOptionalCount',
+    );
+  }
+  if (!_functionInvokesFunction(
+    parserHelpersUnit,
+    functionName: 'parseCreditByCanonicalId',
+    invokedName: 'parseAmountWithClamp',
+  )) {
+    violations.add(
+      'debug_console_parser_helpers.dart:parseCreditByCanonicalId must call parseAmountWithClamp',
+    );
+  }
+
+  if (!_methodInvokesFunction(
+    parserUnit,
+    methodName: '_parseSpawnCivilian',
+    invokedName: 'parseOptionalCount',
+  )) {
+    violations.add(
+      'debug_console_command_parser.dart:_parseSpawnCivilian must call parseOptionalCount',
+    );
+  }
+  for (final methodName in ['_parseSpawnRegiment', '_parseSpawnShip']) {
     if (!_methodInvokesFunction(
       parserUnit,
       methodName: methodName,
-      invokedName: 'parseOptionalCount',
+      invokedName: 'parseSpawnBySupportedId',
     )) {
       violations.add(
-        'debug_console_command_parser.dart:$methodName must call parseOptionalCount',
+        'debug_console_command_parser.dart:$methodName must call parseSpawnBySupportedId',
       );
     }
   }
 
-  for (final methodName in [
-    '_parseAddMoney',
-    '_parseAddWorker',
-    '_parseAddResource',
-  ]) {
+  if (!_methodInvokesFunction(
+    parserUnit,
+    methodName: '_parseAddMoney',
+    invokedName: 'parseAmountWithClamp',
+  )) {
+    violations.add(
+      'debug_console_command_parser.dart:_parseAddMoney must call parseAmountWithClamp',
+    );
+  }
+  for (final methodName in ['_parseAddWorker', '_parseAddResource']) {
     if (!_methodInvokesFunction(
       parserUnit,
       methodName: methodName,
-      invokedName: 'parseAmountWithClamp',
+      invokedName: 'parseCreditByCanonicalId',
     )) {
       violations.add(
-        'debug_console_command_parser.dart:$methodName must call parseAmountWithClamp',
+        'debug_console_command_parser.dart:$methodName must call parseCreditByCanonicalId',
       );
     }
   }
@@ -107,7 +149,11 @@ int runCheckDebugConsoleSharedHelpers(
     '_stockpileCreditExecutorMessage',
   ]) {
     if (_definesTopLevelFunction(executorUnit, legacyName) ||
-        _classDefinesMethod(executorUnit, 'DebugConsoleCommandExecutor', legacyName)) {
+        _classDefinesMethod(
+          executorUnit,
+          'DebugConsoleCommandExecutor',
+          legacyName,
+        )) {
       violations.add(
         'debug_console_command_executor.dart must not define $legacyName; '
         'use creditExecutorMessage in debug_console_executor_helpers.dart',
@@ -130,7 +176,9 @@ int runCheckDebugConsoleSharedHelpers(
     logI('check_debug_console_shared_helpers: no violations found.');
     return 0;
   }
-  logE('check_debug_console_shared_helpers: ${violations.length} violation(s):');
+  logE(
+    'check_debug_console_shared_helpers: ${violations.length} violation(s):',
+  );
   for (final violation in violations) {
     logE(' - $violation');
   }
@@ -145,9 +193,9 @@ CompilationUnit _parseUnit(String absolutePath, String repoRoot) {
 }
 
 bool _definesTopLevelFunction(CompilationUnit unit, String name) {
-  return unit.declarations
-      .whereType<FunctionDeclaration>()
-      .any((decl) => decl.name.lexeme == name);
+  return unit.declarations.whereType<FunctionDeclaration>().any(
+    (decl) => decl.name.lexeme == name,
+  );
 }
 
 bool _classDefinesMethod(
@@ -159,9 +207,9 @@ bool _classDefinesMethod(
       .whereType<ClassDeclaration>()
       .where((decl) => decl.name.lexeme == className)
       .any(
-        (decl) => decl.members
-            .whereType<MethodDeclaration>()
-            .any((member) => member.name.lexeme == methodName),
+        (decl) => decl.members.whereType<MethodDeclaration>().any(
+          (member) => member.name.lexeme == methodName,
+        ),
       );
 }
 
@@ -175,9 +223,35 @@ bool _methodInvokesFunction(
     return false;
   }
   var found = false;
-  method.body?.visitChildren(_InvocationCollector(invokedName, (value) {
-    found = value;
-  }));
+  method.body?.visitChildren(
+    _InvocationCollector(invokedName, (value) {
+      found = value;
+    }),
+  );
+  return found;
+}
+
+bool _functionInvokesFunction(
+  CompilationUnit unit, {
+  required String functionName,
+  required String invokedName,
+}) {
+  FunctionDeclaration? function;
+  for (final decl in unit.declarations.whereType<FunctionDeclaration>()) {
+    if (decl.name.lexeme == functionName) {
+      function = decl;
+      break;
+    }
+  }
+  if (function == null) {
+    return false;
+  }
+  var found = false;
+  function.functionExpression.body.visitChildren(
+    _InvocationCollector(invokedName, (value) {
+      found = value;
+    }),
+  );
   return found;
 }
 
