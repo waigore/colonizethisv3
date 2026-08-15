@@ -1,177 +1,93 @@
 # Combat Mode Choice Dialog
 
 **Screen ID:** `CMPT10001` — stable; do not reassign.
-**SPEC/ui** — Modal dialog that lets the player pick between Auto-Resolve and Quick Battle for an upcoming combat. Game model: [quick-battle.md](../game/quick-battle.md), [siege-mechanics.md](../game/siege-mechanics.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Dialog wiring: [app-ui-wiring.md](../program/app-ui-wiring.md). Follow-up screen: [quick-battle-screen.md](quick-battle-screen.md).
-
+**SPEC/ui** — Modal for Auto-Resolve vs Quick Battle. Game: [quick-battle.md](../game/quick-battle.md), [siege-mechanics.md](../game/siege-mechanics.md). Resolver: [quick-battle-resolution.md](../program/quick-battle-resolution.md). Wiring: [app-ui-wiring.md](../program/app-ui-wiring.md). Intel: [components/combat-mode-choice-intel.md](components/combat-mode-choice-intel.md). Follow-up: [quick-battle-screen.md](quick-battle-screen.md).
 **Mockup:** [mockups/CMPT10001-combat-mode-choice.html](mockups/CMPT10001-combat-mode-choice.html)
----
+**Widgetbook:** `Combat Mode Choice Dialog` → `widgetbook_host/lib/catalogs/catalog_screens_combat_mode_choice.dart`
 
 ## Widget contract
 
-`CombatModeChoiceDialog` is a presentational `StatelessWidget` (`app/lib/features/game/widgets/combat/combat_mode_choice_dialog.dart`) wrapped in a `CtDialogShell`.
+`CombatModeChoiceDialog` (`app/lib/features/game/widgets/combat/combat_mode_choice_dialog.dart`) in `CtDialogShell`. Stateful only for the Details toggle.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `bus` | `AppEventBus` | yes | Bus used to emit `CombatModeChosenEvent(CombatMode)` once the player picks a mode. |
-| `provinceName` | `String` | yes | Display name of the contested province; rendered in the dialog title. May be empty (`''`) if upstream did not resolve a name; in that case the title shows the localized template with no name interpolated. |
-| `isCapitalSiege` | `bool` | yes | When `true`, the dialog forces Quick Battle as the only option (auto-resolve is hidden); when `false`, both options are offered. |
-| `landForceFeedingWarning` | `String?` | no | Soft informational line when the human's land forces are underfed this turn (#4242). Omitted when fully fed. The dialog builder may compute this from `game`, `humanPlayerId`, `topology`, and optional `draftOrders` in `params` when the explicit string is absent. |
+| `bus` | `AppEventBus` | yes | Emits `CombatModeChosenEvent(CombatMode)` then `Navigator.pop`. |
+| `provinceName` | `String` | yes | Title via `quickBattle_combatAt`. Empty interpolates as-is. |
+| `isCapitalSiege` | `bool` | yes | `true`: hide Auto-Resolve and its meaning line. |
+| `landForceFeedingWarning` | `String?` | no | Underfed italic line (#4242). Builder may compute from params `game` / `humanPlayerId` / `topology` / `draftOrders`. |
+| `intel` | `CombatModeChoiceIntel?` | no | Force/fort/Details. Null omits those; mode-meaning still shows. |
+| `detailsInitiallyOpen` | `bool` | no | Widgetbook Details-open story. Default false. |
 
-The widget owns no internal state. It pops itself via `Navigator.of(context).pop()` once the user picks a mode.
-
----
-
-## Trigger conditions
-
-- The dialog is opened via `OpenDialogEvent(combatModeChoiceDialogId, params)` where `combatModeChoiceDialogId == 'combat_mode_choice'` (declared in `app/lib/core/services/app_event_handler/app_event_handler_scope.dart`). The builder for this id is registered in `app/lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart` and constructs the dialog with `provinceName` and `isCapitalSiege` from the event `params`.
-- Required params:
-  - `provinceName: String` — display name of the contested province.
-  - `isCapitalSiege: bool` — `true` for capital sieges per [siege-mechanics.md](../game/siege-mechanics.md).
-- The dialog must not be opened by direct `showDialog` calls from feature panels; cross-cutting opening is bus-driven per [app-ui-wiring.md](../program/app-ui-wiring.md).
-
----
+Builder: `buildCombatModeChoiceDialog` in `app_event_handler_scope_lifecycle.dart`. Params: `provinceName`, `isCapitalSiege`, optional feeding string or snapshot fields, plus intel keys in the component spec. Open via `OpenDialogEvent(combatModeChoiceDialogId, params)` only.
 
 ## Layout / wireframe
 
-### Regular province (`isCapitalSiege == false`)
-
 ```text
-+------------------------------------------------+
-| CtDialogShell                                  |
-| +--------------------------------------------+ |
-| | Combat at <provinceName>     (titleMedium) | |
-| |                                            | |
-| | Choose how to resolve this combat.         | |
-| |                                            | |
-| |               [ Auto-Resolve ] [ Quick Battle ] | |
-| +--------------------------------------------+ |
-+------------------------------------------------+
+CtDialogShell
+  Column(min, start)
+    title  Combat at <provinceName>   titleMedium --accent letterSpacing 0.05
+    CtGap.m
+    prompt  chooseCombatMode | capitalSiegeQuickBattleOnly   bodyMedium --muted
+    [Your army: N]
+    [Defenders: N | Attackers: N | Defenders unknown]
+    [Open field | Wood/Stone/Modern fort siege]
+    [Auto-Resolve meaning]     omitted when capital siege
+    [Quick Battle meaning]
+    [underfed italic --muted]
+    [Details / Hide  CtActionTextButton]
+    [indented type counts when Details open]
+    CtGap.l
+    Wrap(end, 8, 8)  [Auto-Resolve --muted] [Quick Battle --accent]
 ```
 
-### Capital siege (`isCapitalSiege == true`)
+Buttons are `CtNinePatchButton`. No Material buttons. No win-percent or predicted-winner copy. Never `moveArmy_unopposedCapture`.
 
-```text
-+------------------------------------------------+
-| CtDialogShell                                  |
-| +--------------------------------------------+ |
-| | Combat at <provinceName>     (titleMedium) | |
-| |                                            | |
-| | Capital sieges must be resolved with       | |
-| | Quick Battle.                              | |
-| |                                            | |
-| |                              [ Quick Battle ] | |
-| +--------------------------------------------+ |
-+------------------------------------------------+
-```
+## Behavior
 
-- Outer container: `CtDialogShell`.
-- Inner column: `Column(mainAxisSize: min, crossAxisAlignment: start)`.
-- Title: `Text` styled `Theme.of(context).textTheme.titleMedium`, rendered via `appL10n(context).quickBattle_combatAt(provinceName)`.
-- 8 dp gap, then explanatory body text:
-  - `appL10n(context).quickBattle_capitalSiegeQuickBattleOnly` when `isCapitalSiege == true`.
-  - `appL10n(context).quickBattle_chooseCombatMode` otherwise.
-- 16 dp gap, then a `Wrap(alignment: end, spacing: 8, runSpacing: 8)` with action buttons (mirrors mockup `.actions { flex-wrap: wrap }` so both labels fit at `kMinViewportWidth` without horizontal overflow):
-  - Regular: `[ Auto-Resolve ]` (`appL10n(context).quickBattle_autoResolve`) followed by `[ Quick Battle ]` (`appL10n(context).quickBattle_quickBattle`); when the content column is narrower than both buttons side-by-side, the wrap run stacks the second button beneath the first while keeping end alignment.
-  - Capital siege: only `[ Quick Battle ]`.
-- Buttons are `CtNinePatchButton`s; Material buttons are not permitted.
+| Control | When enabled | Emits / calls |
+|---------|--------------|---------------|
+| Auto-Resolve | not capital siege | `CombatModeChosenEvent(autoResolve)` then pop |
+| Quick Battle | always | `CombatModeChosenEvent(quickBattle)` then pop |
+| Details | intel != null | toggles type lines; no bus |
 
----
+Meaning keys: `quickBattle_autoResolveMeaning` (decides at once), `quickBattle_quickBattleMeaning` (player gives orders). Enemy labels: attacker `moveArmy_defendersRegiments`; defender `combatMode_attackersRegiments`. Own: `moveArmy_yourArmyRegiments`. Fort: `moveArmyFortLabelForLevel`.
 
 ## States and variants
 
-| State | Trigger | Render |
-|-------|---------|--------|
-| Default (regular) | `isCapitalSiege == false` | Body text from `quickBattle_chooseCombatMode`; both action buttons visible. |
-| Capital siege | `isCapitalSiege == true` | Body text from `quickBattle_capitalSiegeQuickBattleOnly`; only Quick Battle button visible. Auto-Resolve button is **omitted from the tree**, not merely disabled. |
-| Land underfed | `landForceFeedingWarning != null` | Muted italic body line below the main explanatory text; both combat mode choices remain enabled (Refs #4242). |
-| Empty province name | `provinceName == ''` | Title still renders the localized `quickBattle_combatAt` template; the empty string is interpolated as-is. |
-
-The dialog is modal; it does not auto-dismiss without a player choice.
-
----
-
-## Navigation
-
-- **Entry:** `OpenDialogEvent(combatModeChoiceDialogId, params)` from the combat phase orchestrator.
-- **Exit on Auto-Resolve tap (regular only):** Emit `CombatModeChosenEvent(CombatMode.autoResolve)` on the supplied `bus`, then call `Navigator.of(context).pop()`.
-- **Exit on Quick Battle tap:** Emit `CombatModeChosenEvent(CombatMode.quickBattle)` on the supplied `bus`, then call `Navigator.of(context).pop()`.
-- The dialog does not push or pop other routes. Downstream wiring (e.g., opening [quick-battle-screen.md](quick-battle-screen.md)) is owned by the listener of `CombatModeChosenEvent`, not the dialog.
-
----
+| ID | Trigger | Render |
+|----|---------|--------|
+| CMPT10001 | regular | Both buttons; Auto-Resolve meaning shown |
+| CMPT10001a | capital siege | Quick Battle only; Auto-Resolve meaning omitted |
+| CMPT10001b | underfed | Italic feeding line; modes stay enabled |
+| CMPT10001c | attacker full intel | Own + defenders + fort |
+| CMPT10001d | attacker unknown intel | Own + Defenders unknown; no fort; Details has no enemy types |
+| CMPT10001e | defender full intel | Own + attackers + fort |
+| CMPT10001f | Details open | Type lines for own and, when the enemy line is shown, enemy |
+| CMPT10001g | intel null / name fail-closed | Prompt + meanings (+ feeding); no force/fort/Details |
 
 ## Components
 
-- `CtDialogShell` (`app/lib/widgets/ct_dialog_shell.dart`).
-- `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`).
-- Localized strings via `appL10n(context).quickBattle_*`.
-- `AppEventBus` (`packages/colonizethis_models`) for emitting `CombatModeChosenEvent`.
-- No Material buttons.
-
----
+- `CtDialogShell`, `CtNinePatchButton`, `CtActionTextButton`, `CtGap`
+- [combat-mode-choice-intel.md](components/combat-mode-choice-intel.md)
 
 ## Dark-theme treatment
 
-Per `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette and Refs #2869 R1–R5, the dialog renders against `AppThemes.editorialMonocle`:
-
-- **Title** (`quickBattle_combatAt`): theme `titleMedium` (display font, Cinzel via `editorialMonocleDisplayFontFamily`) with `color: --accent` and `letterSpacing: 0.05` (matching `CtTopBar._titleStyle`). No `--fg` fallback for the title color — the accent reading is what marks the dialog as a combat decision point.
-- **Body** (`quickBattle_chooseCombatMode` or `quickBattle_capitalSiegeQuickBattleOnly`): theme `bodyMedium` with `color: --muted` for the secondary descriptive line. Body text never uses `--accent`.
-- **Quick Battle button (primary)**: `CtNinePatchButton`; its `child` is a `Text(quickBattle_quickBattle)` with explicit `style: titleSmall.copyWith(color: --accent)`. The brass nine-patch chrome remains the asset-driven default; the primary reading comes from the accent-coloured label.
-- **Auto-Resolve button (secondary)**: `CtNinePatchButton`; its `child` is a `Text(quickBattle_autoResolve)` with explicit `style: titleSmall.copyWith(color: --muted)`. The muted label visually de-emphasises the secondary action while keeping the same touch target geometry as Quick Battle.
-- All colors resolve from `EditorialMonoclePalette` (no hex literals in widget code) per `colonizethis-ui-design.mdc`.
-
-Outline-style chrome for the Auto-Resolve button (a dedicated `--border`-outlined `CtNinePatchButton` variant per Refs #2869 R4 mockup) is a follow-up tracked against #2859 button-variant work; it is not delivered by S2.
-
----
-
-## Acceptance Criteria (Given–When–Then)
-
-- Given the dialog is opened via `OpenDialogEvent(combatModeChoiceDialogId, {'provinceName': 'Lisbon', 'isCapitalSiege': false})`,
-  When the UI layer renders the dialog,
-  Then the dialog displays the title `Combat at Lisbon` (localized template), the body text from `quickBattle_chooseCombatMode`, and exactly two `CtNinePatchButton`s labeled with `quickBattle_autoResolve` and `quickBattle_quickBattle`.
-
-- Given the dialog is opened with `isCapitalSiege: true`,
-  When the UI layer renders the dialog,
-  Then the body text comes from `quickBattle_capitalSiegeQuickBattleOnly`, only one `CtNinePatchButton` labeled with `quickBattle_quickBattle` is present, and no Auto-Resolve button is in the widget tree.
-
-- Given the dialog is mounted with `isCapitalSiege: false` and a bus listener subscribed to `CombatModeChosenEvent`,
-  When the user taps the Auto-Resolve button,
-  Then the dialog emits exactly one `CombatModeChosenEvent(CombatMode.autoResolve)` on the supplied bus and pops itself off the navigator stack.
-
-- Given the dialog is mounted with `isCapitalSiege: false` and a bus listener subscribed to `CombatModeChosenEvent`,
-  When the user taps the Quick Battle button,
-  Then the dialog emits exactly one `CombatModeChosenEvent(CombatMode.quickBattle)` on the supplied bus and pops itself off the navigator stack.
-
-- Given the dialog is mounted with `isCapitalSiege: true` and a bus listener subscribed to `CombatModeChosenEvent`,
-  When the user taps the Quick Battle button,
-  Then the dialog emits exactly one `CombatModeChosenEvent(CombatMode.quickBattle)` and pops itself.
-
-- Given the dialog is mounted,
-  When the UI layer renders the widget tree,
-  Then there is exactly one `CtDialogShell` and zero Material `ElevatedButton`, `TextButton`, or `OutlinedButton` widgets in the dialog subtree.
-
-- Given the dialog is mounted inside `AppThemes.editorialMonocle`,
-  When the UI layer renders the title,
-  Then the rendered `Text` for the localized `quickBattle_combatAt` line resolves `style.color` to `EditorialMonoclePalette.accent` and `style.letterSpacing` to `0.05`.
-
-- Given the dialog is mounted inside `AppThemes.editorialMonocle` with `isCapitalSiege: false`,
-  When the UI layer renders the body line,
-  Then the rendered `Text` for the localized `quickBattle_chooseCombatMode` line resolves `style.color` to `EditorialMonoclePalette.muted`.
-
-- Given the dialog is mounted inside `AppThemes.editorialMonocle` with `isCapitalSiege: false`,
-  When the UI layer renders the action row,
-  Then the `CtNinePatchButton` child `Text` for `quickBattle_autoResolve` resolves `style.color` to `EditorialMonoclePalette.muted`, and the `CtNinePatchButton` child `Text` for `quickBattle_quickBattle` resolves `style.color` to `EditorialMonoclePalette.accent`.
-
-- Given the viewport width is exactly `kMinViewportWidth` (320 dp) and `isCapitalSiege: false`,
-  When the UI layer renders `CombatModeChoiceDialog` with `provinceName: 'Lisbon'`,
-  Then `WidgetTester.takeException()` returns `null`, both action labels render, and the action buttons are hosted in a `Wrap` (not a rigid `Row`) so the labels reflow within the ~288 dp `CtDialogShell` content column without horizontal overflow (Refs #2870 S8).
-
----
+`AppThemes.editorialMonocle` only. Title `--accent` + 0.05 tracking; body/meanings/force `--muted`; Quick Battle label `--accent`; Auto-Resolve label `--muted`. Colors from `EditorialMonoclePalette`.
 
 ## Widgetbook
 
-Catalog directory: `Combat Mode Choice Dialog` (registered in `app/lib/widgetbook/catalog.dart`). Required use cases:
+Folder `Combat Mode Choice Dialog`. Use cases: **Regular province**; **Capital siege**; **Attacker full intel**; **Attacker unknown intel**; **Defender full intel**; **Details open**. Each uses a fresh `AppEventBus.create()`. Existing **Quick Battle** folder still hosts the two original mode-choice stories.
 
-1. **Regular province** — `provinceName: 'Lisbon'`, `isCapitalSiege: false`; both buttons visible.
-2. **Capital siege** — `provinceName: 'Madrid'`, `isCapitalSiege: true`; Quick Battle only.
+## Acceptance criteria
 
-Each use case wires a fresh `AppEventBus.create()` so the catalog story does not leak `CombatModeChosenEvent` listeners between runs.
+- Given `OpenDialogEvent` with Lisbon and `isCapitalSiege: false`, when the UI layer renders, then title, choose-mode prompt, both `CtNinePatchButton`s, and both meaning lines render, and `moveArmy_unopposedCapture` does not.
+- Given capital siege, when the UI layer renders, then Auto-Resolve button and Auto-Resolve meaning are absent, Quick Battle remains, and force/fort follow intel rules.
+- Given attacker full intel with owner `N > 0`, when the UI layer renders, then own count, `moveArmy_defendersRegiments(N)`, and the fort label render.
+- Given attacker unknown intel, when the UI layer renders, then Defenders unknown shows, fort type does not, and own count still shows.
+- Given defender full intel, when the UI layer renders, then own count uses in-province human total and enemy uses `combatMode_attackersRegiments`, not `moveArmy_defendersRegiments`.
+- Given Details closed, when the UI layer renders, then type lines are hidden; when the player taps Details and the enemy line is shown, then own and enemy type lines appear.
+- Given intel null, when the UI layer renders, then force/fort/Details are omitted and meanings still render.
+- Given underfed copy, when the UI layer renders, then that line remains and both modes stay enabled.
+- Given width `kMinViewportWidth` (320 dp) with force/fort/meanings and both buttons, when the UI layer renders, then there is no horizontal overflow.
+- Given Auto-Resolve or Quick Battle tap, when the player chooses, then the dialog emits the matching `CombatModeChosenEvent` once and pops.
+- Given editorial-monocle, when the UI layer renders, then title is `--accent` 0.05, body `--muted`, Auto-Resolve label `--muted`, Quick Battle label `--accent`, one `CtDialogShell`, zero Material buttons.
