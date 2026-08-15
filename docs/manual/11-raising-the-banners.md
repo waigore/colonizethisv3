@@ -44,14 +44,14 @@ On `UNIT20001` **Military Units panel**, the **Generals** strip at the top of th
 
 ### Moving a field army
 
-1. **From the map:** On `MAP10001`, tap your **army stack marker** in the bottom-right of a town tile. When a field army is there, `DLG20001` opens (or `DLG20002` first if several field armies share the tile — each row shows that army’s regiment mix). The Home Army is never a Move choice from that tap. If only the Home Army is present, the tap opens `UNIT20001` instead. This does not open `MAP20001`. You can still open `MAP20001` on a province and tap **Move** when a non-Home field army is stationed there, or **Invade** on a foreign province when a field army can conceivably reach it. If several armies qualify from the overlay, `DLG20002` asks which army acts and shows each army’s regiment mix so you can tell them apart; then `DLG20001` opens. **Invade** preselects that province so you need not hunt it again.
+1. **From the map:** On `MAP10001`, tap your **army stack marker** in the bottom-right of a town tile. When a field army there can march, `DLG20001` opens (or `DLG20002` first if several field armies share the tile — each row shows that army’s regiment mix). The Home Army is never a Move choice from that tap. If a **non-empty** Home Army is in that stack and no field army there has a legal destination, the tap opens Split Army (**Detach a field army**) and then `DLG20001` for the new field army. An **empty** Home-Army-only marker still opens `UNIT20001`. This does not open `MAP20001`. You can still open `MAP20001` on a province and tap **Move** when a field army is stationed there, or when a non-empty Home Army is ready to detach. Tap **Invade** on a foreign province when a field army can conceivably reach it, or when your capital Home Army sits next door. If several armies qualify from the overlay, `DLG20002` asks which army acts and shows each army’s regiment mix so you can tell them apart; then `DLG20001` opens. **Invade** preselects that province so you need not hunt it again.
 2. **From the roster:** In `UNIT20001`, select **Move** on a non-Home army.
 3. `DLG20001` **Move army dialog** lists only destinations that are legal for that army and the current turn’s orders. The dialog body shows **Your army: N regiments** for the army you are moving. When you select an invasion destination, it also shows how many invasions you have staged this turn versus how many generals you have; staging more invasions than generals triggers a soft warning that extra armies fight with weaker command (Confirm stays enabled). If your armies are short on rations this turn, a separate soft line warns that they will fight weaker — again without blocking Confirm. Invasion target rows show defender strength, unopposed capture, and fort/siege risk when your military intel is complete (Spy, full tile visibility, or Spy fog-decay timer); otherwise they show **Defenders unknown**. Select an invasion row to see regiment-type breakdown when intel allows.
 4. Your owned provinces may be selected for relocation, including provinces in another region. Enemy, neutral, Minor Nation, or Tribe provinces must be adjacent to the army’s present province and lie in its current region.
 5. Confirm the selected destination. If entering another faction’s province would begin a war, confirm the invasion warning; the declaration of war and army move are submitted together.
 6. When the turn resolves, every regiment in that army moves with it. The panel shows its pending destination while the order remains in the draft.
 
-The Home Army has no enabled Move control and cannot leave the capital. Split it first if you need a marching force. On `MAP20001`, Move may still appear disabled with that plain reminder when only the Home Army is present.
+The Home Army itself cannot leave the capital. Split a field army from it before any regiment can march. From the map or `MAP20001`, a non-empty Home Army now starts that split for you (**Detach and choose destination**), then `DLG20001` for the new army. On `MAP20001`, Move stays disabled with the capital reminder only when the Home Army is empty.
 
 ### Military Counsel (`GAME90001` Military tab)
 
@@ -87,9 +87,9 @@ Other Great Powers use deterministic planners to weigh expansion, military rebui
 - [ ] Documents `UNIT20001` and `UNIT50001` training flow, including peasant consumption and capital Home Army arrival.
 - [ ] Explains armies, splitting and combining, Home Army purpose, and generals’ combat assignment and medal growth.
 - [ ] Documents `DLG20001` legal movement destinations, pending moves, invasion confirmation, and same-turn war declaration.
-- [ ] Documents `MAP10001` army stack-marker taps (field Move vs Home-only roster) and `MAP20001` Military **Move** / **Invade** shortcuts with optional `DLG20002` army picker (regiment mix on each row).
+- [ ] Documents `MAP10001` army stack-marker taps (field Move, non-empty Home Army detach-then-move, empty Home-only roster) and `MAP20001` Military **Move** / **Invade** shortcuts with optional `DLG20002` army picker (regiment mix on each row).
 - [ ] Documents `GAME90001` Military Counsel: `UNIT20001` entry, train/invade Agree, war confirm, empty state.
-- [ ] States that the Home Army cannot march and that a field army must be split from it.
+- [ ] States that the Home Army cannot march, that a field army must be split from it, and that map/overlay Move or Invade can start that split.
 - [ ] Grounds rival military behaviour in the Full AI phase-planning model.
 
 ## Sources

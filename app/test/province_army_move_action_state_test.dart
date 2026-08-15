@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:colonizethis_app/features/game/flame/map_state/province_army_move_action_state.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/province_army_move_home_army.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -81,7 +82,7 @@ void main() {
     );
   }
 
-  test('Home Army alone shows disabled Move with home reason', () {
+  test('Home Army with regiments enables Move via detach', () {
     final game = gameWithArmies(
       armies: [
         const Army(
@@ -105,12 +106,47 @@ void main() {
       isSeaZoneContext: false,
     );
     expect(state.showMove, isTrue);
+    expect(state.moveEnabled, isTrue);
+    expect(state.eligibleMoveArmyIds, isEmpty);
+    expect(state.showInvade, isFalse);
+    expect(
+      usesHomeArmyDetachFlow(
+        enabled: state.moveEnabled,
+        eligibleArmyIds: state.eligibleMoveArmyIds,
+      ),
+      isTrue,
+    );
+  });
+
+  test('empty Home Army still shows disabled Move with home reason', () {
+    final game = gameWithArmies(
+      armies: [
+        const Army(
+          id: 'home',
+          ownerId: human,
+          regionId: 'oldWorld',
+          stationedProvinceId: owned,
+          regimentUnitIds: [],
+          isHomeArmy: true,
+        ),
+      ],
+    );
+    final cache = PerPlayerArmyMovePickerCache();
+    final state = computeProvinceArmyMoveActionState(
+      game: game,
+      humanPlayerId: human,
+      provinceId: owned,
+      topology: topology(),
+      armyMovePickerCache: cache,
+      showsFullMilitaryIntel: true,
+      isSeaZoneContext: false,
+    );
+    expect(state.showMove, isTrue);
     expect(state.moveEnabled, isFalse);
     expect(
       state.moveDisabledReason,
       ProvinceArmyMoveDisabledReason.homeArmyCannotLeave,
     );
-    expect(state.showInvade, isFalse);
   });
 
   test('Invade visible but disabled when not in cache reachability', () {
@@ -222,4 +258,144 @@ void main() {
       isFalse,
     );
   });
+
+  test('Home-only adjacent foreign province enables Invade via detach', () {
+    final game = gameWithArmies(
+      armies: [
+        const Army(
+          id: 'home',
+          ownerId: human,
+          regionId: 'oldWorld',
+          stationedProvinceId: owned,
+          regimentUnitIds: ['r1'],
+          isHomeArmy: true,
+        ),
+      ],
+    );
+    final cache = PerPlayerArmyMovePickerCache();
+    final state = computeProvinceArmyMoveActionState(
+      game: game,
+      humanPlayerId: human,
+      provinceId: foreign,
+      topology: topology(),
+      armyMovePickerCache: cache,
+      showsFullMilitaryIntel: true,
+      isSeaZoneContext: false,
+    );
+    expect(state.showInvade, isTrue);
+    expect(state.invadeEnabled, isTrue);
+    expect(state.eligibleInvadeArmyIds, isEmpty);
+    expect(
+      usesHomeArmyDetachFlow(
+        enabled: state.invadeEnabled,
+        eligibleArmyIds: state.eligibleInvadeArmyIds,
+      ),
+      isTrue,
+    );
+  });
+
+  test('mixed unreachable field army still enables Invade via Home Army', () {
+    final game = gameWithArmies(
+      armies: [
+        const Army(
+          id: 'home',
+          ownerId: human,
+          regionId: 'oldWorld',
+          stationedProvinceId: owned,
+          regimentUnitIds: ['r1'],
+          isHomeArmy: true,
+        ),
+        const Army(
+          id: 'field',
+          ownerId: human,
+          regionId: 'oldWorld',
+          stationedProvinceId: other,
+          regimentUnitIds: ['r2'],
+        ),
+      ],
+    );
+    final cache = PerPlayerArmyMovePickerCache();
+    final state = computeProvinceArmyMoveActionState(
+      game: game,
+      humanPlayerId: human,
+      provinceId: foreign,
+      topology: topology(),
+      armyMovePickerCache: cache,
+      showsFullMilitaryIntel: true,
+      isSeaZoneContext: false,
+    );
+    expect(state.showInvade, isTrue);
+    expect(state.invadeEnabled, isTrue);
+    expect(state.eligibleInvadeArmyIds, isEmpty);
+  });
+
+  test('Home-Army Invade clause does not call armyMovePickerDestinations', () {
+    const path =
+        'lib/features/game/flame/map_state/province_army_move_home_army.dart';
+    final source = File('${Directory.current.path}/$path').readAsStringSync();
+    expect(source.contains('armyMovePickerDestinations('), isFalse);
+    expect(source.contains('PerPlayerArmyMovePickerCache'), isFalse);
+  });
+
+  test('non-adjacent foreign province stays hidden with only Home Army', () {
+    final game = gameWithArmies(
+      armies: [
+        const Army(
+          id: 'home',
+          ownerId: human,
+          regionId: 'oldWorld',
+          stationedProvinceId: owned,
+          regimentUnitIds: ['r1'],
+          isHomeArmy: true,
+        ),
+      ],
+    );
+    expect(
+      invadeConceivableCheap(
+        game: game,
+        topology: topology(),
+        humanPlayerId: human,
+        targetFullProvinceId: other,
+      ),
+      isFalse,
+    );
+  });
+
+  test(
+    'capital Move detach when stationed field armies have no destinations',
+    () {
+      final game = gameWithArmies(
+        armies: [
+          const Army(
+            id: 'home',
+            ownerId: human,
+            regionId: 'oldWorld',
+            stationedProvinceId: owned,
+            regimentUnitIds: ['r1'],
+            isHomeArmy: true,
+          ),
+          const Army(
+            id: 'field',
+            ownerId: human,
+            regionId: 'oldWorld',
+            stationedProvinceId: owned,
+            regimentUnitIds: ['r2'],
+          ),
+        ],
+      );
+      final cache = PerPlayerArmyMovePickerCache();
+      final state = computeProvinceArmyMoveActionState(
+        game: game,
+        humanPlayerId: human,
+        provinceId: owned,
+        topology: topology(),
+        armyMovePickerCache: cache,
+        showsFullMilitaryIntel: true,
+        isSeaZoneContext: false,
+      );
+      expect(state.showMove, isTrue);
+      expect(state.moveEnabled, isTrue);
+      expect(state.eligibleMoveArmyIds, isEmpty);
+    },
+  );
 }

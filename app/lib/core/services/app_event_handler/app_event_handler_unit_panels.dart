@@ -1,5 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show buildPlayerView;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +12,10 @@ import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
 import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
 import '../../../features/game/widgets/units/military/military_units_panel.dart';
 import '../../../features/game/widgets/units/naval/naval_units_panel.dart';
+import '../../../features/game/flame/caches/per_player_army_move_picker_cache.dart';
+import '../../../features/game/flame/map_state/province_army_move_home_army.dart';
 import '../../../features/game/widgets/unit_orders/army_stack_marker_action.dart';
+import '../../../features/game/widgets/unit_orders/home_army_detach_then_move_flow.dart';
 import '../../../features/game/widgets/unit_orders/naval_mission_flow.dart';
 import '../../../features/game/widgets/unit_orders/overlay_army_move_flow.dart';
 import '../../../providers/app_event_bus_provider.dart';
@@ -201,17 +206,46 @@ Future<void> appEventHandlerOpenArmyStackMarker(
   if (!ctx.mounted) return;
   final container = ProviderScope.containerOf(ctx);
   final shell = container.read(shellPlayerContextProvider);
+  if (!shell.canMutateViaUi) {
+    handler.state.onShowSnackBar?.call(
+      const ShowSnackBarEvent(
+        message: 'Observe mode: UI actions are read-only.',
+      ),
+    );
+    return;
+  }
+  final game = container.read(currentGameProvider);
+  if (game == null) return;
+  final humanPlayerId = resolveShellPanelPlayerId(shell, game);
+  final mapData = container.read(gameServiceProvider).getMapData(game.id);
+  final topology = mapData?.combinedTopology ?? const MapTopology();
+  final draftOrders = container.read(currentOrdersProvider);
+  final cache = PerPlayerArmyMovePickerCache();
+  cache.refresh(
+    ArmyMovePickerSnapshot(
+      game: game,
+      playerId: humanPlayerId,
+      playerView: buildPlayerView(game, topology, humanPlayerId),
+      topology: topology,
+      currentOrders: draftOrders,
+    ),
+  );
+  final home = humanHomeArmy(game, humanPlayerId);
   final action = resolveArmyStackMarkerAction(
-    canMutateViaUi: shell.canMutateViaUi,
+    canMutateViaUi: true,
     fieldArmyIds: event.fieldArmyIds,
+    stackHasNonEmptyHomeArmy:
+        home != null &&
+        home.regimentUnitIds.isNotEmpty &&
+        event.armyIds.contains(home.id),
+    fieldArmyIdsWithDestinations: cache.stationedFieldArmyIdsWithDestinations(
+      humanPlayerId,
+      event.provinceId,
+      game,
+    ),
   );
   switch (action.kind) {
     case ArmyStackMarkerKind.observeBlocked:
-      handler.state.onShowSnackBar?.call(
-        const ShowSnackBarEvent(
-          message: 'Observe mode: UI actions are read-only.',
-        ),
-      );
       return;
     case ArmyStackMarkerKind.openMilitaryRoster:
       await appEventHandlerOpenMilitaryUnitsPanel(
@@ -221,21 +255,26 @@ Future<void> appEventHandlerOpenArmyStackMarker(
       );
       return;
     case ArmyStackMarkerKind.overlayMove:
-      break;
+      if (!ctx.mounted) return;
+      await showOverlayArmyMoveFlow(
+        context: ctx,
+        game: game,
+        topology: topology,
+        humanPlayerId: humanPlayerId,
+        draftOrders: draftOrders,
+        bus: container.read(appEventBusProvider),
+        armyIds: action.moveArmyIds,
+      );
+      return;
+    case ArmyStackMarkerKind.detachThenMove:
+      if (!ctx.mounted) return;
+      await showHomeArmyDetachThenMoveFlow(
+        context: ctx,
+        game: game,
+        topology: topology,
+        humanPlayerId: humanPlayerId,
+        draftOrders: draftOrders,
+        bus: container.read(appEventBusProvider),
+      );
   }
-  final game = container.read(currentGameProvider);
-  if (game == null) return;
-  if (!ctx.mounted) return;
-  final humanPlayerId = resolveShellPanelPlayerId(shell, game);
-  final mapData = container.read(gameServiceProvider).getMapData(game.id);
-  final draftOrders = container.read(currentOrdersProvider);
-  await showOverlayArmyMoveFlow(
-    context: ctx,
-    game: game,
-    topology: mapData?.combinedTopology ?? const MapTopology(),
-    humanPlayerId: humanPlayerId,
-    draftOrders: draftOrders,
-    bus: container.read(appEventBusProvider),
-    armyIds: action.moveArmyIds,
-  );
 }

@@ -290,4 +290,10 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String mapHover_semantics(String summary) {
     return summary;
   }
+
+  @override
+  String get splitArmy_detachTitle => 'Detach a field army';
+
+  @override
+  String get splitArmy_detachConfirm => 'Detach and choose destination';
 }

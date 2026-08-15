@@ -59,7 +59,7 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart
 
 ## Trigger conditions
 
-- Opened from `MilitaryUnitsPanel` non-Home army row **Move** action, from `MAP20001` Military **Move** / **Invade** via overlay-local `showDialog` / `showOverlayArmyMoveFlow` (optional multi-army picker `DLG20002` first), or from a `MAP10001` army stack marker tap (`OpenArmyStackMarkerEvent` → same flow with **field-only** ids). **Home Army** never shows Move and cannot open this dialog.
+- Opened from `MilitaryUnitsPanel` non-Home army row **Move** action, from `MAP20001` Military **Move** / **Invade** via overlay-local `showDialog` / `showOverlayArmyMoveFlow` (optional multi-army picker `DLG20002` first), from a `MAP10001` army stack marker tap (`OpenArmyStackMarkerEvent` → field-only ids when those armies have cached destinations), or after a confirmed Home Army split on the detach-then-move path (new army id from `LandArmiesUpdatedEvent.game`; Invade preselects the viewed province). **Home Army** never shows Move and cannot be the `DLG20001` target.
 - The panel or overlay passes the current `currentOrders` as `draftOrders` and optionally a cached `playerView` so the dialog reuses an `IncrementalCandidateValidator` per [order-suggestions.md](../program/order-suggestions.md) instead of rebuilding per probe.
 - Destination probing calls `armyMovePickerDestinations` exactly as `MilitaryUnitsPanel` does, so the dialog never offers a destination that the order engine would reject for the current `(game, topology, playerView, draftOrders)`.
 

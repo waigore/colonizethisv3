@@ -3,11 +3,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../caches/per_player_army_move_picker_cache.dart';
+import 'province_army_move_home_army.dart';
 
 /// Visibility/enablement for MAP20001 Military Move / Invade (Refs #4350).
 ///
-/// Visibility uses cheap topology/ownership predicates; enablement reads
-/// [PerPlayerArmyMovePickerCache] only — never live `armyMovePickerDestinations`.
+/// Visibility uses cheap topology/ownership predicates. Field enablement
+/// reads [PerPlayerArmyMovePickerCache] only; the Home-Army detach clause
+/// never reads that cache. Overlay rebuild never calls live
+/// `armyMovePickerDestinations`.
 class ProvinceArmyMoveActionState {
   const ProvinceArmyMoveActionState({
     required this.showMove,
@@ -95,16 +98,23 @@ ProvinceArmyMoveActionState computeProvinceArmyMoveActionState({
     humanPlayerId,
     provinceId,
   );
+  final homeDetach = homeArmyDetachInvadeCheap(
+    game: game,
+    topology: topology,
+    humanPlayerId: humanPlayerId,
+    targetFullProvinceId: provinceId,
+  );
+  final invadeEnabled = reachable.isNotEmpty || homeDetach;
   return ProvinceArmyMoveActionState(
     showMove: false,
     moveEnabled: false,
     moveDisabledReason: ProvinceArmyMoveDisabledReason.none,
     eligibleMoveArmyIds: const [],
     showInvade: true,
-    invadeEnabled: reachable.isNotEmpty,
-    invadeDisabledReason: reachable.isEmpty
-        ? ProvinceArmyMoveDisabledReason.cannotReach
-        : ProvinceArmyMoveDisabledReason.none,
+    invadeEnabled: invadeEnabled,
+    invadeDisabledReason: invadeEnabled
+        ? ProvinceArmyMoveDisabledReason.none
+        : ProvinceArmyMoveDisabledReason.cannotReach,
     eligibleInvadeArmyIds: reachable,
   );
 }
@@ -120,29 +130,15 @@ ProvinceArmyMoveActionState _moveStateForOwnedProvince({
     provinceId,
     game,
   );
-  final hasHomeOnly = fieldIds.isEmpty &&
-      game.worldState.armies.any(
-        (a) =>
-            a.ownerId == humanPlayerId &&
-            a.isHomeArmy &&
-            a.stationedProvinceId == provinceId,
-      );
+  final home = humanHomeArmy(game, humanPlayerId);
+  final homeHere = home != null && home.stationedProvinceId == provinceId;
+  final homeHereNonEmpty =
+      home != null &&
+      home.stationedProvinceId == provinceId &&
+      home.regimentUnitIds.isNotEmpty;
 
-  if (fieldIds.isEmpty && !hasHomeOnly) {
+  if (fieldIds.isEmpty && !homeHere) {
     return ProvinceArmyMoveActionState.hidden;
-  }
-
-  if (hasHomeOnly) {
-    return const ProvinceArmyMoveActionState(
-      showMove: true,
-      moveEnabled: false,
-      moveDisabledReason: ProvinceArmyMoveDisabledReason.homeArmyCannotLeave,
-      eligibleMoveArmyIds: [],
-      showInvade: false,
-      invadeEnabled: false,
-      invadeDisabledReason: ProvinceArmyMoveDisabledReason.none,
-      eligibleInvadeArmyIds: [],
-    );
   }
 
   final withDest = armyMovePickerCache.stationedFieldArmyIdsWithDestinations(
@@ -150,17 +146,51 @@ ProvinceArmyMoveActionState _moveStateForOwnedProvince({
     provinceId,
     game,
   );
-  return ProvinceArmyMoveActionState(
+  if (withDest.isNotEmpty) {
+    return ProvinceArmyMoveActionState(
+      showMove: true,
+      moveEnabled: true,
+      moveDisabledReason: ProvinceArmyMoveDisabledReason.none,
+      eligibleMoveArmyIds: withDest,
+      showInvade: false,
+      invadeEnabled: false,
+      invadeDisabledReason: ProvinceArmyMoveDisabledReason.none,
+      eligibleInvadeArmyIds: const [],
+    );
+  }
+  if (homeHereNonEmpty) {
+    return const ProvinceArmyMoveActionState(
+      showMove: true,
+      moveEnabled: true,
+      moveDisabledReason: ProvinceArmyMoveDisabledReason.none,
+      eligibleMoveArmyIds: [],
+      showInvade: false,
+      invadeEnabled: false,
+      invadeDisabledReason: ProvinceArmyMoveDisabledReason.none,
+      eligibleInvadeArmyIds: [],
+    );
+  }
+  if (fieldIds.isNotEmpty) {
+    return ProvinceArmyMoveActionState(
+      showMove: true,
+      moveEnabled: false,
+      moveDisabledReason: ProvinceArmyMoveDisabledReason.noDestinations,
+      eligibleMoveArmyIds: fieldIds,
+      showInvade: false,
+      invadeEnabled: false,
+      invadeDisabledReason: ProvinceArmyMoveDisabledReason.none,
+      eligibleInvadeArmyIds: const [],
+    );
+  }
+  return const ProvinceArmyMoveActionState(
     showMove: true,
-    moveEnabled: withDest.isNotEmpty,
-    moveDisabledReason: withDest.isEmpty
-        ? ProvinceArmyMoveDisabledReason.noDestinations
-        : ProvinceArmyMoveDisabledReason.none,
-    eligibleMoveArmyIds: withDest.isNotEmpty ? withDest : fieldIds,
+    moveEnabled: false,
+    moveDisabledReason: ProvinceArmyMoveDisabledReason.homeArmyCannotLeave,
+    eligibleMoveArmyIds: [],
     showInvade: false,
     invadeEnabled: false,
     invadeDisabledReason: ProvinceArmyMoveDisabledReason.none,
-    eligibleInvadeArmyIds: const [],
+    eligibleInvadeArmyIds: [],
   );
 }
 
@@ -181,15 +211,21 @@ bool invadeConceivableCheap({
           ProvinceId.regionIdFrom(army.stationedProvinceId) == regionId)
         army,
   ];
-  if (fieldInRegion.isEmpty) return false;
-
-  final neighborLocals =
-      neighborProvinceIdsInRegion(topology, regionId, localId).toSet();
+  final neighborLocals = neighborProvinceIdsInRegion(
+    topology,
+    regionId,
+    localId,
+  ).toSet();
   for (final army in fieldInRegion) {
     final hostLocal = ProvinceId.localIdFrom(army.stationedProvinceId);
     if (neighborLocals.contains(hostLocal)) return true;
   }
-  return false;
+  return homeArmyDetachInvadeCheap(
+    game: game,
+    topology: topology,
+    humanPlayerId: humanPlayerId,
+    targetFullProvinceId: targetFullProvinceId,
+  );
 }
 
 bool _hasInvasionOwnerSemantics(Game game, String ownerId) {
