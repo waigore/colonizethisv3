@@ -298,9 +298,7 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
   ),
 ];
 
-Widget _moveDialogStoryFrame({
-  required Widget Function(BuildContext) open,
-}) {
+Widget _moveDialogStoryFrame({required Widget Function(BuildContext) open}) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -784,6 +782,44 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
                 },
                 // ignore: avoid_hardcoded_strings_in_widgets
                 child: const Text('Open Set Subsidy'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Grant mode — treasury below minimum',
+        builder: (context) {
+          final base = loadSeed42InitGameResult().game;
+          final humanPlayerId = base.players.first.id;
+          final targetFactionId = base.players.length >= 2
+              ? base.players[1].id
+              : (base.minorNations.isNotEmpty
+                    ? base.minorNations.first.id
+                    : 'm1');
+          final game = base.copyWith(
+            players: [
+              base.players.first.copyWith(treasury: 0),
+              ...base.players.skip(1),
+            ],
+          );
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => GrantOrSubsidyDialog(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      targetFactionId: targetFactionId,
+                      isSubsidy: false,
+                      bus: AppEventBus.create(),
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Grant Aid (empty treasury)'),
               );
             },
           );
