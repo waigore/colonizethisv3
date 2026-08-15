@@ -27,17 +27,16 @@ Player productionLabourSectionGpWithPool({
   int treasury = 0,
   Map<String, int> stockpile = const {},
   Map<String, bool>? techUnlocked,
-}) =>
-    productionLabourGpWithPool(
-      id: productionLabourSectionPlayerId,
-      peasants: peasants,
-      apprentices: apprentices,
-      journeymen: journeymen,
-      masters: masters,
-      treasury: treasury,
-      stockpile: stockpile,
-      techUnlocked: techUnlocked,
-    );
+}) => productionLabourGpWithPool(
+  id: productionLabourSectionPlayerId,
+  peasants: peasants,
+  apprentices: apprentices,
+  journeymen: journeymen,
+  masters: masters,
+  treasury: treasury,
+  stockpile: stockpile,
+  techUnlocked: techUnlocked,
+);
 
 class ProductionLabourSectionCapture {
   final List<WorkerTier> appended = [];
@@ -95,19 +94,22 @@ Widget mountProductionLabourSection({
   Orders currentOrders = const Orders(),
   bool canEdit = true,
   ProductionLabourCallbacks? callbacks,
+  double width = 800,
+  double height = 600,
 }) {
   return buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: const [Locale('en')],
     child: Scaffold(
       body: SizedBox(
-        width: 800,
-        height: 600,
+        width: width,
+        height: height,
         child: ProductionLabourSection(
           player: player,
           currentOrders: currentOrders,
           canEdit: canEdit,
-          callbacks: callbacks ?? ProductionLabourSectionCapture().asCallbacks(),
+          callbacks:
+              callbacks ?? ProductionLabourSectionCapture().asCallbacks(),
         ),
       ),
     ),
@@ -120,6 +122,8 @@ Future<void> pumpProductionLabourSection(
   Orders currentOrders = const Orders(),
   bool canEdit = true,
   ProductionLabourCallbacks? callbacks,
+  double width = 800,
+  double height = 600,
 }) async {
   await tester.pumpWidget(
     mountProductionLabourSection(
@@ -127,6 +131,8 @@ Future<void> pumpProductionLabourSection(
       currentOrders: currentOrders,
       canEdit: canEdit,
       callbacks: callbacks,
+      width: width,
+      height: height,
     ),
   );
   await pumpSettleCapped(tester);

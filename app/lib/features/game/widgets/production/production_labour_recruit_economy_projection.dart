@@ -4,7 +4,10 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
-    show applyRecruitWorkerCostDeduction, canAffordRecruitWorker;
+    show
+        applyRecruitWorkerCostDeduction,
+        canAffordRecruitWorker,
+        kRecruitWorkerInsufficientMaterials;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Per-tier queued recruit-worker counts for [playerId] from [currentOrders].
@@ -100,6 +103,75 @@ projectedEconomyAfterQueuedRecruitWorkerOrders({
   return (workers: workers, stockpile: stockpile, treasury: treasury);
 }
 
+/// Result of probing whether one more recruit/train at [candidateTier]
+/// would pass [canAffordRecruitWorker] after queued recruit deductions
+/// and military/naval peasant reservation.
+class RecruitWorkerAppendCheck {
+  const RecruitWorkerAppendCheck({
+    required this.canAppend,
+    this.reason,
+    this.insufficientMaterialIds = const <String>{},
+  });
+
+  final bool canAppend;
+  final String? reason;
+  final Set<String> insufficientMaterialIds;
+}
+
+/// Affordance + refusal for appending one [RecruitWorkerOrder] at
+/// [candidateTier]. Applies queued recruit deductions, then subtracts
+/// pending military/naval peasant consumes from the projected pool so
+/// [canAffordRecruitWorker] sees the reserved ledger (tech → workers →
+/// treasury → materials).
+RecruitWorkerAppendCheck recruitWorkerAppendCheck({
+  required Player player,
+  required Orders currentOrders,
+  required WorkerTier candidateTier,
+  ({WorkerPool workers, Stockpile stockpile, int treasury})? projected,
+}) {
+  final snapshot =
+      projected ??
+      projectedEconomyAfterQueuedRecruitWorkerOrders(
+        player: player,
+        currentOrders: currentOrders,
+      );
+  final row = WorkerActionEconomyCatalog.forTier(candidateTier);
+  var workers = snapshot.workers;
+  if (row.consumesPeasant) {
+    final reserved =
+        workers.peasants -
+        _militaryAndNavalPeasantConsumes(
+          currentOrders: currentOrders,
+          playerId: player.id,
+        );
+    workers = workers.copyWith(peasants: reserved < 0 ? 0 : reserved);
+  }
+  final candidate = RecruitWorkerOrder(targetTier: candidateTier);
+  final check = canAffordRecruitWorker(
+    player,
+    candidate,
+    workers,
+    snapshot.stockpile,
+    snapshot.treasury,
+  );
+  if (check.canAfford) {
+    return const RecruitWorkerAppendCheck(canAppend: true);
+  }
+  final insufficient = <String>{};
+  if (check.reason == kRecruitWorkerInsufficientMaterials) {
+    for (final entry in row.materialCosts.entries) {
+      if (snapshot.stockpile.quantityOf(entry.key) < entry.value) {
+        insufficient.add(entry.key);
+      }
+    }
+  }
+  return RecruitWorkerAppendCheck(
+    canAppend: false,
+    reason: check.reason,
+    insufficientMaterialIds: insufficient,
+  );
+}
+
 /// True when appending one more [RecruitWorkerOrder] at [candidateTier] for
 /// [player] would be accepted by [canAffordRecruitWorker] after every
 /// already-queued recruit order has been deducted, **and** after applying
@@ -113,29 +185,11 @@ bool canAppendRecruitWorkerOrder({
   required Orders currentOrders,
   required WorkerTier candidateTier,
 }) {
-  final projected = projectedEconomyAfterQueuedRecruitWorkerOrders(
+  return recruitWorkerAppendCheck(
     player: player,
     currentOrders: currentOrders,
-  );
-  final row = WorkerActionEconomyCatalog.forTier(candidateTier);
-  if (row.consumesPeasant) {
-    final militaryNavalConsumes = _militaryAndNavalPeasantConsumes(
-      currentOrders: currentOrders,
-      playerId: player.id,
-    );
-    if (projected.workers.peasants - militaryNavalConsumes < 1) {
-      return false;
-    }
-  }
-  final candidate = RecruitWorkerOrder(targetTier: candidateTier);
-  final check = canAffordRecruitWorker(
-    player,
-    candidate,
-    projected.workers,
-    projected.stockpile,
-    projected.treasury,
-  );
-  return check.canAfford;
+    candidateTier: candidateTier,
+  ).canAppend;
 }
 
 int _militaryAndNavalPeasantConsumes({

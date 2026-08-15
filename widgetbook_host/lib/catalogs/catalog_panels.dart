@@ -1,6 +1,7 @@
 part of 'catalog.dart';
 
-Map<String, IndustryCounselRecommendation> _demoStarredProduceRecommendations() {
+Map<String, IndustryCounselRecommendation>
+_demoStarredProduceRecommendations() {
   IndustryCounselRecommendation rec(String recipeId) {
     return IndustryCounselRecommendation(
       recommendationId: 'produce:$recipeId',
@@ -103,9 +104,8 @@ List<WidgetbookNode> get productionPanelDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Labour zero',
-        builder: (context) => ProductionPanelStory(
-          playerOverride: zeroLabourReadinessPlayer(),
-        ),
+        builder: (context) =>
+            ProductionPanelStory(playerOverride: zeroLabourReadinessPlayer()),
       ),
       WidgetbookUseCase(
         name: 'Labour food shortfall (mobile)',
@@ -113,6 +113,27 @@ List<WidgetbookNode> get productionPanelDirectories => [
           context,
           ProductionPanelStory(
             playerOverride: foodShortfallLabourReadinessPlayer(),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Labour cost gist',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: labourCostGistProductionPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Labour locked tier',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: labourLockedTierProductionPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Labour cost gist (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          ProductionPanelStory(
+            playerOverride: labourCostGistProductionPlayer(),
           ),
         ),
       ),
@@ -339,9 +360,8 @@ List<WidgetbookNode> get techTreeDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Slots — sequential funding preview',
-        builder: (context) => _technologySequentialFundingPreviewStoryHost(
-          context,
-        ),
+        builder: (context) =>
+            _technologySequentialFundingPreviewStoryHost(context),
       ),
       WidgetbookUseCase(
         name: 'Slots — persisted in-progress (no fresh orders)',
@@ -543,15 +563,12 @@ const List<ResearchFundingLevel> _kFundingPreviewLevels =
 /// slots at Medium funding with treasury `200` so slot 0 spends and slot 1 is
 /// sequential-blocked. SPEC/ui/technology-panel.md § Widgetbook. Refs #4335.
 ({Player player, Game game, Orders orders})
-    technologySequentialFundingPreviewFixture({
+technologySequentialFundingPreviewFixture({
   required Game baseGame,
   required Player basePlayer,
 }) {
   const techIds = <String>[kTechIdCropRotation, kTechIdSawMill];
-  final player = basePlayer.copyWith(
-    treasury: 200,
-    researchSlots: 3,
-  );
+  final player = basePlayer.copyWith(treasury: 200, researchSlots: 3);
   final game = baseGame.copyWith(
     players: [player, ...baseGame.players.skip(1)],
   );

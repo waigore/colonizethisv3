@@ -1,4 +1,4 @@
-// Per-tier Labour Controls row widgets (Refs #3878).
+// Per-tier Labour Controls row widgets (Refs #3878, #4432).
 //
 // Extracted from `production_labour_section.dart` to keep the host file
 // under the repo code-review physical-line limit.
@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'production_labour_helpers.dart';
 import 'production_labour_section_tier_row_controls.dart';
+import 'production_labour_section_tier_row_gists.dart';
 
 const kUiIconLabourIncrement = 'ui_icon_production_alloc_increment.png';
 const kUiIconLabourDecrement = 'ui_icon_production_alloc_decrement.png';
@@ -43,19 +44,34 @@ class ProductionLabourTierRow extends StatelessWidget {
     }
   }
 
-  String _tierLabelWithUnlockState() {
-    final tierName = _tierName();
-    final state = data.techUnlocked
-        ? l10n.production_labourTierUnlocked
-        : l10n.production_labourTierLocked;
-    return l10n.production_labourTierLabel(tierName, state);
-  }
-
-  String _appendTooltip() {
+  String _appendActionLabel() {
     final label = _tierName();
     return data.tier == WorkerTier.peasant
         ? l10n.production_labourRecruitTier(label)
         : l10n.production_labourTrainTier(label);
+  }
+
+  String _appendRefusalOrEmpty() {
+    final reason = data.appendRefusalReason;
+    if (!data.canAppend && reason != null && reason.isNotEmpty) {
+      return reason;
+    }
+    return '';
+  }
+
+  String _appendTooltip() {
+    final refusal = _appendRefusalOrEmpty();
+    if (refusal.isNotEmpty) return refusal;
+    return l10n.production_labourAppendEnabledTooltip(
+      _appendActionLabel(),
+      l10n.production_labourStaffsNextProduction,
+    );
+  }
+
+  String _appendSemantics() {
+    final refusal = _appendRefusalOrEmpty();
+    if (refusal.isNotEmpty) return refusal;
+    return _appendActionLabel();
   }
 
   Widget _buildQueuedSegment() {
@@ -63,7 +79,7 @@ class ProductionLabourTierRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.only(left: CtSpacing.m),
+      padding: const EdgeInsets.only(top: 2),
       child: Text(
         l10n.production_labourQueued(data.queuedCount),
         style: theme.textTheme.labelSmall,
@@ -73,8 +89,10 @@ class ProductionLabourTierRow extends StatelessWidget {
 
   List<Widget> _buildEditActions(String tierName) {
     final disbandLabel = l10n.production_labourDisband;
+    final appendTooltip = _appendTooltip();
     return [
       ProductionLabourIconButton(
+        key: ValueKey<String>('production_labour_minus_${data.tier.id}'),
         enabled: data.canPop,
         semanticLabel: l10n.production_labourDequeueTier(tierName),
         tooltip: l10n.production_labourDequeueTier(tierName),
@@ -82,9 +100,10 @@ class ProductionLabourTierRow extends StatelessWidget {
         onPressed: () => callbacks.onPopLastRecruitOrder(data.tier),
       ),
       ProductionLabourIconButton(
+        key: ValueKey<String>('production_labour_plus_${data.tier.id}'),
         enabled: data.canAppend,
-        semanticLabel: _appendTooltip(),
-        tooltip: _appendTooltip(),
+        semanticLabel: _appendSemantics(),
+        tooltip: appendTooltip,
         assetFileName: kUiIconLabourIncrement,
         onPressed: () => callbacks.onAppendRecruitOrder(data.tier),
       ),
@@ -97,10 +116,6 @@ class ProductionLabourTierRow extends StatelessWidget {
           onDisband: callbacks.onDisband,
         )
       else
-        // Peasant rows have no visible Disband control but reserve the
-        // same trailing slot width as trained rows so −/+ align across
-        // all tier rows. SPEC/ui/production-panel.md § Labour Controls
-        // (12-A) > Trailing alignment. Refs #2862 S8a / C4 / G5.
         ProductionLabourDisbandReservedSlot(label: disbandLabel),
     ];
   }
@@ -108,32 +123,35 @@ class ProductionLabourTierRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tierName = _tierName();
-    final tierLabel = _tierLabelWithUnlockState();
-    // Expanded (not Flexible) on the leading tier-label slot so the slot
-    // width is the same across rows. With Flexible.loose the label slot
-    // collapses to the text's intrinsic width, which differs per tier
-    // (e.g. "Peasants (unlocked)" vs "Apprentices (unlocked)") and
-    // shifts the trailing action cluster horizontally — breaking the
-    // trailing-alignment contract in SPEC/ui/production-panel.md
-    // § Labour Controls (12-A) > Trailing alignment. With Expanded, the
-    // label slot occupies all available pre-cluster space, the cluster
-    // anchors flush to the row's right edge, and combined with the
-    // reserved-Disband-slot on the peasant row the −/+ steppers sit at
-    // the same screen-x across every tier row. Refs #2862 S8a / C4 / G5.
+    final requires = labourRequiresGist(
+      tier: data.tier,
+      techUnlocked: data.techUnlocked,
+      l10n: l10n,
+    );
+    final segments = labourCostGistSegments(
+      tier: data.tier,
+      l10n: l10n,
+      canAppend: data.canAppend,
+      appendRefusalReason: data.appendRefusalReason,
+      insufficientMaterialIds: data.insufficientMaterialIds,
+    );
     return Row(
       mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Flexible(
-                child: Text(
-                  tierLabel,
-                  style: theme.textTheme.bodySmall,
-                  overflow: TextOverflow.ellipsis,
+              Text(tierName, style: theme.textTheme.bodySmall, softWrap: true),
+              ProductionLabourTierCostGist(tier: data.tier, segments: segments),
+              ProductionLabourTierUpkeepGist(tier: data.tier, l10n: l10n),
+              if (requires != null)
+                ProductionLabourTierRequiresGist(
+                  tier: data.tier,
+                  label: requires,
                 ),
-              ),
               _buildQueuedSegment(),
             ],
           ),

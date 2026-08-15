@@ -1,6 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'economy_worker_consumption_rates.dart';
+
+export 'economy_worker_consumption_rates.dart';
+
 /// Per-turn food consumption phases used by [resolveConsumption].
 ///
 /// Each phase is a pure, stockpile-in/stockpile-out function so the land
@@ -183,10 +187,22 @@ WorkerFoodFedCounts consumeWorkerFood({
     return consumed ~/ foodPerUnit;
   }
 
-  final fedMasters = feedGroup(count: workers.masters, foodPerUnit: 2);
-  final fedJourneymen = feedGroup(count: workers.journeymen, foodPerUnit: 2);
-  final fedApprentices = feedGroup(count: workers.apprentices, foodPerUnit: 2);
-  final fedPeasants = feedGroup(count: workers.peasants, foodPerUnit: 1);
+  final fedMasters = feedGroup(
+    count: workers.masters,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.master),
+  );
+  final fedJourneymen = feedGroup(
+    count: workers.journeymen,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.journeyman),
+  );
+  final fedApprentices = feedGroup(
+    count: workers.apprentices,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.apprentice),
+  );
+  final fedPeasants = feedGroup(
+    count: workers.peasants,
+    foodPerUnit: workerFoodPerUnitForTier(WorkerTier.peasant),
+  );
 
   return (
     stockpile: current,
