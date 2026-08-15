@@ -2,6 +2,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show MapBaseLayerFlags;
 import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/material.dart' show Offset;
 
 import 'ct_region_map_game_mixins.dart';
 import 'region_map_component.dart';
@@ -47,6 +48,8 @@ void ctRegionMapGameUpdateProps(
   bool? showPlayerTerritoryOutline,
   Set<String>? playerTerritoryTileKeys,
   bool clearPlayerTerritoryTileKeys = false,
+  void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial,
 }) {
   var regionChanged = false;
   if (region != null) {
@@ -127,6 +130,9 @@ void ctRegionMapGameUpdateProps(
     game.playerTerritoryTileKeys = null;
   } else if (playerTerritoryTileKeys != null) {
     game.playerTerritoryTileKeys = playerTerritoryTileKeys;
+  }
+  if (onMapTileSecondaryForRadial != null) {
+    game.onMapTileSecondaryForRadial = onMapTileSecondaryForRadial;
   }
 
   assertCtMapPlayerViewRequired(

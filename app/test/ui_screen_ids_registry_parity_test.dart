@@ -31,6 +31,8 @@ const Map<String, String> _expectedConstants = {
   'counselScreen': UiScreenIds.counselScreen,
   'empireOverviewMapArea': UiScreenIds.empireOverviewMapArea,
   'provinceSeaZoneOverlay': UiScreenIds.provinceSeaZoneOverlay,
+  'tileContextRadial': UiScreenIds.tileContextRadial,
+  'tileMoreActionsDialog': UiScreenIds.tileMoreActionsDialog,
   'civilianUnitsPanel': UiScreenIds.civilianUnitsPanel,
   'militaryUnitsPanel': UiScreenIds.militaryUnitsPanel,
   'navalUnitsPanel': UiScreenIds.navalUnitsPanel,

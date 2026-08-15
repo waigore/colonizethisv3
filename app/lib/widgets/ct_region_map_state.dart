@@ -31,6 +31,7 @@ class CtRegionMapState extends State<CtRegionMap>
 
   @override
   void dispose() {
+    cancelTileRadialHoldTimer();
     subscriptions.cancelAll();
     super.dispose();
   }
@@ -69,7 +70,9 @@ class CtRegionMapState extends State<CtRegionMap>
         widget.playerTerritoryTileKeys != oldWidget.playerTerritoryTileKeys ||
         widget.onViewportSnapshotChanged !=
             oldWidget.onViewportSnapshotChanged ||
-        widget.zoomMultiplier != oldWidget.zoomMultiplier) {
+        widget.zoomMultiplier != oldWidget.zoomMultiplier ||
+        widget.onMapTileSecondaryForRadial !=
+            oldWidget.onMapTileSecondaryForRadial) {
       game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
@@ -118,6 +121,7 @@ class CtRegionMapState extends State<CtRegionMap>
         zoomMultiplier: widget.zoomMultiplier,
         showPlayerTerritoryOutline: widget.showPlayerTerritoryOutline,
         playerTerritoryTileKeys: widget.playerTerritoryTileKeys,
+        onMapTileSecondaryForRadial: widget.onMapTileSecondaryForRadial,
       );
     }
     if (widget.bus != oldWidget.bus) {

@@ -303,6 +303,24 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   }
 
   @override
+  String get tileRadial_explore => 'Explore';
+
+  @override
+  String get tileRadial_prospect => 'Prospect';
+
+  @override
+  String get tileRadial_buildImprovement => 'Build improvement';
+
+  @override
+  String get tileRadial_more => 'More';
+
+  @override
+  String get tileRadial_moreTitle => 'More tile actions';
+
+  @override
+  String get tileRadial_provinceDetails => 'Province details';
+
+  @override
   String get splitArmy_detachTitle => 'Detach a field army';
 
   @override

@@ -25,6 +25,8 @@ abstract final class UiScreenIds {
   // MAP — map surfaces
   static const String empireOverviewMapArea = 'MAP10001';
   static const String provinceSeaZoneOverlay = 'MAP20001';
+  static const String tileContextRadial = 'MAP30001';
+  static const String tileMoreActionsDialog = 'MAP30002';
 
   // UNIT — unit management panels and train dialogs
   static const String civilianUnitsPanel = 'UNIT10001';
