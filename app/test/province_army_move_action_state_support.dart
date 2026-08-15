@@ -72,3 +72,79 @@ Game armyMoveActionGameWithArmies({
     ],
   );
 }
+
+/// Picker-ready overlay game: units, tiles, visibility, optional war.
+Game armyMoveActionPickerReadyGame({
+  required List<Army> armies,
+  required List<Unit> units,
+  bool atWar = false,
+}) {
+  return Game(
+    id: 'g_army_move_picker',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          const Province(
+            id: kArmyMoveActionOwnedId,
+            regionId: 'oldWorld',
+            ownerId: kArmyMoveActionHumanId,
+            displayName: 'Owned',
+          ),
+          const Province(
+            id: kArmyMoveActionForeignId,
+            regionId: 'oldWorld',
+            ownerId: kArmyMoveActionRivalId,
+            displayName: 'Foreign',
+          ),
+          const Province(
+            id: kArmyMoveActionOtherId,
+            regionId: 'oldWorld',
+            ownerId: kArmyMoveActionHumanId,
+            displayName: 'Other',
+          ),
+        ],
+        units: units,
+      ),
+      newWorld: const RegionData(),
+      armies: armies,
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          kArmyMoveActionOwnedId: ['oldWorld|p_owned|0|0'],
+          kArmyMoveActionForeignId: ['oldWorld|p_foreign|0|0'],
+          kArmyMoveActionOtherId: ['oldWorld|p_other|0|0'],
+        },
+      },
+      playerVisibilityByTile: const {
+        kArmyMoveActionHumanId: {
+          'oldWorld|p_owned|0|0': 'fullyVisible',
+          'oldWorld|p_foreign|0|0': 'fullyVisible',
+          'oldWorld|p_other|0|0': 'fullyVisible',
+        },
+      },
+    ),
+    players: const [
+      Player(
+        id: kArmyMoveActionHumanId,
+        displayName: 'Human',
+        isHuman: true,
+        capitalProvinceId: kArmyMoveActionOwnedId,
+      ),
+      Player(
+        id: kArmyMoveActionRivalId,
+        displayName: 'Rival',
+        isHuman: false,
+        capitalProvinceId: kArmyMoveActionForeignId,
+      ),
+    ],
+    diplomacyRelations: [
+      if (atWar)
+        const DiplomacyRelation(
+          factionId1: kArmyMoveActionHumanId,
+          factionId2: kArmyMoveActionRivalId,
+          state: RelationState.atWar,
+          score: 20,
+        ),
+    ],
+  );
+}
