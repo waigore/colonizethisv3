@@ -552,6 +552,20 @@ rules:
     runner: dart
     script: tool/check_debug_console_shared_helpers.dart
 
+  - rule_id: repo.debug_console_lib_file_size
+    group: structure
+    title: colonizethis_debug_console lib files must stay at or below 270 physical lines (Refs #4433)
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_debug_console_lib_file_size.dart
+
+  - rule_id: repo.debug_console_test_file_size
+    group: testing
+    title: colonizethis_debug_console test files must stay at or below 400 physical lines (Refs #4433)
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_debug_console_test_file_size.dart
+
   - rule_id: repo.app_event_handler_scope_logic_boundary
     group: architecture
     title: app_event_handler_scope must not import features/game/logic directly
