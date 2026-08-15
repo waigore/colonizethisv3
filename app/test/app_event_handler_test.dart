@@ -243,6 +243,37 @@ void main() {
       },
     );
 
+    testWidgets('QuickStartNewGameEvent invokes extraActionHandlers', (
+      tester,
+    ) async {
+      var called = false;
+      GlobalKey<NavigatorState>? receivedKey;
+      handler.unbind();
+      handler = buildTestAppEventHandler(
+        bus: bus,
+        navigatorKey: navKey,
+        extraActionHandlers: {
+          QuickStartNewGameEvent: (key) {
+            called = true;
+            receivedKey = key;
+          },
+        },
+      );
+      handler.bind();
+      await pumpAppEventHandlerEmitButton(
+        tester,
+        navigatorKey: navKey,
+        label: 'home',
+        home: const Text('home'),
+        onPressed: () {},
+      );
+      bus.emit(const QuickStartNewGameEvent());
+      await tester.pumpAndSettle();
+      expect(called, isTrue);
+      expect(receivedKey, navKey);
+      expect(find.text('home'), findsOneWidget);
+    });
+
     testWidgets('ShowSnackBarEvent calls onShowSnackBar callback', (
       tester,
     ) async {

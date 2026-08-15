@@ -45,6 +45,16 @@ class NavigateToShellEvent extends UIActionEvent {
   const NavigateToShellEvent();
 }
 
+/// Request a default-campaign start from the main menu Quick Start control.
+///
+/// Handled by a feature-layer factory injected at the composition root
+/// (`AppEventHandlerScope.extraActionHandlers`). The shell emits this event
+/// and does not call setup or read `appNavigatorKey`.
+/// SPEC: `SPEC/ui/main-menu.md`, `SPEC/program/app-ui-wiring.md`. Refs #4416.
+class QuickStartNewGameEvent extends UIActionEvent {
+  const QuickStartNewGameEvent();
+}
+
 /// Request the app-layer exit-to-main-menu confirmation flow.
 ///
 /// Emitted by the pause menu (`PauseMenuPanel`) when the player taps

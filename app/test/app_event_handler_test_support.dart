@@ -15,6 +15,7 @@ AppEventHandler buildTestAppEventHandler({
   dialogBuilders,
   Map<String, Widget Function(BuildContext, Map<String, Object?>?)>?
   panelBuilders,
+  Map<Type, NavigatorKeyActionHandler>? extraActionHandlers,
   void Function(ShowSnackBarEvent event)? onShowSnackBar,
   void Function(DismissOverlayEvent event)? onDismissOverlay,
 }) {
@@ -33,6 +34,7 @@ AppEventHandler buildTestAppEventHandler({
           'test_panel': (ctx, params) =>
               Material(child: Text('panel:${params?['id'] ?? 'default'}')),
         },
+    extraActionHandlers: extraActionHandlers,
     onShowSnackBar: onShowSnackBar,
     onDismissOverlay: onDismissOverlay,
   );
