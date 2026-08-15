@@ -5,7 +5,6 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'extraction_fixture_support.dart';
-import 'non_gp_auto_offers_expectations.dart';
 import 'non_gp_auto_offers_test_support.dart';
 /// One row for `computeNonGreatPowerAutoOffers` scenario tables
 /// (Refs #3939 slice 63).

@@ -99,4 +99,17 @@ Pattern: merge pin types/assert helpers from leftover `*_expectations.dart` into
 | `non_gp_extraction_*` | `non_gp_extraction_pins.dart` (pair 193+45 > 220) | (thin `runNonGpExtractionScenario` stayed in scenarios) | `non_gp_extraction_expectations.dart` |
 | `development_panel_read_model_*` | table-only `development_panel_read_model_scenarios.dart` | `economy/development_panel_read_model_test.dart` | `development_panel_read_model_expectations.dart` |
 
-Still deferred (Slices B–D): `province_extraction_snapshot`, `purchased_tile`, `resource_extractor`, `town_manufacturing_bonus`, `trade_order_suggester`, `non_gp_auto_offers`, remaining treasury/validator/deal-matcher/FRR-credits families, LOC ratchet, `repo.economy_test_support_no_expectations_modules`.
+Still deferred after Slice A (Slices B–D): `province_extraction_snapshot`, `purchased_tile`, `resource_extractor`, `town_manufacturing_bonus`, `trade_order_suggester`, `non_gp_auto_offers`, remaining treasury/validator/deal-matcher/FRR-credits families, LOC ratchet, `repo.economy_test_support_no_expectations_modules`.
+
+## Wave 2 Slice B — extraction / town family (Refs #4410)
+
+Pattern: relocate mid-size `run*` bodies into consumer tests; merge leftover pin types into a same-folder sibling that stays ≤220 (not always the paired scenarios file).
+
+| module | destination | runners relocated to | expectations deleted |
+|--------|-------------|----------------------|----------------------|
+| `town_manufacturing_bonus_*` | `town_manufacturing_bonus_scenarios.dart` | `economy/town_manufacturing_bonus_test.dart` (`runTownManufacturingBonusGamePin`) | `town_manufacturing_bonus_expectations.dart` |
+| `resource_extractor_*` | `resource_extractor_scenario_runner.dart` | `economy/resource_extractor_test.dart` (`runResourceExtractorScenario`) | `resource_extractor_expectations.dart` |
+| `non_gp_auto_offers_*` | `non_gp_auto_offers_test_support.dart` | (thin `runNonGpAutoOffersScenario` stayed in scenarios) | `non_gp_auto_offers_expectations.dart` |
+| `province_extraction_snapshot_*` | `province_extraction_snapshot_pins.dart` (pair 144+97 > 220) | `economy/province_extraction_snapshot_builder_test.dart` (thin `run*` wrappers) | `province_extraction_snapshot_expectations.dart` |
+
+Still deferred (Slices C–D): `purchased_tile`, `trade_order_suggester`, remaining treasury/validator/deal-matcher/FRR-credits families, LOC ratchet, `repo.economy_test_support_no_expectations_modules`.

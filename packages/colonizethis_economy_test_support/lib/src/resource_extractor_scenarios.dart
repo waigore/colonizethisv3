@@ -3,7 +3,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'extraction_fixture_support.dart';
-import 'resource_extractor_expectations.dart';
 import 'resource_extractor_scenario_runner.dart';
 export 'resource_extractor_scenario_runner.dart';
 const _p1Grid2x2 = [
