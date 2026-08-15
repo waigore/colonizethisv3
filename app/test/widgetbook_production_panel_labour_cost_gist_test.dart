@@ -1,6 +1,7 @@
 // Widget test pin for Production Panel labour cost/upkeep Widgetbook use cases.
 // SPEC/ui/production-panel.md § Widgetbook (Refs #4432).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -82,7 +83,7 @@ void main() {
           ),
           findsOneWidget,
         );
-        expect(find.textContaining('apprentice_workers'), findsNothing);
+        expect(find.textContaining(kTechIdApprenticeWorkers), findsNothing);
       });
     },
   );
