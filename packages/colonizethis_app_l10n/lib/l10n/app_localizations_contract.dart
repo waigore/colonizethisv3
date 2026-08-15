@@ -744,6 +744,21 @@ abstract class AppLocalizations {
   /// Combat mode button label.
   String get quickBattle_quickBattle;
 
+  /// One-line meaning under Auto-Resolve on CMPT10001 (Refs #4438).
+  String get quickBattle_autoResolveMeaning;
+
+  /// One-line meaning under Quick Battle on CMPT10001 (Refs #4438).
+  String get quickBattle_quickBattleMeaning;
+
+  /// Incoming enemy force line on CMPT10001 when the human is defending (Refs #4438).
+  String combatMode_attackersRegiments(int count);
+
+  /// Expands regiment-type mix on CMPT10001 (Refs #4438).
+  String get combatMode_details;
+
+  /// Collapses regiment-type mix on CMPT10001 (Refs #4438).
+  String get combatMode_hideDetails;
+
   /// Quick battle winner line when attacker wins.
   String quickBattle_attackerWins(String name);
 
@@ -2383,6 +2398,15 @@ abstract class AppLocalizations {
 
   /// MAP20001 Military Move control label. Refs #4350.
   String get provinceOverlay_moveArmyAction;
+
+  /// MAP20001 Civilian Station spy control label. Refs #4439.
+  String get provinceOverlay_stationSpyAction;
+
+  /// Disabled Station spy — no eligible idle Spy. Refs #4439.
+  String get provinceOverlay_stationSpyDisabledNoIdleSpyTooltip;
+
+  /// Disabled Station spy — selected tile not occupiable. Refs #4439.
+  String get provinceOverlay_stationSpyDisabledNotOccupiableTooltip;
 
   /// MAP20001 Military Invade control label. Refs #4350.
   String provinceOverlay_invadeArmyAction(String provinceName);

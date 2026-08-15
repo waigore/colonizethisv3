@@ -80,8 +80,11 @@ const _packageName = 'colonizethis_app';
 // raised for Home Army detach-then-move from map overlay (Refs #4407; measured 78_256).
 // raised for SHEL10002 Quick Start (Refs #4416; measured 77_621).
 // raised for Declare War named third-party courts on confirm (Refs #4409; measured 78_068).
-// raised for combined #4413+#4407+#4416+#4409 merge headroom (measured 78_872).
-const _maxMainLines = 78900;
+// raised for combined #4414+#4415+#4407+#4416+#4409 merge headroom (measured 78_506).
+// raised for CMPT10001 force/fort/Details on combat mode choice (Refs #4438; measured 78_737).
+// raised for MAP20001 Station spy Civilian shortcut + #4438 merge (Refs #4439; measured 79_147).
+// raised for MAP20001 Naval Blockade/Beachhead overlay + #4439 merge (Refs #4413; measured 79_517).
+const _maxMainLines = 79600;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

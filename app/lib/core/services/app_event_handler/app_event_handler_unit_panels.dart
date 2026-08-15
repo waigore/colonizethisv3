@@ -63,6 +63,7 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
           engineerOnly: event.engineerOnly,
           railBuilderOnly: event.railBuilderOnly,
           merchantOnly: event.merchantOnly,
+          spyOnly: event.spyOnly,
           prospectShortcutTargetTileKey: event.prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: event.exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
@@ -75,6 +76,7 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
               event.purchaseLandShortcutTargetTileKey,
           upgradeTownShortcutTargetTileKey:
               event.upgradeTownShortcutTargetTileKey,
+          relocateShortcutTargetTileKey: event.relocateShortcutTargetTileKey,
         ),
       );
     },

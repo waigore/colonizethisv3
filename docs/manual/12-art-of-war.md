@@ -25,9 +25,9 @@ If several attackers reach the same province, they fight in initiative order. Th
 
 ### Choosing the combat mode
 
-1. When your coming battle needs a choice, `CMPT10001` **Combat mode choice dialog** names the contested province. If your armies are short on rations this turn, a soft informational line warns that they will fight weaker; you may still choose Auto-Resolve or Quick Battle.
-2. Choose **Auto-Resolve** for an immediate deterministic result, or **Quick Battle** to direct the current tactical encounter.
-3. A capital siege permits only Quick Battle. The Auto-Resolve choice is not available in that case.
+1. When a coming battle needs a choice, `CMPT10001` **Combat mode choice dialog** names the province. It also shows how many of your regiments are already there, the enemy count you can see (or **Defenders unknown** if you cannot see the garrison), and whether the ground is open or a wood, stone, or modern fort siege. If you are defending, the enemy line is labeled **Attackers**. Tap **Details** for regiment types. If your armies are short on rations this turn, a soft line warns that they will fight weaker; you may still choose Auto-Resolve or Quick Battle.
+2. **Auto-Resolve** decides the battle at once. **Quick Battle** lets you give orders in the fight. The dialog does not tell you who will win.
+3. A capital siege permits only Quick Battle. Auto-Resolve is not offered then.
 
 A province without a fort is a field battle. A province with a fort level of 1 or more is a siege, whether you choose Auto-Resolve or Quick Battle.
 
@@ -123,6 +123,7 @@ AI-controlled Quick Battles use the non-interactive path and default actions. Yo
 - `SPEC/ui/counsel-panel.md`
 - `SPEC/program/military-counsel-ranking.md`
 - `SPEC/ui/combat-mode-choice-dialog.md`
+- `SPEC/ui/components/combat-mode-choice-intel.md`
 - `SPEC/ui/quick-battle-screen.md`
 - `SPEC/ui/quick-battle-deployment-view.md`
 - `SPEC/ui/quick-battle-action-selector.md`

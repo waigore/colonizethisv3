@@ -18,6 +18,7 @@ import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_naval_mission.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
+import 'province_detail_overlay_host_support_station_spy.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
@@ -183,6 +184,20 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     bus: bus,
     isSeaZone: isSeaZone,
   );
+  final stationSpy = buildProvinceStationSpyOverlayProps(
+    context: context,
+    game: game,
+    region: region,
+    displayId: displayId,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+    selectedTileKey: selectedTileKey,
+    draftOrders: draftOrders,
+    canMutateViaUi: canMutateViaUi,
+    omniscientDetail: omniscientDetail,
+    isSeaZone: isSeaZone,
+    bus: bus,
+  );
 
   return ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -247,6 +262,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     invadeArmyTooltip: armyMove.invadeTooltip,
     onInvadeArmyTap: armyMove.onInvadeTap,
     navalMission: navalMission,
+    stationSpy: stationSpy,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,
     establishConsulateEnabled:

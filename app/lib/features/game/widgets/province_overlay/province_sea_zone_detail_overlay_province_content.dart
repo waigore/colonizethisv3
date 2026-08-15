@@ -88,6 +88,7 @@ OverlayContent provinceContent({
   VoidCallback? onInvadeArmyTap,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
+  ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
   required bool establishConsulatePending,
@@ -253,6 +254,7 @@ OverlayContent provinceContent({
     invadeArmyTooltip: invadeArmyTooltip,
     onInvadeArmyTap: onInvadeArmyTap,
     navalMission: navalMission,
+    stationSpy: stationSpy,
     provinceDisplayName: province?.displayName,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,

@@ -1330,6 +1330,31 @@
   "@quickBattle_quickBattle": {
     "description": "Combat mode button label."
   },
+  "quickBattle_autoResolveMeaning": "Decides the battle at once.",
+  "@quickBattle_autoResolveMeaning": {
+    "description": "One-line meaning under Auto-Resolve on CMPT10001 (Refs #4438)."
+  },
+  "quickBattle_quickBattleMeaning": "You give orders in the fight.",
+  "@quickBattle_quickBattleMeaning": {
+    "description": "One-line meaning under Quick Battle on CMPT10001 (Refs #4438)."
+  },
+  "combatMode_attackersRegiments": "Attackers: {count} regiments",
+  "@combatMode_attackersRegiments": {
+    "description": "Incoming enemy force line on CMPT10001 when the human is defending (Refs #4438).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "combatMode_details": "Details",
+  "@combatMode_details": {
+    "description": "Expands regiment-type mix on CMPT10001 (Refs #4438)."
+  },
+  "combatMode_hideDetails": "Hide",
+  "@combatMode_hideDetails": {
+    "description": "Collapses regiment-type mix on CMPT10001 (Refs #4438)."
+  },
   "quickBattle_attackerWins": "{name} wins",
   "@quickBattle_attackerWins": {
     "description": "Quick battle winner line when attacker wins.",
@@ -3439,6 +3464,18 @@
   "provinceOverlay_moveArmyAction": "Move",
   "@provinceOverlay_moveArmyAction": {
     "description": "MAP20001 Military Move control label (Refs #4350)."
+  },
+  "provinceOverlay_stationSpyAction": "Station spy",
+  "@provinceOverlay_stationSpyAction": {
+    "description": "MAP20001 Civilian Station spy control label (Refs #4439)."
+  },
+  "provinceOverlay_stationSpyDisabledNoIdleSpyTooltip": "No idle Spy can relocate here.",
+  "@provinceOverlay_stationSpyDisabledNoIdleSpyTooltip": {
+    "description": "Disabled Station spy tooltip when no eligible idle Spy can relocate to the selected tile (Refs #4439)."
+  },
+  "provinceOverlay_stationSpyDisabledNotOccupiableTooltip": "This tile cannot be occupied.",
+  "@provinceOverlay_stationSpyDisabledNotOccupiableTooltip": {
+    "description": "Disabled Station spy tooltip when the selected tile is not occupiable (Refs #4439)."
   },
   "provinceOverlay_invadeArmyAction": "Invade {provinceName}",
   "@provinceOverlay_invadeArmyAction": {
