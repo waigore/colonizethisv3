@@ -63,6 +63,7 @@ Widget buildPoliticalSection({
   required AppLocalizations l10n,
   required String name,
   required String ownerName,
+  String? sightPhrase,
   required String regionLabel,
   required bool isCapital,
   required int townDevelopmentLevel,
@@ -90,6 +91,8 @@ Widget buildPoliticalSection({
       children: [
         Text(l10n.provinceOverlay_name(name), style: bodyStyle),
         Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
+        if (sightPhrase != null)
+          Text(l10n.provinceOverlay_sight(sightPhrase), style: bodyStyle),
         if (showEstablishConsulateControl)
           ..._buildEstablishConsulateControl(
             l10n: l10n,

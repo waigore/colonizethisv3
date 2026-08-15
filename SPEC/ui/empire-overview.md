@@ -133,6 +133,14 @@ Compact teaching chrome for `{n} of {cap}` improvement marks (Refs #4408; paint 
 - **Narrow (`< kNarrowBreakpoint`):** Collapses to a tappable `{n} of {cap}` chip.
 - **Tap:** Opens a dismissible floating panel (extraction-legend family: ×, outside tap, Esc) restating that `{n} of {cap}` is improvement level versus what this court can extract now, and that muted means at the current limit.
 
+### Tile owner / sight hover readout (in-game map only)
+
+Compact MAP10001 teaching chrome (Refs #4406). No new screen ID; does not default-on GP tint (`#1521`) or the players bar (`#3986`); not a second always-visible legend beside extraction discs.
+
+- **Placement:** Top-start of the map canvas stack ([MapTileHoverReadout](../../app/lib/features/game/flame/controls/map_tile_hover_readout.dart)), `IgnorePointer` so it does not steal map hover. Cargo-hold / extraction-legend family: `--surface` at alpha 0.92, 1 px `--border`, `CtSpacing.m` padding, max width 260 dp (clamped to viewport − 16 dp).
+- **Visibility:** Shown while `onTileHovered` reports a tile key and work-target selection is **off**. Hidden on pointer leave and while work-target selection is active.
+- **Copy:** Place + Owner (or Sea zone identity) + Sight phrases from [map-widget.md](map-widget.md) § Hover; warp water adds one passage line. Owner uses `ownerNameForProvinceOverlay`.
+
 **Acceptance (narrow corner controls):**
 
 - **Given** the in-game map is rendered on the narrow layout (`MediaQuery.size.width < kNarrowBreakpoint`), **when** `GameMapCornerControls` is constructed with `narrow: true` and lays out the three corner buttons, **then** every visible corner button paints a **24 × 24 dp** square surface.
@@ -319,6 +327,18 @@ Folder: **Improvement headroom legend** — chrome host for [ImprovementHeadroom
 | Hidden — global observe | Legend omitted. | § Improvement headroom legend |
 | 320 dp narrow | Chip does not overflow or cover Next turn. | § Improvement headroom legend |
 
+Folder: **Map tile hover readout** — isolated MAP10001 owner/sight chrome ([MapTileHoverReadout](../../app/lib/features/game/flame/controls/map_tile_hover_readout.dart)), registered from [`mapTileHoverReadoutDirectories`](../../widgetbook_host/lib/catalogs/catalog_game_chrome.dart) (Refs #4406).
+
+| Story | Purpose | Authority |
+|-------|---------|-----------|
+| Fully visible owned land | Place + Owner + Fully visible. | § Tile owner / sight hover readout |
+| Fogged rival land | Authoritative owner + Fogged — terrain only. | § Tile owner / sight hover readout |
+| Unrevealed land | Owner or Unclaimed + Unknown — no intel yet. | § Tile owner / sight hover readout |
+| Unclaimed land | Owner: Unclaimed. | § Tile owner / sight hover readout |
+| Sea zone | Place + Sea zone identity (no owner row). | § Tile owner / sight hover readout |
+| Warp sea | Extra passage-to-the-other-world line. | § Tile owner / sight hover readout |
+| 320 dp narrow | No horizontal overflow. | § Tile owner / sight hover readout |
+
 Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../../app/lib/features/game/widgets/dialogs/game_map_options_dialog.dart) registered from [`gameMapOptionsDialogDirectories`](../../widgetbook_host/lib/catalogs/catalog_game_chrome.dart).
 
 | Story | Purpose | Authority |
@@ -371,6 +391,7 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 - **Given** the Empire overview map is in a resource-including base-layer mode and `ShellPlayerContext.viewingPlayerId != null`, **when** the map chrome renders (including zero discs), **then** the UI layer shows the extraction-disc legend above the corner controls with plain gold/brown meanings (Refs #4367).
 - **Given** the player taps the extraction-disc legend, **when** the details popover opens, **then** the UI layer shows both colour meanings and a capital-link counsel line, and dismisses via ×, outside tap, or Esc without staging orders (Refs #4367).
 - **Given** the base layer is **terrain only** or global observe (`viewingPlayerId == null`), **when** the map chrome renders, **then** the UI layer omits the extraction-disc legend (Refs #4367). Widget goldens: `app/test/extraction_disc_legend_goldens_test.dart` (`extraction_disc_legend_hidden_terrain_only.png`, `extraction_disc_legend_hidden_global_observe.png`); Widgetbook folder **Extraction disc legend**.
+- **Given** the in-game map is not in work-target selection and the pointer hovers a map tile, **when** the owner/sight readout renders, **then** the UI layer shows Place, Owner or Sea zone identity, and Sight on MAP10001 without opening `MAP20001` (Refs #4406). Widget goldens: `app/test/map_tile_hover_readout_goldens_test.dart`; Widgetbook folder **Map tile hover readout**.
 
 - **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible **immediately to the right** of the base-layer cycle button in the same **bottom-left** horizontal row.
 - **Given** the Empire overview map is visible and the current player has a defined capital tile, **when** the user taps the home-to-capital button, **then** the active region switches (if needed) to the current player's capital region and the map centers on the current player's capital tile with the selection/highlight cursor placed on that tile.
