@@ -50,8 +50,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Spy'), findsWidgets);
-    expect(find.text('Explorer'), findsNothing);
+    expect(find.text(kUnitTypeSpy), findsWidgets);
+    expect(find.text(kUnitTypeExplorer), findsNothing);
   });
 
   testWidgets('Relocate shortcut commits move without map pick', (
