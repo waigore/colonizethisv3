@@ -2583,6 +2583,9 @@ abstract class AppLocalizations {
   /// Label above current diplomatic relation summary.
   String get diplomacy_detail_currentRelation;
 
+  /// Other Great Powers with a persisted formal alliance with this court.
+  String diplomacy_detail_formalAllies(String names);
+
   /// Empty state for dossier evidence list.
   String get diplomacy_detail_noDossier;
 
