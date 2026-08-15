@@ -87,7 +87,13 @@ All PNG fill paths in `colonizethis_map` share a single cell-fill abstraction so
 
 ## Map view model
 
-`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel, **`resourceExtractionUnits`**, **`resourceExtractionEffectiveUnits`**, **`resourceExtractionBlockedUnits`**); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, **`improvementTechCap`**, transportLevel, **`resourceExtractionUnits`**, **`resourceExtractionEffectiveUnits`**, **`resourceExtractionBlockedUnits`**); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+
+`CellViewData.improvementTechCap` semantics (Refs #4408):
+
+- Nullable integer for **land** cells owned by the **viewing player** that have a resource and terrain; `null` for sea, foreign/unowned land, global observe (`viewingFactionId` omitted), or cells without a resource/terrain.
+- Value is `extractionCapForResourceOnTerrain` for the viewing player's `techUnlocked` (tech cap, then terrain hard cap). Computed at map-view build time — not in the Flame paint loop.
+- The map renderer shows `{level} of {cap}` only when this field is set **and** the resource is player-visible; otherwise it paints `{level}` only (or nothing when `improvementLevel` is 0 / unrevealed).
 
 `CellViewData.resourceExtractionUnits` semantics:
 

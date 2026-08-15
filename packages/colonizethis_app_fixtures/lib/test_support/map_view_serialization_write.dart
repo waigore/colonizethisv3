@@ -19,6 +19,9 @@ Map<String, dynamic> _cellToJson(CellViewData cell) {
   if (cell.improvementLevel != null) {
     json['improvementLevel'] = cell.improvementLevel;
   }
+  if (cell.improvementTechCap != null) {
+    json['improvementTechCap'] = cell.improvementTechCap;
+  }
   if (cell.roadLevel != null) json['roadLevel'] = cell.roadLevel;
   if (cell.resourceExtractionUnits != null) {
     json['resourceExtractionUnits'] = cell.resourceExtractionUnits;
