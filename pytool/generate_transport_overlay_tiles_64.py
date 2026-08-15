@@ -33,11 +33,19 @@ CORRIDOR_PX = 14
 CORRIDOR_START = (TILE - CORRIDOR_PX) // 2
 CORRIDOR_END = CORRIDOR_START + CORRIDOR_PX
 HALF = TILE // 2
+MAX_SEAM_DELTA = 2
 
 MASK_N = 1
 MASK_E = 2
 MASK_S = 4
 MASK_W = 8
+CARDINALS = (("N", MASK_N), ("E", MASK_E), ("S", MASK_S), ("W", MASK_W))
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ATLAS_OUT_DIR = REPO_ROOT / "pytool/out/transport_overlay_atlases_64"
+DEFAULT_CONTRACTS_OUT = REPO_ROOT / "pytool/out/transport_edge_contracts_64"
+DEFAULT_STATE_PATH = DEFAULT_CONTRACTS_OUT / "state.json"
+SHIPPED_TILESET_DIR = REPO_ROOT / "app/assets/images/terrain/tilesets"
 
 
 @dataclass(frozen=True)
@@ -162,10 +170,43 @@ def create_pixflux_seed(api_key: str, prompt: str) -> Image.Image:
     return Image.open(io.BytesIO(png)).convert("RGBA")
 
 
+def _force_corridor_wrap_ns(image: Image.Image) -> None:
+    px = image.load()
+    for x in range(CORRIDOR_START, CORRIDOR_END):
+        px[x, TILE - 1] = px[x, 0]
+
+
+def _force_corridor_wrap_ew(image: Image.Image) -> None:
+    px = image.load()
+    for y in range(CORRIDOR_START, CORRIDOR_END):
+        px[TILE - 1, y] = px[0, y]
+
+
+def _extend_corridor_to_edges(image: Image.Image) -> None:
+    px = image.load()
+    opaque_rows = [
+        y
+        for y in range(TILE)
+        if any(px[x, y][3] > 0 for x in range(CORRIDOR_START, CORRIDOR_END))
+    ]
+    if not opaque_rows:
+        return
+    first = opaque_rows[0]
+    last = opaque_rows[-1]
+    for y in range(first):
+        for x in range(CORRIDOR_START, CORRIDOR_END):
+            px[x, y] = px[x, first]
+    for y in range(last + 1, TILE):
+        for x in range(CORRIDOR_START, CORRIDOR_END):
+            px[x, y] = px[x, last]
+
+
 def normalize_straight(seed: Image.Image) -> Image.Image:
     normalized = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
     column = seed.crop((CORRIDOR_START, 0, CORRIDOR_END, TILE))
     normalized.paste(column, (CORRIDOR_START, 0), column)
+    _extend_corridor_to_edges(normalized)
+    _force_corridor_wrap_ns(normalized)
     return normalized
 
 
@@ -182,6 +223,7 @@ def build_contracts(straight: Image.Image) -> dict[str, Image.Image]:
     contracts["S"] = south
 
     horiz = straight.rotate(90, expand=False)
+    _force_corridor_wrap_ew(horiz)
     west = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
     strip_w = horiz.crop((0, CORRIDOR_START, HALF, CORRIDOR_END))
     west.paste(strip_w, (0, CORRIDOR_START), strip_w)
@@ -251,7 +293,19 @@ def run_inpaint_v3(api_key: str, base_tile: Image.Image, mask_image: Image.Image
 
 def reinforce_contract_edges(tile: Image.Image, contract_base: Image.Image) -> Image.Image:
     out = tile.copy()
-    out.alpha_composite(contract_base)
+    dest = out.load()
+    src = contract_base.load()
+    for x in range(TILE):
+        dest[x, 0] = src[x, 0]
+        dest[x, TILE - 1] = src[x, TILE - 1]
+    for y in range(TILE):
+        dest[0, y] = src[0, y]
+        dest[TILE - 1, y] = src[TILE - 1, y]
+    for y in range(TILE):
+        for x in range(TILE):
+            pixel = src[x, y]
+            if pixel[3] > 0:
+                dest[x, y] = pixel
     return out
 
 
@@ -363,6 +417,196 @@ def build_atlas_from_tiles(family_contract_dir: Path, atlas_path: Path) -> None:
     print(f"[{family_contract_dir.name}] wrote atlas {atlas_path}")
 
 
+def resolve_user_path(path: Path) -> Path:
+    if path.is_absolute():
+        return path.resolve()
+    parts = path.parts
+    if parts and parts[0] in ("pytool", "app"):
+        return (REPO_ROOT / path).resolve()
+    return (Path.cwd() / path).resolve()
+
+
+def refuse_shipped_out_dir(out_dir: Path, *, allow_shipped: bool) -> None:
+    resolved = out_dir.resolve()
+    shipped = SHIPPED_TILESET_DIR.resolve()
+    if resolved == shipped and not allow_shipped:
+        print(
+            "Refusing to write transport atlases into shipped UI tilesets "
+            f"({shipped}). Use the default candidate directory "
+            f"{DEFAULT_ATLAS_OUT_DIR} or pass --allow-shipped-out-dir.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+
+def _pixel_channel_delta(left: tuple[int, ...], right: tuple[int, ...]) -> int:
+    return max(abs(left[i] - right[i]) for i in range(4))
+
+
+def edge_pixels(tile: Image.Image, cardinal: str) -> list[tuple[int, int, int, int]]:
+    px = tile.load()
+    if cardinal == "N":
+        return [px[x, 0] for x in range(TILE)]
+    if cardinal == "S":
+        return [px[x, TILE - 1] for x in range(TILE)]
+    if cardinal == "W":
+        return [px[0, y] for y in range(TILE)]
+    if cardinal == "E":
+        return [px[TILE - 1, y] for y in range(TILE)]
+    raise ValueError(f"unknown cardinal {cardinal}")
+
+
+def corridor_edge_indices(cardinal: str) -> range:
+    del cardinal
+    return range(CORRIDOR_START, CORRIDOR_END)
+
+
+def complementary_cardinal(cardinal: str) -> str:
+    return {"N": "S", "S": "N", "E": "W", "W": "E"}[cardinal]
+
+
+def check_family_seams(
+    family_contract_dir: Path,
+    *,
+    max_delta: int = MAX_SEAM_DELTA,
+) -> list[str]:
+    errors: list[str] = []
+    contracts, _ = load_contract_assets(family_contract_dir)
+    tiles: dict[int, Image.Image] = {}
+    for mask in range(16):
+        tile_path = family_contract_dir / f"tile_mask_{mask:02d}.png"
+        if not tile_path.is_file():
+            errors.append(f"missing {tile_path.name}")
+            continue
+        tiles[mask] = Image.open(tile_path).convert("RGBA")
+
+    if errors:
+        return errors
+
+    for mask, tile in tiles.items():
+        if mask == 0:
+            continue
+        for cardinal, bit in CARDINALS:
+            if mask & bit == 0:
+                continue
+            tile_edge = edge_pixels(tile, cardinal)
+            contract_edge = edge_pixels(contracts[cardinal], cardinal)
+            for index, (actual, expected) in enumerate(zip(tile_edge, contract_edge, strict=True)):
+                if _pixel_channel_delta(actual, expected) > max_delta:
+                    errors.append(
+                        f"{family_contract_dir.name} mask={mask} {cardinal} edge "
+                        f"index={index} delta>{max_delta}",
+                    )
+                    break
+            opaque = False
+            for index in corridor_edge_indices(cardinal):
+                if tile_edge[index][3] > 0:
+                    opaque = True
+                    break
+            if not opaque:
+                errors.append(
+                    f"{family_contract_dir.name} mask={mask} {cardinal} "
+                    "14px corridor edge is fully transparent",
+                )
+
+    pair_masks = {"N": MASK_N, "S": MASK_S, "E": MASK_E, "W": MASK_W}
+    for cardinal, bit in CARDINALS:
+        opposite = complementary_cardinal(cardinal)
+        opposite_bit = pair_masks[opposite]
+        left_mask = next((m for m in range(1, 16) if m & bit), None)
+        right_mask = next((m for m in range(1, 16) if m & opposite_bit), None)
+        if left_mask is None or right_mask is None:
+            continue
+        left_edge = edge_pixels(tiles[left_mask], cardinal)
+        right_edge = edge_pixels(tiles[right_mask], opposite)
+        for index, (left, right) in enumerate(zip(left_edge, right_edge, strict=True)):
+            if _pixel_channel_delta(left, right) > max_delta:
+                errors.append(
+                    f"{family_contract_dir.name} complementary {cardinal}↔{opposite} "
+                    f"edge index={index} delta>{max_delta}",
+                )
+                break
+    return errors
+
+
+def extract_atlas_tile(atlas: Image.Image, mask: int) -> Image.Image:
+    row = mask // ATLAS_COLS
+    col = mask % ATLAS_COLS
+    left = col * TILE
+    top = row * TILE
+    return atlas.crop((left, top, left + TILE, top + TILE)).convert("RGBA")
+
+
+def check_atlas_seams(atlas_path: Path, *, max_delta: int = MAX_SEAM_DELTA) -> list[str]:
+    errors: list[str] = []
+    if not atlas_path.is_file():
+        return [f"missing atlas {atlas_path}"]
+    with Image.open(atlas_path) as atlas_file:
+        atlas = atlas_file.convert("RGBA")
+    if atlas.size != (ATLAS_COLS * TILE, ATLAS_ROWS * TILE):
+        return [f"{atlas_path.name} size {atlas.size} != {(ATLAS_COLS * TILE, ATLAS_ROWS * TILE)}"]
+    tiles = {mask: extract_atlas_tile(atlas, mask) for mask in range(16)}
+    pair_masks = {"N": MASK_N, "S": MASK_S, "E": MASK_E, "W": MASK_W}
+    for cardinal, bit in CARDINALS:
+        opposite = complementary_cardinal(cardinal)
+        opposite_bit = pair_masks[opposite]
+        left_mask = next((m for m in range(1, 16) if m & bit), None)
+        right_mask = next((m for m in range(1, 16) if m & opposite_bit), None)
+        if left_mask is None or right_mask is None:
+            continue
+        left_edge = edge_pixels(tiles[left_mask], cardinal)
+        right_edge = edge_pixels(tiles[right_mask], opposite)
+        for index, (left, right) in enumerate(zip(left_edge, right_edge, strict=True)):
+            if _pixel_channel_delta(left, right) > max_delta:
+                errors.append(
+                    f"{atlas_path.name} complementary {cardinal}↔{opposite} "
+                    f"edge index={index} delta>{max_delta}",
+                )
+                break
+        opaque = False
+        for index in corridor_edge_indices(cardinal):
+            if left_edge[index][3] > 0:
+                opaque = True
+                break
+        if not opaque:
+            errors.append(
+                f"{atlas_path.name} mask={left_mask} {cardinal} "
+                "14px corridor edge is fully transparent",
+            )
+    return errors
+
+
+QA_LAYOUTS: dict[str, list[tuple[int, int, int]]] = {
+    "straight_ns": [(0, 0, 5), (0, 1, 5), (0, 2, 5)],
+    "straight_ew": [(0, 0, 10), (1, 0, 10), (2, 0, 10)],
+    "corner": [(0, 0, 6), (1, 0, 12), (1, 1, 3)],
+    "tee": [(0, 1, 10), (1, 1, 13), (2, 1, 10), (1, 0, 5)],
+    "cross": [(1, 0, 5), (0, 1, 10), (1, 1, 15), (2, 1, 10), (1, 2, 5)],
+    "path": [(0, 1, 10), (1, 1, 14), (1, 2, 5), (1, 3, 5)],
+}
+
+
+def write_qa_composites(family_contract_dir: Path, out_dir: Path) -> None:
+    family = family_contract_dir.name
+    tiles: dict[int, Image.Image] = {}
+    for mask in range(16):
+        tile_path = family_contract_dir / f"tile_mask_{mask:02d}.png"
+        if not tile_path.is_file():
+            raise RuntimeError(f"Cannot write QA composites; missing {tile_path}")
+        tiles[mask] = Image.open(tile_path).convert("RGBA")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, cells in QA_LAYOUTS.items():
+        cols = max(cell[0] for cell in cells) + 1
+        rows = max(cell[1] for cell in cells) + 1
+        canvas = Image.new("RGBA", (cols * TILE, rows * TILE), (32, 48, 32, 255))
+        for col, row, mask in cells:
+            tile = tiles[mask]
+            canvas.paste(tile, (col * TILE, row * TILE), tile)
+        dest = out_dir / f"qa_{family}_{name}.png"
+        canvas.save(dest)
+        print(f"[{family}] wrote QA composite {dest}")
+
+
 def parse_mask_args(mask_values: list[int] | None) -> list[int]:
     if not mask_values:
         return list(range(16))
@@ -374,7 +618,7 @@ def parse_mask_args(mask_values: list[int] | None) -> list[int]:
 
 
 def process_family_masks(
-    api_key: str,
+    api_key: str | None,
     family: FamilyPlan,
     atlas_path: Path,
     contracts_out: Path,
@@ -385,10 +629,14 @@ def process_family_masks(
     init_seed: bool,
     force_reseed: bool,
     rebuild_atlas: bool,
+    process_masks: bool,
+    write_qa: bool,
 ) -> None:
     family_contract_dir = contracts_out / family.key
     family_contract_dir.mkdir(parents=True, exist_ok=True)
     if init_seed or force_reseed:
+        if not api_key:
+            raise RuntimeError("PIXELLAB_API_KEY is required for --init-seed / --force-reseed")
         seed_and_write_contracts(
             api_key,
             family,
@@ -396,40 +644,50 @@ def process_family_masks(
             force_reseed=force_reseed,
         )
 
-    contracts, center_mask = load_contract_assets(family_contract_dir)
-    state = load_state(state_path)
-    family_state = get_family_state(state, family.key)
-    completed = set(int(x) for x in family_state.get("completed_masks", []))
+    if process_masks:
+        if not api_key:
+            raise RuntimeError("PIXELLAB_API_KEY is required to generate mask tiles")
+        contracts, center_mask = load_contract_assets(family_contract_dir)
+        state = load_state(state_path)
+        family_state = get_family_state(state, family.key)
+        completed = set(int(x) for x in family_state.get("completed_masks", []))
 
-    for mask in masks:
-        tile_out = family_contract_dir / f"tile_mask_{mask:02d}.png"
-        if resume and mask in completed and tile_out.is_file():
-            print(f"[{family.key}] skip completed mask={mask}")
-            continue
+        for mask in masks:
+            tile_out = family_contract_dir / f"tile_mask_{mask:02d}.png"
+            if resume and mask in completed and tile_out.is_file():
+                print(f"[{family.key}] skip completed mask={mask}")
+                continue
 
-        composed = compose_mask_contract(mask, contracts)
-        if mask == 0:
-            final_tile = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
-        else:
-            print(f"[{family.key}] inpaint-v3 mask={mask}")
-            inpainted = run_inpaint_v3(
-                api_key,
-                composed,
-                center_mask,
-                family.center_fill_prompt,
-            )
-            final_tile = reinforce_contract_edges(inpainted, composed)
+            composed = compose_mask_contract(mask, contracts)
+            if mask == 0:
+                final_tile = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
+            else:
+                print(f"[{family.key}] inpaint-v3 mask={mask}")
+                inpainted = run_inpaint_v3(
+                    api_key,
+                    composed,
+                    center_mask,
+                    family.center_fill_prompt,
+                )
+                final_tile = reinforce_contract_edges(inpainted, composed)
 
-        final_tile.save(tile_out)
-        verify_written_tile(tile_out, mask=mask)
-        completed.add(mask)
-        family_state["completed_masks"] = sorted(completed)
-        family_state["updated_at_epoch_s"] = int(time.time())
-        save_state(state_path, state)
-        print(f"[{family.key}] wrote+verified {tile_out.name}")
+            final_tile.save(tile_out)
+            verify_written_tile(tile_out, mask=mask)
+            completed.add(mask)
+            family_state["completed_masks"] = sorted(completed)
+            family_state["updated_at_epoch_s"] = int(time.time())
+            save_state(state_path, state)
+            print(f"[{family.key}] wrote+verified {tile_out.name}")
 
     if rebuild_atlas:
         build_atlas_from_tiles(family_contract_dir, atlas_path)
+        seam_errors = check_family_seams(family_contract_dir)
+        if seam_errors:
+            raise RuntimeError(
+                "Candidate seam check failed:\n" + "\n".join(seam_errors),
+            )
+    if write_qa:
+        write_qa_composites(family_contract_dir, atlas_path.parent)
 
 
 def main() -> None:
@@ -439,19 +697,19 @@ def main() -> None:
     parser.add_argument(
         "--out-dir",
         type=Path,
-        default=Path("app/assets/images/terrain/tilesets"),
-        help="Output directory for atlas PNG files",
+        default=DEFAULT_ATLAS_OUT_DIR,
+        help="Output directory for atlas PNG files (default: candidate folder, not shipped UI)",
     )
     parser.add_argument(
         "--contracts-out",
         type=Path,
-        default=Path("pytool/out/transport_edge_contracts_64"),
+        default=DEFAULT_CONTRACTS_OUT,
         help="Debug output path for per-mask/contract PNGs",
     )
     parser.add_argument(
         "--state-path",
         type=Path,
-        default=Path("pytool/out/transport_edge_contracts_64/state.json"),
+        default=DEFAULT_STATE_PATH,
         help="State file used to resume completed mask tiles",
     )
     parser.add_argument(
@@ -486,26 +744,60 @@ def main() -> None:
         action="store_true",
         help="Rebuild the 4x4 atlas from tile_mask_00..15 after mask processing",
     )
+    parser.add_argument(
+        "--write-qa-composites",
+        action="store_true",
+        help="Write straight/corner/T/cross/path composites next to the atlas",
+    )
+    parser.add_argument(
+        "--allow-shipped-out-dir",
+        action="store_true",
+        help="Allow --out-dir to target app/assets/images/terrain/tilesets (disabled by default)",
+    )
     args = parser.parse_args()
+
+    out_dir = resolve_user_path(args.out_dir)
+    contracts_out = resolve_user_path(args.contracts_out)
+    state_path = resolve_user_path(args.state_path)
+    refuse_shipped_out_dir(out_dir, allow_shipped=args.allow_shipped_out_dir)
+
+    seed_only = (
+        (args.init_seed or args.force_reseed)
+        and args.mask is None
+        and not args.resume
+        and not args.rebuild_atlas
+    )
+    rebuild_only = (
+        args.rebuild_atlas
+        and args.mask is None
+        and not args.init_seed
+        and not args.force_reseed
+        and not args.resume
+    )
+    process_masks = not seed_only and not rebuild_only
+    need_api = seed_only or process_masks or args.init_seed or args.force_reseed
 
     selected_families = FAMILY_PLANS
     if args.family != "both":
         selected_families = tuple(plan for plan in FAMILY_PLANS if plan.key == args.family)
     masks = parse_mask_args(args.mask)
-    api_key = require_api_key()
+    api_key = require_api_key() if need_api else None
+    write_qa = args.write_qa_composites or args.rebuild_atlas
     for family in selected_families:
         atlas_name = f"tileset_transport_{family.key}_64.png"
         process_family_masks(
             api_key=api_key,
             family=family,
-            atlas_path=args.out_dir / atlas_name,
-            contracts_out=args.contracts_out,
-            state_path=args.state_path,
+            atlas_path=out_dir / atlas_name,
+            contracts_out=contracts_out,
+            state_path=state_path,
             masks=masks,
             resume=args.resume,
             init_seed=args.init_seed,
             force_reseed=args.force_reseed,
             rebuild_atlas=args.rebuild_atlas,
+            process_masks=process_masks,
+            write_qa=write_qa,
         )
 
 
