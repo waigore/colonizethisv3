@@ -71,8 +71,7 @@ TextStyle overlayObfuscatedBodyStyle() =>
 Widget overlayObfuscatedBodyText(String data) =>
     Text(data, style: overlayObfuscatedBodyStyle());
 
-TextStyle overlayFgBodyStyle() =>
-    TextStyle(color: EditorialMonoclePalette.fg);
+TextStyle overlayFgBodyStyle() => TextStyle(color: EditorialMonoclePalette.fg);
 
 TextStyle overlayTitleStyle(BuildContext context) {
   final ThemeData theme = Theme.of(context);
@@ -88,4 +87,47 @@ TextStyle overlayTitleStyle(BuildContext context) {
 
 Widget overlayEmptyBodyDashText() {
   return Text('—', style: TextStyle(color: EditorialMonoclePalette.muted));
+}
+
+/// MAP20001 Civilian **Station spy** control props (Refs #4439).
+typedef ProvinceOverlayStationSpyProps = ({
+  bool showControl,
+  bool enabled,
+  String tooltip,
+  VoidCallback? onTap,
+});
+
+const ProvinceOverlayStationSpyProps kProvinceOverlayStationSpyHidden = (
+  showControl: false,
+  enabled: false,
+  tooltip: '',
+  onTap: null,
+);
+
+/// Tab labels, narrow tab views, and wide stacked sections for a province.
+OverlayContent overlayProvinceSectionBundle({
+  required AppLocalizations l10n,
+  required Widget political,
+  required Widget tileSection,
+  required Widget economic,
+  required Widget military,
+  required Widget civilian,
+  required Widget naval,
+}) {
+  return OverlayContent(
+    tabLabels: [
+      l10n.provinceOverlay_sectionPolitical,
+      l10n.provinceOverlay_sectionTile,
+      l10n.provinceOverlay_sectionEconomic,
+      l10n.provinceOverlay_sectionMilitary,
+      l10n.provinceOverlay_sectionCivilian,
+      l10n.provinceOverlay_sectionNaval,
+    ],
+    tabViews: [political, tileSection, economic, military, civilian, naval],
+    sections: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [political, tileSection, economic, military, civilian, naval],
+    ),
+  );
 }

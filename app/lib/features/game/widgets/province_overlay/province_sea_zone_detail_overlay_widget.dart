@@ -73,6 +73,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.invadeArmyEnabled = false,
     this.invadeArmyTooltip = '',
     this.onInvadeArmyTap,
+    this.stationSpy = kProvinceOverlayStationSpyHidden,
     this.showEstablishConsulateControl = false,
     this.establishConsulateEnabled = false,
     this.establishConsulatePending = false,
@@ -139,6 +140,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool invadeArmyEnabled;
   final String invadeArmyTooltip;
   final VoidCallback? onInvadeArmyTap;
+  final ProvinceOverlayStationSpyProps stationSpy;
   final bool showEstablishConsulateControl;
   final bool establishConsulateEnabled;
   final bool establishConsulatePending;
@@ -232,6 +234,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       invadeArmyEnabled: invadeArmyEnabled,
       invadeArmyTooltip: invadeArmyTooltip,
       onInvadeArmyTap: onInvadeArmyTap,
+      stationSpy: stationSpy,
       showEstablishConsulateControl: showEstablishConsulateControl,
       establishConsulateEnabled: establishConsulateEnabled,
       establishConsulatePending: establishConsulatePending,

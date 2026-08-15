@@ -7,10 +7,10 @@ import 'dart:async';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../shared/units_entity_action_row.dart';
 import 'civilian_units_panel_support_unit_row_actions.dart';
 import 'civilian_units_panel_unit_row_pending.dart';
+import 'civilian_units_panel_unit_row_relocate.dart';
 import 'civilian_units_panel_unit_row_shortcuts.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -59,6 +59,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required AppLocalizations l10n,
   required BuildContext context,
   required AppEventBus bus,
+  required Game game,
   required Unit unit,
   required String humanPlayerId,
   required CivilianUnitsPanelUnitRowPending pending,
@@ -77,6 +78,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required String? buildRailShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
   required String? upgradeTownShortcutTargetTileKey,
+  required String? relocateShortcutTargetTileKey,
 }) {
   if (readOnly) {
     return const <UnitsEntityAction>[];
@@ -91,11 +93,15 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
         tooltip: l10n.civilian_units_relocate,
         icon: Icons.directions_walk,
         label: l10n.civilian_units_relocate,
-        onPressed: () {
-          bus.closePanelThenEmit(
-            StartCivilianRelocateSelectionEvent(unitId: unit.id),
-          );
-        },
+        onPressed: () => onCivilianUnitsPanelRelocatePressed(
+          context: context,
+          bus: bus,
+          game: game,
+          unit: unit,
+          humanPlayerId: humanPlayerId,
+          pending: pending,
+          relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
+        ),
       ),
     if (showActions && pending.isIdleNoPending && !pending.hasPendingWorkOnly)
       UnitsEntityAction(

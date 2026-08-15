@@ -3465,6 +3465,18 @@
   "@provinceOverlay_moveArmyAction": {
     "description": "MAP20001 Military Move control label (Refs #4350)."
   },
+  "provinceOverlay_stationSpyAction": "Station spy",
+  "@provinceOverlay_stationSpyAction": {
+    "description": "MAP20001 Civilian Station spy control label (Refs #4439)."
+  },
+  "provinceOverlay_stationSpyDisabledNoIdleSpyTooltip": "No idle Spy can relocate here.",
+  "@provinceOverlay_stationSpyDisabledNoIdleSpyTooltip": {
+    "description": "Disabled Station spy tooltip when no eligible idle Spy can relocate to the selected tile (Refs #4439)."
+  },
+  "provinceOverlay_stationSpyDisabledNotOccupiableTooltip": "This tile cannot be occupied.",
+  "@provinceOverlay_stationSpyDisabledNotOccupiableTooltip": {
+    "description": "Disabled Station spy tooltip when the selected tile is not occupiable (Refs #4439)."
+  },
   "provinceOverlay_invadeArmyAction": "Invade {provinceName}",
   "@provinceOverlay_invadeArmyAction": {
     "description": "MAP20001 Military Invade control label (Refs #4350).",

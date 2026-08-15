@@ -1,7 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart'
-    show projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -143,6 +141,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
       purchaseLandShortcutTargetTileKey:
           widget.purchaseLandShortcutTargetTileKey,
       upgradeTownShortcutTargetTileKey: widget.upgradeTownShortcutTargetTileKey,
+      relocateShortcutTargetTileKey: widget.relocateShortcutTargetTileKey,
     );
   }
 
@@ -154,6 +153,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     required bool engineerOnly,
     required bool railBuilderOnly,
     required bool merchantOnly,
+    required bool spyOnly,
   }) {
     final tileScopeActive =
         tileScopeTileKey != null && tileScopeTileKey.isNotEmpty;
@@ -162,7 +162,8 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
         !builderOnly &&
         !engineerOnly &&
         !railBuilderOnly &&
-        !merchantOnly) {
+        !merchantOnly &&
+        !spyOnly) {
       return units;
     }
     return [
@@ -178,7 +179,8 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
             (!builderOnly || isBuilderUnit(u)) &&
             (!engineerOnly || isEngineerUnit(u)) &&
             (!railBuilderOnly || isRailBuilderUnit(u)) &&
-            (!merchantOnly || isMerchantUnit(u)))
+            (!merchantOnly || isMerchantUnit(u)) &&
+            (!spyOnly || u.type == kUnitTypeSpy))
           u,
     ];
   }
