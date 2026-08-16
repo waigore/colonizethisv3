@@ -84,6 +84,7 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
   - When `tileMapByRegion` is absent: capital-connected first, then lower `improvementLevel`, then stable tile key.
 - Materials: affordability uses stockpile after deducting other pending material work orders via `replayPendingWorkResourceProjection` in `work_order_affordance_projection.dart` (same replay order as MAP assign previews and economy preview).
 - Disconnected targets: Assign enabled when improve is otherwise valid; warn dialog on commit (Slice C).
+- Assign preview (Refs #4472): candidate also carries `currentImprovementLevel` and `materialCosts` from `previewWorkOrderAffordAtTile`, cached once with row state. UI: [development-assign-row.md](../ui/components/development-assign-row.md).
 
 ## Road first (Slice C)
 

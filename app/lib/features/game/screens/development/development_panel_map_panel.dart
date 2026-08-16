@@ -19,6 +19,7 @@ class DevelopmentPanelMapPanel extends ConsumerStatefulWidget {
     required this.regionId,
     required this.playerView,
     this.highlightTileKeys,
+    this.selectedTileKey,
   });
 
   final Game game;
@@ -26,6 +27,7 @@ class DevelopmentPanelMapPanel extends ConsumerStatefulWidget {
   final String regionId;
   final PlayerView playerView;
   final Set<String>? highlightTileKeys;
+  final String? selectedTileKey;
 
   @override
   ConsumerState<DevelopmentPanelMapPanel> createState() =>
@@ -116,6 +118,7 @@ class _DevelopmentPanelMapPanelState
       playerViewForResources: widget.playerView,
       showPlayerTerritoryOutline: true,
       playerTerritoryTileKeys: snapshot.playerTerritoryTileKeys,
+      selectedTileKey: widget.selectedTileKey,
       secondaryHighlightTileKeys: widget.highlightTileKeys,
     );
   }

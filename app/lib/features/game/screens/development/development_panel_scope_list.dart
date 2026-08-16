@@ -13,6 +13,7 @@ import '../../../../widgets/commodity_display_name.dart';
 import '../../../../widgets/ct_action_text_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../widgets/units/shared/region_section_header.dart';
+import 'development_assign_preview.dart';
 import 'development_panel_keys.dart';
 
 /// Province and purchased-land scope list for one region tab.
@@ -23,16 +24,16 @@ class DevelopmentPanelScopeList extends StatelessWidget {
     required this.onShowTiles,
     required this.assignRowStateFor,
     required this.onAssign,
+    required this.provinceDisplayNamesById,
   });
 
   final DevelopmentPanelRegionModel regionModel;
-  final void Function(Set<String> tileKeys) onShowTiles;
-  final DevelopmentAssignRowState Function(
-    String scopeKey,
-    String commodityId,
-  )
+  final void Function(Set<String> tileKeys, {String? selectedTileKey})
+  onShowTiles;
+  final DevelopmentAssignRowState Function(String scopeKey, String commodityId)
   assignRowStateFor;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
+  final Map<String, String> provinceDisplayNamesById;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +51,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
             onShowTiles: onShowTiles,
             assignRowStateFor: assignRowStateFor,
             onAssign: onAssign,
+            provinceDisplayNamesById: provinceDisplayNamesById,
           ),
         ),
         const SizedBox(height: CtSpacing.m),
@@ -76,6 +78,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
               onShowTiles: onShowTiles,
               assignRowStateFor: assignRowStateFor,
               onAssign: onAssign,
+              provinceDisplayNamesById: provinceDisplayNamesById,
             ),
           ),
       ],
@@ -90,18 +93,18 @@ class _ScopeCard extends StatelessWidget {
     required this.onShowTiles,
     required this.assignRowStateFor,
     required this.onAssign,
+    required this.provinceDisplayNamesById,
   });
 
   final AppLocalizations l10n;
 
   final DevelopmentPanelScopeRow scope;
-  final void Function(Set<String> tileKeys) onShowTiles;
-  final DevelopmentAssignRowState Function(
-    String scopeKey,
-    String commodityId,
-  )
+  final void Function(Set<String> tileKeys, {String? selectedTileKey})
+  onShowTiles;
+  final DevelopmentAssignRowState Function(String scopeKey, String commodityId)
   assignRowStateFor;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
+  final Map<String, String> provinceDisplayNamesById;
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +146,7 @@ class _ScopeCard extends StatelessWidget {
                 assignRowStateFor: assignRowStateFor,
                 onShowTiles: onShowTiles,
                 onAssign: onAssign,
+                provinceDisplayNamesById: provinceDisplayNamesById,
               ),
             ),
         ],
@@ -160,6 +164,7 @@ class _ImprovableCommodityRow extends StatelessWidget {
     required this.assignRowStateFor,
     required this.onShowTiles,
     required this.onAssign,
+    required this.provinceDisplayNamesById,
   });
 
   final AppLocalizations l10n;
@@ -167,13 +172,12 @@ class _ImprovableCommodityRow extends StatelessWidget {
   final String scopeKey;
   final DevelopmentImprovableCommodityRow row;
   final TextTheme textTheme;
-  final DevelopmentAssignRowState Function(
-    String scopeKey,
-    String commodityId,
-  )
+  final DevelopmentAssignRowState Function(String scopeKey, String commodityId)
   assignRowStateFor;
-  final void Function(Set<String> tileKeys) onShowTiles;
+  final void Function(Set<String> tileKeys, {String? selectedTileKey})
+  onShowTiles;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
+  final Map<String, String> provinceDisplayNamesById;
 
   @override
   Widget build(BuildContext context) {
@@ -187,26 +191,56 @@ class _ImprovableCommodityRow extends StatelessWidget {
           ? () => onAssign(assignState.candidate!)
           : null,
     );
+    final previewLine = formatDevelopmentAssignPreviewLine(
+      l10n: l10n,
+      assignState: assignState,
+      provinceDisplayNamesById: provinceDisplayNamesById,
+    );
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              l10n.development_improvableCount(row.count, displayName),
-              style: textTheme.bodySmall,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.development_improvableCount(row.count, displayName),
+                  style: textTheme.bodySmall,
+                ),
+              ),
+              CtActionTextButton(
+                key: DevelopmentPanelKeys.showButtonKey(
+                  scopeKey,
+                  row.commodityId,
+                ),
+                label: l10n.development_show,
+                onPressed: () => onShowTiles(
+                  row.tileKeys.toSet(),
+                  selectedTileKey: assignState.candidate?.targetTileKey,
+                ),
+              ),
+              const SizedBox(width: CtSpacing.s),
+              if (assignTooltip != null && !assignState.enabled)
+                Tooltip(message: assignTooltip, child: assignButton)
+              else
+                assignButton,
+            ],
+          ),
+          if (previewLine != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                key: DevelopmentPanelKeys.assignPreviewKey(
+                  scopeKey,
+                  row.commodityId,
+                ),
+                previewLine,
+                style: textTheme.bodySmall?.copyWith(
+                  color: EditorialMonoclePalette.muted,
+                ),
+              ),
             ),
-          ),
-          CtActionTextButton(
-            key: DevelopmentPanelKeys.showButtonKey(scopeKey, row.commodityId),
-            label: l10n.development_show,
-            onPressed: () => onShowTiles(row.tileKeys.toSet()),
-          ),
-          const SizedBox(width: CtSpacing.s),
-          if (assignTooltip != null && !assignState.enabled)
-            Tooltip(message: assignTooltip, child: assignButton)
-          else
-            assignButton,
         ],
       ),
     );

@@ -1,13 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'development_panel/idle_civilians.dart';
 import 'development_panel/improve_tile_ordering.dart';
-import 'development_panel/material_affordance.dart';
 import 'development_panel_assign_candidate.dart';
+import 'development_panel_assign_preview.dart';
 import 'development_panel_assign_types.dart';
-import 'order_work_constants.dart';
 
 String? priorityTileForDevelopmentCommodity({
   required Game game,
@@ -55,25 +53,15 @@ DevelopmentImproveAssignCandidate? hypotheticalDevelopmentAssignCandidate({
     tileMapByRegion: tileMapByRegion,
   );
   if (tileKey == null) return null;
-  return DevelopmentImproveAssignCandidate(
-    builderUnitId: builders.first.id,
-    targetTileKey: tileKey,
-    isCapitalConnected: connectedTileKeys.contains(tileKey),
-  );
-}
-
-bool canAffordDevelopmentImproveAssign({
-  required Game game,
-  required String playerId,
-  required Orders currentOrders,
-  required DevelopmentImproveAssignCandidate candidate,
-}) {
-  return canAffordDevelopmentWorkOrder(
+  return enrichDevelopmentImproveAssignCandidate(
     game: game,
     playerId: playerId,
     currentOrders: currentOrders,
-    workTarget: kWorkTargetBuildImprovement,
-    targetTileKey: candidate.targetTileKey,
+    candidate: DevelopmentImproveAssignCandidate(
+      builderUnitId: builders.first.id,
+      targetTileKey: tileKey,
+      isCapitalConnected: connectedTileKeys.contains(tileKey),
+    ),
   );
 }
 
@@ -116,12 +104,7 @@ DevelopmentAssignRowState resolveDevelopmentAssignRowState({
     connectedTileKeys: connectedTileKeys,
   );
   if (candidate != null) {
-    if (!canAffordDevelopmentImproveAssign(
-      game: game,
-      playerId: playerId,
-      currentOrders: currentOrders,
-      candidate: candidate,
-    )) {
+    if (!candidate.canAffordPreview) {
       return DevelopmentAssignRowState(
         enabled: false,
         disabledReason: 'Insufficient materials',
@@ -147,12 +130,7 @@ DevelopmentAssignRowState resolveDevelopmentAssignRowState({
     );
   }
 
-  if (!canAffordDevelopmentImproveAssign(
-    game: game,
-    playerId: playerId,
-    currentOrders: currentOrders,
-    candidate: hypothetical,
-  )) {
+  if (!hypothetical.canAffordPreview) {
     return DevelopmentAssignRowState(
       enabled: false,
       disabledReason: 'Insufficient materials',
