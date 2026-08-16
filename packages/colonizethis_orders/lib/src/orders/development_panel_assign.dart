@@ -12,9 +12,7 @@ import 'development_panel_assign_row_state.dart';
 import 'development_panel_assign_types.dart';
 
 export 'development_panel/idle_civilians.dart'
-    show
-        idleBuildersForDevelopmentAssign,
-        idleDevelopmentCiviliansForAssign;
+    show idleBuildersForDevelopmentAssign, idleDevelopmentCiviliansForAssign;
 export 'development_panel/improve_tile_ordering.dart'
     show
         compareDevelopmentImproveTilePriority,
@@ -24,6 +22,8 @@ export 'development_panel/material_affordance.dart'
     show effectiveStockpileAfterPendingDevelopmentMaterialWork;
 export 'development_panel_assign_candidate.dart'
     show selectDevelopmentImproveAssignCandidate;
+export 'development_panel_assign_preview.dart'
+    show enrichDevelopmentImproveAssignCandidate;
 export 'development_panel_assign_row_state.dart'
     show resolveDevelopmentAssignRowState;
 export 'development_panel_assign_row_state_cache.dart'
@@ -41,7 +41,8 @@ Set<String> developmentPanelMaterialShortageCommodityIds({
   required Orders currentOrders,
   required MapTopology topology,
   required Map<String, TileMapResult> tileMapByRegion,
-  required Iterable<({String commodityId, Set<String> tileKeys})> improvableRows,
+  required Iterable<({String commodityId, Set<String> tileKeys})>
+  improvableRows,
   required Set<String> connectedTileKeys,
 }) {
   final shortages = <String>{};

@@ -610,10 +610,18 @@ abstract class AppLocalizations {
   String intelligence_allianceBroken(String a, String b);
 
   /// Spy report when the court captured a province.
-  String intelligence_spyCaptureMade(String court, String province, String other);
+  String intelligence_spyCaptureMade(
+    String court,
+    String province,
+    String other,
+  );
 
   /// Spy report when the court lost a province.
-  String intelligence_spyCaptureLost(String court, String province, String other);
+  String intelligence_spyCaptureLost(
+    String court,
+    String province,
+    String other,
+  );
 
   /// Spy report when the court finished a technology.
   String intelligence_spyResearch(String court, String tech);
@@ -1602,6 +1610,24 @@ abstract class AppLocalizations {
 
   /// Improvable commodity count label in the Development panel.
   String development_improvableCount(int count, String name);
+
+  /// Enabled Development Assign preview with material cost.
+  String development_assignPreview(
+    String place,
+    int currentLevel,
+    int nextLevel,
+    String cost,
+  );
+
+  /// Enabled Development Assign preview when material cost is waived empty.
+  String development_assignPreviewNoCost(
+    String place,
+    int currentLevel,
+    int nextLevel,
+  );
+
+  /// Capital-link clause on a disconnected Development Assign preview.
+  String get development_assignPreviewNotBoundToCapital;
 
   /// Production commodity breakdown dialog title.
   String get production_breakdown_title;

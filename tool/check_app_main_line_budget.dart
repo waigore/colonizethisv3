@@ -92,8 +92,9 @@ const _packageName = 'colonizethis_app';
 // raised for Home Fleet detach-then-sail from the map (Refs #4448; measured 81_342).
 // raised for MAP10001 Old World province race chip (Refs #4451; measured 81_681).
 // raised for DLG60001 staged decree review + #4451 merge (Refs #4469; measured 82_528).
-// raised for GAME30003 Intelligence Council (Refs #4476; measured 83_032).
-const _maxMainLines = 83100;
+// raised for GAME80001 Development Assign preview + #4469 merge (Refs #4472; measured 82_729).
+// raised for GAME30003 Intelligence Council + #4472 merge (Refs #4476; measured 83_233).
+const _maxMainLines = 83300;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

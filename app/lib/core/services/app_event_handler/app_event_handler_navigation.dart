@@ -97,6 +97,7 @@ Future<void> appEventHandlerShowDevelopmentDisconnectedAssignDialog(
           enabled: event.roadFirstEnabled,
           disabledReason: event.roadFirstDisabledReason,
         ),
+        assignPreviewLine: event.assignPreviewLine,
       ),
     );
     event.result(choice ?? DevelopmentDisconnectedAssignChoice.cancel);

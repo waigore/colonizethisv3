@@ -1,10 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'development_panel/idle_civilians.dart';
 import 'development_panel/improve_tile_ordering.dart';
 import 'development_panel_pass_context.dart';
+import 'development_panel_assign_preview.dart';
 import 'development_panel_assign_types.dart';
 import 'order_work_constants.dart';
 import 'work_tile_candidacy/work_tile_candidacy.dart';
@@ -61,10 +61,15 @@ DevelopmentImproveAssignCandidate? selectDevelopmentImproveAssignCandidate({
       tileMapByRegion: tileMapByRegion,
     ).first;
 
-    return DevelopmentImproveAssignCandidate(
-      builderUnitId: builder.id,
-      targetTileKey: bestTile,
-      isCapitalConnected: connectedTileKeys.contains(bestTile),
+    return enrichDevelopmentImproveAssignCandidate(
+      game: game,
+      playerId: playerId,
+      currentOrders: currentOrders,
+      candidate: DevelopmentImproveAssignCandidate(
+        builderUnitId: builder.id,
+        targetTileKey: bestTile,
+        isCapitalConnected: connectedTileKeys.contains(bestTile),
+      ),
     );
   }
   return null;
