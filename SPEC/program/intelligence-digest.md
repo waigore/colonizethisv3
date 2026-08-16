@@ -21,6 +21,7 @@ Store spy blocks in `spyReportsByObserverId` keyed by observer GP id (all GPs; U
 ## Acceptance criteria
 
 - Given two other GPs go to war and a third-party province changes owner this turn, when the digest commits, then world lines include both facts with faction and prefixed province ids, and `Game.lastTurnIntelligenceDigest` round-trips through JSON.
+- Given two other GPs form a formal alliance this turn, when the digest commits, then world lines include `allianceFormed` for that pair (lexicographic ids) after war/peace.
 - Given observer `H` has no Spy in France after resolution, when France unlocks a catalog tech and fights a battle `H` is not in, then France spy-report lines for `H` are absent; public world types may still appear.
 - Given `H` still has a Spy in a French-owned province after spy-resolution, and France unlocked a tech and `declareWar` vs Spain this turn, then the France block for `H` includes both facts (tech id, Spain id) and no `hiddenAgenda`.
 - Given that Spy was caught or was the last Spy and left so France hosts none of `H`’s Spies, when the next digest builds, then France spy-report lines for `H` are omitted (world lines unchanged).

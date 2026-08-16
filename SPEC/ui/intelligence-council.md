@@ -61,6 +61,12 @@ Ct-* only. Editorial-monocle tokens. Display names only (no raw ids, no `declare
 | `GAME30003` | Empty | Null or empty digest | Both empty copies. |
 | `GAME30003` | Mobile | Width ≤ 320 dp | Same stack; scroll. |
 
+## Components
+
+- `CtGameFeatureScreenShell` — [components/ct-game-feature-screen-shell.md](components/ct-game-feature-screen-shell.md).
+- `GameFeatureScreenTopBar` / `CtTopBar` — Diplomacy-family chrome; back is `← Map`.
+- `IntelligenceCouncilLineTile` — world or spy fact row; tap emits bus events above.
+
 ## Widgetbook
 
 Folder **Intelligence Council**. Use cases: **World briefing**, **Spy reports**, **Empty**, **Mobile viewport** (`mobileViewport`, 320 dp).
@@ -71,4 +77,7 @@ Folder **Intelligence Council**. Use cases: **World briefing**, **Spy reports**,
 - Given no Spy in France, when France finishes a tech and fights a battle the human is not in, then those France-only lines are absent from the council and from `OVL70001`.
 - Given a remaining Spy in France and France finished a catalog tech and declared war on Spain, when the council renders, then a Spy reports block includes both as `Our spy in France reports:` with display names (never raw ids or `hiddenAgenda`).
 - Given last-turn spy reports exist, when `DLG50001` opens, then a footer states spies reported N items and navigates to the council.
+- Given a world war line naming a court, when The Player taps that row, then the UI layer emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` (`GAME30002`).
+- Given a capture world line with a province id, when The Player taps that row, then the UI layer emits `PopNavigationEvent` then `OpenProvinceDetailPanelEvent` for that province.
+- Given a spy-gated `OVL70001` row from the digest, when The Player taps it, then the UI layer opens `GAME30003`. Public world gazette lines are not appended to the feed.
 - Given `DLG60001` / end-turn readiness, when this ships, then no idle/unassigned Spy list is added.
