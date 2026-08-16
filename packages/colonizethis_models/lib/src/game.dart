@@ -6,6 +6,7 @@ import 'game_copy_with.dart';
 import 'game_equality.dart';
 import 'game_serialization.dart';
 import 'general.dart';
+import 'last_turn_intelligence_digest.dart';
 import 'map_view_state.dart';
 import 'minor_nation.dart';
 import 'player.dart';
@@ -41,6 +42,7 @@ class Game {
     this.hiddenAgendaByGpId = const {},
     this.dossierEvidenceEntries = const [],
     this.diplomaticHistoryEvents = const [],
+    this.lastTurnIntelligenceDigest,
     this.globalGameSeed,
     this.greatPowerColorOverride,
     this.victory,
@@ -117,6 +119,10 @@ class Game {
 
   /// Flat, append-only list of diplomatic history events. Phase 6.
   final List<DiplomaticEvent> diplomaticHistoryEvents;
+
+  /// Last completed turn's world + spy briefing. Replaced each resolve.
+  /// SPEC/program/intelligence-digest.md. Null on legacy saves.
+  final LastTurnIntelligenceDigest? lastTurnIntelligenceDigest;
 
   /// Global game seed for AI determinism. Phase 4.
   final int? globalGameSeed;
@@ -204,6 +210,7 @@ class Game {
     Map<String, String>? hiddenAgendaByGpId,
     List<DossierEvidenceEntry>? dossierEvidenceEntries,
     List<DiplomaticEvent>? diplomaticHistoryEvents,
+    LastTurnIntelligenceDigest? lastTurnIntelligenceDigest,
     int? globalGameSeed,
     Map<String, List<int>>? greatPowerColorOverride,
     VictoryState? victory,
@@ -243,6 +250,7 @@ class Game {
         hiddenAgendaByGpId: hiddenAgendaByGpId,
         dossierEvidenceEntries: dossierEvidenceEntries,
         diplomaticHistoryEvents: diplomaticHistoryEvents,
+        lastTurnIntelligenceDigest: lastTurnIntelligenceDigest,
         globalGameSeed: globalGameSeed,
         greatPowerColorOverride: greatPowerColorOverride,
         victory: victory,

@@ -664,6 +664,75 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get turnNews_stage_joinEmpire => 'join empire';
 
   @override
+  String turnNews_spiesFooter(int count) {
+    return 'Your spies report $count items — open Intelligence';
+  }
+
+  @override
+  String get diplomacy_intelligence => 'Intelligence';
+
+  @override
+  String get intelligence_worldHeading => 'World briefing';
+
+  @override
+  String get intelligence_spyHeading => 'Spy reports';
+
+  @override
+  String get intelligence_worldEmpty => 'No major world events last turn.';
+
+  @override
+  String get intelligence_spyEmpty =>
+      'No spy reports. Station a Spy in a foreign province to hear that court\'s news.';
+
+  @override
+  String intelligence_spyPrefix(String court, String fact) {
+    return 'Our spy in $court reports: $fact';
+  }
+
+  @override
+  String intelligence_allianceFormed(String a, String b) {
+    return '$a and $b formed a formal alliance.';
+  }
+
+  @override
+  String intelligence_allianceBroken(String a, String b) {
+    return '$a and $b broke their formal alliance.';
+  }
+
+  @override
+  String intelligence_spyCaptureMade(
+    String court,
+    String province,
+    String other,
+  ) {
+    return '$court captured $province from $other.';
+  }
+
+  @override
+  String intelligence_spyCaptureLost(
+    String court,
+    String province,
+    String other,
+  ) {
+    return '$court lost $province to $other.';
+  }
+
+  @override
+  String intelligence_spyResearch(String court, String tech) {
+    return '$court finished researching $tech.';
+  }
+
+  @override
+  String intelligence_spyCombat(String court, String province) {
+    return '$court fought in $province.';
+  }
+
+  @override
+  String intelligence_spyNaval(String court, String zone) {
+    return '$court fought at sea in $zone.';
+  }
+
+  @override
   String get province_unitStatus_idle => 'idle';
 
   @override

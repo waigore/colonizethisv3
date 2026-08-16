@@ -8,6 +8,7 @@ import 'diplomacy.dart';
 import 'dossier_evidence.dart';
 import 'game.dart';
 import 'general.dart';
+import 'last_turn_intelligence_digest.dart';
 import 'map_view_state.dart';
 import 'minor_nation.dart';
 import 'player.dart';
@@ -40,6 +41,7 @@ Game gameCopyWith(
   Map<String, String>? hiddenAgendaByGpId,
   List<DossierEvidenceEntry>? dossierEvidenceEntries,
   List<DiplomaticEvent>? diplomaticHistoryEvents,
+  LastTurnIntelligenceDigest? lastTurnIntelligenceDigest,
   int? globalGameSeed,
   Map<String, List<int>>? greatPowerColorOverride,
   VictoryState? victory,
@@ -82,6 +84,8 @@ Game gameCopyWith(
         dossierEvidenceEntries ?? game.dossierEvidenceEntries,
     diplomaticHistoryEvents:
         diplomaticHistoryEvents ?? game.diplomaticHistoryEvents,
+    lastTurnIntelligenceDigest:
+        lastTurnIntelligenceDigest ?? game.lastTurnIntelligenceDigest,
     globalGameSeed: globalGameSeed ?? game.globalGameSeed,
     greatPowerColorOverride:
         greatPowerColorOverride ?? game.greatPowerColorOverride,

@@ -9,6 +9,7 @@ import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_for
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/intelligence_council_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
@@ -220,10 +221,31 @@ mixin AppEventHandlerScopeDialogBuilders
     if (game == null || digest == null || newTurnNumber == null) {
       return const SizedBox.shrink();
     }
+    String humanId = '';
+    for (final player in game.players) {
+      if (player.isHuman) {
+        humanId = player.id;
+        break;
+      }
+    }
+    final spyCount = humanId.isEmpty
+        ? 0
+        : game.lastTurnIntelligenceDigest?.spyLineCountFor(humanId) ?? 0;
     return TurnNewsDialog(
       game: game,
       digest: digest,
       newTurnNumber: newTurnNumber,
+      spyReportCount: spyCount,
+      onOpenIntelligence: spyCount > 0
+          ? () {
+              Navigator.of(ctx).pop();
+              emitOpenIntelligenceCouncil(
+                bus: container.read(appEventBusProvider),
+                game: game,
+                humanPlayerId: humanId,
+              );
+            }
+          : null,
     );
   }
 }

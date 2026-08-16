@@ -55,6 +55,8 @@ Map<String, dynamic> encodeGameToJson(Game game) {
       'diplomaticHistoryEvents': game.diplomaticHistoryEvents
           .map((e) => e.toJson())
           .toList(),
+    if (game.lastTurnIntelligenceDigest != null)
+      'lastTurnIntelligenceDigest': game.lastTurnIntelligenceDigest!.toJson(),
     if (game.globalGameSeed != null) 'globalGameSeed': game.globalGameSeed,
     if (game.greatPowerColorOverride != null &&
         game.greatPowerColorOverride!.isNotEmpty)

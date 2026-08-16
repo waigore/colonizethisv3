@@ -37,6 +37,7 @@ export 'src/worker_idle_counts.dart';
 export 'src/worker_tier.dart';
 export 'src/turn_state.dart';
 export 'src/turn_news_digest.dart';
+export 'src/last_turn_intelligence_digest.dart';
 export 'src/turn_time_mapping.dart';
 export 'src/unit.dart';
 export 'src/world_market.dart';

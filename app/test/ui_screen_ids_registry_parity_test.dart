@@ -23,6 +23,7 @@ const Map<String, String> _expectedConstants = {
   'productionScreen': UiScreenIds.productionScreen,
   'diplomacyScreen': UiScreenIds.diplomacyScreen,
   'diplomacyDetailScreen': UiScreenIds.diplomacyDetailScreen,
+  'intelligenceCouncilScreen': UiScreenIds.intelligenceCouncilScreen,
   'technologyScreen': UiScreenIds.technologyScreen,
   'gameSideMenu': UiScreenIds.gameSideMenu,
   'tradeScreen': UiScreenIds.tradeScreen,

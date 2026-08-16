@@ -67,6 +67,8 @@ The diplomacy screen renders its chrome through `CtGameFeatureScreenShell`'s opt
 
 The top bar applies to both wide and narrow viewports; mobile adaptation does not change the top-bar contract.
 
+**Intelligence (trailing):** `CtActionTextButton` **Intelligence** in `GameFeatureScreenTopBar.trailing` opens `GAME30003` via `NavigateToRouteEvent(Routes.intelligence)` (same pattern as Production **Counsel** — not a parallel map shell). A compact numeric badge shows last-turn world + spy-report line count for the human (`LastTurnIntelligenceDigest.lineCountForObserver`). Badge `0` still shows the control. Spec: [intelligence-council.md](intelligence-council.md).
+
 ---
 
 ## Section headings

@@ -7,6 +7,7 @@ import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../screens/diplomacy/intelligence_council_screen.dart';
 import '../../widgets/diplomacy/diplomacy_panel_rows_builder_helpers.dart';
 
 import 'map_location_resolver.dart';
@@ -51,6 +52,14 @@ mixin GameMapAreaTurnFeedTaps
       return null;
     }
     return () => navigateToDiplomacyDetail(factionId);
+  }
+
+  void navigateToIntelligenceCouncil() {
+    emitOpenIntelligenceCouncil(
+      bus: ref.read(appEventBusProvider),
+      game: widget.game,
+      humanPlayerId: mapPlayerId,
+    );
   }
 
   void locateAndOpenProvinceOverlay(String provinceId) {

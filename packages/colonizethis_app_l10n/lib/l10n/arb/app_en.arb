@@ -1105,6 +1105,137 @@
   "@turnNews_stage_joinEmpire": {
     "description": "Overture stage label."
   },
+  "turnNews_spiesFooter": "Your spies report {count} items — open Intelligence",
+  "@turnNews_spiesFooter": {
+    "description": "Turn news footer when last-turn spy reports exist; taps open Intelligence.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_intelligence": "Intelligence",
+  "@diplomacy_intelligence": {
+    "description": "GAME30001 top-bar control opening the Intelligence Council."
+  },
+  "intelligence_worldHeading": "World briefing",
+  "@intelligence_worldHeading": {
+    "description": "GAME30003 section heading for public last-turn world lines."
+  },
+  "intelligence_spyHeading": "Spy reports",
+  "@intelligence_spyHeading": {
+    "description": "GAME30003 section heading for spy-gated court reports."
+  },
+  "intelligence_worldEmpty": "No major world events last turn.",
+  "@intelligence_worldEmpty": {
+    "description": "GAME30003 empty copy for the world briefing section."
+  },
+  "intelligence_spyEmpty": "No spy reports. Station a Spy in a foreign province to hear that court's news.",
+  "@intelligence_spyEmpty": {
+    "description": "GAME30003 empty copy when the human has no last-turn spy reports."
+  },
+  "intelligence_spyPrefix": "Our spy in {court} reports: {fact}",
+  "@intelligence_spyPrefix": {
+    "description": "Prefix wrapping a spy-gated court fact.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "fact": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_allianceFormed": "{a} and {b} formed a formal alliance.",
+  "@intelligence_allianceFormed": {
+    "description": "World briefing line for a last-turn formal alliance.",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_allianceBroken": "{a} and {b} broke their formal alliance.",
+  "@intelligence_allianceBroken": {
+    "description": "World briefing line for a last-turn broken formal alliance.",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyCaptureMade": "{court} captured {province} from {other}.",
+  "@intelligence_spyCaptureMade": {
+    "description": "Spy report when the court captured a province.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "province": {
+        "type": "String"
+      },
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyCaptureLost": "{court} lost {province} to {other}.",
+  "@intelligence_spyCaptureLost": {
+    "description": "Spy report when the court lost a province.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "province": {
+        "type": "String"
+      },
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyResearch": "{court} finished researching {tech}.",
+  "@intelligence_spyResearch": {
+    "description": "Spy report when the court finished a technology.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "tech": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyCombat": "{court} fought in {province}.",
+  "@intelligence_spyCombat": {
+    "description": "Spy report when the court fought a land battle.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "province": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyNaval": "{court} fought at sea in {zone}.",
+  "@intelligence_spyNaval": {
+    "description": "Spy report when the court fought a naval battle.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
   "province_unitStatus_idle": "idle",
   "@province_unitStatus_idle": {
     "description": "Province panel: unit has no pending orders this turn."

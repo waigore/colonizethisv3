@@ -582,6 +582,56 @@ abstract class AppLocalizations {
   /// Overture stage label.
   String get turnNews_stage_joinEmpire;
 
+  /// Turn news footer when last-turn spy reports exist; taps open Intelligence.
+  String turnNews_spiesFooter(int count);
+
+  /// GAME30001 top-bar control opening the Intelligence Council.
+  String get diplomacy_intelligence;
+
+  /// GAME30003 section heading for public last-turn world lines.
+  String get intelligence_worldHeading;
+
+  /// GAME30003 section heading for spy-gated court reports.
+  String get intelligence_spyHeading;
+
+  /// GAME30003 empty copy for the world briefing section.
+  String get intelligence_worldEmpty;
+
+  /// GAME30003 empty copy when the human has no last-turn spy reports.
+  String get intelligence_spyEmpty;
+
+  /// Prefix wrapping a spy-gated court fact.
+  String intelligence_spyPrefix(String court, String fact);
+
+  /// World briefing line for a last-turn formal alliance.
+  String intelligence_allianceFormed(String a, String b);
+
+  /// World briefing line for a last-turn broken formal alliance.
+  String intelligence_allianceBroken(String a, String b);
+
+  /// Spy report when the court captured a province.
+  String intelligence_spyCaptureMade(
+    String court,
+    String province,
+    String other,
+  );
+
+  /// Spy report when the court lost a province.
+  String intelligence_spyCaptureLost(
+    String court,
+    String province,
+    String other,
+  );
+
+  /// Spy report when the court finished a technology.
+  String intelligence_spyResearch(String court, String tech);
+
+  /// Spy report when the court fought a land battle.
+  String intelligence_spyCombat(String court, String province);
+
+  /// Spy report when the court fought a naval battle.
+  String intelligence_spyNaval(String court, String zone);
+
   /// Province panel: unit has no pending orders this turn.
   String get province_unitStatus_idle;
 

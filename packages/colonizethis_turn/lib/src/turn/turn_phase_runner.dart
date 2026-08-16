@@ -2,6 +2,7 @@ import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_turn_summary_events.dart';
+import 'last_turn_intelligence_digest.dart';
 import 'turn_news_digest.dart';
 import 'turn_phase_handler_registry.dart';
 import 'turn_pipeline_state.dart';
@@ -16,6 +17,10 @@ TurnResolutionResult runTurnResolutionPipeline({
   required Game gameAtResolutionStart,
   required TurnResolverConfig config,
 }) {
+  final collectedEvents = <GameEvent>[];
+  final runConfig = config.copyWith(
+    eventSink: _CollectingTurnEventSink(config.eventSink, collectedEvents),
+  );
   if (gameAtResolutionStart.calendarCampaignHalted) {
     final turn = gameAtResolutionStart.worldState.turnState.turnNumber;
     turnLog.i('turn $turn resolve skipped (calendar halted)');
@@ -26,7 +31,7 @@ TurnResolutionResult runTurnResolutionPipeline({
       gameAtResolutionStart,
       gameAtResolutionStart,
       turn,
-      config.eventSink,
+      runConfig.eventSink,
       beforeIndex: haltedIndex,
       afterIndex: haltedIndex,
     );
@@ -34,7 +39,7 @@ TurnResolutionResult runTurnResolutionPipeline({
       start: gameAtResolutionStart,
       end: gameAtResolutionStart,
       turn: turn,
-      sink: config.eventSink,
+      sink: runConfig.eventSink,
     );
     final news = buildTurnNewsDigestForComplete(
       start: gameAtResolutionStart,
@@ -42,57 +47,61 @@ TurnResolutionResult runTurnResolutionPipeline({
       startIndex: haltedIndex,
       endIndex: haltedIndex,
     );
-    return TurnResolutionComplete(news.game, turnNewsDigest: news.digest);
+    return _completeWithIntel(
+      start: gameAtResolutionStart,
+      news: news,
+      turnEvents: collectedEvents,
+    );
   }
   var acc = TurnPipelineState(game: gameAtResolutionStart);
   final turn = acc.game.worldState.turnState.turnNumber;
-  final phaseIndex = config.startFromPhase != null
-      ? turnResolutionSequence.indexOf(config.startFromPhase!)
+  final phaseIndex = runConfig.startFromPhase != null
+      ? turnResolutionSequence.indexOf(runConfig.startFromPhase!)
       : 0;
   final defaults = TurnPhaseHandlerRegistry.defaults;
-  final handlers = config.phaseHandlerOverrides == null
+  final handlers = runConfig.phaseHandlerOverrides == null
       ? defaults
       : <TurnPhase, TurnPhaseHandler>{
           ...defaults,
-          ...config.phaseHandlerOverrides!,
+          ...runConfig.phaseHandlerOverrides!,
         };
 
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
     if (i < phaseIndex) continue;
-    config.turnTraceRuntime?.clearPhaseOrderEvents();
-    config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
+    runConfig.turnTraceRuntime?.clearPhaseOrderEvents();
+    runConfig.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
     turnLog.i('phase ${phase.name} start');
-    final beforeState = config.onTurnTracePhase == null
+    final beforeState = runConfig.onTurnTracePhase == null
         ? null
         : acc.game.toJson();
     final handler = handlers[phase];
     if (handler == null) {
       throw StateError('No turn phase handler registered for ${phase.name}');
     }
-    final outcome = handler(acc, config, turn);
+    final outcome = handler(acc, runConfig, turn);
     switch (outcome) {
       case TurnPhaseStepExit(:final result):
         _emitPhaseTrace(
-          config: config,
+          config: runConfig,
           phase: phase,
           beforeState: beforeState,
-          afterState: _phaseExitStateSnapshot(config, result),
+          afterState: _phaseExitStateSnapshot(runConfig, result),
         );
         return result;
       case TurnPhaseStepContinue(:final pipeline):
         _emitPhaseTrace(
-          config: config,
+          config: runConfig,
           phase: phase,
           beforeState: beforeState,
-          afterState: config.onTurnTracePhase == null
+          afterState: runConfig.onTurnTracePhase == null
               ? null
               : pipeline.game.toJson(),
         );
         acc = pipeline;
     }
     turnLog.i('phase ${phase.name} end');
-    config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.end);
+    runConfig.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.end);
   }
 
   turnLog.i('turn $turn resolve end');
@@ -104,7 +113,7 @@ TurnResolutionResult runTurnResolutionPipeline({
     gameAtResolutionStart,
     acc.game,
     turn,
-    config.eventSink,
+    runConfig.eventSink,
     beforeIndex: beforeIndex,
     afterIndex: afterIndex,
   );
@@ -112,7 +121,7 @@ TurnResolutionResult runTurnResolutionPipeline({
     start: gameAtResolutionStart,
     end: acc.game,
     turn: turn,
-    sink: config.eventSink,
+    sink: runConfig.eventSink,
   );
   final news = buildTurnNewsDigestForComplete(
     start: gameAtResolutionStart,
@@ -120,7 +129,25 @@ TurnResolutionResult runTurnResolutionPipeline({
     startIndex: beforeIndex,
     endIndex: afterIndex,
   );
-  return TurnResolutionComplete(news.game, turnNewsDigest: news.digest);
+  return _completeWithIntel(
+    start: gameAtResolutionStart,
+    news: news,
+    turnEvents: collectedEvents,
+  );
+}
+
+TurnResolutionComplete _completeWithIntel({
+  required Game start,
+  required ({TurnNewsDigest? digest, Game game}) news,
+  required List<GameEvent> turnEvents,
+}) {
+  final game = persistLastTurnIntelligenceDigest(
+    start: start,
+    end: news.game,
+    worldNews: news.digest,
+    turnEvents: turnEvents,
+  );
+  return TurnResolutionComplete(game, turnNewsDigest: news.digest);
 }
 
 void _emitPhaseTrace({
@@ -154,4 +181,23 @@ Map<String, Object?>? _phaseExitStateSnapshot(
     return null;
   }
   return gameFromTurnResolutionResult(result).toJson();
+}
+
+/// Collects [emit] payloads without forcing [TurnEventSink.hasGameEvent].
+class _CollectingTurnEventSink extends TurnEventSink {
+  _CollectingTurnEventSink(this._inner, this.collected)
+    : super(
+        eventBus: _inner.eventBus,
+        onGameEvent: _inner.onGameEvent,
+        onDialogue: _inner.onDialogue,
+      );
+
+  final TurnEventSink _inner;
+  final List<GameEvent> collected;
+
+  @override
+  void emit(GameEvent event) {
+    collected.add(event);
+    _inner.emit(event);
+  }
 }
