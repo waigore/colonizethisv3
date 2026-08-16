@@ -85,7 +85,7 @@ List<WidgetbookNode> get intelligenceCouncilDirectories => [
                     ),
                     IntelligenceSpyLine(
                       kind: IntelligenceSpyKind.researchComplete,
-                      techId: 'crop_rotation',
+                      techId: kTechIdCropRotation,
                       fromFactionId: 'france',
                     ),
                   ],

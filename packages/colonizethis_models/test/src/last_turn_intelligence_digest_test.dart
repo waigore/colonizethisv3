@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -21,7 +22,7 @@ void main() {
             lines: [
               IntelligenceSpyLine(
                 kind: IntelligenceSpyKind.researchComplete,
-                techId: 'crop_rotation',
+                techId: kTechIdCropRotation,
                 fromFactionId: 'f',
               ),
             ],
