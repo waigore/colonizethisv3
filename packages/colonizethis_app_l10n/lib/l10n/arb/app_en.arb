@@ -336,6 +336,135 @@
   "@game_nextTurnConfirm_dontShowAgain": {
     "description": "Toggle label in the end-turn idle-civilian warning variant."
   },
+  "game_nextTurnConfirm_stagedSection": "Staged this turn",
+  "@game_nextTurnConfirm_stagedSection": {
+    "description": "Section header on DLG60001 listing already staged decrees."
+  },
+  "game_nextTurnConfirm_reviewDecrees": "Review decrees",
+  "@game_nextTurnConfirm_reviewDecrees": {
+    "description": "Button that expands the staged-decree list on DLG60001."
+  },
+  "game_nextTurnConfirm_hideDecrees": "Hide decrees",
+  "@game_nextTurnConfirm_hideDecrees": {
+    "description": "Button that collapses the staged-decree list on DLG60001."
+  },
+  "game_nextTurnConfirm_familySeparator": " · ",
+  "@game_nextTurnConfirm_familySeparator": {
+    "description": "Joiner between compact family summaries on DLG60001."
+  },
+  "game_nextTurnConfirm_familyCount": "{family} ({count})",
+  "@game_nextTurnConfirm_familyCount": {
+    "description": "Compact family summary with count on DLG60001.",
+    "placeholders": {
+      "family": {
+        "type": "String",
+        "description": "Player-facing family name."
+      },
+      "count": {
+        "type": "int",
+        "description": "Number of staged decrees in that family."
+      }
+    }
+  },
+  "game_nextTurnConfirm_familyCivilianWork": "Civilian work",
+  "@game_nextTurnConfirm_familyCivilianWork": {
+    "description": "Staged-decree family name for civilian work orders."
+  },
+  "game_nextTurnConfirm_familySpyRelocate": "Spy relocate",
+  "@game_nextTurnConfirm_familySpyRelocate": {
+    "description": "Staged-decree family name for Spy relocate moves."
+  },
+  "game_nextTurnConfirm_familyArmyMoves": "Army moves",
+  "@game_nextTurnConfirm_familyArmyMoves": {
+    "description": "Staged-decree family name for army moves."
+  },
+  "game_nextTurnConfirm_familyFleet": "Fleet moves and missions",
+  "@game_nextTurnConfirm_familyFleet": {
+    "description": "Staged-decree family name for fleet moves and missions."
+  },
+  "game_nextTurnConfirm_familyTraining": "Training",
+  "@game_nextTurnConfirm_familyTraining": {
+    "description": "Staged-decree family name for unit training and builds."
+  },
+  "game_nextTurnConfirm_familyLabour": "Labour recruit",
+  "@game_nextTurnConfirm_familyLabour": {
+    "description": "Staged-decree family name for labour recruit and train."
+  },
+  "game_nextTurnConfirm_familyDiplomacy": "Diplomacy",
+  "@game_nextTurnConfirm_familyDiplomacy": {
+    "description": "Staged-decree family name for diplomacy."
+  },
+  "game_nextTurnConfirm_familyTrade": "Trade",
+  "@game_nextTurnConfirm_familyTrade": {
+    "description": "Staged-decree family name for market bids and offers."
+  },
+  "game_nextTurnConfirm_familyResearch": "Research",
+  "@game_nextTurnConfirm_familyResearch": {
+    "description": "Staged-decree family name for funded research assignments."
+  },
+  "game_nextTurnConfirm_rowWork": "{unitType}: {work}",
+  "@game_nextTurnConfirm_rowWork": {
+    "description": "Plain-language civilian work row on DLG60001.",
+    "placeholders": {
+      "unitType": {"type": "String"},
+      "work": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowRelocate": "{unitType} → {place}",
+  "@game_nextTurnConfirm_rowRelocate": {
+    "description": "Plain-language Spy relocate row on DLG60001.",
+    "placeholders": {
+      "unitType": {"type": "String"},
+      "place": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowArmyMove": "{army} → {place}",
+  "@game_nextTurnConfirm_rowArmyMove": {
+    "description": "Plain-language army move row on DLG60001.",
+    "placeholders": {
+      "army": {"type": "String"},
+      "place": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowFleetMove": "{fleet} → {place}",
+  "@game_nextTurnConfirm_rowFleetMove": {
+    "description": "Plain-language fleet move row on DLG60001.",
+    "placeholders": {
+      "fleet": {"type": "String"},
+      "place": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowFleetMission": "{fleet}: {mission}",
+  "@game_nextTurnConfirm_rowFleetMission": {
+    "description": "Plain-language fleet mission row on DLG60001.",
+    "placeholders": {
+      "fleet": {"type": "String"},
+      "mission": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowTrain": "Train {name}",
+  "@game_nextTurnConfirm_rowTrain": {
+    "description": "Plain-language train/build row on DLG60001.",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowDiplomacy": "{action} — {faction}",
+  "@game_nextTurnConfirm_rowDiplomacy": {
+    "description": "Plain-language diplomacy row on DLG60001.",
+    "placeholders": {
+      "action": {"type": "String"},
+      "faction": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowResearch": "{tech} ({funding})",
+  "@game_nextTurnConfirm_rowResearch": {
+    "description": "Plain-language funded research row on DLG60001.",
+    "placeholders": {
+      "tech": {"type": "String"},
+      "funding": {"type": "String"}
+    }
+  },
   "game_turnResolutionFailedMessage": "Turn resolution failed.",
   "@game_turnResolutionFailedMessage": {
     "description": "Snackbar shown when turn resolution throws an error."

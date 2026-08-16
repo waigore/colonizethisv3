@@ -178,6 +178,90 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       "Don't show this warning again";
 
   @override
+  String get game_nextTurnConfirm_stagedSection => 'Staged this turn';
+
+  @override
+  String get game_nextTurnConfirm_reviewDecrees => 'Review decrees';
+
+  @override
+  String get game_nextTurnConfirm_hideDecrees => 'Hide decrees';
+
+  @override
+  String get game_nextTurnConfirm_familySeparator => ' · ';
+
+  @override
+  String game_nextTurnConfirm_familyCount(String family, int count) {
+    return '$family ($count)';
+  }
+
+  @override
+  String get game_nextTurnConfirm_familyCivilianWork => 'Civilian work';
+
+  @override
+  String get game_nextTurnConfirm_familySpyRelocate => 'Spy relocate';
+
+  @override
+  String get game_nextTurnConfirm_familyArmyMoves => 'Army moves';
+
+  @override
+  String get game_nextTurnConfirm_familyFleet => 'Fleet moves and missions';
+
+  @override
+  String get game_nextTurnConfirm_familyTraining => 'Training';
+
+  @override
+  String get game_nextTurnConfirm_familyLabour => 'Labour recruit';
+
+  @override
+  String get game_nextTurnConfirm_familyDiplomacy => 'Diplomacy';
+
+  @override
+  String get game_nextTurnConfirm_familyTrade => 'Trade';
+
+  @override
+  String get game_nextTurnConfirm_familyResearch => 'Research';
+
+  @override
+  String game_nextTurnConfirm_rowWork(String unitType, String work) {
+    return '$unitType: $work';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowRelocate(String unitType, String place) {
+    return '$unitType → $place';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowArmyMove(String army, String place) {
+    return '$army → $place';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowFleetMove(String fleet, String place) {
+    return '$fleet → $place';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowFleetMission(String fleet, String mission) {
+    return '$fleet: $mission';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowTrain(String name) {
+    return 'Train $name';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowDiplomacy(String action, String faction) {
+    return '$action — $faction';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowResearch(String tech, String funding) {
+    return '$tech ($funding)';
+  }
+
+  @override
   String get game_turnResolutionProcessingTitle => 'Processing Turn';
 
   @override
