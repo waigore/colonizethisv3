@@ -1,96 +1,28 @@
+// Tests for SplitFleetDialog transfer/confirm. SPEC/ui/naval-units-fleet-management.md.
+// Concern split under repo.app_test_file_size (Refs #4013, #4352, #4448).
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
-import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
-import 'app_shell_harness.dart';
-
-Widget _openDialogButton(VoidCallback onOpen) {
-  return TextButton(onPressed: onOpen, child: const Text('open'));
-}
+import 'split_fleet_dialog_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
-  Game minimalGame({
-    required List<Province> provinces,
-    Map<String, String> seaZoneDisplayNameById = const {},
-  }) {
-    return Game(
-      id: 'g1',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: RegionData(provinces: provinces),
-        newWorld: const RegionData(),
-        seaZoneDisplayNameById: seaZoneDisplayNameById,
-      ),
-      players: const [
-        Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
-      ],
-    );
-  }
-
-  Future<void> openDialog(
-    WidgetTester tester, {
-    required Fleet fleet,
-    required Game game,
-    required bool isHomeFleet,
-    required AppEventBus bus,
-    int overseasCargoUsed = 0,
-    bool isCargoUsedReliable = true,
-    bool cargoNotDefined = false,
-  }) async {
-    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-    await tester.pumpWidget(
-      buildAppShell(
-        child: Scaffold(
-          body: Builder(
-            builder: (context) {
-              return _openDialogButton(() {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => SplitFleetDialog(
-                    originalFleet: fleet,
-                    game: game,
-                    humanPlayerId: 'gp1',
-                    isHomeFleet: isHomeFleet,
-                    bus: bus,
-                    overseasCargoUsed: overseasCargoUsed,
-                    isCargoUsedReliable: isCargoUsedReliable,
-                    cargoNotDefined: cargoNotDefined,
-                  ),
-                );
-              });
-            },
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-  }
-
   testWidgets('at-sea location subtitle uses sea-zone display name', (
     WidgetTester tester,
   ) async {
-    final fleet = Fleet(
-      id: 'f_sea_label',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      seaZoneId: 's1',
-      shipTypeIds: const ['carrack'],
-    );
-
-    await openDialog(
+    await openSplitFleetDialog(
       tester,
-      fleet: fleet,
-      game: minimalGame(
+      fleet: splitFleetAtSea(
+        id: 'f_sea_label',
+        shipTypeIds: const ['carrack'],
+        seaZoneId: 's1',
+      ),
+      game: splitFleetMinimalGame(
         provinces: const [],
         seaZoneDisplayNameById: const {'oldWorld|s1': 'Adriatic Display'},
       ),
@@ -101,28 +33,16 @@ void main() {
     expect(find.textContaining('Adriatic Display'), findsWidgets);
   });
 
-  bool buttonEnabled(WidgetTester tester, String label) {
-    final button = tester.widget<CtNinePatchButton>(
-      find.widgetWithText(CtNinePatchButton, label),
-    );
-    return button.enabled;
-  }
-
   testWidgets('moving exactly one from three of a type leaves 2 and 1', (
     WidgetTester tester,
   ) async {
-    final fleet = Fleet(
-      id: 'f1',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      seaZoneId: 'oldWorld|s1',
-      shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
-    );
-
-    await openDialog(
+    await openSplitFleetDialog(
       tester,
-      fleet: fleet,
-      game: minimalGame(provinces: const []),
+      fleet: splitFleetAtSea(
+        id: 'f1',
+        shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
+      ),
+      game: splitFleetMinimalGame(provinces: const []),
       isHomeFleet: false,
       bus: AppEventBus.create(),
     );
@@ -139,18 +59,13 @@ void main() {
   testWidgets(
     'bulk >> moves all remaining of a type after a single-carrier move (non-Home)',
     (WidgetTester tester) async {
-      final fleet = Fleet(
-        id: 'f1b',
-        ownerId: 'gp1',
-        regionId: 'oldWorld',
-        seaZoneId: 'oldWorld|s1',
-        shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
-      );
-
-      await openDialog(
+      await openSplitFleetDialog(
         tester,
-        fleet: fleet,
-        game: minimalGame(provinces: const []),
+        fleet: splitFleetAtSea(
+          id: 'f1b',
+          shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
+        ),
+        game: splitFleetMinimalGame(provinces: const []),
         isHomeFleet: false,
         bus: AppEventBus.create(),
       );
@@ -170,18 +85,13 @@ void main() {
   testWidgets(
     '<< moves all of a type from new back to original in one action',
     (WidgetTester tester) async {
-      final fleet = Fleet(
-        id: 'f1c',
-        ownerId: 'gp1',
-        regionId: 'oldWorld',
-        seaZoneId: 'oldWorld|s1',
-        shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
-      );
-
-      await openDialog(
+      await openSplitFleetDialog(
         tester,
-        fleet: fleet,
-        game: minimalGame(provinces: const []),
+        fleet: splitFleetAtSea(
+          id: 'f1c',
+          shipTypeIds: const ['carrack', 'carrack', 'carrack', 'fluyte'],
+        ),
+        game: splitFleetMinimalGame(provinces: const []),
         isHomeFleet: false,
         bus: AppEventBus.create(),
       );
@@ -210,18 +120,15 @@ void main() {
     });
     addTearDown(sub.cancel);
 
-    final fleet = Fleet(
+    final fleet = splitFleetAtSea(
       id: 'f1d',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      seaZoneId: 'oldWorld|s1',
       shipTypeIds: const ['carrack', 'carrack', 'fluyte'],
     );
 
-    await openDialog(
+    await openSplitFleetDialog(
       tester,
       fleet: fleet,
-      game: minimalGame(provinces: const []),
+      game: splitFleetMinimalGame(provinces: const []),
       isHomeFleet: false,
       bus: bus,
     );
@@ -240,18 +147,13 @@ void main() {
   testWidgets('per-row controls: one and all transfers with exact counts', (
     WidgetTester tester,
   ) async {
-    final fleet = Fleet(
-      id: 'f2',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      seaZoneId: 'oldWorld|s1',
-      shipTypeIds: const ['carrack', 'carrack', 'fluyte'],
-    );
-
-    await openDialog(
+    await openSplitFleetDialog(
       tester,
-      fleet: fleet,
-      game: minimalGame(provinces: const []),
+      fleet: splitFleetAtSea(
+        id: 'f2',
+        shipTypeIds: const ['carrack', 'carrack', 'fluyte'],
+      ),
+      game: splitFleetMinimalGame(provinces: const []),
       isHomeFleet: false,
       bus: AppEventBus.create(),
     );
@@ -274,18 +176,10 @@ void main() {
   testWidgets('arrow semantics: < is right-to-left and > is left-to-right', (
     WidgetTester tester,
   ) async {
-    final fleet = Fleet(
-      id: 'f3',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      seaZoneId: 'oldWorld|s1',
-      shipTypeIds: const ['fluyte', 'fluyte'],
-    );
-
-    await openDialog(
+    await openSplitFleetDialog(
       tester,
-      fleet: fleet,
-      game: minimalGame(provinces: const []),
+      fleet: splitFleetAtSea(id: 'f3', shipTypeIds: const ['fluyte', 'fluyte']),
+      game: splitFleetMinimalGame(provinces: const []),
       isHomeFleet: false,
       bus: AppEventBus.create(),
     );
@@ -318,10 +212,10 @@ void main() {
       shipTypeIds: const ['carrack'],
     );
 
-    await openDialog(
+    await openSplitFleetDialog(
       tester,
       fleet: fleet,
-      game: minimalGame(provinces: const []),
+      game: splitFleetMinimalGame(provinces: const []),
       isHomeFleet: true,
       bus: bus,
     );
@@ -330,7 +224,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('No ships'), findsOneWidget);
-    expect(buttonEnabled(tester, 'Confirm Split'), isTrue);
+    expect(splitFleetButtonEnabled(tester, 'Confirm Split'), isTrue);
 
     final confirm = find.text('Confirm Split');
     await tester.ensureVisible(confirm);
@@ -340,106 +234,5 @@ void main() {
     expect(captured, isNotNull);
     expect(captured!.shipInstanceIdsToNewFleet, hasLength(1));
     expect(captured!.shipInstanceIdsToNewFleet.first, fleet.ships.single.id);
-  });
-
-  testWidgets('home fleet cargo line updates remaining holds vs used', (
-    WidgetTester tester,
-  ) async {
-    final l10n = AppLocalizationsEn();
-    final fleet = Fleet(
-      id: 'home_fleet',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      inPortAtProvinceId: 'oldWorld|cap1',
-      shipTypeIds: const ['carrack', 'fluyte'],
-    );
-
-    await openDialog(
-      tester,
-      fleet: fleet,
-      game: minimalGame(
-        provinces: const [
-          Province(
-            id: 'cap1',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-            displayName: 'Capital',
-          ),
-        ],
-      ),
-      isHomeFleet: true,
-      bus: AppEventBus.create(),
-      overseasCargoUsed: 4,
-    );
-
-    expect(
-      find.text(l10n.splitFleet_homeCargoConsequence(7, '4')),
-      findsOneWidget,
-    );
-    expect(
-      tester
-          .widget<Text>(find.text(l10n.splitFleet_homeCargoConsequence(7, '4')))
-          .style
-          ?.color,
-      EditorialMonoclePalette.muted,
-    );
-
-    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('fluyte')));
-    await tester.pump();
-    expect(
-      find.text(l10n.splitFleet_homeCargoConsequence(3, '4')),
-      findsOneWidget,
-    );
-    expect(
-      tester
-          .widget<Text>(find.text(l10n.splitFleet_homeCargoConsequence(3, '4')))
-          .style
-          ?.color,
-      EditorialMonoclePalette.danger,
-    );
-  });
-
-  testWidgets('home fleet cargo used is em dash when unreliable', (
-    WidgetTester tester,
-  ) async {
-    final l10n = AppLocalizationsEn();
-    final fleet = Fleet(
-      id: 'home_fleet',
-      ownerId: 'gp1',
-      regionId: 'oldWorld',
-      inPortAtProvinceId: 'oldWorld|cap1',
-      shipTypeIds: const ['carrack'],
-    );
-
-    await openDialog(
-      tester,
-      fleet: fleet,
-      game: minimalGame(
-        provinces: const [
-          Province(
-            id: 'cap1',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-            displayName: 'Capital',
-          ),
-        ],
-      ),
-      isHomeFleet: true,
-      bus: AppEventBus.create(),
-      overseasCargoUsed: 9,
-      isCargoUsedReliable: false,
-    );
-
-    expect(
-      find.text(l10n.splitFleet_homeCargoConsequence(3, '—')),
-      findsOneWidget,
-    );
-    expect(
-      tester
-          .widget<Text>(find.text(l10n.splitFleet_homeCargoConsequence(3, '—')))
-          .style
-          ?.color,
-      EditorialMonoclePalette.muted,
-    );
   });
 }
