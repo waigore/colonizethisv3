@@ -153,6 +153,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Home Army detach-then-move: Split then DLG20001 for the new field army.
   // Same local-by-design rationale as overlay Move/Invade (Refs #4407).
   'app/lib/features/game/widgets/unit_orders/home_army_detach_then_move_flow.dart',
+  // Home Fleet detach-then-sail: Split then DLG30001 for the new sea-going
+  // fleet. Same local-by-design rationale as Home Army detach-then-move —
+  // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
+  // (Refs #4448).
+  'app/lib/features/game/widgets/unit_orders/home_fleet_detach_then_sail_flow.dart',
   // Military Counsel invade Agree reuses the move-army declare-war copy and
   // chrome — same local-by-design rationale as
   // `move_army_dialog_declare_war.dart` (Refs #4307).
