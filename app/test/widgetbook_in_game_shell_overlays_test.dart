@@ -45,7 +45,7 @@ void main() {
           folder: 'Players Bar',
           useCases: const [
             'Default — debug game (wide)',
-            'Human GP highlighted — power scores',
+            'Human GP highlighted — Old World N / 31',
             'Narrow — embedded below feed anchor',
           ],
           widgetType: GameMapPlayersBar,

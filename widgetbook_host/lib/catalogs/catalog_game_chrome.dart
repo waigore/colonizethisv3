@@ -151,6 +151,34 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
       ),
       WidgetbookUseCase(
+        name: 'Old World race — human ahead',
+        builder: (context) =>
+            _gameTabBarStoryFrame(oldWorldRace: _kHumanAheadRace),
+      ),
+      WidgetbookUseCase(
+        name: 'Old World race — rival ahead',
+        builder: (context) =>
+            _gameTabBarStoryFrame(oldWorldRace: _kRivalAheadRace),
+      ),
+      WidgetbookUseCase(
+        name: 'Old World race — players bar hidden',
+        builder: (context) => _gameTabBarStoryFrame(
+          oldWorldRace: _kHumanAheadRace,
+          showPlayersBar: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Old World race — 320 dp rival ahead',
+        builder: (context) => SizedBox(
+          width: 320,
+          child: _gameTabBarStoryFrame(
+            oldWorldRace: _kRivalAheadRace,
+            oldWorldRaceNarrow: true,
+            showPlayersBar: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Cargo — tight (accent numeric)',
         builder: (context) => _gameTabBarStoryFrame(
           cargoUsed: 10,
@@ -573,6 +601,20 @@ Widget _gameTopBarStoryFrame({required Widget child}) {
   );
 }
 
+const OldWorldRaceSnapshot _kHumanAheadRace = OldWorldRaceSnapshot(
+  focusPlayerId: 'gp1',
+  focusCount: 18,
+  threshold: 31,
+);
+
+const OldWorldRaceSnapshot _kRivalAheadRace = OldWorldRaceSnapshot(
+  focusPlayerId: 'gp1',
+  focusCount: 12,
+  threshold: 31,
+  rivalLeaderName: 'Spain',
+  rivalLeaderCount: 20,
+);
+
 /// Tab-bar story frame: full-width chrome under the dark scaffold so the
 /// row layout (region tabs + treasury/cargo cluster + players-bar toggle +
 /// news toggle) reads the same way it does in production where `GameTabBar`
@@ -587,6 +629,8 @@ Widget _gameTabBarStoryFrame({
   int cargoUsed = 3,
   int cargoCapacity = 12,
   String cargoHoldLabel = '3/12',
+  OldWorldRaceSnapshot? oldWorldRace,
+  bool oldWorldRaceNarrow = false,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -609,6 +653,8 @@ Widget _gameTabBarStoryFrame({
               cargoUsed: cargoUsed,
               cargoCapacity: cargoCapacity,
               cargoHoldLabel: cargoHoldLabel,
+              oldWorldRace: oldWorldRace,
+              oldWorldRaceNarrow: oldWorldRaceNarrow,
             ),
           ],
         ),
@@ -628,6 +674,8 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.cargoUsed,
     required this.cargoCapacity,
     required this.cargoHoldLabel,
+    this.oldWorldRace,
+    this.oldWorldRaceNarrow = false,
   });
 
   final int regionIndex;
@@ -639,6 +687,8 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final int cargoUsed;
   final int cargoCapacity;
   final String cargoHoldLabel;
+  final OldWorldRaceSnapshot? oldWorldRace;
+  final bool oldWorldRaceNarrow;
 
   @override
   State<_GameTabBarStoryShell> createState() => _GameTabBarStoryShellState();
@@ -667,6 +717,9 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       cargoNotDefined: false,
       isCargoUsedReliable: true,
       cargoHoldLabel: widget.cargoHoldLabel,
+      oldWorldRace: widget.oldWorldRace,
+      onOldWorldRaceTap: widget.oldWorldRace == null ? null : () {},
+      oldWorldRaceNarrow: widget.oldWorldRaceNarrow,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[

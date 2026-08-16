@@ -4171,6 +4171,100 @@
   "@mapControls_playersBarToggle": {
     "description": "Tooltip for the in-game players bar show/hide toggle on the tab bar."
   },
+  "mapControls_oldWorldRace": "{count} / {threshold}",
+  "@mapControls_oldWorldRace": {
+    "description": "Wide tab-bar Old World race chip fraction (Refs #4451).",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_compact": "{count}/{threshold}",
+  "@mapControls_oldWorldRace_compact": {
+    "description": "Narrow tab-bar Old World race chip fraction (Refs #4451).",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_rivalCue": " · {name} {count} / {threshold}",
+  "@mapControls_oldWorldRace_rivalCue": {
+    "description": "Wide rival-leader cue on the Old World race chip (Refs #4451).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_rivalCueCompact": " · {name} {count}",
+  "@mapControls_oldWorldRace_rivalCueCompact": {
+    "description": "Narrow rival-leader cue on the Old World race chip (Refs #4451).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_tooltip": "Old World provinces toward the 31-province win. Tap for full standings.",
+  "@mapControls_oldWorldRace_tooltip": {
+    "description": "Hover tooltip for the tab-bar Old World race chip (Refs #4451)."
+  },
+  "mapControls_oldWorldRace_semanticsLabel": "Old World province race: {count} of {threshold}. Tap to open Victory.",
+  "@mapControls_oldWorldRace_semanticsLabel": {
+    "description": "Semantics for the Old World race chip when the focus court is not behind.",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_semanticsWithRival": "Old World province race: {count} of {threshold}. {name} leads with {rivalCount} of {threshold}. Tap to open Victory.",
+  "@mapControls_oldWorldRace_semanticsWithRival": {
+    "description": "Semantics for the Old World race chip when a rival leads (Refs #4451).",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "rivalCount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_playersBar_calendarStrengthTooltip": "Calendar-end strength: {score}. Used only if the calendar ends with no province-count winner.",
+  "@mapControls_playersBar_calendarStrengthTooltip": {
+    "description": "Players-bar chip tooltip for calendar-end overall strength (Refs #4451).",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
   "common_percent": "{value}%",
   "@common_percent": {
     "description": "Percentage label with no space before percent sign.",

@@ -140,6 +140,59 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get mapControls_playersBarToggle => 'Players bar';
 
   @override
+  String mapControls_oldWorldRace(String count, String threshold) {
+    return '$count / $threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_compact(String count, String threshold) {
+    return '$count/$threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_rivalCue(
+    String name,
+    String count,
+    String threshold,
+  ) {
+    return ' · $name $count / $threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_rivalCueCompact(String name, String count) {
+    return ' · $name $count';
+  }
+
+  @override
+  String get mapControls_oldWorldRace_tooltip =>
+      'Old World provinces toward the 31-province win. Tap for full standings.';
+
+  @override
+  String mapControls_oldWorldRace_semanticsLabel(
+    String count,
+    String threshold,
+  ) {
+    return 'Old World province race: $count of $threshold. Tap to open Victory.';
+  }
+
+  @override
+  String mapControls_oldWorldRace_semanticsWithRival(
+    String count,
+    String threshold,
+    String name,
+    String rivalCount,
+  ) {
+    return 'Old World province race: $count of $threshold. $name leads with '
+        '$rivalCount of $threshold. Tap to open Victory.';
+  }
+
+  @override
+  String mapControls_playersBar_calendarStrengthTooltip(String score) {
+    return 'Calendar-end strength: $score. Used only if the calendar ends '
+        'with no province-count winner.';
+  }
+
+  @override
   String common_percent(int value) {
     return '$value%';
   }

@@ -14,14 +14,11 @@
 //
 // SPEC: `SPEC/ui/empire-overview.md` § Players bar / § Players bar toggle.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show greatPowerPowerScore;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'golden_capture_harness.dart';
-import 'package:intl/intl.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
@@ -100,18 +97,16 @@ Widget _goldenHost({
   );
 }
 
-
 void main() {
   suppressLogsForTests();
 
   testWidgets(
-    'golden: wide players bar chips sorted by power with human GP accent '
-    '(Refs #3898 AC4)',
+    'golden: wide players bar chips sorted by Old World N / 31 with human GP '
+    'accent (Refs #3898 AC4, #4451)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('players_bar_wide_chips');
       final game = _playersBarGoldenGame();
       final roster = GameMapPlayersBar.greatPowerRoster(game);
-      final scoreFormat = NumberFormat.decimalPattern('en_US');
 
       await tester.pumpWidget(
         _goldenHost(
@@ -129,11 +124,12 @@ void main() {
       await pumpForGolden(tester, settle: false);
 
       expect(find.byKey(kGameMapPlayersBarKey), findsOneWidget);
-      final topScore = greatPowerPowerScore(game, roster.first.id);
       expect(
         find.descendant(
           of: find.byKey(Key('$kGameMapPlayerChipKeyPrefix${roster.first.id}')),
-          matching: find.text(scoreFormat.format(topScore)),
+          matching: find.text(
+            GameMapPlayersBar.oldWorldRaceLabelFor(game, roster.first.id),
+          ),
         ),
         findsOneWidget,
       );
@@ -145,67 +141,66 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: players bar toggle chrome on and off (Refs #3898)',
-    (WidgetTester tester) async {
-      const onBoundaryKey = ValueKey<String>('players_bar_toggle_on');
-      const offBoundaryKey = ValueKey<String>('players_bar_toggle_off');
+  testWidgets('golden: players bar toggle chrome on and off (Refs #3898)', (
+    WidgetTester tester,
+  ) async {
+    const onBoundaryKey = ValueKey<String>('players_bar_toggle_on');
+    const offBoundaryKey = ValueKey<String>('players_bar_toggle_off');
 
-      await tester.pumpWidget(
-        _goldenHost(
-          boundaryKey: onBoundaryKey,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                PlayersBarToggleButton(
-                  tooltip: 'Show players bar',
-                  showPlayersBar: true,
-                  onPressed: () {},
-                ),
-                const SizedBox(width: 8),
-                PlayersBarToggleButton(
-                  tooltip: 'Hide players bar',
-                  showPlayersBar: false,
-                  onPressed: () {},
-                ),
-              ],
-            ),
+    await tester.pumpWidget(
+      _goldenHost(
+        boundaryKey: onBoundaryKey,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PlayersBarToggleButton(
+                tooltip: 'Show players bar',
+                showPlayersBar: true,
+                onPressed: () {},
+              ),
+              const SizedBox(width: 8),
+              PlayersBarToggleButton(
+                tooltip: 'Hide players bar',
+                showPlayersBar: false,
+                onPressed: () {},
+              ),
+            ],
           ),
         ),
-      );
-      await pumpForGolden(tester, settle: false);
+      ),
+    );
+    await pumpForGolden(tester, settle: false);
 
-      expect(find.byKey(kPlayersBarToggleButtonKey), findsNWidgets(2));
+    expect(find.byKey(kPlayersBarToggleButtonKey), findsNWidgets(2));
 
-      await expectLater(
-        find.byKey(onBoundaryKey),
-        matchesGoldenFile('goldens/players_bar_toggle_on_off.png'),
-      );
+    await expectLater(
+      find.byKey(onBoundaryKey),
+      matchesGoldenFile('goldens/players_bar_toggle_on_off.png'),
+    );
 
-      // Re-pump off-only surface for a dedicated inactive-state baseline.
-      await tester.pumpWidget(
-        _goldenHost(
-          boundaryKey: offBoundaryKey,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: PlayersBarToggleButton(
-              tooltip: 'Hide players bar',
-              showPlayersBar: false,
-              onPressed: () {},
-            ),
+    // Re-pump off-only surface for a dedicated inactive-state baseline.
+    await tester.pumpWidget(
+      _goldenHost(
+        boundaryKey: offBoundaryKey,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: PlayersBarToggleButton(
+            tooltip: 'Hide players bar',
+            showPlayersBar: false,
+            onPressed: () {},
           ),
         ),
-      );
-      await pumpForGolden(tester, settle: false);
+      ),
+    );
+    await pumpForGolden(tester, settle: false);
 
-      await expectLater(
-        find.byKey(offBoundaryKey),
-        matchesGoldenFile('goldens/players_bar_toggle_off.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(offBoundaryKey),
+      matchesGoldenFile('goldens/players_bar_toggle_off.png'),
+    );
+  });
 
   testWidgets(
     'golden: tab bar trailing cluster players toggle before news (Refs #3898 AC3)',
@@ -254,8 +249,12 @@ void main() {
 
       expect(find.byKey(kPlayersBarToggleButtonKey), findsOneWidget);
       expect(find.byKey(kPlayerTurnFeedToggleButtonKey), findsOneWidget);
-      final playersOffset = tester.getTopLeft(find.byKey(kPlayersBarToggleButtonKey));
-      final newsOffset = tester.getTopLeft(find.byKey(kPlayerTurnFeedToggleButtonKey));
+      final playersOffset = tester.getTopLeft(
+        find.byKey(kPlayersBarToggleButtonKey),
+      );
+      final newsOffset = tester.getTopLeft(
+        find.byKey(kPlayerTurnFeedToggleButtonKey),
+      );
       expect(playersOffset.dx, lessThan(newsOffset.dx));
 
       await expectLater(
@@ -293,7 +292,10 @@ void main() {
                 ),
               ),
               Positioned(
-                top: GameMapPlayersBar.narrowTopInset + 48 + GameMapPlayersBar.narrowStackGap,
+                top:
+                    GameMapPlayersBar.narrowTopInset +
+                    48 +
+                    GameMapPlayersBar.narrowStackGap,
                 right: GameMapPlayersBar.rightInsetDefault,
                 child: GameMapPlayersBar(
                   game: game,

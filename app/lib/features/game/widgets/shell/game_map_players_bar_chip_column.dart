@@ -1,3 +1,4 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show factionOwnershipColorMapForOldWorld;
@@ -21,6 +22,7 @@ Widget buildGameMapPlayersBarChipColumn({
   }
   final ownershipColors = factionOwnershipColorMapForOldWorld(game);
   final scoreFormat = NumberFormat.decimalPattern('en_US');
+  final l10n = appL10n(context);
   final theme = Theme.of(context);
   final mutedNameStyle =
       (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
@@ -48,27 +50,27 @@ Widget buildGameMapPlayersBarChipColumn({
     final highlight =
         highlightPlayerId != null && highlightPlayerId == player.id;
     chips.add(
-      GameMapPlayersBarChip(
-        key: Key('$kGameMapPlayerChipKeyPrefix${player.id}'),
-        name: player.displayName,
-        score: scoreFormat.format(
-          GameMapPlayersBar.powerScoreFor(game, player.id),
+      Tooltip(
+        message: l10n.mapControls_playersBar_calendarStrengthTooltip(
+          scoreFormat.format(GameMapPlayersBar.powerScoreFor(game, player.id)),
         ),
-        swatchColor: _swatchColorFor(ownershipColors, player.id),
-        minWidth: GameMapPlayersBar.chipMinWidth,
-        nameStyle: highlight ? accentNameStyle : mutedNameStyle,
-        scoreStyle: scoreStyle,
+        child: GameMapPlayersBarChip(
+          key: Key('$kGameMapPlayerChipKeyPrefix${player.id}'),
+          name: player.displayName,
+          score: GameMapPlayersBar.oldWorldRaceLabelFor(game, player.id),
+          swatchColor: _swatchColorFor(ownershipColors, player.id),
+          minWidth: GameMapPlayersBar.chipMinWidth,
+          nameStyle: highlight ? accentNameStyle : mutedNameStyle,
+          scoreStyle: scoreStyle,
+        ),
       ),
     );
   }
-  return IgnorePointer(
-    ignoring: true,
-    child: Column(
-      key: kGameMapPlayersBarKey,
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: chips,
-    ),
+  return Column(
+    key: kGameMapPlayersBarKey,
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: chips,
   );
 }
 

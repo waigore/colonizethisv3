@@ -1,16 +1,14 @@
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show greatPowerPowerScore;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show factionOwnershipColorMapForOldWorld;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intl/intl.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
@@ -59,11 +57,11 @@ void main() {
     );
   }
 
-  Widget hostFor(
-    ct_models.Game game, {
-    String? highlightPlayerId,
-  }) {
+  Widget hostFor(ct_models.Game game, {String? highlightPlayerId}) {
     return buildAppShell(
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en'),
       child: Scaffold(
         body: SizedBox(
           width: 600,
@@ -81,12 +79,11 @@ void main() {
     );
   }
 
-  testWidgets('renders chips sorted by power score descending', (
+  testWidgets('renders chips sorted by Old World count descending', (
     WidgetTester tester,
   ) async {
     final game = gameWithOwnership();
     final roster = GameMapPlayersBar.greatPowerRoster(game);
-    final scoreFormat = NumberFormat.decimalPattern('en_US');
 
     await tester.pumpWidget(hostFor(game));
     await tester.pump();
@@ -103,34 +100,33 @@ void main() {
       );
     }
 
-    final topScore = greatPowerPowerScore(game, roster.first.id);
     expect(
       find.descendant(
         of: find.byKey(Key('$kGameMapPlayerChipKeyPrefix${roster.first.id}')),
-        matching: find.text(scoreFormat.format(topScore)),
+        matching: find.text(
+          GameMapPlayersBar.oldWorldRaceLabelFor(game, roster.first.id),
+        ),
       ),
       findsOneWidget,
     );
   });
 
-  testWidgets('chip score equals greatPowerPowerScore formatted en_US', (
+  testWidgets('chip default number is Old World N / 31', (
     WidgetTester tester,
   ) async {
     final game = gameWithOwnership();
     final roster = GameMapPlayersBar.greatPowerRoster(game);
-    final scoreFormat = NumberFormat.decimalPattern('en_US');
 
     await tester.pumpWidget(hostFor(game));
     await tester.pump();
 
     for (final player in roster) {
-      final expected = scoreFormat.format(
-        GameMapPlayersBar.powerScoreFor(game, player.id),
-      );
       expect(
         find.descendant(
           of: find.byKey(Key('$kGameMapPlayerChipKeyPrefix${player.id}')),
-          matching: find.text(expected),
+          matching: find.text(
+            GameMapPlayersBar.oldWorldRaceLabelFor(game, player.id),
+          ),
         ),
         findsOneWidget,
       );
@@ -156,6 +152,25 @@ void main() {
     expect(style?.fontWeight, FontWeight.w600);
   });
 
+  testWidgets('chip tooltip labels calendar-end strength', (
+    WidgetTester tester,
+  ) async {
+    final game = gameWithOwnership();
+    final roster = GameMapPlayersBar.greatPowerRoster(game);
+
+    await tester.pumpWidget(hostFor(game));
+    await tester.pump();
+
+    final chipFinder = find.byKey(
+      Key('$kGameMapPlayerChipKeyPrefix${roster.first.id}'),
+    );
+    final tooltip = tester.widget<Tooltip>(
+      find.ancestor(of: chipFinder, matching: find.byType(Tooltip)),
+    );
+    expect(tooltip.message, contains('Calendar-end strength'));
+    expect(tooltip.message, contains('no province-count winner'));
+  });
+
   testWidgets('chip swatch paints the canonical map ownership tint', (
     WidgetTester tester,
   ) async {
@@ -169,8 +184,12 @@ void main() {
     for (final player in roster) {
       final expected = ownershipColors[player.id];
       expect(expected, isNotNull);
-      final expectedColor =
-          Color.fromARGB(0xFF, expected!.$1, expected.$2, expected.$3);
+      final expectedColor = Color.fromARGB(
+        0xFF,
+        expected!.$1,
+        expected.$2,
+        expected.$3,
+      );
       final swatchContainers = tester
           .widgetList<Container>(
             find.descendant(
@@ -179,8 +198,9 @@ void main() {
             ),
           )
           .toList();
-      final swatch =
-          swatchContainers.firstWhere((c) => c.constraints?.maxWidth == 8.0);
+      final swatch = swatchContainers.firstWhere(
+        (c) => c.constraints?.maxWidth == 8.0,
+      );
       final decoration = swatch.decoration as BoxDecoration?;
       expect(decoration?.color, expectedColor);
     }
@@ -204,8 +224,9 @@ void main() {
         oldWorld: ct_models.RegionData(provinces: stuffed, units: ow.units),
       ),
     );
-    final expectedScore = NumberFormat.decimalPattern('en_US').format(
-      GameMapPlayersBar.powerScoreFor(game, roster.first.id),
+    final expectedLabel = GameMapPlayersBar.oldWorldRaceLabelFor(
+      game,
+      roster.first.id,
     );
 
     await tester.pumpWidget(hostFor(game));
@@ -214,11 +235,11 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(Key('$kGameMapPlayerChipKeyPrefix${roster.first.id}')),
-        matching: find.text(expectedScore),
+        matching: find.text(expectedLabel),
       ),
       findsOneWidget,
     );
-    expect(expectedScore, contains(','));
+    expect(expectedLabel, '100 / 31');
   });
 
   testWidgets('returns SizedBox.shrink() when the GP roster is empty', (
@@ -243,16 +264,28 @@ void main() {
     expect(find.byKey(kGameMapPlayersBarKey), findsNothing);
   });
 
-  test('greatPowerRoster sorts by power score desc then id asc', () {
-    final game = gameWithOwnership();
-    final roster = GameMapPlayersBar.greatPowerRoster(game);
-    for (var i = 0; i < roster.length - 1; i++) {
-      final leftScore = greatPowerPowerScore(game, roster[i].id);
-      final rightScore = greatPowerPowerScore(game, roster[i + 1].id);
-      expect(leftScore >= rightScore, isTrue);
-      if (leftScore == rightScore) {
-        expect(roster[i].id.compareTo(roster[i + 1].id), lessThan(0));
+  test(
+    'greatPowerRoster sorts by Old World count desc then displayName asc',
+    () {
+      final game = gameWithOwnership();
+      final roster = GameMapPlayersBar.greatPowerRoster(game);
+      for (var i = 0; i < roster.length - 1; i++) {
+        final leftCount = GameMapPlayersBar.oldWorldCountFor(
+          game,
+          roster[i].id,
+        );
+        final rightCount = GameMapPlayersBar.oldWorldCountFor(
+          game,
+          roster[i + 1].id,
+        );
+        expect(leftCount >= rightCount, isTrue);
+        if (leftCount == rightCount) {
+          expect(
+            roster[i].displayName.compareTo(roster[i + 1].displayName),
+            lessThan(0),
+          );
+        }
       }
-    }
-  });
+    },
+  );
 }
