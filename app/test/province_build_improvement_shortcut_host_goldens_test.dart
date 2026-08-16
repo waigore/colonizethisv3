@@ -29,99 +29,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'golden_capture_harness.dart';
+import 'province_shortcut_host_emit_fixtures.dart';
 
-final MapTopology _goldenCombinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|p1',
-      regionId: 'newWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'newWorld|s1',
-      regionId: 'newWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [
-    TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1'),
-    TopologyEdge(id1: 'newWorld|p1', id2: 'newWorld|s1'),
-  ],
-);
+final MapTopology _goldenCombinedTopology =
+    provinceShortcutHostCombinedTopology(includeNewWorld: true);
 
 /// Map topology + tile maps aligned with [goldenBuildImprovementGame] (Refs #1990 goldens).
 class _GameServiceBuildImprovementGolden extends GameService {
   _GameServiceBuildImprovementGolden(super.box, super.adapter);
 
-  static final Map<String, MapTopology> _topologyByRegion = {
-    'oldWorld': MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 's1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-    ),
-    'newWorld': MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: 'newWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 's1',
-          regionId: 'newWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-    ),
-  };
+  static final Map<String, MapTopology> _topologyByRegion =
+      provinceShortcutHostTopologyByRegion(includeNewWorld: true);
 
-  static final Map<String, TileMapResult> _tileMapByRegion = {
-    'oldWorld': TileMapResult(
-      width: 2,
-      height: 2,
-      grid: const [
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ],
-      terrainGrid: const [
-        [TerrainType.plains, TerrainType.plains],
-        [TerrainType.plains, TerrainType.plains],
-      ],
-      resourceGrid: [
-        [Resource.grain, Resource.meat],
-        [Resource.meat, Resource.meat],
-      ],
-    ),
-    'newWorld': TileMapResult(
-      width: 2,
-      height: 2,
-      grid: const [
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ],
-    ),
-  };
+  static final Map<String, TileMapResult> _tileMapByRegion =
+      provinceShortcutHostGoldenCoastalTileMapByRegion(includeNewWorld: true);
 
   @override
   ({

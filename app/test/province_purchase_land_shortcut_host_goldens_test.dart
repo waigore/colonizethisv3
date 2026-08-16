@@ -26,61 +26,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'golden_capture_harness.dart';
+import 'province_shortcut_host_emit_fixtures.dart';
 
 const String _kMinorId = 'minor1';
 
-final MapTopology _goldenCombinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
+final MapTopology _goldenCombinedTopology =
+    provinceShortcutHostCombinedTopology();
 
 class _GameServicePurchaseLandGolden extends GameService {
   _GameServicePurchaseLandGolden(super.box, super.adapter);
 
-  static final Map<String, MapTopology> _topologyByRegion = {
-    'oldWorld': MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 's1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-    ),
-  };
+  static final Map<String, MapTopology> _topologyByRegion =
+      provinceShortcutHostTopologyByRegion();
 
-  static final Map<String, TileMapResult> _tileMapByRegion = {
-    'oldWorld': TileMapResult(
-      width: 1,
-      height: 1,
-      grid: const [
-        ['p1'],
-      ],
-      terrainGrid: const [
-        [TerrainType.plains],
-      ],
-      resourceGrid: const [
-        [Resource.grain],
-      ],
-    ),
-  };
+  static final Map<String, TileMapResult> _tileMapByRegion =
+      provinceShortcutHostTileMapByRegion();
 
   @override
   ({
@@ -110,11 +70,7 @@ Game goldenPurchaseLandGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(
         provinces: [
-          Province(
-            id: provinceId,
-            regionId: 'oldWorld',
-            ownerId: _kMinorId,
-          ),
+          Province(id: provinceId, regionId: 'oldWorld', ownerId: _kMinorId),
         ],
         units: [
           Unit(

@@ -1146,6 +1146,14 @@ rules:
     script: tool/check_app_catalog_widgets_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.app_core_services_file_size
+    group: structure
+    title: app/lib/core/services files must stay at or below 300 physical lines (Refs #4450)
+    spec: SPEC/program/app-core-services-file-size.md
+    runner: dart
+    script: tool/check_app_core_services_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.logic_diplomatic_sub_validator_size
     group: architecture
     title: colonizethis_logic diplomatic sub-validators are factory functions, not bespoke `implements DiplomaticSubValidator` classes (Refs #2560)
@@ -2476,6 +2484,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_no_duplicate_scaffolding.dart
+
+  - rule_id: repo.app_test_no_duplicate_shortcut_fixtures
+    group: testing
+    title: "governed province shortcut-host tests must not re-declare MapTopology / TileMapResult fields (Refs #4450)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_shortcut_fixtures.dart
 
   - rule_id: repo.app_test_no_duplicate_golden_host
     group: testing
