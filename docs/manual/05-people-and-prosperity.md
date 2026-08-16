@@ -20,7 +20,7 @@ Workers live only in the labour pool on `GAME20001` **Production screen**. They 
 | Journeyman | 6 | 1 grain + 1 meat | cigars |
 | Master | 8 | 1 grain + 1 meat | fur hats |
 
-Higher ranks eat more. Trained workers (Apprentice, Journeyman, Master) also need their luxury in full. After you confirm **Next turn**, armies and fleets eat before workers do. Only workers who were fed (and, if trained, given their luxury) add labour that turn. Unfed workers, or trained workers who miss their luxury, **do not work** that turn (they stay in the pool). When food is short, Masters eat first and Peasants last. A trained worker who missed food does not take a luxury that turn.
+Higher ranks eat more. Trained workers (Apprentice, Journeyman, Master) also need their luxury in full, or they give no labour that turn; they do not work “a little.” After you confirm **Next turn**, armies and fleets eat before workers do. Only workers who were fed (and, if trained, given their luxury) add labour that turn. Unfed workers, or trained workers who miss their luxury, **do not work** that turn (they stay in the pool). When food is short, Masters eat first and Peasants last. A trained worker who missed food does not take a luxury that turn.
 
 The **Labour this turn** line under the worker grid shows how much labour you will have after everyone eats. It counts food and luxuries that arrive this turn, not only what you already have stored. When some workers will not work, a short reason names the main shortage (food, or a luxury). Tap **Labour details** for working vs not-working counts on each rank. The line only informs; it does not buy food, change Allocation, or disband anyone for you.
 
@@ -70,7 +70,7 @@ Training queues civilian training. After you confirm **Next turn** and the game 
 
 **Station spy** is hidden on a sea zone, on an unrevealed (`???`) tile, when you cannot act, or when your Spy is already on that tile and no other Spy can move there. It is visible but disabled when no idle Spy can take the tile, or the tile cannot be occupied (the hints distinguish those). It is enabled when at least one idle Spy can occupy the selected tile.
 
-**Assign** still offers **Counter-espionage** on owned provinces only. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own shows **Reserve**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. `DLG60001` **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
+**Assign** still offers **Counter-espionage** on owned provinces only. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own, with no mission, shows **Reserve**. When a Spy is set to defend at home this turn, the row shows **Counter-espionage** and hides **Relocate**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. `DLG60001` **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
 
 ## Counsel
 
