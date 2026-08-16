@@ -3510,6 +3510,14 @@
   "@provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip": {
     "description": "Disabled Blockade/Beachhead tooltip when no adjacent at-sea fleet (Refs #4413)."
   },
+  "provinceOverlay_detachAndSailAction": "Detach and sail",
+  "@provinceOverlay_detachAndSailAction": {
+    "description": "MAP20001 Naval control to split a squadron from the Home Fleet and undock (Refs #4448)."
+  },
+  "provinceOverlay_detachAndSailTooltip": "Detach a squadron from the Home Fleet, then choose an adjacent sea.",
+  "@provinceOverlay_detachAndSailTooltip": {
+    "description": "Enabled Detach and sail tooltip (Refs #4448)."
+  },
   "provinceOverlay_selectArmyTitle": "Select army",
   "@provinceOverlay_selectArmyTitle": {
     "description": "DLG20002 overlay army picker title (Refs #4350)."
@@ -4888,6 +4896,26 @@
   "splitFleet_confirm": "Confirm Split",
   "@splitFleet_confirm": {
     "description": "Confirm button label for split fleet dialog."
+  },
+  "splitFleet_detachTitle": "Detach a squadron",
+  "@splitFleet_detachTitle": {
+    "description": "Split dialog title when detaching from the Home Fleet to sail (Refs #4448)."
+  },
+  "splitFleet_detachConfirm": "Detach and choose destination",
+  "@splitFleet_detachConfirm": {
+    "description": "Split dialog confirm label for Home Fleet detach-then-sail (Refs #4448)."
+  },
+  "splitFleet_homeCargoConsequence": "Cargo holds remaining after this split: {remaining} (overseas load this turn: {used}).",
+  "@splitFleet_homeCargoConsequence": {
+    "description": "Live Home Fleet cargo-hold consequence on split (Refs #4448).",
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      }
+    }
   },
   "splitFleet_totalShips": "Total: {total} ships",
   "@splitFleet_totalShips": {

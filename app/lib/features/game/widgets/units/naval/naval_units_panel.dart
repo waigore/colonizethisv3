@@ -24,6 +24,9 @@ class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
     this.initialSelectedFleetId,
     this.tileScopeTileKey,
     this.readOnly = false,
+    this.overseasCargoUsed = 0,
+    this.isCargoUsedReliable = true,
+    this.cargoNotDefined = false,
   });
 
   /// SPEC/ui/naval-units-panel.md — [UiScreenIds.navalUnitsPanel].
@@ -44,6 +47,9 @@ class NavalUnitsPanel extends StatefulWidget with GamePanelMixin {
   final String? tileScopeTileKey;
   @override
   final bool readOnly;
+  final int overseasCargoUsed;
+  final bool isCargoUsedReliable;
+  final bool cargoNotDefined;
 
   @override
   State<NavalUnitsPanel> createState() => NavalUnitsPanelState();

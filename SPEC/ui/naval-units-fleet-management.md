@@ -86,7 +86,11 @@ Each fleet row shows a **Split** action in the collapsed header content so the a
 
 ### Dialog
 
-Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
+Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**. Map detach-then-sail (`showHomeFleetDetachThenSailFlow`, Refs #4448) opens the same dialog with title **Detach a squadron** and confirm **Detach and choose destination**.
+
+### Home Fleet cargo consequence (Refs #4448)
+
+On a **Home Fleet** split (panel **Split** and map detach-then-sail), a live line below the transfer list states remaining Home Fleet cargo holds after the staged transfer versus this turn’s overseas extraction load. Hosts pass `overseasCargoUsed`, `isCargoUsedReliable`, and `cargoNotDefined` as constructor params; the dialog does **not** import Riverpod. Remaining holds are `NavalStatsCatalog.cargoHold` summed over ships still on the Home Fleet after the staged counts. When `cargoNotDefined` or `!isCargoUsedReliable`, used displays as `—` and the line is not coloured as a shortfall. When used is reliable: `--muted` if remaining **>** used; `--accent` if remaining **==** used; `--danger` if remaining **<** used. A legal split is never blocked.
 
 ### Reusable Transfer Component
 
@@ -235,6 +239,8 @@ After any fleet operation (split or combine):
 - **Given** a fleet with 4 ships, **when** the user moves all 4 ships to the new fleet in the split dialog, **then** the Confirm button is disabled and the original fleet cannot be split.
 
 - **Given** the Home Fleet is present with ships, **when** the user expands the Home Fleet row, **then** the Home Fleet shows a Split Fleet button, allowing the player to split off a detachment.
+
+- **Given** `SplitFleetDialog` is open on the Home Fleet with constructor-passed `overseasCargoUsed` / `isCargoUsedReliable` / `cargoNotDefined`, **when** the player stages merchants to the new fleet, **then** the UI layer shows remaining Home Fleet cargo holds versus this turn’s overseas extraction load. When used is reliable: `--muted` if remaining **>** used, `--accent` if remaining **==** used, `--danger` if remaining **<** used. When `cargoNotDefined` or `!isCargoUsedReliable`, used displays as `—` and the line is not coloured as a shortfall. A legal split is never blocked.
 
 ### Empty Fleet Cleanup
 

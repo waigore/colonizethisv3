@@ -2447,6 +2447,12 @@ abstract class AppLocalizations {
   /// Disabled Blockade/Beachhead — fleet must be at sea beside this coast. Refs #4413.
   String get provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip;
 
+  /// MAP20001 Naval Detach and sail control label. Refs #4448.
+  String get provinceOverlay_detachAndSailAction;
+
+  /// Enabled Detach and sail tooltip. Refs #4448.
+  String get provinceOverlay_detachAndSailTooltip;
+
   /// Multi-army picker title for overlay Move/Invade. Refs #4350.
   String get provinceOverlay_selectArmyTitle;
 
@@ -2935,6 +2941,15 @@ abstract class AppLocalizations {
 
   /// Confirm button label for split fleet dialog.
   String get splitFleet_confirm;
+
+  /// Split dialog title when detaching from the Home Fleet to sail. Refs #4448.
+  String get splitFleet_detachTitle;
+
+  /// Split dialog confirm label for Home Fleet detach-then-sail. Refs #4448.
+  String get splitFleet_detachConfirm;
+
+  /// Live Home Fleet cargo-hold consequence on split. Refs #4448.
+  String splitFleet_homeCargoConsequence(int remaining, String used);
 
   /// Footer total ship count in split fleet transfer list.
   String splitFleet_totalShips(int total);

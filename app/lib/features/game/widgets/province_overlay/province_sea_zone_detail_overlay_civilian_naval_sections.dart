@@ -5,6 +5,8 @@ import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
+    show ProvinceDetachAndSailOverlayControls;
 import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import 'province_panel_labels.dart';
@@ -119,6 +121,8 @@ Widget buildNavalSection({
   bool rosterObfuscated = false,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
+  ProvinceDetachAndSailOverlayControls detachAndSail =
+      ProvinceDetachAndSailOverlayControls.hidden,
 }) {
   final pending = pendingNavalPortProvinceId == null
       ? const <String>[]
@@ -129,7 +133,11 @@ Widget buildNavalSection({
           humanPlayerId: humanPlayerId,
           l10n: l10n,
         );
-  final missionActions = _navalMissionActions(l10n, navalMission);
+  final missionActions = _navalMissionActions(
+    l10n,
+    navalMission,
+    detachAndSail,
+  );
   final hasRoster = fleets.isNotEmpty || pending.isNotEmpty;
   return buildOverlaySection(
     l10n.provinceOverlay_sectionNaval,
@@ -191,8 +199,12 @@ Widget buildNavalSection({
 List<Widget> _navalMissionActions(
   AppLocalizations l10n,
   ProvinceNavalMissionOverlayControls navalMission,
+  ProvinceDetachAndSailOverlayControls detachAndSail,
 ) {
-  if (!navalMission.showBlockade && !navalMission.showBeachhead) {
+  final showDetach = detachAndSail.showDetachAndSail;
+  if (!navalMission.showBlockade &&
+      !navalMission.showBeachhead &&
+      !showDetach) {
     return const [];
   }
   return [
@@ -202,6 +214,15 @@ List<Widget> _navalMissionActions(
         spacing: 8,
         runSpacing: 8,
         children: [
+          if (showDetach)
+            CtActionTextButton(
+              label: l10n.provinceOverlay_detachAndSailAction,
+              tooltip: detachAndSail.detachAndSailTooltip,
+              enabled: detachAndSail.detachAndSailEnabled,
+              onPressed: detachAndSail.detachAndSailEnabled
+                  ? detachAndSail.onDetachAndSailTap
+                  : null,
+            ),
           if (navalMission.showBlockade)
             CtActionTextButton(
               label: l10n.provinceOverlay_blockadeAction,

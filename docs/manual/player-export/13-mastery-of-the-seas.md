@@ -38,6 +38,16 @@ The **Naval units panel** lists every fleet by region and location. Your Home Fl
 
 The Home Fleet remains docked at the capital. Its merchant cargo holds are the realm’s total overseas transport and trade capacity for the turn. Split ships from it when you need a sea-going squadron; the new fleet begins at the same location and can then receive movement and mission orders.
 
+When you split the Home Fleet (from **Naval units panel** or from the map path below), a line under the transfer lists how many cargo holds will remain versus this turn’s overseas load. The numbers change as you move merchant hulls. A warm accent means no spare holds; red means remaining holds would fall short. The game still lets you confirm a legal split — leaving merchants home is a real trade-off, not a blocked tap.
+
+To send newly built ships to sea from the map:
+
+1. Tap the **Home Fleet** marker at your capital harbor on **Empire overview / map area** (or tap **Detach and sail** on **Province sea-zone overlay** Naval when you have ships at home).
+2. Choose which ship types leave. Confirm **Detach and choose destination**.
+3. On **Move fleet dialog**, pick an adjacent sea and confirm. The Home Fleet stays in port.
+
+If the Home Fleet has no ships, the harbor marker still opens **Naval units panel** so you can **Train**.
+
 On the in-game map shell (**Game screen**), the tab bar shows a compact **cargo** readout (`used/capacity`) beside your treasury. Tap it for a plain-language breakdown: overseas extraction load, total Home Fleet holds, and how many holds remain open for trade bids. The numbers turn a warm accent when holds are tight and red when full — a quiet warning, not a popup.
 
 ### Move a sea-going fleet
@@ -55,11 +65,14 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 
 **Map shortcut (primary):** Tap your **fleet marker** on the map (**Empire overview / map area**). When multiple fleets share the marker, choose which fleet in **Naval mission fleet picker dialog** — each row shows that fleet’s ship mix (and a pending mission line when one is already staged) so you can tell stacked fleets apart. What opens next depends on that fleet:
 
-- **Home Fleet** — opens **Naval units panel** Naval Units scoped to that port so you can Split or Train without a dead-end tap.
+- **Home Fleet with ships** — opens **Detach a squadron**, then **Move fleet dialog** for the new sea-going fleet. The Home Fleet itself cannot sail.
+- **Home Fleet with no ships** — opens **Naval units panel** Naval Units scoped to that port so you can Train.
 - **Sea-going fleet in port** — opens **Move fleet dialog** so you can undock immediately.
 - **Sea-going fleet at sea** — opens **Naval mission menu dialog** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open **Move fleet dialog** without returning to the rail panel. Blockade and Beachhead open **Naval mission target dialog** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target.
 
 **Panel parity:** In **Naval units panel**, tap **Mission** on an eligible at-sea fleet row for the same **Naval mission menu dialog** flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
+
+**Capital Naval shortcut:** On your owned capital, when the Home Fleet has at least one ship, **Province sea-zone overlay** Naval offers **Detach and sail**. It starts the same split-then-move path as the harbor marker. This control is hidden when you are only watching the game, on a foreign coast, or on a sea zone.
 
 **Overlay shortcut:** On a foreign coastal province at war with you, **Province sea-zone overlay** Naval offers **Blockade** and **Beachhead**. One eligible at-sea fleet skips **Naval mission menu dialog** and opens **Naval mission target dialog** with that province already selected. Several eligible fleets open **Naval mission fleet picker dialog** first. If a fleet is at sea but not beside this coast, the controls stay visible and disabled until a fleet is at sea beside the coast — fleets in port cannot take missions. A fogged naval roster (`???`) still shows these actions when the Political owner is known. Map-marker and panel **Mission** still open **Naval mission menu dialog** as usual.
 

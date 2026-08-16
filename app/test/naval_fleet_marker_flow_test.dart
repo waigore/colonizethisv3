@@ -4,6 +4,7 @@
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_flow.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -25,44 +26,42 @@ void main() {
   const tileKey = 'oldWorld|cap1|0|0';
 
   Game homeOnlyGame() => buildNavalPanelCapitalHomeAndPeersGame(
-        humanId: humanId,
-        gameId: 'g_marker_home',
-        displayName: 'Marker Home',
-        peerFleets: const [],
-      );
+    humanId: humanId,
+    gameId: 'g_marker_home',
+    displayName: 'Marker Home',
+    peerFleets: const [],
+  );
 
   Game inPortPeerGame() => buildNavalPanelCapitalHomeAndPeersGame(
+    humanId: humanId,
+    gameId: 'g_marker_in_port',
+    displayName: 'Marker In Port',
+    peerFleets: [
+      navalPanelPortPeer(
+        id: 'f_in_port',
         humanId: humanId,
-        gameId: 'g_marker_in_port',
-        displayName: 'Marker In Port',
-        peerFleets: [
-          navalPanelPortPeer(
-            id: 'f_in_port',
-            humanId: humanId,
-            ships: const [ShipInstance(id: 's_port', typeId: 'carrack')],
-          ),
-        ],
-      );
+        ships: const [ShipInstance(id: 's_port', typeId: 'carrack')],
+      ),
+    ],
+  );
 
   Game atSeaPeerGame() => buildNavalPanelNamedSeaZoneGame(humanId: humanId);
 
   MapTopology adjacentSeasTopology() => const MapTopology(
-        nodes: [
-          TopologyNode(
-            id: 'zone_alpha',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: 'zone_beta',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [
-          TopologyEdge(id1: 'zone_alpha', id2: 'zone_beta'),
-        ],
-      );
+    nodes: [
+      TopologyNode(
+        id: 'zone_alpha',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: 'zone_beta',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [TopologyEdge(id1: 'zone_alpha', id2: 'zone_beta')],
+  );
 
   Future<void> pumpOpenButton(
     WidgetTester tester, {
@@ -86,9 +85,49 @@ void main() {
   }
 
   group('showNavalFleetMarkerFlow', () {
-    testWidgets('Home Fleet only opens tile-scoped Naval Units event',
-        (tester) async {
+    testWidgets('non-empty Home Fleet opens detach-then-sail split', (
+      tester,
+    ) async {
       final game = homeOnlyGame();
+      final bus = AppEventBus();
+      OpenNavalUnitsPanelEvent? opened;
+      addTearDown(
+        bus.on<OpenNavalUnitsPanelEvent>().listen((e) => opened = e).cancel,
+      );
+
+      await pumpOpenButton(
+        tester,
+        onPressed: (context) => showNavalFleetMarkerFlow(
+          context: context,
+          game: game,
+          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
+          humanPlayerId: humanId,
+          draftOrders: const Orders(),
+          bus: bus,
+          fleetIds: [homeFleetIdFor(humanId)],
+          locationScopeKey: locationScope,
+          tileScopeTileKey: tileKey,
+        ),
+      );
+      await tester.tap(find.text('open-flow'));
+      await tester.pumpAndSettle();
+
+      expect(opened, isNull);
+      expect(find.byType(SplitFleetDialog), findsOneWidget);
+      expect(find.byType(MoveFleetDialog), findsNothing);
+      expect(find.byType(NavalMissionMenuDialog), findsNothing);
+    });
+
+    testWidgets('empty Home Fleet only opens tile-scoped Naval Units event', (
+      tester,
+    ) async {
+      final game = buildNavalPanelCapitalHomeAndPeersGame(
+        humanId: humanId,
+        gameId: 'g_marker_home_empty',
+        displayName: 'Marker Home Empty',
+        peerFleets: const [],
+        homeShips: const [],
+      );
       final bus = AppEventBus();
       OpenNavalUnitsPanelEvent? opened;
       addTearDown(
@@ -118,6 +157,7 @@ void main() {
       expect(opened!.initialSelectedFleetId, homeFleetIdFor(humanId));
       expect(find.byType(MoveFleetDialog), findsNothing);
       expect(find.byType(NavalMissionMenuDialog), findsNothing);
+      expect(find.byType(SplitFleetDialog), findsNothing);
     });
 
     testWidgets('sea-going in port opens Move fleet dialog', (tester) async {
@@ -153,8 +193,9 @@ void main() {
       expect(openedPanel, isNull);
     });
 
-    testWidgets('stacked marker Home Fleet pick never opens Move',
-        (tester) async {
+    testWidgets('stacked marker Home Fleet pick never opens Move', (
+      tester,
+    ) async {
       final game = inPortPeerGame();
       final bus = AppEventBus();
       OpenNavalUnitsPanelEvent? opened;
@@ -186,13 +227,14 @@ void main() {
       await tester.tap(find.text('Confirm'));
       await tester.pumpAndSettle();
 
-      expect(opened, isNotNull);
-      expect(opened!.initialSelectedFleetId, homeId);
+      expect(opened, isNull);
       expect(find.byType(MoveFleetDialog), findsNothing);
+      expect(find.byType(SplitFleetDialog), findsOneWidget);
     });
 
-    testWidgets('at-sea marker opens mission menu with Sail row',
-        (tester) async {
+    testWidgets('at-sea marker opens mission menu with Sail row', (
+      tester,
+    ) async {
       final game = atSeaPeerGame();
       final bus = AppEventBus();
 
@@ -248,16 +290,15 @@ void main() {
       );
     });
 
-    testWidgets('confirming Sail move clears pending mission (XOR)',
-        (tester) async {
+    testWidgets('confirming Sail move clears pending mission (XOR)', (
+      tester,
+    ) async {
       await bindFixedTestSurface(tester, const Size(800, 1200));
       final game = atSeaPeerGame();
       final bus = AppEventBus();
       var orders = Orders(
         navalMissionOrdersByPlayerId: {
-          humanId: [
-            NavalMissionOrder(fleetId: 'sea_named', mission: 'patrol'),
-          ],
+          humanId: [NavalMissionOrder(fleetId: 'sea_named', mission: 'patrol')],
         },
       );
       bus.on<NavalMoveFleetRequestedEvent>().listen((e) {

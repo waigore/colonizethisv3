@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
@@ -93,6 +93,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         onHighlightTiles: hostArgs.onHighlightTiles,
         onClose: hostArgs.onClose,
         bus: hostArgs.bus,
+        homeFleetCargo: ref.watch(homeFleetCargoSummaryProvider),
       ),
     );
     return ProvinceDetailPanelSlideTransition(

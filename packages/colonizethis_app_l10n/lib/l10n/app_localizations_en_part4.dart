@@ -561,6 +561,17 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get splitFleet_confirm => 'Confirm Split';
 
   @override
+  String get splitFleet_detachTitle => 'Detach a squadron';
+
+  @override
+  String get splitFleet_detachConfirm => 'Detach and choose destination';
+
+  @override
+  String splitFleet_homeCargoConsequence(int remaining, String used) {
+    return 'Cargo holds remaining after this split: $remaining (overseas load this turn: $used).';
+  }
+
+  @override
   String splitFleet_totalShips(int total) {
     return 'Total: $total ships';
   }

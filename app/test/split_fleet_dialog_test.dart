@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 import 'app_shell_harness.dart';
 
@@ -40,6 +42,9 @@ void main() {
     required Game game,
     required bool isHomeFleet,
     required AppEventBus bus,
+    int overseasCargoUsed = 0,
+    bool isCargoUsedReliable = true,
+    bool cargoNotDefined = false,
   }) async {
     // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
@@ -56,6 +61,9 @@ void main() {
                     humanPlayerId: 'gp1',
                     isHomeFleet: isHomeFleet,
                     bus: bus,
+                    overseasCargoUsed: overseasCargoUsed,
+                    isCargoUsedReliable: isCargoUsedReliable,
+                    cargoNotDefined: cargoNotDefined,
                   ),
                 );
               });
@@ -324,10 +332,114 @@ void main() {
     expect(find.text('No ships'), findsOneWidget);
     expect(buttonEnabled(tester, 'Confirm Split'), isTrue);
 
-    await tester.tap(find.text('Confirm Split'));
+    final confirm = find.text('Confirm Split');
+    await tester.ensureVisible(confirm);
+    await tester.pump();
+    await tester.tap(confirm);
     await tester.pumpAndSettle();
     expect(captured, isNotNull);
     expect(captured!.shipInstanceIdsToNewFleet, hasLength(1));
     expect(captured!.shipInstanceIdsToNewFleet.first, fleet.ships.single.id);
+  });
+
+  testWidgets('home fleet cargo line updates remaining holds vs used', (
+    WidgetTester tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    final fleet = Fleet(
+      id: 'home_fleet',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      inPortAtProvinceId: 'oldWorld|cap1',
+      shipTypeIds: const ['carrack', 'fluyte'],
+    );
+
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: minimalGame(
+        provinces: const [
+          Province(
+            id: 'cap1',
+            regionId: 'oldWorld',
+            ownerId: 'gp1',
+            displayName: 'Capital',
+          ),
+        ],
+      ),
+      isHomeFleet: true,
+      bus: AppEventBus.create(),
+      overseasCargoUsed: 4,
+    );
+
+    expect(
+      find.text(l10n.splitFleet_homeCargoConsequence(7, '4')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<Text>(find.text(l10n.splitFleet_homeCargoConsequence(7, '4')))
+          .style
+          ?.color,
+      EditorialMonoclePalette.muted,
+    );
+
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('fluyte')));
+    await tester.pump();
+    expect(
+      find.text(l10n.splitFleet_homeCargoConsequence(3, '4')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<Text>(find.text(l10n.splitFleet_homeCargoConsequence(3, '4')))
+          .style
+          ?.color,
+      EditorialMonoclePalette.danger,
+    );
+  });
+
+  testWidgets('home fleet cargo used is em dash when unreliable', (
+    WidgetTester tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    final fleet = Fleet(
+      id: 'home_fleet',
+      ownerId: 'gp1',
+      regionId: 'oldWorld',
+      inPortAtProvinceId: 'oldWorld|cap1',
+      shipTypeIds: const ['carrack'],
+    );
+
+    await openDialog(
+      tester,
+      fleet: fleet,
+      game: minimalGame(
+        provinces: const [
+          Province(
+            id: 'cap1',
+            regionId: 'oldWorld',
+            ownerId: 'gp1',
+            displayName: 'Capital',
+          ),
+        ],
+      ),
+      isHomeFleet: true,
+      bus: AppEventBus.create(),
+      overseasCargoUsed: 9,
+      isCargoUsedReliable: false,
+    );
+
+    expect(
+      find.text(l10n.splitFleet_homeCargoConsequence(3, '—')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<Text>(find.text(l10n.splitFleet_homeCargoConsequence(3, '—')))
+          .style
+          ?.color,
+      EditorialMonoclePalette.muted,
+    );
   });
 }
