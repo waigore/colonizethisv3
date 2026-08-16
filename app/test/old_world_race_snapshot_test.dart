@@ -7,6 +7,25 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'panel_test_fixtures.dart';
 
+ct_models.Province _provinceWithAssignedOwner({
+  required ct_models.Province province,
+  required int index,
+  required int humanOw,
+  required int rivalOw,
+  required int thirdOw,
+}) {
+  if (index < humanOw) {
+    return province.copyWith(ownerId: kPanelTestHumanPlayerId);
+  }
+  if (index < humanOw + rivalOw) {
+    return province.copyWith(ownerId: 'gp2');
+  }
+  if (index < humanOw + rivalOw + thirdOw) {
+    return province.copyWith(ownerId: 'gp3');
+  }
+  return province;
+}
+
 /// Snapshot math for the MAP10001 Old World race chip (Refs #4451).
 void main() {
   suppressLogsForTests();
@@ -18,26 +37,20 @@ void main() {
   }) {
     final base = buildPlayersBarTestGame();
     final ow = base.worldState.oldWorld;
-    final mutated = <ct_models.Province>[];
-    var assignedHuman = 0;
-    var assignedRival = 0;
-    var assignedThird = 0;
-    for (final province in ow.provinces) {
-      if (assignedHuman < humanOw) {
-        mutated.add(province.copyWith(ownerId: kPanelTestHumanPlayerId));
-        assignedHuman++;
-      } else if (assignedRival < rivalOw) {
-        mutated.add(province.copyWith(ownerId: 'gp2'));
-        assignedRival++;
-      } else if (assignedThird < thirdOw) {
-        mutated.add(province.copyWith(ownerId: 'gp3'));
-        assignedThird++;
-      } else {
-        mutated.add(province);
-      }
-    }
-    expect(assignedHuman, humanOw);
-    expect(assignedRival, rivalOw);
+    expect(
+      ow.provinces.length,
+      greaterThanOrEqualTo(humanOw + rivalOw + thirdOw),
+    );
+    final mutated = [
+      for (var i = 0; i < ow.provinces.length; i++)
+        _provinceWithAssignedOwner(
+          province: ow.provinces[i],
+          index: i,
+          humanOw: humanOw,
+          rivalOw: rivalOw,
+          thirdOw: thirdOw,
+        ),
+    ];
     return base.copyWith(
       worldState: base.worldState.copyWith(
         oldWorld: ct_models.RegionData(provinces: mutated, units: ow.units),
