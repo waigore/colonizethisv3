@@ -2,6 +2,69 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
+  String get techEffectSummary_hussars_0 =>
+      'Improves: Cossacks regiment upgrade path';
+
+  @override
+  String get techEffectSummary_hussars_1 => 'Prerequisite for: Scouting';
+
+  @override
+  String get techEffectSummary_improved_cavalry_tactics_0 =>
+      'Prerequisite for: Hussars and Improved Cavalry Weapons';
+
+  @override
+  String get techEffectSummary_improved_cavalry_weapons_0 =>
+      'Improves: Harquebusiers regiment upgrade path';
+
+  @override
+  String get techEffectSummary_improved_cavalry_weapons_1 =>
+      'Prerequisite for: Repeating Cavalry Carbine';
+
+  @override
+  String get techEffectSummary_improved_food_preservation_0 =>
+      'Improves: Spices extraction cap to 4';
+
+  @override
+  String get techEffectSummary_improved_food_preservation_1 =>
+      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
+
+  @override
+  String get techEffectSummary_improved_infantry_tactics_0 =>
+      'Improves: General cap floor to at least 3 (or National Bureaucracy)';
+
+  @override
+  String get techEffectSummary_improved_infantry_tactics_1 =>
+      'Unlocks: Early Rifles (with Crucible Process)';
+
+  @override
+  String get techEffectSummary_improved_iron_weapons_0 =>
+      'Unlocks: Bayonet (with Crucible Process)';
+
+  @override
+  String get techEffectSummary_improved_sail_design_0 =>
+      'Unlocks: Advanced Hull Design path (University + Privateering)';
+
+  @override
+  String get techEffectSummary_improved_sea_routes_0 =>
+      'Improves: Spices extraction cap to 2';
+
+  @override
+  String get techEffectSummary_improved_sea_routes_1 =>
+      'Unlocks: Large Spice Plantations';
+
+  @override
+  String get techEffectSummary_improved_trapping_techniques_0 =>
+      'Improves: Furs extraction cap to 2';
+
+  @override
+  String get techEffectSummary_improved_trapping_techniques_1 =>
+      'Unlocks: Riverboats';
+
+  @override
+  String get techEffectSummary_industrial_funding_of_research_0 =>
+      'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)';
+
+  @override
   String get techEffectSummary_industrial_funding_of_research_1 =>
       'Improves: +20% effective RP (floor) for military and naval category research allocations';
 
