@@ -90,7 +90,8 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4440+#4432 merge headroom (measured 80_517).
 // raised for combined #4413+#4440 merge headroom (measured 80_940).
 // raised for Home Fleet detach-then-sail from the map (Refs #4448; measured 81_342).
-const _maxMainLines = 81500;
+// raised for GAME80001 Development Assign tile/level/cost preview (Refs #4472; measured 81_554).
+const _maxMainLines = 81600;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
