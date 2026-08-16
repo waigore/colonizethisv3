@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_turn/colonizethis_turn.dart';
@@ -10,7 +11,7 @@ void main() {
         spyResearchBoostRivalIdsForTech(
           game: game,
           playerId: 'gp1',
-          techId: 'crop_rotation',
+          techId: kTechIdCropRotation,
         ),
         ['gp2'],
       );
@@ -18,7 +19,7 @@ void main() {
         spyResearchBoostGpCountForTech(
           game: game,
           playerId: 'gp1',
-          techId: 'crop_rotation',
+          techId: kTechIdCropRotation,
         ),
         1,
       );
@@ -30,7 +31,7 @@ void main() {
         spyResearchBoostRivalIdsForTech(
           game: game,
           playerId: 'gp1',
-          techId: 'crop_rotation',
+          techId: kTechIdCropRotation,
         ),
         isEmpty,
       );
@@ -81,7 +82,7 @@ Game _gameWithOwnSpyInRivalLand({required bool rivalUnlocked}) {
         id: 'gp2',
         displayName: 'France',
         isHuman: false,
-        techUnlocked: rivalUnlocked ? const {'crop_rotation': true} : null,
+        techUnlocked: rivalUnlocked ? const {kTechIdCropRotation: true} : null,
       ),
     ],
   );
