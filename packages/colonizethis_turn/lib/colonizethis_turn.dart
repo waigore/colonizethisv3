@@ -20,5 +20,6 @@ export 'src/turn/spy_research_boost.dart'
         spyResearchBoostGpCountForTech,
         spyResearchBoostRivalIdsForTech;
 export 'src/turn/turn_news_digest.dart';
+export 'src/turn/last_turn_intelligence_digest.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';

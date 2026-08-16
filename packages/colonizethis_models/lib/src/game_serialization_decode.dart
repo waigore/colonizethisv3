@@ -9,6 +9,7 @@ import 'dossier_evidence.dart';
 import 'diplomacy.dart';
 import 'game.dart';
 import 'general.dart';
+import 'last_turn_intelligence_digest.dart';
 import 'map_view_state.dart';
 import 'minor_nation.dart';
 import 'player.dart';
@@ -185,6 +186,13 @@ Game decodeGameFromJson(Map<String, dynamic> json) {
     hiddenAgendaByGpId: hiddenAgendaByGpId,
     dossierEvidenceEntries: dossierEvidenceEntries,
     diplomaticHistoryEvents: diplomaticHistoryEvents,
+    lastTurnIntelligenceDigest: json['lastTurnIntelligenceDigest'] is Map
+        ? LastTurnIntelligenceDigest.fromJson(
+            Map<String, dynamic>.from(
+              json['lastTurnIntelligenceDigest'] as Map,
+            ),
+          )
+        : null,
     globalGameSeed: globalGameSeed,
     greatPowerColorOverride: greatPowerColorOverride,
     victory: json['victory'] is Map<String, dynamic>

@@ -35,6 +35,7 @@
 - Formatting lives in Flutter UI; logic payloads remain ids.
 - Turn-batch ordering (v1): within a committed turn batch, `AppOverseasProfitCreditedEvent`, `AppMarketTurnSummaryEvent`, and `AppEconomyTurnSummaryEvent` rows append after `AppWorkOrderCompletedEvent` entries and before `AppPlayerProvinceDiscoveredEvent` / `AppPlayerSeaZoneDiscoveredEvent` rows (Refs #4226, #4270, #4308).
 - Diplomacy formatting (v1.1 slice): known `changeType` values render concrete outcome copy (`declare_war`, `peace`, `alliance`, `break_alliance`), with a safe generic fallback for unknown values.
+- **Spy-gated digest lines (Refs #4476):** After the human-filtered GameToUI batch, append last-turn spy-report facts from `Game.lastTurnIntelligenceDigest` for the human observer (not public world gazette lines). Each row uses the same **Our spy in {court} reports:** prefix as `GAME30003`. Tap opens `GAME30003` (or `GAME30002` for that court). Third-party research/combat/diplomacy stay **out** of the feed unless a Spy is posted in that court.
 
 ---
 

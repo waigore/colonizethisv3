@@ -47,4 +47,4 @@ Same start/end games → same digest lines and order. Implementation uses sorted
 
 ## Integration
 
-Province ownership invariant for captures: [world-model.md](../game/world-model.md) § Invariants. Event contract: [game-events.md](game-events.md).
+Province ownership invariant for captures: [world-model.md](../game/world-model.md) § Invariants. Event contract: [game-events.md](game-events.md). Last-turn **Intelligence** world briefing reuses these lines and adds formal alliance formed/broken (newspaper taxonomy unchanged): [intelligence-digest.md](intelligence-digest.md).

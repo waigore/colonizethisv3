@@ -72,6 +72,8 @@ Training queues a civilian-unit hire. After you confirm **Next turn**, the new u
 
 **Assign** still offers **Counter-espionage** on owned provinces only. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own, with no mission, shows **Reserve**. When a Spy is set to defend at home this turn, the row shows **Counter-espionage** and hides **Relocate**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. `DLG60001` **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
 
+If at least one of your Spies still stands in a foreign province after **Next turn** finishes, that court’s last-turn news (treaties, wars, captures, research, and fights they took part in) appears under **Spy reports** on `GAME30003` **Intelligence**, opened from **Intelligence** on `GAME30001` **Diplomacy**. You do not see a rival’s secret agenda. If the last Spy left or was caught, that court is silent next turn.
+
 ## Counsel
 
 **Counsel.** Hark, my liege: peasants are coin and fabric made flesh — spend them on Masters only when food, luxuries, and paper already flow.
@@ -99,6 +101,7 @@ Rival courts assign factory labour as you do, and they follow the same peasant-s
 - [ ] Documents peasant reservation vs military/naval builds.
 - [ ] Documents `UNIT40001` civilian train roster and capital spawn timing.
 - [ ] Documents `MAP20001` **Station spy** then `UNIT10001` **Relocate**, plus map Relocate pick and that `DLG60001` **Next turn confirmation** does not list idle Spies.
+- [ ] Documents that a Spy remaining in a foreign court yields last-turn reports on `GAME30003` **Intelligence**.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources
@@ -111,6 +114,7 @@ Rival courts assign factory labour as you do, and they follow the same peasant-s
 - `SPEC/program/turn-resolution-phase-details.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/civilian-units-panel.md`
+- `SPEC/ui/intelligence-council.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/train-civilians-dialog.md`
 - `SPEC/ui/screen-registry.md`

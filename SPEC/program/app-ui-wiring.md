@@ -113,6 +113,7 @@ Handled by **`AppEventHandler`** via **`pushNamed`**. Common names:
 | `Routes.production` | `ProductionScreen` |
 | `Routes.diplomacy` | `DiplomacyScreen` |
 | `Routes.diplomacyDetail` | `DiplomacyDetailScreen` |
+| `Routes.intelligence` | `IntelligenceCouncilScreen` (`GAME30003`) |
 | `Routes.technology` | `TechnologyScreen` |
 
 Shell/game entry: **`Routes.shell`**, **`Routes.game`** (see `config/routes.dart`).

@@ -15,6 +15,7 @@ abstract final class UiScreenIds {
   static const String productionScreen = 'GAME20001';
   static const String diplomacyScreen = 'GAME30001';
   static const String diplomacyDetailScreen = 'GAME30002';
+  static const String intelligenceCouncilScreen = 'GAME30003';
   static const String technologyScreen = 'GAME40001';
   static const String gameSideMenu = 'GAME50001';
   static const String tradeScreen = 'GAME60001';

@@ -9,6 +9,7 @@
 - Modal dialog listing one bullet per `TurnNewsLine` (formatted with faction/province/sea labels from current `Game`).
 - **Empty digest:** show dialog with “No major events last turn.” (or equivalent l10n); the empty-state copy renders with `EditorialMonoclePalette.muted` so the dialog visibly distinguishes "nothing happened" from a regular news entry.
 - **Wiring:** `GameToUIBusListener` emits `OpenDialogEvent` with dialog id `turn_news` and params after reload; no cross-panel callbacks. See `SPEC/program/app-ui-wiring.md`.
+- **Spy-report footer (Refs #4476):** When `Game.lastTurnIntelligenceDigest` has spy-report lines for the human (`N > 0`), a muted footer under the gazette reads **Your spies report N items — open Intelligence** and is tappable. Tap pops the dialog and emits `NavigateToRouteEvent(Routes.intelligence)`. Absent when `N == 0`. Closing the newspaper does **not** drop the briefing — `GAME30003` reopens the persisted digest until the next turn replaces it.
 
 ## Components
 

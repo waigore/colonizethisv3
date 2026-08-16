@@ -19,6 +19,8 @@ class TurnNewsDialog extends StatelessWidget {
     required this.game,
     required this.digest,
     required this.newTurnNumber,
+    this.spyReportCount = 0,
+    this.onOpenIntelligence,
   });
 
   static const screenId = UiScreenIds.turnNewsDialog;
@@ -26,6 +28,8 @@ class TurnNewsDialog extends StatelessWidget {
   final Game game;
   final TurnNewsDigest digest;
   final int newTurnNumber;
+  final int spyReportCount;
+  final VoidCallback? onOpenIntelligence;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +67,17 @@ class TurnNewsDialog extends StatelessWidget {
               ),
             ),
           const SizedBox(height: CtSpacing.l),
+          if (spyReportCount > 0 && onOpenIntelligence != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: CtSpacing.m),
+              child: InkWell(
+                onTap: onOpenIntelligence,
+                child: Text(
+                  l10n.turnNews_spiesFooter(spyReportCount),
+                  style: mutedStyle,
+                ),
+              ),
+            ),
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(

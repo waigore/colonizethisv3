@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../widgets/commodity_display_name.dart';
+import '../../screens/diplomacy/intelligence_council_format.dart';
 import '../../widgets/shell/player_turn_event_feed.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
@@ -19,7 +20,7 @@ mixin GameMapAreaTurnFeed
         GameMapAreaTurnFeedLabels,
         GameMapAreaTurnFeedTaps {
   List<PlayerTurnEventFeedEntry> buildFeedEntries() {
-    return buildCtTurnFeedEntries(
+    final mapped = buildCtTurnFeedEntries(
       events: resolvedPlayerTurnEvents,
       context: CtTurnFeedEntryContext(
         mapPlayerId: mapPlayerId,
@@ -55,6 +56,27 @@ mixin GameMapAreaTurnFeed
             linkAffordance: entry.linkAffordance,
           ),
         )
-        .toList(growable: false);
+        .toList();
+    final digest = widget.game.lastTurnIntelligenceDigest;
+    if (digest == null) return List<PlayerTurnEventFeedEntry>.unmodifiable(mapped);
+    final l10n = appL10n(context);
+    for (final block in digest.spyReportsFor(mapPlayerId)) {
+      for (final line in block.lines) {
+        mapped.add(
+          PlayerTurnEventFeedEntry(
+            text: formatIntelligenceSpyLine(
+              l10n,
+              widget.game,
+              mapPlayerId,
+              block.courtFactionId,
+              line,
+            ),
+            onTap: navigateToIntelligenceCouncil,
+            linkAffordance: true,
+          ),
+        );
+      }
+    }
+    return List<PlayerTurnEventFeedEntry>.unmodifiable(mapped);
   }
 }

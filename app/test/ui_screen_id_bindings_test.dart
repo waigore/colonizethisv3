@@ -22,6 +22,7 @@ import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/intelligence_council_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
@@ -162,6 +163,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'DiplomacyDetailScreen': (
     actual: DiplomacyDetailScreen.screenId,
     expected: UiScreenIds.diplomacyDetailScreen,
+  ),
+  'IntelligenceCouncilScreen': (
+    actual: IntelligenceCouncilScreen.screenId,
+    expected: UiScreenIds.intelligenceCouncilScreen,
   ),
   'GameSideMenu': (
     actual: GameSideMenu.screenId,

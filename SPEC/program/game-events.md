@@ -48,6 +48,8 @@ Additional event types (e.g. extraction_summary) may be added in the same format
 
 The **caller** that owns the order list or invokes TurnResolver is responsible for wiring the event stream to the resolver/engine so that events are emitted in a deterministic order. Same game state and seeds produce the same event sequence (replay and save/load compatibility).
 
+**Last-turn intelligence (Refs #4476):** After a complete resolution, the pipeline folds this turn’s `diplomacy_change` / history events, `combat_result`, `naval_combat_result`, `province_captured`, and `research_complete` into a persisted `LastTurnIntelligenceDigest` on `Game` ([intelligence-digest.md](intelligence-digest.md)). Payloads stay ids-only; UI formats display names. Do not persist `hiddenAgenda`.
+
 ---
 
 ## Determinism

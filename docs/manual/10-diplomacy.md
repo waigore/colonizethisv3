@@ -8,7 +8,7 @@ Relations are shown as Peace or War and a descriptive relation meter rather than
 
 ## How it is done
 
-1. From `GAME10001` **Game screen**, use the diplomacy button to open `GAME30001` **Diplomacy screen**. It lists discovered Great Powers, Minor Nations, and contacted Tribes. Select a row for `GAME30002` **Diplomacy detail screen**, where you may review the relationship and its diplomatic history.
+1. From `GAME10001` **Game screen**, use the diplomacy button to open `GAME30001` **Diplomacy screen**. It lists discovered Great Powers, Minor Nations, and contacted Tribes. Select a row for `GAME30002` **Diplomacy detail screen**, where you may review the relationship and its diplomatic history. The **Intelligence** button on `GAME30001` opens `GAME30003` **Intelligence**. **World briefing** lists last turn’s public wars, peace, alliances, captures, and discoveries. **Spy reports** lists news from courts where one of your Spies still stood after the turn finished, each line starting **Our spy in {court} reports:**. Closing turn news does not erase this briefing; it stays until the next turn replaces it. If you have no Spies abroad, Spy reports says so and tells you to station a Spy.
 2. Choose an enabled action on each faction row (`GAME30001`). Parameter-less decrees still use a confirmation that states first-order **cost** (when relevant), **effect**, and **when** (Break Alliance only — immediate) before you commit. **Grant Aid** and **Set Subsidy** are different: `DIPL20001` itself shows that cost and effect, and **Submit** stages the pending order — there is no second confirmation. When a Minor or Tribe province blocks Explore or Prospect for lack of a Consulate, `MAP20001` Political offers the same first-stage **Establish Consulate** decree in context. Both Consulate entry points use the same confirmation, validation, pending order, and **Cancel** behavior as the panel. Each diplomacy row shows current actions; tap **More actions** for unavailable steps and reasons.
 3. **Declare War** requires peace with the target. It takes effect before that turn’s movement and combat, so it may support an invasion ordered for the same turn. The confirmation names other courts the war can pull in: formal allies of a Great Power target who may be called to defend, and Great Powers holding an Embassy or purchased land in a Minor or Tribe who may be asked to intervene. It does not predict who will join. `GAME30002` lists a Great Power’s other formal allies as orientation. **Offer Peace** requires war; peace needs the other side’s agreement and does not change borders.
 4. **Alliance** targets another Great Power at peace when no formal alliance already exists. A successful treaty creates formal mutual defence. **Break Alliance** requires that treaty; on the human panel it applies immediately after confirmation rather than waiting for turn resolution.
@@ -61,7 +61,8 @@ AI allies join a defensive call to arms when their relation with the defended al
 - [ ] Distinguishes Grant Aid / Set Subsidy (`DIPL20001` **Submit**, Cost / Effect in that dialog, no second confirmation) from other diplomacy confirms.
 - [ ] Covers per-target-per-turn order limits and the same-turn post-break bilateral cooldown.
 - [ ] Explains the overture chain, Diplomatic Expertise, Empire Building, and the distinct Minor/Tribe/Great Power Join Empire outcomes.
-- [ ] Cites `GAME30001`, `GAME30002`, `DIPL20001`, `OVL30001`, `OVL40001`, and `OVL50001` with their player-facing flows.
+- [ ] Cites `GAME30001`, `GAME30002`, `GAME30003`, `DIPL20001`, `OVL30001`, `OVL40001`, and `OVL50001` with their player-facing flows.
+- [ ] Distinguishes public **World briefing** from Spy-only court reports on `GAME30003`.
 - [ ] Explains pending overtures, calls to arms, and interventions without exposing hidden agenda values.
 - [ ] Explains Great Power relative power and its province, military, and naval components.
 
@@ -71,6 +72,8 @@ AI allies join a defensive call to arms when their relation with the defended al
 - `SPEC/game/tech-tree-diplomacy-civilian.md`
 - `SPEC/program/orders.md`
 - `SPEC/ui/diplomacy-panel.md`
+- `SPEC/ui/intelligence-council.md`
+- `SPEC/program/intelligence-digest.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/diplomacy-detail-screen.md`
 - `SPEC/ui/grant-or-subsidy-dialog.md`

@@ -40,6 +40,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME20001` | Production screen | [production-panel.md](production-panel.md) | `app/lib/features/game/screens/production/production_screen.dart` | Production Panel | active |
 | `GAME30001` | Diplomacy screen | [diplomacy-panel.md](diplomacy-panel.md) | `app/lib/features/game/screens/diplomacy/diplomacy_screen.dart` | Diplomacy Panel | active |
 | `GAME30002` | Diplomacy detail screen | [diplomacy-detail-screen.md](diplomacy-detail-screen.md) | `app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart` | Diplomacy Detail Screen | active |
+| `GAME30003` | Intelligence Council | [intelligence-council.md](intelligence-council.md) | `app/lib/features/game/screens/diplomacy/intelligence_council_screen.dart` | Intelligence Council | active |
 | `GAME40001` | Technology screen | [technology-panel.md](technology-panel.md) | `app/lib/features/game/screens/technology/technology_screen.dart` | Tech Tree | active |
 | `GAME50001` | Game side menu | [game-side-menu.md](game-side-menu.md) | `app/lib/features/game/flame/controls/game_side_menu.dart` | Game Side Menu | active |
 | `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade/trade_screen.dart` | Trade Screen | active |
