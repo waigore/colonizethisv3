@@ -13,6 +13,7 @@ import '../../../features/game/widgets/panels/pause_menu_panel.dart';
 import '../../../features/game/widgets/shell/shell_player_context.dart';
 import '../../../widgets/ct_confirm_dialog.dart';
 import '../game_session_clear.dart';
+import '../observe/observe_mode_session_handler.dart';
 import 'app_event_handler.dart';
 
 final _log = packageLogger('event');
@@ -33,12 +34,10 @@ Future<void> appEventHandlerOpenDialog(
   if (_observeBlockedDialogIds.contains(event.dialogId)) {
     final ctx = nav.context;
     final container = ProviderScope.containerOf(ctx);
-    if (!container.read(shellPlayerContextProvider).canMutateViaUi) {
-      state.onShowSnackBar?.call(
-        const ShowSnackBarEvent(
-          message: 'Observe mode: UI actions are read-only.',
-        ),
-      );
+    if (rejectUiMutationIfObserving(
+      shell: container.read(shellPlayerContextProvider),
+      showSnack: (event) => state.onShowSnackBar?.call(event),
+    )) {
       return;
     }
   }
@@ -102,7 +101,11 @@ Future<void> appEventHandlerShowDevelopmentDisconnectedAssignDialog(
     );
     event.result(choice ?? DevelopmentDisconnectedAssignChoice.cancel);
   } catch (e, st) {
-    _log.e('DevelopmentDisconnectedAssignDialog failed', error: e, stackTrace: st);
+    _log.e(
+      'DevelopmentDisconnectedAssignDialog failed',
+      error: e,
+      stackTrace: st,
+    );
     event.result(DevelopmentDisconnectedAssignChoice.cancel);
   }
 }

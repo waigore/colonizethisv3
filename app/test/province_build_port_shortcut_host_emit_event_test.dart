@@ -18,58 +18,12 @@ const String _kHumanPlayerId = 'gp1';
 const String _kProvinceId = 'oldWorld|p1';
 const String _kTileKey = 'oldWorld|p1|0|0';
 
-final MapTopology _combinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
+final MapTopology _combinedTopology = provinceShortcutHostCombinedTopology();
+final Map<String, MapTopology> _topologyByRegion =
+    provinceShortcutHostTopologyByRegion();
 
-final Map<String, MapTopology> _topologyByRegion = {
-  'oldWorld': MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 's1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  ),
-};
-
-final Map<String, TileMapResult> _tileMapByRegion = {
-  'oldWorld': TileMapResult(
-    width: 2,
-    height: 2,
-    grid: const [
-      ['p1', 's1'],
-      ['s1', 's1'],
-    ],
-    terrainGrid: const [
-      [TerrainType.plains, TerrainType.plains],
-      [TerrainType.plains, TerrainType.plains],
-    ],
-    resourceGrid: [
-      [Resource.grain, Resource.meat],
-      [Resource.meat, Resource.meat],
-    ],
-  ),
-};
+final Map<String, TileMapResult> _tileMapByRegion =
+    provinceShortcutHostGoldenCoastalTileMapByRegion();
 
 Game _buildGame({required bool withEngineer}) {
   return Game(
@@ -176,30 +130,29 @@ void main() {
     WidgetTester tester, {
     required Game game,
     required ProvinceShortcutHostCase host,
-  }) =>
-      pumpProvinceShortcutHostAndSelect(
-        tester,
-        gamesBox: gamesBox,
-        gameService: provinceShortcutHostEmitGameService(
-          gamesBox: gamesBox,
-          gameId: _kGameId,
-          combinedTopology: _combinedTopology,
-          tileMapByRegion: _tileMapByRegion,
-          topologyByRegion: _topologyByRegion,
-        ),
-        game: game,
-        humanPlayerId: _kHumanPlayerId,
-        host: host,
-        region: _region(),
-        combinedTopology: _combinedTopology,
-        workTargetSelectionCache: refreshedProvinceShortcutWorkTargetCache(
-          game: game,
-          humanPlayerId: _kHumanPlayerId,
-          combinedTopology: _combinedTopology,
-          tileMapByRegion: _tileMapByRegion,
-        ),
-        selectedTileKey: _kTileKey,
-      );
+  }) => pumpProvinceShortcutHostAndSelect(
+    tester,
+    gamesBox: gamesBox,
+    gameService: provinceShortcutHostEmitGameService(
+      gamesBox: gamesBox,
+      gameId: _kGameId,
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+      topologyByRegion: _topologyByRegion,
+    ),
+    game: game,
+    humanPlayerId: _kHumanPlayerId,
+    host: host,
+    region: _region(),
+    combinedTopology: _combinedTopology,
+    workTargetSelectionCache: refreshedProvinceShortcutWorkTargetCache(
+      game: game,
+      humanPlayerId: _kHumanPlayerId,
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+    ),
+    selectedTileKey: _kTileKey,
+  );
 
   Future<void> expectBuildPortShortcutEmits(
     WidgetTester tester, {
