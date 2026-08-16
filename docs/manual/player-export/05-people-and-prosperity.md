@@ -54,7 +54,7 @@ Civilians are map units. Open **Civilian units panel** from the left empire rail
 
 Training queues a build decree. Units appear at the **capital tile** after **Build/work** resolves (after recruit/train workers in that phase). Use the panel thereafter to select units, assign work (Chapters 4 and 6), or relocate Spies.
 
-**Spies — station and relocate.** On **Civilian units panel**, an idle Spy shows **Relocate** to pick a legal foreign (or own) land tile on the map; **Assign** still offers **counter-espionage** on owned provinces only. While a Spy holds a foreign province, status reads **Holding intel**; leaving when yours is the last Spy there warns that full intel will fog after the turn ends. End-turn confirmation does **not** nag idle Spies — stationing is strategic portfolio, not wasted capacity.
+**Spies — station and relocate.** On the selected tile’s province panel (**Province sea-zone overlay**), tap **Station spy** in the Civilian section when it is available, then tap **Relocate** on an idle Spy. That posts the Spy to the tile you already selected, without picking again on the map. You can still open **Civilian units panel** and tap **Relocate** to pick any legal land tile. **Assign** still offers **counter-espionage** on owned provinces only. While a Spy holds a foreign province, status reads **Holding intel**; leaving when yours is the last Spy there warns that full intel will fog after the turn ends. End-turn confirmation does **not** nag idle Spies — stationing is a chosen post, not wasted capacity.
 
 ## Counsel
 
