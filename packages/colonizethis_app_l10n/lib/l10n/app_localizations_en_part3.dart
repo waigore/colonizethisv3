@@ -44,29 +44,6 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
-  String development_assignPreview(
-    String place,
-    int currentLevel,
-    int nextLevel,
-    String cost,
-  ) {
-    return 'Next: $place · $currentLevel → $nextLevel · $cost';
-  }
-
-  @override
-  String development_assignPreviewNoCost(
-    String place,
-    int currentLevel,
-    int nextLevel,
-  ) {
-    return 'Next: $place · $currentLevel → $nextLevel';
-  }
-
-  @override
-  String get development_assignPreviewNotBoundToCapital =>
-      'not bound to the capital';
-
-  @override
   String get production_breakdown_title => 'Commodity breakdown';
 
   @override

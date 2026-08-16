@@ -180,6 +180,29 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get development_counsel => 'Counsel';
 
   @override
+  String development_assignPreview(
+    String place,
+    int currentLevel,
+    int nextLevel,
+    String cost,
+  ) {
+    return 'Next: $place · $currentLevel → $nextLevel · $cost';
+  }
+
+  @override
+  String development_assignPreviewNoCost(
+    String place,
+    int currentLevel,
+    int nextLevel,
+  ) {
+    return 'Next: $place · $currentLevel → $nextLevel';
+  }
+
+  @override
+  String get development_assignPreviewNotBoundToCapital =>
+      'not bound to the capital';
+
+  @override
   String get provinceOverlay_sectionMilitary => 'Military';
 
   @override
