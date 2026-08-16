@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**Workers** are people in your capital who run industry. They are not pieces on the map. The work they give each turn is **labour**. The **labour pool** is that capital count — not civilians you place on the map. A **decree** is an action you choose on your turn. This chapter separates that capital labour pool from **civilian units** on the map, then shows how to recruit, train, and disband workers on **Production screen** and how to raise civilians from **Civilian units panel**. Empty factories and hungry trained workers lose you goods; rivals who train Explorers and Builders while you do not will map and improve land first.
+**Workers** live in your capital and give **labour** — the work that runs your factories. They are not people you place on the map. The **labour pool** is how many of those workers you have in the capital. A **decree** is an action you choose on your turn. **Peasant**, **Apprentice**, **Journeyman**, and **Master** are the four worker ranks, from cheapest labour to most. **Civilian units** are people you place on the map. Empty factories, workers who **strike** (give no labour that turn for lack of food or luxury), and rivals who train Explorers and Builders while you do not, leave you short of goods and behind on the land.
 
 ## How it is done
 
@@ -20,15 +20,15 @@ Workers live only in the labour pool on **Production screen**. They never appear
 | Journeyman | 6 | 1 grain + 1 meat | cigars |
 | Master | 8 | 1 grain + 1 meat | fur hats |
 
-Higher ranks eat more. Trained workers (Apprentice, Journeyman, Master) also need their luxury in full. After you confirm **Next turn**, armies and fleets eat before workers do. Only workers who were fed (and, if trained, given their luxury) add labour that turn. Unfed workers, or trained workers who miss their luxury, **do not work** that turn (they stay in the pool). When food is short, Masters eat first and Peasants last. A trained worker who missed food does not take a luxury that turn.
+Higher ranks eat more. Trained workers (Apprentice, Journeyman, Master) also need their luxury in full, or they give no labour that turn; they do not work “a little.” After you confirm **Next turn**, armies and fleets eat before workers do. Only workers who were fed (and, if trained, given their luxury) add labour that turn. Unfed workers, or trained workers who miss their luxury, **do not work** that turn (they stay in the pool). When food is short, Masters eat first and Peasants last. A trained worker who missed food does not take a luxury that turn.
 
 The **Labour this turn** line under the worker grid shows how much labour you will have after everyone eats. It counts food and luxuries that arrive this turn, not only what you already have stored. When some workers will not work, a short reason names the main shortage (food, or a luxury). Tap **Labour details** for working vs not-working counts on each rank. The line only informs; it does not buy food, change Allocation, or disband anyone for you.
 
 ### Recruit, train, and disband
 
-On **Production screen**, use **Labour Controls** under that labour line. Each row shows the printed cost (peasant **Fabric ×2**; trained rows **£… + Paper ×N + 1 peasant**), how much labour that worker gives, and what food or luxury they eat. If **+** will not press, rest on it (pointer) to read why — treasury, materials, peasants already promised, or technology. New workers add labour on a **later** turn, not the turn you queue them.
+On **Production screen**, use **Labour Controls** under that labour line. Each row shows the printed cost (peasant **Fabric ×2**; trained rows **£… + Paper ×N + 1 peasant**), how much labour that worker gives, and what food or luxury they eat. If **+** will not press, rest on it to read why — treasury, materials, peasants already promised, or technology. New workers add labour on a **later** turn, not the turn you queue them.
 
-1. Tap **+** on **Recruit peasant** or on a trained-tier **Train** row. That queues the training. After you confirm **Next turn**, the game carries it out. There is **no** direct promotion from apprentice to journeyman or journeyman to master: training always consumes **one peasant**. Tap **−** to take back the last queued hire of that rank. When a rank has queued hires, the row shows **Queued: N**.
+1. Open **Labour Controls** under the worker grid. Tap **+** on **Peasant** to queue **Recruit**, or **+** on **Apprentice**, **Journeyman**, or **Master** to queue **Train**. Training always consumes **one peasant**; there is no direct promotion from apprentice to journeyman or journeyman to master. After you confirm **Next turn**, the game carries it out. Tap **−** to take back the last queued hire of that rank. When a rank has queued hires, the row shows **Queued: N**. Peasants cannot be disbanded.
 2. Printed costs:
 
 | Target | Cost |
@@ -44,7 +44,7 @@ On **Production screen**, use **Labour Controls** under that labour line. Each r
 
 Reject reasons you may see: **Insufficient workers**, **Insufficient materials**, **Insufficient treasury**, **Required technology not unlocked**.
 
-**Timing note:** New workers you queue this turn do not staff factories on the same **Next turn**. Plan one turn ahead.
+**Timing note:** New workers join the pool after this turn’s factories have already run, so they help **next** turn. Plan one turn ahead.
 
 ### Civilian roster and training
 
@@ -64,13 +64,13 @@ Civilians are people you place on the map. They explore, improve land, and post 
 
 Set the **+** counts, then close the dialog (tap outside, or go back). There is no **Confirm** button. **Reset** (if shown) clears the counts. The remaining treasury and paper line updates as you change the counts. Locked rows show **Requires:** with the technology name.
 
-Training queues civilian training. After you confirm **Next turn** and the game finishes that turn, the new units appear on your **capital** tile (worker training is carried out first, then civilians appear). Use the panel thereafter to select units, assign work (Chapters 4 and 6), or relocate Spies.
+Training queues a civilian-unit hire. After you confirm **Next turn**, the new unit appears on your capital tile once the game has finished this turn’s building and work. Worker hires happen first, then the civilians appear. Use the panel thereafter to select units, assign work (Chapters 4 and 6), or relocate Spies.
 
 **Spies — station and relocate.** Tap a province to open **Province sea-zone overlay**. In the **Civilian** section, tap **Station spy** when it is enabled, then tap **Relocate** on an idle Spy. That queues the Spy to walk to the tile you already selected, without picking again on the map. The Spy arrives after you confirm **Next turn**. You can still open **Civilian units panel** and tap **Relocate** to pick any legal land tile.
 
 **Station spy** is hidden on a sea zone, on an unrevealed (`???`) tile, when you cannot act, or when your Spy is already on that tile and no other Spy can move there. It is visible but disabled when no idle Spy can take the tile, or the tile cannot be occupied (the hints distinguish those). It is enabled when at least one idle Spy can occupy the selected tile.
 
-**Assign** still offers **Counter-espionage** on owned provinces only. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own shows **Reserve**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
+**Assign** still offers **Counter-espionage** on owned provinces only. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own, with no mission, shows **Reserve**. When a Spy is set to defend at home this turn, the row shows **Counter-espionage** and hides **Relocate**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
 
 ## Counsel
 
@@ -82,7 +82,7 @@ Training queues civilian training. After you confirm **Next turn** and the game 
 
 ## The other courts
 
-Rival courts assign labour and raise peasants when they can pay the cost, and they honour the same peasant-promise rule you do. They keep enough Explorers, Builders, and Engineers to keep working the map, and they train more Merchants when they are grabbing land or more Engineers and Rail Builders when they are improving roads. They do not get a secret labour rule.
+Rival courts assign factory labour as you do, and they follow the same peasant-sharing rule: soldiers and ships compete with trained workers for peasants. They hire peasants when they do not have enough workers to run industry. While they are still building up, they make fabric and send Builders to improve wool and cotton land. They try to keep at least some Explorers, Builders, and Engineers. Early on they lean toward Builders; while settling new lands they lean toward Explorers and Merchants; when improving the homeland they lean toward Engineers and Rail Builders.
 
 ## Consequences
 
