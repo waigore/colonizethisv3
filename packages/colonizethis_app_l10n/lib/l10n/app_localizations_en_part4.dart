@@ -2,6 +2,15 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
+  String get provinceOverlay_extractionPartialReason =>
+      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
+
+  @override
+  String provinceOverlay_availableTileCount(int count, String name) {
+    return '$count $name';
+  }
+
+  @override
   String get militaryCounsel_tabMilitary => 'Military';
 
   @override
