@@ -15,6 +15,7 @@ import 'package:colonizethis_app/features/game/screens/development/development_s
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -30,10 +31,7 @@ import 'panel_fixtures/core.dart';
 const Size _kDevelopmentWideViewport = Size(900, 760);
 const Size _kDevelopmentNarrowViewport = Size(360, 720);
 
-Widget _developmentBodyHost({
-  required Game game,
-  required Size viewport,
-}) {
+Widget _developmentBodyHost({required Game game, required Size viewport}) {
   return SizedBox(
     width: viewport.width,
     height: viewport.height,
@@ -65,7 +63,9 @@ Future<void> _pumpDevelopmentBodyGolden(
         (ref) => DevelopmentPanelMapGameService(gamesBox, GameSaveAdapter()),
       ),
       currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-      currentOrdersProvider.overrideWith(() => CurrentOrdersNotifier(const Orders())),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
     ],
     child: _developmentBodyHost(game: game, viewport: viewport),
   );
@@ -99,7 +99,10 @@ void main() {
 
       expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsOneWidget);
       expect(find.byKey(DevelopmentPanelKeys.scopeListKey), findsOneWidget);
-      expect(find.byKey(DevelopmentPanelKeys.panelMapKeyForRegion(kRegionOldWorld)), findsOneWidget);
+      expect(
+        find.byKey(DevelopmentPanelKeys.panelMapKeyForRegion(kRegionOldWorld)),
+        findsOneWidget,
+      );
       expect(find.text('Avalon'), findsOneWidget);
       expect(find.text('Barren'), findsOneWidget);
       expect(find.text('No improvable resources'), findsOneWidget);
@@ -113,30 +116,68 @@ void main() {
   );
 
   testWidgets(
-    'golden: narrow stacked layout (Refs #4175)',
+    'golden: Assign preview names place, level, and cost (Refs #4472)',
     (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('developmentPanelNarrowGolden');
-      final game = buildDevelopmentPanelGoldenGame();
+      const boundaryKey = ValueKey<String>(
+        'developmentPanelAssignPreviewGolden',
+      );
+      final base = buildDevelopmentPanelGoldenGame();
+      final game = base.copyWith(
+        worldState: base.worldState.copyWith(
+          tileState: const TileMapState(
+            improvementByTile: {'oldWorld|p1|0|0': 1, 'oldWorld|p1|1|0': 1},
+          ),
+        ),
+        players: [
+          base.players.first.copyWith(
+            techUnlocked: const {
+              kTechIdCircularSaw: true,
+              kTechIdLandEnclosure: true,
+            },
+          ),
+        ],
+      );
       await _pumpDevelopmentBodyGolden(
         tester,
         boundaryKey: boundaryKey,
         game: game,
         gamesBox: gamesBox,
-        viewport: _kDevelopmentNarrowViewport,
       );
       await pumpDevelopmentPanelReady(tester);
-
-      expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsOneWidget);
-      expect(
-        MediaQuery.sizeOf(tester.element(find.byType(DevelopmentScreenBody)))
-            .width,
-        lessThan(kNarrowBreakpoint),
-      );
+      expect(find.textContaining('1 → 2'), findsWidgets);
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/development_panel_narrow.png'),
+        matchesGoldenFile('goldens/development_panel_assign_preview.png'),
       );
     },
   );
+
+  testWidgets('golden: narrow stacked layout (Refs #4175)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('developmentPanelNarrowGolden');
+    final game = buildDevelopmentPanelGoldenGame();
+    await _pumpDevelopmentBodyGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      game: game,
+      gamesBox: gamesBox,
+      viewport: _kDevelopmentNarrowViewport,
+    );
+    await pumpDevelopmentPanelReady(tester);
+
+    expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsOneWidget);
+    expect(
+      MediaQuery.sizeOf(
+        tester.element(find.byType(DevelopmentScreenBody)),
+      ).width,
+      lessThan(kNarrowBreakpoint),
+    );
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/development_panel_narrow.png'),
+    );
+  });
 }

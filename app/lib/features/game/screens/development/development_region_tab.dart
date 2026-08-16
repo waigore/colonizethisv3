@@ -56,6 +56,7 @@ class DevelopmentRegionTab extends ConsumerStatefulWidget {
 
 class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
   Set<String>? _highlightTileKeys;
+  String? _selectedHighlightTileKey;
 
   DevelopmentAssignRowState _assignRowStateFor(
     String scopeKey,
@@ -67,9 +68,13 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
         disabledReason: 'Orders are read-only',
       );
     }
-    final cache = ref.read(developmentPanelAssignRowStateCacheProvider(widget.regionId));
-    return cache.byScopeCommodityKey[
-            developmentPanelAssignRowStateKey(scopeKey, commodityId)] ??
+    final cache = ref.read(
+      developmentPanelAssignRowStateCacheProvider(widget.regionId),
+    );
+    return cache.byScopeCommodityKey[developmentPanelAssignRowStateKey(
+          scopeKey,
+          commodityId,
+        )] ??
         const DevelopmentAssignRowState(
           enabled: false,
           disabledReason: 'No valid tile',
@@ -85,11 +90,13 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
     final list = DevelopmentPanelScopeList(
       key: DevelopmentPanelKeys.scopeListKey,
       regionModel: widget.regionModel,
-      onShowTiles: (keys) => setState(() {
+      onShowTiles: (keys, {selectedTileKey}) => setState(() {
         _highlightTileKeys = Set<String>.from(keys);
+        _selectedHighlightTileKey = selectedTileKey;
       }),
       assignRowStateFor: _assignRowStateFor,
       onAssign: widget.onAssign,
+      provinceDisplayNamesById: widget.provinceDisplayNamesById,
     );
     final mapPanel = DevelopmentPanelMapPanel(
       key: DevelopmentPanelKeys.panelMapKeyForRegion(widget.regionId),
@@ -98,6 +105,7 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
       regionId: widget.regionId,
       playerView: widget.playerView,
       highlightTileKeys: _highlightTileKeys,
+      selectedTileKey: _selectedHighlightTileKey,
     );
 
     return Column(
@@ -106,7 +114,8 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
         DevelopmentPanelOverview(
           key: DevelopmentPanelKeys.overviewKey,
           regionModel: widget.regionModel,
-          materialShortageCommodityIds: assignCache.materialShortageCommodityIds,
+          materialShortageCommodityIds:
+              assignCache.materialShortageCommodityIds,
           provinceDisplayNamesById: widget.provinceDisplayNamesById,
           game: widget.game,
           humanPlayerId: widget.humanPlayerId,

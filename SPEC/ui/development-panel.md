@@ -30,11 +30,11 @@ CtGameFeatureScreenShell
 
 1. **Your provinces** — `RegionSectionHeader`; one card per owned province (never hidden).
 2. **Purchased land** — separate section; rows grouped by source province with **Owner:** label.
-3. Per scope: province name; improvable commodity rows (icon, count, **Show**, **Assign**) or muted **No improvable resources**.
+3. Per scope: province name; improvable commodity rows per [development-assign-row.md](components/development-assign-row.md) (count, **Show**, **Assign**, muted preview when Assign is enabled) or muted **No improvable resources**.
 
 ### Panel map
 
-`CtRegionMap` for active region in **player-constrained** visibility (`CtMapVisibilityMode.playerConstrained` + `playerViewForResources`); **province overlay** strokes enabled with standard edge-gating; **player-territory perimeter** outline (light stroke on outer land boundary, not internal province borders between own provinces). **Show** sets `secondaryHighlightTileKeys` to improvable tile keys; pan/zoom enabled.
+`CtRegionMap` for active region in **player-constrained** visibility (`CtMapVisibilityMode.playerConstrained` + `playerViewForResources`); **province overlay** strokes enabled with standard edge-gating; **player-territory perimeter** outline (light stroke on outer land boundary, not internal province borders between own provinces). **Show** sets `secondaryHighlightTileKeys` to improvable tile keys and `selectedTileKey` to the auto-pick when a candidate exists; pan/zoom enabled.
 
 ### Overview — assigned civilians (Slice D)
 
@@ -47,23 +47,10 @@ Below idle Builder/Engineer counts, when the active region has Builders or Engin
 | Control | Outcome |
 |---------|---------|
 | Counsel (header) | Emits `NavigateToRouteEvent(Routes.counsel, counselTab: 'development')` for [counsel-panel.md](counsel-panel.md) Development tab (Refs #4332). |
-| Show | Highlights commodity improvable tiles on panel map. |
-| Assign | Commits pending `build_improvement` for first idle Builder (stable unit id) on the priority tile (connected → lower level → tile key). When the chosen tile is not capital-connected, a warn dialog offers **Improve anyway**, **Road first** (Engineer `build_road` only), and **Cancel**. Disabled when no Builder, invalid target, or insufficient materials. |
+| Show / Assign | See [development-assign-row.md](components/development-assign-row.md). Connected Assign is one tap; disconnected opens Improve anyway / Road first / Cancel. |
 | Region tab | Switches list + map region. |
 
-Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `development_panel_assign.dart`; Road first: `development_panel_road_first.dart` in `colonizethis_orders`.
-
-### Disconnected warn dialog
-
-When Assign would commit improve on a tile that is not capital-connected:
-
-| Control | Outcome |
-|---------|---------|
-| Improve anyway | Commits pending `build_improvement` only. |
-| Road first | Commits pending `build_road` on the deterministic connectivity-advancing step (first idle Engineer by unit id; tile = first legal step on shortest owned-tile path toward connected network, preferring tiles closer to capital connection). Disabled with plain reason when no Engineer, no owned path, no legal road step, or insufficient materials. Does not auto-queue Builder improve. |
-| Cancel | No order. |
-
-Road-step selection: BFS on owned land tiles from the improve target toward any capital-connected tile; neighbor expansion tie-break by ascending tile key; first valid `build_road` tile along the path from the connection endpoint back toward the improve target. Per `SPEC/game/capital-and-connectivity.md`.
+Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `development_panel_assign.dart`; Road first: `development_panel_road_first.dart` in `colonizethis_orders`. Road-step BFS: [capital-and-connectivity.md](../game/capital-and-connectivity.md).
 
 ---
 
@@ -75,6 +62,8 @@ Road-step selection: BFS on owned land tiles from the improve target toward any 
 | Default — Old World (mobile / wide) | Narrow stacked list/map and wide side-by-side layout. |
 | Fog map — player-constrained visibility | Panel map with `fullyVisible`, `fogged`, and unrevealed tiles; territory perimeter outline; improvable counts exclude unrevealed intel. |
 | Assigned civilians — overview rows | Overview lists pending Builder improve and in-progress Engineer road work with target + turn progress. |
+| Assign preview enabled | Enabled Assign row shows place, `1 → 2`, and lumber + cast iron cost (Refs #4472). |
+| Assign preview enabled (mobile) | Same preview wraps at 320–360 dp; Show/Assign stay tappable. |
 | Disconnected dialog | Road first disabled reason + Improve anyway affordance. |
 
 ---
@@ -102,3 +91,9 @@ Road-step selection: BFS on owned land tiles from the improve target toward any 
 - Given the human player owns contiguous land in the active region, when the panel map renders, then a light border outlines the outer perimeter of player-owned land cells (not internal borders between own provinces).
 - Given a Builder with pending `build_improvement` and an Engineer with in-progress `build_road` in the active region, when the overview renders, then both appear in the assigned-civilians list with work type, target location, and turn progress per `civilian-units-panel.md`.
 - Given the player assigns or cancels work from the panel, when drafts change, then assigned-civilian rows and idle counts update immediately without ending the turn.
+
+## Acceptance criteria (Assign preview — Refs #4472)
+
+Normative row copy, Show selected tile, waiver matching, disabled refusal, and one-tap connected commit: [development-assign-row.md](components/development-assign-row.md).
+
+- Given `GAME80001` layout/behavior/variants change for Assign preview, when implementation merges, then this spec and Widgetbook **Assign preview enabled** stay bound to `GAME80001` (`UiScreenIds.developmentScreen`).

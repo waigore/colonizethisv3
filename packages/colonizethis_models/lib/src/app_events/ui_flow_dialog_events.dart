@@ -20,11 +20,13 @@ class DevelopmentDisconnectedAssignDialogEvent extends UIActionEvent {
   const DevelopmentDisconnectedAssignDialogEvent({
     required this.roadFirstEnabled,
     this.roadFirstDisabledReason,
+    this.assignPreviewLine,
     void Function(DevelopmentDisconnectedAssignChoice)? onResult,
   }) : _onResult = onResult;
 
   final bool roadFirstEnabled;
   final String? roadFirstDisabledReason;
+  final String? assignPreviewLine;
   final void Function(DevelopmentDisconnectedAssignChoice)? _onResult;
 
   void result(DevelopmentDisconnectedAssignChoice choice) =>

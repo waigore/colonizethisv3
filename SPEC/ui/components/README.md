@@ -10,6 +10,7 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 
 | Component | File | Consumed by |
 |-----------|------|-------------|
+| Development assign row | [`development-assign-row.md`](development-assign-row.md) | `GAME80001` (Development) improvable commodity **Show** / **Assign** preview. |
 | Combat mode choice intel | [`combat-mode-choice-intel.md`](combat-mode-choice-intel.md) | `CMPT10001` (combat mode choice dialog). |
 | Tile radial catalog | [`tile-radial-catalog.md`](tile-radial-catalog.md) | `MAP30001` (tile context radial), `MAP30002` (more tile actions). |
 | `CtDarkScaffold` | [`ct-dark-scaffold.md`](ct-dark-scaffold.md) | `CtGameFeatureScreenShell` (dark-chrome path) and any dark-theme screen. |

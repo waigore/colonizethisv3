@@ -22,9 +22,11 @@ class DevelopmentDisconnectedAssignDialog extends StatelessWidget {
   const DevelopmentDisconnectedAssignDialog({
     super.key,
     required this.roadFirstState,
+    this.assignPreviewLine,
   });
 
   final DevelopmentRoadFirstState roadFirstState;
+  final String? assignPreviewLine;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,15 @@ class DevelopmentDisconnectedAssignDialog extends StatelessWidget {
               color: EditorialMonoclePalette.fg,
             ),
           ),
+          if (assignPreviewLine != null) ...[
+            const SizedBox(height: CtSpacing.s),
+            Text(
+              assignPreviewLine!,
+              style: textTheme.bodySmall?.copyWith(
+                color: EditorialMonoclePalette.muted,
+              ),
+            ),
+          ],
           const SizedBox(height: CtSpacing.l),
           _DisconnectedAssignActions(roadFirstState: roadFirstState),
         ],

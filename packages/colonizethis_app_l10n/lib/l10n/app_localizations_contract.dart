@@ -1561,6 +1561,24 @@ abstract class AppLocalizations {
   /// Improvable commodity count label in the Development panel.
   String development_improvableCount(int count, String name);
 
+  /// Enabled Development Assign preview with material cost.
+  String development_assignPreview(
+    String place,
+    int currentLevel,
+    int nextLevel,
+    String cost,
+  );
+
+  /// Enabled Development Assign preview when material cost is waived empty.
+  String development_assignPreviewNoCost(
+    String place,
+    int currentLevel,
+    int nextLevel,
+  );
+
+  /// Capital-link clause on a disconnected Development Assign preview.
+  String get development_assignPreviewNotBoundToCapital;
+
   /// Production commodity breakdown dialog title.
   String get production_breakdown_title;
 

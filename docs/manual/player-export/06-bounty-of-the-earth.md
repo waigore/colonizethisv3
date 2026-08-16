@@ -38,9 +38,11 @@ Shortcut hints use the same cost preview when the control is enabled, or a mater
 
 1. Tap the **Development** icon on the left of the map to open **Development screen**.
 2. Use **Old World** / **New World** tabs. The overview shows extraction totals, idle Builder and Engineer counts, and assigned civilians (Builders and Engineers with pending or in-progress work in the active region, with the same remaining-turns wording as **Civilian units panel**).
-3. Tap **Assign** on an improvable resource row. That stages improve-work itself. **Assign** is disabled when you have no idle Builder, the target is not valid, or materials are short (the overview also warns of a shortage).
-4. The first idle Builder in a fixed list order is used. Among eligible tiles, the game prefers land still linked to your capital, then a lower improvement level, then a fixed tile order.
-5. When the chosen tile is not linked to your capital, a warn dialog offers **Improve anyway** (improve only), **Road first** (one Engineer **Build road** step toward the capital — no automatic improve), or **Cancel**.
+3. On an improvable resource row, read the line under **Assign** before you tap. It names the next tile (province name and coordinates), the improvement step (for example **1 → 2**), and the lumber and cast iron cost after other work you already staged this turn. When that tile is not linked to your capital, the same line says it is not bound to the capital. If **Assign** is greyed (no idle Builder, no valid tile, or materials short), that cost line is hidden. Rest on **Assign** for the plain reason.
+4. Tap **Show** to light those resource tiles on the Development map and mark the tile **Assign** would use.
+5. Tap **Assign** on that row. That stages improve-work itself. When the tile is still linked to your capital, one tap is enough — no extra confirm.
+6. The first idle Builder in a fixed list order is used. Among eligible tiles, the game prefers land still linked to your capital, then a lower improvement level, then a fixed tile order. The line under **Assign** names that same chosen tile.
+7. When the chosen tile is not linked to your capital, a warn dialog offers **Improve anyway** (improve only), **Road first** (one Engineer **Build road** step toward the capital — no automatic improve), or **Cancel**.
 
 Unrevealed tiles stay hidden. Fogged tiles look faded. Counts and **Assign** use only tiles you already know about.
 

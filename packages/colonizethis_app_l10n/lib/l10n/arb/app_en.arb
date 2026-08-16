@@ -2821,6 +2821,43 @@
       }
     }
   },
+  "development_assignPreview": "Next: {place} · {currentLevel} → {nextLevel} · {cost}",
+  "@development_assignPreview": {
+    "description": "Enabled Development Assign preview with material cost.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "currentLevel": {
+        "type": "int"
+      },
+      "nextLevel": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "development_assignPreviewNoCost": "Next: {place} · {currentLevel} → {nextLevel}",
+  "@development_assignPreviewNoCost": {
+    "description": "Enabled Development Assign preview when material cost is waived empty.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "currentLevel": {
+        "type": "int"
+      },
+      "nextLevel": {
+        "type": "int"
+      }
+    }
+  },
+  "development_assignPreviewNotBoundToCapital": "not bound to the capital",
+  "@development_assignPreviewNotBoundToCapital": {
+    "description": "Capital-link clause on a disconnected Development Assign preview."
+  },
   "production_breakdown_title": "Commodity breakdown",
   "@production_breakdown_title": {
     "description": "Production commodity breakdown dialog title."
