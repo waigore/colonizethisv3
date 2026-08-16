@@ -1,4 +1,5 @@
-import 'package:colonizethis_world/colonizethis_world.dart' show GamePlayerLookup;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show GamePlayerLookup;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,9 @@ mixin NavalUnitsPanelDialogs
         humanPlayerId: widget.humanPlayerId,
         isHomeFleet: row.isHomeFleet,
         bus: widget.bus,
+        overseasCargoUsed: widget.overseasCargoUsed,
+        isCargoUsedReliable: widget.isCargoUsedReliable,
+        cargoNotDefined: widget.cargoNotDefined,
       ),
     );
   }

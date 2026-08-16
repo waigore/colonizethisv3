@@ -226,6 +226,30 @@ Future<void> open(BuildContext context) {
     });
 
     test(
+      'allows showDialog in Home Fleet detach-then-sail flow (Refs #4448)',
+      () {
+        final root = _writeAppFile(
+          'app/lib/features/game/widgets/unit_orders/'
+              'home_fleet_detach_then_sail_flow.dart',
+          '''
+import 'package:flutter/material.dart';
+
+Future<void> open(BuildContext context) {
+  return showDialog<void>(context: context, builder: (_) => const Text('x'));
+}
+''',
+        );
+        final stdoutLines = <String>[];
+        final code = runCheckAppEventBusDecoupling(
+          root.path,
+          info: stdoutLines.add,
+        );
+        expect(code, 0);
+        expect(stdoutLines.join('\n'), contains('no violations found'));
+      },
+    );
+
+    test(
       'allows showDialog in GameMapTileRadialHost (MAP30002 local-by-design)',
       () {
         final root = _writeAppFile(

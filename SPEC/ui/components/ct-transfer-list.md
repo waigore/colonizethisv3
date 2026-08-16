@@ -23,6 +23,7 @@ Consolidates the dual-panel quantity-transfer chrome shared by `SplitArmyDialog`
 | `itemLabelBuilder` | `String Function(String)?` | identity | Maps `itemId` → localized row label. |
 | `canConfirm` | `bool Function(Map, Map)?` | `rightTotal > 0` | Confirm gate. |
 | `onChanged` | `void Function(Map, Map)?` | `null` | Fires after every accepted move. |
+| `extraContentBuilder` | `Widget? Function(Map, Map)?` | `null` | Optional content between the side panels and the action row (Home Fleet cargo line). |
 | `onConfirm` | `void Function(Map, Map)` | required | Fires when `canConfirm` returns `true`. |
 | `onCancel` | `VoidCallback?` | `null` | When supplied, Cancel renders. |
 | `listHeight` | `double` | `150` | Pixel height of each scrollable list. |

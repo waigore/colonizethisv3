@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
+import '../../../../providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,7 @@ import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.
     show isProvinceSeaZoneOverlaySeaZone;
 import 'province_detail_overlay_host_support_army_move.dart';
 import 'province_detail_overlay_host_support_bonus.dart';
+import 'province_detail_overlay_host_support_detach_sail.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_naval_mission.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
@@ -40,6 +42,10 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   required void Function(Iterable<String>?) onHighlightTiles,
   required VoidCallback onClose,
   required ct_models.AppEventBus bus,
+  HomeFleetCargoSummary homeFleetCargo = const HomeFleetCargoSummary(
+    used: 0,
+    capacity: 0,
+  ),
 }) {
   final displayId = resolveProvinceDetailDisplayId(
     region: region,
@@ -184,6 +190,17 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     bus: bus,
     isSeaZone: isSeaZone,
   );
+  final detachAndSail = buildProvinceDetachAndSailOverlayControls(
+    context: context,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    displayId: displayId,
+    mapData: mapData,
+    canMutateViaUi: canMutateViaUi,
+    bus: bus,
+    isSeaZone: isSeaZone,
+    cargo: homeFleetCargo,
+  );
   final stationSpy = buildProvinceStationSpyOverlayProps(
     context: context,
     game: game,
@@ -262,6 +279,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     invadeArmyTooltip: armyMove.invadeTooltip,
     onInvadeArmyTap: armyMove.onInvadeTap,
     navalMission: navalMission,
+    detachAndSail: detachAndSail,
     stationSpy: stationSpy,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,

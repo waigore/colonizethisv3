@@ -1,4 +1,4 @@
-// Naval mission assign + map fleet-marker routing (Refs #4213, #4343).
+// Naval mission assign + map fleet-marker routing (Refs #4213, #4343, #4448).
 // SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -11,14 +11,16 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/ui_screen_ids.dart';
 import '../panels/tree_builders/fleet_mission_label.dart';
+import 'home_fleet_detach_then_sail_flow.dart';
 import 'move_fleet_dialog.dart';
 import 'naval_mission_flow_support.dart';
 import 'naval_mission_menu_dialog.dart';
 
 /// Map fleet-marker tap: pick fleet when stacked, then route to the legal action.
 ///
-/// Home Fleet → tile-scoped [OpenNavalUnitsPanelEvent]; sea-going in port →
-/// [MoveFleetDialog]; sea-going at sea → [showNavalMissionFlow] (Refs #4343).
+/// Home Fleet (non-empty) → detach-then-sail; empty Home Fleet → tile-scoped
+/// [OpenNavalUnitsPanelEvent]; sea-going in port → [MoveFleetDialog];
+/// sea-going at sea → [showNavalMissionFlow] (Refs #4343, #4448).
 Future<void> showNavalFleetMarkerFlow({
   required BuildContext context,
   required Game game,
@@ -30,6 +32,9 @@ Future<void> showNavalFleetMarkerFlow({
   required String locationScopeKey,
   String? preselectedFleetId,
   String? tileScopeTileKey,
+  int overseasCargoUsed = 0,
+  bool isCargoUsedReliable = true,
+  bool cargoNotDefined = false,
 }) async {
   if (fleetIds.isEmpty) return;
 
@@ -46,12 +51,25 @@ Future<void> showNavalFleetMarkerFlow({
   if (fleet == null || !context.mounted) return;
 
   if (fleet.id == homeFleetIdFor(humanPlayerId)) {
-    bus.emit(
-      OpenNavalUnitsPanelEvent(
-        locationScopeKey: locationScopeKey,
-        initialSelectedFleetId: fleet.id,
-        tileScopeTileKey: tileScopeTileKey,
-      ),
+    if (fleet.ships.isEmpty) {
+      bus.emit(
+        OpenNavalUnitsPanelEvent(
+          locationScopeKey: locationScopeKey,
+          initialSelectedFleetId: fleet.id,
+          tileScopeTileKey: tileScopeTileKey,
+        ),
+      );
+      return;
+    }
+    await showHomeFleetDetachThenSailFlow(
+      context: context,
+      game: game,
+      topology: topology,
+      humanPlayerId: humanPlayerId,
+      bus: bus,
+      overseasCargoUsed: overseasCargoUsed,
+      isCargoUsedReliable: isCargoUsedReliable,
+      cargoNotDefined: cargoNotDefined,
     );
     return;
   }

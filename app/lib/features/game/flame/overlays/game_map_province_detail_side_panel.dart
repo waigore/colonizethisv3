@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
@@ -9,8 +8,10 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
-import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
+import '../../screens/game/game_screen_shared.dart'
+    show kGameMapWideProvinceSidePanelWidth;
 import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import 'province_detail_overlay_host_support.dart';
@@ -101,6 +102,7 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       onHighlightTiles: hostArgs.onHighlightTiles,
       onClose: hostArgs.onClose,
       bus: hostArgs.bus,
+      homeFleetCargo: ref.watch(homeFleetCargoSummaryProvider),
     );
     if (kCtE2EEnabled) {
       overlay = KeyedSubtree(key: kCtE2EProvincePanelRootKey, child: overlay);

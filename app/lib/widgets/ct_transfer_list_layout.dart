@@ -104,6 +104,7 @@ mixin CtTransferListLayout on CtTransferListStateBase, CtTransferListMutations {
               leftPanel(),
               const SizedBox(height: 16),
               rightPanel(),
+              ...extraContent(),
               const SizedBox(height: 16),
               actionRow(context),
             ],
@@ -121,11 +122,20 @@ mixin CtTransferListLayout on CtTransferListStateBase, CtTransferListMutations {
                 Expanded(child: rightPanel()),
               ],
             ),
+            ...extraContent(),
             const SizedBox(height: 16),
             actionRow(context),
           ],
         );
       },
     );
+  }
+
+  List<Widget> extraContent() {
+    final builder = widget.extraContentBuilder;
+    if (builder == null) return const [];
+    final child = builder(leftCounts, rightCounts);
+    if (child == null) return const [];
+    return [const SizedBox(height: 8), child];
   }
 }

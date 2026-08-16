@@ -38,6 +38,16 @@ The `UNIT30001` Naval Units panel lists every fleet by region and location. Your
 
 The Home Fleet remains docked at the capital. Its merchant cargo holds are the realm’s total overseas transport and trade capacity for the turn. Split ships from it when you need a sea-going squadron; the new fleet begins at the same location and can then receive movement and mission orders.
 
+When you split the Home Fleet (from `UNIT30001` or from the map path below), a line under the transfer lists how many cargo holds will remain versus this turn’s overseas load. The numbers change as you move merchant hulls. A warm accent means no spare holds; red means remaining holds would fall short. The game still lets you confirm a legal split — leaving merchants home is a real trade-off, not a blocked tap.
+
+To send newly built ships to sea from the map:
+
+1. Tap the **Home Fleet** marker at your capital harbor on `MAP10001` (or tap **Detach and sail** on `MAP20001` Naval when you have ships at home).
+2. Choose which ship types leave. Confirm **Detach and choose destination**.
+3. On `DLG30001` **Move Fleet**, pick an adjacent sea and confirm. The Home Fleet stays in port.
+
+If the Home Fleet has no ships, the harbor marker still opens `UNIT30001` so you can **Train**.
+
 On the in-game map shell (`GAME10001`), the tab bar shows a compact **cargo** readout (`used/capacity`) beside your treasury. Tap it for a plain-language breakdown: overseas extraction load, total Home Fleet holds, and how many holds remain open for trade bids. The numbers turn a warm accent when holds are tight and red when full — a quiet warning, not a popup.
 
 ### Move a sea-going fleet
@@ -55,12 +65,15 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 
 **Map shortcut (primary):** Tap your **fleet marker** on the map (`MAP10001`). When multiple fleets share the marker, choose which fleet in `DLG31003` **Select fleet** — each row shows that fleet’s ship mix (and a pending mission line when one is already staged) so you can tell stacked fleets apart. What opens next depends on that fleet:
 
-- **Home Fleet** — opens `UNIT30001` Naval Units scoped to that port so you can Split or Train without a dead-end tap.
+- **Home Fleet with ships** — opens **Detach a squadron**, then `DLG30001` **Move Fleet** for the new sea-going fleet. The Home Fleet itself cannot sail.
+- **Home Fleet with no ships** — opens `UNIT30001` Naval Units scoped to that port so you can Train.
 - **Sea-going fleet in port** — opens `DLG30001` **Move Fleet** so you can undock immediately.
 - **Sea-going fleet at sea** — opens `DLG31001` **Assign mission** (Patrol / Defend / Blockade / Beachhead, plus **Cancel pending mission** when a mission is staged). Use **Sail / Move** on that menu to open `DLG30001` without returning to the rail panel. Blockade and Beachhead open `DLG31002` **Select target** so you choose an adjacent enemy province at war with you. Target rows keep the province name and add fog-honest decision support: Beachhead shows the same defender / unopposed / fort summary you see on invasion rows elsewhere; Blockade shows harbor posture (port or not, empty harbor, or hostile fleets in port)—or unknown copy when you lack full intel. Confirm still only requires a selected target.
 
 
 **Panel parity:** In `UNIT30001` **Naval Units**, tap **Mission** on an eligible at-sea fleet row for the same `DLG31001` flow (including **Sail / Move**). The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
+
+**Capital Naval shortcut:** On your owned capital, when the Home Fleet has at least one ship, `MAP20001` Naval offers **Detach and sail**. It starts the same split-then-move path as the harbor marker. This control is hidden when you are only watching the game, on a foreign coast, or on a sea zone.
 
 **Overlay shortcut:** On a foreign coastal province at war with you, `MAP20001` Naval offers **Blockade** and **Beachhead**. One eligible at-sea fleet skips `DLG31001` and opens `DLG31002` with that province already selected. Several eligible fleets open `DLG31003` first. If a fleet is at sea but not beside this coast, the controls stay visible and disabled until a fleet is at sea beside the coast — fleets in port cannot take missions. A fogged naval roster (`???`) still shows these actions when the Political owner is known. Map-marker and panel **Mission** still open `DLG31001` as usual.
 
@@ -111,7 +124,7 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - [ ] Explains the complete merchant and warship roster, each ship’s technology gate, and the Carrack exception.
 - [ ] Documents `UNIT30001` and `UNIT60001` for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints.
 - [ ] Documents `DLG30001` one-hop port⇄sea movement, owned-port docking, capital docking, and sea-zone revelation.
-- [ ] Documents map fleet-marker routing: Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, `MAP20001` Naval **Blockade** / **Beachhead** overlay entry (skip `DLG31001` when the mission is known; `DLG31003` when several fleets qualify), cancel-pending, move xor mission, fog-honest Beachhead/Blockade target intel on `DLG31002`, and `DLG31003` ship-mix rows when several fleets share a marker.
+- [ ] Documents map fleet-marker routing: Home Fleet with ships → detach-then-sail (`DLG30001` for the new fleet), empty Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with Sail/Move, plus `UNIT30001` **Mission** parity, `MAP20001` Naval **Detach and sail** on the owned capital, `MAP20001` Naval **Blockade** / **Beachhead** overlay entry (skip `DLG31001` when the mission is known; `DLG31003` when several fleets qualify), cancel-pending, move xor mission, fog-honest Beachhead/Blockade target intel on `DLG31002`, and `DLG31003` ship-mix rows when several fleets share a marker.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing preconditions; Join Home Fleet via dock/transfer only (not mission menu).
 - [ ] Documents `DLG40001` transfer of selected hulls from an eligible capital-port fleet into the Home Fleet.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.

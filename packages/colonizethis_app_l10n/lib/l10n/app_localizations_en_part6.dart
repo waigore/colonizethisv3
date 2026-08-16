@@ -279,6 +279,13 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'A fleet must be at sea beside this coast. Fleets in port cannot take missions.';
 
   @override
+  String get provinceOverlay_detachAndSailAction => 'Detach and sail';
+
+  @override
+  String get provinceOverlay_detachAndSailTooltip =>
+      'Detach a squadron from the Home Fleet, then choose an adjacent sea.';
+
+  @override
   String get provinceOverlay_selectArmyTitle => 'Select army';
 
   @override

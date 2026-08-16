@@ -21,6 +21,7 @@ import '../../../features/game/widgets/unit_orders/overlay_army_move_flow.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
+import '../../../providers/home_fleet_cargo_provider.dart';
 import 'app_event_handler.dart';
 import 'app_event_handler_units_panel_sheet.dart';
 
@@ -141,6 +142,7 @@ Future<void> appEventHandlerOpenNavalUnitsPanel(
       final bus = ref.watch(appEventBusProvider);
       final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
       final draftOrders = ref.watch(currentOrdersProvider);
+      final cargo = ref.watch(homeFleetCargoSummaryProvider);
       return (
         replacement: null,
         panel: NavalUnitsPanel(
@@ -155,6 +157,9 @@ Future<void> appEventHandlerOpenNavalUnitsPanel(
           locationScopeKey: event.locationScopeKey,
           initialSelectedFleetId: event.initialSelectedFleetId,
           tileScopeTileKey: event.tileScopeTileKey,
+          overseasCargoUsed: cargo.used,
+          isCargoUsedReliable: cargo.isCargoUsedReliable,
+          cargoNotDefined: cargo.notDefined,
         ),
       );
     },
@@ -184,6 +189,7 @@ Future<void> appEventHandlerOpenNavalMissionMenu(
   final humanPlayerId = resolveShellPanelPlayerId(shell, game);
   final mapData = container.read(gameServiceProvider).getMapData(game.id);
   final draftOrders = container.read(currentOrdersProvider);
+  final cargo = container.read(homeFleetCargoSummaryProvider);
   await showNavalFleetMarkerFlow(
     context: ctx,
     game: game,
@@ -195,6 +201,9 @@ Future<void> appEventHandlerOpenNavalMissionMenu(
     locationScopeKey: event.locationScopeKey,
     preselectedFleetId: event.initialSelectedFleetId,
     tileScopeTileKey: event.tileScopeTileKey,
+    overseasCargoUsed: cargo.used,
+    isCargoUsedReliable: cargo.isCargoUsedReliable,
+    cargoNotDefined: cargo.notDefined,
   );
 }
 

@@ -85,6 +85,8 @@ import 'package:colonizethis_app/features/game/widgets/production/production_pan
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_detach_and_sail_overlay_controls.dart'
+    show ProvinceDetachAndSailOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
@@ -189,6 +191,7 @@ part 'catalog_panel_map_build_port_stories.dart';
 part 'catalog_panel_map_build_railroad_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_naval_mission_stories.dart';
+part 'catalog_panel_map_detach_sail_stories.dart';
 part 'catalog_panel_map_station_spy_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
 part 'catalog_panel_map_political_sight_stories.dart';

@@ -89,7 +89,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP30001 tile context radial + More dialog (Refs #4440; measured 80_223).
 // raised for combined #4440+#4432 merge headroom (measured 80_517).
 // raised for combined #4413+#4440 merge headroom (measured 80_940).
-const _maxMainLines = 81100;
+// raised for Home Fleet detach-then-sail from the map (Refs #4448; measured 81_342).
+const _maxMainLines = 81500;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
