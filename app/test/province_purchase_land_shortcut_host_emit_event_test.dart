@@ -21,7 +21,8 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -37,55 +38,12 @@ const String _kMinorId = 'minor1';
 const String _kProvinceId = 'oldWorld|p1';
 const String _kTileKey = 'oldWorld|p1|0|0';
 
-final MapTopology _combinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
+final MapTopology _combinedTopology = provinceShortcutHostCombinedTopology();
+final Map<String, MapTopology> _topologyByRegion =
+    provinceShortcutHostTopologyByRegion();
 
-final Map<String, MapTopology> _topologyByRegion = {
-  'oldWorld': MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 's1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  ),
-};
-
-final Map<String, TileMapResult> _tileMapByRegion = {
-  'oldWorld': TileMapResult(
-    width: 1,
-    height: 1,
-    grid: const [
-      ['p1'],
-    ],
-    terrainGrid: const [
-      [TerrainType.plains],
-    ],
-    resourceGrid: const [
-      [Resource.grain],
-    ],
-  ),
-};
+final Map<String, TileMapResult> _tileMapByRegion =
+    provinceShortcutHostTileMapByRegion();
 
 Game _buildGame({required bool withMerchant}) {
   return Game(
@@ -94,11 +52,7 @@ Game _buildGame({required bool withMerchant}) {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(
         provinces: [
-          Province(
-            id: _kProvinceId,
-            regionId: 'oldWorld',
-            ownerId: _kMinorId,
-          ),
+          Province(id: _kProvinceId, regionId: 'oldWorld', ownerId: _kMinorId),
         ],
         units: [
           if (withMerchant)
@@ -190,16 +144,21 @@ void main() {
 
   test('purchase land action state fixture is enabled for host wiring', () {
     final game = _buildGame(withMerchant: true);
-    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    final state = GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
-      game: game,
-      humanPlayerId: _kHumanPlayerId,
-      selectedTileKey: _kTileKey,
-      playerView: playerView,
-      topology: _combinedTopology,
-      currentOrders: const Orders(),
-      tileMapByRegion: _tileMapByRegion,
+    final playerView = buildPlayerView(
+      game,
+      _combinedTopology,
+      _kHumanPlayerId,
     );
+    final state =
+        GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
+          game: game,
+          humanPlayerId: _kHumanPlayerId,
+          selectedTileKey: _kTileKey,
+          playerView: playerView,
+          topology: _combinedTopology,
+          currentOrders: const Orders(),
+          tileMapByRegion: _tileMapByRegion,
+        );
     expect(state.showIcon, isTrue);
     expect(state.enabled, isTrue);
   });
@@ -215,30 +174,29 @@ void main() {
     WidgetTester tester, {
     required Game game,
     required ProvinceShortcutHostCase host,
-  }) =>
-      pumpProvinceShortcutHostAndSelect(
-        tester,
-        gamesBox: gamesBox,
-        gameService: provinceShortcutHostEmitGameService(
-          gamesBox: gamesBox,
-          gameId: _kGameId,
-          combinedTopology: _combinedTopology,
-          tileMapByRegion: _tileMapByRegion,
-          topologyByRegion: _topologyByRegion,
-        ),
-        game: game,
-        humanPlayerId: _kHumanPlayerId,
-        host: host,
-        region: _region(),
-        combinedTopology: _combinedTopology,
-        workTargetSelectionCache: refreshedProvinceShortcutWorkTargetCache(
-          game: game,
-          humanPlayerId: _kHumanPlayerId,
-          combinedTopology: _combinedTopology,
-          tileMapByRegion: _tileMapByRegion,
-        ),
-        selectedTileKey: _kTileKey,
-      );
+  }) => pumpProvinceShortcutHostAndSelect(
+    tester,
+    gamesBox: gamesBox,
+    gameService: provinceShortcutHostEmitGameService(
+      gamesBox: gamesBox,
+      gameId: _kGameId,
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+      topologyByRegion: _topologyByRegion,
+    ),
+    game: game,
+    humanPlayerId: _kHumanPlayerId,
+    host: host,
+    region: _region(),
+    combinedTopology: _combinedTopology,
+    workTargetSelectionCache: refreshedProvinceShortcutWorkTargetCache(
+      game: game,
+      humanPlayerId: _kHumanPlayerId,
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+    ),
+    selectedTileKey: _kTileKey,
+  );
 
   Future<void> expectPurchaseLandShortcutEmits(
     WidgetTester tester, {

@@ -42,6 +42,7 @@ import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_app_catalog_widgets_file_size.dart';
 import 'check_app_core_services_file_size.dart';
+import 'check_app_test_no_duplicate_shortcut_fixtures.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
 import 'check_economy_dedup_credit_aggregation.dart';
@@ -750,7 +751,10 @@ int _runOneRule({
     environment: Platform.environment,
     runInShell: false,
   );
-  forwardRepoLintProcessOutput(result, relayStdoutToStderr: relayChildStdoutToStderr);
+  forwardRepoLintProcessOutput(
+    result,
+    relayStdoutToStderr: relayChildStdoutToStderr,
+  );
   if (result.exitCode != 0) {
     stderr.writeln(
       'ct_repo_lint: FAILED [${rule.ruleId}] exit ${result.exitCode} (see output above)',
@@ -983,6 +987,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppCatalogWidgetsFileSize(repoRoot);
     case 'repo.app_core_services_file_size':
       return runCheckAppCoreServicesFileSize(repoRoot);
+    case 'repo.app_test_no_duplicate_shortcut_fixtures':
+      return runCheckAppTestNoDuplicateShortcutFixtures(repoRoot);
     default:
       return null;
   }
