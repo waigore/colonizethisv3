@@ -59,7 +59,7 @@ Station Spies in rival Great Power provinces from the selected tile’s province
 
 **Tip.** Extraction-cap techs multiply every improved tile you already paid for. Pair Chapter 6 builds with Gathering research.
 
-**Tip.** After a technology completes, open `GAME40001` **Slots** when you next mean to spend; the court will not interrupt **Next turn** to fill seats for you.
+**Tip.** After a technology completes, open `GAME40001` **Slots** when you next mean to spend; the court will not interrupt **Next turn** to fill empty seats for you. A funded project you already assigned can appear under **Staged this turn** on `DLG60001`; unused seats still are not listed.
 
 **Warning.** Cancel is permanent for that progress. Re-choosing the same tech starts from zero.
 

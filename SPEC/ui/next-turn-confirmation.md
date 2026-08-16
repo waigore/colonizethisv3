@@ -20,7 +20,8 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
   - Title: "End turn?" or "Proceed to next turn?"
   - Body text: "Turn {N} will end. Continue?"
   - **Simple variant** (default): title + body + No/Yes only.
-  - **Warning variant** (when warn preference is on and one or more human-owned civilians are idle with no `currentWork` and no draft `WorkOrder`): same title/body, then a section **"These civilians have no work order for the next turn:"** and a scrollable list. Each row shows civilian type icon, type, location (region + province display when available), explicit **"No work order"** text, and a **go-to** (`CtIconAction` locate glyph). A **Don't show this warning again** row uses `CtToggleSwitch` (not Material `Checkbox`). **Yes** stays enabled.
+  - **Staged-decree section** (when the human slice of the confirmation `Orders` snapshot has at least one listed decree): after the body, mount [staged-decree-review.md](components/staged-decree-review.md) — compact **Staged this turn** summary, **Review decrees** on request, per-family go-to that aborts confirm. Omitted when the listed draft is empty (no “no decrees” nag). **Yes** stays enabled. Idle-civilian warning, UXD-001, and UXD-002 are unchanged: empty research seats / unfunded slots / idle Spies are never listed here.
+  - **Warning variant** (when warn preference is on and one or more human-owned civilians are idle with no `currentWork` and no draft `WorkOrder`): same title/body (and staged section when present), then a section **"These civilians have no work order for the next turn:"** and a scrollable list. Each row shows civilian type icon, type, location (region + province display when available), explicit **"No work order"** text, and a **go-to** (`CtIconAction` locate glyph). A **Don't show this warning again** row uses `CtToggleSwitch` (not Material `Checkbox`). **Yes** stays enabled.
   - Actions: "No" (abort), "Yes" (confirm)
 - **Styling:** Matches the editorial-monocle dark theme catalog (`SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette) and the universal dialog pattern under #2867:
   - Title text colour resolves to `EditorialMonoclePalette.accent` (display font slot from the dark theme).
@@ -38,9 +39,10 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 4. Player clicks "Yes" → dialog closes, the system enters turn-resolution active state.
 5. **Warning variant — go-to:** Player activates go-to on a listed civilian → dialog closes **without** ending the turn; the map locates/highlights that civilian (`LocateMapTileEvent`) and opens `UNIT10001` focused on that unit (`OpenCivilianUnitsPanelEvent` with `initialSelectedUnitId`).
 6. **Warning variant — don't show again:** When the toggle is on and the player taps **Yes**, Hive `settings` stores `ux.warnIdleCiviliansOnEndTurn = false` and turn resolution proceeds. **No** leaves the preference unchanged.
-7. When warn preference is off (`ux.warnIdleCiviliansOnEndTurn == false`) or no civilians match the idle/no-pending rule, show the **simple** variant only.
-8. During turn-resolution active state, the UI shows a non-dismissible modal titled `Processing Turn`.
-9. After the worker isolate delivers a **terminal** success or error to the app runner (`session.done` resolves), the **`Processing Turn` modal closes immediately** so the UI does not linger on a late resolver label (for example “Finalizing turn…”) while the main isolate still performs synchronous persistence and `TurnResolutionResult` application. If that follow-up work fails, error handling still applies; `turnResolutionBlocking` ends with the same `finally` path as before. Refs **#2277**.
+7. When warn preference is off (`ux.warnIdleCiviliansOnEndTurn == false`) or no civilians match the idle/no-pending rule, omit the idle-civilian list (simple confirm, plus staged-decree section when the listed draft is non-empty).
+8. **Staged decrees — Review / go-to:** Player expands **Review decrees** → each staged row is listed in player language. Player activates family go-to → dialog closes **without** ending the turn; the owning surface opens (`UNIT10001`, military panel, `UNIT30001`, `GAME20001`, `GAME60001`, `GAME40001`, or `GAME30001`) using the same family routing as `OVL70001` order-rejected rows.
+9. During turn-resolution active state, the UI shows a non-dismissible modal titled `Processing Turn`.
+10. After the worker isolate delivers a **terminal** success or error to the app runner (`session.done` resolves), the **`Processing Turn` modal closes immediately** so the UI does not linger on a late resolver label (for example “Finalizing turn…”) while the main isolate still performs synchronous persistence and `TurnResolutionResult` application. If that follow-up work fails, error handling still applies; `turnResolutionBlocking` ends with the same `finally` path as before. Refs **#2277**.
 
 ### Turn-resolution active state (slice 1)
 
@@ -80,7 +82,13 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 - **Given** those civilians each have a pending `WorkOrder`, **when** confirmation opens, **then** the warning list is absent (simple confirm).
 - **Given** the warning list is shown, **when** the player activates go-to on a row, **then** confirmation closes without ending the turn and that civilian is located on the map.
 - **Given** the warning is shown and "Don't show this warning again" is selected, **when** the player taps **Yes**, **then** Hive stores `ux.warnIdleCiviliansOnEndTurn = false` and turn resolution proceeds; **when** the player taps **No**, **then** the preference remains on.
-- **Given** warn preference is off, **when** idle civilians without work exist, **then** only the simple confirmation appears.
+- **Given** warn preference is off, **when** idle civilians without work exist, **then** only the simple confirmation appears (plus the staged-decree section when the listed draft is non-empty).
+- **Given** the human draft contains at least one staged decree, **when** `DLG60001` opens, **then** the UI layer shows **Staged this turn** naming only families with count > 0 in player language (no raw order class or enum names).
+- **Given** the human draft is empty of staged decrees, **when** `DLG60001` opens, **then** the UI layer does not show a “no decrees” warning.
+- **Given** a multi-family draft, **when** the player expands **Review decrees**, **then** each staged row is listed in plain language and a go-to control is offered per family.
+- **Given** the staged-decree list is shown, **when** the player activates go-to on a family, **then** confirmation closes without ending the turn and the owning panel or screen opens.
+- **Given** empty research seats, unfunded research, or idle Spies, **when** confirmation opens, **then** those absences are not listed. Idle work-order civilians continue to use the existing warning variant only.
+- **Given** Yes is shown, **when** staged decrees are listed, **then** Yes remains enabled.
 
 ---
 
@@ -106,3 +114,4 @@ Idle-civilian warnings remain in scope for **work-order** civilians (not Spy por
 - Confirmation uses `showDialog<bool>` with `CtDialogShell` (same pattern as `_confirmCancel` in civilian_units_panel.dart).
 - The existing turn number should be shown in the confirmation dialog body text.
 - Research end-turn readiness: out of scope per **UXD-001** ([ux-design-decisions.md](ux-design-decisions.md)).
+- Staged-decree review: [staged-decree-review.md](components/staged-decree-review.md); Widgetbook folder **Next Turn Confirmation** adds **Staged — one family** and **Staged — multi-family** use cases.

@@ -29,3 +29,4 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | `UnitsPanelSheetSurface` | [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
 | `UnitsPanelShell` | [`units-panel-shell.md`](units-panel-shell.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
 | Old World race chip | [`old-world-race-chip.md`](old-world-race-chip.md) | `MAP10001` tab bar (`GameTabBar` / `GameMapControls`). |
+| Staged decree review | [`staged-decree-review.md`](staged-decree-review.md) | `DLG60001` (next turn confirmation). |

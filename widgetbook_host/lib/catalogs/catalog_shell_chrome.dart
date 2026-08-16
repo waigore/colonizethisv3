@@ -299,10 +299,12 @@ class _NextTurnConfirmationDialogStoryHost extends StatelessWidget {
   const _NextTurnConfirmationDialogStoryHost({
     required this.currentTurn,
     this.civiliansMissingWork = const [],
+    this.stagedReview = StagedDecreeReview.empty,
   });
 
   final int currentTurn;
   final List<CivilianMissingWorkOrderEntry> civiliansMissingWork;
+  final StagedDecreeReview stagedReview;
 
   @override
   Widget build(BuildContext context) {
@@ -314,6 +316,7 @@ class _NextTurnConfirmationDialogStoryHost extends StatelessWidget {
         child: NextTurnConfirmationDialog(
           currentTurn: currentTurn,
           civiliansMissingWork: civiliansMissingWork,
+          stagedReview: stagedReview,
         ),
       ),
     );
@@ -358,6 +361,41 @@ List<WidgetbookNode> get nextTurnConfirmationDialogDirectories => [
           ],
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Staged — one family',
+        builder: (context) => const _NextTurnConfirmationDialogStoryHost(
+          currentTurn: 7,
+          stagedReview: StagedDecreeReview(
+            families: [
+              StagedDecreeFamilyGroup(
+                family: StagedDecreeFamily.armyMoves,
+                familyLabel: 'Army moves',
+                rows: [StagedDecreeRow(id: 'a1', label: 'Army a1 → Alpha')],
+              ),
+            ],
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Staged — multi-family',
+        builder: (context) => const _NextTurnConfirmationDialogStoryHost(
+          currentTurn: 12,
+          stagedReview: StagedDecreeReview(
+            families: [
+              StagedDecreeFamilyGroup(
+                family: StagedDecreeFamily.civilianWork,
+                familyLabel: 'Civilian work',
+                rows: [StagedDecreeRow(id: 'w1', label: 'Explorer: Explore')],
+              ),
+              StagedDecreeFamilyGroup(
+                family: StagedDecreeFamily.trade,
+                familyLabel: 'Trade',
+                rows: [StagedDecreeRow(id: 't1', label: 'Bid Grain × 10')],
+              ),
+            ],
+          ),
+        ),
+      ),
     ],
   ),
 ];
@@ -383,9 +421,7 @@ class _GameInitializingProgressStoryHost extends StatelessWidget {
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
-      child: Center(
-        child: NewGameSetupProgressView(stepIndex: stepIndex),
-      ),
+      child: Center(child: NewGameSetupProgressView(stepIndex: stepIndex)),
     );
   }
 }

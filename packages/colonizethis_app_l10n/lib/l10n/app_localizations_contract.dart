@@ -176,6 +176,72 @@ abstract class AppLocalizations {
   /// Toggle label in the end-turn idle-civilian warning variant.
   String get game_nextTurnConfirm_dontShowAgain;
 
+  /// Section header listing already staged decrees on DLG60001.
+  String get game_nextTurnConfirm_stagedSection;
+
+  /// Button that expands the staged-decree list on DLG60001.
+  String get game_nextTurnConfirm_reviewDecrees;
+
+  /// Button that collapses the staged-decree list on DLG60001.
+  String get game_nextTurnConfirm_hideDecrees;
+
+  /// Joiner between compact family summaries on DLG60001.
+  String get game_nextTurnConfirm_familySeparator;
+
+  /// Compact family summary with count on DLG60001.
+  String game_nextTurnConfirm_familyCount(String family, int count);
+
+  /// Staged-decree family name for civilian work orders.
+  String get game_nextTurnConfirm_familyCivilianWork;
+
+  /// Staged-decree family name for Spy relocate moves.
+  String get game_nextTurnConfirm_familySpyRelocate;
+
+  /// Staged-decree family name for army moves.
+  String get game_nextTurnConfirm_familyArmyMoves;
+
+  /// Staged-decree family name for fleet moves and missions.
+  String get game_nextTurnConfirm_familyFleet;
+
+  /// Staged-decree family name for unit training and builds.
+  String get game_nextTurnConfirm_familyTraining;
+
+  /// Staged-decree family name for labour recruit and train.
+  String get game_nextTurnConfirm_familyLabour;
+
+  /// Staged-decree family name for diplomacy.
+  String get game_nextTurnConfirm_familyDiplomacy;
+
+  /// Staged-decree family name for market bids and offers.
+  String get game_nextTurnConfirm_familyTrade;
+
+  /// Staged-decree family name for funded research assignments.
+  String get game_nextTurnConfirm_familyResearch;
+
+  /// Plain-language civilian work row on DLG60001.
+  String game_nextTurnConfirm_rowWork(String unitType, String work);
+
+  /// Plain-language Spy relocate row on DLG60001.
+  String game_nextTurnConfirm_rowRelocate(String unitType, String place);
+
+  /// Plain-language army move row on DLG60001.
+  String game_nextTurnConfirm_rowArmyMove(String army, String place);
+
+  /// Plain-language fleet move row on DLG60001.
+  String game_nextTurnConfirm_rowFleetMove(String fleet, String place);
+
+  /// Plain-language fleet mission row on DLG60001.
+  String game_nextTurnConfirm_rowFleetMission(String fleet, String mission);
+
+  /// Plain-language train/build row on DLG60001.
+  String game_nextTurnConfirm_rowTrain(String name);
+
+  /// Plain-language diplomacy row on DLG60001.
+  String game_nextTurnConfirm_rowDiplomacy(String action, String faction);
+
+  /// Plain-language funded research row on DLG60001.
+  String game_nextTurnConfirm_rowResearch(String tech, String funding);
+
   /// Title of the modal shown while next-turn resolution runs.
   String get game_turnResolutionProcessingTitle;
 

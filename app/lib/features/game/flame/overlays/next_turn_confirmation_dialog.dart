@@ -9,8 +9,11 @@ import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_toggle_switch.dart';
-import 'package:colonizethis_logic/civilian_intel_api.dart' show CivilianMissingWorkOrderEntry;
+import 'package:colonizethis_logic/civilian_intel_api.dart'
+    show CivilianMissingWorkOrderEntry;
 
+import '../../turn_resolution/staged_decree_review.dart';
+import 'staged_decree_review_section.dart';
 
 /// Outcome of [showNextTurnConfirmationDialog].
 class NextTurnConfirmationResult {
@@ -32,14 +35,18 @@ Future<NextTurnConfirmationResult?> showNextTurnConfirmationDialog(
   BuildContext context, {
   required int currentTurn,
   List<CivilianMissingWorkOrderEntry> civiliansMissingWork = const [],
+  StagedDecreeReview stagedReview = StagedDecreeReview.empty,
   void Function(CivilianMissingWorkOrderEntry entry)? onGoToCivilian,
+  void Function(StagedDecreeFamily family)? onGoToStagedFamily,
 }) async {
   return showDialog<NextTurnConfirmationResult>(
     context: context,
     builder: (BuildContext ctx) => NextTurnConfirmationDialog(
       currentTurn: currentTurn,
       civiliansMissingWork: civiliansMissingWork,
+      stagedReview: stagedReview,
       onGoToCivilian: onGoToCivilian,
+      onGoToStagedFamily: onGoToStagedFamily,
     ),
   );
 }
@@ -53,24 +60,31 @@ class NextTurnConfirmationDialog extends StatefulWidget {
     super.key,
     required this.currentTurn,
     this.civiliansMissingWork = const [],
+    this.stagedReview = StagedDecreeReview.empty,
     this.onGoToCivilian,
+    this.onGoToStagedFamily,
   });
 
   static const screenId = UiScreenIds.nextTurnConfirmation;
 
   final int currentTurn;
   final List<CivilianMissingWorkOrderEntry> civiliansMissingWork;
+  final StagedDecreeReview stagedReview;
   final void Function(CivilianMissingWorkOrderEntry entry)? onGoToCivilian;
+  final void Function(StagedDecreeFamily family)? onGoToStagedFamily;
 
   @override
   State<NextTurnConfirmationDialog> createState() =>
       _NextTurnConfirmationDialogState();
 }
 
-class _NextTurnConfirmationDialogState extends State<NextTurnConfirmationDialog> {
+class _NextTurnConfirmationDialogState
+    extends State<NextTurnConfirmationDialog> {
   bool _dontShowAgain = false;
 
   bool get _showWarning => widget.civiliansMissingWork.isNotEmpty;
+
+  bool get _showStaged => !widget.stagedReview.isEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -83,14 +97,30 @@ class _NextTurnConfirmationDialogState extends State<NextTurnConfirmationDialog>
     final mutedStyle = (theme.textTheme.bodySmall ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.muted);
     return CtDialogShell(
-      maxHeight: _showWarning ? 520 : 600,
+      maxHeight: (_showWarning || _showStaged) ? 520 : 600,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.game_nextTurnConfirm_title, style: titleStyle),
           const SizedBox(height: CtSpacing.m),
-          Text(l10n.game_nextTurnConfirm_body(widget.currentTurn), style: bodyStyle),
+          Text(
+            l10n.game_nextTurnConfirm_body(widget.currentTurn),
+            style: bodyStyle,
+          ),
+          StagedDecreeReviewSection(
+            review: widget.stagedReview,
+            bodyStyle: bodyStyle,
+            mutedStyle: mutedStyle,
+            onGoToFamily: widget.onGoToStagedFamily == null
+                ? null
+                : (family) {
+                    widget.onGoToStagedFamily!(family);
+                    Navigator.of(
+                      context,
+                    ).pop(const NextTurnConfirmationResult(confirmed: false));
+                  },
+          ),
           if (_showWarning) ...[
             const SizedBox(height: CtSpacing.l),
             Text(
@@ -151,9 +181,9 @@ class _NextTurnConfirmationDialogState extends State<NextTurnConfirmationDialog>
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CtNinePatchButton(
-                onPressed: () => Navigator.of(context).pop(
-                  const NextTurnConfirmationResult(confirmed: false),
-                ),
+                onPressed: () => Navigator.of(
+                  context,
+                ).pop(const NextTurnConfirmationResult(confirmed: false)),
                 child: Text(l10n.common_no),
               ),
               const SizedBox(width: CtSpacing.m),
@@ -205,7 +235,11 @@ class _IdleCivilianWarningRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(entry.type, style: bodyStyle, overflow: TextOverflow.ellipsis),
+                Text(
+                  entry.type,
+                  style: bodyStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 Text(
                   entry.locationLabel,
                   style: mutedStyle,

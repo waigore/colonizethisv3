@@ -32,6 +32,8 @@ const List<String> kNextTurnConfirmationUseCaseNames = <String>[
   'Default — turn 1',
   'Mid-game — turn 42',
   'Warning — idle civilians',
+  'Staged — one family',
+  'Staged — multi-family',
 ];
 
 /// Normative inventory of the new SHEL30001 stories that issue #2867 S13
