@@ -992,13 +992,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
     return ' (incl. +$bonus capital grain bonus)';
   }
-
-  @override
-  String get provinceOverlay_extractionPartialReason =>
-      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
-
-  @override
-  String provinceOverlay_availableTileCount(int count, String name) {
-    return '$count $name';
-  }
 }
