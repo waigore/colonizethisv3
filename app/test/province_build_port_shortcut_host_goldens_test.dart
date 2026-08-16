@@ -27,67 +27,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'golden_capture_harness.dart';
+import 'province_shortcut_host_emit_fixtures.dart';
 
 const String _kGameId = 'g_bp_golden';
 const String _kHumanPlayerId = 'gp1';
 const String _kProvinceId = 'oldWorld|p1';
 const String _kTileKey = 'oldWorld|p1|0|0';
 
-final MapTopology _goldenCombinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
+final MapTopology _goldenCombinedTopology =
+    provinceShortcutHostCombinedTopology();
 
 class _GameServiceBuildPortGolden extends GameService {
   _GameServiceBuildPortGolden(super.box, super.adapter);
 
-  static final Map<String, MapTopology> _topologyByRegion = {
-    'oldWorld': MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 's1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-    ),
-  };
+  static final Map<String, MapTopology> _topologyByRegion =
+      provinceShortcutHostTopologyByRegion();
 
-  static final Map<String, TileMapResult> _tileMapByRegion = {
-    'oldWorld': TileMapResult(
-      width: 2,
-      height: 2,
-      grid: const [
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ],
-      terrainGrid: const [
-        [TerrainType.plains, TerrainType.plains],
-        [TerrainType.plains, TerrainType.plains],
-      ],
-      resourceGrid: [
-        [Resource.grain, Resource.meat],
-        [Resource.meat, Resource.meat],
-      ],
-    ),
-  };
+  static final Map<String, TileMapResult> _tileMapByRegion =
+      provinceShortcutHostGoldenCoastalTileMapByRegion();
 
   @override
   ({
@@ -150,9 +107,7 @@ Game goldenBuildPortGame() {
         displayName: 'Human',
         isHuman: true,
         capitalProvinceId: _kProvinceId,
-        stockpile: const Stockpile(
-          quantities: {'lumber': 10, 'castIron': 10},
-        ),
+        stockpile: const Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
       ),
     ],
     minorNations: const [],
@@ -239,8 +194,7 @@ void main() {
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
-            (ref) =>
-                _GameServiceBuildPortGolden(gamesBox, GameSaveAdapter()),
+            (ref) => _GameServiceBuildPortGolden(gamesBox, GameSaveAdapter()),
           ),
           appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -290,8 +244,7 @@ void main() {
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
-            (ref) =>
-                _GameServiceBuildPortGolden(gamesBox, GameSaveAdapter()),
+            (ref) => _GameServiceBuildPortGolden(gamesBox, GameSaveAdapter()),
           ),
           appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -333,9 +286,7 @@ void main() {
       await pumpNarrowHost(tester);
       final buildPortShortcut = find.byWidgetPredicate(
         (Widget w) =>
-            w is CtIconAction &&
-            w.onPressed != null &&
-            w.icon == Icons.anchor,
+            w is CtIconAction && w.onPressed != null && w.icon == Icons.anchor,
       );
       expect(buildPortShortcut, findsOneWidget);
     },

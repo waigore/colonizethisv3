@@ -27,67 +27,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'golden_capture_harness.dart';
+import 'province_shortcut_host_emit_fixtures.dart';
 
 const String _kGameId = 'g_brr_golden';
 const String _kHumanPlayerId = 'gp1';
 const String _kProvinceId = 'oldWorld|p1';
 const String _kTileKey = 'oldWorld|p1|0|0';
 
-final MapTopology _goldenCombinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
+final MapTopology _goldenCombinedTopology =
+    provinceShortcutHostCombinedTopology();
 
 class _GameServiceBuildRailroadGolden extends GameService {
   _GameServiceBuildRailroadGolden(super.box, super.adapter);
 
-  static final Map<String, MapTopology> _topologyByRegion = {
-    'oldWorld': MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 's1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-    ),
-  };
+  static final Map<String, MapTopology> _topologyByRegion =
+      provinceShortcutHostTopologyByRegion();
 
-  static final Map<String, TileMapResult> _tileMapByRegion = {
-    'oldWorld': TileMapResult(
-      width: 2,
-      height: 2,
-      grid: const [
-        ['p1', 's1'],
-        ['s1', 's1'],
-      ],
-      terrainGrid: const [
-        [TerrainType.plains, TerrainType.plains],
-        [TerrainType.plains, TerrainType.plains],
-      ],
-      resourceGrid: [
-        [Resource.grain, Resource.meat],
-        [Resource.meat, Resource.meat],
-      ],
-    ),
-  };
+  static final Map<String, TileMapResult> _tileMapByRegion =
+      provinceShortcutHostGoldenCoastalTileMapByRegion();
 
   @override
   ({
