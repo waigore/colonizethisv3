@@ -31,7 +31,7 @@ Efficiency is about 2 RP per gold except Maximum (~2.5). Some military/naval tec
 - **Cancel** clears the slot; **all progress on that tech is forfeited** (confirm when progress > 0).
 - Slot assignments persist across turns until unlock or cancel. An optional **goal** highlight may sort the Tree for you — it is UI-only and is **not** part of the research order payload.
 - **Empty seats and funding None are legal.** You may leave a slot empty or set funding to **None** when gold is needed for builds, recruits, diplomacy, or the market. That is a treasury choice, not a failed order. Ending the turn does **not** warn about unused research seats the way it may list idle civilians — review slots on `GAME40001` when you mean to invest again.
-- **Research this turn:** On `GAME40001` **Slots**, read the line under **Research Slots** — **Research this turn: −£X · +Y RP** — for the empire-wide gold and RP the next End Turn will apply across all funded seats (slots spend in order, so later seats may show no RP when earlier ones already consumed your treasury). When nothing will spend, the panel shows **Research this turn: no spend**. Tap a blocked slot’s gold row or RP delta for the per-slot breakdown.
+- **Research this turn:** On `GAME40001` **Slots**, read the line under **Research Slots** — **Research this turn: −£X · +Y RP** — for the empire-wide gold and RP the next End Turn will apply across all funded seats (slots spend in order, so later seats may show no RP when earlier ones already consumed your treasury). When nothing will spend, the panel shows **Research this turn: no spend**. Tap a blocked slot’s gold row or RP delta for the per-slot breakdown. If stationed Spies will speed a seat, that bonus is already inside **+Y RP** and the per-seat **+N RP** number.
 
 ### Eight branches (categories)
 
@@ -51,7 +51,7 @@ Eras (Renaissance → Industrial) are flavour for the chart; they do **not** har
 
 ### Spy insight (optional boost)
 
-Station Spies in rival Great Power provinces from the selected tile’s province panel (`MAP20001`) with **Station spy**, then **Relocate** on `UNIT10001` (Chapter 5), or pick a tile from the units panel **Relocate** path. Presence intel holds while they stay; when funding is at least **Low**, add roughly **+15% RP per such rival** (stacks) for techs they have already unlocked — after spy resolution that turn. Counter-espionage on home soil is separate (**Assign** → counter-spy). Do not bet a whole plan on spies alone.
+Station Spies in rival Great Power provinces from the selected tile’s province panel (`MAP20001`) with **Station spy**, then **Relocate** on `UNIT10001` (Chapter 5), or pick a tile from the units panel **Relocate** path. Presence intel holds while they stay. When a research seat is funded at **Low** or higher, and that rival has already unlocked the tech you are researching, the next End Turn adds about **+15% RP** per such rival (two rivals stack). On `GAME40001` **Slots**, the green **+N RP** line already includes that bonus. Tap it to open the breakdown; a **Spy insight** line names those courts in plain words (for example **Spy insight — France already knows this (+15%)**). The number uses Spies still in place now — if a Spy is caught before research is applied this turn, the live gain can be a little lower. Counter-espionage on home soil is separate (**Assign** → counter-spy). Do not bet a whole plan on spies alone.
 
 ## Counsel
 
@@ -79,7 +79,7 @@ AI research planners fill slots toward military, naval, or economic unlocks matc
 - [ ] Documents `GAME40001`Slots/Tree, slot count 3→4 with University, funding presets and cancel forfeiture.
 - [ ] Explains prerequisite DAG, researchable-only choose list, and RP cost tiers at player level.
 - [ ] Summarizes eight category branches and New World discovery prerequisites.
-- [ ] Notes goal slot is UI-only; mentions spy RP boost briefly.
+- [ ] Notes goal slot is UI-only; mentions spy insight on the Slots **+N RP** preview and RP breakdown.
 - [ ] States that empty seats / funding None are legal strategic thrift and that end-turn does not warn about unused research capacity.
 - [ ] Explains the **Research this turn** header on Slots and sequential multi-slot funding honesty.
 - [ ] Sources match the chapter coverage map.

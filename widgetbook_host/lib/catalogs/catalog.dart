@@ -198,6 +198,7 @@ part 'catalog_panel_map_establish_consulate_stories.dart';
 part 'catalog_panel_map_political_sight_stories.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
+part 'catalog_panels_technology_spy_insight.dart';
 part 'catalog_panels_counsel.dart';
 part 'catalog_panels_generals.dart';
 part 'catalog_panels_intervention.dart';

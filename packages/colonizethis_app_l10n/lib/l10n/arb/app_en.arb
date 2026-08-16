@@ -3169,6 +3169,27 @@
   "@technologyPanel_rpBreakdownIndustrialLabel": {
     "description": "Breakdown dialog row labelling the Industrial Funding of Research +20% military/naval bonus (Refs #3512)."
   },
+  "technologyPanel_rpBreakdownSpyInsightOne": "Spy insight — {court} already knows this (+15%)",
+  "@technologyPanel_rpBreakdownSpyInsightOne": {
+    "description": "Breakdown dialog Spy insight row when one rival court qualifies (Refs #4457).",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownSpyInsightMany": "Spy insight — {courts} already know this (+{percent}%)",
+  "@technologyPanel_rpBreakdownSpyInsightMany": {
+    "description": "Breakdown dialog Spy insight row when two or more rival courts qualify (Refs #4457).",
+    "placeholders": {
+      "courts": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "technologyPanel_rpBreakdownEffectiveLabel": "Effective RP this turn",
   "@technologyPanel_rpBreakdownEffectiveLabel": {
     "description": "Breakdown dialog row labelling the effective RP applied this turn (Refs #3512)."

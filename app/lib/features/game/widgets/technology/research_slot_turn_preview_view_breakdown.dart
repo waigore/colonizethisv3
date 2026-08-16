@@ -84,6 +84,11 @@ class _BreakdownMetrics extends StatelessWidget {
               preview.industrialBonusRpPerTurn,
             ),
           ),
+        if (preview.hasSpyInsight)
+          _BreakdownRow(
+            label: spyInsightBreakdownLabel(l10n, preview),
+            value: l10n.technologyPanel_rpValue(preview.spyInsightRpPerTurn),
+          ),
         _BreakdownRow(
           label: l10n.technologyPanel_rpBreakdownEffectiveLabel,
           value: l10n.technologyPanel_rpValue(preview.effectiveRpPerTurn),
@@ -96,6 +101,33 @@ class _BreakdownMetrics extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Plain-language Spy insight breakdown label (Refs #4457).
+@visibleForTesting
+String spyInsightBreakdownLabel(
+  AppLocalizations l10n,
+  ResearchSlotTurnPreview preview,
+) {
+  final names = preview.spyInsightRivalNames;
+  final percent = preview.spyInsightRivalCount * 15;
+  if (names.length <= 1) {
+    return l10n.technologyPanel_rpBreakdownSpyInsightOne(
+      names.isEmpty ? '' : names.first,
+    );
+  }
+  return l10n.technologyPanel_rpBreakdownSpyInsightMany(
+    _joinCourtDisplayNames(names),
+    percent,
+  );
+}
+
+String _joinCourtDisplayNames(List<String> names) {
+  if (names.length == 2) {
+    return '${names[0]} and ${names[1]}';
+  }
+  final head = names.sublist(0, names.length - 1).join(', ');
+  return '$head, and ${names.last}';
 }
 
 class _BreakdownBlockedNotice extends StatelessWidget {
