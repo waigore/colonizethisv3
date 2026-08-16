@@ -213,6 +213,7 @@ part 'catalog_primitives.dart';
 part 'catalog_data_screens.dart';
 part 'catalog_data_screens_trade.dart';
 part 'catalog_game_chrome.dart';
+part 'catalog_game_chrome_old_world_race.dart';
 part 'catalog_improvement_headroom.dart';
 part 'catalog_shell_chrome.dart';
 part 'catalog_event_feed.dart';

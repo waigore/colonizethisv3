@@ -150,34 +150,7 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         name: 'Players bar toggle — off (dim)',
         builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
       ),
-      WidgetbookUseCase(
-        name: 'Old World race — human ahead',
-        builder: (context) =>
-            _gameTabBarStoryFrame(oldWorldRace: _kHumanAheadRace),
-      ),
-      WidgetbookUseCase(
-        name: 'Old World race — rival ahead',
-        builder: (context) =>
-            _gameTabBarStoryFrame(oldWorldRace: _kRivalAheadRace),
-      ),
-      WidgetbookUseCase(
-        name: 'Old World race — players bar hidden',
-        builder: (context) => _gameTabBarStoryFrame(
-          oldWorldRace: _kHumanAheadRace,
-          showPlayersBar: false,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Old World race — 320 dp rival ahead',
-        builder: (context) => SizedBox(
-          width: 320,
-          child: _gameTabBarStoryFrame(
-            oldWorldRace: _kRivalAheadRace,
-            oldWorldRaceNarrow: true,
-            showPlayersBar: false,
-          ),
-        ),
-      ),
+      ..._oldWorldRaceTabBarStories,
       WidgetbookUseCase(
         name: 'Cargo — tight (accent numeric)',
         builder: (context) => _gameTabBarStoryFrame(
@@ -600,20 +573,6 @@ Widget _gameTopBarStoryFrame({required Widget child}) {
     ),
   );
 }
-
-const OldWorldRaceSnapshot _kHumanAheadRace = OldWorldRaceSnapshot(
-  focusPlayerId: 'gp1',
-  focusCount: 18,
-  threshold: 31,
-);
-
-const OldWorldRaceSnapshot _kRivalAheadRace = OldWorldRaceSnapshot(
-  focusPlayerId: 'gp1',
-  focusCount: 12,
-  threshold: 31,
-  rivalLeaderName: 'Spain',
-  rivalLeaderCount: 20,
-);
 
 /// Tab-bar story frame: full-width chrome under the dark scaffold so the
 /// row layout (region tabs + treasury/cargo cluster + players-bar toggle +
