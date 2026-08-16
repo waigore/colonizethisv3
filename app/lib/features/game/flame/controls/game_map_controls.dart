@@ -34,6 +34,9 @@ class GameMapControls extends StatelessWidget {
     this.treasuryNotDefined = false,
     this.cargoNotDefined = false,
     this.playerTurnEventsFeedNotDefined = false,
+    this.oldWorldRace,
+    this.onOldWorldRaceTap,
+    this.oldWorldRaceNarrow = false,
     super.key,
   });
 
@@ -60,6 +63,9 @@ class GameMapControls extends StatelessWidget {
   final bool treasuryNotDefined;
   final bool cargoNotDefined;
   final bool playerTurnEventsFeedNotDefined;
+  final OldWorldRaceSnapshot? oldWorldRace;
+  final VoidCallback? onOldWorldRaceTap;
+  final bool oldWorldRaceNarrow;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +104,9 @@ class GameMapControls extends StatelessWidget {
           cargoNotDefined: cargoNotDefined,
           isCargoUsedReliable: isCargoUsedReliable,
           cargoHoldLabel: cargoHoldLabel,
+          oldWorldRace: oldWorldRace,
+          onOldWorldRaceTap: onOldWorldRaceTap,
+          oldWorldRaceNarrow: oldWorldRaceNarrow,
           trailing: _GameMapControlsTabBarTrailing(
             playersBarToggleTooltip: l10n.mapControls_playersBarToggle,
             showPlayersBar: showPlayersBar,

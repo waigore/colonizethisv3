@@ -49,6 +49,7 @@ Implementation: [`GameTabBar`](../../app/lib/features/game/widgets/shell/game_ta
 - **Region tabs:** Inactive tabs paint a vertical `--bg-deep` → `--surface` gradient with a **1 px** `--border` outline on the top/left/right edges; label colour `--muted`. Active tab paints `--bg` fill, `--accent-dim` top/left/right borders, and a **2 px** `--accent` bottom border; label colour `--accent`.
 - **Treasury:** Coin icon (`ui_icon_treasury_coin.png`, 18×18 dp) + monospace value in `--accent-dim`; optional projected delta in `--success` (positive) or `--danger` (negative) at 10 sp. Tapping toggles exact/abbreviated formatting (unchanged behaviour).
 - **Cargo:** Crate icon (18×18 dp) + monospace `used/capacity`; numeric text colour follows the tight/full tier rules above (crate icon stays default). Separated from treasury by a **1 px** `--border` left rule. Tap opens the cargo details popover; desktop hover shows the tooltip string.
+- **Old World race chip:** Always-visible control after cargo and before the players-bar toggle. Shows the human (or observe-focus) Great Power `N / 31` Old World provinces and a rival-leader cue when another court is strictly ahead. Tap opens `GAME70001` with the same `NavigateToRouteEvent(Routes.victory, {game, humanPlayerId})` as the left-rail Victory button. Hidden when `Game.victory != null`. Independent of `showPlayersBar`. Layout, compact 320 dp copy, and ACs: [old-world-race-chip.md](components/old-world-race-chip.md).
 - **News toggle:** Trailing slot on the tab bar row (see [player-turn-event-feed.md](player-turn-event-feed.md)); not restyled in this slice.
 
 ---
@@ -201,14 +202,14 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 
 ### Players bar (in-game map stack)
 
-- **Toggle:** Tab-bar trailing cluster order is `treasury → cargo → players-bar toggle → news toggle`. Toggle chrome matches the news toggle (`28 × 22 dp`, dark editorial-monocle border/hover/active). Persisted in `MapViewState.showPlayersBar`. **New-game default:** `false` (set only in standard game setup; bar starts hidden). **Legacy / model default:** `true` when `mapViewState` or `showPlayersBar` is missing on load (`MapViewState.defaults` / `fromJson` `?? true`). Functional in **global observe** (explicit carve-out from observe sentinel pattern).
+- **Toggle:** Tab-bar trailing cluster order is `treasury → cargo → Old World race chip → players-bar toggle → news toggle`. The race chip is the glanceable win-race anchor and stays mounted when the bar is hidden; the bar is the full Great Power comparison. Toggle chrome matches the news toggle (`28 × 22 dp`, dark editorial-monocle border/hover/active). Persisted in `MapViewState.showPlayersBar`. **New-game default:** `false` (set only in standard game setup; bar starts hidden). **Legacy / model default:** `true` when `mapViewState` or `showPlayersBar` is missing on load (`MapViewState.defaults` / `fromJson` `?? true`). Functional in **global observe** (explicit carve-out from observe sentinel pattern).
 - **Placement:** Floating column anchored below the top bar + tab bar chrome. **Wide:** `top: 78 dp`, `right: 6 dp` (respects province-panel right inset). **Narrow:** below the news-feed anchor (`top: 56 dp` region); stacks vertically beneath an open `PlayerTurnEventFeedCard` when both are visible.
 - **Visibility:** Shown when `mapViewState.showPlayersBar == true` and `Game.victory == null`. Hidden when toggled off or during victory overlay.
-- **Order:** One chip per **Great Power** (`Game.players` filtered to non-tribe entries). Sorted by **`greatPowerPowerScore` descending**; tie-break `player.id` ascending.
-- **Chip content:** `8 × 8 dp` swatch, `displayName`, and **power score** formatted with `NumberFormat.decimalPattern('en_US')`, monospace `--accent-dim` (not OW province count).
+- **Order:** One chip per **Great Power** (`Game.players` filtered to non-tribe entries). Sorted like `GAME70001`: **Old World province count descending**; tie-break `displayName` ascending.
+- **Chip content:** `8 × 8 dp` swatch, `displayName`, and default number **Old World `N / 31`** (same threshold as `GAME70001`; not a raw power-score integer), monospace `--accent-dim`.
 - **Name emphasis:** Normal play — human GP name in **bold accent** (`FontWeight.w600`). Player observe — observed GP bold accent. Global observe — all names muted (no bold accent).
 - **Swatch colour:** `factionOwnershipColorMapForOldWorld(game)` (same as map ownership tint).
-- **Interaction:** Chip column is non-interactive (pointer pass-through).
+- **Interaction:** Chips accept pointer for **tooltip / long-press** only. Tooltip copy is calendar-end overall strength (`greatPowerPowerScore`, `en_US` decimal) labeled as comparison used only if the calendar ends with no province-count winner. Chips do **not** open `GAME70001` (the tab-bar race chip does).
 
 **Acceptance (players bar):**
 
@@ -220,7 +221,8 @@ When the in-game map renders on a narrow viewport (`MediaQuery.size.width < kNar
 - Given narrow viewport (<600 dp) and `showPlayersBar == false` on a new game, when the map renders, then `GameMapPlayersBar` is not mounted.
 - Given global or player observe mode and `showPlayersBar == false`, when the map renders, then the bar is hidden and the players-bar toggle remains functional.
 - Given `showPlayersBar == false`, when the wide map renders, then `GameMapPlayersBar` is not mounted.
-- Given two GPs with deterministic `greatPowerPowerScore` values, when the bar renders, then chips appear in descending score order with formatted power scores.
+- Given two GPs with deterministic Old World province counts, when the bar renders, then chips appear in descending Old World count order (display-name ascending on ties) with default numbers `N / 31`.
+- Given a players-bar chip is shown, when the player requests overall strength (tooltip or long-press), then the UI layer shows calendar-end strength labeled as comparison used only if the calendar ends with no province-count winner.
 - Given normal play for human `gp1`, when the bar renders, then `gp1` display name uses bold accent and other GP names use muted style.
 - Given player observe for `gp2`, when the bar renders, then `gp2` name is bold accent.
 - Given global observe, when the bar renders, then all GP names use muted style.
@@ -281,7 +283,7 @@ On mobile: same tab row; map area fills available space; one region visible at a
 
 ## Components
 
-- `GameMapArea`, `CtRegionMap`, map tool row, treasury/cargo indicators — see [map-widget.md](map-widget.md), [empire-buttons.md](empire-buttons.md).
+- `GameMapArea`, `CtRegionMap`, map tool row, treasury/cargo/Old World race indicators — see [map-widget.md](map-widget.md), [empire-buttons.md](empire-buttons.md), [old-world-race-chip.md](components/old-world-race-chip.md).
 
 ---
 
@@ -388,6 +390,8 @@ Folder: **Game Map Options Dialog** — stories for [GameMapOptionsDialog](../..
 - **Given** `capacity > 0` and reliable `used ≥ capacity`, **when** the cargo indicator renders, **then** only the numeric text resolves to `--danger`.
 - **Given** the cargo details panel is open, **when** the player dismisses it via ×, outside tap on the map scrim, or Esc, **then** the panel closes and tapping cargo again reopens it.
 - **Given** the in-game shell at viewport width `< kNarrowBreakpoint` (600 dp), **when** the cargo details panel is open, **then** the `GameTopBar` Next turn control remains tappable (barrier scrim starts below shell chrome).
+- **Given** the in-game shell control row is visible and `Game.victory == null`, **when** the UI renders region tabs, **then** the UI layer also renders the Old World race chip after cargo with the focus court’s `N / 31` per [old-world-race-chip.md](components/old-world-race-chip.md) (Refs #4451).
+
 - **Given** the player has just entered the in-game shell (after init or load), **when** the map area is first shown, **then** `showMapResources`, `showMapImprovements`, and `showMapRoads` are all **ON** (full detail per [map-widget.md](map-widget.md) § Base layer display mode) unless the save already persisted other values.
 - **Given** the Empire overview map is visible and the current flags equal a cycle preset, **when** the user taps the base-layer cycle button at the **bottom-left** of the map area (leftmost of the horizontal map tool row), **then** the UI layer writes the next preset in order terrain-only → resources → resources+improvements → full detail → terrain-only, persists those flags on `MapViewState`, and the button tooltip/semantics name the **current** combination.
 - **Given** resources are off, improvements are on, and roads are off (non-preset), **when** the user taps the base-layer cycle button, **then** all three flags become off (terrain-only) and the tooltip/semantics name terrain only.

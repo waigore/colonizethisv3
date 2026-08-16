@@ -14,6 +14,7 @@
 ## Trigger conditions
 
 - Left-rail **Victory** button (`kEmpireVictoryButtonKey`), always **last** among core empire buttons (after Technology).
+- `MAP10001` tab-bar **Old World race chip** (same `NavigateToRouteEvent` payload as the left-rail button). See [old-world-race-chip.md](components/old-world-race-chip.md).
 - `NavigateToRouteEvent(Routes.victory, {game, humanPlayerId})` from bus wiring on `GameScreen`.
 - Route path: `/game/victory`.
 
@@ -54,6 +55,7 @@ When map data is unavailable, standings render full width at all breakpoints.
 | Source | Condition | Result |
 |--------|-----------|--------|
 | Left rail Victory | always (non-debug seventh button) | `NavigateToRouteEvent` → `VictoryScreen` |
+| Tab-bar Old World race chip | `Game.victory == null` | Same `NavigateToRouteEvent(Routes.victory, {game, humanPlayerId})` |
 | Observe mode | global observe without player | `ObserveModeNotDefinedPanel` via shell guard |
 
 ### User actions

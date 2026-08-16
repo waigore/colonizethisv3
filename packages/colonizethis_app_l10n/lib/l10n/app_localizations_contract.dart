@@ -2645,6 +2645,42 @@ abstract class AppLocalizations {
   /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
   String get mapControls_playersBarToggle;
 
+  /// Tab-bar Old World race chip fraction with spaces (wide).
+  String mapControls_oldWorldRace(String count, String threshold);
+
+  /// Tab-bar Old World race chip fraction without spaces (narrow).
+  String mapControls_oldWorldRace_compact(String count, String threshold);
+
+  /// Wide rival-leader cue after the focus fraction.
+  String mapControls_oldWorldRace_rivalCue(
+    String name,
+    String count,
+    String threshold,
+  );
+
+  /// Narrow rival-leader cue (omits the second threshold).
+  String mapControls_oldWorldRace_rivalCueCompact(String name, String count);
+
+  /// Hover tooltip for the tab-bar Old World race chip.
+  String get mapControls_oldWorldRace_tooltip;
+
+  /// Semantics label for the race chip when the focus court is not behind.
+  String mapControls_oldWorldRace_semanticsLabel(
+    String count,
+    String threshold,
+  );
+
+  /// Semantics label when a rival court leads the Old World race.
+  String mapControls_oldWorldRace_semanticsWithRival(
+    String count,
+    String threshold,
+    String name,
+    String rivalCount,
+  );
+
+  /// Players-bar chip tooltip for calendar-end overall strength.
+  String mapControls_playersBar_calendarStrengthTooltip(String score);
+
   /// Percentage label with no space before percent sign.
   String common_percent(int value);
 
