@@ -11,6 +11,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gap.dart';
 import 'research_slot_preview.dart';
+import 'research_slot_spy_insight.dart';
 import 'research_turn_funding_header.dart';
 import 'technology_panel_research_slots.dart';
 import 'technology_panel_widgets.dart';
@@ -45,12 +46,19 @@ Widget buildTechnologyPanelSlotsBody({
       if (tech == null || assignment == null) {
         continue;
       }
+      final insight = spyInsightForResearchPreview(
+        game: game,
+        playerId: humanPlayerId,
+        techId: tech.id,
+      );
       occupiedPreviewInputs.add(
         ResearchSlotPreviewInput(
           slotIndex: index,
           tech: tech,
           committedProgress: progress[techId] ?? 0,
           funding: assignment.funding,
+          qualifyingRivalGpCount: insight.count,
+          qualifyingRivalDisplayNames: insight.names,
         ),
       );
     }
@@ -88,9 +96,9 @@ Widget buildTechnologyPanelSlotsBody({
         Text(
           l10n.technologyPanel_noneYet,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: EditorialMonoclePalette.muted,
-                fontStyle: FontStyle.italic,
-              ),
+            color: EditorialMonoclePalette.muted,
+            fontStyle: FontStyle.italic,
+          ),
         )
       else
         Wrap(

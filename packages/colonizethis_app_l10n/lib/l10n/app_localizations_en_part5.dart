@@ -2,6 +2,18 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
+  String get techEffectSummary_improved_trapping_techniques_0 =>
+      'Improves: Furs extraction cap to 2';
+
+  @override
+  String get techEffectSummary_improved_trapping_techniques_1 =>
+      'Unlocks: Riverboats';
+
+  @override
+  String get techEffectSummary_industrial_funding_of_research_0 =>
+      'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)';
+
+  @override
   String get techEffectSummary_industrial_funding_of_research_1 =>
       'Improves: +20% effective RP (floor) for military and naval category research allocations';
 
