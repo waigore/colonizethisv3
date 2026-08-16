@@ -150,6 +150,7 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         name: 'Players bar toggle — off (dim)',
         builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
       ),
+      ..._oldWorldRaceTabBarStories,
       WidgetbookUseCase(
         name: 'Cargo — tight (accent numeric)',
         builder: (context) => _gameTabBarStoryFrame(
@@ -587,6 +588,8 @@ Widget _gameTabBarStoryFrame({
   int cargoUsed = 3,
   int cargoCapacity = 12,
   String cargoHoldLabel = '3/12',
+  OldWorldRaceSnapshot? oldWorldRace,
+  bool oldWorldRaceNarrow = false,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -609,6 +612,8 @@ Widget _gameTabBarStoryFrame({
               cargoUsed: cargoUsed,
               cargoCapacity: cargoCapacity,
               cargoHoldLabel: cargoHoldLabel,
+              oldWorldRace: oldWorldRace,
+              oldWorldRaceNarrow: oldWorldRaceNarrow,
             ),
           ],
         ),
@@ -628,6 +633,8 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.cargoUsed,
     required this.cargoCapacity,
     required this.cargoHoldLabel,
+    this.oldWorldRace,
+    this.oldWorldRaceNarrow = false,
   });
 
   final int regionIndex;
@@ -639,6 +646,8 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final int cargoUsed;
   final int cargoCapacity;
   final String cargoHoldLabel;
+  final OldWorldRaceSnapshot? oldWorldRace;
+  final bool oldWorldRaceNarrow;
 
   @override
   State<_GameTabBarStoryShell> createState() => _GameTabBarStoryShellState();
@@ -667,6 +676,9 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       cargoNotDefined: false,
       isCargoUsedReliable: true,
       cargoHoldLabel: widget.cargoHoldLabel,
+      oldWorldRace: widget.oldWorldRace,
+      onOldWorldRaceTap: widget.oldWorldRace == null ? null : () {},
+      oldWorldRaceNarrow: widget.oldWorldRaceNarrow,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[

@@ -10,7 +10,7 @@ You have inherited a **Great Power** — a playable nation. On each turn you iss
 
 - **Old World** and **New World** each have their own land and water. Armies march only into a neighbouring province on the **same** map. Fleets sail from sea to sea and can touch a coast. The two maps meet **only** at **warp** sea (paired sea zones). Ports and colonies reach home by sea paths **plus** those warp links — there is no land bridge.
 - Warp sea is the water with the yellow glow (and the extra hover line). That is the only bridge between the two maps.
-- Switch maps with the **Old World** / **New World** tabs on **Empire overview / map area**. The small map in the bottom-right only moves the camera on the map you are already viewing.
+- Switch maps with the **Old World** / **New World** tabs on **Empire overview / map area**. The small map in the bottom-right only moves the camera on the map you are already viewing. That same tab row also shows how many Old World provinces you hold out of 31 (Chapter 15).
 
 ### Reading provinces and sea zones
 

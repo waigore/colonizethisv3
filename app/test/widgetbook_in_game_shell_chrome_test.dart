@@ -10,6 +10,7 @@ import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/old_world_race_chip.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
@@ -74,6 +75,27 @@ void main() {
           expect(find.byType(GameTabBar), findsOneWidget);
           expect(find.byType(PlayersBarToggleButton), findsOneWidget);
           expect(find.byType(PlayerTurnEventsFeedToggleButton), findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets(
+      'Game Tab Bar folder exposes Old World race variants (Refs #4451)',
+      (WidgetTester tester) async {
+        for (final name in const [
+          'Old World race — human ahead',
+          'Old World race — rival ahead',
+          'Old World race — players bar hidden',
+          'Old World race — 320 dp rival ahead',
+        ]) {
+          await pumpWidgetbookStory(
+            tester,
+            gameTabBarDirectories,
+            folder: 'Game Tab Bar',
+            useCase: name,
+          );
+          expect(find.byType(GameTabBar), findsOneWidget);
+          expect(find.byType(OldWorldRaceChip), findsOneWidget);
         }
       },
     );

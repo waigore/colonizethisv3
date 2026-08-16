@@ -9,6 +9,7 @@ import 'cargo_hold_indicator_support.dart';
 import 'game_tab_bar.dart';
 import 'game_tab_bar_indicators.dart';
 import 'game_tab_bar_region_tabs.dart';
+import 'old_world_race_chip.dart';
 
 /// Stateful implementation for [GameTabBar] (Refs #4117 de-part).
 class GameTabBarState extends State<GameTabBar> {
@@ -56,22 +57,20 @@ class GameTabBarState extends State<GameTabBar> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle monoBody = (theme.textTheme.bodySmall ?? const TextStyle())
-        .copyWith(
-          fontFamily: 'monospace',
-          fontSize: 11,
-          height: 1.0,
-        );
+        .copyWith(fontFamily: 'monospace', fontSize: 11, height: 1.0);
     final treasuryLabel = widget.treasuryNotDefined
         ? (widget.treasuryObserveLabel ?? '—')
         : _formatTreasury(widget.treasury);
     final deltaLabel = widget.treasuryNotDefined
         ? null
         : _treasuryDeltaLabel(widget.treasuryDelta);
-    final deltaColor =
-        _treasuryDeltaColor(deltaLabel == null ? null : widget.treasuryDelta);
+    final deltaColor = _treasuryDeltaColor(
+      deltaLabel == null ? null : widget.treasuryDelta,
+    );
     final AppLocalizations l10n = appL10n(context);
-    final String usedToken =
-        widget.isCargoUsedReliable ? '${widget.cargoUsed}' : '—';
+    final String usedToken = widget.isCargoUsedReliable
+        ? '${widget.cargoUsed}'
+        : '—';
     final String capacityToken = '${widget.cargoCapacity}';
     final Color cargoNumericColor = cargoHoldNumericColor(
       used: widget.cargoUsed,
@@ -98,96 +97,127 @@ class GameTabBarState extends State<GameTabBar> {
           padding: const EdgeInsets.symmetric(
             horizontal: GameTabBar.horizontalPadding,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GameRegionTab(
-                        label: widget.oldWorldLabel,
-                        selected: widget.regionIndex == 0,
-                        onTap: () => widget.onRegionIndexChanged(0),
-                      ),
-                      const SizedBox(width: GameTabBar.regionTabGap),
-                      if (kCtE2EEnabled)
-                        KeyedSubtree(
-                          key: kCtE2ERegionTabNewWorldKey,
-                          child: GameRegionTab(
-                            label: widget.newWorldLabel,
-                            selected: widget.regionIndex == 1,
-                            onTap: () => widget.onRegionIndexChanged(1),
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GameRegionTab(
+                            label: widget.oldWorldLabel,
+                            selected: widget.regionIndex == 0,
+                            onTap: () => widget.onRegionIndexChanged(0),
                           ),
-                        )
-                      else
-                        GameRegionTab(
-                          label: widget.newWorldLabel,
-                          selected: widget.regionIndex == 1,
-                          onTap: () => widget.onRegionIndexChanged(1),
-                        ),
-                    ],
+                          const SizedBox(width: GameTabBar.regionTabGap),
+                          if (kCtE2EEnabled)
+                            KeyedSubtree(
+                              key: kCtE2ERegionTabNewWorldKey,
+                              child: GameRegionTab(
+                                label: widget.newWorldLabel,
+                                selected: widget.regionIndex == 1,
+                                onTap: () => widget.onRegionIndexChanged(1),
+                              ),
+                            )
+                          else
+                            GameRegionTab(
+                              label: widget.newWorldLabel,
+                              selected: widget.regionIndex == 1,
+                              onTap: () => widget.onRegionIndexChanged(1),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              GestureDetector(
-                key: kTreasuryIndicatorKey,
-                onTap: widget.treasuryNotDefined
-                    ? null
-                    : () => setState(
-                          () => _showExactTreasury = !_showExactTreasury,
-                        ),
-                child: GameTabBarTreasuryIndicator(
-                  treasuryLabel: treasuryLabel,
-                  deltaLabel: deltaLabel,
-                  deltaColor: deltaColor,
-                  labelStyle: monoBody.copyWith(
-                    color: EditorialMonoclePalette.accentDim,
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            key: kTreasuryIndicatorKey,
+                            onTap: widget.treasuryNotDefined
+                                ? null
+                                : () => setState(
+                                    () => _showExactTreasury =
+                                        !_showExactTreasury,
+                                  ),
+                            child: GameTabBarTreasuryIndicator(
+                              treasuryLabel: treasuryLabel,
+                              deltaLabel: deltaLabel,
+                              deltaColor: deltaColor,
+                              labelStyle: monoBody.copyWith(
+                                color: EditorialMonoclePalette.accentDim,
+                              ),
+                              deltaStyle: monoBody.copyWith(
+                                fontSize: 10,
+                                color: deltaColor,
+                              ),
+                            ),
+                          ),
+                          GameTabBarCargoHoldIndicator(
+                            key: _cargoHoldAnchorKey,
+                            cargoHoldLabel: widget.cargoHoldLabel,
+                            labelStyle: monoBody,
+                            numericColor: cargoNumericColor,
+                            tooltip: cargoInteractive
+                                ? l10n.mapControls_cargoHold_tooltip(
+                                    usedToken,
+                                    capacityToken,
+                                  )
+                                : null,
+                            semanticsLabel: cargoInteractive
+                                ? l10n.mapControls_cargoHold_semanticsLabel(
+                                    usedToken,
+                                    capacityToken,
+                                  )
+                                : widget.cargoHoldLabel,
+                            onTap: cargoInteractive
+                                ? () {
+                                    final RenderBox? tabBarBox =
+                                        context.findRenderObject()
+                                            as RenderBox?;
+                                    final double chromeBottomY =
+                                        (tabBarBox
+                                                ?.localToGlobal(Offset.zero)
+                                                .dy ??
+                                            0) +
+                                        GameTabBar.height;
+                                    showCargoHoldDetailsPopover(
+                                      context: context,
+                                      anchorKey: _cargoHoldAnchorKey,
+                                      chromeBottomY: chromeBottomY,
+                                      l10n: l10n,
+                                      cargoUsed: widget.cargoUsed,
+                                      cargoCapacity: widget.cargoCapacity,
+                                      isCargoUsedReliable:
+                                          widget.isCargoUsedReliable,
+                                    );
+                                  }
+                                : null,
+                          ),
+                          if (widget.oldWorldRace != null)
+                            OldWorldRaceChip(
+                              snapshot: widget.oldWorldRace!,
+                              narrow: widget.oldWorldRaceNarrow,
+                              onTap: widget.onOldWorldRaceTap,
+                            ),
+                          const SizedBox(width: GameTabBar.clusterTrailingGap),
+                          widget.trailing,
+                        ],
+                      ),
+                    ),
                   ),
-                  deltaStyle: monoBody.copyWith(
-                    fontSize: 10,
-                    color: deltaColor,
-                  ),
-                ),
-              ),
-              GameTabBarCargoHoldIndicator(
-                key: _cargoHoldAnchorKey,
-                cargoHoldLabel: widget.cargoHoldLabel,
-                labelStyle: monoBody,
-                numericColor: cargoNumericColor,
-                tooltip: cargoInteractive
-                    ? l10n.mapControls_cargoHold_tooltip(usedToken, capacityToken)
-                    : null,
-                semanticsLabel: cargoInteractive
-                    ? l10n.mapControls_cargoHold_semanticsLabel(
-                        usedToken,
-                        capacityToken,
-                      )
-                    : widget.cargoHoldLabel,
-                onTap: cargoInteractive
-                    ? () {
-                        final RenderBox? tabBarBox =
-                            context.findRenderObject() as RenderBox?;
-                        final double chromeBottomY =
-                            (tabBarBox?.localToGlobal(Offset.zero).dy ?? 0) +
-                            GameTabBar.height;
-                        showCargoHoldDetailsPopover(
-                          context: context,
-                          anchorKey: _cargoHoldAnchorKey,
-                          chromeBottomY: chromeBottomY,
-                          l10n: l10n,
-                          cargoUsed: widget.cargoUsed,
-                          cargoCapacity: widget.cargoCapacity,
-                          isCargoUsedReliable: widget.isCargoUsedReliable,
-                        );
-                      }
-                    : null,
-              ),
-              const SizedBox(width: GameTabBar.clusterTrailingGap),
-              widget.trailing,
-            ],
+                ],
+              );
+            },
           ),
         ),
       ),

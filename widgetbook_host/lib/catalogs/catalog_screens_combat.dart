@@ -559,7 +559,7 @@ List<WidgetbookNode> get playersBarDirectories => [
         },
       ),
       WidgetbookUseCase(
-        name: 'Human GP highlighted — power scores',
+        name: 'Human GP highlighted — Old World N / 31',
         builder: (context) {
           final result = loadSeed42InitGameResult();
           final game = result.game;
