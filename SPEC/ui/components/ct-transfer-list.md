@@ -1,14 +1,14 @@
 # CtTransferList (component)
 
-**SPEC/ui/components** — Reusable dual-list transfer composite for moving counted items (ships, regiments, generic typed tokens). Implementation: [`app/lib/widgets/ct_transfer_list.dart`](../../../app/lib/widgets/ct_transfer_list.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtTransferList*, *CtNinePatchButton*, *CtPanel*.
+**SPEC/ui/components** — Dual-list transfer composite for counted items (ships, regiments, typed tokens). Implementation: [`app/lib/widgets/ct_transfer_list.dart`](../../../app/lib/widgets/ct_transfer_list.dart). Catalog atoms: [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtTransferList*, *CtNinePatchButton*, *CtPanel*.
 
-This composite is **not** a screen and has **no** stable screen ID. It is the canonical dual-list transfer scaffold referenced by the screen specs under [Consumers](#consumers).
+Not a screen (no stable screen ID). Canonical dual-list scaffold for the hosts under [Consumers](#consumers).
 
 ---
 
 ## Purpose
 
-Consolidates the dual-panel quantity-transfer chrome shared by `SplitArmyDialog`, `SplitFleetDialog`, and `TransferToHomeFleetDialog`. Callers configure per-side titles, initial counts, item labels, and a `canConfirm` hook; the composite owns the side panels, per-row one / move-all controls, running totals, the Cancel / Confirm action row, and the narrow-viewport stack rule honouring `kMinViewportWidth = 320` dp (per [`mobile-adaptation.md`](../mobile-adaptation.md) § 7).
+Shared dual-panel quantity-transfer chrome for `SplitArmyDialog`, `SplitFleetDialog`, and `TransferToHomeFleetDialog`. Callers set titles, initial counts, labels, and `canConfirm`; the composite owns panels, per-row one / move-all controls, totals, Cancel / Confirm, and the narrow stack honouring `kMinViewportWidth = 320` dp ([`mobile-adaptation.md`](../mobile-adaptation.md) § 7).
 
 ---
 
@@ -23,13 +23,13 @@ Consolidates the dual-panel quantity-transfer chrome shared by `SplitArmyDialog`
 | `itemLabelBuilder` | `String Function(String)?` | identity | Maps `itemId` → localized row label. |
 | `canConfirm` | `bool Function(Map, Map)?` | `rightTotal > 0` | Confirm gate. |
 | `onChanged` | `void Function(Map, Map)?` | `null` | Fires after every accepted move. |
-| `extraContentBuilder` | `Widget? Function(Map, Map)?` | `null` | Optional content between the side panels and the action row (Home Fleet cargo line). |
+| `extraContentBuilder` | `Widget? Function(Map, Map)?` | `null` | Optional slot between panels and the action row (Home Fleet cargo line). |
 | `onConfirm` | `void Function(Map, Map)` | required | Fires when `canConfirm` returns `true`. |
 | `onCancel` | `VoidCallback?` | `null` | When supplied, Cancel renders. |
 | `listHeight` | `double` | `150` | Pixel height of each scrollable list. |
 | `totalLabelBuilder` | `String Function(int)?` | `'Total: $total items'` | Total-row formatter. |
 
-Empty labels (`leftEmptyLabel` / `rightEmptyLabel`), move labels (`>`/`>>`/`<`/`<<`), and action button labels (`cancelLabel`, `confirmLabel`) are configurable `String` props defaulting to `'No items'`, the ASCII arrow glyphs, `'Cancel'`, and `'Confirm'`. Exposed constant: `kCtTransferListSideBySideMinWidth = 360` (logical px). Per-row widget keys: `CtTransferListKeys.{leftMoveOne, leftMoveAll, rightMoveOne, rightMoveAll}` keyed by `itemId`.
+Empty labels (`leftEmptyLabel` / `rightEmptyLabel`), move labels (`>`/`>>`/`<`/`<<`), and action labels (`cancelLabel`, `confirmLabel`) default to `'No items'`, ASCII arrows, `'Cancel'`, and `'Confirm'`. Constant: `kCtTransferListSideBySideMinWidth = 360` (logical px). Row keys: `CtTransferListKeys.{leftMoveOne, leftMoveAll, rightMoveOne, rightMoveAll}` keyed by `itemId`.
 
 ---
 
