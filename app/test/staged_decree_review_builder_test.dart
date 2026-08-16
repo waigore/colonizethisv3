@@ -65,7 +65,10 @@ void main() {
     expect(review.families, hasLength(1));
     expect(review.families.single.family, StagedDecreeFamily.civilianWork);
     expect(review.families.single.familyLabel, 'Civilian work');
-    expect(review.families.single.rows.single.label, contains('Explorer'));
+    expect(
+      review.families.single.rows.single.label,
+      contains(kUnitTypeExplorer),
+    );
     expect(
       review.families.single.rows.single.label,
       isNot(contains('WorkOrder')),
