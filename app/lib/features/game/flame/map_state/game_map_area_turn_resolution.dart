@@ -58,6 +58,7 @@ mixin GameMapAreaTurnResolution
     final warnIdleCiviliansEnabled =
         settings[UxSettingsKeys.warnIdleCiviliansOnEndTurn] as bool? ?? true;
     final bus = ref.read(appEventBusProvider);
+    final mapDataForConfirm = ref.read(gameServiceProvider).getMapData(game.id);
     final ok = await confirmNextTurnWithIdleCivilianWarning(
       context: context,
       game: game,
@@ -66,6 +67,7 @@ mixin GameMapAreaTurnResolution
       orders: orders,
       warnIdleCiviliansEnabled: warnIdleCiviliansEnabled,
       bus: bus,
+      topology: mapDataForConfirm?.combinedTopology,
       onDisableIdleCivilianWarning: () => ref
           .read(settingsProvider.notifier)
           .setValue(UxSettingsKeys.warnIdleCiviliansOnEndTurn, false),
@@ -117,8 +119,7 @@ mixin GameMapAreaTurnResolution
       final sessionResult = await awaitGameMapAreaTurnResolutionSession(
         host: this,
         service: service,
-        aiCatalog:
-            ref.read(blessedAiProfileCatalogProvider).value ?? const {},
+        aiCatalog: ref.read(blessedAiProfileCatalogProvider).value ?? const {},
         runner: runner,
         game: game,
         orders: orders,
@@ -172,7 +173,7 @@ mixin GameMapAreaTurnResolution
 }
 
 Future<({TurnResolutionTerminalEvent terminal, String sessionId})>
-    awaitGameMapAreaTurnResolutionSession({
+awaitGameMapAreaTurnResolutionSession({
   required GameMapAreaStateBase host,
   required GameService service,
   required Map<String, AiProfile> aiCatalog,
@@ -270,8 +271,9 @@ void applyGameMapAreaTurnResolutionTerminal({
         'logic: next_turn_ui_map terminal_error gameId=${game.id} '
         'sessionId=$activeSessionId elapsedMs=${uiStopwatch.elapsedMilliseconds}',
         error: e.errorMessage,
-        stackTrace:
-            e.stackTrace.isEmpty ? null : StackTrace.fromString(e.stackTrace),
+        stackTrace: e.stackTrace.isEmpty
+            ? null
+            : StackTrace.fromString(e.stackTrace),
       );
       throw StateError(e.errorMessage);
   }

@@ -17,6 +17,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_app/features/game/turn_resolution/staged_decree_review.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -61,37 +62,36 @@ void main() {
     ActiveMapTheme.resetToDefaultsForTest();
   });
 
-  testWidgets(
-    'golden: DLG60001 simple confirm (Refs #4140 AC8 companion)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('next_turn_confirm_simple_golden');
+  testWidgets('golden: DLG60001 simple confirm (Refs #4140 AC8 companion)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('next_turn_confirm_simple_golden');
 
-      await pumpGoldenHost(
-        tester,
-        boundaryKey: boundaryKey,
-        physicalSize: const Size(420, 280),
-        settle: false,
-        includeLocalizations: true,
-        scaffoldBackgroundColor:
-            AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        child: const NextTurnConfirmationDialog(currentTurn: 7),
-      );
+    await pumpGoldenHost(
+      tester,
+      boundaryKey: boundaryKey,
+      physicalSize: const Size(420, 280),
+      settle: false,
+      includeLocalizations: true,
+      scaffoldBackgroundColor:
+          AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      child: const NextTurnConfirmationDialog(currentTurn: 7),
+    );
 
-      expect(tester.takeException(), isNull);
-      expectEditorialMonocleDarkChrome(tester);
-      expect(find.byType(CtDialogShell), findsOneWidget);
-      expect(find.text('End turn?'), findsOneWidget);
-      expect(find.text('No'), findsOneWidget);
-      expect(find.text('Yes'), findsOneWidget);
-      expect(find.byType(CtNinePatchButton), findsNWidgets(2));
-      expect(find.byType(CtToggleSwitch), findsNothing);
+    expect(tester.takeException(), isNull);
+    expectEditorialMonocleDarkChrome(tester);
+    expect(find.byType(CtDialogShell), findsOneWidget);
+    expect(find.text('End turn?'), findsOneWidget);
+    expect(find.text('No'), findsOneWidget);
+    expect(find.text('Yes'), findsOneWidget);
+    expect(find.byType(CtNinePatchButton), findsNWidgets(2));
+    expect(find.byType(CtToggleSwitch), findsNothing);
 
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/next_turn_confirm_dialog_simple.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/next_turn_confirm_dialog_simple.png'),
+    );
+  });
 
   testWidgets(
     'golden: DLG60001 idle-civilian warning variant (Refs #4140 AC1)',
@@ -139,8 +139,9 @@ void main() {
     'golden: DLG60001 warning variant @ 320×640 with several civilians '
     '(Refs #4140 AC11)',
     (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('next_turn_confirm_warning_320dp_golden');
+      const boundaryKey = ValueKey<String>(
+        'next_turn_confirm_warning_320dp_golden',
+      );
 
       await pumpGoldenHost(
         tester,
@@ -164,6 +165,93 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/next_turn_confirm_dialog_warning_320dp.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: DLG60001 staged one-family compact summary (Refs #4469)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'next_turn_confirm_staged_one_golden',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(420, 360),
+        settle: false,
+        includeLocalizations: true,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: const NextTurnConfirmationDialog(
+          currentTurn: 7,
+          stagedReview: StagedDecreeReview(
+            families: [
+              StagedDecreeFamilyGroup(
+                family: StagedDecreeFamily.armyMoves,
+                familyLabel: 'Army moves',
+                rows: [StagedDecreeRow(id: 'a1', label: 'Army a1 → Alpha')],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.text('STAGED THIS TURN'), findsOneWidget);
+      expect(find.text('Yes'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/next_turn_confirm_dialog_staged_one.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: DLG60001 staged multi-family compact summary (Refs #4469)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'next_turn_confirm_staged_multi_golden',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(420, 360),
+        settle: false,
+        includeLocalizations: true,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: const NextTurnConfirmationDialog(
+          currentTurn: 12,
+          stagedReview: StagedDecreeReview(
+            families: [
+              StagedDecreeFamilyGroup(
+                family: StagedDecreeFamily.civilianWork,
+                familyLabel: 'Civilian work',
+                rows: [StagedDecreeRow(id: 'w1', label: 'Explorer: Explore')],
+              ),
+              StagedDecreeFamilyGroup(
+                family: StagedDecreeFamily.trade,
+                familyLabel: 'Trade',
+                rows: [StagedDecreeRow(id: 't1', label: 'Bid Grain × 10')],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('Civilian work (1)'), findsOneWidget);
+      expect(find.textContaining('Trade (1)'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/next_turn_confirm_dialog_staged_multi.png'),
       );
     },
   );
