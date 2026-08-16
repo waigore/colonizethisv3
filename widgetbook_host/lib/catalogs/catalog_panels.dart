@@ -363,6 +363,7 @@ List<WidgetbookNode> get techTreeDirectories => [
         builder: (context) =>
             _technologySequentialFundingPreviewStoryHost(context),
       ),
+      ...technologySpyInsightUseCases,
       WidgetbookUseCase(
         name: 'Slots — persisted in-progress (no fresh orders)',
         builder: (context) => _technologyPersistedSlotStoryHost(context),

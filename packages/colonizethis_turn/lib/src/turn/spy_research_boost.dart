@@ -3,14 +3,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-/// Count of rival GPs with a spy present that have unlocked [techId].
-/// Used for passive RP boost during research (Refs #3834 R2).
-int spyResearchBoostGpCountForTech({
+/// Rival GP ids with a spy present that have unlocked [techId], sorted.
+/// Used for passive RP boost during research (Refs #3834 R2, #4457).
+List<String> spyResearchBoostRivalIdsForTech({
   required Game game,
   required String playerId,
   required String techId,
 }) {
-  if (techId.isEmpty) return 0;
+  if (techId.isEmpty) return const [];
   final rivalGpIdsWithSpy = <String>{};
   final ownerByProvince = ownerByProvinceIdMap(game.worldState);
   for (final u in game.worldState.allUnitsById.values) {
@@ -21,12 +21,27 @@ int spyResearchBoostGpCountForTech({
     if (game.playerById(territoryOwner) == null) continue;
     rivalGpIdsWithSpy.add(territoryOwner);
   }
-  var count = 0;
+  final qualifying = <String>[];
   for (final rivalId in rivalGpIdsWithSpy) {
     final rival = game.playerById(rivalId);
-    if (rival?.techUnlocked?[techId] == true) count++;
+    if (rival?.techUnlocked?[techId] == true) qualifying.add(rivalId);
   }
-  return count;
+  qualifying.sort();
+  return qualifying;
+}
+
+/// Count of rival GPs with a spy present that have unlocked [techId].
+/// Used for passive RP boost during research (Refs #3834 R2).
+int spyResearchBoostGpCountForTech({
+  required Game game,
+  required String playerId,
+  required String techId,
+}) {
+  return spyResearchBoostRivalIdsForTech(
+    game: game,
+    playerId: playerId,
+    techId: techId,
+  ).length;
 }
 
 /// Applies spy RP boost multiplier to base research points (Refs #3834 R2).
@@ -35,7 +50,6 @@ int applySpyResearchBoostToPoints({
   required int qualifyingRivalGpCount,
 }) {
   if (basePoints <= 0 || qualifyingRivalGpCount <= 0) return basePoints;
-  final multiplier =
-      1.0 + qualifyingRivalGpCount * spyResearchBoostPerGp;
+  final multiplier = 1.0 + qualifyingRivalGpCount * spyResearchBoostPerGp;
   return (basePoints * multiplier).round();
 }
