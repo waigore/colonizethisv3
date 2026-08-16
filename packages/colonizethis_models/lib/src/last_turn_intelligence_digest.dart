@@ -207,7 +207,7 @@ class IntelligenceSpyCourtBlock {
       lines: raw
           .map(
             (e) => IntelligenceSpyLine.fromJson(
-              Map<String, dynamic>.from(e as Map),
+              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
             ),
           )
           .toList(),
@@ -274,7 +274,7 @@ class LastTurnIntelligenceDigest {
       spy[entry.key.toString()] = list
           .map(
             (e) => IntelligenceSpyCourtBlock.fromJson(
-              Map<String, dynamic>.from(e as Map),
+              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
             ),
           )
           .toList();
@@ -284,7 +284,7 @@ class LastTurnIntelligenceDigest {
       worldLines: worldRaw
           .map(
             (e) => IntelligenceWorldLine.fromJson(
-              Map<String, dynamic>.from(e as Map),
+              Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
             ),
           )
           .toList(),

@@ -186,10 +186,15 @@ Game decodeGameFromJson(Map<String, dynamic> json) {
     hiddenAgendaByGpId: hiddenAgendaByGpId,
     dossierEvidenceEntries: dossierEvidenceEntries,
     diplomaticHistoryEvents: diplomaticHistoryEvents,
-    lastTurnIntelligenceDigest: json['lastTurnIntelligenceDigest'] is Map
+    lastTurnIntelligenceDigest:
+        json['lastTurnIntelligenceDigest'] is Map<String, dynamic>
+        ? LastTurnIntelligenceDigest.fromJson(
+            json['lastTurnIntelligenceDigest'] as Map<String, dynamic>,
+          )
+        : json['lastTurnIntelligenceDigest'] is Map<dynamic, dynamic>
         ? LastTurnIntelligenceDigest.fromJson(
             Map<String, dynamic>.from(
-              json['lastTurnIntelligenceDigest'] as Map,
+              json['lastTurnIntelligenceDigest'] as Map<dynamic, dynamic>,
             ),
           )
         : null,
