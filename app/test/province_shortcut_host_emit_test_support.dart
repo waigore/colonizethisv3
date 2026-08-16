@@ -11,7 +11,8 @@ import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -21,6 +22,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+
+export 'province_shortcut_host_emit_fixtures.dart';
 
 typedef ProvinceShortcutHostCase = ({
   String label,
@@ -32,33 +35,32 @@ typedef ProvinceShortcutHostCase = ({
 
 const List<ProvinceShortcutHostCase> provinceShortcutHostCases =
     <ProvinceShortcutHostCase>[
-  (
-    label: 'The wide side panel',
-    hostType: GameMapProvinceDetailSidePanel,
-    surfaceSize: Size(720, 720),
-    selectTileTab: false,
-    wide: true,
-  ),
-  (
-    label: 'The narrow bottom-slot host',
-    hostType: GameMapNarrowDetailOverlaySlot,
-    surfaceSize: Size(400, 600),
-    selectTileTab: true,
-    wide: false,
-  ),
-];
+      (
+        label: 'The wide side panel',
+        hostType: GameMapProvinceDetailSidePanel,
+        surfaceSize: Size(720, 720),
+        selectTileTab: false,
+        wide: true,
+      ),
+      (
+        label: 'The narrow bottom-slot host',
+        hostType: GameMapNarrowDetailOverlaySlot,
+        surfaceSize: Size(400, 600),
+        selectTileTab: true,
+        wide: false,
+      ),
+    ];
 
 /// Narrow negative cases that omit the Tile tab when the shortcut stays off.
 ProvinceShortcutHostCase provinceShortcutHostCaseWithoutTileTab(
   ProvinceShortcutHostCase host,
-) =>
-    (
-      label: host.label,
-      hostType: host.hostType,
-      surfaceSize: host.surfaceSize,
-      selectTileTab: false,
-      wide: host.wide,
-    );
+) => (
+  label: host.label,
+  hostType: host.hostType,
+  surfaceSize: host.surfaceSize,
+  selectTileTab: false,
+  wide: host.wide,
+);
 
 GameService provinceShortcutHostEmitGameService({
   required Box<dynamic> gamesBox,
@@ -66,15 +68,14 @@ GameService provinceShortcutHostEmitGameService({
   required MapTopology combinedTopology,
   required Map<String, TileMapResult> tileMapByRegion,
   required Map<String, MapTopology> topologyByRegion,
-}) =>
-    _ProvinceShortcutHostEmitGameService(
-      gamesBox,
-      GameSaveAdapter(),
-      gameId: gameId,
-      combinedTopology: combinedTopology,
-      tileMapByRegion: tileMapByRegion,
-      topologyByRegion: topologyByRegion,
-    );
+}) => _ProvinceShortcutHostEmitGameService(
+  gamesBox,
+  GameSaveAdapter(),
+  gameId: gameId,
+  combinedTopology: combinedTopology,
+  tileMapByRegion: tileMapByRegion,
+  topologyByRegion: topologyByRegion,
+);
 
 PerPlayerWorkTargetSelectionCache refreshedProvinceShortcutWorkTargetCache({
   required Game game,
@@ -87,17 +88,16 @@ PerPlayerWorkTargetSelectionCache refreshedProvinceShortcutWorkTargetCache({
   final cache = strategies == null
       ? PerPlayerWorkTargetSelectionCache()
       : PerPlayerWorkTargetSelectionCache(strategies: strategies);
-  return cache
-    ..refresh(
-      WorkTargetSelectionSnapshot(
-        game: game,
-        playerId: humanPlayerId,
-        playerView: playerView,
-        topology: combinedTopology,
-        currentOrders: const Orders(),
-        tileMapByRegion: tileMapByRegion,
-      ),
-    );
+  return cache..refresh(
+    WorkTargetSelectionSnapshot(
+      game: game,
+      playerId: humanPlayerId,
+      playerView: playerView,
+      topology: combinedTopology,
+      currentOrders: const Orders(),
+      tileMapByRegion: tileMapByRegion,
+    ),
+  );
 }
 
 Future<List<OpenCivilianUnitsPanelEvent>> pumpProvinceShortcutHostAndSelect(

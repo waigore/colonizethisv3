@@ -18,58 +18,12 @@ const String _kHumanPlayerId = 'gp1';
 const String _kProvinceId = 'oldWorld|p1';
 const String _kTileKey = 'oldWorld|p1|0|0';
 
-final MapTopology _combinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
+final MapTopology _combinedTopology = provinceShortcutHostCombinedTopology();
+final Map<String, MapTopology> _topologyByRegion =
+    provinceShortcutHostTopologyByRegion();
 
-final Map<String, MapTopology> _topologyByRegion = {
-  'oldWorld': MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 's1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  ),
-};
-
-final Map<String, TileMapResult> _tileMapByRegion = {
-  'oldWorld': TileMapResult(
-    width: 2,
-    height: 2,
-    grid: const [
-      ['p1', 's1'],
-      ['s1', 's1'],
-    ],
-    terrainGrid: const [
-      [TerrainType.plains, TerrainType.plains],
-      [TerrainType.plains, TerrainType.plains],
-    ],
-    resourceGrid: [
-      [Resource.grain, Resource.meat],
-      [Resource.meat, Resource.meat],
-    ],
-  ),
-};
+final Map<String, TileMapResult> _tileMapByRegion =
+    provinceShortcutHostGoldenCoastalTileMapByRegion();
 
 Game _buildGame({required bool withRailBuilder, int roadLevel = 1}) {
   return Game(

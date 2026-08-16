@@ -43,68 +43,37 @@ const String _kProvinceId = 'oldWorld|p1';
 const String _kTileKey = 'oldWorld|p1|0|0';
 const String _kExploreTargetTileKey = 'oldWorld|p1|1|0';
 
-final MapTopology _combinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
+final MapTopology _combinedTopology = provinceShortcutHostCombinedTopology();
+final Map<String, MapTopology> _topologyByRegion =
+    provinceShortcutHostTopologyByRegion();
 
-final Map<String, MapTopology> _topologyByRegion = {
-  'oldWorld': MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 's1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  ),
-};
-
-final Map<String, TileMapResult> _tileMapByRegion = {
-  'oldWorld': TileMapResult(
-    width: 2,
-    height: 1,
-    grid: const [
-      ['p1', 'p1'],
-    ],
-    terrainGrid: const [
-      [TerrainType.plains, TerrainType.plains],
-    ],
-    resourceGrid: const [
-      [Resource.grain, Resource.grain],
-    ],
-  ),
-};
+final Map<String, TileMapResult> _tileMapByRegion =
+    provinceShortcutHostTileMapByRegion(
+      width: 2,
+      height: 1,
+      grid: const [
+        ['p1', 'p1'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains, TerrainType.plains],
+      ],
+      resourceGrid: const [
+        [Resource.grain, Resource.grain],
+      ],
+    );
 
 /// Cache that can simulate click-time drift by clearing explore targets on the
 /// next [get] after [armExploreDriftOnNextRead].
 class _ExploreDriftWorkTargetCache extends PerPlayerWorkTargetSelectionCache {
   _ExploreDriftWorkTargetCache()
-      : super(
-          strategies: <String, WorkTargetSelectionPopulationStrategy>{
-            kWorkTargetExplore: (_) => const <String>{
-              _kTileKey,
-              _kExploreTargetTileKey,
-            },
+    : super(
+        strategies: <String, WorkTargetSelectionPopulationStrategy>{
+          kWorkTargetExplore: (_) => const <String>{
+            _kTileKey,
+            _kExploreTargetTileKey,
           },
-        );
+        },
+      );
 
   bool _armDrift = false;
 
@@ -223,15 +192,15 @@ PerPlayerWorkTargetSelectionCache _exploreCache() {
       },
     },
   )..refresh(
-      WorkTargetSelectionSnapshot(
-        game: game,
-        playerId: _kHumanPlayerId,
-        playerView: buildPlayerView(game, _combinedTopology, _kHumanPlayerId),
-        topology: _combinedTopology,
-        currentOrders: const Orders(),
-        tileMapByRegion: _tileMapByRegion,
-      ),
-    );
+    WorkTargetSelectionSnapshot(
+      game: game,
+      playerId: _kHumanPlayerId,
+      playerView: buildPlayerView(game, _combinedTopology, _kHumanPlayerId),
+      topology: _combinedTopology,
+      currentOrders: const Orders(),
+      tileMapByRegion: _tileMapByRegion,
+    ),
+  );
 }
 
 Finder _exploreAction({required bool enabled}) {
@@ -258,25 +227,24 @@ void main() {
     required Game game,
     required ProvinceShortcutHostCase host,
     required PerPlayerWorkTargetSelectionCache cache,
-  }) =>
-      pumpProvinceShortcutHostAndSelect(
-        tester,
-        gamesBox: gamesBox,
-        gameService: provinceShortcutHostEmitGameService(
-          gamesBox: gamesBox,
-          gameId: _kGameId,
-          combinedTopology: _combinedTopology,
-          tileMapByRegion: _tileMapByRegion,
-          topologyByRegion: _topologyByRegion,
-        ),
-        game: game,
-        humanPlayerId: _kHumanPlayerId,
-        host: host,
-        region: _partiallyRevealedRegion(),
-        combinedTopology: _combinedTopology,
-        workTargetSelectionCache: cache,
-        selectedTileKey: _kTileKey,
-      );
+  }) => pumpProvinceShortcutHostAndSelect(
+    tester,
+    gamesBox: gamesBox,
+    gameService: provinceShortcutHostEmitGameService(
+      gamesBox: gamesBox,
+      gameId: _kGameId,
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+      topologyByRegion: _topologyByRegion,
+    ),
+    game: game,
+    humanPlayerId: _kHumanPlayerId,
+    host: host,
+    region: _partiallyRevealedRegion(),
+    combinedTopology: _combinedTopology,
+    workTargetSelectionCache: cache,
+    selectedTileKey: _kTileKey,
+  );
 
   Future<void> expectExploreShortcutEmits(
     WidgetTester tester, {
@@ -360,7 +328,11 @@ void main() {
           WorkTargetSelectionSnapshot(
             game: game,
             playerId: _kHumanPlayerId,
-            playerView: buildPlayerView(game, _combinedTopology, _kHumanPlayerId),
+            playerView: buildPlayerView(
+              game,
+              _combinedTopology,
+              _kHumanPlayerId,
+            ),
             topology: _combinedTopology,
             currentOrders: const Orders(),
             tileMapByRegion: _tileMapByRegion,
