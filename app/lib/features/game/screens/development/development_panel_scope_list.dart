@@ -183,14 +183,6 @@ class _ImprovableCommodityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayName = commodityDisplayName(l10n, row.commodityId);
     final assignState = assignRowStateFor(scopeKey, row.commodityId);
-    final assignTooltip = assignState.disabledReason;
-    final assignButton = CtActionTextButton(
-      key: DevelopmentPanelKeys.assignButtonKey(scopeKey, row.commodityId),
-      label: l10n.civilian_units_assign,
-      onPressed: assignState.enabled && assignState.candidate != null
-          ? () => onAssign(assignState.candidate!)
-          : null,
-    );
     final previewLine = formatDevelopmentAssignPreviewLine(
       l10n: l10n,
       assignState: assignState,
@@ -201,47 +193,110 @@ class _ImprovableCommodityRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.development_improvableCount(row.count, displayName),
-                  style: textTheme.bodySmall,
-                ),
-              ),
-              CtActionTextButton(
-                key: DevelopmentPanelKeys.showButtonKey(
-                  scopeKey,
-                  row.commodityId,
-                ),
-                label: l10n.development_show,
-                onPressed: () => onShowTiles(
-                  row.tileKeys.toSet(),
-                  selectedTileKey: assignState.candidate?.targetTileKey,
-                ),
-              ),
-              const SizedBox(width: CtSpacing.s),
-              if (assignTooltip != null && !assignState.enabled)
-                Tooltip(message: assignTooltip, child: assignButton)
-              else
-                assignButton,
-            ],
+          _ImprovableCommodityActionsRow(
+            l10n: l10n,
+            scopeKey: scopeKey,
+            row: row,
+            textTheme: textTheme,
+            displayName: displayName,
+            assignState: assignState,
+            onShowTiles: onShowTiles,
+            onAssign: onAssign,
           ),
           if (previewLine != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                key: DevelopmentPanelKeys.assignPreviewKey(
-                  scopeKey,
-                  row.commodityId,
-                ),
-                previewLine,
-                style: textTheme.bodySmall?.copyWith(
-                  color: EditorialMonoclePalette.muted,
-                ),
-              ),
+            _AssignPreviewCaption(
+              scopeKey: scopeKey,
+              commodityId: row.commodityId,
+              previewLine: previewLine,
+              textTheme: textTheme,
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _ImprovableCommodityActionsRow extends StatelessWidget {
+  const _ImprovableCommodityActionsRow({
+    required this.l10n,
+    required this.scopeKey,
+    required this.row,
+    required this.textTheme,
+    required this.displayName,
+    required this.assignState,
+    required this.onShowTiles,
+    required this.onAssign,
+  });
+
+  final AppLocalizations l10n;
+  final String scopeKey;
+  final DevelopmentImprovableCommodityRow row;
+  final TextTheme textTheme;
+  final String displayName;
+  final DevelopmentAssignRowState assignState;
+  final void Function(Set<String> tileKeys, {String? selectedTileKey})
+  onShowTiles;
+  final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
+
+  @override
+  Widget build(BuildContext context) {
+    final assignTooltip = assignState.disabledReason;
+    final assignButton = CtActionTextButton(
+      key: DevelopmentPanelKeys.assignButtonKey(scopeKey, row.commodityId),
+      label: l10n.civilian_units_assign,
+      onPressed: assignState.enabled && assignState.candidate != null
+          ? () => onAssign(assignState.candidate!)
+          : null,
+    );
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            l10n.development_improvableCount(row.count, displayName),
+            style: textTheme.bodySmall,
+          ),
+        ),
+        CtActionTextButton(
+          key: DevelopmentPanelKeys.showButtonKey(scopeKey, row.commodityId),
+          label: l10n.development_show,
+          onPressed: () => onShowTiles(
+            row.tileKeys.toSet(),
+            selectedTileKey: assignState.candidate?.targetTileKey,
+          ),
+        ),
+        const SizedBox(width: CtSpacing.s),
+        if (assignTooltip != null && !assignState.enabled)
+          Tooltip(message: assignTooltip, child: assignButton)
+        else
+          assignButton,
+      ],
+    );
+  }
+}
+
+class _AssignPreviewCaption extends StatelessWidget {
+  const _AssignPreviewCaption({
+    required this.scopeKey,
+    required this.commodityId,
+    required this.previewLine,
+    required this.textTheme,
+  });
+
+  final String scopeKey;
+  final String commodityId;
+  final String previewLine;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Text(
+        key: DevelopmentPanelKeys.assignPreviewKey(scopeKey, commodityId),
+        previewLine,
+        style: textTheme.bodySmall?.copyWith(
+          color: EditorialMonoclePalette.muted,
+        ),
       ),
     );
   }
