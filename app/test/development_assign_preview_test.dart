@@ -41,7 +41,7 @@ void main() {
     expect(line, contains('Lumber 4'));
     expect(line, contains('Cast iron 4'));
     expect(line!.contains('oldWorld|p1|0|0'), isFalse);
-    expect(line.contains('build_improvement'), isFalse);
+    expect(line.contains(kWorkTargetBuildImprovement), isFalse);
   });
 
   test('disconnected preview states not bound to the capital', () {

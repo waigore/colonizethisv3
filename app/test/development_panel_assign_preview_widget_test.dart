@@ -94,7 +94,7 @@ void main() {
         'Next: Avalon (0, 0) · 1 → 2 · Cast iron 4, Lumber 4',
       );
       expect(find.textContaining('oldWorld|p1|0|0'), findsNothing);
-      expect(find.textContaining('build_improvement'), findsNothing);
+      expect(find.textContaining(kWorkTargetBuildImprovement), findsNothing);
     },
   );
 
