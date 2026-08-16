@@ -60,6 +60,7 @@ void main() {
       );
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
+      expect(ids, contains('repo.app_core_services_file_size'));
       expect(ids, contains('repo.logic_test_file_size'));
       expect(ids, contains('repo.logic_domain_import_dag'));
       expect(ids, contains('repo.logic_source_file_size'));
@@ -94,6 +95,12 @@ void main() {
       expect(
         rules.firstWhere((r) => r.ruleId == 'repo.game_widgets_file_size').spec,
         'SPEC/program/game-widgets-file-size.md',
+      );
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.app_core_services_file_size')
+            .spec,
+        'SPEC/program/app-core-services-file-size.md',
       );
       expect(
         rules.firstWhere((r) => r.ruleId == 'repo.logic_test_file_size').spec,

@@ -41,6 +41,7 @@ import 'check_long_string_switches.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_app_catalog_widgets_file_size.dart';
+import 'check_app_core_services_file_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
 import 'check_economy_dedup_credit_aggregation.dart';
@@ -980,6 +981,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckGameWidgetsFileSize(repoRoot);
     case 'repo.app_catalog_widgets_file_size':
       return runCheckAppCatalogWidgetsFileSize(repoRoot);
+    case 'repo.app_core_services_file_size':
+      return runCheckAppCoreServicesFileSize(repoRoot);
     default:
       return null;
   }
