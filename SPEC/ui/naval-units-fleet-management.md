@@ -242,6 +242,8 @@ After any fleet operation (split or combine):
 
 - **Given** `SplitFleetDialog` is open on the Home Fleet with constructor-passed `overseasCargoUsed` / `isCargoUsedReliable` / `cargoNotDefined`, **when** the player stages merchants to the new fleet, **then** the UI layer shows remaining Home Fleet cargo holds versus this turn’s overseas extraction load. When used is reliable: `--muted` if remaining **>** used, `--accent` if remaining **==** used, `--danger` if remaining **<** used. When `cargoNotDefined` or `!isCargoUsedReliable`, used displays as `—` and the line is not coloured as a shortfall. A legal split is never blocked.
 
+- **Given** the map detach-then-sail `SplitFleetDialog` is hosted under `AppThemes.editorialMonocle` with title **Detach a squadron**, confirm **Detach and choose destination**, and constructor-passed cargo flags, **when** `app/test/split_fleet_dialog_detach_goldens_test.dart` captures each keyed `RepaintBoundary`, **then** each `matchesGoldenFile` baseline under `app/test/goldens/split_fleet_dialog_detach*.png` matches the committed PNG for that copy and for cargo-line `--muted` / `--accent` / `--danger` / `—` colours (Refs #4448).
+
 ### Empty Fleet Cleanup
 
 - **Given** a fleet operation results in a non-Home Fleet having zero ships, **when** the operation completes, **then** that fleet is automatically removed from the game state and the panel updates immediately.
