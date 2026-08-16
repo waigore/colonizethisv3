@@ -61,6 +61,7 @@ void main() {
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
       expect(ids, contains('repo.app_core_services_file_size'));
+      expect(ids, contains('repo.app_test_no_duplicate_shortcut_fixtures'));
       expect(ids, contains('repo.logic_test_file_size'));
       expect(ids, contains('repo.logic_domain_import_dag'));
       expect(ids, contains('repo.logic_source_file_size'));

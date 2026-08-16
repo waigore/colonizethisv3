@@ -22,6 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'province_shortcut_host_emit_fixtures.dart';
 
 const _gameId = 'g_consulate_shortcut';
 const _humanId = 'gp1';
@@ -29,31 +30,16 @@ const _minorId = 'minor1';
 const _provinceId = 'oldWorld|p1';
 const _tileKey = 'oldWorld|p1|0|0';
 
-final _topology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: _provinceId,
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
+final _topology = provinceShortcutHostCombinedTopology(includeSea: false);
+
+final _tileMaps = provinceShortcutHostTileMapByRegion(
+  terrainGrid: const [
+    [TerrainType.hills],
+  ],
+  resourceGrid: const [
+    [null],
   ],
 );
-
-final _tileMaps = {
-  'oldWorld': TileMapResult(
-    width: 1,
-    height: 1,
-    grid: const [
-      ['p1'],
-    ],
-    terrainGrid: const [
-      [TerrainType.hills],
-    ],
-    resourceGrid: const [
-      [null],
-    ],
-  ),
-};
 
 class _ConsulateGameService extends GameService {
   _ConsulateGameService(super.box, super.adapter);
@@ -227,10 +213,9 @@ void main() {
       '${host.wide ? 'wide' : 'narrow'} host emits confirm then appends Consulate',
       (tester) async {
         final bus = await pumpHost(tester, host: host, game: _game());
-        final confirmFuture = bus
-            .on<ConfirmDialogEvent>()
-            .first
-            .timeout(const Duration(seconds: 2));
+        final confirmFuture = bus.on<ConfirmDialogEvent>().first.timeout(
+          const Duration(seconds: 2),
+        );
         final appendFuture = bus
             .on<AppendDiplomaticOrderRequestedEvent>()
             .first

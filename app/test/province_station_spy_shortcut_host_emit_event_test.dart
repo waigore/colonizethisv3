@@ -22,45 +22,26 @@ const String _kProvinceId = 'oldWorld|p1';
 const String _kSpyTile = 'oldWorld|p1|0|0';
 const String _kTargetTile = 'oldWorld|p1|1|0';
 
-final MapTopology _combinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: const [],
+final MapTopology _combinedTopology = provinceShortcutHostCombinedTopology(
+  includeSea: false,
 );
+final Map<String, MapTopology> _topologyByRegion =
+    provinceShortcutHostTopologyByRegion(includeSea: false);
 
-final Map<String, MapTopology> _topologyByRegion = {
-  'oldWorld': MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: const [],
-  ),
-};
-
-final Map<String, TileMapResult> _tileMapByRegion = {
-  'oldWorld': TileMapResult(
-    width: 2,
-    height: 1,
-    grid: const [
-      ['p1', 'p1'],
-    ],
-    terrainGrid: const [
-      [TerrainType.plains, TerrainType.plains],
-    ],
-    resourceGrid: const [
-      [Resource.grain, Resource.grain],
-    ],
-  ),
-};
+final Map<String, TileMapResult> _tileMapByRegion =
+    provinceShortcutHostTileMapByRegion(
+      width: 2,
+      height: 1,
+      grid: const [
+        ['p1', 'p1'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains, TerrainType.plains],
+      ],
+      resourceGrid: const [
+        [Resource.grain, Resource.grain],
+      ],
+    );
 
 Game _buildGame({required bool withSpy}) {
   return Game(
