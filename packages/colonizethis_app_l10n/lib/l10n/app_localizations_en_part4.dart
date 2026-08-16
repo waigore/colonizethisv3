@@ -2,6 +2,15 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
+  String get provinceOverlay_extractionPartialReason =>
+      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
+
+  @override
+  String provinceOverlay_availableTileCount(int count, String name) {
+    return '$count $name';
+  }
+
+  @override
   String get militaryCounsel_tabMilitary => 'Military';
 
   @override
@@ -979,16 +988,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
   String get techEffectSummary_improved_sea_routes_1 =>
       'Unlocks: Large Spice Plantations';
-
-  @override
-  String get techEffectSummary_improved_trapping_techniques_0 =>
-      'Improves: Furs extraction cap to 2';
-
-  @override
-  String get techEffectSummary_improved_trapping_techniques_1 =>
-      'Unlocks: Riverboats';
-
-  @override
-  String get techEffectSummary_industrial_funding_of_research_0 =>
-      'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)';
 }

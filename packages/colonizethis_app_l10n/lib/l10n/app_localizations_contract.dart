@@ -1960,6 +1960,12 @@ abstract class AppLocalizations {
   /// Breakdown dialog row labelling the Industrial Funding +20% bonus (Refs #3512).
   String get technologyPanel_rpBreakdownIndustrialLabel;
 
+  /// Breakdown dialog Spy insight row for one qualifying court (Refs #4457).
+  String technologyPanel_rpBreakdownSpyInsightOne(String court);
+
+  /// Breakdown dialog Spy insight row for two or more courts (Refs #4457).
+  String technologyPanel_rpBreakdownSpyInsightMany(String courts, int percent);
+
   /// Breakdown dialog row labelling the effective RP applied this turn (Refs #3512).
   String get technologyPanel_rpBreakdownEffectiveLabel;
 

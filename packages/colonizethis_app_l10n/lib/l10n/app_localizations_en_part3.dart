@@ -445,6 +445,16 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Industrial Funding +20%';
 
   @override
+  String technologyPanel_rpBreakdownSpyInsightOne(String court) {
+    return 'Spy insight \u2014 $court already knows this (+15%)';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownSpyInsightMany(String courts, int percent) {
+    return 'Spy insight \u2014 $courts already know this (+$percent%)';
+  }
+
+  @override
   String get technologyPanel_rpBreakdownEffectiveLabel =>
       'Effective RP this turn';
 
@@ -981,14 +991,5 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
     return ' (incl. +$bonus capital grain bonus)';
-  }
-
-  @override
-  String get provinceOverlay_extractionPartialReason =>
-      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
-
-  @override
-  String provinceOverlay_availableTileCount(int count, String name) {
-    return '$count $name';
   }
 }

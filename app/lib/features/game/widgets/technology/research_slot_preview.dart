@@ -1,9 +1,9 @@
 // Deterministic per-slot and multi-slot research turn-preview for the
-// GAME40001 Technology panel (Refs #3512, #4335). Mirrors the research-phase
-// resolver (`packages/colonizethis_turn/.../research_resolver.dart`) so slot
-// cards and the empire-wide funding header show the same RP/gold effect the
-// next End Turn will apply, without duplicating the funding rate table (single
-// source of truth — Refs #3472).
+// GAME40001 Technology panel (Refs #3512, #4335, #4457). Mirrors the
+// research-phase resolver (`packages/colonizethis_turn/.../research_resolver.dart`)
+// so slot cards and the empire-wide funding header show the same RP/gold effect
+// the next End Turn will apply, without duplicating the funding rate table
+// (single source of truth — Refs #3472).
 //
 // SPEC: SPEC/ui/technology-panel.md § Slot turn preview;
 // SPEC/program/research-resolution.md.
@@ -11,7 +11,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_turn/colonizethis_turn.dart'
-    show effectiveResearchPointsForTechAllocation, fundingStats;
+    show
+        applySpyResearchBoostToPoints,
+        effectiveResearchPointsForTechAllocation,
+        fundingStats;
 
 /// One occupied research slot's inputs for [computeResearchSlotsTurnPreview].
 class ResearchSlotPreviewInput {
@@ -20,12 +23,20 @@ class ResearchSlotPreviewInput {
     required this.tech,
     required this.committedProgress,
     required this.funding,
+    this.qualifyingRivalGpCount = 0,
+    this.qualifyingRivalDisplayNames = const [],
   });
 
   final int slotIndex;
   final TechDefinition tech;
   final int committedProgress;
   final ResearchFundingLevel funding;
+
+  /// Distinct rival GPs that currently qualify for spy insight on [tech].
+  final int qualifyingRivalGpCount;
+
+  /// Display names for [qualifyingRivalGpCount] courts (never raw ids).
+  final List<String> qualifyingRivalDisplayNames;
 }
 
 /// Aggregate research funding for the current turn after a sequential slot walk.
@@ -63,6 +74,9 @@ class ResearchSlotTurnPreview {
     required this.debtBlocked,
     this.sequentialBlocked = false,
     this.treasuryBeforeSlot,
+    this.spyInsightRpPerTurn = 0,
+    this.spyInsightRivalCount = 0,
+    this.spyInsightRivalNames = const [],
   });
 
   /// The slot's funding level.
@@ -104,11 +118,26 @@ class ResearchSlotTurnPreview {
   /// spends when part of a multi-slot walk).
   final int? treasuryBeforeSlot;
 
-  /// Effective RP/turn = base + industrial bonus, independent of blocks.
-  int get effectiveRpPerTurn => baseRpPerTurn + industrialBonusRpPerTurn;
+  /// Extra RP/turn from spy insight (0 when it does not apply or the slot
+  /// will not spend). Applied after the industrial bonus, matching the resolver.
+  final int spyInsightRpPerTurn;
+
+  /// Qualifying rival GP count used for the spy multiplier (0 when blocked).
+  final int spyInsightRivalCount;
+
+  /// Display names of qualifying courts (empty when the spy row is omitted).
+  final List<String> spyInsightRivalNames;
+
+  /// Effective RP/turn = base + industrial + spy insight, independent of
+  /// gold-cost display; spy extra is 0 when the slot will not spend.
+  int get effectiveRpPerTurn =>
+      baseRpPerTurn + industrialBonusRpPerTurn + spyInsightRpPerTurn;
 
   /// Whether the +20% industrial bonus contributes to this slot.
   bool get hasIndustrialBonus => industrialBonusRpPerTurn > 0;
+
+  /// Whether spy insight contributes extra RP this turn.
+  bool get hasSpyInsight => spyInsightRpPerTurn > 0 && spyInsightRivalCount > 0;
 
   /// Whether funding is None (no spend, no preview delta).
   bool get isNoneFunding => funding == ResearchFundingLevel.none;
@@ -156,6 +185,8 @@ ResearchSlotsTurnPreview computeResearchSlotsTurnPreview({
       funding: slot.funding,
       treasuryBeforeSlot: residualTreasury,
       startingTreasury: startingTreasury,
+      qualifyingRivalGpCount: slot.qualifyingRivalGpCount,
+      qualifyingRivalDisplayNames: slot.qualifyingRivalDisplayNames,
     );
     bySlot[slot.slotIndex] = preview;
     if (preview.goldSpentThisTurn > 0) {
@@ -181,8 +212,9 @@ ResearchSlotsTurnPreview computeResearchSlotsTurnPreview({
 /// - `nextTreasury = treasuryBeforeSlot - funding.cost`; when
 ///   `nextTreasury < -researchMaxDebtForUnlocked(player.techUnlocked)` the
 ///   slot is debt-blocked → 0 RP, 0 spend.
-/// - Otherwise RP applied = `effectiveResearchPointsForTechAllocation` (base
-///   funding points plus the +20% military/naval industrial bonus).
+/// - Otherwise RP applied = `applySpyResearchBoostToPoints` on
+///   `effectiveResearchPointsForTechAllocation` (base funding points plus the
+///   +20% military/naval industrial bonus, then +15% per qualifying rival).
 ResearchSlotTurnPreview computeResearchSlotTurnPreview({
   required Player player,
   required TechDefinition tech,
@@ -190,25 +222,41 @@ ResearchSlotTurnPreview computeResearchSlotTurnPreview({
   required ResearchFundingLevel funding,
   int? treasuryBeforeSlot,
   int? startingTreasury,
+  int qualifyingRivalGpCount = 0,
+  List<String> qualifyingRivalDisplayNames = const [],
 }) {
   final int treasury = treasuryBeforeSlot ?? player.treasury;
   final int startTreasury = startingTreasury ?? player.treasury;
   final ({int points, int cost}) stats = fundingStats(funding);
   final int base = stats.points;
-  final int effective = effectiveResearchPointsForTechAllocation(
+  final int industrialAdjusted = effectiveResearchPointsForTechAllocation(
     player,
     tech,
     base,
   );
-  final int industrialBonus = (effective - base).clamp(0, effective);
+  final int industrialBonus = (industrialAdjusted - base).clamp(
+    0,
+    industrialAdjusted,
+  );
+  final int spyBoosted = applySpyResearchBoostToPoints(
+    basePoints: industrialAdjusted,
+    qualifyingRivalGpCount: qualifyingRivalGpCount,
+  );
   final int goldCost = stats.cost;
   final int maxDebt = researchMaxDebtForUnlocked(player.techUnlocked);
   final int nextTreasury = treasury - goldCost;
   final bool debtBlocked = goldCost > 0 && nextTreasury < -maxDebt;
   final bool sequentialBlocked = debtBlocked && treasury < startTreasury;
   final bool noSpend =
-      funding == ResearchFundingLevel.none || debtBlocked || effective <= 0;
-  final int anticipated = noSpend ? 0 : effective;
+      funding == ResearchFundingLevel.none ||
+      debtBlocked ||
+      industrialAdjusted <= 0;
+  final int anticipated = noSpend ? 0 : spyBoosted;
+  final int spyInsightRp = noSpend ? 0 : (spyBoosted - industrialAdjusted);
+  final int spyCount = spyInsightRp > 0 ? qualifyingRivalGpCount : 0;
+  final List<String> spyNames = spyCount > 0
+      ? qualifyingRivalDisplayNames
+      : const <String>[];
   final int goldSpent = (debtBlocked || goldCost <= 0) ? 0 : goldCost;
   return ResearchSlotTurnPreview(
     funding: funding,
@@ -222,5 +270,8 @@ ResearchSlotTurnPreview computeResearchSlotTurnPreview({
     debtBlocked: debtBlocked,
     sequentialBlocked: sequentialBlocked,
     treasuryBeforeSlot: treasuryBeforeSlot ?? player.treasury,
+    spyInsightRpPerTurn: spyInsightRp,
+    spyInsightRivalCount: spyCount,
+    spyInsightRivalNames: spyNames,
   );
 }
