@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_navigation.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_unit_marker_flows.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_unit_panels.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_units_panel_sheet.dart';
 
@@ -17,11 +18,18 @@ void main() {
       expect(appEventHandlerNavigateToShell, isNotNull);
       expect(appEventHandlerShowUnitsPanelSheet, isNotNull);
       expect(appEventHandlerOpenCivilianUnitsPanel, isNotNull);
+      expect(appEventHandlerOpenMilitaryUnitsPanel, isNotNull);
+      expect(appEventHandlerOpenNavalUnitsPanel, isNotNull);
+      expect(appEventHandlerOpenNavalMissionMenu, isNotNull);
+      expect(appEventHandlerOpenArmyStackMarker, isNotNull);
     });
 
-    test('DialogBuilder typedef remains exported from app_event_handler.dart', () {
-      expect(DialogBuilder, isNotNull);
-      expect(NavigatorKeyDialogBuilder, isNotNull);
-    });
+    test(
+      'DialogBuilder typedef remains exported from app_event_handler.dart',
+      () {
+        expect(DialogBuilder, isNotNull);
+        expect(NavigatorKeyDialogBuilder, isNotNull);
+      },
+    );
   });
 }
