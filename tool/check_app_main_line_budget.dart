@@ -90,7 +90,8 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4440+#4432 merge headroom (measured 80_517).
 // raised for combined #4413+#4440 merge headroom (measured 80_940).
 // raised for Home Fleet detach-then-sail from the map (Refs #4448; measured 81_342).
-const _maxMainLines = 81500;
+// raised for DLG60001 staged decree review (Refs #4469; measured 82_075).
+const _maxMainLines = 82200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
