@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -14,7 +12,9 @@ import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/human_draft_projected_region_provider.dart';
 
 import '../../../../config/constants.dart';
+import '../../../../config/routes.dart';
 import '../controls/controls.dart';
+import '../../widgets/shell/old_world_race_snapshot.dart';
 import 'game_map_area_state_logic.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
@@ -47,11 +47,11 @@ mixin GameMapAreaBuild
     final shell = ref.watch(shellPlayerContextProvider);
     final mapPlayerId = shell.mapPlayerIdFor(widget.game);
     final mapPlayerView =
-        shell.playerView ?? buildPlayerView(widget.game, mapTopology, mapPlayerId);
+        shell.playerView ??
+        buildPlayerView(widget.game, mapTopology, mapPlayerId);
     final l10n = appL10n(context);
-    final projectedRegion = ref.watch(
-          humanDraftProjectedRegionProvider(currentRegion.regionId),
-        ) ??
+    final projectedRegion =
+        ref.watch(humanDraftProjectedRegionProvider(currentRegion.regionId)) ??
         currentRegion;
     final turnNumber = widget.game.worldState.turnState.turnNumber;
     final year = turnToYear(turnNumber, widget.game.turnTimeMapping);
@@ -63,12 +63,21 @@ mixin GameMapAreaBuild
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = buildFeedEntries();
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
+    final raceFocusId = widget.game.victory != null
+        ? null
+        : (shell.panelPlayerId ??
+              OldWorldRaceSnapshot.leadingPlayerId(widget.game));
+    final OldWorldRaceSnapshot? oldWorldRace = raceFocusId == null
+        ? null
+        : OldWorldRaceSnapshot.fromGame(
+            game: widget.game,
+            focusPlayerId: raceFocusId,
+          );
     return Column(
       children: [
         GameMapControls(
           sideMenuOpen: sideMenuOpen,
-          onToggleSideMenu: () =>
-              setState(() => sideMenuOpen = !sideMenuOpen),
+          onToggleSideMenu: () => setState(() => sideMenuOpen = !sideMenuOpen),
           onPausePressed: isTurnResolving
               ? null
               : () => ref
@@ -97,6 +106,18 @@ mixin GameMapAreaBuild
           onTogglePlayerTurnEventsFeed: togglePlayerTurnEventsFeedVisibility,
           showPlayersBar: mapViewState.showPlayersBar,
           onTogglePlayersBar: togglePlayersBarVisibility,
+          oldWorldRace: oldWorldRace,
+          oldWorldRaceNarrow: isNarrow,
+          onOldWorldRaceTap: oldWorldRace == null
+              ? null
+              : () => ref
+                    .read(appEventBusProvider)
+                    .emit(
+                      ct_models.NavigateToRouteEvent(Routes.victory, {
+                        'game': widget.game,
+                        'humanPlayerId': mapPlayerId,
+                      }),
+                    ),
         ),
         Expanded(
           child: buildMapPlayAreaStack(

@@ -15,7 +15,7 @@ You have inherited a **Great Power** — one of the playable nations — in an a
 
 ### Victory at a glance
 
-- **Military victory:** control **31 or more Old World provinces** (provinces you own). Checked at the end of the turn, after the game has carried out everything for that turn. When someone wins this way, Chapter 15 covers `OVL20001` **Victory overlay**. The left-side **Victory** icon opens `GAME70001` **Victory screen**, which is mid-campaign standings and conditions — not that overlay.
+- **Military victory:** control **31 or more Old World provinces** (provinces you own). Checked at the end of the turn, after the game has carried out everything for that turn. When someone wins this way, Chapter 15 covers `OVL20001` **Victory overlay**. On the map, the row with the **Old World** and **New World** tabs also shows how many Old World provinces you hold out of 31. If another Great Power is ahead, that court’s name and count appear beside yours. Tap that count to open `GAME70001` **Victory screen**. The left-side **Victory** icon opens the same screen.
 - **Calendar campaign end:** without military victory, the campaign can stop at year **1800** (usually turn **201**). That stop is not a military victory, and this primer does not describe a special “campaign over” screen for it. Summaries may name the strongest Great Power; if two or more tie for strongest (or there are no scorers), the declared winner is no-one. **Infinite mode** (chosen at new game) bypasses the calendar halt; only military victory or quitting ends the campaign.
 
 Later chapters deepen victory counsel; start here so you know the finish line.
@@ -59,7 +59,7 @@ Rival Great Powers choose the same kinds of decrees you do. A chosen **leader** 
 ## Acceptance criteria for this chapter
 
 - [ ] Premise covers 1500–1850 framing, Old World and New World, and Great Power / Minor Nation / Tribe roles.
-- [ ] Victory at a glance states 31 or more Old World provinces, calendar halt vs infinite mode, and that only Great Powers win.
+- [ ] Victory at a glance states 31 or more Old World provinces, the map-row Old World count out of 31, calendar halt vs infinite mode, and that only Great Powers win.
 - [ ] Turn rhythm describes choose actions → **Next turn** → the game carries out the turn → choose actions again (or end).
 - [ ] Orientation cites `GAME10001`, `MAP10001` **Empire overview / map area**, empire buttons in Production / Trade / Development order with unit-panel IDs `UNIT10001` / `UNIT20001` / `UNIT30001`, `GAME50001`, `MAP20001` **Province sea-zone overlay**.
 - [ ] Orientation names right-click / press-and-hold `MAP30001` and **More** `MAP30002` **Province details**.

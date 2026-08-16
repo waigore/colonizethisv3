@@ -149,6 +149,59 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get mapControls_playersBarToggle => 'Players bar';
 
   @override
+  String mapControls_oldWorldRace(String count, String threshold) {
+    return '$count / $threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_compact(String count, String threshold) {
+    return '$count/$threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_rivalCue(
+    String name,
+    String count,
+    String threshold,
+  ) {
+    return ' · $name $count / $threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_rivalCueCompact(String name, String count) {
+    return ' · $name $count';
+  }
+
+  @override
+  String get mapControls_oldWorldRace_tooltip =>
+      'Old World provinces toward the 31-province win. Tap for full standings.';
+
+  @override
+  String mapControls_oldWorldRace_semanticsLabel(
+    String count,
+    String threshold,
+  ) {
+    return 'Old World province race: $count of $threshold. Tap to open Victory.';
+  }
+
+  @override
+  String mapControls_oldWorldRace_semanticsWithRival(
+    String count,
+    String threshold,
+    String name,
+    String rivalCount,
+  ) {
+    return 'Old World province race: $count of $threshold. $name leads with '
+        '$rivalCount of $threshold. Tap to open Victory.';
+  }
+
+  @override
+  String mapControls_playersBar_calendarStrengthTooltip(String score) {
+    return 'Calendar-end strength: $score. Used only if the calendar ends '
+        'with no province-count winner.';
+  }
+
+  @override
   String common_percent(int value) {
     return '$value%';
   }
@@ -937,55 +990,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
   String get techEffectSummary_horse_artillery_0 =>
       'Prerequisite for: Light Artillery Tactics';
-
-  @override
-  String get techEffectSummary_hussars_0 =>
-      'Improves: Cossacks regiment upgrade path';
-
-  @override
-  String get techEffectSummary_hussars_1 => 'Prerequisite for: Scouting';
-
-  @override
-  String get techEffectSummary_improved_cavalry_tactics_0 =>
-      'Prerequisite for: Hussars and Improved Cavalry Weapons';
-
-  @override
-  String get techEffectSummary_improved_cavalry_weapons_0 =>
-      'Improves: Harquebusiers regiment upgrade path';
-
-  @override
-  String get techEffectSummary_improved_cavalry_weapons_1 =>
-      'Prerequisite for: Repeating Cavalry Carbine';
-
-  @override
-  String get techEffectSummary_improved_food_preservation_0 =>
-      'Improves: Spices extraction cap to 4';
-
-  @override
-  String get techEffectSummary_improved_food_preservation_1 =>
-      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
-
-  @override
-  String get techEffectSummary_improved_infantry_tactics_0 =>
-      'Improves: General cap floor to at least 3 (or National Bureaucracy)';
-
-  @override
-  String get techEffectSummary_improved_infantry_tactics_1 =>
-      'Unlocks: Early Rifles (with Crucible Process)';
-
-  @override
-  String get techEffectSummary_improved_iron_weapons_0 =>
-      'Unlocks: Bayonet (with Crucible Process)';
-
-  @override
-  String get techEffectSummary_improved_sail_design_0 =>
-      'Unlocks: Advanced Hull Design path (University + Privateering)';
-
-  @override
-  String get techEffectSummary_improved_sea_routes_0 =>
-      'Improves: Spices extraction cap to 2';
-
-  @override
-  String get techEffectSummary_improved_sea_routes_1 =>
-      'Unlocks: Large Spice Plantations';
 }

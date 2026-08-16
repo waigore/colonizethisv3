@@ -90,7 +90,8 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4440+#4432 merge headroom (measured 80_517).
 // raised for combined #4413+#4440 merge headroom (measured 80_940).
 // raised for Home Fleet detach-then-sail from the map (Refs #4448; measured 81_342).
-const _maxMainLines = 81500;
+// raised for MAP10001 Old World province race chip (Refs #4451; measured 81_681).
+const _maxMainLines = 82000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
