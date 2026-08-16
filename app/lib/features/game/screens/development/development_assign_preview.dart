@@ -1,7 +1,10 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:flutter/material.dart';
 
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'development_panel_keys.dart';
 
 /// Province + coordinates for Development Assign preview. Never a raw tile key.
 String formatDevelopmentAssignPreviewPlace({
@@ -48,4 +51,34 @@ String? formatDevelopmentAssignPreviewLine({
         );
   if (candidate.isCapitalConnected) return line;
   return '$line · ${l10n.development_assignPreviewNotBoundToCapital}';
+}
+
+/// Muted wrap line under an enabled Assign row. SPEC/ui/components/development-assign-row.md.
+class DevelopmentAssignPreviewCaption extends StatelessWidget {
+  const DevelopmentAssignPreviewCaption({
+    super.key,
+    required this.scopeKey,
+    required this.commodityId,
+    required this.previewLine,
+    required this.textTheme,
+  });
+
+  final String scopeKey;
+  final String commodityId;
+  final String previewLine;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Text(
+        key: DevelopmentPanelKeys.assignPreviewKey(scopeKey, commodityId),
+        previewLine,
+        style: textTheme.bodySmall?.copyWith(
+          color: EditorialMonoclePalette.muted,
+        ),
+      ),
+    );
+  }
 }

@@ -204,7 +204,7 @@ class _ImprovableCommodityRow extends StatelessWidget {
             onAssign: onAssign,
           ),
           if (previewLine != null)
-            _AssignPreviewCaption(
+            DevelopmentAssignPreviewCaption(
               scopeKey: scopeKey,
               commodityId: row.commodityId,
               previewLine: previewLine,
@@ -270,34 +270,6 @@ class _ImprovableCommodityActionsRow extends StatelessWidget {
         else
           assignButton,
       ],
-    );
-  }
-}
-
-class _AssignPreviewCaption extends StatelessWidget {
-  const _AssignPreviewCaption({
-    required this.scopeKey,
-    required this.commodityId,
-    required this.previewLine,
-    required this.textTheme,
-  });
-
-  final String scopeKey;
-  final String commodityId;
-  final String previewLine;
-  final TextTheme textTheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Text(
-        key: DevelopmentPanelKeys.assignPreviewKey(scopeKey, commodityId),
-        previewLine,
-        style: textTheme.bodySmall?.copyWith(
-          color: EditorialMonoclePalette.muted,
-        ),
-      ),
     );
   }
 }
