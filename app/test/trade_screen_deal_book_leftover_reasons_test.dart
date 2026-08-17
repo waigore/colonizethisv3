@@ -51,36 +51,40 @@ void main() {
       expect(data.didNotStayOpenRows, isEmpty);
     });
 
-    test('cargo drop note renders as Did not stay open without Still open row', () {
-      final WorldMarketState worldMarket = WorldMarketState(
-        lastTurnActivity: <CommodityId, MarketActivity>{
-          'timber': MarketActivity(
-            notes: <MarketActivityNote>[
-              MarketActivityNote(
-                kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
-                factionId: humanId,
-                commodityId: 'timber',
-                quantity: 8,
-              ),
-            ],
-          ),
-        },
-      );
+    test(
+      'cargo drop note renders as Did not stay open without Still open row',
+      () {
+        final WorldMarketState worldMarket = WorldMarketState(
+          lastTurnActivity: <CommodityId, MarketActivity>{
+            'timber': MarketActivity(
+              notes: <MarketActivityNote>[
+                MarketActivityNote(
+                  kind: MarketActivityNoteKind
+                      .carryForwardDroppedCargoInsufficient,
+                  factionId: humanId,
+                  commodityId: 'timber',
+                  quantity: 8,
+                ),
+              ],
+            ),
+          },
+        );
 
-      final DealBookPanelReasonData data = DealBookReasonBuilder.buildBids(
-        worldMarket: worldMarket,
-        playerId: humanId,
-        unfilledBids: const <TradeOrder>[],
-      );
+        final DealBookPanelReasonData data = DealBookReasonBuilder.buildBids(
+          worldMarket: worldMarket,
+          playerId: humanId,
+          unfilledBids: const <TradeOrder>[],
+        );
 
-      expect(data.stillOpenRows, isEmpty);
-      expect(data.didNotStayOpenRows, hasLength(1));
-      expect(data.didNotStayOpenRows.first.quantity, 8);
-      expect(
-        data.didNotStayOpenRows.first.reasonKind,
-        DealBookDropReasonKind.cargoInsufficient,
-      );
-    });
+        expect(data.stillOpenRows, isEmpty);
+        expect(data.didNotStayOpenRows, hasLength(1));
+        expect(data.didNotStayOpenRows.first.quantity, 8);
+        expect(
+          data.didNotStayOpenRows.first.reasonKind,
+          DealBookDropReasonKind.cargoInsufficient,
+        );
+      },
+    );
 
     test('stockpile drop note renders on offers panel', () {
       final WorldMarketState worldMarket = WorldMarketState(
@@ -88,8 +92,8 @@ void main() {
           'grain': MarketActivity(
             notes: <MarketActivityNote>[
               MarketActivityNote(
-                kind:
-                    MarketActivityNoteKind.carryForwardDroppedStockpileInsufficient,
+                kind: MarketActivityNoteKind
+                    .carryForwardDroppedStockpileInsufficient,
                 factionId: humanId,
                 commodityId: 'grain',
                 quantity: 6,
@@ -241,7 +245,8 @@ void main() {
           'timber': MarketActivity(
             notes: <MarketActivityNote>[
               MarketActivityNote(
-                kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
+                kind:
+                    MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
                 factionId: 'gp_other',
                 commodityId: 'timber',
                 quantity: 8,
@@ -258,6 +263,58 @@ void main() {
       );
 
       expect(data.didNotStayOpenRows, isEmpty);
+    });
+
+    test('orphan treasury note with no leftover bid is omitted', () {
+      final WorldMarketState worldMarket = WorldMarketState(
+        lastTurnActivity: <CommodityId, MarketActivity>{
+          'timber': MarketActivity(
+            notes: <MarketActivityNote>[
+              MarketActivityNote(
+                kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+                factionId: humanId,
+                commodityId: 'timber',
+                quantity: 10,
+              ),
+            ],
+          ),
+        },
+      );
+
+      final DealBookPanelReasonData data = DealBookReasonBuilder.buildBids(
+        worldMarket: worldMarket,
+        playerId: humanId,
+        unfilledBids: const <TradeOrder>[],
+      );
+
+      expect(data.stillOpenRows, isEmpty);
+      expect(data.didNotStayOpenRows, isEmpty);
+    });
+
+    test('no offer fallback when last-turn bids were non-zero', () {
+      final WorldMarketState worldMarket = WorldMarketState(
+        lastTurnActivity: <CommodityId, MarketActivity>{
+          'grain': const MarketActivity(totalBidQuantity: 4),
+        },
+        carryForwardOffersByFactionId: <String, List<TradeOrder>>{
+          humanId: <TradeOrder>[
+            TradeOrder(
+              commodityId: 'grain',
+              type: TradeOrderType.offer,
+              quantity: 4,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+
+      final DealBookPanelReasonData data = DealBookReasonBuilder.buildOffers(
+        worldMarket: worldMarket,
+        playerId: humanId,
+        unfilledOffers: worldMarket.carryForwardOffersByFactionId[humanId]!,
+      );
+
+      expect(data.stillOpenRows.first.reasonKind, isNull);
     });
   });
 }

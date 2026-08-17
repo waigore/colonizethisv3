@@ -104,9 +104,7 @@ Game _tradeScreenStoryFirstRightGame() {
         displayName: 'England',
         isHuman: true,
         treasury: 500,
-        stockpile: Stockpile(
-          quantities: <CommodityId, int>{'timber': 10},
-        ),
+        stockpile: Stockpile(quantities: <CommodityId, int>{'timber': 10}),
       ),
     ],
     minorNations: const [
@@ -164,7 +162,8 @@ Widget _tradeScreenDefaultStory({
   Map<String, bool>? techUnlocked,
   Game? gameOverride,
 }) {
-  final game = gameOverride ??
+  final game =
+      gameOverride ??
       _tradeScreenStoryGame(
         treasury: treasury,
         stockpile: stockpile,
@@ -411,18 +410,19 @@ WorldMarketState _tradeScreenDealBookEmptyState() {
 /// `WorldMarketState` for the overseas-profit Deal Book story (Refs #4226).
 WorldMarketState _tradeScreenDealBookOverseasProfitState() {
   return const WorldMarketState(
-    lastTurnOverseasProfitCreditsByGpId: <String, List<OverseasProfitCreditRecord>>{
-      'gp_human': <OverseasProfitCreditRecord>[
-        OverseasProfitCreditRecord(
-          creditKind: OverseasProfitCreditKind.tileOwnerShare,
-          commodityId: 'timber',
-          quantity: 5,
-          profitTreasury: 15,
-          buyerFactionId: 'gp_aragon',
-          sourceFactionId: 'M1',
-        ),
-      ],
-    },
+    lastTurnOverseasProfitCreditsByGpId:
+        <String, List<OverseasProfitCreditRecord>>{
+          'gp_human': <OverseasProfitCreditRecord>[
+            OverseasProfitCreditRecord(
+              creditKind: OverseasProfitCreditKind.tileOwnerShare,
+              commodityId: 'timber',
+              quantity: 5,
+              profitTreasury: 15,
+              buyerFactionId: 'gp_aragon',
+              sourceFactionId: 'M1',
+            ),
+          ],
+        },
   );
 }
 
@@ -432,7 +432,6 @@ WorldMarketState _tradeScreenDealBookLeftoverReasonsState() {
   return WorldMarketState(
     lastTurnActivity: const <CommodityId, MarketActivity>{
       'timber': MarketActivity(
-        totalOfferQuantity: 0,
         notes: <MarketActivityNote>[
           MarketActivityNote(
             kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
@@ -440,6 +439,10 @@ WorldMarketState _tradeScreenDealBookLeftoverReasonsState() {
             commodityId: 'timber',
             quantity: 10,
           ),
+        ],
+      ),
+      'iron': MarketActivity(
+        notes: <MarketActivityNote>[
           MarketActivityNote(
             kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
             factionId: human,
@@ -449,17 +452,17 @@ WorldMarketState _tradeScreenDealBookLeftoverReasonsState() {
         ],
       ),
       'grain': MarketActivity(
-        totalBidQuantity: 0,
         notes: <MarketActivityNote>[
           MarketActivityNote(
-            kind: MarketActivityNoteKind
-                .carryForwardDroppedStockpileInsufficient,
+            kind:
+                MarketActivityNoteKind.carryForwardDroppedStockpileInsufficient,
             factionId: human,
             commodityId: 'grain',
             quantity: 4,
           ),
         ],
       ),
+      'fabric': MarketActivity(totalBidQuantity: 0),
     },
     carryForwardBidsByFactionId: <String, List<TradeOrder>>{
       human: <TradeOrder>[
@@ -474,7 +477,7 @@ WorldMarketState _tradeScreenDealBookLeftoverReasonsState() {
     carryForwardOffersByFactionId: <String, List<TradeOrder>>{
       human: <TradeOrder>[
         TradeOrder(
-          commodityId: 'grain',
+          commodityId: 'fabric',
           type: TradeOrderType.offer,
           quantity: 3,
           priority: 1,

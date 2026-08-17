@@ -67,6 +67,7 @@ class _DealBookStillOpenRowState extends State<DealBookStillOpenRow> {
                 Text(
                   l10n.tradeDealBook_detailsAffordance,
                   key: TradeScreenDealBookKeys.dealBookDetailsAffordanceKey(
+                    TradeScreenDealBookKeys.dealBookRowKindStillOpen,
                     rowData.order.commodityId,
                   ),
                   style: widget.mutedStyle,
@@ -78,6 +79,7 @@ class _DealBookStillOpenRowState extends State<DealBookStillOpenRow> {
           Text(
             detailLine,
             key: TradeScreenDealBookKeys.dealBookDetailsExpandedKey(
+              TradeScreenDealBookKeys.dealBookRowKindStillOpen,
               rowData.order.commodityId,
             ),
             style: widget.mutedStyle,
@@ -177,6 +179,7 @@ class _DealBookDidNotStayOpenRowState extends State<DealBookDidNotStayOpenRow> {
                 Text(
                   l10n.tradeDealBook_detailsAffordance,
                   key: TradeScreenDealBookKeys.dealBookDetailsAffordanceKey(
+                    TradeScreenDealBookKeys.dealBookRowKindDidNotStayOpen,
                     rowData.commodityId,
                   ),
                   style: widget.mutedStyle,
@@ -188,6 +191,7 @@ class _DealBookDidNotStayOpenRowState extends State<DealBookDidNotStayOpenRow> {
           Text(
             detailLine,
             key: TradeScreenDealBookKeys.dealBookDetailsExpandedKey(
+              TradeScreenDealBookKeys.dealBookRowKindDidNotStayOpen,
               rowData.commodityId,
             ),
             style: widget.mutedStyle,
