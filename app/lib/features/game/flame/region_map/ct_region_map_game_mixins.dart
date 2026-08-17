@@ -35,18 +35,13 @@ mixin CtRegionMapGameFields on FlameGame {
   late BaseLayerDisplayMode baseLayerDisplayMode;
   void Function(String provinceId)? onProvinceSelected;
   void Function(String tileKey)? onMapTileTappedForDetail;
-  void Function(String tileKey, Offset localPosition)?
-  onMapTileSecondaryForRadial;
+  void Function(String tileKey, Offset localPosition)? onMapTileSecondaryForRadial;
   bool suppressNextPrimaryTap = false;
   VoidCallback? onRegionViewChanged;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
   void Function(String tileKey)? onCivilianTileTapped;
-  void Function(
-    String locationScopeKey,
-    List<String> fleetIds,
-    String markerTileKey,
-  )?
+  void Function(String locationScopeKey, List<String> fleetIds, String markerTileKey)?
   onFleetMarkerTapped;
   void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped;
   VoidCallback? onCivilianTileSelectionCleared;
