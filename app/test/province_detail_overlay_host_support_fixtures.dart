@@ -83,6 +83,7 @@ ProvinceDetailShortcutCallbacks provinceDetailCallbacks({
   DiplomaticOrder? offerPeaceOrder,
   String offerPeaceTargetName = '',
   String provinceId = provinceDetailSupportProvinceId,
+  MapTopology? combinedTopology,
   required AppEventBus bus,
 }) => buildProvinceDetailShortcutCallbacks(
   game: game,
@@ -93,7 +94,14 @@ ProvinceDetailShortcutCallbacks provinceDetailCallbacks({
     strategies: const {},
   ),
   draftOrders: const Orders(),
-  mapData: null,
+  mapData: combinedTopology == null
+      ? null
+      : (
+          combinedTopology: combinedTopology,
+          tileMapByRegion: const {},
+          topologyByRegion: const {},
+          warpLinks: null,
+        ),
   selectedTileKey: selectedTileKey,
   exploreEnabled: exploreEnabled,
   prospectEnabled: prospectEnabled,

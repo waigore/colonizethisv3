@@ -2,8 +2,6 @@
 // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md — Political standing / Offer Peace.
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_offer_peace.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_state_logic.dart';
-import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_shortcuts.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_constants.dart'
     show kDiplomacyAllianceBadgeLabel;
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
@@ -247,21 +245,8 @@ void main() {
           .on<AppendDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
-      final callbacks = buildProvinceDetailShortcutCallbacks(
+      final callbacks = provinceDetailCallbacks(
         game: game,
-        humanPlayerId: _kHumanPlayerId,
-        region: provinceDetailEmptyRegion(),
-        playerView: provinceDetailPlayerView(game),
-        workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(
-          strategies: const {},
-        ),
-        draftOrders: const Orders(),
-        mapData: (
-          combinedTopology: _topology,
-          tileMapByRegion: const {},
-          topologyByRegion: const {},
-          warpLinks: null,
-        ),
         selectedTileKey: _kTileKey,
         exploreEnabled: false,
         prospectEnabled: false,
@@ -269,20 +254,13 @@ void main() {
         buildRoadEnabled: false,
         buildFortEnabled: false,
         buildPortEnabled: false,
-        buildRailEnabled: false,
         purchaseLandEnabled: false,
         provinceId: _kProvinceId,
-        upgradeTownEnabled: false,
-        upgradeTownTargetTileKey: null,
-        establishConsulateEnabled: false,
-        establishConsulatePending: false,
-        establishConsulateOrder: null,
-        establishConsulateTargetName: '',
-        isSeaZone: false,
         offerPeaceEnabled: true,
         offerPeacePending: false,
         offerPeaceOrder: order,
         offerPeaceTargetName: 'Rival',
+        combinedTopology: _topology,
         bus: bus,
       );
       expect(callbacks.onOfferPeaceTap, isNotNull);
