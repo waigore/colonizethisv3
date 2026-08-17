@@ -85,6 +85,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.establishConsulatePending = false,
     this.establishConsulateRejectionReason,
     this.onEstablishConsulateTap,
+    this.showOwnerStanding = false,
+    this.ownerStandingAtWar = false,
+    this.showOwnerAllianceBadge = false,
+    this.showOfferPeaceControl = false,
+    this.offerPeaceEnabled = false,
+    this.offerPeacePending = false,
+    this.offerPeaceRejectionReason,
+    this.onOfferPeaceTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
@@ -154,6 +162,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool establishConsulatePending;
   final String? establishConsulateRejectionReason;
   final VoidCallback? onEstablishConsulateTap;
+  final bool showOwnerStanding;
+  final bool ownerStandingAtWar;
+  final bool showOwnerAllianceBadge;
+  final bool showOfferPeaceControl;
+  final bool offerPeaceEnabled;
+  final bool offerPeacePending;
+  final String? offerPeaceRejectionReason;
+  final VoidCallback? onOfferPeaceTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
@@ -250,6 +266,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       establishConsulatePending: establishConsulatePending,
       establishConsulateRejectionReason: establishConsulateRejectionReason,
       onEstablishConsulateTap: onEstablishConsulateTap,
+      showOwnerStanding: showOwnerStanding,
+      ownerStandingAtWar: ownerStandingAtWar,
+      showOwnerAllianceBadge: showOwnerAllianceBadge,
+      showOfferPeaceControl: showOfferPeaceControl,
+      offerPeaceEnabled: offerPeaceEnabled,
+      offerPeacePending: offerPeacePending,
+      offerPeaceRejectionReason: offerPeaceRejectionReason,
+      onOfferPeaceTap: onOfferPeaceTap,
       isNarrow: isNarrow,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,

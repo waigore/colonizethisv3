@@ -4,6 +4,8 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_chrome_relation_badges.dart'
+    show DiplomacyAllianceBadge;
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
@@ -76,6 +78,14 @@ Widget buildPoliticalSection({
   required bool establishConsulatePending,
   required String? establishConsulateRejectionReason,
   VoidCallback? onEstablishConsulateTap,
+  bool showOwnerStanding = false,
+  bool ownerStandingAtWar = false,
+  bool showOwnerAllianceBadge = false,
+  bool showOfferPeaceControl = false,
+  bool offerPeaceEnabled = false,
+  bool offerPeacePending = false,
+  String? offerPeaceRejectionReason,
+  VoidCallback? onOfferPeaceTap,
   required bool isNarrow,
 }) {
   final bodyStyle = overlayFgBodyStyle();
@@ -91,6 +101,23 @@ Widget buildPoliticalSection({
       children: [
         Text(l10n.provinceOverlay_name(name), style: bodyStyle),
         Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
+        if (showOwnerStanding)
+          ..._buildOwnerStandingLine(
+            l10n: l10n,
+            atWar: ownerStandingAtWar,
+            showAllianceBadge: showOwnerAllianceBadge,
+            bodyStyle: bodyStyle,
+          ),
+        if (showOfferPeaceControl)
+          ..._buildOfferPeaceControl(
+            l10n: l10n,
+            enabled: offerPeaceEnabled,
+            pending: offerPeacePending,
+            rejectionReason: offerPeaceRejectionReason,
+            onTap: onOfferPeaceTap,
+            isNarrow: isNarrow,
+            bodyStyle: gistStyle,
+          ),
         if (sightPhrase != null)
           Text(l10n.provinceOverlay_sight(sightPhrase), style: bodyStyle),
         if (showEstablishConsulateControl)
@@ -135,6 +162,71 @@ Widget buildPoliticalSection({
       ],
     ),
   );
+}
+
+List<Widget> _buildOwnerStandingLine({
+  required AppLocalizations l10n,
+  required bool atWar,
+  required bool showAllianceBadge,
+  required TextStyle bodyStyle,
+}) {
+  final standing = atWar
+      ? l10n.provinceOverlay_ownerStandingAtWar
+      : l10n.provinceOverlay_ownerStandingAtPeace;
+  return [
+    Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(standing, style: bodyStyle),
+          if (showAllianceBadge) const DiplomacyAllianceBadge(),
+        ],
+      ),
+    ),
+  ];
+}
+
+List<Widget> _buildOfferPeaceControl({
+  required AppLocalizations l10n,
+  required bool enabled,
+  required bool pending,
+  required String? rejectionReason,
+  required VoidCallback? onTap,
+  required bool isNarrow,
+  required TextStyle bodyStyle,
+}) {
+  final label = pending
+      ? l10n.provinceOverlay_cancelOfferPeaceAction
+      : l10n.provinceOverlay_offerPeaceAction;
+  final tooltip = enabled || rejectionReason == null ? label : rejectionReason;
+  return [
+    Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          CtActionTextButton(
+            label: label,
+            tooltip: tooltip,
+            semanticLabel: !enabled && rejectionReason != null
+                ? l10n.provinceOverlay_offerPeaceDisabledSemantics(
+                    rejectionReason,
+                  )
+                : label,
+            enabled: enabled,
+            onPressed: enabled ? onTap : null,
+          ),
+          if (isNarrow && !enabled && rejectionReason != null)
+            Text(rejectionReason, style: bodyStyle),
+        ],
+      ),
+    ),
+  ];
 }
 
 List<Widget> _buildEstablishConsulateControl({
