@@ -4,6 +4,7 @@
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'trade_screen_deal_book_tab_e6_support.dart';
@@ -274,6 +275,66 @@ void main() {
         expect(
           find.text(
             'Free treasury by canceling other bids or waiting for income.',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      '320 dp reason line and Did not stay open rows do not overflow',
+      (tester) async {
+        tester.view.physicalSize = const Size(320 * 3, 900 * 3);
+        tester.view.devicePixelRatio = 3.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        final game = buildTradeTestGame(
+          players: dealBookTestPlayers,
+          lastTurnActivity: {
+            'timber': dealBookActivityWithNotes(
+              commodity: 'timber',
+              notes: <MarketActivityNote>[
+                MarketActivityNote(
+                  kind: MarketActivityNoteKind
+                      .bidPartialFillTreasuryInsufficient,
+                  factionId: kTradeTestHumanPlayerId,
+                  commodityId: 'timber',
+                  quantity: 10,
+                ),
+                MarketActivityNote(
+                  kind: MarketActivityNoteKind
+                      .carryForwardDroppedCargoInsufficient,
+                  factionId: kTradeTestHumanPlayerId,
+                  commodityId: 'timber',
+                  quantity: 8,
+                ),
+              ],
+            ),
+          },
+          carryForwardBids: <String, List<TradeOrder>>{
+            kTradeTestHumanPlayerId: <TradeOrder>[
+              TradeOrder(
+                commodityId: 'timber',
+                type: TradeOrderType.bid,
+                quantity: 5,
+                priority: 1,
+              ),
+            ],
+          },
+        );
+        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text('Treasury ran short — leftover stays open'),
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            'Timber — 8 — leftover cargo no longer covered this bid',
           ),
           findsOneWidget,
         );
