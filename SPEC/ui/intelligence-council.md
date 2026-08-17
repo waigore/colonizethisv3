@@ -59,7 +59,7 @@ Ct-* only. Editorial-monocle tokens. Display names only (no raw ids, no `declare
 | `GAME30003` | World-only | World lines, no spy blocks | World list; spy empty copy. |
 | `GAME30003` | Spy reports | ≥1 court block | Prefixed spy lines. |
 | `GAME30003` | Empty | Null or empty digest | Both empty copies. |
-| `GAME30003` | Mobile | Width ≤ 320 dp | Same stack; scroll. |
+| `GAME30003` | Mobile | 360 × 640 dp `mobileViewport` | Same stack; scroll. |
 
 ## Components
 
@@ -69,7 +69,7 @@ Ct-* only. Editorial-monocle tokens. Display names only (no raw ids, no `declare
 
 ## Widgetbook
 
-Folder **Intelligence Council**. Use cases: **World briefing**, **Spy reports**, **Empty**, **Mobile viewport** (`mobileViewport`, 320 dp).
+Folder **Intelligence Council**. Use cases: **World briefing**, **Spy reports**, **Empty**, **Mobile viewport** (shared `mobileViewport`, 360 × 640 dp per `SPEC/ui/mobile-adaptation.md`).
 
 ## Acceptance criteria
 
