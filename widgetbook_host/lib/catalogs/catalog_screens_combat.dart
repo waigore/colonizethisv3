@@ -528,9 +528,99 @@ List<WidgetbookNode> get victoryUiDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        name: 'Victory panel — calendar complete (declared winner)',
+        builder: (context) {
+          final game = _calendarCompleteDeclaredWinnerGame();
+          return _victoryStoryFrame(
+            VictoryPanel(
+              game: game,
+              bus: AppEventBus.create(),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Victory panel — calendar complete (tie)',
+        builder: (context) {
+          final game = _calendarCompleteTieGame();
+          return _victoryStoryFrame(
+            VictoryPanel(
+              game: game,
+              bus: AppEventBus.create(),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Victory overlay — calendar complete (320 dp)',
+        builder: (context) {
+          final game = _calendarCompleteDeclaredWinnerGame();
+          return _victoryStoryFrame(
+            SizedBox(
+              width: 320,
+              height: 640,
+              child: Stack(
+                children: [
+                  ColoredBox(color: EditorialMonoclePalette.bgDeep),
+                  VictoryOverlay(
+                    game: game,
+                    bus: AppEventBus.create(),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     ],
   ),
 ];
+
+Game _calendarCompleteDeclaredWinnerGame() {
+  final base = loadSeed42InitGameResult().game;
+  final leaderId = base.players.first.id;
+  final ow = base.worldState.oldWorld;
+  final provinces = ow.provinces
+      .map((p) => p.copyWith(ownerId: leaderId))
+      .toList();
+  return base.copyWith(
+    calendarCampaignHalted: true,
+    worldState: base.worldState.copyWith(
+      oldWorld: RegionData(provinces: provinces, units: ow.units),
+      fleets: const [],
+      armies: const [],
+    ),
+  );
+}
+
+Game _calendarCompleteTieGame() {
+  final base = loadSeed42InitGameResult().game;
+  final ow = base.worldState.oldWorld;
+  // Drop GP ownership so all Great Powers score 0 (tied / no declared winner).
+  final provinces = ow.provinces
+      .map(
+        (p) => Province(
+          id: p.id,
+          regionId: p.regionId,
+          displayName: p.displayName,
+          fortLevel: p.fortLevel,
+          terrain: p.terrain,
+          townTileKey: p.townTileKey,
+          townDevelopmentLevel: p.townDevelopmentLevel,
+          originalOwnerId: p.originalOwnerId,
+        ),
+      )
+      .toList();
+  return base.copyWith(
+    calendarCampaignHalted: true,
+    worldState: base.worldState.copyWith(
+      oldWorld: RegionData(provinces: provinces, units: ow.units),
+      fleets: const [],
+      armies: const [],
+    ),
+  );
+}
 
 /// Players bar stories. SPEC/ui/empire-overview.md § Players bar
 /// (issue #2861 S6, #3898 power scores + emphasis). Renders the floating

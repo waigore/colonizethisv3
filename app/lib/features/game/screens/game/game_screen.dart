@@ -26,8 +26,11 @@ class GameScreen extends ConsumerWidget {
     final game = ref.watch(currentGameProvider);
     final mapViewData = ref.watch(mapViewDataProvider);
     final victory = game?.victory;
-    final showOverlayButtons =
-        game != null && victory == null && mapViewData == null;
+    final calendarHalted = game?.calendarCampaignHalted ?? false;
+    final showOverlayButtons = game != null &&
+        victory == null &&
+        !calendarHalted &&
+        mapViewData == null;
     // The in-game map shell renders its own 36 dp `GameTopBar`; the mockup
     // shows no secondary `CtScreenShell` title band above it, so suppress it
     // when the map shell is active (issue #2861 M2 / R2). The Flame-canvas

@@ -239,6 +239,9 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get victory_military => 'Military victory';
 
   @override
+  String get victory_campaignComplete => 'Campaign complete';
+
+  @override
   String victory_winnerOnTurn(String winner, int turn) {
     return '$winner wins on turn $turn.';
   }

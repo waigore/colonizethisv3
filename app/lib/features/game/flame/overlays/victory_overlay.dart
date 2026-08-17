@@ -8,16 +8,17 @@ import 'victory_overlay_panel.dart';
 
 export 'victory_overlay_panel.dart';
 
-/// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
+/// Stateful overlay so "View final state" can hide the panel without a route
+/// (SPEC/game/victory.md; SPEC/ui/victory-overlay.md).
 ///
-/// Visual contract: SPEC/ui/victory-overlay.md — dark `--dialog-scrim` wash,
-/// centered brass-bordered [VictoryPanel] with laurel decoration, brass
-/// divider, and asymmetric corner brackets.
+/// Visual contract: dark `--dialog-scrim` wash, centered brass-bordered
+/// [VictoryPanel]. Pass [victory] for military; omit it for calendar-complete
+/// (`Game.calendarCampaignHalted && Game.victory == null`).
 class VictoryOverlay extends StatefulWidget {
   const VictoryOverlay({
     required this.game,
-    required this.victory,
     required this.bus,
+    this.victory,
     super.key,
   });
 
@@ -25,7 +26,7 @@ class VictoryOverlay extends StatefulWidget {
   static const screenId = UiScreenIds.victoryOverlay;
 
   final ct_models.Game game;
-  final ct_models.VictoryState victory;
+  final ct_models.VictoryState? victory;
   final ct_models.AppEventBus bus;
 
   @override
