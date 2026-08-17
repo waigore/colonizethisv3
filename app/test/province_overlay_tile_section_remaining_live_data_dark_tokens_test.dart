@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 import 'province_overlay_test_harness.dart';
+import 'province_overlay_test_harness_demo_shells.dart';
 
 /// Returns the `Text` widget whose `data` starts with [prefix]. Each row
 /// renders exactly once, so a single match is expected.

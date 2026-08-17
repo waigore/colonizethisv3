@@ -21,6 +21,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 
 import 'province_overlay_test_harness.dart';
+import 'province_overlay_test_harness_demo_shells.dart';
 
 Color _expectedDisabledIconColor() {
   return EditorialMonoclePalette.muted.withValues(

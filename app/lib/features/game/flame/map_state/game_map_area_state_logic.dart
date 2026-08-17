@@ -4,6 +4,7 @@
 /// use topic classes directly (`GameMapAreaStateLogicShell`, …).
 export 'game_map_area_province_action_states.dart';
 export 'game_map_area_province_action_states_establish_consulate.dart';
+export 'game_map_area_province_action_states_offer_peace.dart';
 export 'game_map_area_state_logic_draft_projection.dart';
 export 'game_map_area_state_logic_province_actions.dart';
 export 'game_map_area_state_logic_shell.dart';
