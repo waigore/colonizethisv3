@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/debug_console_api.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_command_helpers.dart';
+import 'debug_spawn_apply_helpers.dart';
 
 /// Debug spawn civilians at the human player's capital (console / dev tooling).
 DebugCommandResult applyDebugCivilianSpawnAtCapital({
@@ -19,10 +20,9 @@ DebugCommandResult applyDebugCivilianSpawnAtCapital({
   guard as DebugGuardPass;
   final player = guard.player;
   if (CivilianEconomyCatalog.byId[event.unitType] == null) {
-    return (
-      game: null,
-      message:
-          'Debug spawn ignored: unsupported civilian type ${event.unitType}.',
+    return debugUnsupportedSpawnType(
+      typeLabel: 'civilian',
+      typeId: event.unitType,
     );
   }
   if (event.count < 1) {
@@ -42,21 +42,13 @@ DebugCommandResult applyDebugCivilianSpawnAtCapital({
       message: 'Debug spawn ignored: player has no valid capital tile.',
     );
   }
-  final boundedCount = event.count > 25 ? 25 : event.count;
-  final allUnits = <Unit>[
-    ...guard.game.worldState.oldWorld.units,
-    ...guard.game.worldState.newWorld.units,
-  ];
-  final usedUnitIds = {for (final unit in allUnits) unit.id};
-  var nextUnitSeq = nextCanonicalUnitSequence(units: allUnits);
-  final spawned = <Unit>[];
-  for (var i = 0; i < boundedCount; i++) {
-    final unitId = mintCanonicalUnitId(
-      usedUnitIds: usedUnitIds,
-      nextSequence: nextUnitSeq,
-    );
-    nextUnitSeq++;
-    spawned.add(
+  final boundedCount = boundDebugSpawnCount(event.count);
+  final unitIds = mintDebugLandUnitIds(
+    worldState: guard.game.worldState,
+    count: boundedCount,
+  );
+  final spawned = <Unit>[
+    for (final unitId in unitIds)
       Unit(
         id: unitId,
         type: event.unitType,
@@ -64,8 +56,7 @@ DebugCommandResult applyDebugCivilianSpawnAtCapital({
         locationProvinceId: spawnProvinceId,
         tileKey: spawnTileKey,
       ),
-    );
-  }
+  ];
   final updatedWorld = appendUnitsToRegion(
     guard.game.worldState,
     spawnRegionId,

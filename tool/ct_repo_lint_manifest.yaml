@@ -767,10 +767,24 @@ rules:
 
   - rule_id: repo.app_debug_handler_guard_helpers
     group: structure
-    title: app debug handlers must use shared guard helpers, not inline guard strings (Refs #3655)
+    title: app debug handlers must use shared guard helpers and boundDebugSpawnCount (Refs #3655, #4484)
     spec: SPEC/program/debug-console-internals.md
     runner: dart
     script: tool/check_app_debug_handler_guard_helpers.dart
+
+  - rule_id: repo.app_debug_lib_file_size
+    group: structure
+    title: colonizethis_app_debug lib files must stay at or below 200 physical lines (Refs #4484)
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_app_debug_lib_file_size.dart
+
+  - rule_id: repo.app_debug_test_file_size
+    group: testing
+    title: colonizethis_app_debug test files must stay at or below 400 physical lines (Refs #4484)
+    spec: SPEC/program/debug-console-internals.md
+    runner: dart
+    script: tool/check_app_debug_test_file_size.dart
 
   - rule_id: repo.app_asset_image_decode_dedup
     group: structure

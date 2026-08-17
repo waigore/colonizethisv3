@@ -35,14 +35,14 @@ Spawn parsers (`_parseSpawnCivilian`, `_parseSpawnRegiment`, `_parseSpawnShip`) 
 
 `SetDebugDiplomacyRelationEvent` is applied in the app shell, not in this package, mirroring the other mutating debug commands (`/add_money`, `/flip_province`).
 
-- **Location:** `app/lib/core/services/debug/app_event_handler_debug_set_diplomacy.dart` — `applyDebugSetDiplomacyRelation({required Game? currentGame, required SetDebugDiplomacyRelationEvent event})` returns a `DebugCommandResult` (`(Game?, message)`); a null `game` signals rejection.
+- **Location:** `packages/colonizethis_app_debug/lib/src/app_event_handler_debug_set_diplomacy.dart` — `applyDebugSetDiplomacyRelation({required Game? currentGame, required SetDebugDiplomacyRelationEvent event})` returns a `DebugCommandResult` (`(Game?, message)`); a null `game` signals rejection.
 - **Subscription:** registered in `app_event_handler_scope_session_subscriptions.dart` via `bus.on<SetDebugDiplomacyRelationEvent>()`, guarded by `_unlessTurnResolutionBlocksSession`, and applied with `_applyDebugCommand` (persist + snackbar).
 - **Responsibilities, in order:** (1) `TurnPhase.orders` gate; (2) faction resolution of `factionA` (defaulting to `humanPlayerId` when null) and `factionB` — exact canonical id wins, else case-insensitive display-name match across `players`, `minorNations`, and `tribes`, with ambiguous/unknown inputs rejected; (3) self-target rejection (`factionA == factionB`); (4) per-pair-per-turn quota check against `Game.debugDiplomacyUsedPairKeys` (sorted `pairKey`); (5) per-action hard-incompatibility validation; (6) direct `Game` mutation (relation state/`formalAlliance`, overture upsert/clear, FTP set/remove); (7) `war` side effects (clear overtures both directions, remove FTP); (8) `DiplomaticEvent` history append with sequential `intraTurnIndex`; (9) record the pair key in `debugDiplomacyUsedPairKeys`.
 - **Quota reset:** `runEndOfTurnPhase` (`packages/colonizethis_turn`) clears `Game.debugDiplomacyUsedPairKeys` when the turn advances.
 
-## App debug-handler shared guard helpers (`app/lib/core/services/debug/debug_command_helpers.dart`)
+## App debug-handler shared guard helpers (`packages/colonizethis_app_debug/lib/src/debug_command_helpers.dart`)
 
-The mutating debug handlers (`app/lib/core/services/debug/app_event_handler_debug_*.dart`) share their guard preamble, player mutation, credited-amount messaging, region-aware unit insertion, and per-command message labels through `debug_command_helpers.dart`. This decouples validation from mutation and keeps user-visible guard text byte-for-byte consistent across handlers (Refs #3655). The refactor is behavior-preserving: message text is unchanged.
+The mutating debug handlers (`packages/colonizethis_app_debug/lib/src/app_event_handler_debug_*.dart`) share their guard preamble, player mutation, credited-amount messaging, region-aware unit insertion, and per-command message labels through `debug_command_helpers.dart`. This decouples validation from mutation and keeps user-visible guard text byte-for-byte consistent across handlers (Refs #3655). The refactor is behavior-preserving: message text is unchanged.
 
 | Helper | Role |
 |--------|------|
@@ -54,7 +54,7 @@ The mutating debug handlers (`app/lib/core/services/debug/app_event_handler_debu
 | `debugCreditedAmountMessage` | Single "requested vs credited" credit-success formatter for treasury, worker-pool, and stockpile. |
 | `appendUnitsToRegion` | Region-aware (`kRegionNewWorld` vs old world) unit-append into `WorldState`, used by civilian and regiment spawn. |
 
-Each handler expresses only the guards and label it needs; the combinators preserve each handler's exact short-circuit ordering (which message wins when multiple preconditions fail). The path-scoped lint rule `repo.app_debug_handler_guard_helpers` (`tool/check_app_debug_handler_guard_helpers.dart`) fails when any `app_event_handler_debug_*.dart` handler reintroduces an inline guard string literal (for example `no active game.`, `is not human.`, `count must be >= 1.`) instead of the shared helpers.
+Each handler expresses only the guards and label it needs; the combinators preserve each handler's exact short-circuit ordering (which message wins when multiple preconditions fail). Spawn apply handlers share `boundDebugSpawnCount` / `kDebugSpawnCountCap` (=25; must stay equal to parser `kDebugConsoleMaxSpawnCount` without adding a `colonizethis_debug_console` dependency) and `debugUnsupportedSpawnType` / `mintDebugLandUnitIds` in `debug_spawn_apply_helpers.dart`. Flip/reveal share `resolveDebugProvinceTarget` and `countNewlyFullyVisibleTiles` in `debug_province_target_resolve.dart` (Refs #4484). The path-scoped lint rule `repo.app_debug_handler_guard_helpers` (`tool/check_app_debug_handler_guard_helpers.dart`) fails when any `app_event_handler_debug_*.dart` handler reintroduces an inline guard string literal (for example `no active game.`, `is not human.`, `count must be >= 1.`) instead of the shared helpers.
 
 ## File organization
 
@@ -81,6 +81,14 @@ Each handler expresses only the guards and label it needs; the combinators prese
 - Given a `packages/colonizethis_debug_console/lib/**` Dart file with more than 270 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_lib_file_size`, then the run fails naming that file and exits `1` (Refs #4433).
 - Given every `packages/colonizethis_debug_console/test/**/*.dart` file is at or below 400 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_test_file_size`, then the rule passes and exits `0` (Refs #4433).
 - Given a `packages/colonizethis_debug_console/test/**` Dart file with more than 400 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_test_file_size`, then the run fails naming that file and exits `1` (Refs #4433).
-- Given all `app/lib/core/services/debug/app_event_handler_debug_*.dart` handlers source guard messages from `debug_command_helpers.dart`, when repo lint runs `repo.app_debug_handler_guard_helpers`, then the rule passes with no violations.
+- Given all `packages/colonizethis_app_debug/lib/src/app_event_handler_debug_*.dart` handlers source guard messages from `debug_command_helpers.dart`, when repo lint runs `repo.app_debug_handler_guard_helpers`, then the rule passes with no violations.
 - Given any `app_event_handler_debug_*.dart` handler inlines a canonical guard string literal (for example `'Debug spawn ignored: no active game.'`) instead of calling the shared helper, when repo lint runs `repo.app_debug_handler_guard_helpers`, then the run fails and names the offending file and the inlined guard fragment.
 - Given a debug treasury credit with `creditedAmount == 0` and an unknown `humanPlayerId` while the game is in `TurnPhase.movement`, when `applyDebugTreasuryCredit` runs, then it returns `game == null` with message `Debug add_money rejected: command is allowed only during human Orders phase.` (Orders-phase gate short-circuits first, preserving the prior label and ordering).
+
+
+### colonizethis_app_debug package size ratchets (Refs #4484)
+
+- Package lib ratchet: every non-generated `packages/colonizethis_app_debug/lib/**/*.dart` file is ≤ **200** physical lines (`repo.app_debug_lib_file_size`; empty grandfather).
+- Package test ratchet: every `packages/colonizethis_app_debug/test/**/*.dart` file is ≤ **400** physical lines (`repo.app_debug_test_file_size`; empty grandfather).
+- Given every non-generated `packages/colonizethis_app_debug/lib/**/*.dart` file is at or below 200 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.app_debug_lib_file_size`, then the rule passes and exits `0` (Refs #4484).
+- Given every `packages/colonizethis_app_debug/test/**/*.dart` file is at or below 400 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.app_debug_test_file_size`, then the rule passes and exits `0` (Refs #4484).
