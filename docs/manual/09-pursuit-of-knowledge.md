@@ -87,13 +87,13 @@ Rival courts also fill research seats and spend gold on funding. They keep work 
 
 ## Acceptance criteria for this chapter
 
-- [ ] Documents `GAME40001` Slots/Tree, four slot cards with Slot 4 locked until University, funding presets, Choose tech rules, and cancel forfeiture.
-- [ ] Explains listed prerequisites, researchable-only choose list, and exact RP cost tiers (1800 / 2400 / 3000 / 3600) at player level.
-- [ ] Summarizes Tree colour/icon category groups (no filters) and New World discovery prerequisites without inventing a single branch count that fights the SPECs.
-- [ ] Does not document an unavailable Tree goal control; mentions spy insight on the Slots **+N RP** preview and RP breakdown.
-- [ ] States that empty seats / funding None are legal strategic thrift and that end-turn does not warn about unused research capacity.
-- [ ] Explains the **Research this turn** header on Slots, **+N RP** breakdown entry, sequential multi-seat funding honesty, and the research debt floor.
-- [ ] Sources match the chapter coverage map.
+- [x] Documents `GAME40001` Slots/Tree, four slot cards with Slot 4 locked until University, funding presets, Choose tech rules, and cancel forfeiture.
+- [x] Explains listed prerequisites, researchable-only choose list, and exact RP cost tiers (1800 / 2400 / 3000 / 3600) at player level.
+- [x] Summarizes Tree colour/icon category groups (no filters) and New World discovery prerequisites without inventing a single branch count that fights the SPECs.
+- [x] Does not document an unavailable Tree goal control; mentions spy insight on the Slots **+N RP** preview and RP breakdown.
+- [x] States that empty seats / funding None are legal strategic thrift and that end-turn does not warn about unused research capacity.
+- [x] Explains the **Research this turn** header on Slots, **+N RP** breakdown entry, sequential multi-seat funding honesty, and the research debt floor.
+- [x] Sources match the chapter coverage map.
 
 ## Sources
 
