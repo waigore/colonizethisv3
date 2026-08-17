@@ -54,6 +54,8 @@ class GameMapCanvasStack extends ConsumerWidget {
     this.armyMovePickerCache,
     required this.centerOnTileKey,
     required this.validTileKeysForSelection,
+    this.lastTurnPulseTileKey,
+    this.onLastTurnPlaybackMapTap,
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
     required this.selectedCivilianTileKey,
@@ -87,6 +89,8 @@ class GameMapCanvasStack extends ConsumerWidget {
   final PerPlayerArmyMovePickerCache? armyMovePickerCache;
   final String? centerOnTileKey;
   final Set<String>? validTileKeysForSelection;
+  final String? lastTurnPulseTileKey;
+  final VoidCallback? onLastTurnPlaybackMapTap;
 
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
@@ -151,10 +155,14 @@ class GameMapCanvasStack extends ConsumerWidget {
                       onProvinceSelected: null,
                       onMapTileTappedForDetail: inWorkTargetSelectionMode
                           ? null
+                          : onLastTurnPlaybackMapTap != null
+                          ? (_) => onLastTurnPlaybackMapTap!()
                           : (tk) => ref
                                 .read(mapProvincePanelProvider.notifier)
                                 .reportMapTileTapped(tk),
-                      onMapTileSecondaryForRadial: onSecondary,
+                      onMapTileSecondaryForRadial: onLastTurnPlaybackMapTap != null
+                          ? null
+                          : onSecondary,
                       onProvinceHovered: (_) {},
                       onTileHovered: onTileHovered,
                       onCivilianTileStateChanged: inWorkTargetSelectionMode
@@ -171,6 +179,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                           highlights.secondaryHighlightTileKeys,
                       centerOnTileKey: centerOnTileKey,
                       validTileKeys: validTileKeysForSelection,
+                      lastTurnPulseTileKey: lastTurnPulseTileKey,
                       onTileSelected: onTileSelectedForWork,
                       onWorkTargetSelectionCancelled:
                           onWorkTargetSelectionCancelled,

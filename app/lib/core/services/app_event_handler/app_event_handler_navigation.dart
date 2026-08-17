@@ -50,6 +50,9 @@ Future<void> appEventHandlerOpenDialog(
     context: nav.context,
     builder: (ctx) => builder(ctx, event.params),
   );
+  if (event.dialogId == 'turn_news') {
+    handler.state.bus.emit(const TurnNewsDialogClosedEvent());
+  }
 }
 
 Future<bool> appEventHandlerShowConfirmDialog(

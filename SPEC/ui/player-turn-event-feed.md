@@ -39,6 +39,12 @@
 
 ---
 
+## Last-turn map playback (Refs #4486)
+
+After `DLG50001` closes (or `OVL20001` **View final state** when that overlay mounts for military victory or calendar-complete), `MAP10001` may autoplay up to `kLastTurnPlaybackCap` spatial beats from the same human-filtered batch (camera + pulse + caption). Closing news while `OVL20001` is still visible does not start playback. The feed remains the on-request full catalog; playback never auto-opens overlays. Contract: [map-widget.md](map-widget.md) § Last-turn spatial playback.
+
+---
+
 ## Interaction
 
 - Row tap:

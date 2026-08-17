@@ -34,6 +34,7 @@ class CtRegionMap extends StatefulWidget {
     this.secondaryHighlightTileKeys,
     this.centerOnTileKey,
     this.validTileKeys,
+    this.lastTurnPulseTileKey,
     this.onTileSelected,
     this.onWorkTargetSelectionCancelled,
     this.bus,
@@ -74,6 +75,7 @@ class CtRegionMap extends StatefulWidget {
   final Set<String>? secondaryHighlightTileKeys;
   final String? centerOnTileKey;
   final Set<String>? validTileKeys;
+  final String? lastTurnPulseTileKey;
   final void Function(String tileKey)? onTileSelected;
   final VoidCallback? onWorkTargetSelectionCancelled;
 

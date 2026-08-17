@@ -7,6 +7,7 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../widgets/shell/shell_player_context.dart';
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../screens/game/game_screen_shared.dart';
 import '../map_area/map_area.dart'
@@ -21,6 +22,8 @@ import 'game_map_area_selection.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_build_map_stack_chrome.dart';
 import 'game_map_area_relocate_selection.dart';
+import 'game_map_area_last_turn_playback.dart';
+import 'last_turn_playback_chrome.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 
@@ -35,7 +38,8 @@ mixin GameMapAreaBuildMapStack
         GameMapAreaSelection,
         GameMapAreaRelocateSelection,
         GameMapAreaE2e,
-        GameMapAreaBuildMapStackChrome {
+        GameMapAreaBuildMapStackChrome,
+        GameMapAreaLastTurnPlayback {
   Widget buildMapFocusedStack({
     required BuildContext context,
     required bool isNarrow,
@@ -67,6 +71,10 @@ mixin GameMapAreaBuildMapStack
           armyMovePickerCache: armyMovePickerCache,
           centerOnTileKey: centerOnTileKey,
           validTileKeysForSelection: validTileKeysForSelection,
+          lastTurnPulseTileKey: lastTurnPulseTileKey,
+          onLastTurnPlaybackMapTap: isLastTurnPlaybackRunning
+              ? skipLastTurnPlayback
+              : null,
           selectedCivilianTileKey: selectedCivilianTileKey,
           onTileSelectedForWork: workTargetSelection != null
               ? onTileSelectedForWork
@@ -98,6 +106,13 @@ mixin GameMapAreaBuildMapStack
           onRegionViewportSnapshot: onRegionViewportSnapshot,
           zoomMultiplier: mapViewState.zoomMultiplier,
         ),
+        if (isLastTurnPlaybackRunning && lastTurnPlaybackCaption != null)
+          lastTurnPlaybackChromeOverlay(
+            isNarrow: isNarrow,
+            caption: lastTurnPlaybackCaption!,
+            skipLabel: appL10n(context).map_lastTurnPlayback_skip,
+            onSkip: skipLastTurnPlayback,
+          ),
         if (!sideMenuOpen)
           Positioned(
             left: 0,

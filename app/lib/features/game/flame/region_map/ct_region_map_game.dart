@@ -56,6 +56,7 @@ class CtRegionMapGame extends FlameGame
     String? secondaryHighlightTileKey,
     Set<String>? secondaryHighlightTileKeys,
     Set<String>? validTileKeys,
+    String? lastTurnPulseTileKey,
     void Function(String tileKey)? onTileSelected,
     VoidCallback? onWorkTargetSelectionCancelled,
     void Function(String provinceId)? onTownIconTapped,
@@ -93,6 +94,7 @@ class CtRegionMapGame extends FlameGame
     this.secondaryHighlightTileKey = secondaryHighlightTileKey;
     this.secondaryHighlightTileKeys = secondaryHighlightTileKeys;
     this.validTileKeys = validTileKeys;
+    this.lastTurnPulseTileKey = lastTurnPulseTileKey;
     this.onTileSelected = onTileSelected;
     this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
     this.onTownIconTapped = onTownIconTapped;
@@ -135,6 +137,8 @@ class CtRegionMapGame extends FlameGame
     bool clearSecondaryHighlightTileKeys = false,
     Set<String>? validTileKeys,
     bool clearValidTileKeys = false,
+    String? lastTurnPulseTileKey,
+    bool clearLastTurnPulseTileKey = false,
     void Function(String tileKey)? onTileSelected,
     VoidCallback? onWorkTargetSelectionCancelled,
     void Function(String tileKey)? onCivilianTileTapped,
@@ -175,6 +179,8 @@ class CtRegionMapGame extends FlameGame
     clearSecondaryHighlightTileKeys: clearSecondaryHighlightTileKeys,
     validTileKeys: validTileKeys,
     clearValidTileKeys: clearValidTileKeys,
+    lastTurnPulseTileKey: lastTurnPulseTileKey,
+    clearLastTurnPulseTileKey: clearLastTurnPulseTileKey,
     onTileSelected: onTileSelected,
     onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
     onCivilianTileTapped: onCivilianTileTapped,

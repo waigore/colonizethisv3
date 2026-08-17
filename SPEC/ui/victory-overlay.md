@@ -107,7 +107,7 @@ Implementers MUST drive the narrow flag from `MediaQuery.sizeOf(context).width <
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | Return to Main Menu | Overlay visible | `NavigateToShellEvent` | Shell navigates per [main-menu.md](main-menu.md). |
-| View Final State | Overlay visible | `onViewFinalState` callback | `_dismissed = true`; map remains; no route pop. |
+| View Final State | Overlay visible | `onViewFinalState` callback; emits `VictoryOverlayViewFinalStateEvent` on the bus | `_dismissed = true`; map remains; no route pop. Starts last-turn spatial playback when pending (Refs #4486; [map-widget.md](map-widget.md) § Last-turn spatial playback). |
 
 ---
 
