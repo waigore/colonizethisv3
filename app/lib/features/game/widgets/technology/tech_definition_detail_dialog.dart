@@ -95,49 +95,11 @@ class _TechDefinitionDetailBody extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(techDisplayName(tech.id), style: theme.textTheme.titleMedium),
-        CtGap.m,
-        Text(
-          l10n.techTree_eraCategory(
-            eraRoman(tech.era),
-            techCategoryLabelL10n(l10n, tech.category),
-          ),
-          style: theme.textTheme.bodySmall,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.techTree_researchPoints(tech.cost),
-          style: theme.textTheme.bodyMedium,
-        ),
-        if (tech.prerequisiteIds.isNotEmpty) ...[
-          CtGap.m,
-          Text(
-            l10n.techTree_prerequisites,
-            style: theme.textTheme.labelLarge,
-          ),
-          ...tech.prerequisiteIds.map(
-            (id) => Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                l10n.techTree_prerequisiteBullet(techDisplayName(id)),
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ],
-        if (effects.isNotEmpty) ...[
-          CtGap.m,
-          Text(l10n.techTree_effects, style: theme.textTheme.labelLarge),
-          ...effects.map(
-            (e) => Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                l10n.techTree_bulletItem(e),
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ],
+        _TechDefinitionHeader(tech: tech, theme: theme, l10n: l10n),
+        if (tech.prerequisiteIds.isNotEmpty)
+          _TechPrerequisiteList(tech: tech, theme: theme, l10n: l10n),
+        if (effects.isNotEmpty)
+          _TechEffectList(effects: effects, theme: theme, l10n: l10n),
         ..._researchedBySection(context, game, player, tech.id, l10n, theme),
         if (treeAssign != null) ...[
           CtGap.m,
@@ -157,6 +119,105 @@ class _TechDefinitionDetailBody extends StatelessWidget {
           child: CtNinePatchButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text(l10n.common_close),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TechDefinitionHeader extends StatelessWidget {
+  const _TechDefinitionHeader({
+    required this.tech,
+    required this.theme,
+    required this.l10n,
+  });
+
+  final TechDefinition tech;
+  final ThemeData theme;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(techDisplayName(tech.id), style: theme.textTheme.titleMedium),
+        CtGap.m,
+        Text(
+          l10n.techTree_eraCategory(
+            eraRoman(tech.era),
+            techCategoryLabelL10n(l10n, tech.category),
+          ),
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.techTree_researchPoints(tech.cost),
+          style: theme.textTheme.bodyMedium,
+        ),
+      ],
+    );
+  }
+}
+
+class _TechPrerequisiteList extends StatelessWidget {
+  const _TechPrerequisiteList({
+    required this.tech,
+    required this.theme,
+    required this.l10n,
+  });
+
+  final TechDefinition tech;
+  final ThemeData theme;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CtGap.m,
+        Text(l10n.techTree_prerequisites, style: theme.textTheme.labelLarge),
+        ...tech.prerequisiteIds.map(
+          (id) => Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              l10n.techTree_prerequisiteBullet(techDisplayName(id)),
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TechEffectList extends StatelessWidget {
+  const _TechEffectList({
+    required this.effects,
+    required this.theme,
+    required this.l10n,
+  });
+
+  final List<String> effects;
+  final ThemeData theme;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CtGap.m,
+        Text(l10n.techTree_effects, style: theme.textTheme.labelLarge),
+        ...effects.map(
+          (e) => Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              l10n.techTree_bulletItem(e),
+              style: theme.textTheme.bodySmall,
+            ),
           ),
         ),
       ],
@@ -221,35 +282,19 @@ class _TechTreeAssignSection extends StatelessWidget {
         },
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.techTree_replaceSeatPrompt,
-          style: theme.textTheme.labelLarge,
-        ),
-        const SizedBox(height: 4),
-        for (final entry in occupancy.assignmentBySeat.entries)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: CtActionTextButton(
-              key: Key('techTreeReplaceSeat_${entry.key}'),
-              label: l10n.techTree_replaceSeatLabel(
-                entry.key + 1,
-                techDisplayName(entry.value.techId),
-              ),
-              onPressed: () {
-                unawaited(
-                  _assignToSeat(
-                    context: context,
-                    slotIndex: entry.key,
-                    replacing: entry.value.techId,
-                  ),
-                );
-              },
-            ),
+    return _TechTreeReplaceSeatList(
+      occupancy: occupancy,
+      l10n: l10n,
+      theme: theme,
+      onReplace: (slotIndex, techId) {
+        unawaited(
+          _assignToSeat(
+            context: context,
+            slotIndex: slotIndex,
+            replacing: techId,
           ),
-      ],
+        );
+      },
     );
   }
 
@@ -292,6 +337,46 @@ class _TechTreeAssignSection extends StatelessWidget {
     if (dialogContext.mounted) {
       Navigator.of(dialogContext).pop();
     }
+  }
+}
+
+class _TechTreeReplaceSeatList extends StatelessWidget {
+  const _TechTreeReplaceSeatList({
+    required this.occupancy,
+    required this.l10n,
+    required this.theme,
+    required this.onReplace,
+  });
+
+  final TechTreeSeatOccupancy occupancy;
+  final AppLocalizations l10n;
+  final ThemeData theme;
+  final void Function(int slotIndex, String techId) onReplace;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.techTree_replaceSeatPrompt,
+          style: theme.textTheme.labelLarge,
+        ),
+        const SizedBox(height: 4),
+        for (final entry in occupancy.assignmentBySeat.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: CtActionTextButton(
+              key: Key('techTreeReplaceSeat_${entry.key}'),
+              label: l10n.techTree_replaceSeatLabel(
+                entry.key + 1,
+                techDisplayName(entry.value.techId),
+              ),
+              onPressed: () => onReplace(entry.key, entry.value.techId),
+            ),
+          ),
+      ],
+    );
   }
 }
 
