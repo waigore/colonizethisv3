@@ -24,6 +24,31 @@ Game buildVictoryPanelTestGame() {
   );
 }
 
+/// Calendar-halt fixture with a unique overall-strength leader (`gp1` owns one
+/// Old World province; `gp2` owns none).
+Game buildVictoryCalendarDeclaredWinnerTestGame() {
+  return buildPanelTestGame(
+    id: 'victory-calendar-declared-winner',
+    players: [
+      panelTestHumanPlayer(),
+      Player(id: 'gp2', displayName: 'Rival Power', isHuman: false),
+    ],
+    oldWorldProvinces: const [
+      Province(
+        id: 'oldWorld|p0',
+        regionId: 'oldWorld',
+        displayName: 'Alpha',
+        ownerId: kPanelTestHumanPlayerId,
+      ),
+    ],
+  ).copyWith(calendarCampaignHalted: true);
+}
+
+/// Calendar-halt fixture with tied overall strength (no declared winner).
+Game buildVictoryCalendarTieTestGame() {
+  return buildVictoryPanelTestGame().copyWith(calendarCampaignHalted: true);
+}
+
 /// Lightweight game shaped for the `game_map_players_bar_test` standalone
 /// widget contract.
 ///

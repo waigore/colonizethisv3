@@ -941,6 +941,9 @@ abstract class AppLocalizations {
   /// Victory type label.
   String get victory_military;
 
+  /// Calendar-halt overlay title (OVL20001 campaign-complete variant).
+  String get victory_campaignComplete;
+
   /// Victory sentence with winner and turn number.
   String victory_winnerOnTurn(String winner, int turn);
 

@@ -62,6 +62,7 @@ Their choices are deterministic for the same world state and seeds, but they are
 - News is a summary, not a substitute for inspection. Read `DLG50001` Turn news, then check the affected province, fleet, diplomacy, production, and technology views.
 - Saving preserves a named point in your campaign; loading from pause deliberately discards the active session in favour of the selected save.
 - The fixed calendar keeps moving with each completed turn: early decades pass quickly, while the years after 1700 become more granular.
+- In a standard campaign, after the last full turn of year **1800** resolves without a province-count winner, further **Next turn** actions stay blocked. `OVL20001` **Victory overlay** announces **Campaign complete** (see Chapter 15); dismissing it to view the map does not reopen the turn clock.
 
 ## Acceptance criteria for this chapter
 
@@ -89,4 +90,5 @@ Their choices are deterministic for the same world state and seeds, but they are
 - `SPEC/ui/settings-dialog.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ui/game-side-menu.md`
+- `SPEC/ui/victory-overlay.md`
 - `SPEC/ai/ai-architecture.md`

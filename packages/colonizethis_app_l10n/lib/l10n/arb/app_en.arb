@@ -1757,6 +1757,10 @@
   "@victory_military": {
     "description": "Victory type label."
   },
+  "victory_campaignComplete": "Campaign complete",
+  "@victory_campaignComplete": {
+    "description": "Calendar-halt OVL20001 overlay title (not military victory)."
+  },
   "victory_winnerOnTurn": "{winner} wins on turn {turn}.",
   "@victory_winnerOnTurn": {
     "description": "Victory sentence with winner and turn number.",

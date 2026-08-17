@@ -88,6 +88,11 @@ class GameScreenOverlayStack extends ConsumerWidget {
             game: game!,
             victory: victory!,
             bus: ref.read(appEventBusProvider),
+          )
+        else if (game != null && game!.calendarCampaignHalted)
+          VictoryOverlay(
+            game: game!,
+            bus: ref.read(appEventBusProvider),
           ),
       ],
     );
