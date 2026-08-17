@@ -6,6 +6,7 @@
 //  - AC-1  Still open treasury-short reason line
 //  - AC-2  Bids panel Did not stay open cargo-drop row
 //  - AC-3  Offers panel Did not stay open stockpile-drop row
+//  - AC-4  Bids panel No matching sales last turn fallback
 //  - AC-5  Offers panel No matching buys last turn fallback
 //
 // AC-7 Details goldens live in
@@ -191,6 +192,56 @@ void main() {
           offersPanel,
           matchesGoldenFile(
             'goldens/trade_deal_book_did_not_stay_open_stockpile_drop_offers.png',
+          ),
+        );
+      },
+    );
+
+    testWidgets(
+      'golden: bids panel No matching sales last turn fallback (AC-4)',
+      (WidgetTester tester) async {
+        const boundaryKey = ValueKey<String>(
+          'tradeDealBookStillOpenBidFallbackGolden',
+        );
+
+        await pumpDealBookLeftoverReasonGolden(
+          tester,
+          boundaryKey: boundaryKey,
+          game: buildTradeTestGame(
+            players: dealBookTestPlayers,
+            lastTurnActivity: {
+              'timber': dealBookActivityWithNotes(
+                commodity: 'timber',
+                totalOfferQuantity: 0,
+              ),
+            },
+            carryForwardBids: <String, List<TradeOrder>>{
+              kDealBookLeftoverGoldensHumanPlayerId: <TradeOrder>[
+                TradeOrder(
+                  commodityId: 'timber',
+                  type: TradeOrderType.bid,
+                  quantity: 3,
+                  priority: 1,
+                ),
+              ],
+            },
+          ),
+          viewport: kDealBookLeftoverGoldensPanelViewport,
+        );
+
+        final Finder bidsPanel = find.byKey(
+          TradeScreenDealBookKeys.dealBookBidsPanelKey,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(bidsPanel, findsOneWidget);
+        expect(find.text('Timber — 3'), findsOneWidget);
+        expect(find.text('No matching sales last turn'), findsOneWidget);
+
+        await expectLater(
+          bidsPanel,
+          matchesGoldenFile(
+            'goldens/trade_deal_book_still_open_bid_no_matching_sales.png',
           ),
         );
       },
