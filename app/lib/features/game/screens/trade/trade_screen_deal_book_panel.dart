@@ -24,6 +24,8 @@ import '../../../../widgets/commodity_display_name.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'trade_screen_contract_deal_book.dart';
+import 'trade_screen_deal_book_leftover_row.dart';
+import 'trade_screen_deal_book_reasons.dart';
 
 class DealBookPanel extends StatelessWidget {
   const DealBookPanel({
@@ -31,7 +33,8 @@ class DealBookPanel extends StatelessWidget {
     required this.panelTitle,
     required this.side,
     required this.filledRows,
-    required this.unfilledRows,
+    required this.stillOpenRows,
+    required this.didNotStayOpenRows,
     required this.totalsKey,
     required this.emptyKey,
     required this.totalsLabel,
@@ -44,7 +47,8 @@ class DealBookPanel extends StatelessWidget {
   final String panelTitle;
   final String side;
   final List<FilledDeal> filledRows;
-  final List<TradeOrder> unfilledRows;
+  final List<DealBookStillOpenRowData> stillOpenRows;
+  final List<DealBookDidNotStayOpenRowData> didNotStayOpenRows;
   final Key totalsKey;
   final Key emptyKey;
   final String totalsLabel;
@@ -57,7 +61,9 @@ class DealBookPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final DealBookPanelStyles styles = DealBookPanelStyles.of(context);
     final AppLocalizations l10n = appL10n(context);
-    final bool panelEmpty = filledRows.isEmpty && unfilledRows.isEmpty;
+    final bool panelEmpty = filledRows.isEmpty &&
+        stillOpenRows.isEmpty &&
+        didNotStayOpenRows.isEmpty;
     return CtPanel(
       padding: const EdgeInsets.all(CtSpacing.ml),
       child: Column(
@@ -95,7 +101,16 @@ class DealBookPanel extends StatelessWidget {
       const SizedBox(height: 8),
       Text(l10n.tradeDealBook_unfilledHeading, style: styles.sectionHeading),
       const SizedBox(height: 4),
-      ..._buildUnfilledRows(styles, l10n),
+      ..._buildStillOpenRows(styles, l10n),
+      if (didNotStayOpenRows.isNotEmpty) ...<Widget>[
+        const SizedBox(height: 8),
+        Text(
+          l10n.tradeDealBook_didNotStayOpenHeading,
+          style: styles.sectionHeading,
+        ),
+        const SizedBox(height: 4),
+        ..._buildDidNotStayOpenRows(styles),
+      ],
     ];
   }
 
@@ -124,23 +139,42 @@ class DealBookPanel extends StatelessWidget {
     ];
   }
 
-  List<Widget> _buildUnfilledRows(
+  List<Widget> _buildStillOpenRows(
     DealBookPanelStyles styles,
     AppLocalizations l10n,
   ) {
-    if (unfilledRows.isEmpty) {
+    if (stillOpenRows.isEmpty) {
       return <Widget>[
         Text(l10n.tradeDealBook_unfilledEmpty, style: styles.muted),
       ];
     }
     return <Widget>[
-      for (int i = 0; i < unfilledRows.length; i++)
+      for (int i = 0; i < stillOpenRows.length; i++)
         Padding(
           padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
-          child: DealBookUnfilledRow(
+          child: DealBookStillOpenRow(
             rowKey: TradeScreenDealBookKeys.dealBookUnfilledRowKey(side, i),
-            order: unfilledRows[i],
+            rowData: stillOpenRows[i],
             rowStyle: styles.body,
+            mutedStyle: styles.muted,
+          ),
+        ),
+    ];
+  }
+
+  List<Widget> _buildDidNotStayOpenRows(DealBookPanelStyles styles) {
+    return <Widget>[
+      for (int i = 0; i < didNotStayOpenRows.length; i++)
+        Padding(
+          padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
+          child: DealBookDidNotStayOpenRow(
+            rowKey: TradeScreenDealBookKeys.dealBookDidNotStayOpenRowKey(
+              side,
+              i,
+            ),
+            rowData: didNotStayOpenRows[i],
+            rowStyle: styles.body,
+            mutedStyle: styles.muted,
           ),
         ),
     ];
@@ -244,32 +278,3 @@ class DealBookFilledRow extends StatelessWidget {
   }
 }
 
-/// Single leftover order row inside a Deal Book panel. The order has
-/// not cleared yet so there is no per-unit price or notional —
-/// `{displayName} — quantity` is the player-facing readout (Refs #4414).
-class DealBookUnfilledRow extends StatelessWidget {
-  const DealBookUnfilledRow({
-    super.key,
-    required this.rowKey,
-    required this.order,
-    required this.rowStyle,
-  });
-
-  final Key rowKey;
-  final TradeOrder order;
-  final TextStyle rowStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppLocalizations l10n = appL10n(context);
-    return Text(
-      l10n.tradeDealBook_unfilledRow(
-        commodityDisplayName(l10n, order.commodityId),
-        order.quantity,
-      ),
-      key: rowKey,
-      style: rowStyle,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-}

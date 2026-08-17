@@ -6746,6 +6746,62 @@
       "amount": {"type": "int"}
     }
   },
+  "tradeDealBook_didNotStayOpenHeading": "Did not stay open",
+  "@tradeDealBook_didNotStayOpenHeading": {
+    "description": "Deal Book subsection for dropped carry-forwards (Refs #4500)."
+  },
+  "tradeDealBook_reasonTreasuryShort": "Treasury ran short — leftover stays open",
+  "@tradeDealBook_reasonTreasuryShort": {
+    "description": "Still open bid reason when treasury truncated the fill (Refs #4500)."
+  },
+  "tradeDealBook_reasonNoMatchingSales": "No matching sales last turn",
+  "@tradeDealBook_reasonNoMatchingSales": {
+    "description": "Still open bid fallback when last-turn offers were zero (Refs #4500)."
+  },
+  "tradeDealBook_reasonNoMatchingBuys": "No matching buys last turn",
+  "@tradeDealBook_reasonNoMatchingBuys": {
+    "description": "Still open offer fallback when last-turn bids were zero (Refs #4500)."
+  },
+  "tradeDealBook_droppedBidRow": "{commodity} — {quantity} — leftover cargo no longer covered this bid",
+  "@tradeDealBook_droppedBidRow": {
+    "description": "Did not stay open row for cargo-dropped bid (Refs #4500).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"}
+    }
+  },
+  "tradeDealBook_droppedOfferRow": "{commodity} — {quantity} — stores no longer covered this sale",
+  "@tradeDealBook_droppedOfferRow": {
+    "description": "Did not stay open row for stockpile-dropped offer (Refs #4500).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"}
+    }
+  },
+  "tradeDealBook_detailsAffordance": "Details",
+  "@tradeDealBook_detailsAffordance": {
+    "description": "Tap/long-press affordance for leftover reason next-step (Refs #4500)."
+  },
+  "tradeDealBook_detailFreeTreasury": "Free treasury by canceling other bids or waiting for income.",
+  "@tradeDealBook_detailFreeTreasury": {
+    "description": "On-request next step for treasury-short leftover bid (Refs #4500)."
+  },
+  "tradeDealBook_detailAddCargo": "Add cargo to your home fleet or reduce bid quantity.",
+  "@tradeDealBook_detailAddCargo": {
+    "description": "On-request next step for cargo-dropped bid (Refs #4500)."
+  },
+  "tradeDealBook_detailKeepStock": "Keep enough stock in your warehouses to cover leftover sales.",
+  "@tradeDealBook_detailKeepStock": {
+    "description": "On-request next step for stockpile-dropped offer (Refs #4500)."
+  },
+  "tradeDealBook_detailNoMatchingSales": "Wait for rivals to offer this good, or raise your bid price next turn.",
+  "@tradeDealBook_detailNoMatchingSales": {
+    "description": "On-request next step when no sales matched a leftover bid (Refs #4500)."
+  },
+  "tradeDealBook_detailNoMatchingBuys": "Wait for rivals to bid on this good, or lower your offer price next turn.",
+  "@tradeDealBook_detailNoMatchingBuys": {
+    "description": "On-request next step when no buys matched a leftover offer (Refs #4500)."
+  },
   "eventFeed_overseasProfitCredited": "Overseas profit credited: £{amount} from {count} rival purchase(s). Tap to open Deal Book.",
   "@eventFeed_overseasProfitCredited": {
     "description": "Player turn event feed line when overseas profit treasury was credited.",

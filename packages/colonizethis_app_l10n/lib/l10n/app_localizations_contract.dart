@@ -1906,6 +1906,42 @@ abstract class AppLocalizations {
   /// Deal Book panel totals with treasury mark.
   String tradeDealBook_totalsLine(String label, int amount);
 
+  /// Deal Book subsection for dropped carry-forwards.
+  String get tradeDealBook_didNotStayOpenHeading;
+
+  /// Still open bid reason when treasury truncated the fill.
+  String get tradeDealBook_reasonTreasuryShort;
+
+  /// Still open bid fallback when last-turn offers were zero.
+  String get tradeDealBook_reasonNoMatchingSales;
+
+  /// Still open offer fallback when last-turn bids were zero.
+  String get tradeDealBook_reasonNoMatchingBuys;
+
+  /// Did not stay open row for cargo-dropped bid.
+  String tradeDealBook_droppedBidRow(String commodity, int quantity);
+
+  /// Did not stay open row for stockpile-dropped offer.
+  String tradeDealBook_droppedOfferRow(String commodity, int quantity);
+
+  /// Tap/long-press affordance for leftover reason next-step.
+  String get tradeDealBook_detailsAffordance;
+
+  /// On-request next step for treasury-short leftover bid.
+  String get tradeDealBook_detailFreeTreasury;
+
+  /// On-request next step for cargo-dropped bid.
+  String get tradeDealBook_detailAddCargo;
+
+  /// On-request next step for stockpile-dropped offer.
+  String get tradeDealBook_detailKeepStock;
+
+  /// On-request next step when no sales matched a leftover bid.
+  String get tradeDealBook_detailNoMatchingSales;
+
+  /// On-request next step when no buys matched a leftover offer.
+  String get tradeDealBook_detailNoMatchingBuys;
+
   /// Player turn event feed line when overseas profit treasury was credited.
   String eventFeed_overseasProfitCredited(int amount, int count);
 

@@ -387,4 +387,50 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
   String tradeDealBook_totalsLine(String label, int amount) =>
       '$label: £$amount';
+
+  @override
+  String get tradeDealBook_didNotStayOpenHeading => 'Did not stay open';
+
+  @override
+  String get tradeDealBook_reasonTreasuryShort =>
+      'Treasury ran short — leftover stays open';
+
+  @override
+  String get tradeDealBook_reasonNoMatchingSales =>
+      'No matching sales last turn';
+
+  @override
+  String get tradeDealBook_reasonNoMatchingBuys =>
+      'No matching buys last turn';
+
+  @override
+  String tradeDealBook_droppedBidRow(String commodity, int quantity) =>
+      '$commodity — $quantity — leftover cargo no longer covered this bid';
+
+  @override
+  String tradeDealBook_droppedOfferRow(String commodity, int quantity) =>
+      '$commodity — $quantity — stores no longer covered this sale';
+
+  @override
+  String get tradeDealBook_detailsAffordance => 'Details';
+
+  @override
+  String get tradeDealBook_detailFreeTreasury =>
+      'Free treasury by canceling other bids or waiting for income.';
+
+  @override
+  String get tradeDealBook_detailAddCargo =>
+      'Add cargo to your home fleet or reduce bid quantity.';
+
+  @override
+  String get tradeDealBook_detailKeepStock =>
+      'Keep enough stock in your warehouses to cover leftover sales.';
+
+  @override
+  String get tradeDealBook_detailNoMatchingSales =>
+      'Wait for rivals to offer this good, or raise your bid price next turn.';
+
+  @override
+  String get tradeDealBook_detailNoMatchingBuys =>
+      'Wait for rivals to bid on this good, or lower your offer price next turn.';
 }
