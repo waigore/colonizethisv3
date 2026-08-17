@@ -237,6 +237,11 @@ void main() {
           establishConsulatePending: false,
           establishConsulateOrder: order,
           establishConsulateTargetName: 'Minor One',
+          isSeaZone: false,
+          offerPeaceEnabled: false,
+          offerPeacePending: false,
+          offerPeaceOrder: null,
+          offerPeaceTargetName: '',
           bus: bus,
         );
         expect(callbacks.onEstablishConsulateTap, isNotNull);
@@ -298,6 +303,11 @@ void main() {
         establishConsulatePending: true,
         establishConsulateOrder: order,
         establishConsulateTargetName: 'Minor One',
+        isSeaZone: false,
+        offerPeaceEnabled: false,
+        offerPeacePending: false,
+        offerPeaceOrder: null,
+        offerPeaceTargetName: '',
         bus: bus,
       );
       expect(callbacks.onEstablishConsulateTap, isNotNull);
