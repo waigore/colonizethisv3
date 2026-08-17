@@ -127,14 +127,58 @@ abstract final class DealBookReasonBuilder {
     required bool Function(MarketActivity activity) fallbackApplies,
   }) {
     final Map<CommodityId, List<MarketActivityNote>> notesByCommodity =
+        _collectPanelNotesByCommodity(
+      worldMarket: worldMarket,
+      playerId: playerId,
+      panelNoteKinds: panelNoteKinds,
+    );
+
+    final List<DealBookStillOpenRowData> stillOpen =
+        unfilledOrders
+            .map(
+              (TradeOrder order) => DealBookStillOpenRowData(
+                order: order,
+                reasonKind: _stillOpenReasonForOrder(
+                  order: order,
+                  notesByCommodity: notesByCommodity,
+                  worldMarket: worldMarket,
+                  treasuryNoteKind: treasuryNoteKind,
+                  treasuryReasonKind: treasuryReasonKind,
+                  fallbackReason: fallbackReason,
+                  fallbackApplies: fallbackApplies,
+                ),
+              ),
+            )
+            .toList(growable: false);
+
+    final List<DealBookDidNotStayOpenRowData> drops =
+        _collectDropRows(
+      worldMarket: worldMarket,
+      playerId: playerId,
+      dropNoteKind: dropNoteKind,
+      dropReasonKind: dropReasonKind,
+    );
+
+    return DealBookPanelReasonData(
+      stillOpenRows: List<DealBookStillOpenRowData>.unmodifiable(stillOpen),
+      didNotStayOpenRows:
+          List<DealBookDidNotStayOpenRowData>.unmodifiable(drops),
+    );
+  }
+
+  static Map<CommodityId, List<MarketActivityNote>>
+  _collectPanelNotesByCommodity({
+    required WorldMarketState worldMarket,
+    required String playerId,
+    required Set<MarketActivityNoteKind> panelNoteKinds,
+  }) {
+    final Map<CommodityId, List<MarketActivityNote>> notesByCommodity =
         <CommodityId, List<MarketActivityNote>>{};
     for (final MarketActivity activity
         in worldMarket.lastTurnActivity.values) {
       for (final MarketActivityNote note in activity.notes) {
-        if (note.factionId != playerId) {
-          continue;
-        }
-        if (!panelNoteKinds.contains(note.kind)) {
+        if (note.factionId != playerId ||
+            !panelNoteKinds.contains(note.kind)) {
           continue;
         }
         notesByCommodity
@@ -142,37 +186,44 @@ abstract final class DealBookReasonBuilder {
             .add(note);
       }
     }
+    return notesByCommodity;
+  }
 
-    final List<DealBookStillOpenRowData> stillOpen =
-        <DealBookStillOpenRowData>[];
-    for (final TradeOrder order in unfilledOrders) {
-      DealBookStillOpenReasonKind? reason;
-      final List<MarketActivityNote> notes =
-          notesByCommodity[order.commodityId] ?? const <MarketActivityNote>[];
-      if (notes.any((MarketActivityNote n) => n.kind == treasuryNoteKind)) {
-        reason = treasuryReasonKind;
-      } else if (notes.isEmpty) {
-        final MarketActivity activity =
-            worldMarket.lastTurnActivity[order.commodityId] ??
-                MarketActivity.empty;
-        if (fallbackApplies(activity)) {
-          reason = fallbackReason;
-        }
-      }
-      stillOpen.add(
-        DealBookStillOpenRowData(order: order, reasonKind: reason),
-      );
+  static DealBookStillOpenReasonKind? _stillOpenReasonForOrder({
+    required TradeOrder order,
+    required Map<CommodityId, List<MarketActivityNote>> notesByCommodity,
+    required WorldMarketState worldMarket,
+    required MarketActivityNoteKind treasuryNoteKind,
+    required DealBookStillOpenReasonKind treasuryReasonKind,
+    required DealBookStillOpenReasonKind fallbackReason,
+    required bool Function(MarketActivity activity) fallbackApplies,
+  }) {
+    final List<MarketActivityNote> notes =
+        notesByCommodity[order.commodityId] ?? const <MarketActivityNote>[];
+    if (notes.any((MarketActivityNote n) => n.kind == treasuryNoteKind)) {
+      return treasuryReasonKind;
     }
+    if (notes.isNotEmpty) {
+      return null;
+    }
+    final MarketActivity activity =
+        worldMarket.lastTurnActivity[order.commodityId] ??
+            MarketActivity.empty;
+    return fallbackApplies(activity) ? fallbackReason : null;
+  }
 
+  static List<DealBookDidNotStayOpenRowData> _collectDropRows({
+    required WorldMarketState worldMarket,
+    required String playerId,
+    required MarketActivityNoteKind dropNoteKind,
+    required DealBookDropReasonKind dropReasonKind,
+  }) {
     final List<DealBookDidNotStayOpenRowData> drops =
         <DealBookDidNotStayOpenRowData>[];
     for (final MarketActivity activity
         in worldMarket.lastTurnActivity.values) {
       for (final MarketActivityNote note in activity.notes) {
-        if (note.factionId != playerId) {
-          continue;
-        }
-        if (note.kind != dropNoteKind) {
+        if (note.factionId != playerId || note.kind != dropNoteKind) {
           continue;
         }
         drops.add(
@@ -184,11 +235,6 @@ abstract final class DealBookReasonBuilder {
         );
       }
     }
-
-    return DealBookPanelReasonData(
-      stillOpenRows: List<DealBookStillOpenRowData>.unmodifiable(stillOpen),
-      didNotStayOpenRows:
-          List<DealBookDidNotStayOpenRowData>.unmodifiable(drops),
-    );
+    return drops;
   }
 }
