@@ -18,7 +18,7 @@ const double kLastTurnPulseAngularFrequency =
     RegionMapPalette.hoveredProvinceGlowAngularFrequency;
 
 /// Last-turn pulse stroke (distinct from selection orange and locate cyan).
-const Color kLastTurnPulseColor = Color(0xFFFF77AA);
+const Color kLastTurnPulseColor = RegionMapPalette.lastTurnPulseColor;
 
 /// One resolvable spatial outcome for map playback.
 @immutable
