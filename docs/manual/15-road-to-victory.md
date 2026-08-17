@@ -16,6 +16,7 @@ The campaign may also reach its calendar end without a province-count winner. In
 6. At that calendar end, a declared winner is the Great Power with the strongest overall realm: owned provinces in both worlds, regiment strength, and ships all contribute. A tie produces no declared winner.
 7. Choose **infinite mode** when creating a new campaign if you want to continue beyond the calendar cap. The calendar then advances normally after 1800, and only reaching the province win or leaving the game ends the campaign.
 8. When military victory is recorded, `OVL20001` **Victory overlay** appears over the game. It names the winner, identifies the military victory, and states the winning turn. Choose **Return to Main Menu** to leave the campaign, or **View Final State** to dismiss the overlay and inspect the finished map. Viewing the final state never re-enables orders or further turns.
+9. When the calendar halt resolves without a province-count winner, the same `OVL20001` **Victory overlay** appears with the title **Campaign complete** (not military victory). The body reuses the Victory panel wording: either which court had the strongest overall realm when play stopped, or that no one is declared because overall strength is tied. **Return to Main Menu** and **View Final State** work the same way; after you dismiss the overlay, **Next turn** stays unavailable. Open `GAME70001` **Victory screen** anytime afterward if you want standings and the political minimap.
 
 ## Counsel
 
@@ -37,7 +38,7 @@ The AI does not receive a separate secret victory rule, but a realm approaching 
 
 - Reaching 31 Old World provinces ends the campaign immediately after that turn’s resolution; no further orders or turn advancement are available.
 - A province-count win takes precedence over the calendar cap if both would be reached on the same turn.
-- A calendar halt leaves the province-count win unset. It may declare an overall-strength winner for the campaign summary, or declare no one if the leading total is tied.
+- A calendar halt leaves the province-count win unset. It may declare an overall-strength winner for the campaign summary, or declare no one if the leading total is tied. The **Campaign complete** overlay tells you which of those happened before you leave or inspect the map.
 - Infinite mode removes the calendar halt, not the danger of overextension. Rival courts continue to develop, fight, trade, ally, and react while you pursue the province win.
 - A final-state view is for reflection and inspection only. It preserves the completed map but cannot resume the campaign.
 
@@ -48,7 +49,7 @@ The AI does not receive a separate secret victory rule, but a realm approaching 
 - [ ] States that New World and Tribe provinces do not count toward the military threshold.
 - [ ] Explains the default 1800 calendar cap, its turn-201 default mapping, and the declared-winner power-score outcome, including ties.
 - [ ] Explains infinite mode as a new-campaign choice that bypasses the calendar halt while retaining the province-count win.
-- [ ] Documents active `OVL20001` Victory overlay behavior and both options: Return to Main Menu and View Final State.
+- [ ] Documents active `OVL20001` Victory overlay for both military victory and calendar **Campaign complete**, including Return to Main Menu and View Final State.
 - [ ] Gives endgame counsel on coalition risk, AI reactions to relative power, and overextension.
 - [ ] Distinguishes a province-count win from a calendar-ended campaign summary.
 

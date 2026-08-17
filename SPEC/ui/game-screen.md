@@ -62,6 +62,7 @@ The widget is wrapped in a `PopScope(canPop: false)` so the system back gesture 
 |       GameWidget(ColonizeThisGame())                         |
 |                                                              |
 |    if showOverlayButtons (game != null && victory == null    |
+|                            && !calendarCampaignHalted         |
 |                            && mapViewData == null):          |
 |       Positioned(left:16,top:16) IconButton(menu) -> pause   |
 |       Positioned(right:16,top:16) CtNinePatchButton          |
@@ -69,7 +70,9 @@ The widget is wrapped in a `PopScope(canPop: false)` so the system back gesture 
 |         enabled: !blocking && allowsFullTurnResolution(game) |
 |                                                              |
 |    if game != null && victory != null:                       |
-|       VictoryOverlay(game, victory, bus)                     |
+|       VictoryOverlay(game, victory, bus)  // military        |
+|    else if game != null && calendarCampaignHalted:           |
+|       VictoryOverlay(game, bus)           // calendar        |
 +--------------------------------------------------------------+
 ```
 
@@ -83,7 +86,8 @@ The screen never paints chrome around the map / Flame canvas itself; layout for 
 |-------|------------------|--------|
 | Map view (default) | `mapViewData != null && game != null` | `GameMapArea(game, mapViewData)` plus pause + Next turn overlays unless suppressed. |
 | Flame canvas (legacy / fallback) | `mapViewData == null` | `GameWidget(ColonizeThisGame())` plus pause + Next turn overlays unless suppressed. |
-| Victory | `game != null && victory != null` | Map / Flame remains mounted; pause and Next turn buttons are **hidden** (`showOverlayButtons == false`); [`victory-overlay.md`](victory-overlay.md) `VictoryOverlay` is stacked on top. |
+| Victory | `game != null && victory != null` | Map / Flame remains mounted; pause and Next turn buttons are **hidden** (`showOverlayButtons == false`); military [`victory-overlay.md`](victory-overlay.md) `VictoryOverlay` is stacked on top. |
+| Calendar complete | `calendarCampaignHalted && victory == null` | Same chrome hide as victory on Flame fallback; calendar-complete `VictoryOverlay` mounts. After View Final State, overlay dismisses; Next turn stays blocked via `allowsFullTurnResolution`. |
 | Intro overlay | `game != null && !introShownIds.contains(game.id)` | The whole screen is wrapped in `GameStartIntroOverlay`; dismissing marks the id shown via `gameIdsWithIntroShownProvider.notifier.markShown`. |
 | Pending overtures | `pendingDiplomacy is PendingDiplomacyOvertures && offers.isNotEmpty` | Wraps the content in `OvertureDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeOvertureDecisions` and applies the result via `applyTurnResolutionResult(ref, result)`. |
 | Pending interventions | `pendingDiplomacy is PendingDiplomacyIntervention && prompts.isNotEmpty` | Wraps the content in `InterventionDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeInterventionDecisions`. |
@@ -103,7 +107,7 @@ The pending-diplomacy variants are mutually exclusive — exactly one wrapper is
 |--------|-----------|--------|
 | `NavigateToRouteEvent(Routes.game)` | New Game / Resume / Load from [`shell-screen.md`](shell-screen.md) or setup flow | `GameScreen` mounts at `/game`. |
 | `NavigateToShellEvent` | Post-victory or pause exit | Screen destroyed; in-memory state cleared by bus handler. |
-| Provider overlays | `pendingDiplomacyProvider`, `gameIdsWithIntroShownProvider`, `victory != null` | Wraps content with diplomacy / intro / victory overlays per States table. |
+| Provider overlays | `pendingDiplomacyProvider`, `gameIdsWithIntroShownProvider`, `victory != null`, `calendarCampaignHalted` | Wraps content with diplomacy / intro / victory / calendar-complete overlays per States table. |
 
 ### User actions → outcomes
 
@@ -113,7 +117,7 @@ The pending-diplomacy variants are mutually exclusive — exactly one wrapper is
 | Next turn (`CtNinePatchButton`) | `!turnResolutionBlockingProvider && allowsFullTurnResolution(game)` | Local `_runFlameCanvasNextTurn` | Confirmation dialog → processing dialog → `turnResolutionRunnerProvider.startResolution` → `applyTurnResolutionResult`; sets/clears `turnResolutionBlockingProvider`. |
 | Android back / `PopScope` | Always (`canPop: false`) | `NavigateToShellEvent` on exit confirm | Local exit `CtDialogShell`; no direct `popUntil`. |
 | Intro dismiss | `GameStartIntroOverlay` active | `gameIdsWithIntroShownProvider.markShown(game.id)` | Removes intro wrapper. |
-| Victory overlay actions | `victory != null` | Per [`victory-overlay.md`](victory-overlay.md) | May emit `NavigateToShellEvent` from overlay. |
+| Victory / calendar overlay actions | `victory != null` or calendar-complete mount | Per [`victory-overlay.md`](victory-overlay.md) | May emit `NavigateToShellEvent` from overlay. |
 
 Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross-cutting flows per [`app-ui-wiring.md`](../program/app-ui-wiring.md)).
 
@@ -151,6 +155,14 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
 - Given `GameScreen` is mounted with `currentGameProvider == game` and `game.victory != null`,
   When `GameScreen.build` runs,
   Then the widget tree contains exactly one `VictoryOverlay`, no pause `IconButton`, and no Next turn `CtNinePatchButton` (`showOverlayButtons == false`).
+
+- Given `GameScreen` is mounted with `calendarCampaignHalted == true`, `victory == null`, and `mapViewDataProvider == null`,
+  When `GameScreen.build` runs,
+  Then the widget tree contains exactly one calendar-complete `VictoryOverlay` and `showOverlayButtons == false`.
+
+- Given `GameScreen` is mounted with `victory != null` (even if `calendarCampaignHalted` were also true),
+  When `GameScreen.build` runs,
+  Then only the military overlay mounts (calendar-complete title absent).
 
 - Given `GameScreen` is mounted, no victory is set, and `turnResolutionBlockingProvider == true`,
   When `GameScreen.build` runs,
@@ -200,5 +212,6 @@ Catalog directory: `Game Screen` (registered in `app/lib/widgetbook/catalog.dart
 
 1. **Default — map view, no victory, intro shown** — `currentGameProvider`, `mapViewDataProvider`, and `gameIdsWithIntroShownProvider` overridden so the screen mounts `GameMapArea`, the pause button, and the Next turn button without the intro overlay.
 2. **Victory** — same providers as default, plus `currentGameProvider` overridden to a game with `victory != null` (military victory by `game.players.first`); the story renders the `VictoryOverlay` and hides the overlay buttons.
+3. **Calendar complete** — `calendarCampaignHalted == true`, `victory == null`; calendar-complete `VictoryOverlay` mounts and Flame fallback overlay buttons stay hidden.
 
 Each story uses a `ProviderScope` that overrides `appEventBusProvider` with a fresh `AppEventBus.create()` (disposed on scope dispose) and supplies a fresh `Hive` box / `gameServiceProvider` only if a story specifically exercises the next-turn flow. The default stories must analyze cleanly with no hardcoded UI strings (use `appL10n` via `MaterialApp`).
