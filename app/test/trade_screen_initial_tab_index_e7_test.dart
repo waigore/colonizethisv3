@@ -173,6 +173,7 @@ void main() {
         'Deal Book tab — empty (Refs #2993 E7)',
         'Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)',
         'Deal Book tab — overseas profit ledger (Refs #4226)',
+        'Deal Book tab — leftover reasons (Refs #4500)',
         'Deal Book tab — mobile (stacked) (Refs #2993 E7)',
       ]);
     });

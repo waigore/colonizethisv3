@@ -175,6 +175,7 @@ void main() {
       expect(bidsPanel, findsOneWidget);
       expect(find.text('Still open'), findsWidgets);
       expect(find.text('Grain — 8'), findsOneWidget);
+      expect(find.text('No matching sales last turn'), findsOneWidget);
       expect(find.text('Unfilled (carry-forward)'), findsNothing);
       expect(find.textContaining('(priority'), findsNothing);
 
