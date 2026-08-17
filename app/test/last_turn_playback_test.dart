@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/last_turn_playback.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetExplore;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
@@ -86,7 +87,7 @@ void main() {
         AppWorkOrderCompletedEvent(
           playerId: 'gp1',
           unitId: 'u1',
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
           targetTileKey: 'oldWorld|c|3|3',
           provinceId: 'oldWorld|p2',
           turnNumber: 2,
