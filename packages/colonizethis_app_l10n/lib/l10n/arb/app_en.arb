@@ -3499,6 +3499,56 @@
   "@techTree_researchersDialogTitle": {
     "description": "Long-press modal title listing GPs that have unlocked a tech."
   },
+  "techTree_researchThis": "Research this",
+  "@techTree_researchThis": {
+    "description": "Tree node dialog control that assigns the tech to the lowest empty research seat (Refs #4498)."
+  },
+  "techTree_replaceSeatPrompt": "Replace a research seat",
+  "@techTree_replaceSeatPrompt": {
+    "description": "Tree node dialog heading when every active seat is occupied (Refs #4498)."
+  },
+  "techTree_replaceSeatLabel": "Slot {slot} — {tech}",
+  "@techTree_replaceSeatLabel": {
+    "description": "Tree node dialog seat-replace control label (Refs #4498).",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      },
+      "tech": {
+        "type": "String"
+      }
+    }
+  },
+  "techTree_assignReasonObserveOnly": "Research seats cannot be changed while observing.",
+  "@techTree_assignReasonObserveOnly": {
+    "description": "Tree node dialog refusal when UI mutation is disabled (Refs #4498)."
+  },
+  "techTree_assignReasonAlreadyKnown": "You already know this technology.",
+  "@techTree_assignReasonAlreadyKnown": {
+    "description": "Tree node dialog refusal when the tech is unlocked (Refs #4498)."
+  },
+  "techTree_assignReasonAlreadySeated": "Already researching in Slot {slot}.",
+  "@techTree_assignReasonAlreadySeated": {
+    "description": "Tree node dialog refusal when the tech is already in a seat (Refs #4498).",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      }
+    }
+  },
+  "techTree_assignReasonWaitingOn": "Waiting on: {names}",
+  "@techTree_assignReasonWaitingOn": {
+    "description": "Tree node dialog refusal listing unmet prerequisite display names (Refs #4498).",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "techTree_assignReasonDiscovery": "Requires discovering a related resource first.",
+  "@techTree_assignReasonDiscovery": {
+    "description": "Tree node dialog refusal when a discovery tech is not yet revealed (Refs #4498)."
+  },
   "mapDebug_fullVisibility": "Full visibility",
   "@mapDebug_fullVisibility": {
     "description": "Map debug/story toggle label for full map visibility."

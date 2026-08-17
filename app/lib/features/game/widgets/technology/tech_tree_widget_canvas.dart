@@ -21,6 +21,8 @@ Widget buildTechTreeCanvas({
   required Set<String> researchable,
   required double width,
   required double height,
+  Orders currentOrders = const Orders(),
+  void Function(Orders orders)? onOrdersChanged,
 }) {
   return SizedBox(
     width: width,
@@ -39,6 +41,8 @@ Widget buildTechTreeCanvas({
           unlocked: unlocked,
           inProgress: inProgress,
           researchable: researchable,
+          currentOrders: currentOrders,
+          onOrdersChanged: onOrdersChanged,
         ),
       ],
     ),
@@ -53,6 +57,8 @@ List<Widget> buildPositionedTechNodes({
   required Map<String, bool> unlocked,
   required Set<String> inProgress,
   required Set<String> researchable,
+  Orders currentOrders = const Orders(),
+  void Function(Orders orders)? onOrdersChanged,
 }) {
   return positions.map((pos) {
     final tech = techById(pos.techId);
@@ -77,6 +83,8 @@ List<Widget> buildPositionedTechNodes({
           game: game,
           player: player,
           tech: tech,
+          currentOrders: currentOrders,
+          onOrdersChanged: onOrdersChanged,
         ),
       ),
     );
