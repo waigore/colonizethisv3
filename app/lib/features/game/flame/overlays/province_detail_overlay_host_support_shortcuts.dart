@@ -8,6 +8,7 @@ import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/game_map_area_state_logic.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'province_detail_overlay_host_support_shortcuts_consulate.dart';
+import 'province_detail_overlay_host_support_shortcuts_offer_peace.dart';
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`
 /// when its action is disabled or no tile is selected, matching the previous
@@ -23,6 +24,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onPurchaseLandTap,
   VoidCallback? onUpgradeTownTap,
   VoidCallback? onEstablishConsulateTap,
+  VoidCallback? onOfferPeaceTap,
 });
 
 VoidCallback? _provinceDetailShortcutTap({
@@ -73,6 +75,11 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool establishConsulatePending,
   required ct_models.DiplomaticOrder? establishConsulateOrder,
   required String establishConsulateTargetName,
+  required bool isSeaZone,
+  required bool offerPeaceEnabled,
+  required bool offerPeacePending,
+  required ct_models.DiplomaticOrder? offerPeaceOrder,
+  required String offerPeaceTargetName,
   required ct_models.AppEventBus bus,
 }) {
   final topology = mapData?.combinedTopology;
@@ -111,6 +118,19 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     targetName: establishConsulateTargetName,
     bus: bus,
   );
+  final offerPeaceTap = buildOfferPeaceShortcutTap(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    draftOrders: draftOrders,
+    topology: topology,
+    isSeaZone: isSeaZone,
+    enabled: offerPeaceEnabled,
+    pending: offerPeacePending,
+    order: offerPeaceOrder,
+    targetName: offerPeaceTargetName,
+    bus: bus,
+  );
   if (tileKey == null) {
     return (
       onExploreWithExplorerTap: null,
@@ -123,6 +143,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onPurchaseLandTap: null,
       onUpgradeTownTap: upgradeTownTap,
       onEstablishConsulateTap: establishConsulateTap,
+      onOfferPeaceTap: offerPeaceTap,
     );
   }
 
@@ -273,5 +294,6 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     ),
     onUpgradeTownTap: upgradeTownTap,
     onEstablishConsulateTap: establishConsulateTap,
+    onOfferPeaceTap: offerPeaceTap,
   );
 }

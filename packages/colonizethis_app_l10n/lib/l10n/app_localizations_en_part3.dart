@@ -897,6 +897,23 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_ownerStandingAtWar => 'At war';
+
+  @override
+  String get provinceOverlay_ownerStandingAtPeace => 'At peace';
+
+  @override
+  String get provinceOverlay_offerPeaceAction => 'Offer Peace';
+
+  @override
+  String get provinceOverlay_cancelOfferPeaceAction => 'Cancel';
+
+  @override
+  String provinceOverlay_offerPeaceDisabledSemantics(String reason) {
+    return 'Offer Peace unavailable: $reason';
+  }
+
+  @override
   String get provinceOverlay_politicalUpgradeTownTooltip => 'Upgrade town';
 
   @override

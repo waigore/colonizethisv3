@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'game_map_area_province_action_states.dart';
 import 'game_map_area_province_action_states_establish_consulate.dart';
+import 'game_map_area_province_action_states_offer_peace.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -234,5 +235,21 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     provinceId: provinceId,
     topology: topology,
     currentOrders: currentOrders,
+  );
+
+  static ProvinceOwnerStandingOfferPeaceState provinceOfferPeaceActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String provinceId,
+    required MapTopology? topology,
+    required ct_models.Orders currentOrders,
+    required bool isSeaZone,
+  }) => GameMapAreaProvinceActionStates.offerPeace(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    topology: topology,
+    currentOrders: currentOrders,
+    isSeaZone: isSeaZone,
   );
 }

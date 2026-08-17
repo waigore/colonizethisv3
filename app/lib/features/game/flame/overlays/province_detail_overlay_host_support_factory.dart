@@ -92,6 +92,20 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final establishConsulateTargetName = consulateOwnerId == null
       ? ''
       : (game.factionDisplayNameById(consulateOwnerId) ?? consulateOwnerId);
+  final isSeaZone = isProvinceSeaZoneOverlaySeaZone(region, displayId);
+  final offerPeaceState =
+      GameMapAreaStateLogicProvinceActions.provinceOfferPeaceActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        provinceId: displayId,
+        topology: mapData?.combinedTopology,
+        currentOrders: draftOrders,
+        isSeaZone: isSeaZone,
+      );
+  final offerPeaceOwnerId = offerPeaceState.ownerId;
+  final offerPeaceTargetName = offerPeaceOwnerId == null
+      ? ''
+      : (game.factionDisplayNameById(offerPeaceOwnerId) ?? offerPeaceOwnerId);
 
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
@@ -117,6 +131,11 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     establishConsulatePending: establishConsulateState.pending,
     establishConsulateOrder: establishConsulateState.order,
     establishConsulateTargetName: establishConsulateTargetName,
+    isSeaZone: isSeaZone,
+    offerPeaceEnabled: offerPeaceState.offerPeaceEnabled,
+    offerPeacePending: offerPeaceState.offerPeacePending,
+    offerPeaceOrder: offerPeaceState.order,
+    offerPeaceTargetName: offerPeaceTargetName,
     bus: bus,
   );
   final townProductionBonus = provinceTownProductionBonusPreview(
@@ -162,7 +181,6 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
       );
     }
   }
-  final isSeaZone = isProvinceSeaZoneOverlaySeaZone(region, displayId);
   final armyMove = buildProvinceArmyMoveOverlayControls(
     context: context,
     game: game,
@@ -288,5 +306,14 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     establishConsulatePending: establishConsulateState.pending,
     establishConsulateRejectionReason: establishConsulateState.rejectionReason,
     onEstablishConsulateTap: shortcuts.onEstablishConsulateTap,
+    showOwnerStanding: offerPeaceState.showStanding,
+    ownerStandingAtWar: offerPeaceState.atWar,
+    showOwnerAllianceBadge: offerPeaceState.showAllianceBadge,
+    showOfferPeaceControl:
+        canMutateViaUi && offerPeaceState.showOfferPeaceControl,
+    offerPeaceEnabled: canMutateViaUi && offerPeaceState.offerPeaceEnabled,
+    offerPeacePending: offerPeaceState.offerPeacePending,
+    offerPeaceRejectionReason: offerPeaceState.rejectionReason,
+    onOfferPeaceTap: shortcuts.onOfferPeaceTap,
   );
 }

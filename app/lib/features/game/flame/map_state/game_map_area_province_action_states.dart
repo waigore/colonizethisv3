@@ -10,6 +10,7 @@ import 'game_map_area_province_action_states_build_port.dart';
 import 'game_map_area_province_action_states_build_rail.dart';
 import 'game_map_area_province_action_states_explore.dart';
 import 'game_map_area_province_action_states_establish_consulate.dart';
+import 'game_map_area_province_action_states_offer_peace.dart';
 import 'game_map_area_province_action_states_prospect.dart';
 import 'game_map_area_province_action_states_purchase_land.dart';
 import 'game_map_area_province_action_states_upgrade_town.dart';
@@ -270,5 +271,21 @@ class GameMapAreaProvinceActionStates {
     provinceId: provinceId,
     topology: topology,
     currentOrders: currentOrders,
+  );
+
+  static ProvinceOwnerStandingOfferPeaceState offerPeace({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String provinceId,
+    required MapTopology? topology,
+    required ct_models.Orders currentOrders,
+    required bool isSeaZone,
+  }) => GameMapAreaProvinceActionStatesOfferPeace.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    topology: topology,
+    currentOrders: currentOrders,
+    isSeaZone: isSeaZone,
   );
 }

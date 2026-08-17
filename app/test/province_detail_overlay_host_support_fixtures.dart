@@ -77,6 +77,11 @@ ProvinceDetailShortcutCallbacks provinceDetailCallbacks({
   bool establishConsulatePending = false,
   DiplomaticOrder? establishConsulateOrder,
   String establishConsulateTargetName = '',
+  bool isSeaZone = false,
+  bool offerPeaceEnabled = false,
+  bool offerPeacePending = false,
+  DiplomaticOrder? offerPeaceOrder,
+  String offerPeaceTargetName = '',
   String provinceId = provinceDetailSupportProvinceId,
   required AppEventBus bus,
 }) => buildProvinceDetailShortcutCallbacks(
@@ -105,6 +110,11 @@ ProvinceDetailShortcutCallbacks provinceDetailCallbacks({
   establishConsulatePending: establishConsulatePending,
   establishConsulateOrder: establishConsulateOrder,
   establishConsulateTargetName: establishConsulateTargetName,
+  isSeaZone: isSeaZone,
+  offerPeaceEnabled: offerPeaceEnabled,
+  offerPeacePending: offerPeacePending,
+  offerPeaceOrder: offerPeaceOrder,
+  offerPeaceTargetName: offerPeaceTargetName,
   bus: bus,
 );
 
