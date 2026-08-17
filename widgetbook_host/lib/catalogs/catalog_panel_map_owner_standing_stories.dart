@@ -15,6 +15,16 @@ List<WidgetbookUseCase> get provinceOverlayOwnerStandingUseCases => [
     ),
   ),
   WidgetbookUseCase(
+    name: 'Standalone — Political owner standing at war Offer Peace disabled',
+    builder: (context) => _provinceOverlayOwnerStandingStory(
+      showStanding: true,
+      atWar: true,
+      showOfferPeace: true,
+      offerPeaceRejectionReason:
+          'Already have a diplomatic order for this faction this turn',
+    ),
+  ),
+  WidgetbookUseCase(
     name: 'Standalone — Political owner standing at war pending Cancel',
     builder: (context) => _provinceOverlayOwnerStandingStory(
       showStanding: true,
@@ -26,9 +36,8 @@ List<WidgetbookUseCase> get provinceOverlayOwnerStandingUseCases => [
   ),
   WidgetbookUseCase(
     name: 'Standalone — Political owner standing at peace',
-    builder: (context) => _provinceOverlayOwnerStandingStory(
-      showStanding: true,
-    ),
+    builder: (context) =>
+        _provinceOverlayOwnerStandingStory(showStanding: true),
   ),
   WidgetbookUseCase(
     name: 'Standalone — Political owner standing + ALLIANCE',
@@ -39,9 +48,8 @@ List<WidgetbookUseCase> get provinceOverlayOwnerStandingUseCases => [
   ),
   WidgetbookUseCase(
     name: 'Standalone — Political owner standing hidden (own)',
-    builder: (context) => _provinceOverlayOwnerStandingStory(
-      showStanding: false,
-    ),
+    builder: (context) =>
+        _provinceOverlayOwnerStandingStory(showStanding: false),
   ),
   WidgetbookUseCase(
     name: 'Standalone — Political owner standing 320 dp',
@@ -65,6 +73,7 @@ Widget _provinceOverlayOwnerStandingStory({
   bool showOfferPeace = false,
   bool offerPeaceEnabled = false,
   bool offerPeacePending = false,
+  String? offerPeaceRejectionReason,
 }) {
   final game = demoGameForOverlay;
   return SizedBox(
@@ -83,6 +92,7 @@ Widget _provinceOverlayOwnerStandingStory({
       showOfferPeaceControl: showOfferPeace,
       offerPeaceEnabled: offerPeaceEnabled,
       offerPeacePending: offerPeacePending,
+      offerPeaceRejectionReason: offerPeaceRejectionReason,
       onOfferPeaceTap: () {},
       onClose: () {},
     ),
