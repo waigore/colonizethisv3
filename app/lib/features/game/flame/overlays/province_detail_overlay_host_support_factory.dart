@@ -153,34 +153,15 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     provinceId: displayId,
     mapData: mapData,
   );
-  ProvinceTileConnectivityDisplay? tileConnectivity;
-  if (selectedTileKey != null) {
-    final coords = tryParseProvinceOverlayTileCoords(
-      regionId: region.regionId,
-      regionWidth: region.width,
-      regionHeight: region.height,
-      selectedTileKey: selectedTileKey,
-    );
-    if (coords != null) {
-      final cell = region.cellAt(coords.x, coords.y);
-      final connectivityForHuman = humanConnectivityPreview(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        mapData: mapData,
-      );
-      tileConnectivity = provinceTileConnectivityDisplayPreview(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        provinceId: displayId,
-        selectedTileKey: selectedTileKey,
-        mapData: mapData,
-        isSeaZoneContext: isProvinceSeaZoneOverlaySeaZone(region, displayId),
-        tileIsSea: cell.isSea,
-        tileRevealed: cell.visibility != TileVisibility.unrevealed,
-        connectivityForHuman: connectivityForHuman,
-      );
-    }
-  }
+  final tileConnectivity = resolveProvinceDetailTileConnectivity(
+    game: game,
+    region: region,
+    humanPlayerId: humanPlayerId,
+    displayId: displayId,
+    selectedTileKey: selectedTileKey,
+    mapData: mapData,
+    isSeaZone: isSeaZone,
+  );
   final armyMove = buildProvinceArmyMoveOverlayControls(
     context: context,
     game: game,
