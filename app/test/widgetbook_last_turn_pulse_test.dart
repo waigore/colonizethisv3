@@ -1,7 +1,7 @@
 // Widgetbook mount pin for MAP10001 last-turn pulse stories (#4486).
 
-import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
