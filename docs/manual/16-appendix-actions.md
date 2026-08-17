@@ -115,3 +115,5 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/ui/tile-context-radial.md`
 - `SPEC/ui/tile-more-actions-dialog.md`
 - `SPEC/ui/components/tile-radial-catalog.md`
+- `SPEC/ui/tech-tree-widget.md`
+- `SPEC/ui/technology-panel.md`
