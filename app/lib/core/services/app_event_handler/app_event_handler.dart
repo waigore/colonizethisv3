@@ -116,7 +116,9 @@ class AppEventHandler {
   }
 
   void _handleUIAction(UIActionEvent event) {
-    if (event is LocateMapTileEvent) {
+    if (event is LocateMapTileEvent ||
+        event is TurnNewsDialogClosedEvent ||
+        event is VictoryOverlayViewFinalStateEvent) {
       return;
     }
     final nav = state.navigatorKey.currentState;

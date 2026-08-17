@@ -646,6 +646,10 @@
   "@map_relocate_leaveIntel_cancel": {
     "description": "Cancel button on leave-intel Spy relocate warning."
   },
+  "map_lastTurnPlayback_skip": "Skip",
+  "@map_lastTurnPlayback_skip": {
+    "description": "Button that ends MAP10001 last-turn spatial playback without opening overlays."
+  },
   "civilian_units_relocate": "Relocate",
   "@civilian_units_relocate": {
     "description": "Relocate action for idle Spy units in the civilian units panel."

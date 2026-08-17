@@ -75,6 +75,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.secondaryHighlightTileKey,
     this.secondaryHighlightTileKeys,
     this.validTileKeys,
+    this.lastTurnPulseTileKey,
     this.onTownIconTapped,
     this.playerViewForResources,
     this.showPlayerTerritoryOutline = false,
@@ -125,6 +126,7 @@ class CtRegionMapComponent extends PositionComponent {
   String? secondaryHighlightTileKey;
   Set<String>? secondaryHighlightTileKeys;
   Set<String>? validTileKeys;
+  String? lastTurnPulseTileKey;
   void Function(String provinceId)? onTownIconTapped;
 
   /// Session fields shared by de-parted implementation libraries (Refs #4117).

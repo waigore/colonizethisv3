@@ -95,8 +95,9 @@ const _packageName = 'colonizethis_app';
 // raised for GAME80001 Development Assign preview + #4469 merge (Refs #4472; measured 82_729).
 // raised for GAME30003 Intelligence Council + #4472 merge (Refs #4476; measured 83_233).
 // raised for MAP20001 Political owner standing + Offer Peace (Refs #4479; measured 83_694).
-// raised for GAME40001 Technology Tree assign-from-node (Refs #4498; measured 84_242).
-const _maxMainLines = 84400;
+// raised for MAP10001 last-turn spatial playback + #4479 merge (Refs #4486; measured 84_334).
+// raised for GAME40001 Technology Tree assign-from-node + #4486 merge (Refs #4498; measured 84_885).
+const _maxMainLines = 85000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

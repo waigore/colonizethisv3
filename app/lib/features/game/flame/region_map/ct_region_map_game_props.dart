@@ -31,6 +31,8 @@ void ctRegionMapGameUpdateProps(
   bool clearSecondaryHighlightTileKeys = false,
   Set<String>? validTileKeys,
   bool clearValidTileKeys = false,
+  String? lastTurnPulseTileKey,
+  bool clearLastTurnPulseTileKey = false,
   void Function(String tileKey)? onTileSelected,
   VoidCallback? onWorkTargetSelectionCancelled,
   void Function(String tileKey)? onCivilianTileTapped,
@@ -110,6 +112,11 @@ void ctRegionMapGameUpdateProps(
   } else if (validTileKeys != null) {
     game.validTileKeys = validTileKeys;
   }
+  if (clearLastTurnPulseTileKey) {
+    game.lastTurnPulseTileKey = null;
+  } else if (lastTurnPulseTileKey != null) {
+    game.lastTurnPulseTileKey = lastTurnPulseTileKey;
+  }
   game.onTileSelected = onTileSelected;
   game.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
   game.onCivilianTileTapped = onCivilianTileTapped;
@@ -158,6 +165,7 @@ void ctRegionMapGameUpdateProps(
       ..secondaryHighlightTileKey = game.secondaryHighlightTileKey
       ..secondaryHighlightTileKeys = game.secondaryHighlightTileKeys
       ..validTileKeys = game.validTileKeys
+      ..lastTurnPulseTileKey = game.lastTurnPulseTileKey
       ..playerViewForResources = game.playerViewForResources
       ..showPlayerTerritoryOutline = game.showPlayerTerritoryOutline
       ..playerTerritoryTileKeys = game.playerTerritoryTileKeys

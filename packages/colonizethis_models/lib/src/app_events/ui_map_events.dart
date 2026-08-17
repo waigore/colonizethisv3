@@ -11,6 +11,19 @@ class LocateMapTileEvent extends UIActionEvent {
   final String regionId;
 }
 
+/// `DLG50001` turn-news dialog route completed (Close or pop-before-navigate).
+/// Map host may start last-turn spatial playback. SPEC/ui/map-widget.md § Last-turn
+/// spatial playback (Refs #4486).
+class TurnNewsDialogClosedEvent extends UIActionEvent {
+  const TurnNewsDialogClosedEvent();
+}
+
+/// `OVL20001` **View final state** dismissed the victory scrim. Map host may start
+/// last-turn spatial playback when news was omitted for victory (Refs #4486).
+class VictoryOverlayViewFinalStateEvent extends UIActionEvent {
+  const VictoryOverlayViewFinalStateEvent();
+}
+
 /// In-game region minimap requests the Flame map camera center at world coordinates (after clamp).
 /// Consumed by the in-game region map host wired to the same [AppEventBus]. SPEC/ui/empire-overview.md.
 class RequestRegionMapCameraCenterWorldEvent extends UIActionEvent {
