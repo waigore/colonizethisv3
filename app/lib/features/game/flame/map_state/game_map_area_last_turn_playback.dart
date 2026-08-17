@@ -54,12 +54,12 @@ mixin GameMapAreaLastTurnPlayback
   /// Called from [GameMapAreaEvents.onTurnResolutionCompleteEvent] after feed flush.
   void armLastTurnPlaybackAfterResolution({
     required bool newsDialogWillShow,
-    required bool victorySet,
+    required bool overlayWillShow,
   }) {
     stopLastTurnPlayback(clearPending: true);
     lastTurnPlayback.arm(
       newsDialogWillShow: newsDialogWillShow,
-      victorySet: victorySet,
+      overlayWillShow: overlayWillShow,
     );
     if (lastTurnPlayback.blockedByStartGate) {
       return;

@@ -21,23 +21,32 @@ void main() {
   ];
 
   group('lastTurnPlaybackStartGate', () {
-    test('victory set waits for View final state even if news would show', () {
+    test('overlay waits for View final state even if news would show', () {
       expect(
-        lastTurnPlaybackStartGate(newsDialogWillShow: true, victorySet: true),
+        lastTurnPlaybackStartGate(
+          newsDialogWillShow: true,
+          overlayWillShow: true,
+        ),
         LastTurnPlaybackStartGate.victoryDismiss,
       );
     });
 
-    test('news without victory waits for DLG50001 close', () {
+    test('news without overlay waits for DLG50001 close', () {
       expect(
-        lastTurnPlaybackStartGate(newsDialogWillShow: true, victorySet: false),
+        lastTurnPlaybackStartGate(
+          newsDialogWillShow: true,
+          overlayWillShow: false,
+        ),
         LastTurnPlaybackStartGate.newsClose,
       );
     });
 
     test('neither modal starts immediately', () {
       expect(
-        lastTurnPlaybackStartGate(newsDialogWillShow: false, victorySet: false),
+        lastTurnPlaybackStartGate(
+          newsDialogWillShow: false,
+          overlayWillShow: false,
+        ),
         LastTurnPlaybackStartGate.immediate,
       );
     });
@@ -46,7 +55,7 @@ void main() {
   group('LastTurnPlaybackSession', () {
     test('news close starts playback; victory dismiss does not', () {
       final session = LastTurnPlaybackSession()
-        ..arm(newsDialogWillShow: true, victorySet: false);
+        ..arm(newsDialogWillShow: true, overlayWillShow: false);
       expect(session.blockedByStartGate, isTrue);
       expect(session.tryBegin(sample), isFalse);
       expect(session.onVictoryDismissed(), isFalse);
@@ -55,9 +64,9 @@ void main() {
       expect(session.currentBeat?.tileKey, 'oldWorld|p1|0|0');
     });
 
-    test('victory dismiss starts playback; news close does not', () {
+    test('OVL20001 dismiss starts playback; news close does not', () {
       final session = LastTurnPlaybackSession()
-        ..arm(newsDialogWillShow: true, victorySet: true);
+        ..arm(newsDialogWillShow: true, overlayWillShow: true);
       expect(session.gate, LastTurnPlaybackStartGate.victoryDismiss);
       expect(session.tryBegin(sample), isFalse);
       expect(session.onNewsClosed(), isFalse);
@@ -66,9 +75,18 @@ void main() {
       expect(session.active, isTrue);
     });
 
+    test('calendar halt with news still waits for View final state', () {
+      final session = LastTurnPlaybackSession()
+        ..arm(newsDialogWillShow: true, overlayWillShow: true);
+      expect(session.onNewsClosed(), isFalse);
+      expect(session.tryBegin(sample), isFalse);
+      expect(session.onVictoryDismissed(), isTrue);
+      expect(session.tryBegin(sample), isTrue);
+    });
+
     test('empty spatial batch does not pan or pulse', () {
       final session = LastTurnPlaybackSession()
-        ..arm(newsDialogWillShow: false, victorySet: false);
+        ..arm(newsDialogWillShow: false, overlayWillShow: false);
       expect(session.tryBegin(const []), isFalse);
       expect(session.active, isFalse);
       expect(session.pending, isFalse);
@@ -77,7 +95,7 @@ void main() {
 
     test('advancing switches regionId then skip ends immediately', () {
       final session = LastTurnPlaybackSession()
-        ..arm(newsDialogWillShow: false, victorySet: false);
+        ..arm(newsDialogWillShow: false, overlayWillShow: false);
       expect(session.tryBegin(sample), isTrue);
       expect(session.currentBeat?.regionId, 'oldWorld');
       expect(session.advanceAfterDwell(), isTrue);
@@ -90,7 +108,7 @@ void main() {
 
     test('dwell after last beat stops the sequence', () {
       final session = LastTurnPlaybackSession()
-        ..arm(newsDialogWillShow: false, victorySet: false);
+        ..arm(newsDialogWillShow: false, overlayWillShow: false);
       expect(session.tryBegin([sample.first]), isTrue);
       expect(session.advanceAfterDwell(), isFalse);
       expect(session.active, isFalse);

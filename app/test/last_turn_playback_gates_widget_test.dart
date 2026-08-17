@@ -103,6 +103,35 @@ void main() {
     expect(emitted, isA<ct_models.VictoryOverlayViewFinalStateEvent>());
   });
 
+  testWidgets(
+    'calendar-complete View final state emits VictoryOverlayViewFinalStateEvent',
+    (tester) async {
+      ct_models.AppEventBus.reset();
+      final bus = ct_models.AppEventBus.create();
+      addTearDown(ct_models.AppEventBus.reset);
+      ct_models.VictoryOverlayViewFinalStateEvent? emitted;
+      final sub = bus.on<ct_models.VictoryOverlayViewFinalStateEvent>().listen(
+        (e) => emitted = e,
+      );
+      addTearDown(sub.cancel);
+      final game = buildVictoryCalendarDeclaredWinnerTestGame();
+      await tester.pumpWidget(
+        buildAppShell(
+          child: Scaffold(
+            body: Stack(
+              children: [VictoryOverlay(game: game, bus: bus)],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(emitted, isNull);
+      await tester.tap(find.text('View final state'));
+      await tester.pumpAndSettle();
+      expect(emitted, isA<ct_models.VictoryOverlayViewFinalStateEvent>());
+    },
+  );
+
   testWidgets('closing turn_news emits TurnNewsDialogClosedEvent', (
     tester,
   ) async {

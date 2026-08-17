@@ -1,8 +1,6 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-
 
 import '../../../../providers/game_service_provider.dart';
 import 'game_map_area.dart';
@@ -33,23 +31,23 @@ mixin GameMapAreaEvents
       );
       pendingPlayerTurnEvents.clear();
     });
-    // Event emits before provider apply; load saved game for victory gate
-    // (same source as GameToUIBusListener news omit).
+    // Event emits before provider apply; load saved game for overlay/news
+    // gates (same source as GameToUIBusListener news omit).
     final loaded = ref.read(gameServiceProvider).loadGame(event.gameId);
-    final victorySet = loaded?.victory != null;
+    final overlayWillShow =
+        loaded?.victory != null || (loaded?.calendarCampaignHalted ?? false);
     final newsDialogWillShow =
         event.turnNumber >= 1 &&
         event.turnNewsDigest != null &&
-        !victorySet;
+        loaded?.victory == null;
     armLastTurnPlaybackAfterResolution(
       newsDialogWillShow: newsDialogWillShow,
-      victorySet: victorySet,
+      overlayWillShow: overlayWillShow,
     );
   }
 
   void onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
-    if (event.attackerId != mapPlayerId &&
-        event.defenderId != mapPlayerId) {
+    if (event.attackerId != mapPlayerId && event.defenderId != mapPlayerId) {
       return;
     }
     pendingPlayerTurnEvents.add(event);
@@ -110,9 +108,7 @@ mixin GameMapAreaEvents
     pendingPlayerTurnEvents.add(event);
   }
 
-  void onAppMarketTurnSummaryEvent(
-    ct_models.AppMarketTurnSummaryEvent event,
-  ) {
+  void onAppMarketTurnSummaryEvent(ct_models.AppMarketTurnSummaryEvent event) {
     if (event.playerId != mapPlayerId) {
       return;
     }

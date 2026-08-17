@@ -15,12 +15,12 @@ enum LastTurnPlaybackStartGate {
   victoryDismiss,
 }
 
-/// News is omitted when victory is set; victory dismiss is the start gate.
+/// `OVL20001` (military or calendar-complete) outranks news; never pulse under it.
 LastTurnPlaybackStartGate lastTurnPlaybackStartGate({
   required bool newsDialogWillShow,
-  required bool victorySet,
+  required bool overlayWillShow,
 }) {
-  if (victorySet) {
+  if (overlayWillShow) {
     return LastTurnPlaybackStartGate.victoryDismiss;
   }
   if (newsDialogWillShow) {
@@ -47,12 +47,12 @@ class LastTurnPlaybackSession {
   bool get blockedByStartGate =>
       pending && gate != LastTurnPlaybackStartGate.immediate;
 
-  void arm({required bool newsDialogWillShow, required bool victorySet}) {
+  void arm({required bool newsDialogWillShow, required bool overlayWillShow}) {
     stop(clearPending: true);
     pending = true;
     gate = lastTurnPlaybackStartGate(
       newsDialogWillShow: newsDialogWillShow,
-      victorySet: victorySet,
+      overlayWillShow: overlayWillShow,
     );
   }
 

@@ -24,7 +24,7 @@
 - **Entry:** Reached from Game Initializing screen on success (or from Load Game when loading a save into play).
 - **Role:** In-game shell. Map-centric view with region tabs; HUD/sidebar and panels (units, development, production, etc.) are defined by separate specs or later. This spec focuses on the map area and region switching.
 - **Map:** Each region has its own map view. The reusable [map-widget](map-widget.md) is used for each; viewport is the widget size; pan, fixed zoom levels, smooth zoom; base layer (terrain, optional resource icons and improvement/road labels, towns, capitals) plus togglable political overlay; tap/click selects province and triggers a callback. Province details (what to show and where) are to be defined; the map widget only reports selection.
-- **Last-turn spatial playback (Refs #4486):** After turn news closes (or victory **View final state** when news is omitted), the map may play capped spatial pulses from the human turn-event batch. See [map-widget.md](map-widget.md) § Last-turn spatial playback and [player-turn-event-feed.md](player-turn-event-feed.md).
+- **Last-turn spatial playback (Refs #4486):** After turn news closes — or after `OVL20001` **View final state** when that overlay mounts (military victory or calendar-complete) — the map may play capped spatial pulses from the human turn-event batch. See [map-widget.md](map-widget.md) § Last-turn spatial playback and [player-turn-event-feed.md](player-turn-event-feed.md).
 
 ---
 
