@@ -146,6 +146,32 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
       'Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.';
 
   @override
+  String mapControls_labourFeeding(String effective, String capacity) {
+    return '$effective/$capacity';
+  }
+
+  @override
+  String mapControls_labourFeeding_tooltip(String effective, String capacity) {
+    return 'Labour this turn: $effective of $capacity';
+  }
+
+  @override
+  String mapControls_labourFeeding_semanticsLabel(
+    String effective,
+    String capacity,
+  ) {
+    return 'Labour this turn: $effective of $capacity. Tap for details.';
+  }
+
+  @override
+  String mapControls_labourFeeding_details_labour(
+    String effective,
+    String capacity,
+  ) {
+    return 'Labour this turn: $effective of $capacity';
+  }
+
+  @override
   String get mapControls_playersBarToggle => 'Players bar';
 
   @override

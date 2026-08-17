@@ -2839,6 +2839,24 @@ abstract class AppLocalizations {
   /// Counsel line in the cargo details popover.
   String get mapControls_cargoHold_details_counsel;
 
+  /// Map tab-bar labour/feeding indicator fraction (Refs #4506).
+  String mapControls_labourFeeding(String effective, String capacity);
+
+  /// Tooltip for the map labour/feeding indicator (Refs #4506).
+  String mapControls_labourFeeding_tooltip(String effective, String capacity);
+
+  /// Semantics label for the map labour/feeding indicator (Refs #4506).
+  String mapControls_labourFeeding_semanticsLabel(
+    String effective,
+    String capacity,
+  );
+
+  /// Primary labour line in the map labour/feeding details popover (Refs #4506).
+  String mapControls_labourFeeding_details_labour(
+    String effective,
+    String capacity,
+  );
+
   /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
   String get mapControls_playersBarToggle;
 

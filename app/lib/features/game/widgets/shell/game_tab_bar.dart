@@ -1,3 +1,4 @@
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:flutter/material.dart';
 
 import 'game_tab_bar_state.dart';
@@ -30,6 +31,11 @@ class GameTabBar extends StatefulWidget {
     required this.cargoNotDefined,
     required this.isCargoUsedReliable,
     required this.cargoHoldLabel,
+    this.labourFeedingLabel = '—',
+    this.labourFeedingNotDefined = false,
+    this.showLabourFeedingIndicator = false,
+    this.labourReadiness,
+    this.forcesFeeding,
     required this.trailing,
     this.treasuryObserveLabel,
     this.oldWorldRace,
@@ -50,6 +56,11 @@ class GameTabBar extends StatefulWidget {
   final bool cargoNotDefined;
   final bool isCargoUsedReliable;
   final String cargoHoldLabel;
+  final String labourFeedingLabel;
+  final bool labourFeedingNotDefined;
+  final bool showLabourFeedingIndicator;
+  final LabourReadinessSnapshot? labourReadiness;
+  final ForceFeedingSnapshot? forcesFeeding;
   final Widget trailing;
   final OldWorldRaceSnapshot? oldWorldRace;
   final VoidCallback? onOldWorldRaceTap;

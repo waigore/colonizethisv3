@@ -168,6 +168,28 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Labour — reduced (accent numeric) (Refs #4506)',
+        builder: (context) => _gameTabBarStoryFrame(
+          showLabourFeedingIndicator: true,
+          labourFeedingLabel: '12/20',
+          labourReadiness: const LabourReadinessSnapshot(
+            effectiveLabour: 12,
+            fullCapacity: 20,
+            tierStatuses: [],
+            primaryCauseKind: LabourReadinessCauseKind.food,
+          ),
+          forcesFeeding: const ForceFeedingSnapshot(
+            totalRegiments: 0,
+            fullyFedRegiments: 0,
+            totalShips: 0,
+            fullyFedShips: 0,
+            landCombatTier: ForceFeedingCombatTier.full,
+            navalCombatTier: ForceFeedingCombatTier.full,
+            forcesFoodDemand: 0,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Cargo details panel — default breakdown',
         builder: (context) => widgetbookEditorialMonocleApp(
           localizationsDelegates:
@@ -590,6 +612,10 @@ Widget _gameTabBarStoryFrame({
   String cargoHoldLabel = '3/12',
   OldWorldRaceSnapshot? oldWorldRace,
   bool oldWorldRaceNarrow = false,
+  bool showLabourFeedingIndicator = false,
+  String labourFeedingLabel = '—',
+  LabourReadinessSnapshot? labourReadiness,
+  ForceFeedingSnapshot? forcesFeeding,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -614,6 +640,10 @@ Widget _gameTabBarStoryFrame({
               cargoHoldLabel: cargoHoldLabel,
               oldWorldRace: oldWorldRace,
               oldWorldRaceNarrow: oldWorldRaceNarrow,
+              showLabourFeedingIndicator: showLabourFeedingIndicator,
+              labourFeedingLabel: labourFeedingLabel,
+              labourReadiness: labourReadiness,
+              forcesFeeding: forcesFeeding,
             ),
           ],
         ),
@@ -635,6 +665,10 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.cargoHoldLabel,
     this.oldWorldRace,
     this.oldWorldRaceNarrow = false,
+    this.showLabourFeedingIndicator = false,
+    this.labourFeedingLabel = '—',
+    this.labourReadiness,
+    this.forcesFeeding,
   });
 
   final int regionIndex;
@@ -648,6 +682,10 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final String cargoHoldLabel;
   final OldWorldRaceSnapshot? oldWorldRace;
   final bool oldWorldRaceNarrow;
+  final bool showLabourFeedingIndicator;
+  final String labourFeedingLabel;
+  final LabourReadinessSnapshot? labourReadiness;
+  final ForceFeedingSnapshot? forcesFeeding;
 
   @override
   State<_GameTabBarStoryShell> createState() => _GameTabBarStoryShellState();
@@ -676,6 +714,10 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       cargoNotDefined: false,
       isCargoUsedReliable: true,
       cargoHoldLabel: widget.cargoHoldLabel,
+      showLabourFeedingIndicator: widget.showLabourFeedingIndicator,
+      labourFeedingLabel: widget.labourFeedingLabel,
+      labourReadiness: widget.labourReadiness,
+      forcesFeeding: widget.forcesFeeding,
       oldWorldRace: widget.oldWorldRace,
       onOldWorldRaceTap: widget.oldWorldRace == null ? null : () {},
       oldWorldRaceNarrow: widget.oldWorldRaceNarrow,

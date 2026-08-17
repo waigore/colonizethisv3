@@ -4568,6 +4568,54 @@
   "@mapControls_cargoHold_details_counsel": {
     "description": "Counsel line in the cargo details popover."
   },
+  "mapControls_labourFeeding": "{effective}/{capacity}",
+  "@mapControls_labourFeeding": {
+    "description": "Map tab-bar labour/feeding indicator fraction (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_labourFeeding_tooltip": "Labour this turn: {effective} of {capacity}",
+  "@mapControls_labourFeeding_tooltip": {
+    "description": "Tooltip for the map labour/feeding indicator (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_labourFeeding_semanticsLabel": "Labour this turn: {effective} of {capacity}. Tap for details.",
+  "@mapControls_labourFeeding_semanticsLabel": {
+    "description": "Semantics label for the map labour/feeding indicator (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_labourFeeding_details_labour": "Labour this turn: {effective} of {capacity}",
+  "@mapControls_labourFeeding_details_labour": {
+    "description": "Primary labour line in the map labour/feeding details popover (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
   "mapControls_playersBarToggle": "Players bar",
   "@mapControls_playersBarToggle": {
     "description": "Tooltip for the in-game players bar show/hide toggle on the tab bar."
