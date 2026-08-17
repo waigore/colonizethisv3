@@ -7,6 +7,7 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../widgets/shell/shell_player_context.dart';
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../screens/game/game_screen_shared.dart';
@@ -146,7 +147,7 @@ mixin GameMapAreaBuildMapStack
                       vertical: 6,
                     ),
                     onPressed: skipLastTurnPlayback,
-                    child: const Text('Skip'),
+                    child: Text(appL10n(context).map_lastTurnPlayback_skip),
                   ),
                 ],
               ),

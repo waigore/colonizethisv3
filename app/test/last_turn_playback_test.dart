@@ -1,7 +1,10 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/last_turn_playback.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetExplore;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetExplore;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/widgets.dart';
 
 void main() {
   group('last_turn_playback constants', () {
@@ -169,6 +172,15 @@ void main() {
           ),
         ),
         isFalse,
+      );
+    });
+  });
+
+  group('last-turn playback Skip copy', () {
+    test('English Skip label comes from AppLocalizations', () {
+      expect(
+        lookupAppLocalizations(const Locale('en')).map_lastTurnPlayback_skip,
+        'Skip',
       );
     });
   });

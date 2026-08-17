@@ -379,6 +379,9 @@ abstract class AppLocalizations {
   /// Cancel button on leave-intel Spy relocate warning.
   String get map_relocate_leaveIntel_cancel;
 
+  /// Button that ends MAP10001 last-turn spatial playback without opening overlays.
+  String get map_lastTurnPlayback_skip;
+
   /// Generic Start button label used when beginning a flow.
   String get common_start;
 
