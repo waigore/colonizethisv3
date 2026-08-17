@@ -660,6 +660,8 @@ The Market tab's `#3093`-era read-only chrome (sectioned grouping, row icons, se
 - **Given** a human `bidPartialFillTreasuryInsufficient` note whose commodity has no leftover bid, **when** the Deal Book renders, **then** the UI layer omits that note (no orphan Still open or Did not stay open row).
 - **Given** a Still open row with a treasury-short reason, **when** the user taps **Details**, **then** one expanded next-step line from `tradeDealBook_detailFreeTreasury` appears.
 - **Given** a **Did not stay open** cargo-drop or stockpile-drop row, **when** the user taps **Details**, **then** one expanded next-step line from `tradeDealBook_detailAddCargo` or `tradeDealBook_detailKeepStock` appears and no enum or model identifier is shown.
+- **Given** `app/test/trade_screen_deal_book_leftover_reasons_goldens_test.dart` runs without `--update-goldens`, **when** the suite completes, **then** the UI layer matches `app/test/goldens/trade_deal_book_still_open_treasury_short_reason.png` (AC-1), `trade_deal_book_did_not_stay_open_cargo_drop_bids.png` (AC-2), `trade_deal_book_did_not_stay_open_stockpile_drop_offers.png` (AC-3), `trade_deal_book_still_open_bid_no_matching_sales.png` (AC-4), and `trade_deal_book_still_open_offer_no_matching_buys.png` (AC-5).
+- **Given** `app/test/trade_screen_deal_book_leftover_reasons_details_goldens_test.dart` runs without `--update-goldens`, **when** the suite completes, **then** the UI layer matches `app/test/goldens/trade_deal_book_details_expanded_treasury_short.png` (AC-7 treasury-short), `trade_deal_book_details_expanded_cargo_drop.png` (AC-7 cargo-drop), and `trade_deal_book_details_expanded_stockpile_drop.png` (AC-7 stockpile-drop).
 
 ### Deal Book tab — integer filled-row prices (`#3093` slice)
 
