@@ -1,12 +1,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart'
     show extractionCapForResourceForUnlocked;
-
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
-import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart';
+import '../../widgets/province_overlay/province_sea_zone_detail_overlay_tile_section_label_text.dart'
+    show tryParseProvinceOverlayTileCoords;
 
 /// Display-only capital-link and per-tile extraction for MAP20001 Tile section.
 ///
@@ -128,5 +130,47 @@ ProvinceTileConnectivityDisplay? provinceTileConnectivityDisplayPreview({
         : null,
     extractionFull:
         contribution != null && contribution.full > 0 ? contribution.full : null,
+  );
+}
+
+/// Resolves tile capital-link / extraction display for the shared overlay
+/// factory when a province tile is selected (Refs #4149, #4479 file-size).
+ProvinceTileConnectivityDisplay? resolveProvinceDetailTileConnectivity({
+  required ct_models.Game game,
+  required RegionMapViewData region,
+  required String humanPlayerId,
+  required String displayId,
+  required String? selectedTileKey,
+  required GameMapData? mapData,
+  required bool isSeaZone,
+}) {
+  if (selectedTileKey == null) {
+    return null;
+  }
+  final coords = tryParseProvinceOverlayTileCoords(
+    regionId: region.regionId,
+    regionWidth: region.width,
+    regionHeight: region.height,
+    selectedTileKey: selectedTileKey,
+  );
+  if (coords == null) {
+    return null;
+  }
+  final cell = region.cellAt(coords.x, coords.y);
+  final connectivityForHuman = humanConnectivityPreview(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    mapData: mapData,
+  );
+  return provinceTileConnectivityDisplayPreview(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: displayId,
+    selectedTileKey: selectedTileKey,
+    mapData: mapData,
+    isSeaZoneContext: isSeaZone,
+    tileIsSea: cell.isSea,
+    tileRevealed: cell.visibility != TileVisibility.unrevealed,
+    connectivityForHuman: connectivityForHuman,
   );
 }

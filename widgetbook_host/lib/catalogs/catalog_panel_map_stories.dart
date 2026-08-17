@@ -176,6 +176,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
       ...provinceOverlayDetachAndSailUseCases,
       ...provinceOverlayStationSpyUseCases,
       ...provinceOverlayEstablishConsulateUseCases,
+      ...provinceOverlayOwnerStandingUseCases,
       ...provinceOverlayPoliticalSightUseCases,
       WidgetbookUseCase(
         name: 'Standalone — extraction & available',
