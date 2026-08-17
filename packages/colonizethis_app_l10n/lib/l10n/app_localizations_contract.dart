@@ -2160,6 +2160,30 @@ abstract class AppLocalizations {
   /// Long-press modal title listing GPs that have unlocked a tech.
   String get techTree_researchersDialogTitle;
 
+  /// Tree node dialog control that assigns the tech to the lowest empty seat.
+  String get techTree_researchThis;
+
+  /// Tree node dialog heading when every active seat is occupied.
+  String get techTree_replaceSeatPrompt;
+
+  /// Tree node dialog seat-replace control label.
+  String techTree_replaceSeatLabel(int slot, String tech);
+
+  /// Tree node dialog refusal when UI mutation is disabled.
+  String get techTree_assignReasonObserveOnly;
+
+  /// Tree node dialog refusal when the tech is unlocked.
+  String get techTree_assignReasonAlreadyKnown;
+
+  /// Tree node dialog refusal when the tech is already in a seat.
+  String techTree_assignReasonAlreadySeated(int slot);
+
+  /// Tree node dialog refusal listing unmet prerequisite display names.
+  String techTree_assignReasonWaitingOn(String names);
+
+  /// Tree node dialog refusal when a discovery tech is not yet revealed.
+  String get techTree_assignReasonDiscovery;
+
   /// Map debug/story toggle label for full map visibility.
   String get mapDebug_fullVisibility;
 

@@ -326,6 +326,7 @@ List<WidgetbookNode> get techTreeDirectories => [
           );
         },
       ),
+      ...technologyTreeAssignUseCases,
       WidgetbookUseCase(
         name: 'Slots — default (3 slots, 4th locked)',
         builder: (context) => _technologySlotsStoryHost(

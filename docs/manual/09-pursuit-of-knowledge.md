@@ -37,7 +37,7 @@ Efficiency is exactly **2.0** RP per gold at Low, Medium, and High, and **2.5** 
 
 ### Categories on the Tree
 
-The Tree is one scrollable chart. Nodes are colour-coded and show a category icon. There are **no** category filter controls. Assignment stays on **Slots**. Tap any node (including locked ones) for name, era, category, RP cost, prerequisites, and effects — you cannot assign from the Tree.
+The Tree is one scrollable chart. Nodes are colour-coded and show a category icon. There are **no** category filter controls. Tap any node (including locked ones) for name, era, category, RP cost, prerequisites, and effects. When a technology is ready to research and you have an empty seat, tap **Research this** on that dialog to seat it at **Medium** without leaving the Tree. If every seat is full, choose which seat to replace (the same forfeit warning as **Cancel** appears when that seat already has progress). Funding and **Cancel** still live on **Slots**.
 
 The Tree’s colours and icons mark these groups (civilian and diplomacy use separate icons on the chart; the catalog docs also name seven research groups that cover the same unlocks):
 

@@ -35,13 +35,26 @@ class TechnologySlotsBody extends StatelessWidget {
 }
 
 class TechnologyTreeBody extends StatelessWidget {
-  const TechnologyTreeBody({super.key, required this.game, required this.player});
+  const TechnologyTreeBody({
+    super.key,
+    required this.game,
+    required this.player,
+    this.currentOrders = const Orders(),
+    this.onOrdersChanged,
+  });
 
   final Game game;
   final Player player;
+  final Orders currentOrders;
+  final void Function(Orders orders)? onOrdersChanged;
 
   @override
   Widget build(BuildContext context) {
-    return TechTreeWidget(game: game, player: player);
+    return TechTreeWidget(
+      game: game,
+      player: player,
+      currentOrders: currentOrders,
+      onOrdersChanged: onOrdersChanged,
+    );
   }
 }

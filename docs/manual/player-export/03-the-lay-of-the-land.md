@@ -29,6 +29,8 @@ You have inherited a **Great Power** — a playable nation. On each turn you iss
 
 On **Empire overview / map area**, rest the pointer on a tile (without tapping) to read a compact panel: the **place name**, **who holds it** (`Owner:` or Unclaimed; sea tiles say they are a sea zone), and **how much your court can see** — Fully visible, Fogged — terrain only, or Unknown — no intel yet. Warp sea adds a line that the water is the passage to the other world. The panel vanishes when the pointer leaves. While you are picking a work tile, only the selection prompt remains. On a touch device, tap the tile and read **Sight** on **Province sea-zone overlay** Political (the first tab). Ownership on this readout stays true even on black unknown land; it does not name hidden terrain or resources.
 
+After a turn resolves, when turn news closes (or after **View Final State** on **Victory overlay**, including **Campaign complete**), **Empire overview / map area** may pulse a few last-turn fights, captures, finished works, or discoveries so you see where the realm changed; Chapter 14 covers skip and the full feed.
+
 ### Terrain, resources, and what is hidden
 
 Tiles carry **terrain** and optional **resources**. Goods only reach your stockpile where you own the land, have improved it, still have a path home, and your court can take that yield (Chapters 6–7). Map rules matter:

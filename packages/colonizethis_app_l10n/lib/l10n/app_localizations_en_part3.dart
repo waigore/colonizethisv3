@@ -521,6 +521,35 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get techTree_researchersDialogTitle => 'Researched by';
 
   @override
+  String get techTree_researchThis => 'Research this';
+
+  @override
+  String get techTree_replaceSeatPrompt => 'Replace a research seat';
+
+  @override
+  String techTree_replaceSeatLabel(int slot, String tech) =>
+      'Slot $slot — $tech';
+
+  @override
+  String get techTree_assignReasonObserveOnly =>
+      'Research seats cannot be changed while observing.';
+
+  @override
+  String get techTree_assignReasonAlreadyKnown =>
+      'You already know this technology.';
+
+  @override
+  String techTree_assignReasonAlreadySeated(int slot) =>
+      'Already researching in Slot $slot.';
+
+  @override
+  String techTree_assignReasonWaitingOn(String names) => 'Waiting on: $names';
+
+  @override
+  String get techTree_assignReasonDiscovery =>
+      'Requires discovering a related resource first.';
+
+  @override
   String get mapDebug_fullVisibility => 'Full visibility';
 
   @override

@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/ct_spacing.dart';
+import 'tech_tree_assign.dart';
 import 'tech_tree_widget_canvas.dart';
 import 'tech_tree_widget_layout.dart';
 import 'tech_tree_widget_legend.dart';
@@ -16,12 +17,20 @@ export 'tech_tree_widget_types.dart' show TechNodePosition;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Full-screen tech tree graph. Left-to-right layout, explicit edges, scrollable.
-/// SPEC/ui/tech-tree-widget.md.
+/// SPEC/ui/tech-tree-widget.md. Assignment from node dialog: Refs #4498.
 class TechTreeWidget extends StatelessWidget {
-  const TechTreeWidget({super.key, required this.game, required this.player});
+  const TechTreeWidget({
+    super.key,
+    required this.game,
+    required this.player,
+    this.currentOrders = const Orders(),
+    this.onOrdersChanged,
+  });
 
   final Game game;
   final Player player;
+  final Orders currentOrders;
+  final void Function(Orders orders)? onOrdersChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +42,19 @@ class TechTreeWidget extends StatelessWidget {
     final width = techTreeCanvasWidth(positions);
     final height = techTreeCanvasHeight(positions);
     final unlocked = player.techUnlocked ?? {};
-    final inProgress = player.researchProgressByTechId?.keys.toSet() ?? {};
+    final occupancy = techTreeSeatOccupancy(
+      player: player,
+      currentOrders: currentOrders,
+    );
+    final inProgress = <String>{
+      ...?player.researchProgressByTechId?.keys,
+      ...occupancy.techIdsInSeats,
+    };
     final researchable = researchableTechIds(
       unlocked,
       hasDiscoveredResource: (r) =>
           hasRevealedResourceForPlayer(game, player.id, r),
-    );
+    ).difference(occupancy.techIdsInSeats);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,6 +82,8 @@ class TechTreeWidget extends StatelessWidget {
                 researchable: researchable,
                 width: width,
                 height: height,
+                currentOrders: currentOrders,
+                onOrdersChanged: onOrdersChanged,
               ),
             ),
           ),

@@ -9,7 +9,7 @@
 
 ## Widget contract
 
-Technology screen hosts research slots UI: slot count from `player.researchSlots`; assignment updates `Orders.researchOrdersByPlayerId`.
+Technology screen hosts research slots UI: slot count from `player.researchSlots`; assignment updates `Orders.researchOrdersByPlayerId`. The Tree tab may also assign a choosable tech into a seat (Refs #4498); see [tech-tree-widget.md](tech-tree-widget.md) § Description dialog — Slots remain the funding / Cancel / turn-preview surface.
 
 ---
 
