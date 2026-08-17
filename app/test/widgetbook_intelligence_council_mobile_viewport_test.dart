@@ -25,8 +25,10 @@ void main() {
     });
 
     testWidgets(
-      'Mobile viewport builder pumps at 360 × 640 dp without exceptions',
+      'Mobile viewport builder pumps at shared 360 × 640 dp without exceptions',
       (WidgetTester tester) async {
+        // Shared `mobileViewport` is 360×640 dp (SPEC/ui/mobile-adaptation.md;
+        // intelligence-council.md Mobile / Widgetbook).
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(360, 640));
 
@@ -49,7 +51,7 @@ void main() {
           isNull,
           reason:
               'Mobile-viewport story must pump without exceptions per '
-              'SPEC/ui/intelligence-council.md.',
+              'SPEC/ui/intelligence-council.md (360 × 640 dp mobileViewport).',
         );
       },
     );
