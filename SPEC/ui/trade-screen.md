@@ -190,10 +190,16 @@ _DealBookPanel (keyed `tradeScreenDealBookBidsPanel` / `tradeScreenDealBookOffer
         │   ├── (if unfilled.isEmpty)
         │   │   Text 'None still open.' (bodySmall, --muted)
         │   └── (otherwise) for each leftover order at index i:
-        │       _DealBookUnfilledRow (keyed
-        │         dealBookUnfilledRowKey(side, i))
-        │           └── Text '{displayName} — Q'
-        │                 (bodyMedium, --fg; no priority on the default surface)
+        │       DealBookStillOpenRow (keyed dealBookUnfilledRowKey(side, i))
+        │         ├── Text '{displayName} — Q' (bodyMedium, --fg)
+        │         ├── (optional) muted reason line (bodySmall, --muted)
+        │         └── (optional) 'Details' affordance → expanded next-step line
+        │   ├── (if didNotStayOpen.isNotEmpty)
+        │   │   Text 'Did not stay open' (labelMedium, --accentDim)
+        │   └── for each drop note at index j:
+        │       DealBookDidNotStayOpenRow (keyed
+        │         dealBookDidNotStayOpenRowKey(side, j))
+        │         └── Text '{displayName} — Q — <drop reason>' (bodyMedium)
         └── Text '<totals label>: £<total>' (titleSmall, --accentBright,
               keyed dealBook{Side}TotalsKey)
             totals labels: 'Total spent' | 'Total received'
@@ -218,15 +224,16 @@ The Deal Book tab body is now the live two-panel ledger described in the wirefra
   - Bids panel includes every `FilledDeal` whose `buyerFactionId == playerId`.
   - Offers panel includes every `FilledDeal` whose `sellerFactionId == playerId`.
   - Encounter order is the iteration order of `lastTurnActivity.entries` followed by the per-commodity `deals` list — deterministic for a given resolved-turn state because the world-market phase handler writes the per-commodity `deals` list in matcher emission order (FRR pre-pass → priority tiers → FTP → fallback per `SPEC/program/world-market-resolution.md` § Step F).
-- **Unfilled rows** are sourced from `carryForwardBidsByFactionId[playerId]` (bids panel) and `carryForwardOffersByFactionId[playerId]` (offers panel) in their stored list order.
+- **Unfilled rows** are sourced from `carryForwardBidsByFactionId[playerId]` (bids panel) and `carryForwardOffersByFactionId[playerId]` (offers panel) in their stored list order, enriched with human-scoped `lastTurnActivity[*].notes` and per-commodity volume fallbacks (Refs `#4500`).
+- **Still open reasons (Refs `#4500`):** Filter `lastTurnActivity[*].notes` to `factionId == playerId`. Match key is `(commodityId, note.kind)` per panel side — bids panel: `bidPartialFillTreasuryInsufficient`, `carryForwardDroppedCargoInsufficient`; offers panel: `carryForwardDroppedStockpileInsufficient`. When a matching `bidPartialFillTreasuryInsufficient` note exists for a leftover bid commodity, append muted l10n `tradeDealBook_reasonTreasuryShort`. When no human note exists for that commodity on that panel side and `lastTurnActivity[commodityId].totalOfferQuantity == 0` (bids) or `totalBidQuantity == 0` (offers), append `tradeDealBook_reasonNoMatchingSales` / `tradeDealBook_reasonNoMatchingBuys` respectively. Tap/long-press the row or its `tradeDealBook_detailsAffordance` expands one player-language next-step line (`tradeDealBook_detail*` keys); no enum or model identifiers.
+- **Did not stay open (Refs `#4500`):** When human-scoped drop notes exist (`carryForwardDroppedCargoInsufficient` on bids panel, `carryForwardDroppedStockpileInsufficient` on offers panel), render a **Did not stay open** subsection (`tradeDealBook_didNotStayOpenHeading`) with one row per note using `tradeDealBook_droppedBidRow` / `tradeDealBook_droppedOfferRow`. Drop rows are not Still open and not Filled. Orphan treasury notes with no matching leftover bid are omitted silently.
 - **Match tags (First right / Favored partner)** render on filled rows when `FilledDeal.isFirstRightOfRefusalMatch` / `isFtpMatch` is true, separated by a space when both apply, in `--muted` `bodySmall`. Labels use l10n `tradeDealBook_matchTagFirstRight` (**First right**) and `tradeDealBook_matchTagFavoredPartner` (**Favored partner**) — not the legacy `FRR` / `FTP` tokens (Refs #4226).
 - **Overseas profit ledger (Refs #4226):** When `WorldMarketState.lastTurnOverseasProfitCreditsByGpId[playerId]` is non-empty, a full-width **Overseas profit** subsection (`tradeDealBook_overseasProfitHeading`) renders above the two panels. Each `OverseasProfitCreditRecord` with `profitTreasury > 0` becomes one row (`tradeDealBook_overseasProfitRow`: commodity display name, quantity, integer treasury credit). Rows with zero credit are omitted at persistence time.
 - **Filled-row unit price** renders as a whole integer (`floor(pricePerUnit)`), never one decimal place — consistent with `Game.worldMarketState.prices` integer storage (Refs `#3093` § Display). Row text uses the localized commodity **display name** (not the catalog id) in `{displayName} — {quantity} at £{unitPrice} = £{notional}` where `<notional> = quantity × floor(pricePerUnit)` (Refs `#4414`). Priority is not shown on filled or leftover rows until Market exposes a priority control.
 - **Totals row** sums `quantity × floor(pricePerUnit)` across the panel's filled rows only — leftovers have not cleared and so do not move treasury yet (per `SPEC/program/world-market-resolution.md` § Step C Treasury). The totals row is always mounted (`Total spent: £0` / `Total received: £0` when no filled deals exist) so widget tests can pin the affordance regardless of activity.
-- **Empty state** mounts the per-side empty-text only when both `filledRows.isEmpty` **and** `unfilledRows.isEmpty`; the totals row remains mounted underneath. When one side is populated and the other empty, each subsection renders its own "No deals filled this turn." / "None still open." inline placeholder so the panel structure stays consistent. Do **not** replace the panel-level empty copy (`No bids placed last turn.` / `No offers placed last turn.`) with **None still open.**
-- **Cross-side coexistence:** When the world-market phase emits both `deals` and `MarketActivityNote` drop notes on the same commodity, the Deal Book reads only `deals` for filled rows; drop notes are owned by future observer/Deal Book surfaces (Refs `#2990` B3 follow-up) and are intentionally out of scope for this slice.
+- **Empty state** mounts the per-side empty-text only when `filledRows`, still-open leftovers, **and** did-not-stay-open rows are all empty; the totals row remains mounted underneath. When one side is populated and the other empty, each subsection renders its own "No deals filled this turn." / "None still open." inline placeholder so the panel structure stays consistent. Do **not** replace the panel-level empty copy (`No bids placed last turn.` / `No offers placed last turn.`) with **None still open.**
 
-The ledger is read-only: there are no interactive controls inside `_DealBookTabContent`, so the observe-mode `IgnorePointer` wrap that protects the Market tab is unnecessary here. The Deal Book content renders identically regardless of `shellPlayerContextProvider.canMutateViaUi`.
+The ledger is read-only for order staging: leftover reason rows expose tap/long-press **Details** to expand a next-step hint only (Refs `#4500`); no bid/offer editing on Deal Book.
 
 ### Responsive layout (`#2993` E6)
 
@@ -466,6 +473,7 @@ Use cases for the current slice (E1+E2+E3+E4+E5a+E5b+E5c+E6+E7):
 | `Deal Book tab — empty (Refs #2993 E7)` | Synthetic Game with `WorldMarketState.empty` (no `lastTurnActivity` and no leftovers). Mounted with `TradeScreen.initialTabIndex: 1` so the Deal Book tab is foregrounded on first frame. Proves the per-side empty-state copies (`dealBookBidsEmpty` / `dealBookOffersEmpty`) render together with the always-mounted `Total spent: £0` / `Total received: £0` rows. |
 | `Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)` | Synthetic Game with one first-right-tagged human buy and one favored-partner-tagged human buy of timber (`3 × 30.0` each), one human sale of iron (`4 × 80.0`), one favored-partner-tagged human sale of fabric (`7 × 120.0`), one human leftover bid (grain `qty 8`), one human leftover offer (cast-iron `qty 4`), and a foreign-only leftover (timber `qty 99` for `gp_aragon`) that must not surface in the human Deal Book. Proves both Filled and Still open subsections render together, the **First right** / **Favored partner** audit tags paint in `--muted`, leftover rows omit priority, and the totals row reads `Total spent: £180` (`3×30 + 3×30`) and `Total received: £1160` (`4×80 + 7×120`). |
 | `Deal Book tab — overseas profit ledger (Refs #4226)` | Synthetic Game with `lastTurnOverseasProfitCreditsByGpId[gp_human]` containing one tile-owner timber credit (`qty 5`, `£15`) and no filled deals. Proves the **Overseas profit** subsection and keyed profit rows render above the two-panel ledger. |
+| `Deal Book tab — leftover reasons (Refs #4500)` | Synthetic Game with treasury-short timber leftover bid, cargo-dropped iron bid note, stockpile-dropped grain offer note, and grain leftover with zero last-turn bids. Proves Still open reason lines, **Did not stay open** subsection, and **Details** affordance on reason rows. |
 | `Deal Book tab — mobile (stacked) (Refs #2993 E7)` | Same mixed data inside `mobileViewport` (360 × 640 dp). Proves the panels stack vertically inside the `Column` layout below `dealBookTwoPanelMinWidth` so the 320 dp minimum viewport stays overflow-safe per `SPEC/ui/mobile-adaptation.md` § 7. |
 
 These use cases share the same data sources as the trade screen runtime (`Game.worldMarketState`) so the Widgetbook contract evolves with the live render automatically.
@@ -641,6 +649,14 @@ The Market tab's `#3093`-era read-only chrome (sectioned grouping, row icons, se
 - **Given** the viewport width is at least `TradeScreenDealBookKeys.dealBookTwoPanelMinWidth` (600 dp), **when** the Deal Book tab is foregrounded, **then** `tester.getTopLeft(find.byKey(dealBookOffersPanelKey)).dx` is strictly greater than `tester.getTopLeft(find.byKey(dealBookBidsPanelKey)).dx` and their `dy` values are equal (the panels render side-by-side with a shared top anchor inside the `Row`).
 
 - **Given** the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, **when** the Deal Book tab is foregrounded, **then** `tester.takeException()` returns `null`, `tester.getTopLeft(find.byKey(dealBookOffersPanelKey)).dy` is strictly greater than `tester.getTopLeft(find.byKey(dealBookBidsPanelKey)).dy` (the panels stack vertically), and the Deal Book renders inside the 320 dp column without horizontal overflow.
+
+### Deal Book tab — leftover reasons (`#4500` slice)
+
+- **Given** last-turn `lastTurnActivity` contains a human `bidPartialFillTreasuryInsufficient` note and a leftover bid for that commodity, **when** the user opens the Deal Book **Your bids** panel, **then** the Still open row shows the leftover quantity and l10n `tradeDealBook_reasonTreasuryShort` with no enum name visible.
+- **Given** last-turn activity contains a human `carryForwardDroppedCargoInsufficient` note, **when** the Deal Book **Your bids** panel renders, **then** a **Did not stay open** row uses `tradeDealBook_droppedBidRow` and that quantity does not appear under Still open.
+- **Given** last-turn activity contains a human `carryForwardDroppedStockpileInsufficient` note, **when** the Deal Book **Your offers** panel renders, **then** a **Did not stay open** row uses `tradeDealBook_droppedOfferRow`.
+- **Given** a leftover bid for commodity `C` with no matching human note on the bids side and `lastTurnActivity[C].totalOfferQuantity == 0`, **when** the Deal Book renders, **then** the Still open row shows `tradeDealBook_reasonNoMatchingSales`; when `totalOfferQuantity > 0`, no fallback line is shown.
+- **Given** a Still open row with a treasury-short reason, **when** the user taps **Details**, **then** one expanded next-step line from `tradeDealBook_detailFreeTreasury` appears.
 
 ### Deal Book tab — integer filled-row prices (`#3093` slice)
 

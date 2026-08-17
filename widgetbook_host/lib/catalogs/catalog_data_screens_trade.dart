@@ -426,6 +426,64 @@ WorldMarketState _tradeScreenDealBookOverseasProfitState() {
   );
 }
 
+/// `WorldMarketState` for leftover-reason Deal Book stories (Refs #4500).
+WorldMarketState _tradeScreenDealBookLeftoverReasonsState() {
+  const String human = 'gp_human';
+  return WorldMarketState(
+    lastTurnActivity: const <CommodityId, MarketActivity>{
+      'timber': MarketActivity(
+        totalOfferQuantity: 0,
+        notes: <MarketActivityNote>[
+          MarketActivityNote(
+            kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+            factionId: human,
+            commodityId: 'timber',
+            quantity: 10,
+          ),
+          MarketActivityNote(
+            kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
+            factionId: human,
+            commodityId: 'iron',
+            quantity: 6,
+          ),
+        ],
+      ),
+      'grain': MarketActivity(
+        totalBidQuantity: 0,
+        notes: <MarketActivityNote>[
+          MarketActivityNote(
+            kind: MarketActivityNoteKind
+                .carryForwardDroppedStockpileInsufficient,
+            factionId: human,
+            commodityId: 'grain',
+            quantity: 4,
+          ),
+        ],
+      ),
+    },
+    carryForwardBidsByFactionId: <String, List<TradeOrder>>{
+      human: <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.bid,
+          quantity: 5,
+          priority: 1,
+        ),
+      ],
+    },
+    carryForwardOffersByFactionId: <String, List<TradeOrder>>{
+      human: <TradeOrder>[
+        TradeOrder(
+          commodityId: 'grain',
+          type: TradeOrderType.offer,
+          quantity: 3,
+          priority: 1,
+        ),
+      ],
+    },
+  );
+}
+
 /// `WorldMarketState` for the mixed Deal Book story — one FRR-tagged
 /// buy, one FTP-tagged buy, two filled sales, and a mix of carry
 /// forward bids/offers on both sides. Mirrors the realistic resolved
@@ -692,6 +750,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         name: 'Deal Book tab — overseas profit ledger (Refs #4226)',
         builder: (context) => _tradeScreenDealBookProviderScope(
           worldMarketState: _tradeScreenDealBookOverseasProfitState(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Deal Book tab — leftover reasons (Refs #4500)',
+        builder: (context) => _tradeScreenDealBookProviderScope(
+          worldMarketState: _tradeScreenDealBookLeftoverReasonsState(),
         ),
       ),
       WidgetbookUseCase(

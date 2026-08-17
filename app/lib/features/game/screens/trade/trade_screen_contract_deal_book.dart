@@ -83,6 +83,26 @@ abstract final class TradeScreenDealBookKeys {
   static Key dealBookUnfilledRowKey(String side, int index) =>
       ValueKey<String>('tradeScreenDealBookUnfilledRow:$side:$index');
 
+  /// Per-row Deal Book key for a Did not stay open drop row.
+  static Key dealBookDidNotStayOpenRowKey(String side, int index) =>
+      ValueKey<String>('tradeScreenDealBookDidNotStayOpenRow:$side:$index');
+
+  /// Stable key for a Still open row's muted reason line, scoped by commodity.
+  static Key dealBookUnfilledReasonKey(String commodityId) =>
+      ValueKey<String>('tradeScreenDealBookUnfilledReason:$commodityId');
+
+  /// Stable key for the Details affordance on a reason/drop row.
+  static Key dealBookDetailsAffordanceKey(String commodityId) =>
+      ValueKey<String>('tradeScreenDealBookDetailsAffordance:$commodityId');
+
+  /// Stable key for an expanded on-request detail line.
+  static Key dealBookDetailsExpandedKey(String commodityId) =>
+      ValueKey<String>('tradeScreenDealBookDetailsExpanded:$commodityId');
+
+  /// Localized section heading for dropped carry-forwards (Refs #4500).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String dealBookDidNotStayOpenHeading = 'Did not stay open';
+
   /// Minimum viewport width (logical px) above which the Deal Book
   /// renders its two panels side-by-side. Below this threshold the
   /// panels stack vertically so the 320 dp minimum viewport stays
