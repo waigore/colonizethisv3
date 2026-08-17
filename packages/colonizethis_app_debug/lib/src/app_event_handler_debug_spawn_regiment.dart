@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_command_helpers.dart';
+import 'debug_spawn_apply_helpers.dart';
 
 /// Debug spawn military regiments at the human player's capital (console / dev tooling).
 DebugCommandResult applyDebugRegimentSpawnAtCapital({
@@ -20,10 +21,9 @@ DebugCommandResult applyDebugRegimentSpawnAtCapital({
   guard as DebugGuardPass;
   final player = guard.player;
   if (RegimentEconomyCatalog.byId[event.regimentTypeId] == null) {
-    return (
-      game: null,
-      message:
-          'Debug spawn ignored: unsupported regiment type ${event.regimentTypeId}.',
+    return debugUnsupportedSpawnType(
+      typeLabel: 'regiment',
+      typeId: event.regimentTypeId,
     );
   }
   if (event.count < 1) {
@@ -45,20 +45,13 @@ DebugCommandResult applyDebugRegimentSpawnAtCapital({
       message: 'Debug spawn ignored: invalid capital province id.',
     );
   }
-  final boundedCount = event.count > 25 ? 25 : event.count;
-  final allUnits = <Unit>[
-    ...guard.game.worldState.oldWorld.units,
-    ...guard.game.worldState.newWorld.units,
-  ];
-  final usedUnitIds = {for (final unit in allUnits) unit.id};
-  var nextUnitSeq = nextCanonicalUnitSequence(units: allUnits);
+  final boundedCount = boundDebugSpawnCount(event.count);
+  final unitIds = mintDebugLandUnitIds(
+    worldState: guard.game.worldState,
+    count: boundedCount,
+  );
   var game = guard.game;
-  for (var i = 0; i < boundedCount; i++) {
-    final unitId = mintCanonicalUnitId(
-      usedUnitIds: usedUnitIds,
-      nextSequence: nextUnitSeq,
-    );
-    nextUnitSeq++;
+  for (final unitId in unitIds) {
     final unit = Unit(
       id: unitId,
       type: event.regimentTypeId,
