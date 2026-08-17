@@ -394,6 +394,29 @@ Hover, selection, and overlay behavior:
 - The widget **supports** animation of individual tiles and other assets (e.g. tile highlight, building animation, unit pulse).
 - Implementation uses **Flame** so that per-tile and per-asset animations can be driven by game events or timers without blocking the UI. Animation API (e.g. “play tile animation at tileKey”) is implementation-defined; this spec only requires that the component is built so such animation is feasible.
 
+### Last-turn spatial playback (MAP10001; Refs #4486)
+
+After a resolved turn, the empire map host may play human-scoped **spatial** outcomes as sequential camera + pulse beats. Non-spatial lines stay text-only in `DLG50001` / `OVL70001`.
+
+| Constant | Value | Role |
+|---|---|---|
+| `kLastTurnPlaybackCap` | `6` | Max beats per sequence; remaining spatial lines stay in the feed |
+| `kLastTurnBeatDwellMs` | `1200` | Camera + pulse visible before advancing |
+| `kLastTurnPulseAngularFrequency` | same as `RegionMapPalette.hoveredProvinceGlowAngularFrequency` (`2π`) | Pulse opacity sine period (shared with hover / valid-target family) |
+
+- **Pulse colour:** Distinct from selection orange (`mapSelectedHighlightOrange`) and locate cyan (`mapSecondarySelectionCyan`); opacity uses the valid-target sine family at `kLastTurnPulseAngularFrequency`.
+- **Spatial types (resolvable anchors only):** land combat (`provinceId`), naval combat (`seaZoneId`), province capture (`provinceId`), work-order completed (`targetTileKey` / province), province discovery (`provinceId`), sea discovery (`seaZoneId`). Unresolved anchors omit the beat.
+- **Start gates:** When `OVL20001` will mount (`Game.victory != null`, or `Game.calendarCampaignHalted` with `Game.victory == null`), playback starts only after **View final state** (`VictoryOverlayViewFinalStateEvent`) — never under the overlay scrim (military or calendar-complete). Else when `DLG50001` was shown, playback starts only after that dialog closes (`TurnNewsDialogClosedEvent`). When neither modal applies, playback may start after `TurnResolutionCompleteEvent`. Do not start under in-resolution diplomacy overlays. Closing news while `OVL20001` is still visible does not start playback.
+- **Behavior:** One beat at a time; center camera + switch Old/New World tab as locate does; show feed-style caption; **Skip** or map tap ends the sequence (camera stays; no `MAP20001` / unit panel opens). Hover bounce, province glow, and work-target yellow pulse remain unchanged when playback is idle.
+
+#### Acceptance criteria (last-turn playback)
+
+- Given a resolved turn with at least one human-scoped spatial event whose anchor resolves and `Game.victory == null`, when `DLG50001` closes, then the UI layer plays a pulse at that anchor and centers the camera on it.
+- Given a resolved turn with `OVL20001` mounted (military `Game.victory != null`, or calendar-complete `Game.calendarCampaignHalted && Game.victory == null`) and at least one resolvable spatial event, when the player dismisses `OVL20001` via **View final state**, then the UI layer starts the same sequence; while `OVL20001` is visible, news close does not start playback.
+- Given multiple spatial events, when playback runs, then beats follow committed feed order, dwell `kLastTurnBeatDwellMs` each, and stop after `kLastTurnPlaybackCap` beats.
+- Given playback is running, when the player taps the map or **Skip**, then the sequence ends immediately without opening overlays.
+- Given only non-spatial human events (or an empty resolvable spatial set), when the start gate fires, then the map does not auto-pan or pulse.
+
 ---
 
 ## Layout and reuse
@@ -401,6 +424,7 @@ Hover, selection, and overlay behavior:
 - **Reusable:** The map widget is a single reusable component. It is used by the Empire overview screen (one instance per region when a region is active). It may be reused elsewhere (e.g. debug or other screens) with the same contract.
 - **Widgetbook debug mode:** The Map Widget “Debug mode” stories in Widgetbook use a map from the real map generator and an initialized game (default config); see app `debug_init_game` and map widget directories. The folder **Map Widget** also exposes a **Debug mode (mobile)** use case wrapped in `mobileViewport(context, …)` so reviewers can verify the 360 × 640 dp narrow story without resizing the host window. The **Debug mode (mobile)** use case must be pinned by `app/test/widgetbook_map_widget_mobile_viewport_test.dart` (Refs #2870 R22 / S9) so its removal or rename surfaces in CI before reviewers lose the narrow-viewport review surface. Capital-link hatch variants (mixed on, highlight off, fogged, 320 dp narrow) are registered in the same **Map Widget** folder (`widgetbook_host/lib/catalogs/capital_link_disconnected_highlight_story.dart`; Refs #4370).
 - **Army stack markers (Refs #4384):** The same **Map Widget** folder exposes isolated `CtRegionMap` stories for army-marker **default field army**, **stacked field armies**, **grayscale pending move**, **Home Army only**, **empty Home Army**, and **mixed Home plus field**. Host goldens: `app/test/army_tile_marker_goldens_test.dart` / `app/test/goldens/army_stack_marker_*.png`. Mount pin: `app/test/widgetbook_army_tile_markers_test.dart`.
+- **Last-turn spatial playback (Refs #4486):** The same **Map Widget** folder exposes **Last-turn pulse** and **Last-turn pulse (320 dp)** (`widgetbook_host/lib/catalogs/last_turn_pulse_story.dart`). Host goldens use bounded pumps (pulse tickers never settle): `app/test/last_turn_pulse_goldens_test.dart` / `app/test/goldens/last_turn_pulse_map.png`, `last_turn_playback_chrome.png`, `last_turn_playback_chrome_320.png`. Mount pin: `app/test/widgetbook_last_turn_pulse_test.dart`.
 - **Owner / sight hover readout (Refs #4406):** Folder **Map tile hover readout** (`widgetbook_host/lib/catalogs/catalog_game_chrome.dart`) isolates the MAP10001 chrome for fully visible owned land, fogged rival land, unrevealed land, unclaimed land, sea, warp sea, and 320 dp narrow. Host goldens: `app/test/map_tile_hover_readout_goldens_test.dart`. Mount pin: `app/test/widgetbook_map_tile_hover_readout_test.dart`.
 - **Work-order afford preview (Refs #4262):** The **Work order afford preview** Widgetbook folder (`widgetbook_host/lib/catalogs/catalog_work_order_afford_preview.dart`) isolates `GameMapCanvasStackSelectionPrompt` with synthetic `WorkOrderAffordPreview` payloads: **Selection prompt — can afford** (material chips + `workOrderAfford_canAfford`), **Selection prompt — material shortfall**, **Selection prompt — treasury shortfall**, and **Selection prompt — free target (no cost)** (prompt + cancel only, no cost chips).
 - **One region per instance:** Each widget instance displays one region's map (e.g. Old World or New World). Region id (or equivalent) is a parameter; data is supplied for that region only.

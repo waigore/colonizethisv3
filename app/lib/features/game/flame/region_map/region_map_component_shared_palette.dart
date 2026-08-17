@@ -72,6 +72,8 @@ abstract final class RegionMapPalette {
   static const Color validWorkTargetStrokeYellow = Color(0xFFFFFF00);
   static const Color mapSelectedHighlightOrange = Color(0xFFFFAA00);
   static const Color mapSecondarySelectionCyan = Color(0xFF66D9FF);
+  /// Last-turn spatial playback pulse (distinct from selection orange / locate cyan).
+  static const Color lastTurnPulseColor = Color(0xFFFF77AA);
   static const double hoverSelectorBounceBaseline = 1.0;
   static const double hoverSelectorBounceAmplitude = 0.04;
   static const Color mapHoverSelectorIdle = Color(0xFFFFFFFF);

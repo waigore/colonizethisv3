@@ -30,6 +30,25 @@ extension CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     }
   }
 
+  void paintLastTurnPulse(Canvas canvas) {
+    final tileKey = lastTurnPulseTileKey!;
+    final t = session.hoverAnimationT;
+    final opacity =
+        RegionMapPalette.validWorkTargetGlowOpacityBase +
+        RegionMapPalette.validWorkTargetGlowOpacityAmplitude *
+            (RegionMapPalette.sinNormalizedMid +
+                RegionMapPalette.sinNormalizedMid *
+                    math.sin(
+                      t * RegionMapPalette.hoveredProvinceGlowAngularFrequency,
+                    ));
+    _paintTileOutlineRing(
+      canvas,
+      tileKey: tileKey,
+      color: RegionMapPalette.lastTurnPulseColor.withValues(alpha: opacity),
+      strokeWidth: kMapValidTileTargetStrokeWidth,
+    );
+  }
+
   void paintSelectedTile(Canvas canvas) {
     _paintTileOutlineRing(
       canvas,

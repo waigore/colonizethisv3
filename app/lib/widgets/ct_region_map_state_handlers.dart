@@ -69,6 +69,7 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
     secondaryHighlightTileKey: state.widget.secondaryHighlightTileKey,
     secondaryHighlightTileKeys: state.widget.secondaryHighlightTileKeys,
     validTileKeys: state.widget.validTileKeys,
+    lastTurnPulseTileKey: state.widget.lastTurnPulseTileKey,
     onTileSelected: state.widget.onTileSelected,
     onWorkTargetSelectionCancelled: state.widget.onWorkTargetSelectionCancelled,
     onTownIconTapped: state.widget.bus != null

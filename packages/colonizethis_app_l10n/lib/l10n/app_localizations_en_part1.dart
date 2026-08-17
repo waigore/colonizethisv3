@@ -402,6 +402,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get map_relocate_leaveIntel_cancel => 'Stay';
 
   @override
+  String get map_lastTurnPlayback_skip => 'Skip';
+
+  @override
   String get common_start => 'Start';
 
   @override
