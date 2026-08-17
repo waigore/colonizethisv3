@@ -3,18 +3,15 @@
 // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md — Political Consulate shortcut.
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_establish_consulate.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_state_logic.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_shortcuts.dart';
-import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'province_detail_overlay_host_support_fixtures.dart';
 import 'province_overlay_test_harness.dart';
 
 const String _kGameId = 'g_consulate_shortcut';
@@ -206,21 +203,8 @@ void main() {
           targetFactionId: _kMinorId,
           overtureStage: OvertureStage.tradeConsulate,
         );
-        final callbacks = buildProvinceDetailShortcutCallbacks(
+        final callbacks = provinceDetailCallbacks(
           game: game,
-          humanPlayerId: _kHumanPlayerId,
-          region: emptyProvinceOverlayRegion(),
-          playerView: buildPlayerView(game, _topology, _kHumanPlayerId),
-          workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(
-            strategies: const {},
-          ),
-          draftOrders: const Orders(),
-          mapData: (
-            combinedTopology: _topology,
-            tileMapByRegion: const {},
-            topologyByRegion: const {},
-            warpLinks: null,
-          ),
           selectedTileKey: _kTileKey,
           exploreEnabled: false,
           prospectEnabled: false,
@@ -228,15 +212,13 @@ void main() {
           buildRoadEnabled: false,
           buildFortEnabled: false,
           buildPortEnabled: false,
-          buildRailEnabled: false,
           purchaseLandEnabled: false,
           provinceId: _kProvinceId,
-          upgradeTownEnabled: false,
-          upgradeTownTargetTileKey: null,
           establishConsulateEnabled: true,
           establishConsulatePending: false,
           establishConsulateOrder: order,
           establishConsulateTargetName: 'Minor One',
+          combinedTopology: _topology,
           bus: bus,
         );
         expect(callbacks.onEstablishConsulateTap, isNotNull);
@@ -263,25 +245,8 @@ void main() {
         targetFactionId: _kMinorId,
         overtureStage: OvertureStage.tradeConsulate,
       );
-      final callbacks = buildProvinceDetailShortcutCallbacks(
+      final callbacks = provinceDetailCallbacks(
         game: game,
-        humanPlayerId: _kHumanPlayerId,
-        region: emptyProvinceOverlayRegion(),
-        playerView: buildPlayerView(game, _topology, _kHumanPlayerId),
-        workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(
-          strategies: const {},
-        ),
-        draftOrders: Orders(
-          diplomaticOrdersByPlayerId: {
-            _kHumanPlayerId: [order],
-          },
-        ),
-        mapData: (
-          combinedTopology: _topology,
-          tileMapByRegion: const {},
-          topologyByRegion: const {},
-          warpLinks: null,
-        ),
         selectedTileKey: _kTileKey,
         exploreEnabled: false,
         prospectEnabled: false,
@@ -289,11 +254,8 @@ void main() {
         buildRoadEnabled: false,
         buildFortEnabled: false,
         buildPortEnabled: false,
-        buildRailEnabled: false,
         purchaseLandEnabled: false,
         provinceId: _kProvinceId,
-        upgradeTownEnabled: false,
-        upgradeTownTargetTileKey: null,
         establishConsulateEnabled: true,
         establishConsulatePending: true,
         establishConsulateOrder: order,

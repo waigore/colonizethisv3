@@ -3689,6 +3689,31 @@
       }
     }
   },
+  "provinceOverlay_ownerStandingAtWar": "At war",
+  "@provinceOverlay_ownerStandingAtWar": {
+    "description": "MAP20001 Political standing line when human is at war with the province owner (Refs #4479)."
+  },
+  "provinceOverlay_ownerStandingAtPeace": "At peace",
+  "@provinceOverlay_ownerStandingAtPeace": {
+    "description": "MAP20001 Political standing line when human is at peace with the province owner (Refs #4479)."
+  },
+  "provinceOverlay_offerPeaceAction": "Offer Peace",
+  "@provinceOverlay_offerPeaceAction": {
+    "description": "Political shortcut label for staging offerPeace toward the province owner (Refs #4479)."
+  },
+  "provinceOverlay_cancelOfferPeaceAction": "Cancel",
+  "@provinceOverlay_cancelOfferPeaceAction": {
+    "description": "Political shortcut label when offerPeace toward the owner is already pending (Refs #4479)."
+  },
+  "provinceOverlay_offerPeaceDisabledSemantics": "Offer Peace unavailable: {reason}",
+  "@provinceOverlay_offerPeaceDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Offer Peace shortcut (Refs #4479).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."

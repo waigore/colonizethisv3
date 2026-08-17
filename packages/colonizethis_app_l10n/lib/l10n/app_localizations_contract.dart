@@ -2534,6 +2534,21 @@ abstract class AppLocalizations {
   /// Accessible disabled label including the canonical validator reason.
   String provinceOverlay_establishConsulateDisabledSemantics(String reason);
 
+  /// Political standing when at war with the province owner. Refs #4479.
+  String get provinceOverlay_ownerStandingAtWar;
+
+  /// Political standing when at peace with the province owner. Refs #4479.
+  String get provinceOverlay_ownerStandingAtPeace;
+
+  /// Political Offer Peace shortcut label. Refs #4479.
+  String get provinceOverlay_offerPeaceAction;
+
+  /// Political Cancel when offerPeace is pending. Refs #4479.
+  String get provinceOverlay_cancelOfferPeaceAction;
+
+  /// Accessible disabled Offer Peace label. Refs #4479.
+  String provinceOverlay_offerPeaceDisabledSemantics(String reason);
+
   /// Political Upgrade town enabled tooltip. Refs #4316.
   String get provinceOverlay_politicalUpgradeTownTooltip;
 
