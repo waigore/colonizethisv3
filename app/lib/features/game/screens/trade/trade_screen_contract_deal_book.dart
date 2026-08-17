@@ -87,17 +87,27 @@ abstract final class TradeScreenDealBookKeys {
   static Key dealBookDidNotStayOpenRowKey(String side, int index) =>
       ValueKey<String>('tradeScreenDealBookDidNotStayOpenRow:$side:$index');
 
+  /// Row-kind token for Still open leftover Details keys (Refs #4500).
+  static const String dealBookRowKindStillOpen = 'stillOpen';
+
+  /// Row-kind token for Did not stay open Details keys (Refs #4500).
+  static const String dealBookRowKindDidNotStayOpen = 'didNotStayOpen';
+
   /// Stable key for a Still open row's muted reason line, scoped by commodity.
   static Key dealBookUnfilledReasonKey(String commodityId) =>
       ValueKey<String>('tradeScreenDealBookUnfilledReason:$commodityId');
 
   /// Stable key for the Details affordance on a reason/drop row.
-  static Key dealBookDetailsAffordanceKey(String commodityId) =>
-      ValueKey<String>('tradeScreenDealBookDetailsAffordance:$commodityId');
+  static Key dealBookDetailsAffordanceKey(String rowKind, String commodityId) =>
+      ValueKey<String>(
+        'tradeScreenDealBookDetailsAffordance:$rowKind:$commodityId',
+      );
 
   /// Stable key for an expanded on-request detail line.
-  static Key dealBookDetailsExpandedKey(String commodityId) =>
-      ValueKey<String>('tradeScreenDealBookDetailsExpanded:$commodityId');
+  static Key dealBookDetailsExpandedKey(String rowKind, String commodityId) =>
+      ValueKey<String>(
+        'tradeScreenDealBookDetailsExpanded:$rowKind:$commodityId',
+      );
 
   /// Localized section heading for dropped carry-forwards (Refs #4500).
   // ignore: avoid_hardcoded_strings_in_widgets
