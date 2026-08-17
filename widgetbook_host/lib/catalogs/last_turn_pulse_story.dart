@@ -1,9 +1,9 @@
+import 'package:colonizethis_app/features/game/flame/map_state/last_turn_playback_chrome.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Tiny region with a fixed last-turn pulse tile (Refs #4486).
 RegionMapViewData lastTurnPulseStoryRegion() {
@@ -56,22 +56,15 @@ class LastTurnPulseStory extends StatelessWidget {
       showPoliticalOverlay: false,
       lastTurnPulseTileKey: 'oldWorld|p1|0|0',
     );
-    final caption = Container(
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: EditorialMonoclePalette.bgDeep.withValues(alpha: 0.9),
-        border: Border.all(color: EditorialMonoclePalette.accent),
-      ),
-      child: Text(
-        'Pulse province battle resolved!',
-        style: TextStyle(color: EditorialMonoclePalette.fg, fontSize: 13),
-      ),
-    );
-    final body = Column(
+    final body = Stack(
       children: [
-        Expanded(child: map),
-        caption,
+        Positioned.fill(child: map),
+        lastTurnPlaybackChromeOverlay(
+          isNarrow: narrow,
+          caption: 'Pulse province battle resolved!',
+          skipLabel: 'Skip',
+          onSkip: () {},
+        ),
       ],
     );
     if (!narrow) {

@@ -9,7 +9,6 @@ import '../../widgets/shell/shell_player_context.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../screens/game/game_screen_shared.dart';
 import '../map_area/map_area.dart'
     show GameMapAreaBackground, GameMapCanvasStack;
@@ -24,6 +23,7 @@ import 'game_map_area_e2e.dart';
 import 'game_map_area_build_map_stack_chrome.dart';
 import 'game_map_area_relocate_selection.dart';
 import 'game_map_area_last_turn_playback.dart';
+import 'last_turn_playback_chrome.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 
@@ -107,51 +107,11 @@ mixin GameMapAreaBuildMapStack
           zoomMultiplier: mapViewState.zoomMultiplier,
         ),
         if (isLastTurnPlaybackRunning && lastTurnPlaybackCaption != null)
-          Positioned(
-            left: isNarrow ? 56 : 72,
-            right: isNarrow ? 8 : 120,
-            bottom: isNarrow ? 88 : 64,
-            child: Material(
-              color: Colors.transparent,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: EditorialMonoclePalette.bgDeep.withValues(
-                          alpha: 0.9,
-                        ),
-                        border: Border.all(
-                          color: EditorialMonoclePalette.accent,
-                        ),
-                      ),
-                      child: Text(
-                        lastTurnPlaybackCaption!,
-                        style: TextStyle(
-                          color: EditorialMonoclePalette.fg,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  CtNinePatchButton(
-                    minHeight: 34,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    onPressed: skipLastTurnPlayback,
-                    child: Text(appL10n(context).map_lastTurnPlayback_skip),
-                  ),
-                ],
-              ),
-            ),
+          lastTurnPlaybackChromeOverlay(
+            isNarrow: isNarrow,
+            caption: lastTurnPlaybackCaption!,
+            skipLabel: appL10n(context).map_lastTurnPlayback_skip,
+            onSkip: skipLastTurnPlayback,
           ),
         if (!sideMenuOpen)
           Positioned(

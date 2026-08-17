@@ -12,6 +12,7 @@ import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed_labels.dart';
 import 'game_map_area_view.dart';
 import 'last_turn_playback.dart';
+import 'last_turn_playback_session.dart';
 import 'map_location_resolver.dart';
 
 /// Schedules and runs last-turn spatial pulses after news / victory gates.
@@ -21,25 +22,13 @@ mixin GameMapAreaLastTurnPlayback
         GameMapAreaStateBase,
         GameMapAreaTurnFeedLabels,
         GameMapAreaView {
-  /// Beats ready after the start gate; cleared when playback ends.
-  List<LastTurnPlaybackBeat> lastTurnPlaybackBeats = const [];
+  final LastTurnPlaybackSession lastTurnPlayback = LastTurnPlaybackSession();
 
-  int lastTurnPlaybackIndex = 0;
   Timer? lastTurnPlaybackTimer;
   String? lastTurnPulseTileKey;
   String? lastTurnPlaybackCaption;
-  bool lastTurnPlaybackActive = false;
 
-  /// True after a turn resolution until playback starts or is abandoned.
-  bool lastTurnPlaybackPending = false;
-
-  /// When true, wait for [TurnNewsDialogClosedEvent] before starting.
-  bool lastTurnPlaybackAwaitingNewsClose = false;
-
-  /// When true, wait for [VictoryOverlayViewFinalStateEvent] before starting.
-  bool lastTurnPlaybackAwaitingVictoryDismiss = false;
-
-  bool get isLastTurnPlaybackRunning => lastTurnPlaybackActive;
+  bool get isLastTurnPlaybackRunning => lastTurnPlayback.active;
 
   void disposeLastTurnPlayback() {
     lastTurnPlaybackTimer?.cancel();
@@ -47,26 +36,18 @@ mixin GameMapAreaLastTurnPlayback
   }
 
   void onTurnNewsDialogClosedEvent(ct_models.TurnNewsDialogClosedEvent event) {
-    if (!mounted || !lastTurnPlaybackPending) {
+    if (!mounted || !lastTurnPlayback.onNewsClosed()) {
       return;
     }
-    if (!lastTurnPlaybackAwaitingNewsClose) {
-      return;
-    }
-    lastTurnPlaybackAwaitingNewsClose = false;
     startLastTurnPlaybackIfPending();
   }
 
   void onVictoryOverlayViewFinalStateEvent(
     ct_models.VictoryOverlayViewFinalStateEvent event,
   ) {
-    if (!mounted || !lastTurnPlaybackPending) {
+    if (!mounted || !lastTurnPlayback.onVictoryDismissed()) {
       return;
     }
-    if (!lastTurnPlaybackAwaitingVictoryDismiss) {
-      return;
-    }
-    lastTurnPlaybackAwaitingVictoryDismiss = false;
     startLastTurnPlaybackIfPending();
   }
 
@@ -76,39 +57,32 @@ mixin GameMapAreaLastTurnPlayback
     required bool victorySet,
   }) {
     stopLastTurnPlayback(clearPending: true);
-    lastTurnPlaybackPending = true;
-    lastTurnPlaybackAwaitingNewsClose = newsDialogWillShow && !victorySet;
-    lastTurnPlaybackAwaitingVictoryDismiss = victorySet;
-    if (!lastTurnPlaybackAwaitingNewsClose &&
-        !lastTurnPlaybackAwaitingVictoryDismiss) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        startLastTurnPlaybackIfPending();
-      });
+    lastTurnPlayback.arm(
+      newsDialogWillShow: newsDialogWillShow,
+      victorySet: victorySet,
+    );
+    if (lastTurnPlayback.blockedByStartGate) {
+      return;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      startLastTurnPlaybackIfPending();
+    });
   }
 
   void startLastTurnPlaybackIfPending() {
-    if (!mounted || !lastTurnPlaybackPending) {
+    if (!mounted || lastTurnPlayback.blockedByStartGate) {
       return;
     }
-    if (lastTurnPlaybackAwaitingNewsClose ||
-        lastTurnPlaybackAwaitingVictoryDismiss) {
-      return;
-    }
-    lastTurnPlaybackPending = false;
     final beats = buildLastTurnPlaybackBeats(
       events: resolvedPlayerTurnEvents,
       resolveAnchor: resolveLastTurnAnchor,
       captionFor: captionForLastTurnEvent,
     );
-    if (beats.isEmpty) {
+    if (!lastTurnPlayback.tryBegin(beats)) {
       return;
     }
-    lastTurnPlaybackBeats = beats;
-    lastTurnPlaybackIndex = 0;
-    lastTurnPlaybackActive = true;
-    showLastTurnPlaybackBeat(0);
+    showLastTurnPlaybackBeat();
   }
 
   ({String tileKey, String regionId})? resolveLastTurnAnchor(
@@ -117,11 +91,13 @@ mixin GameMapAreaLastTurnPlayback
     return switch (event) {
       ct_models.AppCombatResultEvent(:final provinceId) ||
       ct_models.AppProvinceCapturedEvent(:final provinceId) ||
-      ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
-        _anchorForProvince(provinceId),
+      ct_models.AppPlayerProvinceDiscoveredEvent(
+        :final provinceId,
+      ) => _anchorForProvince(provinceId),
       ct_models.AppNavalCombatResultEvent(:final seaZoneId) ||
-      ct_models.AppPlayerSeaZoneDiscoveredEvent(:final seaZoneId) =>
-        _anchorForSeaZone(seaZoneId),
+      ct_models.AppPlayerSeaZoneDiscoveredEvent(
+        :final seaZoneId,
+      ) => _anchorForSeaZone(seaZoneId),
       ct_models.AppWorkOrderCompletedEvent(
         :final targetTileKey,
         :final provinceId,
@@ -205,14 +181,13 @@ mixin GameMapAreaLastTurnPlayback
     };
   }
 
-  void showLastTurnPlaybackBeat(int index) {
+  void showLastTurnPlaybackBeat() {
     lastTurnPlaybackTimer?.cancel();
-    if (!mounted || index < 0 || index >= lastTurnPlaybackBeats.length) {
+    final beat = lastTurnPlayback.currentBeat;
+    if (!mounted || beat == null) {
       stopLastTurnPlayback();
       return;
     }
-    final beat = lastTurnPlaybackBeats[index];
-    lastTurnPlaybackIndex = index;
     setState(() {
       lastTurnPulseTileKey = beat.tileKey;
       lastTurnPlaybackCaption = beat.caption;
@@ -221,21 +196,20 @@ mixin GameMapAreaLastTurnPlayback
     lastTurnPlaybackTimer = Timer(
       const Duration(milliseconds: kLastTurnBeatDwellMs),
       () {
-        if (!mounted || !lastTurnPlaybackActive) {
+        if (!mounted || !lastTurnPlayback.active) {
           return;
         }
-        final next = index + 1;
-        if (next >= lastTurnPlaybackBeats.length) {
+        if (!lastTurnPlayback.advanceAfterDwell()) {
           stopLastTurnPlayback();
           return;
         }
-        showLastTurnPlaybackBeat(next);
+        showLastTurnPlaybackBeat();
       },
     );
   }
 
   void skipLastTurnPlayback() {
-    if (!lastTurnPlaybackActive && !lastTurnPlaybackPending) {
+    if (!lastTurnPlayback.active && !lastTurnPlayback.pending) {
       return;
     }
     stopLastTurnPlayback(clearPending: true);
@@ -244,15 +218,8 @@ mixin GameMapAreaLastTurnPlayback
   void stopLastTurnPlayback({bool clearPending = false}) {
     lastTurnPlaybackTimer?.cancel();
     lastTurnPlaybackTimer = null;
-    final wasActive = lastTurnPlaybackActive;
-    lastTurnPlaybackActive = false;
-    lastTurnPlaybackBeats = const [];
-    lastTurnPlaybackIndex = 0;
-    if (clearPending) {
-      lastTurnPlaybackPending = false;
-      lastTurnPlaybackAwaitingNewsClose = false;
-      lastTurnPlaybackAwaitingVictoryDismiss = false;
-    }
+    final wasActive = lastTurnPlayback.active;
+    lastTurnPlayback.stop(clearPending: clearPending);
     if (!mounted) {
       return;
     }

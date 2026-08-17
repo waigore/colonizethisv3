@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/last_turn_playback.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_component_shared_palette.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetExplore;
@@ -165,6 +166,27 @@ void main() {
       );
       expect(
         isLastTurnSpatialEvent(
+          const AppProvinceCapturedEvent(
+            provinceId: 'oldWorld|p1',
+            previousOwnerId: 'gp2',
+            newOwnerId: 'gp1',
+            turnNumber: 1,
+          ),
+        ),
+        isTrue,
+      );
+      expect(
+        isLastTurnSpatialEvent(
+          const AppPlayerSeaZoneDiscoveredEvent(
+            playerId: 'gp1',
+            seaZoneId: 'sz1',
+            turnNumber: 1,
+          ),
+        ),
+        isTrue,
+      );
+      expect(
+        isLastTurnSpatialEvent(
           const AppResearchCompleteEvent(
             playerId: 'gp1',
             techId: 't',
@@ -172,6 +194,19 @@ void main() {
           ),
         ),
         isFalse,
+      );
+    });
+  });
+
+  group('last-turn pulse colour', () {
+    test('is distinct from selection orange and locate cyan', () {
+      expect(
+        kLastTurnPulseColor,
+        isNot(RegionMapPalette.mapSelectedHighlightOrange),
+      );
+      expect(
+        kLastTurnPulseColor,
+        isNot(RegionMapPalette.mapSecondarySelectionCyan),
       );
     });
   });
