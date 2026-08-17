@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_command_helpers.dart';
+import 'debug_spawn_apply_helpers.dart';
 
 /// Debug spawn ships into the human player's home fleet at capital.
 DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
@@ -19,10 +20,9 @@ DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
   guard as DebugGuardPass;
   final player = guard.player;
   if (ShipEconomyCatalog.byId[event.shipTypeId] == null) {
-    return (
-      game: null,
-      message:
-          'Debug spawn ignored: unsupported ship type ${event.shipTypeId}.',
+    return debugUnsupportedSpawnType(
+      typeLabel: 'ship',
+      typeId: event.shipTypeId,
     );
   }
   if (event.count < 1) {
@@ -47,7 +47,7 @@ DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
           'Debug spawn ignored: no valid home fleet at capital for player ${event.humanPlayerId}.',
     );
   }
-  final boundedCount = event.count > 25 ? 25 : event.count;
+  final boundedCount = boundDebugSpawnCount(event.count);
   final world = guard.game.worldState;
   final fleets = List<Fleet>.from(world.fleets);
   final fleet = fleets[fleetIndex];
