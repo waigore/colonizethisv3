@@ -79,6 +79,11 @@ int runCheckAppDebugHandlerGuardHelpers(
         }
       }
     }
+    _collectSpawnRawCountCapViolations(
+      unit: unit,
+      relativePath: relativePath,
+      violations: violations,
+    );
   }
 
   if (violations.isEmpty) {
@@ -94,6 +99,27 @@ int runCheckAppDebugHandlerGuardHelpers(
   return 1;
 }
 
+void _collectSpawnRawCountCapViolations({
+  required CompilationUnit unit,
+  required String relativePath,
+  required List<String> violations,
+}) {
+  final basename = p.basename(relativePath);
+  if (!basename.startsWith('app_event_handler_debug_spawn_') ||
+      !basename.endsWith('.dart')) {
+    return;
+  }
+  final collector = _IntegerLiteralCollector();
+  unit.accept(collector);
+  for (final value in collector.values) {
+    if (value != 25) continue;
+    violations.add(
+      '$relativePath contains raw integer literal 25; clamp spawn counts via '
+      'boundDebugSpawnCount (kDebugSpawnCountCap) instead (Refs #4484)',
+    );
+  }
+}
+
 class _GuardLiteralCollector extends RecursiveAstVisitor<void> {
   final List<String> literals = <String>[];
 
@@ -107,6 +133,19 @@ class _GuardLiteralCollector extends RecursiveAstVisitor<void> {
   void visitInterpolationString(InterpolationString node) {
     literals.add(node.value);
     super.visitInterpolationString(node);
+  }
+}
+
+class _IntegerLiteralCollector extends RecursiveAstVisitor<void> {
+  final List<int> values = <int>[];
+
+  @override
+  void visitIntegerLiteral(IntegerLiteral node) {
+    final value = node.value;
+    if (value != null) {
+      values.add(value);
+    }
+    super.visitIntegerLiteral(node);
   }
 }
 

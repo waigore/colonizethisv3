@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_command_helpers.dart';
+import 'debug_province_target_resolve.dart';
 
 /// Apply immediate province reveal for debug console command `/reveal_province`.
 DebugCommandResult applyDebugRevealProvince({
@@ -21,7 +22,14 @@ DebugCommandResult applyDebugRevealProvince({
   guard as DebugGuardPass;
   final game = guard.game;
 
-  final resolved = _resolveRevealTarget(game.worldState, event);
+  final resolved = resolveDebugProvinceTarget(
+    world: game.worldState,
+    commandLabel: DebugCommandLabel.revealProvince,
+    fullProvinceId: event.targetIsFullProvinceId ? event.target : null,
+    provinceDisplayName: event.targetIsFullProvinceId ? null : event.target,
+    searchAllRegionsByDisplayName: !event.targetIsFullProvinceId,
+    ambiguousRetryHint: '/reveal_province <regionId|localId>',
+  );
   if (resolved.failureMessage != null) {
     return (game: null, message: resolved.failureMessage!);
   }
@@ -53,7 +61,7 @@ DebugCommandResult applyDebugRevealProvince({
     topology: combinedTopology,
     topologyByRegion: topologyByRegion,
   );
-  final changedCount = _countNewlyVisibleTiles(
+  final changedCount = countNewlyFullyVisibleTiles(
     before: beforeByPlayer,
     after: afterWithCoastal,
   );
@@ -77,58 +85,4 @@ DebugCommandResult applyDebugRevealProvince({
     message:
         'Revealed province ${province.id} for ${event.humanPlayerId}; fully visible tiles +$changedCount.',
   );
-}
-
-({Province? province, String? failureMessage}) _resolveRevealTarget(
-  WorldState world,
-  RevealDebugProvinceEvent event,
-) {
-  if (event.targetIsFullProvinceId) {
-    final province = world.tryGetProvince(event.target);
-    if (province == null) {
-      return (
-        province: null,
-        failureMessage:
-            'Debug reveal_province rejected: province "${event.target}" not found.',
-      );
-    }
-    return (province: province, failureMessage: null);
-  }
-
-  final normalized = event.target.trim().toLowerCase();
-  final matched = world
-      .allProvinces()
-      .where((p) => (p.displayName ?? '').trim().toLowerCase() == normalized)
-      .toList(growable: false);
-  if (matched.isEmpty) {
-    return (
-      province: null,
-      failureMessage:
-          'Debug reveal_province rejected: province "${event.target}" not found.',
-    );
-  }
-  if (matched.length > 1) {
-    final candidateIds = matched.map((p) => p.id).toList()..sort();
-    return (
-      province: null,
-      failureMessage:
-          'Debug reveal_province rejected: province "${event.target}" is ambiguous. '
-          'Candidates: ${candidateIds.join(', ')}. Retry with /reveal_province <regionId|localId>.',
-    );
-  }
-  return (province: matched.single, failureMessage: null);
-}
-
-int _countNewlyVisibleTiles({
-  required Map<String, String> before,
-  required Map<String, String> after,
-}) {
-  var count = 0;
-  for (final MapEntry(key: tileKey, value: level) in after.entries) {
-    if (level != VisibilityLevel.fullyVisible.name) continue;
-    if (before[tileKey] != VisibilityLevel.fullyVisible.name) {
-      count++;
-    }
-  }
-  return count;
 }

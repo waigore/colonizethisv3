@@ -1,7 +1,6 @@
 import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter_test/flutter_test.dart';
+import 'package:colonizethis_test/test.dart';
 
 import 'debug_handler_test_fixtures.dart';
 

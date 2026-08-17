@@ -1,7 +1,5 @@
-// Shared Game factories for `app_event_handler_debug_*` pure suites (Refs #4048).
-// Lives outside `app/test/support/` so debug-handler scenario builders do not
-// count toward `repo.app_test_support_loc`. Re-exported from
-// `app/test/support/debug_handler_test_fixtures.dart`.
+// Shared Game factories for `app_event_handler_debug_*` pure suites
+// (Refs #4048, #4484). Owned by colonizethis_app_debug/test.
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Empty regions + one human (treasury / stockpile / workers).
