@@ -142,10 +142,17 @@ Future<void> commitEventFeedTurnEvents(
   for (final event in events) {
     harness.bus.emit(event);
   }
+  // Digest marks that DLG50001 will show, so last-turn playback stays gated
+  // (SPEC/ui/map-widget.md). Feed suites do not close news; omitting digest
+  // starts pulses immediately and duplicates spatial captions in finders.
   harness.bus.emit(
     TurnResolutionCompleteEvent(
       gameId: harness.game.id,
       turnNumber: turnNumber,
+      turnNewsDigest: TurnNewsDigest(
+        resolvedTurnNumber: turnNumber,
+        lines: const [],
+      ),
     ),
   );
   await tester.pump();
