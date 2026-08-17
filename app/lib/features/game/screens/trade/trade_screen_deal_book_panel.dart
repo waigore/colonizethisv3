@@ -9,10 +9,10 @@
 /// * Unfilled section heading + rows (or in-panel empty placeholder).
 /// * Totals row pinned by [totalsKey].
 ///
-/// When **both** `filledRows.isEmpty` and `unfilledRows.isEmpty`, the
-/// per-section headings collapse and a single empty-state line keyed
-/// [emptyKey] is rendered. The totals row remains mounted regardless so
-/// widget tests can pin the affordance.
+/// When **filledRows**, **stillOpenRows**, and **didNotStayOpenRows**
+/// are all empty, the per-section headings collapse and a single
+/// empty-state line keyed [emptyKey] is rendered. The totals row remains
+/// mounted regardless so widget tests can pin the affordance.
 library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -61,7 +61,8 @@ class DealBookPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final DealBookPanelStyles styles = DealBookPanelStyles.of(context);
     final AppLocalizations l10n = appL10n(context);
-    final bool panelEmpty = filledRows.isEmpty &&
+    final bool panelEmpty =
+        filledRows.isEmpty &&
         stillOpenRows.isEmpty &&
         didNotStayOpenRows.isEmpty;
     return CtPanel(
@@ -277,4 +278,3 @@ class DealBookFilledRow extends StatelessWidget {
     );
   }
 }
-

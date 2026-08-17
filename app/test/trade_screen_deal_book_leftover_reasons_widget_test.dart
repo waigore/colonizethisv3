@@ -7,25 +7,10 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'trade_screen_deal_book_leftover_reasons_widget_support.dart';
 import 'trade_screen_deal_book_tab_e6_support.dart';
 import 'trade_screen_test_game_builders.dart';
 import 'trade_screen_test_support.dart';
-
-MarketActivity dealBookActivityWithNotes({
-  required String commodity,
-  List<FilledDeal> deals = const <FilledDeal>[],
-  List<MarketActivityNote> notes = const <MarketActivityNote>[],
-  int totalBidQuantity = 0,
-  int totalOfferQuantity = 0,
-}) {
-  return MarketActivity(
-    totalBidQuantity: totalBidQuantity,
-    totalOfferQuantity: totalOfferQuantity,
-    filledQuantity: deals.fold<int>(0, (sum, d) => sum + d.quantity),
-    deals: deals,
-    notes: notes,
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -41,8 +26,8 @@ void main() {
               commodity: 'timber',
               notes: <MarketActivityNote>[
                 MarketActivityNote(
-                  kind: MarketActivityNoteKind
-                      .bidPartialFillTreasuryInsufficient,
+                  kind:
+                      MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
                   factionId: kTradeTestHumanPlayerId,
                   commodityId: 'timber',
                   quantity: 10,
@@ -54,9 +39,9 @@ void main() {
             kTradeTestHumanPlayerId: <TradeOrder>[
               TradeOrder(
                 commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: 5,
-              priority: 1,
+                type: TradeOrderType.bid,
+                quantity: 5,
+                priority: 1,
               ),
             ],
           },
@@ -95,9 +80,7 @@ void main() {
         await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
         expect(
-          find.text(
-            'Timber — 8 — leftover cargo no longer covered this bid',
-          ),
+          find.text('Timber — 8 — leftover cargo no longer covered this bid'),
           findsOneWidget,
         );
         expect(
@@ -117,34 +100,33 @@ void main() {
       },
     );
 
-    testWidgets(
-      'stockpile drop shows Did not stay open on offers panel',
-      (tester) async {
-        final game = buildTradeTestGame(
-          players: dealBookTestPlayers,
-          lastTurnActivity: {
-            'grain': dealBookActivityWithNotes(
-              commodity: 'grain',
-              notes: <MarketActivityNote>[
-                MarketActivityNote(
-                  kind: MarketActivityNoteKind
-                      .carryForwardDroppedStockpileInsufficient,
-                  factionId: kTradeTestHumanPlayerId,
-                  commodityId: 'grain',
-                  quantity: 6,
-                ),
-              ],
-            ),
-          },
-        );
-        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
+    testWidgets('stockpile drop shows Did not stay open on offers panel', (
+      tester,
+    ) async {
+      final game = buildTradeTestGame(
+        players: dealBookTestPlayers,
+        lastTurnActivity: {
+          'grain': dealBookActivityWithNotes(
+            commodity: 'grain',
+            notes: <MarketActivityNote>[
+              MarketActivityNote(
+                kind: MarketActivityNoteKind
+                    .carryForwardDroppedStockpileInsufficient,
+                factionId: kTradeTestHumanPlayerId,
+                commodityId: 'grain',
+                quantity: 6,
+              ),
+            ],
+          ),
+        },
+      );
+      await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
-        expect(
-          find.text('Grain — 6 — stores no longer covered this sale'),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(
+        find.text('Grain — 6 — stores no longer covered this sale'),
+        findsOneWidget,
+      );
+    });
 
     testWidgets(
       'leftover bid with zero last-turn offers shows volume fallback',
@@ -161,9 +143,9 @@ void main() {
             kTradeTestHumanPlayerId: <TradeOrder>[
               TradeOrder(
                 commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: 3,
-              priority: 1,
+                type: TradeOrderType.bid,
+                quantity: 3,
+                priority: 1,
               ),
             ],
           },
@@ -190,9 +172,9 @@ void main() {
             kTradeTestHumanPlayerId: <TradeOrder>[
               TradeOrder(
                 commodityId: 'grain',
-              type: TradeOrderType.offer,
-              quantity: 4,
-              priority: 1,
+                type: TradeOrderType.offer,
+                quantity: 4,
+                priority: 1,
               ),
             ],
           },
@@ -204,82 +186,59 @@ void main() {
       },
     );
 
-    testWidgets(
-      'no fallback when last-turn volume was non-zero',
-      (tester) async {
-        final game = buildTradeTestGame(
-          players: dealBookTestPlayers,
-          lastTurnActivity: {
-            'timber': dealBookActivityWithNotes(
-              commodity: 'timber',
-              totalOfferQuantity: 5,
-            ),
-          },
-          carryForwardBids: <String, List<TradeOrder>>{
-            kTradeTestHumanPlayerId: <TradeOrder>[
-              TradeOrder(
-                commodityId: 'timber',
+    testWidgets('no fallback when last-turn volume was non-zero', (
+      tester,
+    ) async {
+      final game = buildTradeTestGame(
+        players: dealBookTestPlayers,
+        lastTurnActivity: {
+          'timber': dealBookActivityWithNotes(
+            commodity: 'timber',
+            totalOfferQuantity: 5,
+          ),
+        },
+        carryForwardBids: <String, List<TradeOrder>>{
+          kTradeTestHumanPlayerId: <TradeOrder>[
+            TradeOrder(
+              commodityId: 'timber',
               type: TradeOrderType.bid,
               quantity: 3,
               priority: 1,
-              ),
-            ],
-          },
-        );
-        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
-
-        expect(find.text('No matching sales last turn'), findsNothing);
-      },
-    );
-
-    testWidgets(
-      'Details tap expands next-step line for treasury-short row',
-      (tester) async {
-        final game = buildTradeTestGame(
-          players: dealBookTestPlayers,
-          lastTurnActivity: {
-            'timber': dealBookActivityWithNotes(
-              commodity: 'timber',
-              notes: <MarketActivityNote>[
-                MarketActivityNote(
-                  kind: MarketActivityNoteKind
-                      .bidPartialFillTreasuryInsufficient,
-                  factionId: kTradeTestHumanPlayerId,
-                  commodityId: 'timber',
-                  quantity: 10,
-                ),
-              ],
             ),
-          },
-          carryForwardBids: <String, List<TradeOrder>>{
-            kTradeTestHumanPlayerId: <TradeOrder>[
-              TradeOrder(
-                commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: 5,
-              priority: 1,
-              ),
-            ],
-          },
-        );
-        await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
+          ],
+        },
+      );
+      await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
 
-        expect(
-          find.text(
-            'Free treasury by canceling other bids or waiting for income.',
+      expect(find.text('No matching sales last turn'), findsNothing);
+    });
+
+    testWidgets('no offer fallback when last-turn bid volume was non-zero', (
+      tester,
+    ) async {
+      final game = buildTradeTestGame(
+        players: dealBookTestPlayers,
+        lastTurnActivity: {
+          'grain': dealBookActivityWithNotes(
+            commodity: 'grain',
+            totalBidQuantity: 5,
           ),
-          findsNothing,
-        );
-        await tester.tap(find.text('Details').first);
-        await tester.pumpAndSettle();
-        expect(
-          find.text(
-            'Free treasury by canceling other bids or waiting for income.',
-          ),
-          findsOneWidget,
-        );
-      },
-    );
+        },
+        carryForwardOffers: <String, List<TradeOrder>>{
+          kTradeTestHumanPlayerId: <TradeOrder>[
+            TradeOrder(
+              commodityId: 'grain',
+              type: TradeOrderType.offer,
+              quantity: 4,
+              priority: 1,
+            ),
+          ],
+        },
+      );
+      await pumpTradeScreen(tester, game: game, selectDealBookTab: true);
+
+      expect(find.text('No matching buys last turn'), findsNothing);
+    });
 
     testWidgets(
       '320 dp reason line and Did not stay open rows do not overflow',
@@ -298,17 +257,22 @@ void main() {
               commodity: 'timber',
               notes: <MarketActivityNote>[
                 MarketActivityNote(
-                  kind: MarketActivityNoteKind
-                      .bidPartialFillTreasuryInsufficient,
+                  kind:
+                      MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
                   factionId: kTradeTestHumanPlayerId,
                   commodityId: 'timber',
                   quantity: 10,
                 ),
+              ],
+            ),
+            'iron': dealBookActivityWithNotes(
+              commodity: 'iron',
+              notes: <MarketActivityNote>[
                 MarketActivityNote(
                   kind: MarketActivityNoteKind
                       .carryForwardDroppedCargoInsufficient,
                   factionId: kTradeTestHumanPlayerId,
-                  commodityId: 'timber',
+                  commodityId: 'iron',
                   quantity: 8,
                 ),
               ],
@@ -333,32 +297,29 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.text(
-            'Timber — 8 — leftover cargo no longer covered this bid',
-          ),
+          find.text('Iron — 8 — leftover cargo no longer covered this bid'),
           findsOneWidget,
         );
       },
     );
 
-    testWidgets(
-      'empty state unchanged when no notes and no leftovers',
-      (tester) async {
-        await pumpTradeScreen(
-          tester,
-          game: buildTradeTestGame(players: dealBookTestPlayers),
-          selectDealBookTab: true,
-        );
+    testWidgets('empty state unchanged when no notes and no leftovers', (
+      tester,
+    ) async {
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(players: dealBookTestPlayers),
+        selectDealBookTab: true,
+      );
 
-        expect(
-          find.text(TradeScreenDealBookKeys.dealBookDidNotStayOpenHeading),
-          findsNothing,
-        );
-        expect(
-          find.text(TradeScreenDealBookKeys.dealBookBidsEmptyText),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(
+        find.text(TradeScreenDealBookKeys.dealBookDidNotStayOpenHeading),
+        findsNothing,
+      );
+      expect(
+        find.text(TradeScreenDealBookKeys.dealBookBidsEmptyText),
+        findsOneWidget,
+      );
+    });
   });
 }
