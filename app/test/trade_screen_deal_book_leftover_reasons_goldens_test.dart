@@ -7,7 +7,8 @@
 //  - AC-2  Bids panel Did not stay open cargo-drop row
 //  - AC-3  Offers panel Did not stay open stockpile-drop row
 //  - AC-5  Offers panel No matching buys last turn fallback
-//  - AC-7  Details expanded next-step line (treasury-short row)
+//  - AC-7  Details expanded next-step line (treasury-short, cargo-drop,
+//          and stockpile-drop rows)
 //
 // SPEC: SPEC/ui/trade-screen.md § Deal Book tab — leftover reasons.
 
@@ -117,60 +118,59 @@ void main() {
       );
     });
 
-    testWidgets(
-      'golden: bids panel Did not stay open cargo-drop row (AC-2)',
-      (WidgetTester tester) async {
-        const boundaryKey = ValueKey<String>(
-          'tradeDealBookDidNotStayOpenCargoDropGolden',
-        );
+    testWidgets('golden: bids panel Did not stay open cargo-drop row (AC-2)', (
+      WidgetTester tester,
+    ) async {
+      const boundaryKey = ValueKey<String>(
+        'tradeDealBookDidNotStayOpenCargoDropGolden',
+      );
 
-        await _pumpDealBookGolden(
-          tester,
-          boundaryKey: boundaryKey,
-          game: buildTradeTestGame(
-            players: dealBookTestPlayers,
-            lastTurnActivity: {
-              'timber': dealBookActivityWithNotes(
-                commodity: 'timber',
-                notes: <MarketActivityNote>[
-                  MarketActivityNote(
-                    kind: MarketActivityNoteKind
-                        .carryForwardDroppedCargoInsufficient,
-                    factionId: _humanPlayerId,
-                    commodityId: 'timber',
-                    quantity: 8,
-                  ),
-                ],
-              ),
-            },
-          ),
-          viewport: _dealBookPanelViewport,
-        );
+      await _pumpDealBookGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: buildTradeTestGame(
+          players: dealBookTestPlayers,
+          lastTurnActivity: {
+            'timber': dealBookActivityWithNotes(
+              commodity: 'timber',
+              notes: <MarketActivityNote>[
+                MarketActivityNote(
+                  kind: MarketActivityNoteKind
+                      .carryForwardDroppedCargoInsufficient,
+                  factionId: _humanPlayerId,
+                  commodityId: 'timber',
+                  quantity: 8,
+                ),
+              ],
+            ),
+          },
+        ),
+        viewport: _dealBookPanelViewport,
+      );
 
-        final Finder bidsPanel = find.byKey(
-          TradeScreenDealBookKeys.dealBookBidsPanelKey,
-        );
+      final Finder bidsPanel = find.byKey(
+        TradeScreenDealBookKeys.dealBookBidsPanelKey,
+      );
 
-        expect(tester.takeException(), isNull);
-        expect(bidsPanel, findsOneWidget);
-        expect(
-          find.text(TradeScreenDealBookKeys.dealBookDidNotStayOpenHeading),
-          findsOneWidget,
-        );
-        expect(
-          find.text('Timber — 8 — leftover cargo no longer covered this bid'),
-          findsOneWidget,
-        );
-        expect(find.text('Timber — 8'), findsNothing);
+      expect(tester.takeException(), isNull);
+      expect(bidsPanel, findsOneWidget);
+      expect(
+        find.text(TradeScreenDealBookKeys.dealBookDidNotStayOpenHeading),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Timber — 8 — leftover cargo no longer covered this bid'),
+        findsOneWidget,
+      );
+      expect(find.text('Timber — 8'), findsNothing);
 
-        await expectLater(
-          bidsPanel,
-          matchesGoldenFile(
-            'goldens/trade_deal_book_did_not_stay_open_cargo_drop_bids.png',
-          ),
-        );
-      },
-    );
+      await expectLater(
+        bidsPanel,
+        matchesGoldenFile(
+          'goldens/trade_deal_book_did_not_stay_open_cargo_drop_bids.png',
+        ),
+      );
+    });
 
     testWidgets(
       'golden: offers panel Did not stay open stockpile-drop row (AC-3)',
@@ -343,6 +343,144 @@ void main() {
         stillOpenRow,
         matchesGoldenFile(
           'goldens/trade_deal_book_details_expanded_treasury_short.png',
+        ),
+      );
+    });
+
+    testWidgets('golden: Details expanded cargo-drop next-step (AC-7)', (
+      WidgetTester tester,
+    ) async {
+      const boundaryKey = ValueKey<String>(
+        'tradeDealBookDetailsExpandedCargoDropGolden',
+      );
+
+      await _pumpDealBookGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: buildTradeTestGame(
+          players: dealBookTestPlayers,
+          lastTurnActivity: {
+            'timber': dealBookActivityWithNotes(
+              commodity: 'timber',
+              notes: <MarketActivityNote>[
+                MarketActivityNote(
+                  kind: MarketActivityNoteKind
+                      .carryForwardDroppedCargoInsufficient,
+                  factionId: _humanPlayerId,
+                  commodityId: 'timber',
+                  quantity: 8,
+                ),
+              ],
+            ),
+          },
+        ),
+        viewport: _dealBookPanelViewport,
+      );
+
+      final Finder cargoDetails = find.byKey(
+        TradeScreenDealBookKeys.dealBookDetailsAffordanceKey(
+          TradeScreenDealBookKeys.dealBookRowKindDidNotStayOpen,
+          'timber',
+        ),
+      );
+      await tester.ensureVisible(cargoDetails);
+      await tester.tap(cargoDetails);
+      await tester.pumpAndSettle();
+
+      final Finder dropRow = find.byKey(
+        TradeScreenDealBookKeys.dealBookDidNotStayOpenRowKey(
+          TradeScreenDealBookKeys.dealBookSideBids,
+          0,
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(dropRow, findsOneWidget);
+      await tester.ensureVisible(dropRow);
+      await tester.pump();
+      expect(
+        find.text('Add cargo to your home fleet or reduce bid quantity.'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('carryForwardDroppedCargoInsufficient'),
+        findsNothing,
+      );
+
+      await expectLater(
+        dropRow,
+        matchesGoldenFile(
+          'goldens/trade_deal_book_details_expanded_cargo_drop.png',
+        ),
+      );
+    });
+
+    testWidgets('golden: Details expanded stockpile-drop next-step (AC-7)', (
+      WidgetTester tester,
+    ) async {
+      const boundaryKey = ValueKey<String>(
+        'tradeDealBookDetailsExpandedStockpileDropGolden',
+      );
+
+      await _pumpDealBookGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: buildTradeTestGame(
+          players: dealBookTestPlayers,
+          lastTurnActivity: {
+            'grain': dealBookActivityWithNotes(
+              commodity: 'grain',
+              notes: <MarketActivityNote>[
+                MarketActivityNote(
+                  kind: MarketActivityNoteKind
+                      .carryForwardDroppedStockpileInsufficient,
+                  factionId: _humanPlayerId,
+                  commodityId: 'grain',
+                  quantity: 6,
+                ),
+              ],
+            ),
+          },
+        ),
+        viewport: _dealBookPanelViewport,
+      );
+
+      final Finder stockpileDetails = find.byKey(
+        TradeScreenDealBookKeys.dealBookDetailsAffordanceKey(
+          TradeScreenDealBookKeys.dealBookRowKindDidNotStayOpen,
+          'grain',
+        ),
+      );
+      await tester.ensureVisible(stockpileDetails);
+      await tester.tap(stockpileDetails);
+      await tester.pumpAndSettle();
+
+      final Finder dropRow = find.byKey(
+        TradeScreenDealBookKeys.dealBookDidNotStayOpenRowKey(
+          TradeScreenDealBookKeys.dealBookSideOffers,
+          0,
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(dropRow, findsOneWidget);
+      await tester.ensureVisible(dropRow);
+      await tester.pump();
+      expect(
+        find.text(
+          'Keep enough stock in your warehouses to cover leftover sales.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('carryForwardDroppedStockpileInsufficient'),
+        findsNothing,
+      );
+
+      await expectLater(
+        dropRow,
+        matchesGoldenFile(
+          'goldens/trade_deal_book_details_expanded_stockpile_drop.png',
         ),
       );
     });
