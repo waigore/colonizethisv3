@@ -126,4 +126,4 @@ When map data is unavailable, standings render full width at all breakpoints.
 - `SPEC/game/diplomacy.md` § Great Power power score
 - `SPEC/ui/empire-buttons.md`
 - `SPEC/ui/mobile-adaptation.md`
-- `SPEC/ui/victory-overlay.md` (`OVL20001` post-military overlay unchanged)
+- `SPEC/ui/victory-overlay.md` (`OVL20001` military + calendar-complete variants)
