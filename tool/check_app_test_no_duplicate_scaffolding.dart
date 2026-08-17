@@ -603,6 +603,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'widgetbook_production_panel_mobile_viewport_test.dart' ||
       name == 'widgetbook_leader_selection_dialog_mobile_viewport_test.dart' ||
       name == 'widgetbook_map_widget_mobile_viewport_test.dart' ||
+      name == 'widgetbook_last_turn_pulse_test.dart' ||
       name == 'widgetbook_province_overlay_mobile_viewport_test.dart' ||
       name == 'widgetbook_game_top_bar_mobile_viewport_test.dart' ||
       name == 'widgetbook_shell_mobile_viewport_test.dart' ||

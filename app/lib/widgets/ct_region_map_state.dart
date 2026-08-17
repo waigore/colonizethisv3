@@ -51,6 +51,7 @@ class CtRegionMapState extends State<CtRegionMap>
         widget.mapBaseLayerFlags != oldWidget.mapBaseLayerFlags ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
+        widget.lastTurnPulseTileKey != oldWidget.lastTurnPulseTileKey ||
         widget.onCivilianTileStateChanged !=
             oldWidget.onCivilianTileStateChanged ||
         widget.onCivilianTileSelectionCleared !=
@@ -102,6 +103,8 @@ class CtRegionMapState extends State<CtRegionMap>
         validTileKeys: widget.validTileKeys,
         clearValidTileKeys:
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
+        lastTurnPulseTileKey: widget.lastTurnPulseTileKey,
+        clearLastTurnPulseTileKey: widget.lastTurnPulseTileKey == null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
         onCivilianTileTapped: (tileKey) =>

@@ -177,6 +177,7 @@ import 'army_tile_marker_story.dart';
 import 'debug_map_visibility_story.dart';
 import 'fort_map_icon_levels_story.dart';
 import 'capital_link_disconnected_highlight_story.dart';
+import 'last_turn_pulse_story.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
@@ -755,6 +756,18 @@ List<WidgetbookNode> get mapWidgetDirectories => [
         name: 'Capital-link hatch — mixed connected/disconnected',
         builder: (context) => widgetbookEditorialMonocleApp(
           child: const Center(child: CapitalLinkDisconnectedHighlightStory()),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Last-turn pulse',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: LastTurnPulseStory()),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Last-turn pulse (320 dp)',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: LastTurnPulseStory(narrow: true)),
         ),
       ),
       WidgetbookUseCase(

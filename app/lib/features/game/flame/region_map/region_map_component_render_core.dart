@@ -63,6 +63,9 @@ extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {
       paintValidTilesGlow(canvas);
     }
+    if (lastTurnPulseTileKey != null) {
+      paintLastTurnPulse(canvas);
+    }
   }
 }
 

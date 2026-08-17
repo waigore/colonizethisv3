@@ -17,6 +17,7 @@ import 'game_map_area_selection.dart';
 import 'game_map_area_relocate_selection.dart';
 import 'game_map_area_view.dart';
 import 'game_map_area_events.dart';
+import 'game_map_area_last_turn_playback.dart';
 
 /// State lifecycle for [GameMapArea]: bus-subscription wiring in [initState],
 /// observe-mode listeners, teardown in [dispose], and the per-game reset /
@@ -28,7 +29,8 @@ mixin GameMapAreaLifecycle
         GameMapAreaSelection,
         GameMapAreaRelocateSelection,
         GameMapAreaView,
-        GameMapAreaEvents {
+        GameMapAreaEvents,
+        GameMapAreaLastTurnPlayback {
   @override
   void initState() {
     super.initState();
@@ -102,6 +104,12 @@ mixin GameMapAreaLifecycle
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
         onTurnResolutionCompleteEvent,
       ),
+      bus.on<ct_models.TurnNewsDialogClosedEvent>().listen(
+        onTurnNewsDialogClosedEvent,
+      ),
+      bus.on<ct_models.VictoryOverlayViewFinalStateEvent>().listen(
+        onVictoryOverlayViewFinalStateEvent,
+      ),
       bus.on<ct_models.OpenDebugConsolePanelEvent>().listen((_) {
         if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
         setState(() => debugConsoleOpen = true);
@@ -140,6 +148,7 @@ mixin GameMapAreaLifecycle
 
   @override
   void dispose() {
+    disposeLastTurnPlayback();
     turnResolutionProgressSub?.cancel();
     turnResolutionProgressSub = null;
     busSubscriptions.cancelAll();

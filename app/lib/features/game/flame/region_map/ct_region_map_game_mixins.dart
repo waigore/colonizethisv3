@@ -55,6 +55,7 @@ mixin CtRegionMapGameFields on FlameGame {
   String? secondaryHighlightTileKey;
   Set<String>? secondaryHighlightTileKeys;
   Set<String>? validTileKeys;
+  String? lastTurnPulseTileKey;
   void Function(String tileKey)? onTileSelected;
   VoidCallback? onWorkTargetSelectionCancelled;
   void Function(String provinceId)? onTownIconTapped;
@@ -242,6 +243,7 @@ mixin CtRegionMapGameLifecycle on CtRegionMapGameFields, CtRegionMapGameCamera {
         }
       },
       validTileKeys: validTileKeys,
+      lastTurnPulseTileKey: lastTurnPulseTileKey,
       onTownIconTapped: onTownIconTapped,
       playerViewForResources: playerViewForResources,
       showPlayerTerritoryOutline: showPlayerTerritoryOutline,

@@ -7,6 +7,7 @@ import 'game_map_area_build_map_stack_chrome.dart';
 import 'game_map_area_build_overlays.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_events.dart';
+import 'game_map_area_last_turn_playback.dart';
 import 'game_map_area_lifecycle.dart';
 import 'game_map_area_relocate_selection.dart';
 import 'game_map_area_selection.dart';
@@ -28,6 +29,7 @@ class GameMapAreaState extends ConsumerState<GameMapArea>
         GameMapAreaTurnFeedLabels,
         GameMapAreaTurnFeedTaps,
         GameMapAreaTurnFeed,
+        GameMapAreaLastTurnPlayback,
         GameMapAreaEvents,
         GameMapAreaE2e,
         GameMapAreaLifecycle,

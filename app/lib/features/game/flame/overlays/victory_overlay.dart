@@ -47,7 +47,10 @@ class _VictoryOverlayState extends State<VictoryOverlay> {
           game: widget.game,
           victory: widget.victory,
           bus: widget.bus,
-          onViewFinalState: () => setState(() => _dismissed = true),
+          onViewFinalState: () {
+            setState(() => _dismissed = true);
+            widget.bus.emit(const ct_models.VictoryOverlayViewFinalStateEvent());
+          },
         ),
       ),
     );

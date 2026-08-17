@@ -394,6 +394,29 @@ Hover, selection, and overlay behavior:
 - The widget **supports** animation of individual tiles and other assets (e.g. tile highlight, building animation, unit pulse).
 - Implementation uses **Flame** so that per-tile and per-asset animations can be driven by game events or timers without blocking the UI. Animation API (e.g. “play tile animation at tileKey”) is implementation-defined; this spec only requires that the component is built so such animation is feasible.
 
+### Last-turn spatial playback (MAP10001; Refs #4486)
+
+After a resolved turn, the empire map host may play human-scoped **spatial** outcomes as sequential camera + pulse beats. Non-spatial lines stay text-only in `DLG50001` / `OVL70001`.
+
+| Constant | Value | Role |
+|---|---|---|
+| `kLastTurnPlaybackCap` | `6` | Max beats per sequence; remaining spatial lines stay in the feed |
+| `kLastTurnBeatDwellMs` | `1200` | Camera + pulse visible before advancing |
+| `kLastTurnPulseAngularFrequency` | same as `RegionMapPalette.hoveredProvinceGlowAngularFrequency` (`2π`) | Pulse opacity sine period (shared with hover / valid-target family) |
+
+- **Pulse colour:** Distinct from selection orange (`mapSelectedHighlightOrange`) and locate cyan (`mapSecondarySelectionCyan`); opacity uses the valid-target sine family at `kLastTurnPulseAngularFrequency`.
+- **Spatial types (resolvable anchors only):** land combat (`provinceId`), naval combat (`seaZoneId`), province capture (`provinceId`), work-order completed (`targetTileKey` / province), province discovery (`provinceId`), sea discovery (`seaZoneId`). Unresolved anchors omit the beat.
+- **Start gates:** When `DLG50001` was shown (`Game.victory == null`), playback starts only after that dialog closes (`TurnNewsDialogClosedEvent`). When news is omitted because `Game.victory != null`, playback starts only after `OVL20001` **View final state** (`VictoryOverlayViewFinalStateEvent`) — never under the victory scrim. When neither modal applies, playback may start after `TurnResolutionCompleteEvent`. Do not start under in-resolution diplomacy overlays.
+- **Behavior:** One beat at a time; center camera + switch Old/New World tab as locate does; show feed-style caption; **Skip** or map tap ends the sequence (camera stays; no `MAP20001` / unit panel opens). Hover bounce, province glow, and work-target yellow pulse remain unchanged when playback is idle.
+
+#### Acceptance criteria (last-turn playback)
+
+- Given a resolved turn with at least one human-scoped spatial event whose anchor resolves and `Game.victory == null`, when `DLG50001` closes, then the UI layer plays a pulse at that anchor and centers the camera on it.
+- Given a resolved turn with `Game.victory != null` and at least one resolvable spatial event, when the player dismisses `OVL20001` via **View final state**, then the UI layer starts the same sequence; while `OVL20001` is visible, the UI layer does not start playback.
+- Given multiple spatial events, when playback runs, then beats follow committed feed order, dwell `kLastTurnBeatDwellMs` each, and stop after `kLastTurnPlaybackCap` beats.
+- Given playback is running, when the player taps the map or **Skip**, then the sequence ends immediately without opening overlays.
+- Given only non-spatial human events (or an empty resolvable spatial set), when the start gate fires, then the map does not auto-pan or pulse.
+
 ---
 
 ## Layout and reuse

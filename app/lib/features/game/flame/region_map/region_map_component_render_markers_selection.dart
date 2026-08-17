@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/last_turn_playback.dart';
 import 'package:flutter/material.dart';
 import 'region_map_component.dart';
 import 'region_map_province_overlay_geometry.dart';
@@ -28,6 +29,23 @@ extension CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
         canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
       }
     }
+  }
+
+  void paintLastTurnPulse(Canvas canvas) {
+    final tileKey = lastTurnPulseTileKey!;
+    final t = session.hoverAnimationT;
+    final opacity =
+        RegionMapPalette.validWorkTargetGlowOpacityBase +
+        RegionMapPalette.validWorkTargetGlowOpacityAmplitude *
+            (RegionMapPalette.sinNormalizedMid +
+                RegionMapPalette.sinNormalizedMid *
+                    math.sin(t * kLastTurnPulseAngularFrequency));
+    _paintTileOutlineRing(
+      canvas,
+      tileKey: tileKey,
+      color: kLastTurnPulseColor.withValues(alpha: opacity),
+      strokeWidth: kMapValidTileTargetStrokeWidth,
+    );
   }
 
   void paintSelectedTile(Canvas canvas) {

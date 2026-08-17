@@ -4,16 +4,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 
+import '../../../../providers/game_service_provider.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_selection.dart';
+import 'game_map_area_last_turn_playback.dart';
 
 /// App-event-bus handlers for [GameMapArea]: filtering combat/diplomacy/
 /// discovery/overture events to the viewing player and buffering them for the
 /// turn-event feed, plus the turn-resolution-complete flush (Refs #3699 Theme
 /// 3).
 mixin GameMapAreaEvents
-    on ConsumerState<GameMapArea>, GameMapAreaStateBase, GameMapAreaSelection {
+    on
+        ConsumerState<GameMapArea>,
+        GameMapAreaStateBase,
+        GameMapAreaSelection,
+        GameMapAreaLastTurnPlayback {
   void onTurnResolutionCompleteEvent(
     ct_models.TurnResolutionCompleteEvent event,
   ) {
@@ -27,6 +33,18 @@ mixin GameMapAreaEvents
       );
       pendingPlayerTurnEvents.clear();
     });
+    // Event emits before provider apply; load saved game for victory gate
+    // (same source as GameToUIBusListener news omit).
+    final loaded = ref.read(gameServiceProvider).loadGame(event.gameId);
+    final victorySet = loaded?.victory != null;
+    final newsDialogWillShow =
+        event.turnNumber >= 1 &&
+        event.turnNewsDigest != null &&
+        !victorySet;
+    armLastTurnPlaybackAfterResolution(
+      newsDialogWillShow: newsDialogWillShow,
+      victorySet: victorySet,
+    );
   }
 
   void onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
