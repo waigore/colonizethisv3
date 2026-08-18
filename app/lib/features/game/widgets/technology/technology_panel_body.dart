@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gap.dart';
+import 'research_slot_finish_estimate.dart';
 import 'research_slot_preview.dart';
 import 'research_slot_spy_insight.dart';
 import 'research_turn_funding_header.dart';
@@ -138,6 +139,9 @@ Widget buildTechnologyPanelSlotsBody({
             currentOrders: currentOrders,
             onOrdersChanged: onOrdersChanged,
             turnPreview: slotsTurnPreview?.bySlotIndex[index],
+            finishCalendar: slotsTurnPreview == null
+                ? null
+                : ResearchFinishCalendar.fromGame(game),
           ),
         ),
       ),
