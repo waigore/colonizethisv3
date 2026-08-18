@@ -151,6 +151,7 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
       ),
       ..._oldWorldRaceTabBarStories,
+      ..._labourFeedingTabBarStories,
       WidgetbookUseCase(
         name: 'Cargo — tight (accent numeric)',
         builder: (context) => _gameTabBarStoryFrame(
@@ -590,6 +591,10 @@ Widget _gameTabBarStoryFrame({
   String cargoHoldLabel = '3/12',
   OldWorldRaceSnapshot? oldWorldRace,
   bool oldWorldRaceNarrow = false,
+  bool showLabourFeedingIndicator = false,
+  String labourFeedingLabel = '—',
+  LabourReadinessSnapshot? labourReadiness,
+  ForceFeedingSnapshot? forcesFeeding,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -614,6 +619,10 @@ Widget _gameTabBarStoryFrame({
               cargoHoldLabel: cargoHoldLabel,
               oldWorldRace: oldWorldRace,
               oldWorldRaceNarrow: oldWorldRaceNarrow,
+              showLabourFeedingIndicator: showLabourFeedingIndicator,
+              labourFeedingLabel: labourFeedingLabel,
+              labourReadiness: labourReadiness,
+              forcesFeeding: forcesFeeding,
             ),
           ],
         ),
@@ -635,6 +644,10 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.cargoHoldLabel,
     this.oldWorldRace,
     this.oldWorldRaceNarrow = false,
+    this.showLabourFeedingIndicator = false,
+    this.labourFeedingLabel = '—',
+    this.labourReadiness,
+    this.forcesFeeding,
   });
 
   final int regionIndex;
@@ -648,6 +661,10 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final String cargoHoldLabel;
   final OldWorldRaceSnapshot? oldWorldRace;
   final bool oldWorldRaceNarrow;
+  final bool showLabourFeedingIndicator;
+  final String labourFeedingLabel;
+  final LabourReadinessSnapshot? labourReadiness;
+  final ForceFeedingSnapshot? forcesFeeding;
 
   @override
   State<_GameTabBarStoryShell> createState() => _GameTabBarStoryShellState();
@@ -676,6 +693,10 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       cargoNotDefined: false,
       isCargoUsedReliable: true,
       cargoHoldLabel: widget.cargoHoldLabel,
+      showLabourFeedingIndicator: widget.showLabourFeedingIndicator,
+      labourFeedingLabel: widget.labourFeedingLabel,
+      labourReadiness: widget.labourReadiness,
+      forcesFeeding: widget.forcesFeeding,
       oldWorldRace: widget.oldWorldRace,
       onOldWorldRaceTap: widget.oldWorldRace == null ? null : () {},
       oldWorldRaceNarrow: widget.oldWorldRaceNarrow,

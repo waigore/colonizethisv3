@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../../config/app_assets.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../../screens/game/game_screen_shared.dart' show kCargoHoldIndicatorKey;
+import '../../screens/game/game_screen_shared.dart'
+    show kCargoHoldIndicatorKey, kLabourFeedingIndicatorKey;
 
 class GameTabBarTreasuryIndicator extends StatelessWidget {
   const GameTabBarTreasuryIndicator({
@@ -93,6 +94,79 @@ class GameTabBarCargoHoldIndicator extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             cargoHoldLabel,
+            style: labelStyle.copyWith(color: numericColor),
+          ),
+        ],
+      ),
+    );
+
+    Widget wrapped = indicator;
+    if (onTap != null) {
+      wrapped = GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: wrapped,
+      );
+    }
+    if (tooltip != null) {
+      wrapped = Tooltip(message: tooltip, child: wrapped);
+    }
+    if (semanticsLabel != null) {
+      wrapped = Semantics(
+        button: onTap != null,
+        label: semanticsLabel,
+        child: wrapped,
+      );
+    }
+    return wrapped;
+  }
+}
+
+class GameTabBarLabourFeedingIndicator extends StatelessWidget {
+  const GameTabBarLabourFeedingIndicator({
+    super.key,
+    required this.labourFeedingLabel,
+    required this.labelStyle,
+    required this.numericColor,
+    this.tooltip,
+    this.semanticsLabel,
+    this.onTap,
+  });
+
+  final String labourFeedingLabel;
+  final TextStyle labelStyle;
+  final Color numericColor;
+  final String? tooltip;
+  final String? semanticsLabel;
+  final VoidCallback? onTap;
+
+  static const double _iconSize = 18;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget indicator = Container(
+      key: kLabourFeedingIndicatorKey,
+      padding: const EdgeInsets.symmetric(horizontal: CtSpacing.m),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(
+            color: EditorialMonoclePalette.border,
+            width: 1,
+          ),
+        ),
+      ),
+      margin: const EdgeInsets.only(left: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const StrictAssetIcon(
+            assetPath: '${kAppIconAssetPrefix}ui_icon_worker_peasant.png',
+            width: _iconSize,
+            height: _iconSize,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            labourFeedingLabel,
             style: labelStyle.copyWith(color: numericColor),
           ),
         ],

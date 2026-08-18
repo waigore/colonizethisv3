@@ -7,9 +7,11 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/human_draft_projected_region_provider.dart';
+import '../../../../providers/labour_feeding_hud_summary_provider.dart';
 
 import '../../../../config/constants.dart';
 import '../../../../config/routes.dart';
@@ -61,6 +63,7 @@ mixin GameMapAreaBuild
     final turnDisplayText = l10n.game_turnDisplay(turnNumber, year);
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
+    final labourFeedingSummary = ref.watch(labourFeedingHudSummaryProvider);
     final feedEntries = buildFeedEntries();
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
     final raceFocusId = widget.game.victory != null
@@ -72,6 +75,12 @@ mixin GameMapAreaBuild
         : OldWorldRaceSnapshot.fromGame(
             game: widget.game,
             focusPlayerId: raceFocusId,
+          );
+    final labourFeedingLabel = labourFeedingSummary.notDefined
+        ? kObserveNotDefinedLabel
+        : l10n.mapControls_labourFeeding(
+            '${labourFeedingSummary.labourReadiness.effectiveLabour}',
+            '${labourFeedingSummary.labourReadiness.fullCapacity}',
           );
     return Column(
       children: [
@@ -118,6 +127,15 @@ mixin GameMapAreaBuild
                         'humanPlayerId': mapPlayerId,
                       }),
                     ),
+          showLabourFeedingIndicator: true,
+          labourFeedingLabel: labourFeedingLabel,
+          labourFeedingNotDefined: labourFeedingSummary.notDefined,
+          labourReadiness: labourFeedingSummary.notDefined
+              ? null
+              : labourFeedingSummary.labourReadiness,
+          forcesFeeding: labourFeedingSummary.notDefined
+              ? null
+              : labourFeedingSummary.forcesFeeding,
         ),
         Expanded(
           child: buildMapPlayAreaStack(

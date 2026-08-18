@@ -146,6 +146,36 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
       'Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.';
 
   @override
+  String mapControls_labourFeeding(String effective, String capacity) {
+    return '$effective/$capacity';
+  }
+
+  @override
+  String mapControls_labourFeeding_tooltip(String effective, String capacity) {
+    return 'Labour this turn: $effective of $capacity';
+  }
+
+  @override
+  String mapControls_labourFeeding_semanticsLabel(
+    String effective,
+    String capacity,
+  ) {
+    return 'Labour this turn: $effective of $capacity. Tap for details.';
+  }
+
+  @override
+  String mapControls_labourFeeding_details_labour(
+    String effective,
+    String capacity,
+  ) {
+    return 'Labour this turn: $effective of $capacity';
+  }
+
+  @override
+  String get mapControls_labourFeeding_details_emptyPool =>
+      'No workers trained yet';
+
+  @override
   String get mapControls_playersBarToggle => 'Players bar';
 
   @override
@@ -966,28 +996,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
 
   @override
   String get techEffectSummary_hat_production_1 => 'Unlocks: Master Artisans';
-
-  @override
-  String get techEffectSummary_heavy_artillery_0 =>
-      'Improves: Royal Artillery regiment upgrade path';
-
-  @override
-  String get techEffectSummary_heavy_artillery_1 =>
-      'Prerequisite for: High Grade Steel and Emplaced Siege Guns';
-
-  @override
-  String get techEffectSummary_heavy_emplaced_artillery_0 =>
-      'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)';
-
-  @override
-  String get techEffectSummary_heavy_emplaced_artillery_1 =>
-      'Prerequisite for: Emplaced Siege Guns';
-
-  @override
-  String get techEffectSummary_high_grade_steel_0 =>
-      'Improves: Heavy Artillery regiment upgrade path';
-
-  @override
-  String get techEffectSummary_horse_artillery_0 =>
-      'Prerequisite for: Light Artillery Tactics';
 }
