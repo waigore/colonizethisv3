@@ -2154,6 +2154,24 @@ abstract class AppLocalizations {
   /// Secondary gold-row hint on sequential-blocked slots (Refs #4335).
   String technologyPanel_goldCostAfterEarlierSlots(int gold);
 
+  /// Slot-card finish-time line when remaining RP completes this turn (Refs #4511).
+  String get technologyPanel_finishCompletesNextTurn;
+
+  /// Slot-card finish-time line with calendar year (Refs #4511).
+  String technologyPanel_finishCompletesNextTurnWithYear(int year);
+
+  /// Slot-card finish-time line for N further turns at current funding (Refs #4511).
+  String technologyPanel_finishInTurns(int turns);
+
+  /// Slot-card finish-time line with N turns and calendar year (Refs #4511).
+  String technologyPanel_finishInTurnsWithYear(int turns, int year);
+
+  /// Breakdown restatement of remaining RP (Refs #4511).
+  String technologyPanel_rpBreakdownRemaining(int rp);
+
+  /// Breakdown restatement of implied turns at current funding (Refs #4511).
+  String technologyPanel_rpBreakdownTurns(int turns);
+
   /// Monospace research-point value used in breakdown dialog rows (Refs #3512).
   String technologyPanel_rpValue(int rp);
 

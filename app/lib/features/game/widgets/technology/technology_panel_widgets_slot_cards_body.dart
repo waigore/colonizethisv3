@@ -7,6 +7,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_progress_bar.dart';
 import '../../../../widgets/strict_asset_icon.dart';
+import 'research_slot_finish_estimate.dart';
 import 'research_slot_preview.dart';
 import 'research_slot_turn_preview_view.dart';
 import 'tech_ui_helpers.dart';
@@ -41,6 +42,7 @@ class TechnologyPanelSlotAssignedBody extends StatelessWidget {
     required this.funding,
     required this.onFundingChanged,
     required this.turnPreview,
+    this.finishCalendar,
   });
 
   final int slotIndex;
@@ -50,6 +52,7 @@ class TechnologyPanelSlotAssignedBody extends StatelessWidget {
   final ResearchFundingLevel funding;
   final ValueChanged<ResearchFundingLevel>? onFundingChanged;
   final ResearchSlotTurnPreview? turnPreview;
+  final ResearchFinishCalendar? finishCalendar;
 
   @override
   Widget build(BuildContext context) {
@@ -73,14 +76,13 @@ class TechnologyPanelSlotAssignedBody extends StatelessWidget {
           ResearchSlotTurnPreviewView(
             slotIndex: slotIndex,
             preview: turnPreview!,
+            calendar: finishCalendar,
           )
         else
           Row(
             children: [
               Expanded(
-                child: CtProgressBar(
-                  value: cost > 0 ? progress / cost : 0,
-                ),
+                child: CtProgressBar(value: cost > 0 ? progress / cost : 0),
               ),
               CtGap.wm,
               Text(

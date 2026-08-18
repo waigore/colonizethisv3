@@ -3423,6 +3423,58 @@
       }
     }
   },
+  "technologyPanel_finishCompletesNextTurn": "Completes next turn",
+  "@technologyPanel_finishCompletesNextTurn": {
+    "description": "Slot-card finish-time line when remaining RP will be covered this turn (Refs #4511)."
+  },
+  "technologyPanel_finishCompletesNextTurnWithYear": "Completes next turn ({year})",
+  "@technologyPanel_finishCompletesNextTurnWithYear": {
+    "description": "Slot-card finish-time line with calendar year when remaining RP completes this turn (Refs #4511).",
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_finishInTurns": "Finishes in {turns} turns",
+  "@technologyPanel_finishInTurns": {
+    "description": "Slot-card finish-time line for remaining RP divided by this-turn RP (Refs #4511).",
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_finishInTurnsWithYear": "Finishes in {turns} turns ({year})",
+  "@technologyPanel_finishInTurnsWithYear": {
+    "description": "Slot-card finish-time line with N turns and calendar year (Refs #4511).",
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownRemaining": "Remaining: {rp} RP",
+  "@technologyPanel_rpBreakdownRemaining": {
+    "description": "Breakdown dialog restatement of remaining research points (Refs #4511).",
+    "placeholders": {
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownTurns": "About {turns} more turns at this funding",
+  "@technologyPanel_rpBreakdownTurns": {
+    "description": "Breakdown dialog restatement of implied turns at current funding (Refs #4511).",
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "technologyPanel_rpValue": "{rp} RP",
   "@technologyPanel_rpValue": {
     "description": "Monospace research-point value used in the breakdown dialog rows (Refs #3512).",

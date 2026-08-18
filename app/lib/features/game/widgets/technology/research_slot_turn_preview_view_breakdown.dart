@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'research_slot_finish_estimate.dart';
 import 'research_slot_preview.dart';
 import 'research_slot_turn_preview_view_styles.dart';
 import 'technology_slot_funding_toggles.dart';
@@ -98,8 +99,32 @@ class _BreakdownMetrics extends StatelessWidget {
           label: l10n.technologyPanel_rpBreakdownTreasuryLabel,
           value: l10n.technologyPanel_goldValue(preview.goldCostPerTurn),
         ),
+        ..._finishRestatementRows(l10n),
       ],
     );
+  }
+
+  List<Widget> _finishRestatementRows(AppLocalizations l10n) {
+    final estimate = researchFinishEstimate(preview);
+    if (estimate == null) {
+      return const <Widget>[];
+    }
+    final style = TextStyle(
+      color: EditorialMonoclePalette.muted,
+      fontSize: 11,
+      fontStyle: FontStyle.italic,
+    );
+    return <Widget>[
+      const SizedBox(height: 4),
+      Text(
+        l10n.technologyPanel_rpBreakdownRemaining(estimate.remainingRp),
+        style: style,
+      ),
+      Text(
+        l10n.technologyPanel_rpBreakdownTurns(estimate.turnsRemaining),
+        style: style,
+      ),
+    ];
   }
 }
 
