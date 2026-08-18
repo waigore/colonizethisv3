@@ -202,6 +202,7 @@ OverlayContent provinceContent({
     purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
     onPurchaseLandTap: onPurchaseLandTap,
     tileConnectivity: tileConnectivity,
+    blockadeStatus: blockadeStatus,
   );
   final political = buildPoliticalSection(
     l10n: l10n,

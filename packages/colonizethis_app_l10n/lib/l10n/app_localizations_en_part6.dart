@@ -310,6 +310,10 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'Under blockade — capital port severed; sea-only and overseas links are cut while land roads remain.';
 
   @override
+  String get provinceOverlay_tileCapitalLinkCutByBlockade =>
+      'Cause: this port is under blockade.';
+
+  @override
   String get provinceOverlay_detachAndSailAction => 'Detach and sail';
 
   @override
@@ -408,8 +412,7 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'No matching sales last turn';
 
   @override
-  String get tradeDealBook_reasonNoMatchingBuys =>
-      'No matching buys last turn';
+  String get tradeDealBook_reasonNoMatchingBuys => 'No matching buys last turn';
 
   @override
   String tradeDealBook_droppedBidRow(String commodity, int quantity) =>

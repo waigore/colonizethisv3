@@ -6,6 +6,8 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -69,6 +71,7 @@ Widget buildRevealedTileSection({
   required bool purchaseLandActionHasMerchantUnits,
   VoidCallback? onPurchaseLandTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
@@ -233,6 +236,7 @@ Widget buildRevealedTileSection({
               buildRailroadActionHasRailBuilderUnits,
           onBuildRailroadTap: onBuildRailroadTap,
           tileConnectivity: tileConnectivity,
+          blockadeStatus: blockadeStatus,
         ),
         ...buildTileConnectivityLabelWidgets(
           context: context,
@@ -242,6 +246,7 @@ Widget buildRevealedTileSection({
           provinceId: provinceId,
           roadLevel: roadLevel,
           tileConnectivity: tileConnectivity,
+          blockadeStatus: blockadeStatus,
         ),
         Text(
           l10n.provinceOverlay_tileCivilianUnits(civilianCount),

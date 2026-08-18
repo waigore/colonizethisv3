@@ -4122,6 +4122,10 @@
   "@provinceOverlay_tileCapitalLinkNotConnected": {
     "description": "Tile section capital-link row when the selected human-owned tile is not capital-connected (Refs #4149)."
   },
+  "provinceOverlay_tileCapitalLinkCutByBlockade": "Cause: this port is under blockade.",
+  "@provinceOverlay_tileCapitalLinkCutByBlockade": {
+    "description": "Tile details teaching line when an owned disconnected tile is cut because the province port is blockaded (Refs #4516)."
+  },
   "provinceOverlay_tileExtractionFromTile": "Extraction from this tile: {effective} of {full}",
   "@provinceOverlay_tileExtractionFromTile": {
     "description": "Tile section per-tile effective vs full extraction when production F > 0 (Refs #4149).",
