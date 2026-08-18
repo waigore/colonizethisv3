@@ -921,7 +921,7 @@ rules:
 
   - rule_id: repo.colonizethis_world_lib_file_size
     group: structure
-    title: colonizethis_world lib files must stay at or below the wave-6 320 physical-line ceiling (Refs #4330)
+    title: colonizethis_world lib files must stay at or below 300 physical lines except sealed GameEvent at 400 (Refs #4330, #4515)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_lib_file_size.dart
