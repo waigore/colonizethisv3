@@ -87,8 +87,11 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_detail_ov
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';

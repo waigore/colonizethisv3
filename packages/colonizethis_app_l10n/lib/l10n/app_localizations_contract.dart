@@ -2474,6 +2474,9 @@ abstract class AppLocalizations {
   /// Tile section capital-link row when not capital-connected (Refs #4149).
   String get provinceOverlay_tileCapitalLinkNotConnected;
 
+  /// Tile details cause when a disconnected owned tile is cut by blockade (Refs #4516).
+  String get provinceOverlay_tileCapitalLinkCutByBlockade;
+
   /// Tile section per-tile effective vs full extraction (Refs #4149).
   String provinceOverlay_tileExtractionFromTile(int effective, int full);
 

@@ -25,6 +25,17 @@ void main() {
     },
   );
 
+  test(
+    'Naval Mission Target Dialog folder includes capital-port extra line',
+    () {
+      findWidgetbookUseCase(
+        navalMissionDialogDirectories,
+        folderName: 'Naval Mission Target Dialog',
+        useCaseName: 'Blockade — capital port extra line',
+      );
+    },
+  );
+
   test('Overlay Army Move Picker Dialog folder includes Default + Narrow', () {
     findWidgetbookUseCase(
       navalMissionDialogDirectories,

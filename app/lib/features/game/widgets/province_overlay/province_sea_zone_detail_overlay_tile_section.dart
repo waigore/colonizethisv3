@@ -3,6 +3,8 @@ library;
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -52,6 +54,7 @@ Widget buildTileSection({
   required bool purchaseLandActionHasMerchantUnits,
   VoidCallback? onPurchaseLandTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   if (selectedTileKey == null) {
     return buildOverlaySection(
@@ -144,5 +147,6 @@ Widget buildTileSection({
     purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
     onPurchaseLandTap: onPurchaseLandTap,
     tileConnectivity: tileConnectivity,
+    blockadeStatus: blockadeStatus,
   );
 }

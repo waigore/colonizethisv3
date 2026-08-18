@@ -1,7 +1,10 @@
 // Blockade capital-link player copy (Refs #4516).
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_flow.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_target_dialog.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
@@ -46,7 +49,11 @@ void main() {
             isHuman: true,
             capitalProvinceId: 'oldWorld|cap1',
           ),
-          Player(id: navalMissionGoldenEnemyId, displayName: 'Spain', isHuman: false),
+          Player(
+            id: navalMissionGoldenEnemyId,
+            displayName: 'Spain',
+            isHuman: false,
+          ),
         ],
         oldWorldProvinces: const [
           Province(
@@ -108,7 +115,8 @@ void main() {
     ) async {
       await tester.pumpWidget(
         buildAppShell(
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           child: Builder(
@@ -132,7 +140,8 @@ void main() {
     testWidgets('omits status line when not blockaded', (tester) async {
       await tester.pumpWidget(
         buildAppShell(
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           child: Builder(
@@ -150,73 +159,212 @@ void main() {
       );
       await tester.pump();
       expect(find.text(l10n.provinceOverlay_underBlockade), findsNothing);
-      expect(find.text(l10n.provinceOverlay_underBlockadeCapital), findsNothing);
+      expect(
+        find.text(l10n.provinceOverlay_underBlockadeCapital),
+        findsNothing,
+      );
     });
   });
 
-  testWidgets('Blockade target dialog adds capital extra when capital selected', (
-    tester,
-  ) async {
-    const enemyCap = 'oldWorld|enemy1';
-    final game = buildPanelTestGame(
-      id: 'blockade-capital-extra',
-      players: const [
-        Player(
-          id: navalMissionGoldenHumanId,
-          displayName: 'England',
-          isHuman: true,
-        ),
-        Player(
-          id: navalMissionGoldenEnemyId,
-          displayName: 'Spain',
-          isHuman: false,
-          capitalProvinceId: enemyCap,
-        ),
-      ],
-      oldWorldProvinces: const [
-        Province(
-          id: enemyCap,
-          regionId: 'oldWorld',
-          ownerId: navalMissionGoldenEnemyId,
-          displayName: 'Enemy Capital Port',
-        ),
-      ],
-      fleets: [
-        Fleet(
-          id: 'fleet_at_sea',
-          ownerId: navalMissionGoldenHumanId,
-          regionId: 'oldWorld',
-          seaZoneId: navalMissionGoldenSeaZone,
-          ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-        ),
-      ],
-      diplomacyRelations: const [
-        DiplomacyRelation(
-          factionId1: navalMissionGoldenHumanId,
-          factionId2: navalMissionGoldenEnemyId,
-          state: RelationState.atWar,
-        ),
-      ],
-    );
-    final fleet = game.worldState.fleets.single;
+  testWidgets(
+    'Blockade target dialog adds capital extra when capital selected',
+    (tester) async {
+      const enemyCap = 'oldWorld|enemy1';
+      final game = buildPanelTestGame(
+        id: 'blockade-capital-extra',
+        players: const [
+          Player(
+            id: navalMissionGoldenHumanId,
+            displayName: 'England',
+            isHuman: true,
+          ),
+          Player(
+            id: navalMissionGoldenEnemyId,
+            displayName: 'Spain',
+            isHuman: false,
+            capitalProvinceId: enemyCap,
+          ),
+        ],
+        oldWorldProvinces: const [
+          Province(
+            id: enemyCap,
+            regionId: 'oldWorld',
+            ownerId: navalMissionGoldenEnemyId,
+            displayName: 'Enemy Capital Port',
+          ),
+        ],
+        fleets: [
+          Fleet(
+            id: 'fleet_at_sea',
+            ownerId: navalMissionGoldenHumanId,
+            regionId: 'oldWorld',
+            seaZoneId: navalMissionGoldenSeaZone,
+            ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+          ),
+        ],
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: navalMissionGoldenHumanId,
+            factionId2: navalMissionGoldenEnemyId,
+            state: RelationState.atWar,
+          ),
+        ],
+      );
+      final fleet = game.worldState.fleets.single;
 
-    await tester.pumpWidget(
-      buildAppShell(
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        child: NavalMissionTargetDialog(
+      await tester.pumpWidget(
+        buildAppShell(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          child: NavalMissionTargetDialog(
+            game: game,
+            mission: FleetMission.blockade,
+            fleet: fleet,
+            targetProvinceIds: const [enemyCap],
+            humanPlayerId: navalMissionGoldenHumanId,
+            initialTargetProvinceId: enemyCap,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(l10n.naval_mission_blockade_capitalExtra),
+        findsOneWidget,
+      );
+    },
+  );
+
+  group('tile details blockade cause (Refs #4516)', () {
+    const disconnected = ProvinceTileConnectivityDisplay(
+      capitalConnected: false,
+      extractionEffective: 0,
+      extractionFull: 3,
+    );
+    const connected = ProvinceTileConnectivityDisplay(
+      capitalConnected: true,
+      extractionEffective: 1,
+      extractionFull: 1,
+    );
+
+    test(
+      'names blockade when the owned tile is disconnected by a port blockade',
+      () {
+        final game = buildPanelTestGame(
+          id: 'tile-blockade-cause',
+          players: const [
+            Player(
+              id: navalMissionGoldenHumanId,
+              displayName: 'England',
+              isHuman: true,
+              capitalProvinceId: 'oldWorld|cap1',
+            ),
+          ],
+          oldWorldProvinces: const [
+            Province(
+              id: 'oldWorld|enemy1',
+              regionId: 'oldWorld',
+              ownerId: navalMissionGoldenHumanId,
+              displayName: 'My Port',
+            ),
+          ],
+        );
+        final lines = provinceTileDetailsLines(
+          l10n: l10n,
           game: game,
-          mission: FleetMission.blockade,
-          fleet: fleet,
-          targetProvinceIds: const [enemyCap],
           humanPlayerId: navalMissionGoldenHumanId,
-          initialTargetProvinceId: enemyCap,
-        ),
-      ),
+          provinceId: 'oldWorld|enemy1',
+          roadLevel: 0,
+          tileConnectivity: disconnected,
+          blockadeStatus: ProvinceBlockadeStatus.portBlockaded,
+        );
+        expect(
+          lines,
+          contains(l10n.provinceOverlay_tileCapitalLinkNotConnected),
+        );
+        expect(
+          lines,
+          contains(l10n.provinceOverlay_tileCapitalLinkCutByBlockade),
+        );
+      },
     );
-    await tester.pumpAndSettle();
 
-    expect(find.text(l10n.naval_mission_blockade_capitalExtra), findsOneWidget);
+    test(
+      'omits the cause when the tile is disconnected for a non-blockade reason',
+      () {
+        final game = buildPanelTestGame(
+          id: 'tile-blockade-cause-none',
+          players: const [
+            Player(
+              id: navalMissionGoldenHumanId,
+              displayName: 'England',
+              isHuman: true,
+              capitalProvinceId: 'oldWorld|cap1',
+            ),
+          ],
+          oldWorldProvinces: const [
+            Province(
+              id: 'oldWorld|enemy1',
+              regionId: 'oldWorld',
+              ownerId: navalMissionGoldenHumanId,
+              displayName: 'Inland',
+            ),
+          ],
+        );
+        final lines = provinceTileDetailsLines(
+          l10n: l10n,
+          game: game,
+          humanPlayerId: navalMissionGoldenHumanId,
+          provinceId: 'oldWorld|enemy1',
+          roadLevel: 0,
+          tileConnectivity: disconnected,
+        );
+        expect(
+          lines,
+          contains(l10n.provinceOverlay_tileCapitalLinkNotConnected),
+        );
+        expect(
+          lines,
+          isNot(contains(l10n.provinceOverlay_tileCapitalLinkCutByBlockade)),
+        );
+      },
+    );
+
+    test('omits the cause when the owned tile stays capital-connected', () {
+      final game = buildPanelTestGame(
+        id: 'tile-blockade-cause-connected',
+        players: const [
+          Player(
+            id: navalMissionGoldenHumanId,
+            displayName: 'England',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|cap1',
+          ),
+        ],
+        oldWorldProvinces: const [
+          Province(
+            id: 'oldWorld|cap1',
+            regionId: 'oldWorld',
+            ownerId: navalMissionGoldenHumanId,
+            displayName: 'Capital',
+          ),
+        ],
+      );
+      final lines = provinceTileDetailsLines(
+        l10n: l10n,
+        game: game,
+        humanPlayerId: navalMissionGoldenHumanId,
+        provinceId: 'oldWorld|cap1',
+        roadLevel: 4,
+        tileConnectivity: connected,
+        blockadeStatus: ProvinceBlockadeStatus.portBlockaded,
+      );
+      expect(
+        lines,
+        isNot(contains(l10n.provinceOverlay_tileCapitalLinkCutByBlockade)),
+      );
+    });
   });
 }

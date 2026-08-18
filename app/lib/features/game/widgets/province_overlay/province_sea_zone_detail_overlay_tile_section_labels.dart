@@ -1,6 +1,8 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
 library;
 
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
@@ -122,6 +124,7 @@ List<Widget> buildTileRoadLabelWidgets({
   required bool buildRailroadActionHasRailBuilderUnits,
   VoidCallback? onBuildRailroadTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   if (roadLevel == null) {
     return [
@@ -164,6 +167,7 @@ List<Widget> buildTileRoadLabelWidgets({
       provinceId: provinceId,
       roadLevel: roadLevel,
       tileConnectivity: tileConnectivity,
+      blockadeStatus: blockadeStatus,
     );
   }
 
@@ -233,6 +237,7 @@ List<Widget> buildTileConnectivityLabelWidgets({
   required String provinceId,
   required int? roadLevel,
   required ProvinceTileConnectivityDisplay? tileConnectivity,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   if (!showDefaultStrandedCapitalLink(tileConnectivity)) {
     return const [];
@@ -247,6 +252,7 @@ List<Widget> buildTileConnectivityLabelWidgets({
       provinceId: provinceId,
       roadLevel: roadLevel,
       tileConnectivity: tileConnectivity,
+      blockadeStatus: blockadeStatus,
     );
   }
 
