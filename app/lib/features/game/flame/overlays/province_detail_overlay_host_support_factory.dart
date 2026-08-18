@@ -14,13 +14,10 @@ import '../map_state/game_map_area_state_logic.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
     show isProvinceSeaZoneOverlaySeaZone;
-import 'province_detail_overlay_host_support_army_move.dart';
 import 'province_detail_overlay_host_support_bonus.dart';
-import 'province_detail_overlay_host_support_detach_sail.dart';
 import 'province_detail_overlay_host_support_display.dart';
-import 'province_detail_overlay_host_support_naval_mission.dart';
+import 'province_detail_overlay_host_support_factory_missions.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
-import 'province_detail_overlay_host_support_station_spy.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
@@ -162,58 +159,28 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     mapData: mapData,
     isSeaZone: isSeaZone,
   );
-  final armyMove = buildProvinceArmyMoveOverlayControls(
+  final missions = buildProvinceDetailMissionOverlayControls(
     context: context,
     game: game,
     region: region,
     humanPlayerId: humanPlayerId,
     playerView: playerView,
     displayId: displayId,
-    draftOrders: draftOrders,
-    mapData: mapData,
-    canMutateViaUi: canMutateViaUi,
-    omniscientDetail: omniscientDetail,
-    armyMovePickerCache: armyMovePickerCache,
-    bus: bus,
-    isSeaZone: isSeaZone,
-  );
-  final navalMission = buildProvinceNavalMissionOverlayControls(
-    context: context,
-    game: game,
-    humanPlayerId: humanPlayerId,
-    playerView: playerView,
-    displayId: displayId,
-    draftOrders: draftOrders,
-    mapData: mapData,
-    canMutateViaUi: canMutateViaUi,
-    bus: bus,
-    isSeaZone: isSeaZone,
-  );
-  final detachAndSail = buildProvinceDetachAndSailOverlayControls(
-    context: context,
-    game: game,
-    humanPlayerId: humanPlayerId,
-    displayId: displayId,
-    mapData: mapData,
-    canMutateViaUi: canMutateViaUi,
-    bus: bus,
-    isSeaZone: isSeaZone,
-    cargo: homeFleetCargo,
-  );
-  final stationSpy = buildProvinceStationSpyOverlayProps(
-    context: context,
-    game: game,
-    region: region,
-    displayId: displayId,
-    humanPlayerId: humanPlayerId,
-    playerView: playerView,
     selectedTileKey: selectedTileKey,
     draftOrders: draftOrders,
+    mapData: mapData,
     canMutateViaUi: canMutateViaUi,
     omniscientDetail: omniscientDetail,
     isSeaZone: isSeaZone,
+    armyMovePickerCache: armyMovePickerCache,
     bus: bus,
+    cargo: homeFleetCargo,
   );
+  final armyMove = missions.armyMove;
+  final navalMission = missions.navalMission;
+  final detachAndSail = missions.detachAndSail;
+  final stationSpy = missions.stationSpy;
+
   return ProvinceSeaZoneDetailOverlay(
     game: game,
     region: region,
