@@ -75,9 +75,11 @@ void main() {
 
       expect(find.text('Blockade'), findsOneWidget);
       expect(
-        find.text(
-          'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.',
-        ),
+        find.textContaining('capital'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('warehouse'),
         findsOneWidget,
       );
       expect(
@@ -128,9 +130,11 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text(
-          'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.',
-        ),
+        find.textContaining('capital'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('warehouse'),
         findsOneWidget,
       );
       expect(

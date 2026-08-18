@@ -10,6 +10,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/ui_screen_ids.dart';
+import '../province_overlay/province_sea_zone_detail_overlay_designation.dart';
 import '../panels/tree_builders/fleet_mission_label.dart';
 import 'home_fleet_detach_then_sail_flow.dart';
 import 'move_fleet_dialog.dart';
@@ -285,3 +286,7 @@ String? navalMissionTargetCaption(AppLocalizations l10n, FleetMission mission) {
     _ => null,
   };
 }
+
+/// Whether [provinceId] is any faction's capital province (Blockade assign).
+bool navalMissionBlockadeTargetIsCapital(Game game, String provinceId) =>
+    provinceOverlayIsCapital(game, provinceId);

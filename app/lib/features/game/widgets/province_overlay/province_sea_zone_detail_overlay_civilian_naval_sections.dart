@@ -5,6 +5,8 @@ import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import '../../flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
 import '../../flame/map_state/province_naval_mission_action_state.dart'
@@ -123,6 +125,7 @@ Widget buildNavalSection({
       ProvinceNavalMissionOverlayControls.hidden,
   ProvinceDetachAndSailOverlayControls detachAndSail =
       ProvinceDetachAndSailOverlayControls.hidden,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   final pending = pendingNavalPortProvinceId == null
       ? const <String>[]
@@ -139,12 +142,23 @@ Widget buildNavalSection({
     detachAndSail,
   );
   final hasRoster = fleets.isNotEmpty || pending.isNotEmpty;
+  final blockadeLine = switch (blockadeStatus) {
+    ProvinceBlockadeStatus.none => null,
+    ProvinceBlockadeStatus.portBlockaded => l10n.provinceOverlay_underBlockade,
+    ProvinceBlockadeStatus.capitalBlockaded =>
+      l10n.provinceOverlay_underBlockadeCapital,
+  };
   return buildOverlaySection(
     l10n.provinceOverlay_sectionNaval,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (blockadeLine != null)
+          Text(
+            blockadeLine,
+            style: TextStyle(color: EditorialMonoclePalette.danger),
+          ),
         if (rosterObfuscated)
           overlayObfuscatedBodyText(l10n.provinceOverlay_unknown)
         else if (!hasRoster && missionActions.isEmpty)

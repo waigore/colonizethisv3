@@ -7,6 +7,8 @@ import '../../../../config/constants.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import '../../flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
 import '../../flame/map_state/province_naval_mission_action_state.dart'
@@ -79,6 +81,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onInvadeArmyTap,
     this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
     this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
+    this.blockadeStatus = ProvinceBlockadeStatus.none,
     this.stationSpy = kProvinceOverlayStationSpyHidden,
     this.showEstablishConsulateControl = false,
     this.establishConsulateEnabled = false,
@@ -156,6 +159,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final VoidCallback? onInvadeArmyTap;
   final ProvinceNavalMissionOverlayControls navalMission;
   final ProvinceDetachAndSailOverlayControls detachAndSail;
+  final ProvinceBlockadeStatus blockadeStatus;
   final ProvinceOverlayStationSpyProps stationSpy;
   final bool showEstablishConsulateControl;
   final bool establishConsulateEnabled;
@@ -260,6 +264,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       onInvadeArmyTap: onInvadeArmyTap,
       navalMission: navalMission,
       detachAndSail: detachAndSail,
+      blockadeStatus: blockadeStatus,
       stationSpy: stationSpy,
       showEstablishConsulateControl: showEstablishConsulateControl,
       establishConsulateEnabled: establishConsulateEnabled,

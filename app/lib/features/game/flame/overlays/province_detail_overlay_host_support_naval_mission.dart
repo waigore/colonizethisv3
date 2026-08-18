@@ -8,6 +8,7 @@ import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
 import '../../widgets/unit_orders/naval_mission_flow.dart';
 import '../map_state/province_naval_mission_action_state.dart';
+import 'province_blockade_status_support.dart';
 
 /// Resolves MAP20001 Naval Blockade/Beachhead enablement and tap handlers.
 ProvinceNavalMissionOverlayControls buildProvinceNavalMissionOverlayControls({
@@ -22,9 +23,18 @@ ProvinceNavalMissionOverlayControls buildProvinceNavalMissionOverlayControls({
   required ct_models.AppEventBus bus,
   required bool isSeaZone,
 }) {
-  if (!canMutateViaUi) return ProvinceNavalMissionOverlayControls.hidden;
-
   final topology = mapData?.combinedTopology ?? const MapTopology();
+  final blockadeStatus = resolveHumanOwnedBlockadeStatus(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: displayId,
+    topology: topology,
+    isSeaZone: isSeaZone,
+  );
+  if (!canMutateViaUi) {
+    return ProvinceNavalMissionOverlayControls(blockadeStatus: blockadeStatus);
+  }
+
   final state = computeProvinceNavalMissionActionState(
     game: game,
     humanPlayerId: humanPlayerId,
@@ -32,7 +42,9 @@ ProvinceNavalMissionOverlayControls buildProvinceNavalMissionOverlayControls({
     topology: topology,
     isSeaZoneContext: isSeaZone,
   );
-  if (!state.showControls) return ProvinceNavalMissionOverlayControls.hidden;
+  if (!state.showControls) {
+    return ProvinceNavalMissionOverlayControls(blockadeStatus: blockadeStatus);
+  }
 
   final l10n = appL10n(context);
   final disabledTooltip =
@@ -71,5 +83,6 @@ ProvinceNavalMissionOverlayControls buildProvinceNavalMissionOverlayControls({
     beachheadEnabled: state.enabled,
     beachheadTooltip: beachheadTooltip,
     onBeachheadTap: tapFor(ct_models.FleetMission.beachhead),
+    blockadeStatus: blockadeStatus,
   );
 }
