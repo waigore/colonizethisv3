@@ -1,3 +1,4 @@
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../providers/observe_session_provider.dart';
@@ -37,6 +38,11 @@ class GameMapControls extends StatelessWidget {
     this.oldWorldRace,
     this.onOldWorldRaceTap,
     this.oldWorldRaceNarrow = false,
+    this.showLabourFeedingIndicator = false,
+    this.labourFeedingLabel = '—',
+    this.labourFeedingNotDefined = false,
+    this.labourReadiness,
+    this.forcesFeeding,
     super.key,
   });
 
@@ -66,6 +72,11 @@ class GameMapControls extends StatelessWidget {
   final OldWorldRaceSnapshot? oldWorldRace;
   final VoidCallback? onOldWorldRaceTap;
   final bool oldWorldRaceNarrow;
+  final bool showLabourFeedingIndicator;
+  final String labourFeedingLabel;
+  final bool labourFeedingNotDefined;
+  final LabourReadinessSnapshot? labourReadiness;
+  final ForceFeedingSnapshot? forcesFeeding;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +115,11 @@ class GameMapControls extends StatelessWidget {
           cargoNotDefined: cargoNotDefined,
           isCargoUsedReliable: isCargoUsedReliable,
           cargoHoldLabel: cargoHoldLabel,
+          showLabourFeedingIndicator: showLabourFeedingIndicator,
+          labourFeedingLabel: labourFeedingLabel,
+          labourFeedingNotDefined: labourFeedingNotDefined,
+          labourReadiness: labourReadiness,
+          forcesFeeding: forcesFeeding,
           oldWorldRace: oldWorldRace,
           onOldWorldRaceTap: onOldWorldRaceTap,
           oldWorldRaceNarrow: oldWorldRaceNarrow,
