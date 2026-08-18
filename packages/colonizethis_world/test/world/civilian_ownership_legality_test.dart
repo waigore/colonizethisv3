@@ -1,3 +1,5 @@
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show kWorkTargetBuildRoad;
 import 'package:colonizethis_world/src/world/civilian_ownership_legality.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -73,7 +75,7 @@ void main() {
           tileKey: changedTile,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_road',
+            workTarget: kWorkTargetBuildRoad,
             tileKey: changedTile,
             totalTurns: 2,
             remainingTurns: 1,

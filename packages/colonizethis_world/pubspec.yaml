@@ -15,6 +15,7 @@ dependencies:
   colonizethis_models:
 
 dev_dependencies:
+  colonizethis_orders:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
   colonizethis_test:
