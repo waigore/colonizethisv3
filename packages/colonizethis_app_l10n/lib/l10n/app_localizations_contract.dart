@@ -2151,6 +2151,24 @@ abstract class AppLocalizations {
   /// Secondary gold-row hint on sequential-blocked slots (Refs #4335).
   String technologyPanel_goldCostAfterEarlierSlots(int gold);
 
+  /// Slot-card finish-time line when remaining RP completes this turn (Refs #4511).
+  String get technologyPanel_finishCompletesNextTurn;
+
+  /// Slot-card finish-time line with calendar year (Refs #4511).
+  String technologyPanel_finishCompletesNextTurnWithYear(int year);
+
+  /// Slot-card finish-time line for N further turns at current funding (Refs #4511).
+  String technologyPanel_finishInTurns(int turns);
+
+  /// Slot-card finish-time line with N turns and calendar year (Refs #4511).
+  String technologyPanel_finishInTurnsWithYear(int turns, int year);
+
+  /// Breakdown restatement of remaining RP (Refs #4511).
+  String technologyPanel_rpBreakdownRemaining(int rp);
+
+  /// Breakdown restatement of implied turns at current funding (Refs #4511).
+  String technologyPanel_rpBreakdownTurns(int turns);
+
   /// Monospace research-point value used in breakdown dialog rows (Refs #3512).
   String technologyPanel_rpValue(int rp);
 
@@ -2838,6 +2856,27 @@ abstract class AppLocalizations {
 
   /// Counsel line in the cargo details popover.
   String get mapControls_cargoHold_details_counsel;
+
+  /// Map tab-bar labour/feeding indicator fraction (Refs #4506).
+  String mapControls_labourFeeding(String effective, String capacity);
+
+  /// Tooltip for the map labour/feeding indicator (Refs #4506).
+  String mapControls_labourFeeding_tooltip(String effective, String capacity);
+
+  /// Semantics label for the map labour/feeding indicator (Refs #4506).
+  String mapControls_labourFeeding_semanticsLabel(
+    String effective,
+    String capacity,
+  );
+
+  /// Primary labour line in the map labour/feeding details popover (Refs #4506).
+  String mapControls_labourFeeding_details_labour(
+    String effective,
+    String capacity,
+  );
+
+  /// Empty worker-pool line in the map labour/feeding details popover (Refs #4506).
+  String get mapControls_labourFeeding_details_emptyPool;
 
   /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
   String get mapControls_playersBarToggle;

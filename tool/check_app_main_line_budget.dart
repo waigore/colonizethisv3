@@ -98,7 +98,9 @@ const _packageName = 'colonizethis_app';
 // raised for MAP10001 last-turn spatial playback + #4479 merge (Refs #4486; measured 84_334).
 // raised for GAME40001 Technology Tree assign-from-node + #4486 merge (Refs #4498; measured 84_885).
 // raised for GAME60001 Deal Book leftover reasons (Refs #4500; measured 85_318).
-const _maxMainLines = 85400;
+// raised for MAP10001 labour/feeding tab-bar indicator (Refs #4506; measured 85_954).
+// raised for GAME40001 research seat finish-time line (Refs #4511; measured 86_127).
+const _maxMainLines = 86200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

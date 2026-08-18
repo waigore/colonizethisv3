@@ -9,6 +9,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import 'research_slot_finish_estimate.dart';
 import 'research_slot_preview.dart';
 import 'technology_panel_constants.dart';
 import 'technology_panel_orders.dart';
@@ -29,6 +30,7 @@ Widget buildTechnologyResearchSlot({
   required Orders currentOrders,
   required void Function(Orders orders)? onOrdersChanged,
   ResearchSlotTurnPreview? turnPreview,
+  ResearchFinishCalendar? finishCalendar,
 }) {
   final isLockedFourthSlot =
       index == kTechnologyResearchSlotCount - 1 && slots < 4;
@@ -53,8 +55,7 @@ Widget buildTechnologyResearchSlot({
   // only on the editable (human, own-orders) panel; read-only panels keep the
   // simple committed-progress bar. Refs #3512, #4335 — sequential walk is
   // computed once in [buildTechnologyPanelSlotsBody] and passed per slot.
-  final resolvedTurnPreview =
-      (tech == null || !canEdit) ? null : turnPreview;
+  final resolvedTurnPreview = (tech == null || !canEdit) ? null : turnPreview;
   return Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: ResearchSlotCard(
@@ -65,16 +66,17 @@ Widget buildTechnologyResearchSlot({
       canEdit: canEdit,
       funding: funding,
       turnPreview: resolvedTurnPreview,
+      finishCalendar: resolvedTurnPreview == null ? null : finishCalendar,
       onFundingChanged: hasTech && canEdit
           ? (level) => onOrdersChanged!(
-                applySetSlotFunding(
-                  currentOrders: currentOrders,
-                  humanPlayerId: humanPlayerId,
-                  slotIndex: index,
-                  funding: level,
-                  techId: techId,
-                ),
-              )
+              applySetSlotFunding(
+                currentOrders: currentOrders,
+                humanPlayerId: humanPlayerId,
+                slotIndex: index,
+                funding: level,
+                techId: techId,
+              ),
+            )
           : null,
       onCancel: hasTech && canEdit
           ? () {
@@ -134,10 +136,7 @@ ResearchSlotAssignment? effectiveTechnologyAssignmentForSlot({
     if (order.techId.isEmpty || techById(order.techId) == null) {
       return null;
     }
-    return ResearchSlotAssignment(
-      techId: order.techId,
-      funding: order.funding,
-    );
+    return ResearchSlotAssignment(techId: order.techId, funding: order.funding);
   }
   final persisted = player.researchSlotAssignments?[index];
   if (persisted == null ||

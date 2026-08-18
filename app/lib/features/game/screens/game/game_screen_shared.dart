@@ -30,6 +30,9 @@ const Key kEmpireDebugConsoleButtonKey = Key('empire_rail_debug_console');
 /// Key for the cargo hold indicator row item. SPEC/ui/empire-overview.md.
 const Key kCargoHoldIndicatorKey = Key('cargo_hold_indicator');
 
+/// Key for the labour/feeding indicator row item. SPEC/ui/empire-overview.md.
+const Key kLabourFeedingIndicatorKey = Key('labour_feeding_indicator');
+
 /// Key for the treasury indicator row item. SPEC/ui/empire-overview.md.
 const Key kTreasuryIndicatorKey = Key('treasury_indicator');
 

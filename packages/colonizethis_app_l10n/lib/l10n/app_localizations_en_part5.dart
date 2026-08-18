@@ -2,6 +2,30 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
+  String get techEffectSummary_heavy_artillery_0 =>
+      'Improves: Royal Artillery regiment upgrade path';
+
+  @override
+  String get techEffectSummary_heavy_artillery_1 =>
+      'Prerequisite for: High Grade Steel and Emplaced Siege Guns';
+
+  @override
+  String get techEffectSummary_heavy_emplaced_artillery_0 =>
+      'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)';
+
+  @override
+  String get techEffectSummary_heavy_emplaced_artillery_1 =>
+      'Prerequisite for: Emplaced Siege Guns';
+
+  @override
+  String get techEffectSummary_high_grade_steel_0 =>
+      'Improves: Heavy Artillery regiment upgrade path';
+
+  @override
+  String get techEffectSummary_horse_artillery_0 =>
+      'Prerequisite for: Light Artillery Tactics';
+
+  @override
   String get techEffectSummary_hussars_0 =>
       'Improves: Cossacks regiment upgrade path';
 
@@ -686,5 +710,33 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
     String shortfall,
   ) {
     return 'Cannot upgrade town: $shortfall';
+  }
+
+  @override
+  String get technologyPanel_finishCompletesNextTurn => 'Completes next turn';
+
+  @override
+  String technologyPanel_finishCompletesNextTurnWithYear(int year) {
+    return 'Completes next turn ($year)';
+  }
+
+  @override
+  String technologyPanel_finishInTurns(int turns) {
+    return 'Finishes in $turns turns';
+  }
+
+  @override
+  String technologyPanel_finishInTurnsWithYear(int turns, int year) {
+    return 'Finishes in $turns turns ($year)';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownRemaining(int rp) {
+    return 'Remaining: $rp RP';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownTurns(int turns) {
+    return 'About $turns more turns at this funding';
   }
 }
