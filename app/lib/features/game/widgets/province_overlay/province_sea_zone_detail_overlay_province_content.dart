@@ -118,16 +118,11 @@ OverlayContent provinceContent({
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
-  final localProvinceId = prefixedIdLocalSegment(provinceId);
-  final isFullyUnrevealed =
-      !omniscientDetail &&
-      region.regionId == regionId &&
-      !region.cells.any(
-        (c) =>
-            c.regionCellId == localProvinceId &&
-            c.visibility != TileVisibility.unrevealed,
-      );
-  if (isFullyUnrevealed) {
+  if (provinceContentIsFullyUnrevealed(
+    region: region,
+    provinceId: provinceId,
+    omniscientDetail: omniscientDetail,
+  )) {
     return provinceContentUnrevealed(l10n: l10n);
   }
   final province = findProvinceForSeaZoneOverlay(game, provinceId);
@@ -167,7 +162,6 @@ OverlayContent provinceContent({
     tileKeys: tileKeys,
     omniscientDetail: omniscientDetail,
   );
-
   final tileSection = buildTileSection(
     context: context,
     l10n: l10n,
