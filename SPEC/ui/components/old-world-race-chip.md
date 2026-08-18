@@ -24,7 +24,7 @@ Let the player see `N / 31` for their court (and a rival leader when that court 
 
 Narrow: `{count}/{threshold}` and ` · {rivalName} {rivalCount}` (no second threshold). Max width 108 dp narrow / 220 dp wide; `FittedBox` scale-down if needed. The tab-bar trailing cluster (treasury, cargo, race, toggles) also uses `FittedBox` scale-down so 320 dp does not overflow. Family: treasury/cargo (monospace `--accent-dim`, 1 px `--border` left rule).
 
-Tab-bar order: `treasury → cargo → race chip → players-bar toggle → news`.
+Tab-bar order: `treasury → cargo → labour/feeding → race chip → players-bar toggle → news`.
 
 ## Behavior
 

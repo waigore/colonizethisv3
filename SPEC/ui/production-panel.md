@@ -203,7 +203,7 @@ The `Full availability (mobile)` use case must be pinned by `app/test/widgetbook
 
 ## Labour readiness (Refs #4237)
 
-In-panel labour preview on `GAME20001` Available only (not end-turn nags). Uses the same consumption/strike rules as the resolver (`previewWorkerIdleLabour` / `effectiveLabourForWorkers`) on a **post-extraction** stockpile: pending build costs → Extraction → Riches-to-treasury (not raw warehouse alone).
+In-panel labour preview on `GAME20001` Available only (not end-turn nags). Uses the same consumption/strike rules as the resolver (`previewWorkerIdleLabour` / `effectiveLabourForWorkers`) on a **post-extraction** stockpile: pending build costs → Extraction → Riches-to-treasury (not raw warehouse alone). Map-HUD glanceable labour/feeding on `MAP10001` is the same non-nag class as this in-panel preview (continuous HUD state); “Available only” does not forbid the map chip.
 
 ### Default (always visible)
 
@@ -229,7 +229,7 @@ In-panel labour preview on `GAME20001` Available only (not end-turn nags). Uses 
 
 ## Forces food readiness (Refs #4242)
 
-In-panel army/navy feeding preview on `GAME20001` Available only (not end-turn nags). Uses the same post-extraction stockpile and military/navy consumption phases as labour readiness (`previewForceFeeding` on stockpile after pending build costs → Extraction → Riches-to-treasury).
+In-panel army/navy feeding preview on `GAME20001` Available only (not end-turn nags). Uses the same post-extraction stockpile and military/navy consumption phases as labour readiness (`previewForceFeeding` on stockpile after pending build costs → Extraction → Riches-to-treasury). Map-HUD glanceable labour/feeding on `MAP10001` is the same non-nag class as this in-panel preview; “Available only” does not forbid the map chip.
 
 ### Default (when player has regiments and/or ships)
 

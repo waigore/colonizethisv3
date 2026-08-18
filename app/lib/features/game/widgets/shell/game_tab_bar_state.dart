@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../screens/game/game_screen_shared.dart' show kTreasuryIndicatorKey;
 import 'cargo_hold_indicator_support.dart';
+import 'labour_feeding_indicator_support.dart';
 import 'game_tab_bar.dart';
 import 'game_tab_bar_indicators.dart';
 import 'game_tab_bar_region_tabs.dart';
@@ -14,6 +15,7 @@ import 'old_world_race_chip.dart';
 /// Stateful implementation for [GameTabBar] (Refs #4117 de-part).
 class GameTabBarState extends State<GameTabBar> {
   final GlobalKey _cargoHoldAnchorKey = GlobalKey();
+  final GlobalKey _labourFeedingAnchorKey = GlobalKey();
 
   static final NumberFormat _exactTreasuryFormat =
       NumberFormat.decimalPattern();
@@ -79,6 +81,16 @@ class GameTabBarState extends State<GameTabBar> {
       isCargoUsedReliable: widget.isCargoUsedReliable,
     );
     final bool cargoInteractive = !widget.cargoNotDefined;
+    final bool labourFeedingInteractive =
+        widget.showLabourFeedingIndicator && !widget.labourFeedingNotDefined;
+    final Color labourNumericColor = widget.labourReadiness == null ||
+            widget.forcesFeeding == null
+        ? EditorialMonoclePalette.muted
+        : labourFeedingNumericColor(
+            labourReadiness: widget.labourReadiness!,
+            forcesFeeding: widget.forcesFeeding!,
+            notDefined: widget.labourFeedingNotDefined,
+          );
 
     return SizedBox(
       key: GameTabBar.surfaceKey,
@@ -203,6 +215,51 @@ class GameTabBarState extends State<GameTabBar> {
                                   }
                                 : null,
                           ),
+                          if (widget.showLabourFeedingIndicator)
+                            GameTabBarLabourFeedingIndicator(
+                              key: _labourFeedingAnchorKey,
+                              labourFeedingLabel: widget.labourFeedingLabel,
+                              labelStyle: monoBody,
+                              numericColor: labourNumericColor,
+                              tooltip: labourFeedingInteractive
+                                  ? l10n.mapControls_labourFeeding_tooltip(
+                                      widget.labourReadiness!.effectiveLabour
+                                          .toString(),
+                                      widget.labourReadiness!.fullCapacity
+                                          .toString(),
+                                    )
+                                  : null,
+                              semanticsLabel: labourFeedingInteractive
+                                  ? l10n
+                                        .mapControls_labourFeeding_semanticsLabel(
+                                      widget.labourReadiness!.effectiveLabour
+                                          .toString(),
+                                      widget.labourReadiness!.fullCapacity
+                                          .toString(),
+                                    )
+                                  : widget.labourFeedingLabel,
+                              onTap: labourFeedingInteractive
+                                  ? () {
+                                      final RenderBox? tabBarBox =
+                                          context.findRenderObject()
+                                              as RenderBox?;
+                                      final double chromeBottomY =
+                                          (tabBarBox
+                                                  ?.localToGlobal(Offset.zero)
+                                                  .dy ??
+                                              0) +
+                                          GameTabBar.height;
+                                      showLabourFeedingDetailsPopover(
+                                        context: context,
+                                        anchorKey: _labourFeedingAnchorKey,
+                                        chromeBottomY: chromeBottomY,
+                                        l10n: l10n,
+                                        labourReadiness: widget.labourReadiness!,
+                                        forcesFeeding: widget.forcesFeeding!,
+                                      );
+                                    }
+                                  : null,
+                            ),
                           if (widget.oldWorldRace != null)
                             OldWorldRaceChip(
                               snapshot: widget.oldWorldRace!,
