@@ -41,6 +41,7 @@
 | `tool/ct_repo_lint.dart` | Orchestrator: loads manifest, runs rules in order, stops on first failure |
 | `tool/ct_repo_lint_lib.dart` | Parse/execute helpers (also covered by `test/ct_repo_lint_test.dart`) |
 | `tool/ct_repo_lint_map_dispatch.dart` | In-process dispatch for map/`colonizethis_map` manifest rules (keeps `ct_repo_lint_lib.dart` under the 1000-NCL ceiling; Refs #4022) |
+| `tool/ct_repo_lint_world_dispatch.dart` | In-process dispatch for `repo.world_*` manifest rules (keeps `ct_repo_lint_lib.dart` under the 1000-NCL ceiling; Refs #4515) |
 | `tool/ct_repo_lint_scan_contract.dart` | Shared roots, skip helpers, canonical tile-key collectors, app UI path gate, PR path split — see `test/ct_repo_lint_scan_contract_test.dart` |
 | `tool/disallowed_ast_pattern_rules.dart` | Rule model + YAML parse (`parseDisallowedAstRulesFromYaml`) from `tool/disallowed_ast_patterns.yaml` (`SPEC/program/disallowed-ast-patterns.md`); consumed by `tool/check_disallowed_ast_patterns.dart` |
 | `tool/check_disallowed_ast_patterns.dart` | Config-driven AST visitor and scan CLI; rule `repo.disallowed_ast_patterns`; also invoked in-process for `repo.debug_console_logic_contract_boundary` |
