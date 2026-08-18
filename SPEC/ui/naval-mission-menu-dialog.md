@@ -88,7 +88,7 @@ Folder `Naval Mission Menu Dialog`:
 
 | Use case | Proves |
 |----------|--------|
-| Default — patrol available | At-sea fleet; Patrol/Defend enabled; Blockade/Beachhead disabled (no war); Sail/Move row present; each mission row shows `naval_mission_effect_<mission>` (Refs #4295). |
+| Default — patrol available | At-sea fleet; Patrol/Defend enabled; Blockade/Beachhead disabled (no war); Sail/Move row present; Blockade effect names the capital-link / warehouse cut (Refs #4295, #4516). |
 
 ---
 
