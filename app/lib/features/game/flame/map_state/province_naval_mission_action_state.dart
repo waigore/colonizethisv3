@@ -5,6 +5,8 @@ import 'package:colonizethis_orders/colonizethis_orders.dart'
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
+import '../overlays/province_blockade_status_support.dart';
+
 /// Visibility/enablement for MAP20001 Naval Blockade / Beachhead (Refs #4413).
 ///
 /// Visibility uses cheap topology/ownership/war predicates; enablement reads
@@ -39,6 +41,7 @@ class ProvinceNavalMissionOverlayControls {
     this.beachheadEnabled = false,
     this.beachheadTooltip = '',
     this.onBeachheadTap,
+    this.blockadeStatus = ProvinceBlockadeStatus.none,
   });
 
   static const hidden = ProvinceNavalMissionOverlayControls();
@@ -51,6 +54,7 @@ class ProvinceNavalMissionOverlayControls {
   final bool beachheadEnabled;
   final String beachheadTooltip;
   final VoidCallback? onBeachheadTap;
+  final ProvinceBlockadeStatus blockadeStatus;
 }
 
 /// Computes Blockade/Beachhead action state for [provinceId] (prefixed full id).

@@ -12,6 +12,8 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_detach_a
     show ProvinceDetachAndSailOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import 'province_overlay_unit_partition.dart';
@@ -93,6 +95,7 @@ OverlayContent provinceContent({
   ProvinceDetachAndSailOverlayControls detachAndSail =
       ProvinceDetachAndSailOverlayControls.hidden,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
   required bool establishConsulatePending,
@@ -115,16 +118,11 @@ OverlayContent provinceContent({
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
-  final localProvinceId = prefixedIdLocalSegment(provinceId);
-  final isFullyUnrevealed =
-      !omniscientDetail &&
-      region.regionId == regionId &&
-      !region.cells.any(
-        (c) =>
-            c.regionCellId == localProvinceId &&
-            c.visibility != TileVisibility.unrevealed,
-      );
-  if (isFullyUnrevealed) {
+  if (provinceContentIsFullyUnrevealed(
+    region: region,
+    provinceId: provinceId,
+    omniscientDetail: omniscientDetail,
+  )) {
     return provinceContentUnrevealed(l10n: l10n);
   }
   final province = findProvinceForSeaZoneOverlay(game, provinceId);
@@ -164,7 +162,6 @@ OverlayContent provinceContent({
     tileKeys: tileKeys,
     omniscientDetail: omniscientDetail,
   );
-
   final tileSection = buildTileSection(
     context: context,
     l10n: l10n,
@@ -275,6 +272,7 @@ OverlayContent provinceContent({
     onInvadeArmyTap: onInvadeArmyTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
+    blockadeStatus: blockadeStatus,
     stationSpy: stationSpy,
     provinceDisplayName: province?.displayName,
     onHighlightTile: onHighlightTile,
