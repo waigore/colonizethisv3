@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/military_counsel_ranking.dart';
 import 'package:colonizethis_orders/src/orders/military_counsel_scoring.dart';
 import 'package:colonizethis_orders/src/orders/military_counsel_types.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_probe_validator.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -126,6 +127,11 @@ List<MilitaryCounselRecommendation> _mcRank(
 
 void main() {
   runLabeledScenarioGroup('rankMilitaryCounselRecommendations', [
+    rs('builds one pass-level validator without fallback rebuild (Refs #4508)', () {
+      resetIncrementalCandidateValidatorBuildCountForTests();
+      _mcRank(_mcTrainGame(), topology: _mcTopo(['P1'], []));
+      expect(incrementalCandidateValidatorBuildCountForTests, 1);
+    }),
     rs('returns at most three stable recommendations', () {
       final game = _mcTrainGame();
       final topo = _mcTopo(['P1'], []);

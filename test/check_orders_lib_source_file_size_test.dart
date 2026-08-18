@@ -13,8 +13,32 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckOrdersLibSourceFileSize', () {
-    test('passes on current repo tree under wave-8 ceiling', () {
+    test('passes on current repo tree under wave-9 ceiling', () {
       expect(runCheckOrdersLibSourceFileSize('.'), 0);
+    });
+
+    test('wave-9 ceiling is 300 with an empty grandfather', () {
+      expect(ordersLibSourceFileSizeCeiling, 300);
+      expect(ordersLibSourceFileSizeGrandfathered, isEmpty);
+    });
+
+    test('wave-9 split entry files stay ≥30 lines under 300', () {
+      const files = <String>[
+        'packages/colonizethis_orders/lib/src/orders/order_suggestion_work_explorer.dart',
+        'packages/colonizethis_orders/lib/src/orders/order_suggestion_diplomatic_candidates.dart',
+        'packages/colonizethis_orders/lib/src/orders/order_suggestion_army_move_picker.dart',
+        'packages/colonizethis_orders/lib/src/orders/orders_application_completed_work_handlers.dart',
+        'packages/colonizethis_orders/lib/src/orders/incremental_candidate_validator.dart',
+        'packages/colonizethis_orders/lib/src/orders/orders_application_context.dart',
+      ];
+      for (final relative in files) {
+        final lines = File(relative).readAsLinesSync().length;
+        expect(
+          lines,
+          lessThanOrEqualTo(270),
+          reason: '$relative is $lines physical lines (need ≤270)',
+        );
+      }
     });
 
     test('fails when an orders lib file exceeds the ceiling', () {

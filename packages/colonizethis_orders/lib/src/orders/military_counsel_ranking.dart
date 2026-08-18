@@ -5,13 +5,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'incremental_candidate_validator.dart';
 import 'military_counsel_affordance.dart';
 import 'military_counsel_invasion_intel.dart';
 import 'military_counsel_scoring.dart';
 import 'military_counsel_types.dart';
+import 'order_resolution_context.dart';
 import 'order_suggestion_army_move_picker.dart';
 import 'order_suggestion_build.dart';
+import 'order_suggestion_probe_validator.dart';
 
 const int _kMaxRecommendations = 3;
 
@@ -39,11 +40,13 @@ List<MilitaryCounselRecommendation> rankMilitaryCounselRecommendations({
   if (player == null) return const [];
 
   final view = buildPlayerView(game, topology, playerId);
-  final sharedValidator = IncrementalCandidateValidator.forPlayer(
+  final resolution = orderResolutionContextFromView(view, game);
+  final sharedValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: currentOrders,
+    baseOrders: currentOrders,
+    resolution: resolution,
   );
 
   final candidates = <MilitaryCounselRecommendation>[];

@@ -21,9 +21,18 @@ Contract:
   core itself (no sibling barrel exists), so it remains a package-relative export.
 - The remaining deep `src/` exports are grouped under an in-code justification
   block and are permitted **only** because the owning domain barrel does not
-  publish those files. As of the #3543 slice these are:
-  `orders/feedstock_bootstrap_cost.dart` and
-  `orders/feedstock_extraction_targets.dart`.
+  publish those files. As of the #4508 slice (orders wave 9), the former
+  feedstock deep exports (`orders/feedstock_bootstrap_cost.dart` and
+  `orders/feedstock_extraction_targets.dart`) are published on the
+  `colonizethis_orders` barrel; `ai_api.dart` and `industry_counsel_api.dart`
+  consume them through `package:colonizethis_orders/colonizethis_orders.dart`
+  `show` lists. `feedstock_common.dart` stays unpublished and must not be
+  re-exported by the published extraction-targets file, or
+  `regimentCountForPlayer` collides with the AI planner helper of the same
+  name. Counsel ranking/types/emission/core-snapshot files listed in
+  issue #4508 are likewise published on the orders barrel for
+  `industry_counsel_api.dart`. No justified deep `colonizethis_orders` exports
+  remain on `ai_api.dart` as of this slice.
   (`world/sea_reachable_provinces.dart` was a deep export through Phase 3 but
   was promoted into the `colonizethis_world` barrel by the #3543 slice, so
   `ai_api.dart` now re-exports its two symbols through the world barrel `show`
@@ -45,7 +54,7 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 - **Given** the post-Phase-3 `packages/colonizethis_logic/lib/ai_api.dart` on `dev`, **when** `repo.ai_api_narrow_surface` resolves each domain barrel's transitive export closure, **then** no `export 'package:colonizethis_<domain>/src/<file>'` directive targets a file already published by that domain barrel and the rule exits `0`.
 - **Given** an `ai_api.dart` that deep-exports `package:colonizethis_world/src/world/ai_control.dart` while the `colonizethis_world` barrel already re-exports that file, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** it returns exit code `1` and lists the offending `ai_api.dart:<line>` with a "bypasses the colonizethis_world barrel" message.
 - **Given** an `ai_api.dart` that re-exports a symbol through `package:colonizethis_<domain>/colonizethis_<domain>.dart show ...`, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** that directive is not flagged.
-- **Given** an `ai_api.dart` deep export of a file the owning domain barrel does **not** re-export (e.g. `orders/feedstock_extraction_targets.dart`), **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** that directive is not flagged (no barrel alternative exists).
+- **Given** the post-#4508 `ai_api.dart` on `dev`, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** no `export 'package:colonizethis_orders/src/...'` directives remain (feedstock and counsel contract files are barrel-published).
 - **Given** a deep export whose file is reachable only transitively through a sub-barrel (e.g. `orders/orders.dart` re-exporting it), **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** the directive is flagged as a barrel bypass.
 - **Given** the `packages/colonizethis_logic/lib/ai_api.dart` file is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports `Missing AI contract file`.
 - **Given** a domain referenced by an `ai_api.dart` deep export whose barrel file `lib/<domain>.dart` is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports the missing barrel.
