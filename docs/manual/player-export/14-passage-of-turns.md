@@ -12,17 +12,19 @@ The campaign calendar advances with the turn. By default, turn 1 is 1500; turns 
 
 ### Ending a turn
 
-1. On **Game screen**, finish the decrees you mean to give this turn, then tap **Next turn** in the top bar.
-2. **Next turn confirmation** opens. The title is **End turn?** or **Proceed to next turn?** The body says **Turn {N} will end. Continue?**
-3. If you already staged decrees this turn, the dialog shows **Staged this turn** with a short count by kind (army moves, trade, and so on). If you gave none, that list is simply absent — the court does not scold you for a quiet turn.
-4. Tap **Review decrees** to read each staged line in ordinary words. A locate button beside each kind opens that panel or screen and closes the dialog **without** ending the turn, so you can still change your mind. **Yes** stays available while you read.
-5. Five working civilians can do assigned tasks: Explorer, Builder, Engineer, Merchant, and Rail Builder. If any of yours have **no work order** for the next turn, the dialog may list them under **These civilians have no work order for the next turn:**. Each row shows type, location, **No work order**, and a go-to button.
-6. Tap go-to on a listed civilian to leave without ending the turn. The map finds that person and opens **Civilian units panel**. A **Spy** is a civilian posted in a foreign court or at home; Spies are **not** listed here — foreign station, home counter-spy, and capital reserve are deliberate posts, not wasted capacity.
-7. To stop seeing that no-work-order list, turn on **Don't show this warning again** and then tap **Yes**. Tapping **No** leaves the warning on. You can also change the same warning in **Settings** with **Warn when civilians have no work order on end turn**; that switch applies on the next end-turn confirm, without restarting the app.
-8. Empty research seats or funding set to **None** are **not** listed here: holding gold back from research is a normal choice. Review **Technology screen** only when you mean to. A funded research assignment you already set can appear under **Staged this turn**; unused seats still do not.
-9. Choose **Yes** to commit the displayed turn, or **No** to keep planning.
-10. After **Yes**, a **Processing Turn** screen appears. You cannot close it, tap the map, or tap **Next turn** until the turn finishes. The three-line button still opens **Game side menu**. **Game Paused** / **Pause menu panel** does not open until **Processing Turn** closes.
-11. The turn may pause when diplomacy needs your answer. Give that answer on **Overture dialogue**, **Pending intervention overlay**, or **Call to arms dialogue overlay** before the rest of the turn can continue.
+1. On **Game screen**, finish the decrees you mean to give this turn.
+2. Glance at the tab bar beside treasury and cargo: a **labour** readout (`effective/full capacity`) shows how much worker labour you will have this turn after everyone eats, using the same forecast as **Production screen**. If you have not trained any workers yet, that readout still shows `0/0` so the place stays put. Tap it for the labour line, any shortage reason (or “no workers trained yet”), and whether your armies or fleets will be underfed. Warm accent means reduced labour; red means no labour or underfed forces. This is a quiet glance, not a block on **Next turn**.
+3. Tap **Next turn** in the top bar.
+4. **Next turn confirmation** opens. The title is **End turn?** or **Proceed to next turn?** The body says **Turn {N} will end. Continue?**
+5. If you already staged decrees this turn, the dialog shows **Staged this turn** with a short count by kind (army moves, trade, and so on). If you gave none, that list is simply absent — the court does not scold you for a quiet turn.
+6. Tap **Review decrees** to read each staged line in ordinary words. A locate button beside each kind opens that panel or screen and closes the dialog **without** ending the turn, so you can still change your mind. **Yes** stays available while you read.
+7. Five working civilians can do assigned tasks: Explorer, Builder, Engineer, Merchant, and Rail Builder. If any of yours have **no work order** for the next turn, the dialog may list them under **These civilians have no work order for the next turn:**. Each row shows type, location, **No work order**, and a go-to button.
+8. Tap go-to on a listed civilian to leave without ending the turn. The map finds that person and opens **Civilian units panel**. A **Spy** is a civilian posted in a foreign court or at home; Spies are **not** listed here — foreign station, home counter-spy, and capital reserve are deliberate posts, not wasted capacity.
+9. To stop seeing that no-work-order list, turn on **Don't show this warning again** and then tap **Yes**. Tapping **No** leaves the warning on. You can also change the same warning in **Settings** with **Warn when civilians have no work order on end turn**; that switch applies on the next end-turn confirm, without restarting the app.
+10. Empty research seats or funding set to **None** are **not** listed here: holding gold back from research is a normal choice. Review **Technology screen** only when you mean to. A funded research assignment you already set can appear under **Staged this turn**; unused seats still do not.
+11. Choose **Yes** to commit the displayed turn, or **No** to keep planning.
+12. After **Yes**, a **Processing Turn** screen appears. You cannot close it, tap the map, or tap **Next turn** until the turn finishes. The three-line button still opens **Game side menu**. **Game Paused** / **Pause menu panel** does not open until **Processing Turn** closes.
+13. The turn may pause when diplomacy needs your answer. Give that answer on **Overture dialogue**, **Pending intervention overlay**, or **Call to arms dialogue overlay** before the rest of the turn can continue.
 
 ### What happens after Next turn
 
@@ -55,7 +57,7 @@ The pulses wait until **Victory overlay** is gone; closing the newspaper while i
 
 ### The newspaper feed
 
-On **Empire overview / map area**, the newspaper button sits on the map bar after treasury and cargo. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide **Player turn event feed** without leaving **Game screen**.
+On **Empire overview / map area**, the newspaper button sits on the map bar after treasury, cargo, the labour readout, and the Old World race chip. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide **Player turn event feed** without leaving **Game screen**.
 
 Use the feed with turn news: the dialog is the formal summary; the feed keeps relevant lines on the map while you inspect. It replaces its entries each completed turn.
 

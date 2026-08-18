@@ -4,7 +4,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 import '../../../../widgets/ct_action_text_button.dart';
-import 'commodity_ui_helpers.dart';
+import 'labour_readiness_labels.dart';
 import 'production_available_grid.dart';
 
 /// Labour readiness summary + optional details for Production Available panel.
@@ -81,19 +81,7 @@ class _ProductionLabourReadinessSummaryState
     AppLocalizations l10n,
     LabourReadinessSnapshot snapshot,
   ) {
-    return switch (snapshot.primaryCauseKind) {
-      LabourReadinessCauseKind.food =>
-        snapshot.militaryOrNavyConsumesFoodBeforeWorkers
-            ? l10n.production_labourReasonFoodWithMilitary
-            : l10n.production_labourReasonFood,
-      LabourReadinessCauseKind.luxury => l10n.production_labourReasonLuxury(
-        commodityDisplayName(
-          l10n,
-          snapshot.primaryLuxuryCommodityId ?? '',
-        ),
-      ),
-      null => '',
-    };
+    return labourReadinessPrimaryReasonText(l10n, snapshot);
   }
 
   List<Widget> _buildDetailRows(
