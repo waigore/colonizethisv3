@@ -992,28 +992,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
 
   @override
   String get techEffectSummary_hat_production_1 => 'Unlocks: Master Artisans';
-
-  @override
-  String get techEffectSummary_heavy_artillery_0 =>
-      'Improves: Royal Artillery regiment upgrade path';
-
-  @override
-  String get techEffectSummary_heavy_artillery_1 =>
-      'Prerequisite for: High Grade Steel and Emplaced Siege Guns';
-
-  @override
-  String get techEffectSummary_heavy_emplaced_artillery_0 =>
-      'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)';
-
-  @override
-  String get techEffectSummary_heavy_emplaced_artillery_1 =>
-      'Prerequisite for: Emplaced Siege Guns';
-
-  @override
-  String get techEffectSummary_high_grade_steel_0 =>
-      'Improves: Heavy Artillery regiment upgrade path';
-
-  @override
-  String get techEffectSummary_horse_artillery_0 =>
-      'Prerequisite for: Light Artillery Tactics';
 }
