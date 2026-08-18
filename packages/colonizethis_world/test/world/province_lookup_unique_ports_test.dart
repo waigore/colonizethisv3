@@ -1,9 +1,9 @@
 // Unique province-lookup contracts ported from logic orphan (Refs #4090 Slice B).
 // ignore_for_file: deprecated_member_use
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 void main() {
   final world = WorldState(

@@ -83,10 +83,7 @@ import 'check_logic_work_target_switch.dart';
 import 'check_logic_test_file_size.dart';
 import 'check_logic_domain_import_dag.dart';
 import 'check_logic_source_file_size.dart';
-import 'check_world_no_logic_deps.dart';
 import 'check_logic_no_map_deps.dart';
-import 'check_world_no_circular_imports.dart';
-import 'check_world_no_duplicate_extension_helper.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
 import 'check_domain_package_logger_dedup.dart';
@@ -111,6 +108,7 @@ import 'check_workspace_outdated_latest_direct.dart';
 import 'check_workspace_outdated_resolvable.dart';
 import 'ct_repo_lint_map_dispatch.dart';
 import 'ct_repo_lint_process_io.dart';
+import 'ct_repo_lint_world_dispatch.dart';
 import 'ct_repo_lint_scan_contract.dart';
 
 /// One entry from [tool/ct_repo_lint_manifest.yaml].
@@ -817,6 +815,14 @@ int? _tryRunDartRuleInProcess({
     return setupResult;
   }
 
+  final int? worldResult = tryRunWorldRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (worldResult != null) {
+    return worldResult;
+  }
+
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
@@ -862,14 +868,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckFunctionSize(repoRoot);
     case 'repo.debug_handler_one_per_file':
       return runCheckDebugHandlerOnePerFile(repoRoot);
-    case 'repo.world_no_logic_deps':
-      return runCheckWorldNoLogicDeps(repoRoot);
     case 'repo.logic_no_map_deps':
       return runCheckLogicNoMapDeps(repoRoot);
-    case 'repo.world_no_circular_imports':
-      return runCheckWorldNoCircularImports(repoRoot);
-    case 'repo.world_no_duplicate_extension_helper':
-      return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,

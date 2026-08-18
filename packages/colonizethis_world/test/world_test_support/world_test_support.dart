@@ -1,6 +1,8 @@
 export 'army_movement_test_support.dart';
 export 'capital_builders.dart';
 export 'connectivity_builders.dart';
+export 'connectivity_inland_port_builders.dart';
+export 'connectivity_port_blockade_builders.dart';
 export 'fog_builders.dart';
 export 'military_builders.dart';
 export 'naval_coastal_visibility_test_support.dart';

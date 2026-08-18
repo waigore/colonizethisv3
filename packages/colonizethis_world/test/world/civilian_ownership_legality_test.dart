@@ -1,9 +1,8 @@
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show kWorkTargetBuildRoad;
 import 'package:colonizethis_world/src/world/civilian_ownership_legality.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildRoad;
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 

@@ -8,7 +8,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/fog_resolution.dart';
 import 'turn_resolution_seeds.dart';
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
@@ -74,9 +73,7 @@ Game runEndOfTurnPhase(
         .updateWorldState(
           (ws) => ws
               .updateTurnState((ts) => ts.copyWith(phase: TurnPhase.orders))
-              .copyWith(
-                playerVisibilityByTile: nextVisibility,
-              ),
+              .copyWith(playerVisibilityByTile: nextVisibility),
         );
     return _applyAiFirstContact(halted, topology);
   }
@@ -90,9 +87,7 @@ Game runEndOfTurnPhase(
                 phase: TurnPhase.orders,
               ),
             )
-            .copyWith(
-              playerVisibilityByTile: nextVisibility,
-            ),
+            .copyWith(playerVisibilityByTile: nextVisibility),
       )
       // Per-turn `/set_diplomacy` debug-mutation quota resets on turn advance.
       // SPEC/ui/debug-console-panel.md.

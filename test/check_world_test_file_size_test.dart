@@ -13,13 +13,15 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckWorldTestFileSize', () {
-    test('passes on current repo tree under wave-6 ceiling', () {
-      expect(worldTestFileSizeCeiling, 320);
+    test('passes on current repo tree under wave-7 ceiling', () {
+      expect(worldTestFileSizeCeiling, 300);
       expect(runCheckWorldTestFileSize('.'), 0);
     });
 
     test('ignores world_test_support paths', () {
-      final root = Directory.systemTemp.createTempSync('world_test_size_support');
+      final root = Directory.systemTemp.createTempSync(
+        'world_test_size_support',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,
