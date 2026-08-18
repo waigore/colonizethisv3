@@ -26,7 +26,10 @@ Contract:
   `orders/feedstock_extraction_targets.dart`) are published on the
   `colonizethis_orders` barrel; `ai_api.dart` and `industry_counsel_api.dart`
   consume them through `package:colonizethis_orders/colonizethis_orders.dart`
-  `show` lists. Counsel ranking/types/emission/core-snapshot files listed in
+  `show` lists. `feedstock_common.dart` stays unpublished and must not be
+  re-exported by the published extraction-targets file, or
+  `regimentCountForPlayer` collides with the AI planner helper of the same
+  name. Counsel ranking/types/emission/core-snapshot files listed in
   issue #4508 are likewise published on the orders barrel for
   `industry_counsel_api.dart`. No justified deep `colonizethis_orders` exports
   remain on `ai_api.dart` as of this slice.
