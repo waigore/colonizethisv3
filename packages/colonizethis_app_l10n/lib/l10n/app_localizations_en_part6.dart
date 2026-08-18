@@ -302,6 +302,14 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'A fleet must be at sea beside this coast. Fleets in port cannot take missions.';
 
   @override
+  String get provinceOverlay_underBlockade =>
+      'Under blockade — this port is cut off from its capital; goods here will not reach warehouses.';
+
+  @override
+  String get provinceOverlay_underBlockadeCapital =>
+      'Under blockade — capital port severed; sea-only and overseas links are cut while land roads remain.';
+
+  @override
   String get provinceOverlay_detachAndSailAction => 'Detach and sail';
 
   @override

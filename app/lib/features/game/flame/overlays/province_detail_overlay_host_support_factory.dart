@@ -85,10 +85,10 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         topology: mapData?.combinedTopology,
         currentOrders: draftOrders,
       );
-  final consulateOwnerId = establishConsulateState.ownerId;
-  final establishConsulateTargetName = consulateOwnerId == null
-      ? ''
-      : (game.factionDisplayNameById(consulateOwnerId) ?? consulateOwnerId);
+  final establishConsulateTargetName = resolveProvinceDetailFactionDisplayName(
+    game,
+    establishConsulateState.ownerId,
+  );
   final isSeaZone = isProvinceSeaZoneOverlaySeaZone(region, displayId);
   final offerPeaceState =
       GameMapAreaStateLogicProvinceActions.provinceOfferPeaceActionState(
@@ -99,10 +99,10 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         currentOrders: draftOrders,
         isSeaZone: isSeaZone,
       );
-  final offerPeaceOwnerId = offerPeaceState.ownerId;
-  final offerPeaceTargetName = offerPeaceOwnerId == null
-      ? ''
-      : (game.factionDisplayNameById(offerPeaceOwnerId) ?? offerPeaceOwnerId);
+  final offerPeaceTargetName = resolveProvinceDetailFactionDisplayName(
+    game,
+    offerPeaceState.ownerId,
+  );
 
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
@@ -245,6 +245,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onInvadeArmyTap: armyMove.onInvadeTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
+    blockadeStatus: navalMission.blockadeStatus,
     stationSpy: stationSpy,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,
