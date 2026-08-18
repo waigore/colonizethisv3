@@ -928,10 +928,17 @@ rules:
 
   - rule_id: repo.colonizethis_world_test_file_size
     group: testing
-    title: colonizethis_world non-support test files must stay at or below the wave-6 320 physical-line ceiling (Refs #4330)
+    title: colonizethis_world non-support test files must stay at or below the wave-7 300 physical-line ceiling (Refs #4515)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_test_file_size.dart
+
+  - rule_id: repo.world_test_support_file_size
+    group: testing
+    title: colonizethis_world test/world_test_support files must stay at or below 280 physical lines (Refs #4515)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_test_support_file_size.dart
 
   - rule_id: repo.world_test_mirrors_lib
     group: testing

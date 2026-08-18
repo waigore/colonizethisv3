@@ -1,6 +1,5 @@
 import 'package:colonizethis_test/test.dart';
 
-import '../world_test_support/connectivity_builders.dart';
 import '../world_test_support/world_test_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -68,10 +67,7 @@ void main() {
           blockaded['pl1']!.connected.contains('oldWorld|p2|1|0'),
           isFalse,
         );
-        expect(
-          blockaded['pl1']!.connected.contains('oldWorld|p1|0|0'),
-          isTrue,
-        );
+        expect(blockaded['pl1']!.connected.contains('oldWorld|p1|0|0'), isTrue);
       },
     );
   });
