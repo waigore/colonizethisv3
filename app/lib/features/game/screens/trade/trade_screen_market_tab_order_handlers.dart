@@ -3,59 +3,22 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
-    show Orders, TradeOrder, TradeOrderType, removeTradeOrderForPlayer, tradeOrderForPlayerCommodity, applyTradeOrderForPlayer;
+    show
+        Orders,
+        TradeOrder,
+        TradeOrderType,
+        removeTradeOrderForPlayer,
+        tradeOrderForPlayerCommodity,
+        applyTradeOrderForPlayer;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../providers/games_provider.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_tab.dart';
+import 'trade_screen_market_tab_bid_totals.dart';
 
-/// Returns the sum of `TradeOrder.quantity` across all staged
-/// `TradeOrderType.bid` orders for [playerId] in [orders]. Offers do
-/// not consume cargo (per `#2988` § Cargo Constraint Model) and are
-/// excluded from the sum.
-int totalStagedBidQuantity(Orders orders, String playerId) {
-  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[playerId];
-  if (list == null || list.isEmpty) return 0;
-  int total = 0;
-  for (final TradeOrder o in list) {
-    if (o.type == TradeOrderType.bid) total += o.quantity;
-  }
-  return total;
-}
-
-/// Returns the count of distinct commodities with a staged
-/// `TradeOrderType.bid` for [playerId] (Refs #4170). Offers are
-/// excluded; repeat bids on the same commodity count once.
-int stagedDistinctBidCommodityCount(Orders orders, String playerId) {
-  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[playerId];
-  if (list == null || list.isEmpty) return 0;
-  final Set<CommodityId> distinct = <CommodityId>{};
-  for (final TradeOrder o in list) {
-    if (o.type == TradeOrderType.bid) distinct.add(o.commodityId);
-  }
-  return distinct.length;
-}
-
-/// True when the player may stage (or re-stage) a `Bid` on
-/// [commodityId] without exceeding `worldMarketBidTypeCap` (Refs
-/// #4170). Replacing an existing bid on the same commodity never
-/// consumes an additional slot.
-bool canStageBidOnCommodity({
-  required Orders orders,
-  required String playerId,
-  required CommodityId commodityId,
-  required int bidTypeCap,
-}) {
-  final TradeOrder? prior = tradeOrderForPlayerCommodity(
-    orders,
-    playerId,
-    commodityId,
-  );
-  if (prior?.type == TradeOrderType.bid) return true;
-  return stagedDistinctBidCommodityCount(orders, playerId) < bidTypeCap;
-}
+export 'trade_screen_market_tab_bid_totals.dart';
 
 extension MarketTabContentDirectionHandlers on MarketTabContent {
   void handleDirectionChanged({
@@ -103,11 +66,11 @@ extension MarketTabContentDirectionHandlers on MarketTabContent {
       // tradeCargoCapacity. The row's own prior bid contribution (if
       // any) is added back because it is already included in the
       // running total and will be replaced by `applyTradeOrderForPlayer`.
-      final int tradeCargoCapacity =
-          cargoHoldsForHomeFleet(game, playerId);
+      final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
       final int totalStagedBid = totalStagedBidQuantity(orders, playerId);
-      final int priorBidContribution =
-          prior?.type == TradeOrderType.bid ? prior!.quantity : 0;
+      final int priorBidContribution = prior?.type == TradeOrderType.bid
+          ? prior!.quantity
+          : 0;
       final int maxAllowedBidQuantity =
           (tradeCargoCapacity - totalStagedBid) + priorBidContribution;
       if (maxAllowedBidQuantity <= 0) {
@@ -181,11 +144,12 @@ extension MarketTabContentDirectionHandlers on MarketTabContent {
       // is the only staged offer for the commodity, so the cap is
       // applied directly to the row's quantity without subtracting
       // sibling offers.
-      final int rowCap = offerCapByCommodityId(
-        game: game,
-        playerId: playerId,
-        productionInputConsumptionByCommodityId: productionInputConsumption,
-      )[commodityId] ??
+      final int rowCap =
+          offerCapByCommodityId(
+            game: game,
+            playerId: playerId,
+            productionInputConsumptionByCommodityId: productionInputConsumption,
+          )[commodityId] ??
           0;
       if (rowCap <= 0) {
         // Stockpile exhausted — refuse the toggle so the row stays in
@@ -234,8 +198,7 @@ extension MarketTabContentQuantityHandlers on MarketTabContent {
       // bid budget is exhausted. The row's own current quantity is
       // already part of `totalStagedBid` — we only need any unused
       // headroom to grow it by `delta`.
-      final int tradeCargoCapacity =
-          cargoHoldsForHomeFleet(game, playerId);
+      final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
       final int totalStagedBid = totalStagedBidQuantity(orders, playerId);
       if (totalStagedBid + delta > tradeCargoCapacity) return;
       // Refs #3093 — treasury bid budget cap. Block the `+` tap when
@@ -281,11 +244,12 @@ extension MarketTabContentQuantityHandlers on MarketTabContent {
       // Mutual exclusion guarantees the row is the only staged offer
       // for the commodity, so the cap is applied directly to
       // `prior.quantity + delta`.
-      final int rowCap = offerCapByCommodityId(
-        game: game,
-        playerId: playerId,
-        productionInputConsumptionByCommodityId: productionInputConsumption,
-      )[commodityId] ??
+      final int rowCap =
+          offerCapByCommodityId(
+            game: game,
+            playerId: playerId,
+            productionInputConsumptionByCommodityId: productionInputConsumption,
+          )[commodityId] ??
           0;
       if (prior.quantity + delta > rowCap) return;
     }

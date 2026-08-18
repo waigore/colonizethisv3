@@ -63,6 +63,7 @@ void main() {
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
       expect(ids, contains('repo.app_core_services_file_size'));
+      expect(ids, contains('repo.app_turn_resolution_file_size'));
       expect(ids, contains('repo.app_test_no_duplicate_shortcut_fixtures'));
       expect(ids, contains('repo.logic_test_file_size'));
       expect(ids, contains('repo.logic_domain_import_dag'));
@@ -104,6 +105,12 @@ void main() {
             .firstWhere((r) => r.ruleId == 'repo.app_core_services_file_size')
             .spec,
         'SPEC/program/app-core-services-file-size.md',
+      );
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.app_turn_resolution_file_size')
+            .spec,
+        'SPEC/program/app-turn-resolution-file-size.md',
       );
       expect(
         rules.firstWhere((r) => r.ruleId == 'repo.logic_test_file_size').spec,

@@ -1182,6 +1182,14 @@ rules:
     script: tool/check_app_core_services_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.app_turn_resolution_file_size
+    group: structure
+    title: app/lib/features/game/turn_resolution files must stay at or below 300 physical lines (Refs #4512)
+    spec: SPEC/program/app-turn-resolution-file-size.md
+    runner: dart
+    script: tool/check_app_turn_resolution_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.logic_diplomatic_sub_validator_size
     group: architecture
     title: colonizethis_logic diplomatic sub-validators are factory functions, not bespoke `implements DiplomaticSubValidator` classes (Refs #2560)
