@@ -711,4 +711,32 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   ) {
     return 'Cannot upgrade town: $shortfall';
   }
+
+  @override
+  String get technologyPanel_finishCompletesNextTurn => 'Completes next turn';
+
+  @override
+  String technologyPanel_finishCompletesNextTurnWithYear(int year) {
+    return 'Completes next turn ($year)';
+  }
+
+  @override
+  String technologyPanel_finishInTurns(int turns) {
+    return 'Finishes in $turns turns';
+  }
+
+  @override
+  String technologyPanel_finishInTurnsWithYear(int turns, int year) {
+    return 'Finishes in $turns turns ($year)';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownRemaining(int rp) {
+    return 'Remaining: $rp RP';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownTurns(int turns) {
+    return 'About $turns more turns at this funding';
+  }
 }

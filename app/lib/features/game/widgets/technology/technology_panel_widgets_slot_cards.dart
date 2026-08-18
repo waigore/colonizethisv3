@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import 'research_slot_finish_estimate.dart';
 import 'research_slot_preview.dart';
 import 'technology_panel_slot_card_chrome.dart';
 import 'technology_panel_widgets_slot_cards_body.dart';
@@ -23,6 +24,7 @@ class ResearchSlotCard extends StatelessWidget {
     this.funding = ResearchFundingLevel.medium,
     this.onFundingChanged,
     this.turnPreview,
+    this.finishCalendar,
   });
 
   final int slotIndex;
@@ -35,6 +37,7 @@ class ResearchSlotCard extends StatelessWidget {
   final ResearchFundingLevel funding;
   final ValueChanged<ResearchFundingLevel>? onFundingChanged;
   final ResearchSlotTurnPreview? turnPreview;
+  final ResearchFinishCalendar? finishCalendar;
 
   bool get _hasTech => techId != null;
 
@@ -64,6 +67,7 @@ class ResearchSlotCard extends StatelessWidget {
               funding: funding,
               onFundingChanged: onFundingChanged,
               turnPreview: turnPreview,
+              finishCalendar: finishCalendar,
             ),
         ],
       ),
