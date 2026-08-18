@@ -3,13 +3,14 @@
 // overlay stories (Refs #4413).
 part of 'catalog.dart';
 
-/// MAP20001 Naval **Blockade** / **Beachhead** use cases. Refs #4413.
+/// MAP20001 Naval **Blockade** / **Beachhead** use cases. Refs #4413, #4516.
 List<WidgetbookUseCase> get provinceOverlayNavalMissionUseCases => [
   WidgetbookUseCase(
     name: 'Standalone — Naval Blockade enabled',
     builder: (context) => _provinceOverlayNavalMissionStory(
       showBlockade: true,
       blockadeEnabled: true,
+      blockadeTooltip: AppLocalizationsEn().naval_mission_effect_blockade,
     ),
   ),
   WidgetbookUseCase(
@@ -52,12 +53,25 @@ List<WidgetbookUseCase> get provinceOverlayNavalMissionUseCases => [
       blockadeEnabled: true,
       showBeachhead: true,
       beachheadEnabled: true,
+      blockadeTooltip: AppLocalizationsEn().naval_mission_effect_blockade,
       width: 320,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval Under blockade',
+    builder: (context) => _provinceOverlayNavalMissionStory(
+      blockadeStatus: ProvinceBlockadeStatus.portBlockaded,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval Under blockade capital',
+    builder: (context) => _provinceOverlayNavalMissionStory(
+      blockadeStatus: ProvinceBlockadeStatus.capitalBlockaded,
     ),
   ),
 ];
 
-/// MAP20001 Naval **Blockade** / **Beachhead** variants. Refs #4413.
+/// MAP20001 Naval **Blockade** / **Beachhead** variants. Refs #4413, #4516.
 Widget _provinceOverlayNavalMissionStory({
   bool showBlockade = false,
   bool blockadeEnabled = false,
@@ -65,6 +79,7 @@ Widget _provinceOverlayNavalMissionStory({
   bool beachheadEnabled = false,
   String blockadeTooltip = 'Blockade',
   String beachheadTooltip = 'Beachhead',
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
   double width = 640,
 }) {
   final game = demoGameForOverlay;
@@ -90,6 +105,7 @@ Widget _provinceOverlayNavalMissionStory({
         beachheadTooltip: beachheadTooltip,
         onBeachheadTap: () {},
       ),
+      blockadeStatus: blockadeStatus,
       onClose: () {},
     ),
   );

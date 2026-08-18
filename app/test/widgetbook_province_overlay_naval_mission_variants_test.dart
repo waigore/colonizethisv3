@@ -29,6 +29,8 @@ void main() {
       'Standalone — Naval Beachhead disabled',
       'Standalone — Naval Beachhead hidden',
       'Standalone — Naval Blockade/Beachhead 320 dp',
+      'Standalone — Naval Under blockade',
+      'Standalone — Naval Under blockade capital',
     ]) {
       testWidgets('$useCaseName is wired into provinceOverlayDirectories', (
         WidgetTester tester,
@@ -64,6 +66,23 @@ void main() {
       );
       expect(action.enabled, isTrue);
       expect(action.onPressed, isNotNull);
+    });
+
+    testWidgets('Under blockade story shows owned-port status copy', (
+      tester,
+    ) async {
+      final useCase = findWidgetbookUseCase(
+        provinceOverlayDirectories,
+        folderName: folderName,
+        useCaseName: 'Standalone — Naval Under blockade',
+      );
+      await pumpWidgetbookUseCaseAtSize(
+        tester,
+        useCase,
+        size: const Size(800, 640),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.provinceOverlay_underBlockade), findsOneWidget);
     });
 
     testWidgets('hidden Beachhead story has no Beachhead control', (

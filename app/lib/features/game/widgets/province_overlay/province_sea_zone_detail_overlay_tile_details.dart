@@ -1,6 +1,8 @@
 /// On-request Tile teaching helper for MAP20001 (Refs #4369).
 library;
 
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_build_port.dart';
@@ -21,9 +23,7 @@ const Key kProvinceTileDetailsPanelKey = Key('province_tile_details_panel');
 const Key kProvinceTileDetailsActionKey = Key('province_tile_details_action');
 
 /// Transport / connectivity text cluster that opens Tile details.
-const Key kProvinceTileDetailsClusterKey = Key(
-  'province_tile_details_cluster',
-);
+const Key kProvinceTileDetailsClusterKey = Key('province_tile_details_cluster');
 
 String tileCapitalLinkLine(
   AppLocalizations l10n,
@@ -37,6 +37,17 @@ String tileCapitalLinkLine(
     return l10n.provinceOverlay_tileCapitalLinkConnected;
   }
   return l10n.provinceOverlay_tileCapitalLinkNotConnected;
+}
+
+/// Tile-details cause when an owned disconnected tile is cut by blockade.
+String? tileBlockadeCapitalLinkCauseLine({
+  required AppLocalizations l10n,
+  required ProvinceTileConnectivityDisplay display,
+  required ProvinceBlockadeStatus blockadeStatus,
+}) {
+  if (display.capitalConnected) return null;
+  if (blockadeStatus == ProvinceBlockadeStatus.none) return null;
+  return l10n.provinceOverlay_tileCapitalLinkCutByBlockade;
 }
 
 /// Whether default Tile should show the stranded capital-link exception.
@@ -91,6 +102,7 @@ List<String> provinceTileDetailsLines({
   required String provinceId,
   required int? roadLevel,
   required ProvinceTileConnectivityDisplay? tileConnectivity,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   final lines = <String>[];
   if (roadLevel != null) {
@@ -104,9 +116,9 @@ List<String> provinceTileDetailsLines({
   if (showPortStatus) {
     final portPresent =
         GameMapAreaProvinceActionStatesBuildPort.provinceHasAnyPort(
-      game: game,
-      prefixedProvinceId: provinceId,
-    );
+          game: game,
+          prefixedProvinceId: provinceId,
+        );
     lines.add(
       portPresent
           ? l10n.provinceOverlay_tilePortStatusPresent
@@ -115,6 +127,14 @@ List<String> provinceTileDetailsLines({
   }
   if (tileConnectivity != null) {
     lines.add(tileCapitalLinkLine(l10n, tileConnectivity));
+    final blockadeCause = tileBlockadeCapitalLinkCauseLine(
+      l10n: l10n,
+      display: tileConnectivity,
+      blockadeStatus: blockadeStatus,
+    );
+    if (blockadeCause != null) {
+      lines.add(blockadeCause);
+    }
     if (showTileDetailsExtractionRow(tileConnectivity)) {
       lines.add(
         l10n.provinceOverlay_tileExtractionFromTile(
@@ -136,6 +156,7 @@ Future<void> showProvinceTileDetailsDialog({
   required String provinceId,
   required int? roadLevel,
   required ProvinceTileConnectivityDisplay? tileConnectivity,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   final lines = provinceTileDetailsLines(
     l10n: l10n,
@@ -144,14 +165,12 @@ Future<void> showProvinceTileDetailsDialog({
     provinceId: provinceId,
     roadLevel: roadLevel,
     tileConnectivity: tileConnectivity,
+    blockadeStatus: blockadeStatus,
   );
   return showDialog<void>(
     context: context,
     barrierColor: EditorialMonoclePalette.dialogScrim,
-    builder: (ctx) => ProvinceTileDetailsDialog(
-      l10n: l10n,
-      lines: lines,
-    ),
+    builder: (ctx) => ProvinceTileDetailsDialog(l10n: l10n, lines: lines),
   );
 }
 
@@ -196,15 +215,13 @@ class _ProvinceTileDetailsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-      color: EditorialMonoclePalette.fg,
-      height: 1.35,
-    );
+    final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.fg, height: 1.35);
     final captionStyle =
         (theme.textTheme.labelSmall ?? const TextStyle(fontSize: 11)).copyWith(
-      color: EditorialMonoclePalette.muted,
-      height: 1.25,
-    );
+          color: EditorialMonoclePalette.muted,
+          height: 1.25,
+        );
     return ConstrainedBox(
       key: kProvinceTileDetailsPanelKey,
       constraints: const BoxConstraints(maxHeight: 360),
@@ -232,8 +249,10 @@ class _ProvinceTileDetailsPanel extends StatelessWidget {
                       ),
                       child: Text(
                         lines[i],
-                        style: i == 0 ||
-                                lines[i] == l10n.provinceOverlay_tileRoadRailGloss
+                        style:
+                            i == 0 ||
+                                lines[i] ==
+                                    l10n.provinceOverlay_tileRoadRailGloss
                             ? captionStyle
                             : bodyStyle,
                       ),

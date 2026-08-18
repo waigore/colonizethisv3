@@ -80,10 +80,11 @@ Folder `Naval Mission Target Dialog`:
 
 | Use case | Proves |
 |----------|--------|
-| Default — blockade target | Blockade mission; caption; harbor intel or unknown; Confirm gated on selection. |
+| Default — blockade target | Blockade mission; caption names capital-link / warehouse cut; harbor intel or unknown; Confirm gated on selection (Refs #4516). |
 | Beachhead — coastal target caption | Beachhead mission; caption; military intel or unknown; Confirm gated on selection. |
 | Beachhead — full intel unopposed | Full military intel; unopposed + fort labels on rows. |
 | Blockade — full intel empty harbor | Full intel; empty-harbor (or equivalent) copy. |
+| Blockade — capital port extra line | Selected capital-port target; `naval_mission_blockade_capitalExtra` under the caption (Refs #4516). |
 
 ---
 
@@ -94,6 +95,7 @@ Folder `Naval Mission Target Dialog`:
 - **Given** `targetProvinceIds` is empty, **when** the dialog opens, **then** the UI layer shows `naval_mission_noTargetsAvailable` and Confirm is disabled.
 - **Given** the player opens the dialog for Beachhead with at least one legal target, **when** the dialog renders, **then** the UI layer shows `naval_mission_targetCaption_beachhead` under the title (Refs #4295).
 - **Given** the player opens the dialog for Blockade with at least one legal target, **when** the dialog renders, **then** the UI layer shows `naval_mission_targetCaption_blockade` under the title (Refs #4295).
+- **Given** the selected Blockade target is the owner's capital port, **when** `DLG31002` renders, **then** the UI layer shows `naval_mission_blockade_capitalExtra` under the caption (Refs #4516).
 - **Given** full military intel and two Beachhead targets (one unopposed, one with a stone fort and two combat-capable regiments), **when** `DLG31002` opens, **then** both rows show the province name and the matching unopposed / defender + siege labels — not raw unit or fort ids (Refs #4340).
 - **Given** fogged tiles for a Blockade target, **when** the row renders, **then** the UI layer shows harbor-unknown copy and no defender or in-port fleet counts (Refs #4340).
 - **Given** full intel and a Blockade target with a port and two hostile fleets in port, **when** the row renders, **then** the UI layer shows a short in-port summary (not a ship-type dump) (Refs #4340).

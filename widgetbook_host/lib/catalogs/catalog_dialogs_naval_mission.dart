@@ -133,6 +133,22 @@ _navalMissionTargetStoryFixture() {
   );
 }
 
+({Game game, MapTopology topology, Fleet fleet, List<String> targetProvinceIds})
+_navalMissionTargetCapitalStoryFixture() {
+  final base = _navalMissionTargetStoryFixture();
+  final targetId = base.targetProvinceIds.first;
+  final players = [
+    for (final player in base.game.players)
+      player.isHuman ? player : player.copyWith(capitalProvinceId: targetId),
+  ];
+  return (
+    game: base.game.copyWith(players: players),
+    topology: base.topology,
+    fleet: base.fleet,
+    targetProvinceIds: base.targetProvinceIds,
+  );
+}
+
 ({Game game, List<String> fleetIds}) _navalMissionFleetPickerStoryFixture() {
   const playerId = 'gp_naval_picker_story';
   final fleets = [
@@ -375,6 +391,33 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
                 },
                 // ignore: avoid_hardcoded_strings_in_widgets
                 child: const Text('Open Blockade Target (full intel)'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Blockade — capital port extra line',
+        builder: (context) {
+          final fixture = _navalMissionTargetCapitalStoryFixture();
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => NavalMissionTargetDialog(
+                      game: fixture.game,
+                      mission: FleetMission.blockade,
+                      fleet: fixture.fleet,
+                      targetProvinceIds: fixture.targetProvinceIds,
+                      humanPlayerId: fixture.fleet.ownerId,
+                      initialTargetProvinceId: fixture.targetProvinceIds.first,
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Blockade Target (capital port)'),
               );
             },
           );

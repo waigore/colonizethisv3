@@ -114,10 +114,12 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 3. Several eligible fleets open `DLG31003` first.
 4. If a fleet is at sea but not beside this coast, the controls stay visible and disabled until a fleet is at sea beside the coast — fleets in port cannot take missions. When the naval list shows `???`, these actions still appear if **Political** already names the owner.
 
+When you assign **Blockade**, the text you see first names the warehouse cut, not only catching ships. If the chosen target is their capital port, one extra line says links that only go by sea — including overseas — are cut while land roads remain. Once the blockade is in place, open `MAP20001` **Province sea-zone overlay** **Naval** on a port you own that is under blockade: it shows **Under blockade**. Opening **Tile details** on an owned tile that is not linked to the capital names the blockade as the cause.
+
 Map-marker and panel **Mission** still open `DLG31001` as usual.
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
-- **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port. Use the target-row harbor line to compare empty harbors against ports with fleets already docked.
+- **Blockade:** Remain in a sea zone next to the target enemy port. After **Next turn**, that port’s link to its capital is cut, so goods from that province do not reach their warehouses. If you blockade their capital port, links that only go by sea — including overseas — are cut; roads on land still reach inland. The mission also gives a stronger chance to intercept hostile fleets entering that sea, including ships leaving the blockaded port. The target list still shows whether the port is empty or has hostile fleets.
 - **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs. The target row helps you compare landing coasts; it does not mean the fleet captures the province this turn.
 - **Defend:** Remain in place without actively seeking combat. Defending fleets can still be attacked or drawn into combat by hostile patrols or blockades.
 
@@ -161,7 +163,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 - Moving a fleet into a sea zone can expose new coasts, but it also creates opportunities for patrols and blockades to intercept it.
 - Naval combat occurs only between opposing fleets at sea in the same sea zone. An interception can create combat when a patrol or blockade catches a mover; combat also follows when hostile fleets finish movement together.
 - Combat adds together ship firepower, range, armour, hull, and movement. Fleets may retreat only to an adjacent friendly or neutral sea zone free of hostile fleets; failure to retreat causes further losses.
-- Blockades are particularly dangerous to a port’s outbound fleet: ships safely docked do not fight, but can be caught when they leave port into the blockader’s sea zone.
+- Blockades do more than catch ships. They stop that port’s goods from reaching warehouses. A capital-port blockade also cuts links that only go by sea, including overseas; roads on land still work.
 - The Home Fleet cannot sail because it is the permanent capital-port fleet that supplies the realm’s transport and trade capacity. Ships must first be split into a separate sea-going fleet before they can move or take missions.
 - Overseas cargo is not guaranteed. Hostile fleets at war that patrol or blockade the relevant seas can cut delivered goods and endanger merchant hulls. Warships left in the Home Fleet reduce those losses. **Privateering Companies** makes an enemy’s raids stronger when they hold that technology.
 
@@ -173,7 +175,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 - [ ] Documents tapping a fleet marker: Home Fleet with ships → detach-then-sail (`DLG30001` for the new fleet), empty Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with **Sail / Move**, plus `UNIT30001` **Mission**, `MAP20001` **Naval** **Detach and sail** on the owned capital, and `MAP20001` **Naval** **Blockade** / **Beachhead** (skips the mission menu when the mission is already known; `DLG31003` when several fleets qualify). A fleet may move or take one mission, never both. Beachhead/Blockade target lines stay honest when you cannot see the coast. `DLG31003` rows show ship mix when several fleets share a marker.
 - [ ] Documents panel **Split** (**Split Fleet** / **Confirm Split**, then a separate **Move**) versus map **Detach a squadron** / **Detach and choose destination** (then `DLG30001`).
 - [ ] Documents **Combine**: two or more fleets in the same port or the same sea merge at once; ships join the Home Fleet when it is checked; empty non-Home fleets are removed.
-- [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing; Join Home Fleet via dock/transfer only (not the mission menu).
+- [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing; Blockade cuts the target port’s link to its capital (and sea-only overseas links when the target is a capital port); Join Home Fleet via dock/transfer only (not the mission menu).
 - [ ] Documents `DLG40001` **Transfer Ships to Home Fleet** as a button the player can tap, and records in player language that the screens do not all agree on when a transfer is allowed.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.
 - [ ] Explains Home-Fleet cargo capacity on the `MAP10001` crate `used/capacity` row, why the Home Fleet itself cannot sail, and that overseas cargo can be raided.
