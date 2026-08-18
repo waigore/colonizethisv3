@@ -6,35 +6,25 @@ export 'package:colonizethis_economy/colonizethis_economy.dart'
         TradeCounselBookResult,
         TradeCounselReasonKey,
         TradeCounselRecommendation;
-export 'package:colonizethis_orders/src/orders/development_counsel_ranking.dart'
-    show rankDevelopmentCounselRecommendations;
-export 'package:colonizethis_orders/src/orders/development_counsel_types.dart'
+export 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         DevelopmentCounselReasonKey,
         DevelopmentCounselRecommendation,
-        DevelopmentCounselRecommendationKind;
-export 'package:colonizethis_orders/src/orders/industry_counsel_core_snapshot.dart'
-    show
-        industryCounselCoreDesiredOutputByRecipe,
-        mergeIndustryCounselCoreDesiredOutput;
-export 'package:colonizethis_orders/src/orders/industry_counsel_ranking.dart'
-    show rankIndustryCounselRecommendations;
-export 'package:colonizethis_orders/src/orders/military_counsel_affordance.dart'
-    show militaryCounselGreedyAffordableBuildCount;
-export 'package:colonizethis_orders/src/orders/military_counsel_ranking.dart'
-    show rankMilitaryCounselRecommendations;
-export 'package:colonizethis_orders/src/orders/military_counsel_types.dart'
-    show
+        DevelopmentCounselRecommendationKind,
         MilitaryCounselBuildCostSnapshot,
         MilitaryCounselInvasionIntelLevel,
         MilitaryCounselInvasionIntelSummary,
         MilitaryCounselReasonKey,
         MilitaryCounselRecommendation,
-        MilitaryCounselRecommendationKind;
-export 'package:colonizethis_orders/src/orders/trade_counsel_emission.dart'
-    show emitTradeCounselBook, TradeCounselEmissionInput;
-export 'package:colonizethis_orders/src/orders/trade_counsel_ranking.dart'
-    show
+        MilitaryCounselRecommendationKind,
+        TradeCounselEmissionInput,
+        emitTradeCounselBook,
+        industryCounselCoreDesiredOutputByRecipe,
+        mergeIndustryCounselCoreDesiredOutput,
+        militaryCounselGreedyAffordableBuildCount,
+        rankDevelopmentCounselRecommendations,
+        rankIndustryCounselRecommendations,
+        rankMilitaryCounselRecommendations,
         rankTradeCounselRecommendations,
         tradeCounselHighlightsByCommodityId,
         tradeCounselStableIdForOrder;
@@ -45,8 +35,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show ExtractionTotals, TradeCounselBookResult;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_orders/src/orders/trade_counsel_ranking.dart'
-    as trade_counsel_ranking;
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show rankTradeCounselRecommendations;
 
 import 'package:colonizethis_turn/colonizethis_turn.dart'
     show pendingTreasuryCostsForTurn;
@@ -66,7 +56,7 @@ TradeCounselBookResult rankTradeCounselRecommendationsForHuman({
     playerId,
     currentOrders,
   );
-  return trade_counsel_ranking.rankTradeCounselRecommendations(
+  return rankTradeCounselRecommendations(
     game: game,
     playerId: playerId,
     productionAssignments: productionAssignments,
