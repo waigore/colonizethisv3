@@ -88,6 +88,7 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 
 - **Trigger:** Tap/click on any tech node (including locked) opens a **dialog** (or bottom sheet on narrow viewports) with a brief description, so players can see benefits and effects for locked techs too.
 - **Content:** Display name, era (I–IV), category label, RP cost, **prerequisites** (list of prerequisite tech display names), and **effect summary** (e.g. “Unlocks Halberdiers”, “Extraction cap +1 for Ore”, “Road level 2”, “Fourth research slot”). Prerequisites are listed clearly in the dialog.
+- **Finish-time (Tree-opened dialog only; Refs #4511):** When the open tech occupies a research seat that will apply RP next turn, the dialog shows the same muted **Completes next turn** / **Finishes in N turns** sentence as Slots (`researchFinishEstimate` / `researchFinishLineLabel`; key `techTreeFinishLine`), including optional year with campaign-cap suppression. Funding **None**, debt-blocked, sequential-blocked, and unseated techs omit the line. Choose-tech **Details** (`treeAssign == null`) never shows it. No funding toggles, dual-segment bar, gold row, or `+N RP` breakdown on Tree.
 - **Assignment (Tree-opened dialog only; Refs #4498):** When `onOrdersChanged != null` and the tech is **choosable** (in `researchableTechIds`, not unlocked, not already in another active seat per effective occupancy), show **Research this** if any active seat is empty (assigns lowest-index empty seat at Medium via `applyAssignTechToSlot`), or a **replace-seat** list when every active seat is occupied (confirm with the Slots Cancel forfeiture dialog when the replaced seat’s tech has progress `> 0`). After assign, pop the dialog; stay on Tree; node becomes **In progress** (orders + persisted seats count as in progress). When not choosable or observe-only, omit the assign control and show one plain-language reason (named prerequisites when locked; no raw tech ids). Choose-tech **Details** keeps the shared dialog without assignment.
 
 ## Data
@@ -118,17 +119,25 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 
 - **Given** Choose-tech **Details** opens the shared definition dialog from Slots, **when** that dialog renders, **then** it does not offer Tree assignment controls.
 
+- **Finish-time completes next turn (Refs #4511):** **Given** a Tree-opened dialog for a seated tech whose remaining RP `R > 0` and sequential preview `anticipatedRpPerTurn = A > 0` with `R ≤ A`, **when** the dialog renders, **then** the UI layer shows key `techTreeFinishLine` with the localized **Completes next turn** copy.
+
+- **Finish-time N-turn ceil (Refs #4511):** **Given** remaining RP `R > A > 0` on a Tree-opened seated tech, **when** the dialog renders, **then** the UI layer shows **Finishes in N turns** where `N = ceil(R / A)`.
+
+- **Finish-time omitted when not spending (Refs #4511):** **Given** funding **None**, a blocked seat (`A == 0`), or a tech that is not seated, **when** the Tree-opened dialog renders, **then** the UI layer renders no `techTreeFinishLine` widget.
+
+- **Finish-time omitted on Choose-tech Details (Refs #4511):** **Given** Choose-tech **Details** opens the shared dialog (`treeAssign == null`), **when** that dialog renders, **then** the UI layer renders no `techTreeFinishLine` widget.
+
 - **Given** the tech tree contains a chain A→B→C and a direct edge A→C (e.g. Apprentice Workers→University→Master Artisans with Master Artisans also requiring Apprentice Workers), **when** the tech tree is displayed, **then** A is in a column to the left of B, and B is in a column to the left of C, so that there is a gap between A and C with B occupying the column in between.
 
 ## Integration
 
 - **Source of truth:** [tech-tree.md](../game/tech-tree.md), [research-state.md](../game/research-state.md). Research resolution: [research-resolution.md](../program/research-resolution.md).
-- **Widgetbook:** Mid-game scenario (half researched, some in progress); plus Tree assignment variants: assignable Available node with an empty seat; all seats full (replace list); locked node reason; observe/read-only (no assign).
+- **Widgetbook:** Mid-game scenario (half researched, some in progress); plus Tree assignment variants: assignable Available node with an empty seat; all seats full (replace list); locked node reason; observe/read-only (no assign); **Tree dialog — in-progress finish line** (seated funded tech with remaining RP, treasury high enough to spend).
 - **App:** Technology entry opens full-screen with tabs (e.g. “Slots”, “Tree”). Tree tab hosts this widget and passes `currentOrders` / `onOrdersChanged` when `canMutateViaUi`. Cross-link: [technology-panel.md](technology-panel.md) (Slots Choose-tech remains the list assigner; Tree is a second entry). Register in widget catalog.
 
 ## Out of scope
 
-- Funding toggles, Cancel, and turn-preview chrome on the Tree (Slots only).
+- Funding toggles, Cancel, dual-segment bar, gold row, and `+N RP` breakdown on the Tree (Slots only). The seated-tech finish-time sentence (Refs #4511) is in scope on the Tree dialog.
 - Zoom or pan of the graph (scroll only).
 - Filtering by category (one graph, colour only).
 - End-turn unused-research nags (**UXD-001**).
