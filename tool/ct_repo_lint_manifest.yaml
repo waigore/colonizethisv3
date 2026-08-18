@@ -1673,7 +1673,7 @@ rules:
 
   - rule_id: repo.orders_lib_source_file_size
     group: structure
-    title: colonizethis_orders lib files must stay at or below the wave-5 400 physical-line ceiling (Refs #4109)
+    title: colonizethis_orders lib files must stay at or below the wave-9 300 physical-line ceiling (Refs #4508)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_lib_source_file_size.dart
