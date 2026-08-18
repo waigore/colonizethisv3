@@ -172,6 +172,10 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
+  String get mapControls_labourFeeding_details_emptyPool =>
+      'No workers trained yet';
+
+  @override
   String get mapControls_playersBarToggle => 'Players bar';
 
   @override

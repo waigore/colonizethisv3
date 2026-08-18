@@ -48,8 +48,7 @@ Future<void> _pumpLabourIndicatorGolden(
     boundaryKey: boundaryKey,
     physicalSize: _indicatorViewport,
     includeLocalizations: true,
-    scaffoldBackgroundColor:
-        AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
     center: false,
     child: DecoratedBox(
       decoration: BoxDecoration(
@@ -78,109 +77,144 @@ Future<void> _pumpLabourIndicatorGolden(
 void main() {
   suppressLogsForTests();
 
-  testWidgets(
-    'golden: labour full capacity muted tier (Refs #4506)',
-    (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('labour_feeding_indicator_full_golden');
-      await _pumpLabourIndicatorGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        labourReadiness: const LabourReadinessSnapshot(
-          effectiveLabour: 20,
-          fullCapacity: 20,
-          tierStatuses: [],
-        ),
-        forcesFeeding: const ForceFeedingSnapshot(
-          totalRegiments: 0,
-          fullyFedRegiments: 0,
-          totalShips: 0,
-          fullyFedShips: 0,
-          landCombatTier: ForceFeedingCombatTier.full,
-          navalCombatTier: ForceFeedingCombatTier.full,
-          forcesFoodDemand: 0,
-        ),
-        label: '20/20',
-      );
+  testWidgets('golden: labour full capacity muted tier (Refs #4506)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'labour_feeding_indicator_full_golden',
+    );
+    await _pumpLabourIndicatorGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      labourReadiness: const LabourReadinessSnapshot(
+        effectiveLabour: 20,
+        fullCapacity: 20,
+        tierStatuses: [],
+      ),
+      forcesFeeding: const ForceFeedingSnapshot(
+        totalRegiments: 0,
+        fullyFedRegiments: 0,
+        totalShips: 0,
+        fullyFedShips: 0,
+        landCombatTier: ForceFeedingCombatTier.full,
+        navalCombatTier: ForceFeedingCombatTier.full,
+        forcesFoodDemand: 0,
+      ),
+      label: '20/20',
+    );
 
-      expect(tester.takeException(), isNull);
-      expect(find.text('20/20'), findsOneWidget);
-      expectEditorialMonocleDarkChrome(tester);
+    expect(tester.takeException(), isNull);
+    expect(find.text('20/20'), findsOneWidget);
+    expectEditorialMonocleDarkChrome(tester);
 
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/labour_feeding_indicator_full.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/labour_feeding_indicator_full.png'),
+    );
+  });
 
-  testWidgets(
-    'golden: reduced labour accent tier (Refs #4506)',
-    (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('labour_feeding_indicator_reduced_golden');
-      await _pumpLabourIndicatorGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        labourReadiness: const LabourReadinessSnapshot(
-          effectiveLabour: 12,
-          fullCapacity: 20,
-          tierStatuses: [],
-          primaryCauseKind: LabourReadinessCauseKind.food,
-        ),
-        forcesFeeding: const ForceFeedingSnapshot(
-          totalRegiments: 0,
-          fullyFedRegiments: 0,
-          totalShips: 0,
-          fullyFedShips: 0,
-          landCombatTier: ForceFeedingCombatTier.full,
-          navalCombatTier: ForceFeedingCombatTier.full,
-          forcesFoodDemand: 0,
-        ),
-        label: '12/20',
-      );
+  testWidgets('golden: reduced labour accent tier (Refs #4506)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'labour_feeding_indicator_reduced_golden',
+    );
+    await _pumpLabourIndicatorGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      labourReadiness: const LabourReadinessSnapshot(
+        effectiveLabour: 12,
+        fullCapacity: 20,
+        tierStatuses: [],
+        primaryCauseKind: LabourReadinessCauseKind.food,
+      ),
+      forcesFeeding: const ForceFeedingSnapshot(
+        totalRegiments: 0,
+        fullyFedRegiments: 0,
+        totalShips: 0,
+        fullyFedShips: 0,
+        landCombatTier: ForceFeedingCombatTier.full,
+        navalCombatTier: ForceFeedingCombatTier.full,
+        forcesFoodDemand: 0,
+      ),
+      label: '12/20',
+    );
 
-      expect(tester.takeException(), isNull);
-      expect(find.text('12/20'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.text('12/20'), findsOneWidget);
 
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/labour_feeding_indicator_reduced.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/labour_feeding_indicator_reduced.png'),
+    );
+  });
 
-  testWidgets(
-    'golden: underfed forces danger tier (Refs #4506)',
-    (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('labour_feeding_indicator_underfed_golden');
-      await _pumpLabourIndicatorGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        labourReadiness: const LabourReadinessSnapshot(
-          effectiveLabour: 20,
-          fullCapacity: 20,
-          tierStatuses: [],
-        ),
-        forcesFeeding: const ForceFeedingSnapshot(
-          totalRegiments: 4,
-          fullyFedRegiments: 1,
-          totalShips: 0,
-          fullyFedShips: 0,
-          landCombatTier: ForceFeedingCombatTier.severe,
-          navalCombatTier: ForceFeedingCombatTier.full,
-          forcesFoodDemand: 8,
-        ),
-        label: '20/20',
-      );
+  testWidgets('golden: underfed forces danger tier (Refs #4506)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'labour_feeding_indicator_underfed_golden',
+    );
+    await _pumpLabourIndicatorGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      labourReadiness: const LabourReadinessSnapshot(
+        effectiveLabour: 20,
+        fullCapacity: 20,
+        tierStatuses: [],
+      ),
+      forcesFeeding: const ForceFeedingSnapshot(
+        totalRegiments: 4,
+        fullyFedRegiments: 1,
+        totalShips: 0,
+        fullyFedShips: 0,
+        landCombatTier: ForceFeedingCombatTier.severe,
+        navalCombatTier: ForceFeedingCombatTier.full,
+        forcesFoodDemand: 8,
+      ),
+      label: '20/20',
+    );
 
-      expect(tester.takeException(), isNull);
+    expect(tester.takeException(), isNull);
 
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/labour_feeding_indicator_underfed.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/labour_feeding_indicator_underfed.png'),
+    );
+  });
+
+  testWidgets('golden: empty pool muted 0/0 (Refs #4506)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'labour_feeding_indicator_empty_pool_golden',
+    );
+    await _pumpLabourIndicatorGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      labourReadiness: const LabourReadinessSnapshot(
+        effectiveLabour: 0,
+        fullCapacity: 0,
+        tierStatuses: [],
+      ),
+      forcesFeeding: const ForceFeedingSnapshot(
+        totalRegiments: 0,
+        fullyFedRegiments: 0,
+        totalShips: 0,
+        fullyFedShips: 0,
+        landCombatTier: ForceFeedingCombatTier.full,
+        navalCombatTier: ForceFeedingCombatTier.full,
+        forcesFoodDemand: 0,
+      ),
+      label: '0/0',
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('0/0'), findsOneWidget);
+
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/labour_feeding_indicator_empty_pool.png'),
+    );
+  });
 }

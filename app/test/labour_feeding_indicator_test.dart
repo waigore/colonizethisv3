@@ -3,9 +3,7 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
-    show
-        kGameMapNextTurnButtonKey,
-        kLabourFeedingIndicatorKey;
+    show kGameMapNextTurnButtonKey, kLabourFeedingIndicatorKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/labour_feeding_indicator_support.dart';
@@ -35,6 +33,12 @@ const LabourReadinessSnapshot _zeroLabour = LabourReadinessSnapshot(
   fullCapacity: 20,
   tierStatuses: [],
   primaryCauseKind: LabourReadinessCauseKind.food,
+);
+
+const LabourReadinessSnapshot _emptyPoolLabour = LabourReadinessSnapshot(
+  effectiveLabour: 0,
+  fullCapacity: 0,
+  tierStatuses: [],
 );
 
 const ForceFeedingSnapshot _fullyFedForces = ForceFeedingSnapshot(
@@ -142,6 +146,39 @@ void main() {
         EditorialMonoclePalette.danger,
       );
     });
+
+    test('empty pool with no underfed forces resolves muted', () {
+      expect(
+        labourFeedingNumericColor(
+          labourReadiness: _emptyPoolLabour,
+          forcesFeeding: _fullyFedForces,
+          notDefined: false,
+        ),
+        EditorialMonoclePalette.muted,
+      );
+    });
+
+    test('reduced labour with underfed forces resolves danger', () {
+      expect(
+        labourFeedingNumericColor(
+          labourReadiness: _reducedLabour,
+          forcesFeeding: _underfedLandForces,
+          notDefined: false,
+        ),
+        EditorialMonoclePalette.danger,
+      );
+    });
+
+    test('empty pool with underfed forces resolves danger', () {
+      expect(
+        labourFeedingNumericColor(
+          labourReadiness: _emptyPoolLabour,
+          forcesFeeding: _underfedLandForces,
+          notDefined: false,
+        ),
+        EditorialMonoclePalette.danger,
+      );
+    });
   });
 
   testWidgets('shows labour fraction when indicator enabled', (
@@ -158,6 +195,54 @@ void main() {
 
     expect(find.byKey(kLabourFeedingIndicatorKey), findsOneWidget);
     expect(find.text('12/20'), findsOneWidget);
+  });
+
+  testWidgets('shows muted 0/0 for empty worker pool', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        labourReadiness: _emptyPoolLabour,
+        forcesFeeding: _fullyFedForces,
+        labourFeedingLabel: '0/0',
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(kLabourFeedingIndicatorKey), findsOneWidget);
+    expect(find.text('0/0'), findsOneWidget);
+    expect(
+      labourFeedingNumericColor(
+        labourReadiness: _emptyPoolLabour,
+        forcesFeeding: _fullyFedForces,
+        notDefined: false,
+      ),
+      EditorialMonoclePalette.muted,
+    );
+  });
+
+  testWidgets('empty-pool popover has no-workers copy and no shortage reason', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        labourReadiness: _emptyPoolLabour,
+        forcesFeeding: _fullyFedForces,
+        labourFeedingLabel: '0/0',
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(kLabourFeedingIndicatorKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kLabourFeedingDetailsPanelKey), findsOneWidget);
+    expect(find.textContaining('Labour this turn: 0 of 0'), findsOneWidget);
+    expect(find.textContaining('No workers trained yet'), findsOneWidget);
+    expect(
+      find.textContaining('Some workers are not working — food is short'),
+      findsNothing,
+    );
   });
 
   testWidgets('hides indicator when showLabourFeedingIndicator is false', (

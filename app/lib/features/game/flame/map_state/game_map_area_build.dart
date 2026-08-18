@@ -127,7 +127,7 @@ mixin GameMapAreaBuild
                         'humanPlayerId': mapPlayerId,
                       }),
                     ),
-          showLabourFeedingIndicator: labourFeedingSummary.hasWorkerPool,
+          showLabourFeedingIndicator: true,
           labourFeedingLabel: labourFeedingLabel,
           labourFeedingNotDefined: labourFeedingSummary.notDefined,
           labourReadiness: labourFeedingSummary.notDefined

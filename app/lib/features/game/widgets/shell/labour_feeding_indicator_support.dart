@@ -103,8 +103,9 @@ Future<void> showLabourFeedingDetailsPopover({
                       onTap: dismiss,
                       behavior: HitTestBehavior.opaque,
                       child: ColoredBox(
-                        color: EditorialMonoclePalette.dialogScrim
-                            .withValues(alpha: 0.35),
+                        color: EditorialMonoclePalette.dialogScrim.withValues(
+                          alpha: 0.35,
+                        ),
                       ),
                     ),
                   ),
@@ -238,7 +239,16 @@ class _LabourFeedingDetailsRows extends StatelessWidget {
       ),
     ];
 
-    if (!labourReadiness.isFullCapacity &&
+    if (labourReadiness.fullCapacity == 0) {
+      rows
+        ..add(const SizedBox(height: 4))
+        ..add(
+          Text(
+            l10n.mapControls_labourFeeding_details_emptyPool,
+            style: rowStyle,
+          ),
+        );
+    } else if (!labourReadiness.isFullCapacity &&
         labourReadiness.primaryCauseKind != null) {
       rows
         ..add(const SizedBox(height: 4))
@@ -271,9 +281,6 @@ class _LabourFeedingDetailsRows extends StatelessWidget {
         );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: rows,
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
   }
 }

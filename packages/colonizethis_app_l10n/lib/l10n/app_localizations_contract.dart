@@ -2857,6 +2857,9 @@ abstract class AppLocalizations {
     String capacity,
   );
 
+  /// Empty worker-pool line in the map labour/feeding details popover (Refs #4506).
+  String get mapControls_labourFeeding_details_emptyPool;
+
   /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
   String get mapControls_playersBarToggle;
 

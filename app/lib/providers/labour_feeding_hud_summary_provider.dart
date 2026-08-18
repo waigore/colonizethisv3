@@ -21,31 +21,30 @@ class LabourFeedingHudSummary {
   });
 
   const LabourFeedingHudSummary.notDefined()
-      : labourReadiness = const LabourReadinessSnapshot(
-          effectiveLabour: 0,
-          fullCapacity: 0,
-          tierStatuses: [],
-        ),
-        forcesFeeding = const ForceFeedingSnapshot(
-          totalRegiments: 0,
-          fullyFedRegiments: 0,
-          totalShips: 0,
-          fullyFedShips: 0,
-          landCombatTier: ForceFeedingCombatTier.full,
-          navalCombatTier: ForceFeedingCombatTier.full,
-          forcesFoodDemand: 0,
-        ),
-        notDefined = true;
+    : labourReadiness = const LabourReadinessSnapshot(
+        effectiveLabour: 0,
+        fullCapacity: 0,
+        tierStatuses: [],
+      ),
+      forcesFeeding = const ForceFeedingSnapshot(
+        totalRegiments: 0,
+        fullyFedRegiments: 0,
+        totalShips: 0,
+        fullyFedShips: 0,
+        landCombatTier: ForceFeedingCombatTier.full,
+        navalCombatTier: ForceFeedingCombatTier.full,
+        forcesFoodDemand: 0,
+      ),
+      notDefined = true;
 
   final LabourReadinessSnapshot labourReadiness;
   final ForceFeedingSnapshot forcesFeeding;
   final bool notDefined;
-
-  /// True when the human player has a non-empty worker pool this turn.
-  bool get hasWorkerPool => labourReadiness.fullCapacity > 0;
 }
 
-final labourFeedingHudSummaryProvider = Provider<LabourFeedingHudSummary>((ref) {
+final labourFeedingHudSummaryProvider = Provider<LabourFeedingHudSummary>((
+  ref,
+) {
   final game = ref.watch(currentGameProvider);
   if (game == null) {
     return const LabourFeedingHudSummary.notDefined();

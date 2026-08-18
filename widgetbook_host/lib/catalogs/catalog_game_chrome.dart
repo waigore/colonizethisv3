@@ -151,6 +151,7 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
       ),
       ..._oldWorldRaceTabBarStories,
+      ..._labourFeedingTabBarStories,
       WidgetbookUseCase(
         name: 'Cargo — tight (accent numeric)',
         builder: (context) => _gameTabBarStoryFrame(
@@ -165,28 +166,6 @@ List<WidgetbookNode> get gameTabBarDirectories => [
           cargoUsed: 12,
           cargoCapacity: 12,
           cargoHoldLabel: '12/12',
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Labour — reduced (accent numeric) (Refs #4506)',
-        builder: (context) => _gameTabBarStoryFrame(
-          showLabourFeedingIndicator: true,
-          labourFeedingLabel: '12/20',
-          labourReadiness: const LabourReadinessSnapshot(
-            effectiveLabour: 12,
-            fullCapacity: 20,
-            tierStatuses: [],
-            primaryCauseKind: LabourReadinessCauseKind.food,
-          ),
-          forcesFeeding: const ForceFeedingSnapshot(
-            totalRegiments: 0,
-            fullyFedRegiments: 0,
-            totalShips: 0,
-            fullyFedShips: 0,
-            landCombatTier: ForceFeedingCombatTier.full,
-            navalCombatTier: ForceFeedingCombatTier.full,
-            forcesFoodDemand: 0,
-          ),
         ),
       ),
       WidgetbookUseCase(

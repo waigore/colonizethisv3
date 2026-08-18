@@ -4616,6 +4616,10 @@
       }
     }
   },
+  "mapControls_labourFeeding_details_emptyPool": "No workers trained yet",
+  "@mapControls_labourFeeding_details_emptyPool": {
+    "description": "Empty worker-pool line in the map labour/feeding details popover (Refs #4506)."
+  },
   "mapControls_playersBarToggle": "Players bar",
   "@mapControls_playersBarToggle": {
     "description": "Tooltip for the in-game players bar show/hide toggle on the tab bar."
