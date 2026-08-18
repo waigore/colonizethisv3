@@ -83,6 +83,7 @@ import 'check_logic_test_file_size.dart';
 import 'check_logic_domain_import_dag.dart';
 import 'check_logic_source_file_size.dart';
 import 'check_world_no_logic_deps.dart';
+import 'check_world_test_no_upstream_domain_deps.dart';
 import 'check_logic_no_map_deps.dart';
 import 'check_world_no_circular_imports.dart';
 import 'check_world_no_duplicate_extension_helper.dart';
@@ -863,6 +864,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugHandlerOnePerFile(repoRoot);
     case 'repo.world_no_logic_deps':
       return runCheckWorldNoLogicDeps(repoRoot);
+    case 'repo.world_test_no_upstream_domain_deps':
+      return runCheckWorldTestNoUpstreamDomainDeps(repoRoot);
     case 'repo.logic_no_map_deps':
       return runCheckLogicNoMapDeps(repoRoot);
     case 'repo.world_no_circular_imports':

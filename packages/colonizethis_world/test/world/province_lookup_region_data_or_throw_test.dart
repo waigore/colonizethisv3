@@ -1,10 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../world_test_support/province_lookup_test_support.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 void main() {
   group(

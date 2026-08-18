@@ -1,9 +1,50 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_turn/src/turn/phases/movement_phase.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-import '../world_test_support/world_test_support.dart';
+/// Copied local topology for GitHub #2010 (do not import world `test/`).
+MapTopology _homeFleetSplitMovementIntegrationTopology({
+  required String owCoastProv,
+  required String seaOrigin,
+  required String seaDest,
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: owCoastProv,
+        regionId: kRegionOldWorld,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: seaOrigin,
+        regionId: kRegionOldWorld,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: seaDest,
+        regionId: kRegionOldWorld,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: 'newWorld|p1',
+        regionId: kRegionNewWorld,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'newWorld|seaOther',
+        regionId: kRegionNewWorld,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: owCoastProv, id2: seaDest),
+      TopologyEdge(id1: seaOrigin, id2: seaDest),
+      TopologyEdge(id1: 'newWorld|p1', id2: 'newWorld|seaOther'),
+    ],
+  );
+}
 
 /// Integration path for GitHub #2010: split from Home Fleet (orders UI), then
 /// movement phase applies naval moves and ship reveal using combined topology.
@@ -22,7 +63,7 @@ void main() {
       const inlandTile = '$ow|pCoast|0|0';
       const seaDestWater = '$ow|seaDest|2|0';
 
-      final combinedTopology = homeFleetSplitMovementIntegrationTopology(
+      final combinedTopology = _homeFleetSplitMovementIntegrationTopology(
         owCoastProv: owCoastProv,
         seaOrigin: seaOrigin,
         seaDest: seaDest,

@@ -1253,6 +1253,13 @@ rules:
     runner: dart
     script: tool/check_world_no_logic_deps.dart
 
+  - rule_id: repo.world_test_no_upstream_domain_deps
+    group: architecture
+    title: colonizethis_world test/** and pubspec must not depend on colonizethis_logic or colonizethis_turn (Refs #4515)
+    spec: SPEC/program/world-test-no-upstream-domain-deps.md
+    runner: dart
+    script: tool/check_world_test_no_upstream_domain_deps.dart
+
   - rule_id: repo.world_no_circular_imports
     group: architecture
     title: colonizethis_world lib/ file import graph must be acyclic (Refs #3544)
