@@ -1223,6 +1223,9 @@ abstract class AppLocalizations {
   /// Mission consequence caption on Blockade target picker (DLG31002).
   String get naval_mission_targetCaption_blockade;
 
+  /// Extra default line when Blockade target is the owner's capital port (DLG31002).
+  String get naval_mission_blockade_capitalExtra;
+
   /// Mission consequence caption on Beachhead target picker (DLG31002).
   String get naval_mission_targetCaption_beachhead;
 
@@ -2667,6 +2670,12 @@ abstract class AppLocalizations {
 
   /// Disabled Blockade/Beachhead — fleet must be at sea beside this coast. Refs #4413.
   String get provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip;
+
+  /// MAP20001 Naval section status when human-owned port is blockaded. Refs #4516.
+  String get provinceOverlay_underBlockade;
+
+  /// MAP20001 Naval section status when human-owned capital port is blockaded. Refs #4516.
+  String get provinceOverlay_underBlockadeCapital;
 
   /// MAP20001 Naval Detach and sail control label. Refs #4448.
   String get provinceOverlay_detachAndSailAction;

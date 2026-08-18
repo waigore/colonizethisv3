@@ -166,7 +166,7 @@ void main() {
       expect(find.text('Select target — Blockade'), findsOneWidget);
       expect(
         find.text(
-          'Pressures the target port approaches with stronger interception than Patrol.',
+          'Goods from the chosen port will not reach its owner\'s warehouses until the blockade ends. Stronger interception than Patrol on fleets entering this zone.',
         ),
         findsOneWidget,
       );

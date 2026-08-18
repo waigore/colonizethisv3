@@ -35,7 +35,7 @@ Uses [`MoveUnitsDialogState`](components/move-units-dialog-base.md) scaffold (`C
 ```
 
 - Title: `naval_mission_selectTargetTitle(missionLabel)`.
-- **Mission caption** (Refs #4295): muted line under the title from `naval_mission_targetCaption_blockade` or `naval_mission_targetCaption_beachhead`; omitted for other missions.
+- **Mission caption** (Refs #4295, #4516): muted line under the title from `naval_mission_targetCaption_blockade` or `naval_mission_targetCaption_beachhead`; omitted for other missions. Blockade caption states the capital-link / warehouse cut (not intercept-only). When the selected target is the owner's **capital port**, one additional default line from `naval_mission_blockade_capitalExtra` appears under the caption (sea-only / overseas cut; land roads remain).
 - Empty list: `naval_mission_noTargetsAvailable`; Confirm disabled.
 - Row title: province `displayName` fallback to id.
 - **Beachhead intel** (Refs #4340): reuse `computeMoveArmyInvasionIntelSummary` + `moveArmy_*` labels (`Defenders: N regiments` / `Unopposed capture` + fort/siege labels; or `Defenders unknown`). Selected row may append regiment-type breakdown (roster display names) when intel is full.

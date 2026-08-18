@@ -2324,7 +2324,7 @@
   "@naval_mission_effect_defend": {
     "description": "Plain-language effect line for Defend mission row (DLG31001)."
   },
-  "naval_mission_effect_blockade": "Stronger intercept chance on fleets entering this zone, including ships leaving the target port.",
+  "naval_mission_effect_blockade": "Severs the target port's link to its capital, so goods from that province will not reach warehouses. Also gives stronger intercept chance on fleets entering this zone, including ships leaving the target port.",
   "@naval_mission_effect_blockade": {
     "description": "Plain-language effect line for Blockade mission row (DLG31001)."
   },
@@ -2340,11 +2340,14 @@
   "@naval_mission_effect_sail": {
     "description": "Effect line for Sail / Move row on DLG31001 (Refs #4343)."
   },
-  "naval_mission_targetCaption_blockade": "Pressures the target port approaches with stronger interception than Patrol.",
+  "naval_mission_targetCaption_blockade": "Goods from the chosen port will not reach its owner's warehouses until the blockade ends. Stronger interception than Patrol on fleets entering this zone.",
   "@naval_mission_targetCaption_blockade": {
     "description": "Mission consequence caption on Blockade target picker (DLG31002)."
   },
-  "naval_mission_targetCaption_beachhead": "Landing site supports invasion on the following turn and expires after that turn if unused.",
+  "naval_mission_blockade_capitalExtra": "At a capital port, sea-only and overseas links are cut; land roads still reach inland tiles.",
+  "@naval_mission_blockade_capitalExtra": {
+    "description": "Extra default line on Blockade assign when the selected target is the owner's capital port (DLG31002)."
+  },
   "@naval_mission_targetCaption_beachhead": {
     "description": "Mission consequence caption on Beachhead target picker (DLG31002)."
   },
@@ -3910,6 +3913,14 @@
   "provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip": "A fleet must be at sea beside this coast. Fleets in port cannot take missions.",
   "@provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip": {
     "description": "Disabled Blockade/Beachhead tooltip when no adjacent at-sea fleet (Refs #4413)."
+  },
+  "provinceOverlay_underBlockade": "Under blockade — this port is cut off from its capital; goods here will not reach warehouses.",
+  "@provinceOverlay_underBlockade": {
+    "description": "MAP20001 Naval section status when the human-owned province port is blockaded (Refs #4516)."
+  },
+  "provinceOverlay_underBlockadeCapital": "Under blockade — capital port severed; sea-only and overseas links are cut while land roads remain.",
+  "@provinceOverlay_underBlockadeCapital": {
+    "description": "MAP20001 Naval section status when the human-owned capital port is blockaded (Refs #4516)."
   },
   "provinceOverlay_detachAndSailAction": "Detach and sail",
   "@provinceOverlay_detachAndSailAction": {

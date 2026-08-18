@@ -588,7 +588,7 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get naval_mission_effect_blockade =>
-      'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.';
+      'Severs the target port\'s link to its capital, so goods from that province will not reach warehouses. Also gives stronger intercept chance on fleets entering this zone, including ships leaving the target port.';
 
   @override
   String get naval_mission_effect_beachhead =>
@@ -603,7 +603,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get naval_mission_targetCaption_blockade =>
-      'Pressures the target port approaches with stronger interception than Patrol.';
+      'Goods from the chosen port will not reach its owner\'s warehouses until the blockade ends. Stronger interception than Patrol on fleets entering this zone.';
+
+  @override
+  String get naval_mission_blockade_capitalExtra =>
+      'At a capital port, sea-only and overseas links are cut; land roads still reach inland tiles.';
 
   @override
   String get naval_mission_targetCaption_beachhead =>

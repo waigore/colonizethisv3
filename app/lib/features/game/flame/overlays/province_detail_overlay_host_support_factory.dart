@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
@@ -21,6 +22,7 @@ import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_naval_mission.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
 import 'province_detail_overlay_host_support_station_spy.dart';
+import 'province_blockade_status_support.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
@@ -214,6 +216,14 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     isSeaZone: isSeaZone,
     bus: bus,
   );
+  final topology = mapData?.combinedTopology ?? const MapTopology();
+  final blockadeStatus = resolveHumanOwnedBlockadeStatus(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: displayId,
+    topology: topology,
+    isSeaZone: isSeaZone,
+  );
 
   return ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -279,6 +289,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onInvadeArmyTap: armyMove.onInvadeTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
+    blockadeStatus: blockadeStatus,
     stationSpy: stationSpy,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,

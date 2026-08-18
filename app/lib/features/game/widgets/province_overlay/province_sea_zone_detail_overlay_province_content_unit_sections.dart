@@ -16,6 +16,8 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_detach_a
     show ProvinceDetachAndSailOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 
 ({Widget economic, Widget military, Widget civilian, Widget naval})
@@ -49,6 +51,7 @@ buildProvinceIntelGatedUnitSections({
   ProvinceDetachAndSailOverlayControls detachAndSail =
       ProvinceDetachAndSailOverlayControls.hidden,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
   String? provinceDisplayName,
   void Function(String?)? onHighlightTile,
   void Function(Iterable<String>?)? onHighlightTiles,
@@ -139,6 +142,7 @@ buildProvinceIntelGatedUnitSections({
     rosterObfuscated: !showsFullIntel,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
+    blockadeStatus: blockadeStatus,
   );
   return (
     economic: economic,

@@ -81,6 +81,17 @@ class _NavalMissionTargetDialogState
       navalMissionTargetCaption(appL10n(context), widget.mission);
 
   @override
+  List<String> moveDialogSupplementalCaptions(BuildContext context) {
+    if (widget.mission != FleetMission.blockade) return const [];
+    final selected = _selected;
+    if (selected == null ||
+        !navalMissionBlockadeTargetIsCapital(widget.game, selected)) {
+      return const [];
+    }
+    return [appL10n(context).naval_mission_blockade_capitalExtra];
+  }
+
+  @override
   bool get moveDialogHasDestinations => widget.targetProvinceIds.isNotEmpty;
 
   @override

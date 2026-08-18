@@ -29,7 +29,7 @@
 | |  Defend                                      | |
 | |    Stay in place without seeking combat…     | |
 | |  Blockade                                    | |
-| |    Stronger intercept chance…                | |
+| |    Severs the target port's capital link…    | |  (`naval_mission_effect_blockade`; capital-link cut plus intercept)
 | |    No adjacent provinces owned by…         | |  disabled reason when gated
 | |  Beachhead                                   | |
 | |    Stage a landing site…                     | |
@@ -96,6 +96,7 @@ Folder `Naval Mission Menu Dialog`:
 
 - **Given** an at-sea non-Home fleet with `navalMissionAvailabilityForFleet.baseGatesPass == true`, **when** `NavalMissionMenuDialog` opens, **then** the UI layer lists Patrol and Defend as enabled rows and titles the dialog `naval_mission_menuTitle(fleetLabel)`.
 - **Given** an at-sea non-Home fleet with `navalMissionAvailabilityForFleet.baseGatesPass == true`, **when** `NavalMissionMenuDialog` opens, **then** each of Patrol, Defend, Blockade, and Beachhead shows its display name and a non-empty `naval_mission_effect_<mission>` line (Refs #4295).
+- **Given** `NavalMissionMenuDialog` lists Blockade, **when** the row renders (enabled or disabled), **then** `naval_mission_effect_blockade` states the capital-link / warehouse cut, not intercept-only (Refs #4516).
 - **Given** no factions at war with the player, **when** the menu renders Blockade, **then** the Blockade row has `enabled == false`, shows `naval_mission_effect_blockade`, and a non-null disabled-reason line.
 - **Given** a pending `NavalMissionOrder` for the fleet, **when** the menu opens, **then** the UI layer shows **Cancel pending mission** and tapping it pops `NavalMissionMenuChoiceCancelPending`.
 - **Given** an at-sea non-Home fleet menu is open, **when** the UI layer renders `DLG31001`, **then** a **Sail / Move** row is present and tapping it pops `NavalMissionMenuChoiceSail`.
