@@ -817,6 +817,14 @@ int? _tryRunDartRuleInProcess({
     return setupResult;
   }
 
+  final int? worldResult = _tryRunWorldRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (worldResult != null) {
+    return worldResult;
+  }
+
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
@@ -862,16 +870,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckFunctionSize(repoRoot);
     case 'repo.debug_handler_one_per_file':
       return runCheckDebugHandlerOnePerFile(repoRoot);
-    case 'repo.world_no_logic_deps':
-      return runCheckWorldNoLogicDeps(repoRoot);
-    case 'repo.world_test_no_upstream_domain_deps':
-      return runCheckWorldTestNoUpstreamDomainDeps(repoRoot);
     case 'repo.logic_no_map_deps':
       return runCheckLogicNoMapDeps(repoRoot);
-    case 'repo.world_no_circular_imports':
-      return runCheckWorldNoCircularImports(repoRoot);
-    case 'repo.world_no_duplicate_extension_helper':
-      return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,
@@ -1096,6 +1096,29 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
     case 'repo.setup_test_use_shared_fixtures':
       return runCheckSetupTestUseSharedFixtures(repoRoot);
+    default:
+      return null;
+  }
+}
+
+/// Dispatch helper for `repo.world_*` manifest rules. Keeps the main
+/// `_tryRunDartRuleInProcess` switch under the `repo.dart_long_string_switches`
+/// 49-case ceiling as new world-scoped rules are added (Refs #4515).
+/// Returns `null` for non-world rule ids so the caller falls back to the
+/// generic dispatch.
+int? _tryRunWorldRuleInProcess({
+  required String ruleId,
+  required String repoRoot,
+}) {
+  switch (ruleId) {
+    case 'repo.world_no_logic_deps':
+      return runCheckWorldNoLogicDeps(repoRoot);
+    case 'repo.world_test_no_upstream_domain_deps':
+      return runCheckWorldTestNoUpstreamDomainDeps(repoRoot);
+    case 'repo.world_no_circular_imports':
+      return runCheckWorldNoCircularImports(repoRoot);
+    case 'repo.world_no_duplicate_extension_helper':
+      return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
     default:
       return null;
   }
