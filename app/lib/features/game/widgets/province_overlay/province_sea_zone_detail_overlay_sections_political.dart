@@ -9,6 +9,8 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/core/utils/faction_display_name.dart';
+
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
     show WorldStateProvinceLookup, kRegionNewWorld, kRegionOldWorld;
@@ -21,16 +23,7 @@ String ownerNameForProvinceOverlay(
   if (ownerId == null || ownerId.isEmpty) {
     return l10n.provinceOverlay_ownerUnclaimed;
   }
-  for (final p in game.players) {
-    if (p.id == ownerId) return p.displayName;
-  }
-  for (final m in game.minorNations) {
-    if (m.id == ownerId) return m.displayName ?? m.id;
-  }
-  for (final t in game.tribes) {
-    if (t.id == ownerId) return t.displayName ?? t.id;
-  }
-  return ownerId;
+  return displayNameForFaction(game, ownerId);
 }
 
 @visibleForTesting
