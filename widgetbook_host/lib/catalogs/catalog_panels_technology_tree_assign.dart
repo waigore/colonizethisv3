@@ -24,11 +24,7 @@ List<WidgetbookUseCase> get technologyTreeAssignUseCases => [
         players: const [p],
       );
       return widgetbookEditorialMonocleApp(
-        child: TechTreeWidget(
-          game: game,
-          player: p,
-          onOrdersChanged: (_) {},
-        ),
+        child: TechTreeWidget(game: game, player: p, onOrdersChanged: (_) {}),
       );
     },
   ),
@@ -67,11 +63,7 @@ List<WidgetbookUseCase> get technologyTreeAssignUseCases => [
         players: const [p],
       );
       return widgetbookEditorialMonocleApp(
-        child: TechTreeWidget(
-          game: game,
-          player: p,
-          onOrdersChanged: (_) {},
-        ),
+        child: TechTreeWidget(game: game, player: p, onOrdersChanged: (_) {}),
       );
     },
   ),
@@ -117,11 +109,38 @@ List<WidgetbookUseCase> get technologyTreeAssignUseCases => [
         players: const [p],
       );
       return widgetbookEditorialMonocleApp(
-        child: TechTreeWidget(
-          game: game,
-          player: p,
-          onOrdersChanged: (_) {},
+        child: TechTreeWidget(game: game, player: p, onOrdersChanged: (_) {}),
+      );
+    },
+  ),
+  WidgetbookUseCase(
+    name: 'Tree dialog — in-progress finish line',
+    builder: (context) {
+      const p = Player(
+        id: 'gp1',
+        displayName: 'England',
+        isHuman: true,
+        researchSlots: 3,
+        treasury: 2000,
+        researchSlotAssignments: {
+          0: ResearchSlotAssignment(
+            techId: kTechIdSawMill,
+            funding: ResearchFundingLevel.medium,
+          ),
+        },
+        researchProgressByTechId: {kTechIdSawMill: 1600},
+      );
+      final game = Game(
+        id: 'wb_tech_tree_finish_line',
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
         ),
+        players: const [p],
+      );
+      return widgetbookEditorialMonocleApp(
+        child: TechTreeWidget(game: game, player: p, onOrdersChanged: (_) {}),
       );
     },
   ),

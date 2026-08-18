@@ -16,6 +16,7 @@ import 'tech_definition_detail_assign.dart';
 import 'tech_effect_summary.dart';
 import 'tech_gp_researchers.dart';
 import 'tech_researchers_list_dialog.dart';
+import 'tech_tree_finish_line.dart';
 import 'tech_ui_helpers.dart';
 
 export 'tech_definition_detail_assign.dart' show TechTreeAssignConfig;
@@ -79,6 +80,13 @@ class _TechDefinitionDetailBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _TechDefinitionHeader(tech: tech, theme: theme, l10n: l10n),
+        if (treeAssign != null)
+          TechTreeFinishLine(
+            game: game,
+            player: player,
+            tech: tech,
+            currentOrders: treeAssign!.currentOrders,
+          ),
         if (tech.prerequisiteIds.isNotEmpty)
           _TechPrerequisiteList(tech: tech, theme: theme, l10n: l10n),
         if (effects.isNotEmpty)
@@ -236,10 +244,7 @@ List<Widget> _researchedBySection(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.techTree_researchedBy,
-            style: theme.textTheme.labelLarge,
-          ),
+          Text(l10n.techTree_researchedBy, style: theme.textTheme.labelLarge),
           for (final gp in researchers)
             Padding(
               padding: const EdgeInsets.only(top: 4),
