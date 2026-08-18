@@ -4,8 +4,8 @@
 // Kept in one library deliberately (Refs #4330): `sealed` subclasses must share
 // a Dart library for exhaustiveness. Cross-file splits would require `part` /
 // `part of` (forbidden by `repo.world_no_part_directives`) or dropping `sealed`.
-// Wave-6 lib ceiling is 320 (not preferred 300) so this module stays under
-// `repo.colonizethis_world_lib_file_size` without a grandfather entry.
+// Wave-7 dedicated ceiling is 400 (`repo.colonizethis_world_lib_file_size`);
+// other world lib files ratchet to 300 (Refs #4515).
 
 import 'package:colonizethis_models/colonizethis_models.dart' show OrderKind;
 

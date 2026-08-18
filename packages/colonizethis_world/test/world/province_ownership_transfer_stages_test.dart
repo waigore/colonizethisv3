@@ -1,8 +1,8 @@
-import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/src/world/province_ownership_transfer_stages.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 void main() {
   const ow = kRegionOldWorld;

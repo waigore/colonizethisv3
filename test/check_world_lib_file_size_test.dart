@@ -13,12 +13,21 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckWorldLibFileSize', () {
-    test('passes on current repo tree under wave-6 ceiling', () {
-      expect(worldLibFileSizeCeiling, 320);
+    test('passes on current repo tree under wave-7 ceilings', () {
+      expect(worldLibFileSizeCeiling, 300);
+      expect(worldGameEventsFileSizeCeiling, 400);
       expect(runCheckWorldLibFileSize('.'), 0);
     });
 
-    test('fails when a world lib file exceeds the ceiling', () {
+    test('movement_civilian_apply.dart has ≥30 lines of headroom under 300', () {
+      final file = File(
+        'packages/colonizethis_world/lib/src/world/movement_civilian_apply.dart',
+      );
+      final lines = file.readAsLinesSync().length;
+      expect(lines, lessThanOrEqualTo(270));
+    });
+
+    test('fails when a world lib file exceeds the general ceiling', () {
       final root = Directory.systemTemp.createTempSync('world_lib_size_bad');
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
@@ -37,6 +46,52 @@ void main() {
       );
       expect(code, 1);
       expect(errors.join('\n'), contains('fat.dart'));
+    });
+
+    test(
+      'allows game_events.dart between 300 and the dedicated 400 ceiling',
+      () {
+        final root = Directory.systemTemp.createTempSync(
+          'world_lib_size_events_ok',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        _writeFile(
+          root,
+          worldGameEventsRelativePath,
+          List.generate(350, (i) => '// event $i').join('\n'),
+        );
+
+        final code = runCheckWorldLibFileSize(
+          root.path,
+          grandfatheredPaths: const [],
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(code, 0);
+      },
+    );
+
+    test('fails when game_events.dart exceeds the dedicated 400 ceiling', () {
+      final root = Directory.systemTemp.createTempSync(
+        'world_lib_size_events_bad',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      _writeFile(
+        root,
+        worldGameEventsRelativePath,
+        List.generate(401, (i) => '// event $i').join('\n'),
+      );
+
+      final errors = <String>[];
+      final code = runCheckWorldLibFileSize(
+        root.path,
+        grandfatheredPaths: const [],
+        info: (_) {},
+        err: errors.add,
+      );
+      expect(code, 1);
+      expect(errors.join('\n'), contains('game_events.dart'));
+      expect(errors.join('\n'), contains('401 physical lines > 400'));
     });
 
     test('ignores generated files and grandfathered hot files', () {

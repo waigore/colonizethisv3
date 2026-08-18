@@ -15,10 +15,9 @@ dependencies:
   colonizethis_models:
 
 dev_dependencies:
+  colonizethis_orders:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
-  colonizethis_logic:
-  colonizethis_turn:
   colonizethis_test:
   coverage: ^1.15.0
   custom_lint: 0.8.1

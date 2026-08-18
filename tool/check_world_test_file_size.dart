@@ -1,23 +1,23 @@
 // Physical line limit for colonizethis_world non-support tests (repo rule:
 // `repo.colonizethis_world_test_file_size`).
 //
-// Wave 6 (#4330): peer-aligned 320 physical-line ceiling after densify (down
-// from wave-5's 400). `test/world_test_support/` is governed separately by
-// builder-usage gates.
+// Wave 7 (#4515): peer-aligned 300 physical-line ceiling after densify (down
+// from wave-6's 320). `test/world_test_support/` is governed separately by
+// `repo.world_test_support_file_size`.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Ratchet ceiling for wave-6 post-densify root test files.
-const int worldTestFileSizeCeiling = 320;
+/// Ratchet ceiling for wave-7 post-densify root test files.
+const int worldTestFileSizeCeiling = 300;
 
 const String _worldTestsRelativePath = 'packages/colonizethis_world/test';
 
 const String _worldTestSupportPrefix =
     'packages/colonizethis_world/test/world_test_support/';
 
-/// Near-cap suites grandfathered during densify. Shrink-only; empty after #4330.
+/// Near-cap suites grandfathered during densify. Shrink-only; empty after #4515.
 const List<String> worldTestFileSizeGrandfathered = <String>[];
 
 int runCheckWorldTestFileSize(
@@ -86,7 +86,7 @@ int runCheckWorldTestFileSize(
   if (violations.isEmpty) {
     logI(
       'check_world_test_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4330).',
+      '(ceiling $ceiling; Refs #4515).',
     );
     return 0;
   }
@@ -94,7 +94,7 @@ int runCheckWorldTestFileSize(
   violations.sort();
   logE(
     'check_world_test_file_size: found ${violations.length} violation(s) '
-    'under $_worldTestsRelativePath (wave-6 ceiling $ceiling; Refs #4330):',
+    'under $_worldTestsRelativePath (wave-7 ceiling $ceiling; Refs #4515):',
   );
   for (final violation in violations) {
     logE(' - $violation');
