@@ -95,6 +95,8 @@ OverlayContent provinceContent({
   ProvinceDetachAndSailOverlayControls detachAndSail =
       ProvinceDetachAndSailOverlayControls.hidden,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
+  ProvinceOverlayCounterEspionageProps counterEspionage =
+      kProvinceOverlayCounterEspionageHidden,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
@@ -275,6 +277,7 @@ OverlayContent provinceContent({
     detachAndSail: detachAndSail,
     blockadeStatus: blockadeStatus,
     stationSpy: stationSpy,
+    counterEspionage: counterEspionage,
     provinceDisplayName: province?.displayName,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,

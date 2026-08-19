@@ -79,6 +79,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required String? purchaseLandShortcutTargetTileKey,
   required String? upgradeTownShortcutTargetTileKey,
   required String? relocateShortcutTargetTileKey,
+  required String? counterSpyShortcutTargetTileKey,
 }) {
   if (readOnly) {
     return const <UnitsEntityAction>[];
@@ -108,7 +109,12 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
         tooltip: l10n.civilian_units_assign,
         icon: Icons.playlist_add,
         label: l10n.civilian_units_assign,
-        onPressed: !pending.isSpy && inExplorerShortcutMode
+        onPressed:
+            _civilianAssignIsShortcut(
+              isSpy: pending.isSpy,
+              inExplorerShortcutMode: inExplorerShortcutMode,
+              counterSpyShortcutTargetTileKey: counterSpyShortcutTargetTileKey,
+            )
             ? () => startCivilianUnitsPanelUnitRowShortcutAssign(
                 bus: bus,
                 unit: unit,
@@ -127,6 +133,8 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
                     purchaseLandShortcutTargetTileKey,
                 upgradeTownShortcutTargetTileKey:
                     upgradeTownShortcutTargetTileKey,
+                counterSpyShortcutTargetTileKey:
+                    counterSpyShortcutTargetTileKey,
               )
             : () => showCivilianUnitsPanelOrderMenu(
                 context,
@@ -166,4 +174,16 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
           : null,
     ),
   ];
+}
+
+bool _civilianAssignIsShortcut({
+  required bool isSpy,
+  required bool inExplorerShortcutMode,
+  required String? counterSpyShortcutTargetTileKey,
+}) {
+  if (isSpy) {
+    return counterSpyShortcutTargetTileKey != null &&
+        counterSpyShortcutTargetTileKey.isNotEmpty;
+  }
+  return inExplorerShortcutMode;
 }

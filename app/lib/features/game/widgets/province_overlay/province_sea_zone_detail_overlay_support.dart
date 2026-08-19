@@ -104,6 +104,24 @@ const ProvinceOverlayStationSpyProps kProvinceOverlayStationSpyHidden = (
   onTap: null,
 );
 
+/// MAP20001 Civilian **Counter-espionage** control props (Refs #4528).
+typedef ProvinceOverlayCounterEspionageProps = ({
+  bool showControl,
+  bool enabled,
+  String tooltip,
+  String gist,
+  VoidCallback? onTap,
+});
+
+const ProvinceOverlayCounterEspionageProps
+kProvinceOverlayCounterEspionageHidden = (
+  showControl: false,
+  enabled: false,
+  tooltip: '',
+  gist: '',
+  onTap: null,
+);
+
 /// Tab labels, narrow tab views, and wide stacked sections for a province.
 OverlayContent overlayProvinceSectionBundle({
   required AppLocalizations l10n,

@@ -70,7 +70,7 @@ Training queues a civilian-unit hire. After you confirm **Next turn**, the new u
 
 **Station spy** is hidden on a sea zone, on an unrevealed (`???`) tile, when you cannot act, or when your Spy is already on that tile and no other Spy can move there. It is visible but disabled when no idle Spy can take the tile, or the tile cannot be occupied (the hints distinguish those). It is enabled when at least one idle Spy can occupy the selected tile.
 
-**Assign** still offers **Counter-espionage** on owned provinces only. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own, with no mission, shows **Reserve**. When a Spy is set to defend at home this turn, the row shows **Counter-espionage** and hides **Relocate**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. `DLG60001` **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
+**Assign** still offers **Counter-espionage** on owned provinces only. From an owned land province already under study, you can also tap **Counter-espionage** in the **Civilian** section of `MAP20001` **Province sea-zone overlay**, then **Assign** on an idle Spy — that posts the work without picking a tile on the map. The button says this protects the **whole realm**, not only the province you are looking at; one Spy is enough. If a Spy is already posted, or you have no idle Spy, the button stays visible but cannot be used (the hint names which). It stays hidden on a sea zone, on land you do not own, when Civilian shows `???`, or when you cannot act. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own, with no mission, shows **Reserve**. When a Spy is set to defend at home this turn, the row shows **Counter-espionage** and hides **Relocate**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. `DLG60001` **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
 
 If at least one of your Spies still stands in a foreign province after **Next turn** finishes, that court’s last-turn news (treaties, wars, captures, research, and fights they took part in) appears under **Spy reports** on `GAME30003` **Intelligence**, opened from **Intelligence** on `GAME30001` **Diplomacy**. You do not see a rival’s secret agenda. If the last Spy left or was caught, that court is silent next turn.
 
@@ -101,6 +101,7 @@ Rival courts assign factory labour as you do, and they follow the same peasant-s
 - [ ] Documents peasant reservation vs military/naval builds.
 - [ ] Documents `UNIT40001` civilian train roster and capital spawn timing.
 - [ ] Documents `MAP20001` **Station spy** then `UNIT10001` **Relocate**, plus map Relocate pick and that `DLG60001` **Next turn confirmation** does not list idle Spies.
+- [x] Documents `MAP20001` Civilian **Counter-espionage** then `UNIT10001` **Assign**, that it protects the whole realm, and that one Spy is enough.
 - [ ] Documents that a Spy remaining in a foreign court yields last-turn reports on `GAME30003` **Intelligence**.
 - [ ] Sources match the chapter coverage map.
 

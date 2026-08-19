@@ -2710,6 +2710,21 @@ abstract class AppLocalizations {
   /// Disabled Station spy — selected tile not occupiable. Refs #4439.
   String get provinceOverlay_stationSpyDisabledNotOccupiableTooltip;
 
+  /// MAP20001 Civilian Counter-espionage control label. Refs #4528.
+  String get provinceOverlay_counterEspionageAction;
+
+  /// Default-visible whole-realm gist on enabled Counter-espionage. Refs #4528.
+  String get provinceOverlay_counterEspionageGist;
+
+  /// On-request tooltip that extra Counter-espionage Spies do not stack. Refs #4528.
+  String get provinceOverlay_counterEspionageOneSpyTooltip;
+
+  /// Disabled Counter-espionage — a Spy is already posted. Refs #4528.
+  String get provinceOverlay_counterEspionageDisabledAlreadyPostedTooltip;
+
+  /// Disabled Counter-espionage — no eligible idle Spy. Refs #4528.
+  String get provinceOverlay_counterEspionageDisabledNoIdleSpyTooltip;
+
   /// MAP20001 Military Invade control label. Refs #4350.
   String provinceOverlay_invadeArmyAction(String provinceName);
 

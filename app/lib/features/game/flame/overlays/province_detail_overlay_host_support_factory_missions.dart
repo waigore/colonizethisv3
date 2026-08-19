@@ -8,10 +8,11 @@ import '../../../../core/services/game_service/game_service.dart'
 import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../caches/per_player_army_move_picker_cache.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
-    show ProvinceOverlayStationSpyProps;
+    show ProvinceOverlayCounterEspionageProps, ProvinceOverlayStationSpyProps;
 import '../map_state/province_detach_and_sail_overlay_controls.dart';
 import '../map_state/province_naval_mission_action_state.dart';
 import 'province_detail_overlay_host_support_army_move.dart';
+import 'province_detail_overlay_host_support_counter_espionage.dart';
 import 'province_detail_overlay_host_support_detach_sail.dart';
 import 'province_detail_overlay_host_support_naval_mission.dart';
 import 'province_detail_overlay_host_support_station_spy.dart';
@@ -22,6 +23,7 @@ import 'province_detail_overlay_host_support_station_spy.dart';
   ProvinceNavalMissionOverlayControls navalMission,
   ProvinceDetachAndSailOverlayControls detachAndSail,
   ProvinceOverlayStationSpyProps stationSpy,
+  ProvinceOverlayCounterEspionageProps counterEspionage,
 })
 buildProvinceDetailMissionOverlayControls({
   required BuildContext context,
@@ -87,6 +89,19 @@ buildProvinceDetailMissionOverlayControls({
       humanPlayerId: humanPlayerId,
       playerView: playerView,
       selectedTileKey: selectedTileKey,
+      draftOrders: draftOrders,
+      canMutateViaUi: canMutateViaUi,
+      omniscientDetail: omniscientDetail,
+      isSeaZone: isSeaZone,
+      bus: bus,
+    ),
+    counterEspionage: buildProvinceCounterEspionageOverlayProps(
+      context: context,
+      game: game,
+      region: region,
+      displayId: displayId,
+      humanPlayerId: humanPlayerId,
+      playerView: playerView,
       draftOrders: draftOrders,
       canMutateViaUi: canMutateViaUi,
       omniscientDetail: omniscientDetail,

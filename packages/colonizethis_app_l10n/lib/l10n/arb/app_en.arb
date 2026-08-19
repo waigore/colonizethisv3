@@ -4020,6 +4020,26 @@
   "@provinceOverlay_stationSpyDisabledNotOccupiableTooltip": {
     "description": "Disabled Station spy tooltip when the selected tile is not occupiable (Refs #4439)."
   },
+  "provinceOverlay_counterEspionageAction": "Counter-espionage",
+  "@provinceOverlay_counterEspionageAction": {
+    "description": "MAP20001 Civilian Counter-espionage control label (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageGist": "Protects the whole realm, not only this province.",
+  "@provinceOverlay_counterEspionageGist": {
+    "description": "Default-visible whole-realm gist on enabled Counter-espionage (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageOneSpyTooltip": "One Spy is enough; extra Spies do not add more.",
+  "@provinceOverlay_counterEspionageOneSpyTooltip": {
+    "description": "On-request tooltip that extra Counter-espionage Spies do not stack (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageDisabledAlreadyPostedTooltip": "A Spy is already posted for the whole realm.",
+  "@provinceOverlay_counterEspionageDisabledAlreadyPostedTooltip": {
+    "description": "Disabled Counter-espionage tooltip when a Spy is already on counter_spy (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageDisabledNoIdleSpyTooltip": "No idle Spy can take this post.",
+  "@provinceOverlay_counterEspionageDisabledNoIdleSpyTooltip": {
+    "description": "Disabled Counter-espionage tooltip when no eligible idle Spy exists (Refs #4528)."
+  },
   "provinceOverlay_invadeArmyAction": "Invade {provinceName}",
   "@provinceOverlay_invadeArmyAction": {
     "description": "MAP20001 Military Invade control label (Refs #4350).",

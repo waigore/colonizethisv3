@@ -134,6 +134,7 @@ Widget buildCivilianPanel({
   String? buildRailShortcutTargetTileKey,
   String? purchaseLandShortcutTargetTileKey,
   String? relocateShortcutTargetTileKey,
+  String? counterSpyShortcutTargetTileKey,
 }) {
   final resolvedBus = bus ?? AppEventBus.create();
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -169,6 +170,7 @@ Widget buildCivilianPanel({
           buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
           purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
           relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
+          counterSpyShortcutTargetTileKey: counterSpyShortcutTargetTileKey,
         ),
       ),
     ),

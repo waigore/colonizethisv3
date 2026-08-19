@@ -51,6 +51,8 @@ buildProvinceIntelGatedUnitSections({
   ProvinceDetachAndSailOverlayControls detachAndSail =
       ProvinceDetachAndSailOverlayControls.hidden,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
+  ProvinceOverlayCounterEspionageProps counterEspionage =
+      kProvinceOverlayCounterEspionageHidden,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
   String? provinceDisplayName,
   void Function(String?)? onHighlightTile,
@@ -127,6 +129,7 @@ buildProvinceIntelGatedUnitSections({
           playerView: playerView,
           draftOrders: draftOrders,
           stationSpy: stationSpy,
+          counterEspionage: counterEspionage,
         )
       : buildOverlaySection(
           l10n.provinceOverlay_sectionCivilian,

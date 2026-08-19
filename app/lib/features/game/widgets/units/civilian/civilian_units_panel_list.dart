@@ -142,6 +142,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
           widget.purchaseLandShortcutTargetTileKey,
       upgradeTownShortcutTargetTileKey: widget.upgradeTownShortcutTargetTileKey,
       relocateShortcutTargetTileKey: widget.relocateShortcutTargetTileKey,
+      counterSpyShortcutTargetTileKey: widget.counterSpyShortcutTargetTileKey,
     );
   }
 
