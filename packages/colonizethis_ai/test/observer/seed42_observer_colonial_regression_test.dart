@@ -31,7 +31,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Mirrors `kObserverColonialMinImprovementRatio` from
 /// `tool/run_observer_game/lib/observer_colonial_verify.dart`. Kept as a

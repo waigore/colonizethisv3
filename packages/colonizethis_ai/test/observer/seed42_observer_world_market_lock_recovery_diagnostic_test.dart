@@ -1,14 +1,13 @@
 import 'dart:convert';
 
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/cheapest_regiment_build_treasury_cost.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Seed-42 Path F (World Market) lock-recovery diagnostic (Refs #2924).
 ///
@@ -134,16 +133,19 @@ void main() {
             if (treasury > threshold && crossedThresholdAtTurn[gpId] == null) {
               crossedThresholdAtTurn[gpId] = turn;
             }
-            final carryOffers = game.worldMarketState
+            final carryOffers = game
+                .worldMarketState
                 .carryForwardOffersByFactionId[gpId]
                 ?.fold<int>(0, (s, o) => s + o.quantity);
             carryForwardOffersOnEntry[gpId]!.add(carryOffers ?? 0);
-            final carryBids = game.worldMarketState
+            final carryBids = game
+                .worldMarketState
                 .carryForwardBidsByFactionId[gpId]
                 ?.fold<int>(0, (s, o) => s + o.quantity);
             carryForwardBidsOnEntry[gpId]!.add(carryBids ?? 0);
 
-            final orders = fullAi.orders.tradeOrdersByPlayerId[gpId] ??
+            final orders =
+                fullAi.orders.tradeOrdersByPlayerId[gpId] ??
                 const <TradeOrder>[];
             final offers = orders.where((o) => o.type == TradeOrderType.offer);
             final bids = orders.where((o) => o.type == TradeOrderType.bid);
@@ -171,14 +173,16 @@ void main() {
         onAfterResolve: (turn, game) {
           final perGpSellerDeals = <String, int>{for (final id in gpIds) id: 0};
           final perGpBuyerDeals = <String, int>{for (final id in gpIds) id: 0};
-          final perGpSellerCredit = <String, int>{for (final id in gpIds) id: 0};
+          final perGpSellerCredit = <String, int>{
+            for (final id in gpIds) id: 0,
+          };
           final perGpBuyerSpend = <String, int>{for (final id in gpIds) id: 0};
           for (final entry in game.worldMarketState.lastTurnActivity.entries) {
             final commodityId = entry.key;
             final activity = entry.value;
             commodityFilledQuantity[commodityId] =
                 (commodityFilledQuantity[commodityId] ?? 0) +
-                    activity.filledQuantity;
+                activity.filledQuantity;
             for (final deal in activity.deals) {
               final notional = (deal.quantity * deal.pricePerUnit).round();
               if (perGpSellerDeals.containsKey(deal.sellerFactionId)) {
@@ -226,16 +230,17 @@ void main() {
             for (final gpId in gpIds) {
               final player = game.playerById(gpId);
               turn99Stockpile[gpId] = <CommodityId, int>{
-                for (final entry in (player?.stockpile.quantities.entries ??
-                    const <MapEntry<CommodityId, int>>[]))
+                for (final entry
+                    in (player?.stockpile.quantities.entries ??
+                        const <MapEntry<CommodityId, int>>[]))
                   if (entry.value > 0) entry.key: entry.value,
               };
-              turn99CarryOffers[gpId] = game.worldMarketState
-                      .carryForwardOffersByFactionId[gpId]
+              turn99CarryOffers[gpId] =
+                  game.worldMarketState.carryForwardOffersByFactionId[gpId]
                       ?.fold<int>(0, (s, o) => s + o.quantity) ??
                   0;
-              turn99CarryBids[gpId] = game.worldMarketState
-                      .carryForwardBidsByFactionId[gpId]
+              turn99CarryBids[gpId] =
+                  game.worldMarketState.carryForwardBidsByFactionId[gpId]
                       ?.fold<int>(0, (s, o) => s + o.quantity) ??
                   0;
               final homeFleetId = 'fleet_$gpId';
@@ -274,11 +279,14 @@ void main() {
             gpId: {
               'totalOffersEmitted': sum(offersEmittedPerTurn[gpId]!),
               'totalBidsEmitted': sum(bidsEmittedPerTurn[gpId]!),
-              'totalOfferQuantityEmitted':
-                  sum(offerQuantityEmittedPerTurn[gpId]!),
+              'totalOfferQuantityEmitted': sum(
+                offerQuantityEmittedPerTurn[gpId]!,
+              ),
               'avgCargoHolds': avg(cargoHoldsPerTurn[gpId]!),
-              'maxCargoHolds': cargoHoldsPerTurn[gpId]!
-                  .fold<int>(0, (a, b) => a > b ? a : b),
+              'maxCargoHolds': cargoHoldsPerTurn[gpId]!.fold<int>(
+                0,
+                (a, b) => a > b ? a : b,
+              ),
               'totalDealsAsSeller': sum(dealsAsSellerPerTurn[gpId]!),
               'totalDealsAsBuyer': sum(dealsAsBuyerPerTurn[gpId]!),
               'maxCarryForwardOffersOnEntry': carryForwardOffersOnEntry[gpId]!

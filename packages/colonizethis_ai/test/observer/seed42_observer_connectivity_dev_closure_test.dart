@@ -10,8 +10,8 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/connectivity_dev_observer_verify.dart';
-import 'support/seed42_observer_campaign.dart';
+import '../support/connectivity_dev_observer_verify.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Turn count for the late-game connectivity closure pin.
 const int kConnectivityClosureTurns = 60;
@@ -30,46 +30,43 @@ void main() {
     CtLogger.level = Level.off;
   });
 
-  test(
-    'seed 42 turn $kConnectivityClosureTurns: improved resource tiles '
-    'reachable over owned land are capital-connected (AC-F1)',
-    () {
-      final init = runInitGame(
-        config: GameSetupConfig(seed: 42),
-        options: const InitGameOptions(
-          cellSize: 24,
-          renderPng: false,
-          skipFillLakes: false,
-        ),
-      );
-      final topo = init.combinedTopology;
-      final tileMap = init.tileMapByRegion;
+  test('seed 42 turn $kConnectivityClosureTurns: improved resource tiles '
+      'reachable over owned land are capital-connected (AC-F1)', () {
+    final init = runInitGame(
+      config: GameSetupConfig(seed: 42),
+      options: const InitGameOptions(
+        cellSize: 24,
+        renderPng: false,
+        skipFillLakes: false,
+      ),
+    );
+    final topo = init.combinedTopology;
+    final tileMap = init.tileMapByRegion;
 
-      final campaign = runSeed42ObserverCampaign(
-        turns: kConnectivityClosureTurns,
-      );
-      final game = campaign.finalGame;
+    final campaign = runSeed42ObserverCampaign(
+      turns: kConnectivityClosureTurns,
+    );
+    final game = campaign.finalGame;
 
-      final allViolations = <String, List<String>>{};
-      for (final gpId in kConnectivityClosureGreatPowerIds) {
-        final violations = connectivityClosureViolations(
-          game: game,
-          playerId: gpId,
-          topology: topo,
-          tileMapByRegion: tileMap,
-        );
-        if (violations.isNotEmpty) {
-          allViolations[gpId] = violations;
-        }
+    final allViolations = <String, List<String>>{};
+    for (final gpId in kConnectivityClosureGreatPowerIds) {
+      final violations = connectivityClosureViolations(
+        game: game,
+        playerId: gpId,
+        topology: topo,
+        tileMapByRegion: tileMap,
+      );
+      if (violations.isNotEmpty) {
+        allViolations[gpId] = violations;
       }
+    }
 
-      expect(
-        allViolations,
-        isEmpty,
-        reason: 'connectivity closure violations at turn '
-            '$kConnectivityClosureTurns: $allViolations',
-      );
-    },
-    timeout: const Timeout(Duration(minutes: 5)),
-  );
+    expect(
+      allViolations,
+      isEmpty,
+      reason:
+          'connectivity closure violations at turn '
+          '$kConnectivityClosureTurns: $allViolations',
+    );
+  }, timeout: const Timeout(Duration(minutes: 5)));
 }
