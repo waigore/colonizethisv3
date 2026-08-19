@@ -38,6 +38,41 @@ class TurnNewsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return CtDialogShell(
+      child: _TurnNewsDialogContent(
+        game: game,
+        digest: digest,
+        newTurnNumber: newTurnNumber,
+        courtSummary: courtSummary,
+        spyReportCount: spyReportCount,
+        onOpenIntelligence: onOpenIntelligence,
+        onOpenEvents: onOpenEvents,
+      ),
+    );
+  }
+}
+
+class _TurnNewsDialogContent extends StatelessWidget {
+  const _TurnNewsDialogContent({
+    required this.game,
+    required this.digest,
+    required this.newTurnNumber,
+    required this.courtSummary,
+    required this.spyReportCount,
+    this.onOpenIntelligence,
+    this.onOpenEvents,
+  });
+
+  final Game game;
+  final TurnNewsDigest digest;
+  final int newTurnNumber;
+  final TurnNewsCourtSummary courtSummary;
+  final int spyReportCount;
+  final VoidCallback? onOpenIntelligence;
+  final VoidCallback? onOpenEvents;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
     final titleStyle = (theme.textTheme.titleLarge ?? const TextStyle())
@@ -56,57 +91,106 @@ class TurnNewsDialog extends StatelessWidget {
       courtParts.add(l10n.turnNews_courtMore(courtSummary.overflowFamilyCount));
     }
 
-    return CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.turnNews_title(newTurnNumber), style: titleStyle),
-          const SizedBox(height: CtSpacing.ml),
-          if (isEmpty && !hasCourt)
-            Text(l10n.turnNews_empty, style: mutedStyle)
-          else if (!isEmpty)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 320),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: lines.length,
-                itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.only(bottom: CtSpacing.m),
-                  child: Text(lines[i], style: bodyStyle),
-                ),
-              ),
-            ),
-          if (hasCourt) ...[
-            if (!isEmpty) const SizedBox(height: CtSpacing.m),
-            _CourtBlock(
-              key: courtBlockKey(),
-              body: l10n.turnNews_courtBlock(courtParts.join(' · ')),
-              openEventsLabel: l10n.turnNews_openEvents,
-              mutedStyle: mutedStyle,
-              onOpenEvents: onOpenEvents,
-            ),
-          ],
-          const SizedBox(height: CtSpacing.l),
-          if (spyReportCount > 0 && onOpenIntelligence != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: CtSpacing.m),
-              child: InkWell(
-                onTap: onOpenIntelligence,
-                child: Text(
-                  l10n.turnNews_spiesFooter(spyReportCount),
-                  style: mutedStyle,
-                ),
-              ),
-            ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: CtNinePatchButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.turnNews_close),
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.turnNews_title(newTurnNumber), style: titleStyle),
+        const SizedBox(height: CtSpacing.ml),
+        _TurnNewsGazetteSection(
+          isEmpty: isEmpty,
+          hasCourt: hasCourt,
+          lines: lines,
+          emptyLabel: l10n.turnNews_empty,
+          mutedStyle: mutedStyle,
+          bodyStyle: bodyStyle,
+        ),
+        if (hasCourt) ...[
+          if (!isEmpty) const SizedBox(height: CtSpacing.m),
+          _CourtBlock(
+            key: TurnNewsDialog.courtBlockKey(),
+            body: l10n.turnNews_courtBlock(courtParts.join(' · ')),
+            openEventsLabel: l10n.turnNews_openEvents,
+            mutedStyle: mutedStyle,
+            onOpenEvents: onOpenEvents,
           ),
         ],
+        const SizedBox(height: CtSpacing.l),
+        if (spyReportCount > 0 && onOpenIntelligence != null)
+          _TurnNewsSpyFooter(
+            label: l10n.turnNews_spiesFooter(spyReportCount),
+            mutedStyle: mutedStyle,
+            onOpenIntelligence: onOpenIntelligence!,
+          ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: CtNinePatchButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.turnNews_close),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TurnNewsGazetteSection extends StatelessWidget {
+  const _TurnNewsGazetteSection({
+    required this.isEmpty,
+    required this.hasCourt,
+    required this.lines,
+    required this.emptyLabel,
+    required this.mutedStyle,
+    required this.bodyStyle,
+  });
+
+  final bool isEmpty;
+  final bool hasCourt;
+  final List<String> lines;
+  final String emptyLabel;
+  final TextStyle mutedStyle;
+  final TextStyle bodyStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isEmpty && !hasCourt) {
+      return Text(emptyLabel, style: mutedStyle);
+    }
+    if (isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 320),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: lines.length,
+        itemBuilder: (_, i) => Padding(
+          padding: const EdgeInsets.only(bottom: CtSpacing.m),
+          child: Text(lines[i], style: bodyStyle),
+        ),
+      ),
+    );
+  }
+}
+
+class _TurnNewsSpyFooter extends StatelessWidget {
+  const _TurnNewsSpyFooter({
+    required this.label,
+    required this.mutedStyle,
+    required this.onOpenIntelligence,
+  });
+
+  final String label;
+  final TextStyle mutedStyle;
+  final VoidCallback onOpenIntelligence;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: CtSpacing.m),
+      child: InkWell(
+        onTap: onOpenIntelligence,
+        child: Text(label, style: mutedStyle),
       ),
     );
   }
