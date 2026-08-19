@@ -112,6 +112,42 @@ void main() {
     );
   });
 
+  test('enables when the only idle Spy is in the other region', () {
+    final game = buildPanelTestGame(
+      id: 'g_ce_nw_spy',
+      players: [const Player(id: _human, displayName: 'Human', isHuman: true)],
+      oldWorldProvinces: [
+        const Province(
+          id: _owned,
+          regionId: 'oldWorld',
+          displayName: 'Home',
+          ownerId: _human,
+        ),
+      ],
+      newWorldProvinces: const [
+        Province(
+          id: 'newWorld|p1',
+          regionId: 'newWorld',
+          displayName: 'Colony',
+          ownerId: _human,
+        ),
+      ],
+      newWorldUnits: [
+        Unit(
+          id: 'spy-nw',
+          type: kUnitTypeSpy,
+          ownerId: _human,
+          locationProvinceId: 'newWorld|p1',
+          tileKey: 'newWorld|p1|0|0',
+        ),
+      ],
+    );
+    final resolved = state(game: game);
+    expect(resolved.showControl, isTrue);
+    expect(resolved.enabled, isTrue);
+    expect(resolved.disabledReason, isNull);
+  });
+
   test('disables with noIdleSpy when the province is owned', () {
     final game = buildPanelTestGame(
       id: 'g_ce_no_spy',

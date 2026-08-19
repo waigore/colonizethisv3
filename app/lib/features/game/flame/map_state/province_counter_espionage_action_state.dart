@@ -141,9 +141,7 @@ List<Unit> _eligibleAssigners({
 
 List<Unit> _humanSpies(Game game, String humanPlayerId) {
   return [
-    for (final unit in game.worldState.oldWorld.units)
-      if (unit.ownerId == humanPlayerId && isSpyUnit(unit.type)) unit,
-    for (final unit in game.worldState.newWorld.units)
+    for (final unit in game.worldState.allUnitsById.values)
       if (unit.ownerId == humanPlayerId && isSpyUnit(unit.type)) unit,
   ];
 }
