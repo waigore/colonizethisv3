@@ -130,11 +130,11 @@ void main() {
 
   suppressLogsForTests();
 
-  group('seed 42 turn 1 TreasuryPlanner trade-order emission (Refs #2994 F9)', () {
-    test(
-      'generateOrdersForGameFullAI emits TradeOrders for at least one Great '
-      'Power and every emitted order satisfies the F1–F5 invariants',
-      () {
+  group(
+    'seed 42 turn 1 TreasuryPlanner trade-order emission (Refs #2994 F9)',
+    () {
+      test('generateOrdersForGameFullAI emits TradeOrders for at least one Great '
+          'Power and every emitted order satisfies the F1–F5 invariants', () {
         final init = runInitGame(
           config: GameSetupConfig(seed: 42),
           options: const InitGameOptions(
@@ -161,7 +161,8 @@ void main() {
           topology: topology,
         );
         final traceTable = rows.map((r) => r.formatRow()).join('\n');
-        final reason = 'seed-42 turn-1 per-GP trade-emission trace:\n'
+        final reason =
+            'seed-42 turn-1 per-GP trade-emission trace:\n'
             '$traceTable';
 
         // AC F9.1: at least one Great Power emits at least one TradeOrder.
@@ -216,61 +217,60 @@ void main() {
             );
           }
         }
-      },
-      timeout: const Timeout(Duration(minutes: 5)),
-    );
+      }, timeout: const Timeout(Duration(minutes: 5)));
 
-    test(
-      'generateOrdersForGameFullAI is deterministic on seed-42 turn 1: two '
-      'runs produce identical tradeOrdersByPlayerId',
-      () {
-        final init = runInitGame(
-          config: GameSetupConfig(seed: 42),
-          options: const InitGameOptions(
-            cellSize: 24,
-            renderPng: false,
-            skipFillLakes: false,
-          ),
-        );
-        final game = init.game.copyWith(
-          aiControlByGpId: {for (final p in init.game.players) p.id: true},
-        );
-        final topology = init.combinedTopology;
-        final tileMapByRegion = init.tileMapByRegion;
-
-        final r1 = generateOrdersForGameFullAI(
-          game,
-          topology,
-          tileMapByRegion: tileMapByRegion,
-        );
-        final r2 = generateOrdersForGameFullAI(
-          game,
-          topology,
-          tileMapByRegion: tileMapByRegion,
-        );
-
-        // Compare per-player to surface which GP diverged on failure.
-        final allGpIds = <String>{
-          ...r1.orders.tradeOrdersByPlayerId.keys,
-          ...r2.orders.tradeOrdersByPlayerId.keys,
-        };
-        for (final gpId in allGpIds) {
-          final a = r1.orders.tradeOrdersByPlayerId[gpId] ??
-              const <TradeOrder>[];
-          final b = r2.orders.tradeOrdersByPlayerId[gpId] ??
-              const <TradeOrder>[];
-          expect(
-            a,
-            b,
-            reason:
-                'Refs #2994 F9 AC-3 (determinism): seed-42 turn-1 trade '
-                'orders for $gpId differ between two consecutive '
-                'generateOrdersForGameFullAI invocations. '
-                'run1=$a run2=$b',
+      test(
+        'generateOrdersForGameFullAI is deterministic on seed-42 turn 1: two '
+        'runs produce identical tradeOrdersByPlayerId',
+        () {
+          final init = runInitGame(
+            config: GameSetupConfig(seed: 42),
+            options: const InitGameOptions(
+              cellSize: 24,
+              renderPng: false,
+              skipFillLakes: false,
+            ),
           );
-        }
-      },
-      timeout: const Timeout(Duration(minutes: 5)),
-    );
-  });
+          final game = init.game.copyWith(
+            aiControlByGpId: {for (final p in init.game.players) p.id: true},
+          );
+          final topology = init.combinedTopology;
+          final tileMapByRegion = init.tileMapByRegion;
+
+          final r1 = generateOrdersForGameFullAI(
+            game,
+            topology,
+            tileMapByRegion: tileMapByRegion,
+          );
+          final r2 = generateOrdersForGameFullAI(
+            game,
+            topology,
+            tileMapByRegion: tileMapByRegion,
+          );
+
+          // Compare per-player to surface which GP diverged on failure.
+          final allGpIds = <String>{
+            ...r1.orders.tradeOrdersByPlayerId.keys,
+            ...r2.orders.tradeOrdersByPlayerId.keys,
+          };
+          for (final gpId in allGpIds) {
+            final a =
+                r1.orders.tradeOrdersByPlayerId[gpId] ?? const <TradeOrder>[];
+            final b =
+                r2.orders.tradeOrdersByPlayerId[gpId] ?? const <TradeOrder>[];
+            expect(
+              a,
+              b,
+              reason:
+                  'Refs #2994 F9 AC-3 (determinism): seed-42 turn-1 trade '
+                  'orders for $gpId differ between two consecutive '
+                  'generateOrdersForGameFullAI invocations. '
+                  'run1=$a run2=$b',
+            );
+          }
+        },
+        timeout: const Timeout(Duration(minutes: 5)),
+      );
+    },
+  );
 }

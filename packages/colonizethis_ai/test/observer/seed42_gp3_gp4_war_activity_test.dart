@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Seed-42 mutual-plateau frontier war activity (Refs #2509).
 ///
@@ -44,7 +44,8 @@ void main() {
     expect(
       anyGpWarTurns,
       greaterThan(0),
-      reason: 'at least one great-power pair should open a mutual-plateau / '
+      reason:
+          'at least one great-power pair should open a mutual-plateau / '
           'frontier war before turn 50 on seed 42 '
           '(anyGpWarTurns=$anyGpWarTurns warTurnsByPair=$warTurnsByPair)',
     );

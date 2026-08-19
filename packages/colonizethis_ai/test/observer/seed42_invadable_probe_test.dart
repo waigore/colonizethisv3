@@ -9,7 +9,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/seed42_observer_campaign.dart';
 
 void main() {
   test(
@@ -30,8 +30,11 @@ void main() {
       final minorInvadable = snap.conquest.invadableProvinceIdsSorted
           .where((pid) => game.minorNations.any((m) => m.id == owners[pid]))
           .toList();
-      expect(minorInvadable.length, greaterThan(0),
-          reason: 'gp3 should have minor targets');
+      expect(
+        minorInvadable.length,
+        greaterThan(0),
+        reason: 'gp3 should have minor targets',
+      );
     },
     skip:
         'Refs #2509: seed-42 turn-20 gp3 invadable minors not stable after '

@@ -9,54 +9,18 @@ import 'package:colonizethis_logic/ai_api.dart'
         pendingTreasuryCostsForTurn;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../perception/perception_snapshot.dart';
-import 'expand_phase_planner_economy.dart' show cheapestRegimentBuildTreasuryCost;
+import 'expand_phase_planner_economy.dart'
+    show cheapestRegimentBuildTreasuryCost;
 import 'treasury_lock_recovery.dart';
 import 'treasury_market_pricing.dart';
 import 'treasury_need_analysis.dart';
 import 'treasury_planner_constants.dart';
+import 'treasury_planner_emit_input_lock_recovery_seller_flags.dart';
 import 'treasury_planner_input.dart';
 import 'treasury_regiment_bootstrap_bids.dart';
 import 'treasury_relation_boost_preference.dart';
 
-/// Seller-role flags shared by surplus/need maps and lock-recovery bid shaping.
-final class TreasuryLockRecoverySellerFlags {
-  const TreasuryLockRecoverySellerFlags({
-    required this.lockRecoveryScan,
-    required this.isLockRecoverySeller,
-    required this.isRegimentBuildInputMarketSupplier,
-  });
-
-  final LockRecoveryGameScan lockRecoveryScan;
-  final bool isLockRecoverySeller;
-  final bool isRegimentBuildInputMarketSupplier;
-}
-
-TreasuryLockRecoverySellerFlags resolveTreasuryLockRecoverySellerFlags({
-  required Game game,
-  required String playerId,
-  AIWorldSnapshot? snapshot,
-}) {
-  final lockRecoveryScan = LockRecoveryGameScan.fromGame(
-    game,
-    snapshot: snapshot,
-  );
-  final isLockRecoverySeller = lockRecoveryScan.isLockRecoverySeller(playerId);
-  final regimentBuildInputMarketSupplyActive =
-      lockRecoveryScan.anySellerNeedsRegimentBuildInput ||
-      lockRecoveryScan.anySellerNeedsCastIronLabourPeasantRecruitFabric ||
-      peerLockRecoverySellerNeededProducibleImprovementInputs(
-        game,
-        excludePlayerId: playerId,
-      ).isNotEmpty;
-  final isRegimentBuildInputMarketSupplier =
-      regimentBuildInputMarketSupplyActive && !isLockRecoverySeller;
-  return TreasuryLockRecoverySellerFlags(
-    lockRecoveryScan: lockRecoveryScan,
-    isLockRecoverySeller: isLockRecoverySeller,
-    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
-  );
-}
+export 'treasury_planner_emit_input_lock_recovery_seller_flags.dart';
 
 /// Lock-recovery flags and bid shaping for [buildEmitTradeOrdersInput].
 final class TreasuryEmitLockRecoveryContext {
@@ -161,11 +125,12 @@ TreasuryEmitLockRecoveryContext resolveTreasuryEmitLockRecoveryContext({
     treasuryForecast: treasuryForecast,
     scan: lockRecoveryScan,
   );
-  final isAffluentDesignatedBuyer = isAffluentDesignatedLockRecoveryBuyerInternal(
-    game: game,
-    playerId: playerId,
-    scan: lockRecoveryScan,
-  );
+  final isAffluentDesignatedBuyer =
+      isAffluentDesignatedLockRecoveryBuyerInternal(
+        game: game,
+        playerId: playerId,
+        scan: lockRecoveryScan,
+      );
 
   if (treasury >= treasuryAffluenceThreshold() &&
       !isLiquidityBuyer &&
