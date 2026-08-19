@@ -50,6 +50,8 @@ class TurnNewsDialog extends StatelessWidget {
     final lines = digest.lines.isEmpty
         ? const <String>[]
         : digest.lines.map((e) => formatTurnNewsLine(l10n, game, e)).toList();
+    final openEvents = onOpenEvents;
+    final openIntelligence = onOpenIntelligence;
 
     return CtDialogShell(
       child: Column(
@@ -61,40 +63,19 @@ class TurnNewsDialog extends StatelessWidget {
           if (showEmptyCopy)
             Text(l10n.turnNews_empty, style: mutedStyle)
           else if (lines.isNotEmpty)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 320),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: lines.length,
-                itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.only(bottom: CtSpacing.m),
-                  child: Text(lines[i], style: bodyStyle),
-                ),
-              ),
-            ),
+            _TurnNewsDigestList(lines: lines, bodyStyle: bodyStyle),
           const SizedBox(height: CtSpacing.l),
-          if (!courtSnapshot.isEmpty && onOpenEvents != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: CtSpacing.m),
-              child: InkWell(
-                key: courtBlockKey,
-                onTap: onOpenEvents,
-                child: Text(
-                  formatTurnNewsCourtBlock(l10n, courtSnapshot),
-                  style: mutedStyle,
-                ),
-              ),
+          if (!courtSnapshot.isEmpty && openEvents != null)
+            _TurnNewsCourtBlock(
+              snapshot: courtSnapshot,
+              style: mutedStyle,
+              onOpenEvents: openEvents,
             ),
-          if (spyReportCount > 0 && onOpenIntelligence != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: CtSpacing.m),
-              child: InkWell(
-                onTap: onOpenIntelligence,
-                child: Text(
-                  l10n.turnNews_spiesFooter(spyReportCount),
-                  style: mutedStyle,
-                ),
-              ),
+          if (spyReportCount > 0 && openIntelligence != null)
+            _TurnNewsSpiesFooter(
+              spyReportCount: spyReportCount,
+              style: mutedStyle,
+              onOpenIntelligence: openIntelligence,
             ),
           Align(
             alignment: Alignment.centerRight,
@@ -104,6 +85,81 @@ class TurnNewsDialog extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TurnNewsDigestList extends StatelessWidget {
+  const _TurnNewsDigestList({required this.lines, required this.bodyStyle});
+
+  final List<String> lines;
+  final TextStyle bodyStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 320),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: lines.length,
+        itemBuilder: (_, i) => Padding(
+          padding: const EdgeInsets.only(bottom: CtSpacing.m),
+          child: Text(lines[i], style: bodyStyle),
+        ),
+      ),
+    );
+  }
+}
+
+class _TurnNewsCourtBlock extends StatelessWidget {
+  const _TurnNewsCourtBlock({
+    required this.snapshot,
+    required this.style,
+    required this.onOpenEvents,
+  });
+
+  final TurnNewsCourtSnapshot snapshot;
+  final TextStyle style;
+  final VoidCallback onOpenEvents;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: CtSpacing.m),
+      child: InkWell(
+        key: TurnNewsDialog.courtBlockKey,
+        onTap: onOpenEvents,
+        child: Text(
+          formatTurnNewsCourtBlock(appL10n(context), snapshot),
+          style: style,
+        ),
+      ),
+    );
+  }
+}
+
+class _TurnNewsSpiesFooter extends StatelessWidget {
+  const _TurnNewsSpiesFooter({
+    required this.spyReportCount,
+    required this.style,
+    required this.onOpenIntelligence,
+  });
+
+  final int spyReportCount;
+  final TextStyle style;
+  final VoidCallback onOpenIntelligence;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: CtSpacing.m),
+      child: InkWell(
+        onTap: onOpenIntelligence,
+        child: Text(
+          appL10n(context).turnNews_spiesFooter(spyReportCount),
+          style: style,
+        ),
       ),
     );
   }
