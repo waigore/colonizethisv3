@@ -1,8 +1,9 @@
-// Widget goldens for DLG50001 Turn news spy-footer (Refs #4476 verification
-// gaps). Pixel baselines under `app/test/goldens/`.
+// Widget goldens for DLG50001 Turn news spy-footer (Refs #4476) and **Your
+// court** block (Refs #4532). Pixel baselines under `app/test/goldens/`.
 //
 // SPEC: SPEC/ui/turn-news-dialog.md; SPEC/ui/intelligence-council.md.
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -110,6 +111,127 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/turn_news_dialog_no_spy_footer.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: DLG50001 empty gazette with court block (Refs #4532)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('turn_news_court_block_golden');
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(420, 320),
+        settle: false,
+        includeLocalizations: true,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: TurnNewsDialog(
+          game: _baseGame,
+          digest: const TurnNewsDigest(resolvedTurnNumber: 1, lines: []),
+          newTurnNumber: 2,
+          courtSummary: const TurnNewsCourtSummary(
+            clauses: ['Sailing finished'],
+          ),
+          onOpenEvents: () {},
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.text('No major events last turn.'), findsNothing);
+      expect(find.textContaining('Your court:'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/turn_news_dialog_court_block.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: DLG50001 court block and spy footer coexist (Refs #4532)',
+    (WidgetTester tester) async {
+      const boundaryKey =
+          ValueKey<String>('turn_news_court_spy_footer_golden');
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(420, 380),
+        settle: false,
+        includeLocalizations: true,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: TurnNewsDialog(
+          game: _baseGame,
+          digest: const TurnNewsDigest(resolvedTurnNumber: 1, lines: []),
+          newTurnNumber: 2,
+          courtSummary: const TurnNewsCourtSummary(
+            clauses: ['work finished'],
+          ),
+          spyReportCount: 1,
+          onOpenIntelligence: () {},
+          onOpenEvents: () {},
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('Your court:'), findsOneWidget);
+      expect(find.textContaining('open Intelligence'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/turn_news_dialog_court_spy_footer.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: DLG50001 court block at 320 dp with overflow (Refs #4532)',
+    (WidgetTester tester) async {
+      const boundaryKey =
+          ValueKey<String>('turn_news_court_320dp_golden');
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(320, 360),
+        settle: false,
+        includeLocalizations: true,
+        center: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: Center(
+          child: SizedBox(
+            width: 320,
+            child: TurnNewsDialog(
+              game: _baseGame,
+              digest: const TurnNewsDigest(resolvedTurnNumber: 1, lines: []),
+              newTurnNumber: 2,
+              courtSummary: const TurnNewsCourtSummary(
+                clauses: [
+                  'a decree was refused',
+                  'Sailing finished',
+                  'a battle was fought',
+                ],
+                overflowFamilyCount: 2,
+              ),
+              onOpenEvents: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/turn_news_dialog_court_320dp.png'),
       );
     },
   );
