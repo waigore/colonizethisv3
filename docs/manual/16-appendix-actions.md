@@ -100,6 +100,7 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/game/workers-and-population.md`
 - `SPEC/game/military-armies.md`
 - `SPEC/game/ships-and-naval.md`
+- `SPEC/game/capital-and-connectivity.md`
 - `SPEC/game/diplomacy.md`
 - `SPEC/ui/diplomacy-panel.md`
 - `SPEC/ui/grant-or-subsidy-dialog.md`

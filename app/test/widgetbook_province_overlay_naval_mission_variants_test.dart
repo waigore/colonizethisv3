@@ -85,6 +85,26 @@ void main() {
       expect(find.text(l10n.provinceOverlay_underBlockade), findsOneWidget);
     });
 
+    testWidgets('Under blockade capital story shows capital-port status copy', (
+      tester,
+    ) async {
+      final useCase = findWidgetbookUseCase(
+        provinceOverlayDirectories,
+        folderName: folderName,
+        useCaseName: 'Standalone — Naval Under blockade capital',
+      );
+      await pumpWidgetbookUseCaseAtSize(
+        tester,
+        useCase,
+        size: const Size(800, 640),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(l10n.provinceOverlay_underBlockadeCapital),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('hidden Beachhead story has no Beachhead control', (
       tester,
     ) async {

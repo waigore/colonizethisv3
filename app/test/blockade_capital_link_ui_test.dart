@@ -95,6 +95,21 @@ void main() {
       expect(status, ProvinceBlockadeStatus.portBlockaded);
     });
 
+    test('human-owned blockaded capital resolves capitalBlockaded', () {
+      const target = 'oldWorld|enemy1';
+      final game = buildNavalMissionHumanOwnedBlockadedPortGame(
+        capitalPort: true,
+      );
+      final status = resolveHumanOwnedBlockadeStatus(
+        game: game,
+        humanPlayerId: navalMissionGoldenHumanId,
+        provinceId: target,
+        topology: navalMissionWarTopology(),
+        isSeaZone: false,
+      );
+      expect(status, ProvinceBlockadeStatus.capitalBlockaded);
+    });
+
     test('foreign-owned province resolves none', () {
       const target = 'oldWorld|enemy1';
       final game = buildNavalMissionWarTargetsGame();
@@ -136,6 +151,37 @@ void main() {
       await tester.pump();
       expect(find.text(l10n.provinceOverlay_underBlockade), findsOneWidget);
     });
+
+    testWidgets(
+      'shows capital under-blockade line for human-owned capital port',
+      (tester) async {
+        await tester.pumpWidget(
+          buildAppShell(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            child: Builder(
+              builder: (context) {
+                return buildNavalSection(
+                  l10n: appL10n(context),
+                  game: buildNavalMissionMenuPeacetimeGame(),
+                  fleets: const [],
+                  humanPlayerId: navalMissionGoldenHumanId,
+                  draftOrders: const Orders(),
+                  blockadeStatus: ProvinceBlockadeStatus.capitalBlockaded,
+                );
+              },
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(
+          find.text(l10n.provinceOverlay_underBlockadeCapital),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets('omits status line when not blockaded', (tester) async {
       await tester.pumpWidget(
