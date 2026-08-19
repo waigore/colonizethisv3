@@ -3,8 +3,8 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/connectivity_dev_chain_fixture.dart';
-import 'support/connectivity_dev_multi_turn_harness.dart';
+import '../support/connectivity_dev_chain_fixture.dart';
+import '../support/connectivity_dev_multi_turn_harness.dart';
 
 void main() {
   setUpAll(() {

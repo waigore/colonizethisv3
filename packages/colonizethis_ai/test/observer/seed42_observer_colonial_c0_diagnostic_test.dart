@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
@@ -13,7 +11,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/cheapest_regiment_build_treasury_cost.dart';
+import '../support/seed42_observer_campaign.dart';
+import 'seed42_observer_colonial_c0_diagnostic_cases.dart';
 
 /// Seed-42 turn-150 COLONIAL-arm C0 diagnostic (Refs #2852).
 ///
@@ -60,7 +60,7 @@ import 'support/seed42_observer_campaign.dart';
 ///
 /// ```
 /// (cd packages/colonizethis_ai && dart test \
-///     test/seed42_observer_colonial_c0_diagnostic_test.dart \
+///     test/observer/seed42_observer_colonial_c0_diagnostic_test.dart \
 ///     --run-skipped)
 /// ```
 ///
@@ -142,7 +142,10 @@ void main() {
         onBeforeResolve: (turn, fullAi, game, topology, tileMap) {
           for (final gpId in gpIds) {
             final view = buildPlayerView(game, topology, gpId);
-            final snap = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+            final snap = AIWorldSnapshot.fromPlayerView(
+              view,
+              topology: topology,
+            );
             final outcome = runPhasePlanners(game: game, snapshot: snap);
 
             phaseCounts[gpId]![outcome.phase] =
@@ -164,7 +167,7 @@ void main() {
                     (acquisitionMethodCounts[gpId]![key] ?? 0) + 1;
                 acquisitionTargetPicks[gpId]![acq.targetFactionId] =
                     (acquisitionTargetPicks[gpId]![acq.targetFactionId] ?? 0) +
-                        1;
+                    1;
               }
 
               final peaceKey =
@@ -182,12 +185,14 @@ void main() {
                 continue;
               }
 
-              final invadable = snap.colonial.invadableNewWorldProvinceIdsSorted;
+              final invadable =
+                  snap.colonial.invadableNewWorldProvinceIdsSorted;
               final provinceOwner = getProvinceOwnerMap(game);
               final treasury = snap.economy.treasury;
               final regiments = regimentCountForPlayer(game, gpId);
               final prospected =
-                  game.worldState.playerProspectedTiles[gpId] ?? const <String>{};
+                  game.worldState.playerProspectedTiles[gpId] ??
+                  const <String>{};
               final purchasedByTile = game.worldState.purchasedTilesByTileKey;
 
               var arm1JoinEmpireEligible = false;
@@ -205,7 +210,8 @@ void main() {
                       overture.stage == OvertureStage.nap &&
                       relation != null &&
                       relation.score >= relationScoreMinFriendly &&
-                      treasury >= joinEmpireCostForMinorOrTribe(game, ownerId)) {
+                      treasury >=
+                          joinEmpireCostForMinorOrTribe(game, ownerId)) {
                     arm1JoinEmpireEligible = true;
                   }
                 }
@@ -216,7 +222,7 @@ void main() {
                   if ((relation == null || !relation.atWar) &&
                       overture != null &&
                       overture.hasEmbassy &&
-                      _provinceHasValidPurchaseLandTileForDiagnostic(
+                      provinceHasValidPurchaseLandTileForC0Diagnostic(
                         world: game.worldState,
                         provinceId: provinceId,
                         treasury: treasury,
@@ -235,7 +241,7 @@ void main() {
                 }
               }
 
-              final arm2HasIdleMerchant = _hasIdleMerchantForDiagnostic(
+              final arm2HasIdleMerchant = hasIdleMerchantForC0Diagnostic(
                 game.worldState,
                 gpId,
               );
@@ -282,7 +288,7 @@ void main() {
                     snap.conquest.invadableProvinceIdsSorted.length,
                 'treasury': player?.treasury,
                 'regimentCount': regimentCountForPlayer(game, gpId),
-                'idleMerchant': _hasIdleMerchantForDiagnostic(
+                'idleMerchant': hasIdleMerchantForC0Diagnostic(
                   game.worldState,
                   gpId,
                 ),
@@ -367,46 +373,4 @@ void main() {
         'after a tuning slice lands.',
     timeout: const Timeout(Duration(minutes: 25)),
   );
-}
-
-/// Mirror of `_hasIdleMerchant` (private to
-/// `colonial_phase_planner.dart`) — the diagnostic must use the same
-/// idle-Merchant scan the planner consults so eligibility flags align
-/// with the production gate.
-bool _hasIdleMerchantForDiagnostic(WorldState world, String playerId) {
-  for (final unit in allUnitsFromWorld(world)) {
-    if (unit.ownerId == playerId &&
-        unit.type == kUnitTypeMerchant &&
-        unit.status == UnitStatus.idle) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/// Mirror of `_provinceHasValidPurchaseLandTile` (private to
-/// `colonial_phase_planner.dart`) — the diagnostic mirrors the per-tile
-/// gates of `precheckPurchaseLand` so the `arm2PurchaseLandEligible`
-/// flag aligns with the production planner's view exactly.
-bool _provinceHasValidPurchaseLandTileForDiagnostic({
-  required WorldState world,
-  required String provinceId,
-  required int treasury,
-  required Set<String> prospected,
-  required Map<String, String> purchasedByTile,
-}) {
-  for (final entry in world.resourceByTileKey.entries) {
-    final tileKey = entry.key;
-    if (Unit.provinceIdFromTileKey(tileKey) != provinceId) continue;
-    final resourceId = entry.value;
-    if (resourceId.isEmpty) continue;
-    if (purchasedByTile.containsKey(tileKey)) continue;
-    if (kMineralResourceIds.contains(resourceId) &&
-        !prospected.contains(tileKey)) {
-      continue;
-    }
-    if (treasury < purchaseLandCost(resourceId)) continue;
-    return true;
-  }
-  return false;
 }

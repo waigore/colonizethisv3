@@ -31,7 +31,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Per-GP COLONIAL phase-entry budget for the seed-42 turn-150 observer
 /// campaign per #2848 § "COLONIAL phase timeline budget". A first-COLONIAL
@@ -105,7 +105,10 @@ void main() {
         onBeforeResolve: (turn, fullAi, game, topology, tileMap) {
           for (final gpId in gpIds) {
             final view = buildPlayerView(game, topology, gpId);
-            final snap = AIWorldSnapshot.fromPlayerView(view, topology: topology);
+            final snap = AIWorldSnapshot.fromPlayerView(
+              view,
+              topology: topology,
+            );
             // Mirror `seed42_observer_colonial_c0_diagnostic_test.dart`:
             // `runPhasePlanners` returns the canonical `PhasePlanOutcome`
             // whose `.phase` field is the deterministic per-GP per-turn

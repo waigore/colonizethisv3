@@ -5,7 +5,7 @@
 
 import 'package:colonizethis_test/test.dart';
 
-import 'support/s7d/diagnostic_json.dart';
+import '../support/s7d/diagnostic_json.dart';
 
 void main() {
   group('buildSeed42S7dLockRecoveryDiagnosticJson', () {
@@ -34,10 +34,11 @@ void main() {
         reason: 'lock-recovery JSON must expose the Step-0 key contract',
       );
       expect(json['cheapestRegimentBuildTreasuryCost'], 2000);
-      expect(
-        (json['gpTradeOrdersEmitted'] as Map<String, Object?>)['gp1'],
-        {'offers': 2, 'urgentOffers': 1, 'bids': 3},
-      );
+      expect((json['gpTradeOrdersEmitted'] as Map<String, Object?>)['gp1'], {
+        'offers': 2,
+        'urgentOffers': 1,
+        'bids': 3,
+      });
     });
 
     test('negative: missing GP defaults trade/deal counters to zero', () {
@@ -57,14 +58,15 @@ void main() {
         cheapestRegimentCost: 2000,
       );
 
-      expect(
-        (json['gpTradeOrdersEmitted'] as Map<String, Object?>)['gp9'],
-        {'offers': 0, 'urgentOffers': 0, 'bids': 0},
-      );
-      expect(
-        (json['gpDealsMatched'] as Map<String, Object?>)['gp9'],
-        {'asSeller': 0, 'asBuyer': 0},
-      );
+      expect((json['gpTradeOrdersEmitted'] as Map<String, Object?>)['gp9'], {
+        'offers': 0,
+        'urgentOffers': 0,
+        'bids': 0,
+      });
+      expect((json['gpDealsMatched'] as Map<String, Object?>)['gp9'], {
+        'asSeller': 0,
+        'asBuyer': 0,
+      });
     });
   });
 }
