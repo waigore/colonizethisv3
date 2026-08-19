@@ -2,7 +2,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Growth-stage planner seed-42 conquest gate (Refs #3371 AC7).
 ///
@@ -21,8 +21,11 @@ void main() {
         growthStagePlannerEnabled: true,
       );
 
-      int owProvincesFor(String gpId) => campaign.finalGame.worldState
-          .oldWorld.provinces
+      int owProvincesFor(String gpId) => campaign
+          .finalGame
+          .worldState
+          .oldWorld
+          .provinces
           .where((p) => p.ownerId == gpId)
           .length;
 

@@ -35,8 +35,8 @@ void main() {
       final invadableOwners = <String>{
         for (final provinceId in snap.conquest.invadableProvinceIdsSorted)
           game.worldState.oldWorld.provinces
-              .firstWhere((p) => p.id == provinceId)
-              .ownerId ??
+                  .firstWhere((p) => p.id == provinceId)
+                  .ownerId ??
               '',
       }..remove('');
       // Anti-degenerate start: every GP must have at least one invadable Old
@@ -44,7 +44,8 @@ void main() {
       expect(
         snap.conquest.invadableProvinceIdsSorted,
         isNotEmpty,
-        reason: '$gpId invadable=${snap.conquest.invadableProvinceIdsSorted} '
+        reason:
+            '$gpId invadable=${snap.conquest.invadableProvinceIdsSorted} '
             'adjacentOwners=${snap.conquest.adjacentOwnerFactionIdsSorted}',
       );
       if (invadableOwners.any((o) => o.startsWith('minor'))) {
@@ -59,7 +60,8 @@ void main() {
     expect(
       gpsWithMinorTarget,
       greaterThanOrEqualTo(5),
-      reason: 'gpsWithMinorTarget=$gpsWithMinorTarget (expected >= 5 of 6 GPs '
+      reason:
+          'gpsWithMinorTarget=$gpsWithMinorTarget (expected >= 5 of 6 GPs '
           'to border an invadable minor on seed 42)',
     );
   });
