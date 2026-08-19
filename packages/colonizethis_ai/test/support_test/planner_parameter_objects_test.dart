@@ -19,7 +19,9 @@ void main() {
       expect(aiTrace, contains('final class AiTraceBuildInput'));
       expect(
         aiTrace,
-        contains('TurnTraceAiSection buildAiTraceSection(AiTraceBuildInput input)'),
+        contains(
+          'TurnTraceAiSection buildAiTraceSection(AiTraceBuildInput input)',
+        ),
       );
 
       final treasuryInput = File(
@@ -32,16 +34,15 @@ void main() {
       ).readAsStringSync();
       expect(
         treasury,
-        contains('List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input)'),
+        contains(
+          'List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input)',
+        ),
       );
 
       final recruitmentTypes = File(
         p.join(planningDir.path, 'recruitment_planner_types.dart'),
       ).readAsStringSync();
-      expect(
-        recruitmentTypes,
-        contains('final class RecruitmentPlannerInput'),
-      );
+      expect(recruitmentTypes, contains('final class RecruitmentPlannerInput'));
 
       final recruitment = File(
         p.join(planningDir.path, 'recruitment_planner.dart'),
@@ -71,11 +72,7 @@ void main() {
       final recruitmentSource = recruitment.readAsStringSync();
       final candidatesSource = candidates.readAsStringSync();
       final typesSource = types.readAsStringSync();
-      for (final source in [
-        recruitmentSource,
-        candidatesSource,
-        typesSource,
-      ]) {
+      for (final source in [recruitmentSource, candidatesSource, typesSource]) {
         expect(source, isNot(contains("part '")));
         expect(source, isNot(contains('part of ')));
       }
@@ -102,17 +99,17 @@ void main() {
       // threshold (gather/evaluate/emit live in the candidates part).
       final lines = recruitment.readAsLinesSync();
       final start = lines.indexWhere(
-        (l) =>
-            l.contains(
-              'RecruitmentPlan runRecruitmentPlanner(RecruitmentPlannerInput input)',
-            ),
+        (l) => l.contains(
+          'RecruitmentPlan runRecruitmentPlanner(RecruitmentPlannerInput input)',
+        ),
       );
       expect(start, greaterThanOrEqualTo(0));
       var depth = 0;
       var started = false;
       var end = start;
       for (var i = start; i < lines.length; i++) {
-        depth += '{'.allMatches(lines[i]).length - '}'.allMatches(lines[i]).length;
+        depth +=
+            '{'.allMatches(lines[i]).length - '}'.allMatches(lines[i]).length;
         if (lines[i].contains('{')) started = true;
         if (started && depth == 0) {
           end = i;
@@ -146,12 +143,9 @@ void main() {
       expect(recruitment, isNot(contains('runRecruitmentPlanner({')));
     });
 
-    test(
-        'economy labour helpers are topic-split into an explicit-import '
+    test('economy labour helpers are topic-split into an explicit-import '
         'library (Refs #4079 Slice A)', () {
-      final economy = File(
-        p.join(planningDir.path, 'economy_planner.dart'),
-      );
+      final economy = File(p.join(planningDir.path, 'economy_planner.dart'));
       final labour = File(
         p.join(planningDir.path, 'economy_planner_labour.dart'),
       );
@@ -163,9 +157,16 @@ void main() {
         expect(source, isNot(contains("part '")));
         expect(source, isNot(contains('part of ')));
       }
+      expect(economySource, contains("import 'economy_planner_labour.dart';"));
       expect(
-        economySource,
-        contains("import 'economy_planner_labour.dart';"),
+        labourSource,
+        contains("import 'economy_planner_labour_input.dart';"),
+      );
+      expect(
+        File(
+          p.join(planningDir.path, 'economy_planner_labour_input.dart'),
+        ).existsSync(),
+        isTrue,
       );
       expect(
         economy.readAsLinesSync().length,
@@ -179,14 +180,8 @@ void main() {
         p.join(planningDir.path, 'colonial_phase_planner.dart'),
       ).readAsStringSync();
       // Slice A (#4365): colonial barrel is a thin re-export host.
-      expect(
-        colonial,
-        contains("export 'colonial_phase_planner_naval.dart';"),
-      );
-      expect(
-        colonial,
-        contains("export 'colonial_phase_planner_lite.dart';"),
-      );
+      expect(colonial, contains("export 'colonial_phase_planner_naval.dart';"));
+      expect(colonial, contains("export 'colonial_phase_planner_lite.dart';"));
       expect(
         colonial,
         contains("export 'colonial_phase_planner_civilian.dart';"),
@@ -220,10 +215,7 @@ void main() {
         p.join(planningDir.path, 'diplomacy_planner.dart'),
       ).readAsStringSync();
       // Slice A (#4365): diplomacy barrel re-exports run; helpers stay in run.
-      expect(
-        diplomacy,
-        contains("export 'diplomacy_planner_run.dart'"),
-      );
+      expect(diplomacy, contains("export 'diplomacy_planner_run.dart'"));
       expect(diplomacy, isNot(contains("part '")));
       final diplomacyRun = File(
         p.join(planningDir.path, 'diplomacy_planner_run.dart'),
@@ -243,10 +235,7 @@ void main() {
       expect(orchestrator, isNot(contains("part '")));
 
       final economy = File(
-        p.join(
-          planningDir.path,
-          'domain_planner_orchestrator_economy.dart',
-        ),
+        p.join(planningDir.path, 'domain_planner_orchestrator_economy.dart'),
       ).readAsStringSync();
       expect(
         economy,
@@ -254,17 +243,23 @@ void main() {
       );
     });
 
-    test('negative: colonial naval monolith must not reabsorb lite/civilian', () {
-      final naval = File(
-        p.join(planningDir.path, 'colonial_phase_planner_naval.dart'),
-      ).readAsStringSync();
-      expect(naval, isNot(contains('List<String> planColonialLiteOvertures')));
-      expect(naval, isNot(contains('List<WorkOrder> planColonialCivilian')));
-      expect(naval, isNot(contains('final class ColonialLiteNavalPlan')));
-      expect(
-        naval,
-        isNot(contains('ColonialLiteNavalPlan planColonialLiteNaval')),
-      );
-    });
+    test(
+      'negative: colonial naval monolith must not reabsorb lite/civilian',
+      () {
+        final naval = File(
+          p.join(planningDir.path, 'colonial_phase_planner_naval.dart'),
+        ).readAsStringSync();
+        expect(
+          naval,
+          isNot(contains('List<String> planColonialLiteOvertures')),
+        );
+        expect(naval, isNot(contains('List<WorkOrder> planColonialCivilian')));
+        expect(naval, isNot(contains('final class ColonialLiteNavalPlan')));
+        expect(
+          naval,
+          isNot(contains('ColonialLiteNavalPlan planColonialLiteNaval')),
+        );
+      },
+    );
   });
 }
