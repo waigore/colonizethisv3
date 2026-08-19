@@ -1,9 +1,9 @@
+import 'package:colonizethis_app/core/utils/human_units_for_work_target.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show kTownDevelopmentLevelMax, kUnitTypeBuilder;
+    show kTownDevelopmentLevelMax;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import '../caches/per_player_work_target_selection_cache.dart';
 import 'game_map_area_province_action_states_assignable.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -82,13 +82,10 @@ abstract final class GameMapAreaProvinceActionStatesUpgradeTown {
   }
 
   static bool _hasBuilderUnits(ct_models.Game game, String humanPlayerId) {
-    return [
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ].any(
-      (unit) =>
-          unit.ownerId == humanPlayerId &&
-          unit.type == kUnitTypeBuilder,
-    );
+    return humanUnitsMatchingWorkTarget(
+      game: game,
+      playerId: humanPlayerId,
+      workTarget: kWorkTargetUpgradeTown,
+    ).isNotEmpty;
   }
 }

@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/faction_display_name.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -47,12 +48,8 @@ class OvertureDialogueOverlayState extends State<OvertureDialogueOverlay>
 
   bool get _allDecided => dialogueTristateAllDecided(_accepted);
 
-  String _offererDisplayName(String offererGpId) {
-    for (final p in widget.game.players) {
-      if (p.id == offererGpId) return p.displayName;
-    }
-    return offererGpId;
-  }
+  String _offererDisplayName(String offererGpId) =>
+      displayNameForFaction(widget.game, offererGpId);
 
   String _stageLabel(AppLocalizations l10n, OvertureStage stage) {
     switch (stage) {

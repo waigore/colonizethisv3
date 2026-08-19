@@ -1,5 +1,6 @@
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show GamePlayerLookup, homeFleetIdFor;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show GamePlayerLookup, homeFleetIdFor;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -166,12 +167,8 @@ mixin NavalUnitsPanelCombine
     return (home: home, source: source);
   }
 
-  String? humanCapitalProvinceId() {
-    for (final p in widget.game.players) {
-      if (p.id == widget.humanPlayerId) return p.capitalProvinceId;
-    }
-    return null;
-  }
+  String? humanCapitalProvinceId() =>
+      widget.game.playerById(widget.humanPlayerId)?.capitalProvinceId;
 
   bool provinceMatchesCapital(String provinceId, String capitalProvinceId) {
     if (provinceId == capitalProvinceId) return true;
