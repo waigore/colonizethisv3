@@ -66,6 +66,54 @@ void main() {
       );
     });
 
+    test('fails when a world test imports colonizethis_orders', () {
+      final root = Directory.systemTemp.createTempSync('world_no_up_orders_');
+      addTearDown(() => root.deleteSync(recursive: true));
+      _write(
+        root,
+        'packages/colonizethis_world/pubspec.yaml',
+        'name: colonizethis_world\n',
+      );
+      _write(
+        root,
+        'packages/colonizethis_world/test/world/bad_orders_test.dart',
+        "import 'package:colonizethis_orders/colonizethis_orders.dart';\n",
+      );
+
+      final errors = <String>[];
+      final code = runCheckWorldTestNoUpstreamDomainDeps(
+        root.path,
+        err: errors.add,
+      );
+      expect(code, 1);
+      expect(errors.join('\n'), contains('bad_orders_test.dart'));
+    });
+
+    test('fails when world pubspec lists colonizethis_orders', () {
+      final root = Directory.systemTemp.createTempSync(
+        'world_no_up_pub_orders_',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      _write(
+        root,
+        'packages/colonizethis_world/pubspec.yaml',
+        'name: colonizethis_world\ndev_dependencies:\n  colonizethis_orders:\n',
+      );
+      _write(
+        root,
+        'packages/colonizethis_world/test/world/ok_test.dart',
+        "import 'package:colonizethis_world/colonizethis_world.dart';\n",
+      );
+
+      final errors = <String>[];
+      final code = runCheckWorldTestNoUpstreamDomainDeps(
+        root.path,
+        err: errors.add,
+      );
+      expect(code, 1);
+      expect(errors.join('\n'), contains('pubspec.yaml'));
+    });
+
     test('fails when world pubspec lists colonizethis_logic', () {
       final root = Directory.systemTemp.createTempSync('world_no_up_pub_');
       addTearDown(() => root.deleteSync(recursive: true));
