@@ -30,6 +30,7 @@ import 'package:hive/hive.dart' show Box;
 import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart'

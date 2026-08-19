@@ -1118,6 +1118,93 @@
       }
     }
   },
+  "turnNews_courtBlock": "Your court: {clauses}",
+  "@turnNews_courtBlock": {
+    "description": "Turn news compact player-scoped court summary.",
+    "placeholders": {
+      "clauses": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_courtMore": "{count} more",
+  "@turnNews_courtMore": {
+    "description": "Turn news court block overflow families.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_openEvents": "open Events",
+  "@turnNews_openEvents": {
+    "description": "Turn news court block tap target to reveal OVL70001."
+  },
+  "turnNews_courtResearchFinished": "{tech} finished",
+  "@turnNews_courtResearchFinished": {
+    "description": "Turn news court clause for one research completion.",
+    "placeholders": {
+      "tech": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_courtResearchFinishedMany": "{count} technologies finished",
+  "@turnNews_courtResearchFinishedMany": {
+    "description": "Turn news court clause for multiple research completions.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtResearchFinishedUnknown": "a technology finished",
+  "@turnNews_courtResearchFinishedUnknown": {
+    "description": "Turn news court clause when tech display name is unknown."
+  },
+  "turnNews_courtDecreeRefused": "a decree was refused",
+  "@turnNews_courtDecreeRefused": {
+    "description": "Turn news court clause for one rejected order."
+  },
+  "turnNews_courtDecreesRefused": "{count} decrees were refused",
+  "@turnNews_courtDecreesRefused": {
+    "description": "Turn news court clause for multiple rejected orders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtBattleFought": "a battle was fought",
+  "@turnNews_courtBattleFought": {
+    "description": "Turn news court clause for one combat outcome."
+  },
+  "turnNews_courtBattlesFought": "{count} battles were fought",
+  "@turnNews_courtBattlesFought": {
+    "description": "Turn news court clause for multiple combats.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtMarket": "market and realm accounts",
+  "@turnNews_courtMarket": {
+    "description": "Turn news court clause for market or economy summary."
+  },
+  "turnNews_courtWorkFinished": "work finished",
+  "@turnNews_courtWorkFinished": {
+    "description": "Turn news court clause for one completed work order."
+  },
+  "turnNews_courtWorksFinished": "{count} works finished",
+  "@turnNews_courtWorksFinished": {
+    "description": "Turn news court clause for multiple completed work orders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacy_intelligence": "Intelligence",
   "@diplomacy_intelligence": {
     "description": "GAME30001 top-bar control opening the Intelligence Council."

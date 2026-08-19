@@ -588,6 +588,45 @@ abstract class AppLocalizations {
   /// Turn news footer when last-turn spy reports exist; taps open Intelligence.
   String turnNews_spiesFooter(int count);
 
+  /// Turn news compact player-scoped court summary.
+  String turnNews_courtBlock(String clauses);
+
+  /// Turn news court block overflow families.
+  String turnNews_courtMore(int count);
+
+  /// Turn news court block tap target to reveal OVL70001.
+  String get turnNews_openEvents;
+
+  /// Turn news court clause for one research completion.
+  String turnNews_courtResearchFinished(String tech);
+
+  /// Turn news court clause for multiple research completions.
+  String turnNews_courtResearchFinishedMany(int count);
+
+  /// Turn news court clause when tech display name is unknown.
+  String get turnNews_courtResearchFinishedUnknown;
+
+  /// Turn news court clause for one rejected order.
+  String get turnNews_courtDecreeRefused;
+
+  /// Turn news court clause for multiple rejected orders.
+  String turnNews_courtDecreesRefused(int count);
+
+  /// Turn news court clause for one combat outcome.
+  String get turnNews_courtBattleFought;
+
+  /// Turn news court clause for multiple combats.
+  String turnNews_courtBattlesFought(int count);
+
+  /// Turn news court clause for market or economy summary.
+  String get turnNews_courtMarket;
+
+  /// Turn news court clause for one completed work order.
+  String get turnNews_courtWorkFinished;
+
+  /// Turn news court clause for multiple completed work orders.
+  String turnNews_courtWorksFinished(int count);
+
   /// GAME30001 top-bar control opening the Intelligence Council.
   String get diplomacy_intelligence;
 

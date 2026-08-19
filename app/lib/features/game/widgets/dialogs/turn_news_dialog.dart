@@ -1,11 +1,10 @@
 // Turn-start news modal. SPEC/ui/turn-news-dialog.md.
 
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
@@ -19,17 +18,23 @@ class TurnNewsDialog extends StatelessWidget {
     required this.game,
     required this.digest,
     required this.newTurnNumber,
+    this.courtSummary = const TurnNewsCourtSummary.empty(),
     this.spyReportCount = 0,
     this.onOpenIntelligence,
+    this.onOpenEvents,
   });
 
   static const screenId = UiScreenIds.turnNewsDialog;
 
+  static Key courtBlockKey() => const ValueKey<String>('turn_news_court_block');
+
   final Game game;
   final TurnNewsDigest digest;
   final int newTurnNumber;
+  final TurnNewsCourtSummary courtSummary;
   final int spyReportCount;
   final VoidCallback? onOpenIntelligence;
+  final VoidCallback? onOpenEvents;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +46,15 @@ class TurnNewsDialog extends StatelessWidget {
         .copyWith(color: EditorialMonoclePalette.fg);
     final mutedStyle = bodyStyle.copyWith(color: EditorialMonoclePalette.muted);
     final isEmpty = digest.lines.isEmpty;
+    final hasCourt = !courtSummary.isEmpty;
     final lines = isEmpty
         ? const <String>[]
         : digest.lines.map((e) => formatTurnNewsLine(l10n, game, e)).toList();
+
+    final courtParts = <String>[...courtSummary.clauses];
+    if (courtSummary.overflowFamilyCount > 0) {
+      courtParts.add(l10n.turnNews_courtMore(courtSummary.overflowFamilyCount));
+    }
 
     return CtDialogShell(
       child: Column(
@@ -52,9 +63,9 @@ class TurnNewsDialog extends StatelessWidget {
         children: [
           Text(l10n.turnNews_title(newTurnNumber), style: titleStyle),
           const SizedBox(height: CtSpacing.ml),
-          if (isEmpty)
+          if (isEmpty && !hasCourt)
             Text(l10n.turnNews_empty, style: mutedStyle)
-          else
+          else if (!isEmpty)
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 320),
               child: ListView.builder(
@@ -66,6 +77,16 @@ class TurnNewsDialog extends StatelessWidget {
                 ),
               ),
             ),
+          if (hasCourt) ...[
+            if (!isEmpty) const SizedBox(height: CtSpacing.m),
+            _CourtBlock(
+              key: courtBlockKey(),
+              body: l10n.turnNews_courtBlock(courtParts.join(' · ')),
+              openEventsLabel: l10n.turnNews_openEvents,
+              mutedStyle: mutedStyle,
+              onOpenEvents: onOpenEvents,
+            ),
+          ],
           const SizedBox(height: CtSpacing.l),
           if (spyReportCount > 0 && onOpenIntelligence != null)
             Padding(
@@ -85,6 +106,41 @@ class TurnNewsDialog extends StatelessWidget {
               child: Text(l10n.turnNews_close),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CourtBlock extends StatelessWidget {
+  const _CourtBlock({
+    super.key,
+    required this.body,
+    required this.openEventsLabel,
+    required this.mutedStyle,
+    this.onOpenEvents,
+  });
+
+  final String body;
+  final String openEventsLabel;
+  final TextStyle mutedStyle;
+  final VoidCallback? onOpenEvents;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onOpenEvents,
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: CtSpacing.xs,
+        runSpacing: CtSpacing.xs,
+        children: [
+          Text(body, style: mutedStyle),
+          if (onOpenEvents != null)
+            Text(openEventsLabel, style: mutedStyle.copyWith(
+              decoration: TextDecoration.underline,
+              decorationColor: mutedStyle.color,
+            )),
         ],
       ),
     );
