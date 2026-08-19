@@ -1,5 +1,6 @@
-// Forbids world tests and world pubspec from depending on colonizethis_logic
-// or colonizethis_turn (Refs #4515 Slice A).
+// Forbids world tests and world pubspec from depending on colonizethis_logic,
+// colonizethis_turn, or colonizethis_orders (Refs #4515). orders → world already;
+// a world test/dev dep would invert the domain DAG.
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -8,11 +9,11 @@ const _worldTestRelative = 'packages/colonizethis_world/test';
 const _worldPubspecRelative = 'packages/colonizethis_world/pubspec.yaml';
 
 final _forbiddenImport = RegExp(
-  r"import\s+'package:colonizethis_(logic|turn)/",
+  r"import\s+'package:colonizethis_(logic|turn|orders)/",
 );
 
 final _forbiddenPubspecDep = RegExp(
-  r'^  colonizethis_(logic|turn)\s*:',
+  r'^  colonizethis_(logic|turn|orders)\s*:',
   multiLine: true,
 );
 
@@ -59,8 +60,8 @@ int runCheckWorldTestNoUpstreamDomainDeps(
 
   logE(
     'check_world_test_no_upstream_domain_deps: colonizethis_world test/** '
-    'and pubspec.yaml must not depend on colonizethis_logic or '
-    'colonizethis_turn:',
+    'and pubspec.yaml must not depend on colonizethis_logic, '
+    'colonizethis_turn, or colonizethis_orders:',
   );
   for (final path in violations) {
     logE(' - $path');
