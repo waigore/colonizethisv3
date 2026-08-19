@@ -40,51 +40,7 @@ void main() {
   group('resolveHumanOwnedBlockadeStatus (Refs #4516)', () {
     test('human-owned blockaded port resolves portBlockaded', () {
       const target = 'oldWorld|enemy1';
-      final game = buildPanelTestGame(
-        id: 'blockade-status-owned',
-        players: const [
-          Player(
-            id: navalMissionGoldenHumanId,
-            displayName: 'England',
-            isHuman: true,
-            capitalProvinceId: 'oldWorld|cap1',
-          ),
-          Player(
-            id: navalMissionGoldenEnemyId,
-            displayName: 'Spain',
-            isHuman: false,
-          ),
-        ],
-        oldWorldProvinces: const [
-          Province(
-            id: target,
-            regionId: 'oldWorld',
-            ownerId: navalMissionGoldenHumanId,
-            displayName: 'My Port',
-          ),
-        ],
-        fleets: [
-          Fleet(
-            id: 'blockader',
-            ownerId: navalMissionGoldenEnemyId,
-            regionId: 'oldWorld',
-            seaZoneId: navalMissionGoldenSeaZone,
-            mission: FleetMission.blockade,
-            targetProvinceId: target,
-            ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-          ),
-        ],
-        diplomacyRelations: const [
-          DiplomacyRelation(
-            factionId1: navalMissionGoldenHumanId,
-            factionId2: navalMissionGoldenEnemyId,
-            state: RelationState.atWar,
-          ),
-        ],
-        portsByProvinceSeaboard: const {
-          'oldWorld|enemy1|$navalMissionGoldenSeaZone': 'oldWorld|enemy1|0|0',
-        },
-      );
+      final game = buildNavalMissionHumanOwnedBlockadedPortGame();
       final status = resolveHumanOwnedBlockadeStatus(
         game: game,
         humanPlayerId: navalMissionGoldenHumanId,
@@ -216,46 +172,7 @@ void main() {
     'Blockade target dialog adds capital extra when capital selected',
     (tester) async {
       const enemyCap = 'oldWorld|enemy1';
-      final game = buildPanelTestGame(
-        id: 'blockade-capital-extra',
-        players: const [
-          Player(
-            id: navalMissionGoldenHumanId,
-            displayName: 'England',
-            isHuman: true,
-          ),
-          Player(
-            id: navalMissionGoldenEnemyId,
-            displayName: 'Spain',
-            isHuman: false,
-            capitalProvinceId: enemyCap,
-          ),
-        ],
-        oldWorldProvinces: const [
-          Province(
-            id: enemyCap,
-            regionId: 'oldWorld',
-            ownerId: navalMissionGoldenEnemyId,
-            displayName: 'Enemy Capital Port',
-          ),
-        ],
-        fleets: [
-          Fleet(
-            id: 'fleet_at_sea',
-            ownerId: navalMissionGoldenHumanId,
-            regionId: 'oldWorld',
-            seaZoneId: navalMissionGoldenSeaZone,
-            ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-          ),
-        ],
-        diplomacyRelations: const [
-          DiplomacyRelation(
-            factionId1: navalMissionGoldenHumanId,
-            factionId2: navalMissionGoldenEnemyId,
-            state: RelationState.atWar,
-          ),
-        ],
-      );
+      final game = buildNavalMissionCapitalPortTargetGame();
       final fleet = game.worldState.fleets.single;
 
       await tester.pumpWidget(
