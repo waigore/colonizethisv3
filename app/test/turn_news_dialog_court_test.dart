@@ -5,6 +5,7 @@ import 'package:colonizethis_app/widgets/turn_news_court_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -68,7 +69,7 @@ void main() {
         find.text('Your court: Improved Sail Design finished — open Events'),
         findsOneWidget,
       );
-      expect(find.textContaining('improved_sail_design'), findsNothing);
+      expect(find.textContaining(kTechIdImprovedSailDesign), findsNothing);
     },
   );
 

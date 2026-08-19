@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/widgets/turn_news_court_snapshot.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -66,7 +67,7 @@ void main() {
   test('omits capture and rival events from court families', () {
     expect(isTurnNewsCourtSourceEvent(_capture(), 'gp1'), isFalse);
     expect(
-      isTurnNewsCourtSourceEvent(_research('improved_sail_design'), 'gp2'),
+      isTurnNewsCourtSourceEvent(_research(kTechIdImprovedSailDesign), 'gp2'),
       isFalse,
     );
     expect(isTurnNewsCourtSourceEvent(_combat(), 'gp1'), isTrue);
@@ -74,9 +75,9 @@ void main() {
 
   test('research complete uses catalog display name not raw id', () {
     final snapshot = buildTurnNewsCourtSnapshot(
-      events: [_research('improved_sail_design')],
+      events: [_research(kTechIdImprovedSailDesign)],
       catalogTechDisplayName: (id) =>
-          id == 'improved_sail_design' ? 'Improved Sail Design' : null,
+          id == kTechIdImprovedSailDesign ? 'Improved Sail Design' : null,
     );
     expect(snapshot.families, hasLength(1));
     expect(
@@ -113,7 +114,7 @@ void main() {
 
   test('accumulator commits then clears pending', () {
     final acc = TurnNewsCourtAccumulator();
-    acc.consider(_research('improved_sail_design'), 'gp1');
+    acc.consider(_research(kTechIdImprovedSailDesign), 'gp1');
     acc.consider(_capture(), 'gp1');
     final first = acc.commit(
       catalogTechDisplayName: (_) => 'Improved Sail Design',
