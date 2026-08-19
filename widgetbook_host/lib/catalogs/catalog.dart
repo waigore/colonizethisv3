@@ -142,6 +142,7 @@ import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dia
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart';
+import 'package:colonizethis_app/widgets/turn_news_court_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
@@ -216,6 +217,7 @@ part 'catalog_screens_combat.dart';
 part 'catalog_screens_combat_mode_choice.dart';
 part 'catalog_tile_radial.dart';
 part 'catalog_dialogs.dart';
+part 'catalog_dialogs_turn_news.dart';
 part 'catalog_dialogs_grant_or_subsidy.dart';
 part 'catalog_dialogs_move_army_invasion_intel.dart';
 part 'catalog_dialogs_naval_mission.dart';

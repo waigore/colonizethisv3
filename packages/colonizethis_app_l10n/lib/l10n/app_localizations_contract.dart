@@ -588,6 +588,42 @@ abstract class AppLocalizations {
   /// Turn news footer when last-turn spy reports exist; taps open Intelligence.
   String turnNews_spiesFooter(int count);
 
+  /// Turn news compact court summary; taps open the player event feed.
+  String turnNews_courtBlock(String clauses);
+
+  /// Collapsed extra court families beyond the first three clauses.
+  String turnNews_courtMore(int count);
+
+  /// Court clause when one catalog-known technology finished last turn.
+  String turnNews_courtResearchFinished(String tech);
+
+  /// Court clause when more than one technology finished last turn.
+  String turnNews_courtResearchFinishedMany(int count);
+
+  /// Court clause when a technology finished but the catalog has no display name.
+  String get turnNews_courtResearchFinishedUnknown;
+
+  /// Court clause when one order was rejected last turn.
+  String get turnNews_courtDecreeRefused;
+
+  /// Court clause when more than one order was rejected last turn.
+  String turnNews_courtDecreesRefused(int count);
+
+  /// Court clause when the human fought one land or naval battle last turn.
+  String get turnNews_courtBattleFought;
+
+  /// Court clause when the human fought more than one battle last turn.
+  String turnNews_courtBattlesFought(int count);
+
+  /// Court clause for last-turn market, overseas-profit, or economy summary.
+  String get turnNews_courtMarket;
+
+  /// Court clause when one civilian work order completed last turn.
+  String get turnNews_courtWorkFinished;
+
+  /// Court clause when more than one civilian work order completed last turn.
+  String turnNews_courtWorksFinished(int count);
+
   /// GAME30001 top-bar control opening the Intelligence Council.
   String get diplomacy_intelligence;
 

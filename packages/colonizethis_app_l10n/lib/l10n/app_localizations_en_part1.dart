@@ -672,6 +672,56 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String turnNews_courtBlock(String clauses) {
+    return 'Your court: $clauses — open Events';
+  }
+
+  @override
+  String turnNews_courtMore(int count) {
+    return '$count more';
+  }
+
+  @override
+  String turnNews_courtResearchFinished(String tech) {
+    return '$tech finished';
+  }
+
+  @override
+  String turnNews_courtResearchFinishedMany(int count) {
+    return '$count technologies finished';
+  }
+
+  @override
+  String get turnNews_courtResearchFinishedUnknown => 'a technology finished';
+
+  @override
+  String get turnNews_courtDecreeRefused => 'a decree was refused';
+
+  @override
+  String turnNews_courtDecreesRefused(int count) {
+    return '$count decrees were refused';
+  }
+
+  @override
+  String get turnNews_courtBattleFought => 'a battle was fought';
+
+  @override
+  String turnNews_courtBattlesFought(int count) {
+    return '$count battles were fought';
+  }
+
+  @override
+  String get turnNews_courtMarket => 'market and realm accounts';
+
+  @override
+  String get turnNews_courtWorkFinished => 'work finished';
+
+  @override
+  String turnNews_courtWorksFinished(int count) {
+    return '$count works finished';
+  }
+
+  @override
   String get diplomacy_intelligence => 'Intelligence';
 
   @override

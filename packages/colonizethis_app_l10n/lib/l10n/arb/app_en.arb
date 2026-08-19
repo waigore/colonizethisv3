@@ -1118,6 +1118,89 @@
       }
     }
   },
+  "turnNews_courtBlock": "Your court: {clauses} — open Events",
+  "@turnNews_courtBlock": {
+    "description": "Turn news compact court summary; taps open the player event feed.",
+    "placeholders": {
+      "clauses": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_courtMore": "{count} more",
+  "@turnNews_courtMore": {
+    "description": "Collapsed extra court families beyond the first three clauses.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtResearchFinished": "{tech} finished",
+  "@turnNews_courtResearchFinished": {
+    "description": "Court clause when one catalog-known technology finished last turn.",
+    "placeholders": {
+      "tech": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_courtResearchFinishedMany": "{count} technologies finished",
+  "@turnNews_courtResearchFinishedMany": {
+    "description": "Court clause when more than one technology finished last turn.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtResearchFinishedUnknown": "a technology finished",
+  "@turnNews_courtResearchFinishedUnknown": {
+    "description": "Court clause when a technology finished but the catalog has no display name."
+  },
+  "turnNews_courtDecreeRefused": "a decree was refused",
+  "@turnNews_courtDecreeRefused": {
+    "description": "Court clause when one order was rejected last turn."
+  },
+  "turnNews_courtDecreesRefused": "{count} decrees were refused",
+  "@turnNews_courtDecreesRefused": {
+    "description": "Court clause when more than one order was rejected last turn.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtBattleFought": "a battle was fought",
+  "@turnNews_courtBattleFought": {
+    "description": "Court clause when the human fought one land or naval battle last turn."
+  },
+  "turnNews_courtBattlesFought": "{count} battles were fought",
+  "@turnNews_courtBattlesFought": {
+    "description": "Court clause when the human fought more than one battle last turn.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtMarket": "market and realm accounts",
+  "@turnNews_courtMarket": {
+    "description": "Court clause for last-turn market, overseas-profit, or economy summary."
+  },
+  "turnNews_courtWorkFinished": "work finished",
+  "@turnNews_courtWorkFinished": {
+    "description": "Court clause when one civilian work order completed last turn."
+  },
+  "turnNews_courtWorksFinished": "{count} works finished",
+  "@turnNews_courtWorksFinished": {
+    "description": "Court clause when more than one civilian work order completed last turn.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "diplomacy_intelligence": "Intelligence",
   "@diplomacy_intelligence": {
     "description": "GAME30001 top-bar control opening the Intelligence Council."

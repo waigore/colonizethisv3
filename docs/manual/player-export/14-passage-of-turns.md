@@ -45,7 +45,7 @@ After you confirm, the game carries out the turn in a fixed order. You see the c
 
 ### Turn news
 
-A completed turn’s main report appears in **Turn news dialog**, unless victory takes precedence. If nothing major happened, it says **No major events last turn.** Close the report, inspect the map and your empire screens, and prepare the next turn.
+A completed turn’s main report appears in **Turn news dialog**, unless victory takes precedence. If the world newspaper has no captures, wars, or discoveries, it says **No major events last turn.** If your own court also had last-turn results — a finished technology, a refused decree, a battle you fought, **market and realm accounts**, or finished work — a muted **Your court** line names those results instead of claiming the turn was quiet. Tap **open Events** to close the newspaper and show **Player turn event feed**. Ordinary **Close** does not open that feed. Close the report, inspect the map and your empire screens, and prepare the next turn.
 
 When your Spies still stood in a foreign court after that turn, a line at the bottom of turn news says **Your spies report N items — open Intelligence**. Tap it to close the newspaper and open **Intelligence Council** (the printed bar says **Intelligence**; you can also open it from **Intelligence** on **Diplomacy screen**). Closing the newspaper does not forget those reports; Intelligence keeps last turn’s world briefing and spy lines until the next completed turn replaces them.
 

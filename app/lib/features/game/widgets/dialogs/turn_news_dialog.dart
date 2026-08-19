@@ -1,6 +1,5 @@
 // Turn-start news modal. SPEC/ui/turn-news-dialog.md.
 
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -12,6 +11,8 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../../../../widgets/turn_news_court_snapshot.dart';
+
 /// Prior-turn summary dialog; [newTurnNumber] is current turn after resolution.
 class TurnNewsDialog extends StatelessWidget {
   const TurnNewsDialog({
@@ -20,16 +21,21 @@ class TurnNewsDialog extends StatelessWidget {
     required this.digest,
     required this.newTurnNumber,
     this.spyReportCount = 0,
+    this.courtSnapshot = TurnNewsCourtSnapshot.empty,
     this.onOpenIntelligence,
+    this.onOpenEvents,
   });
 
   static const screenId = UiScreenIds.turnNewsDialog;
+  static const courtBlockKey = ValueKey<String>('turnNews.courtBlock');
 
   final Game game;
   final TurnNewsDigest digest;
   final int newTurnNumber;
   final int spyReportCount;
+  final TurnNewsCourtSnapshot courtSnapshot;
   final VoidCallback? onOpenIntelligence;
+  final VoidCallback? onOpenEvents;
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +46,8 @@ class TurnNewsDialog extends StatelessWidget {
     final bodyStyle = (theme.textTheme.bodyMedium ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.fg);
     final mutedStyle = bodyStyle.copyWith(color: EditorialMonoclePalette.muted);
-    final isEmpty = digest.lines.isEmpty;
-    final lines = isEmpty
+    final showEmptyCopy = digest.lines.isEmpty && courtSnapshot.isEmpty;
+    final lines = digest.lines.isEmpty
         ? const <String>[]
         : digest.lines.map((e) => formatTurnNewsLine(l10n, game, e)).toList();
 
@@ -52,9 +58,9 @@ class TurnNewsDialog extends StatelessWidget {
         children: [
           Text(l10n.turnNews_title(newTurnNumber), style: titleStyle),
           const SizedBox(height: CtSpacing.ml),
-          if (isEmpty)
+          if (showEmptyCopy)
             Text(l10n.turnNews_empty, style: mutedStyle)
-          else
+          else if (lines.isNotEmpty)
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 320),
               child: ListView.builder(
@@ -67,6 +73,18 @@ class TurnNewsDialog extends StatelessWidget {
               ),
             ),
           const SizedBox(height: CtSpacing.l),
+          if (!courtSnapshot.isEmpty && onOpenEvents != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: CtSpacing.m),
+              child: InkWell(
+                key: courtBlockKey,
+                onTap: onOpenEvents,
+                child: Text(
+                  formatTurnNewsCourtBlock(l10n, courtSnapshot),
+                  style: mutedStyle,
+                ),
+              ),
+            ),
           if (spyReportCount > 0 && onOpenIntelligence != null)
             Padding(
               padding: const EdgeInsets.only(bottom: CtSpacing.m),
@@ -89,6 +107,49 @@ class TurnNewsDialog extends StatelessWidget {
       ),
     );
   }
+}
+
+String formatTurnNewsCourtBlock(
+  AppLocalizations l10n,
+  TurnNewsCourtSnapshot snapshot,
+) {
+  final clauses = snapshot.families.map((hit) {
+    return _courtClause(l10n, hit);
+  }).toList();
+  if (snapshot.overflowFamilyCount > 0) {
+    clauses.add(l10n.turnNews_courtMore(snapshot.overflowFamilyCount));
+  }
+  return l10n.turnNews_courtBlock(clauses.join(' · '));
+}
+
+String _courtClause(AppLocalizations l10n, TurnNewsCourtFamilyHit hit) {
+  return switch (hit.family) {
+    TurnNewsCourtFamily.orderRejected =>
+      hit.count == 1
+          ? l10n.turnNews_courtDecreeRefused
+          : l10n.turnNews_courtDecreesRefused(hit.count),
+    TurnNewsCourtFamily.researchComplete => _researchClause(l10n, hit),
+    TurnNewsCourtFamily.combat =>
+      hit.count == 1
+          ? l10n.turnNews_courtBattleFought
+          : l10n.turnNews_courtBattlesFought(hit.count),
+    TurnNewsCourtFamily.marketEconomy => l10n.turnNews_courtMarket,
+    TurnNewsCourtFamily.workFinished =>
+      hit.count == 1
+          ? l10n.turnNews_courtWorkFinished
+          : l10n.turnNews_courtWorksFinished(hit.count),
+  };
+}
+
+String _researchClause(AppLocalizations l10n, TurnNewsCourtFamilyHit hit) {
+  final name = hit.techDisplayName;
+  if (hit.count == 1 && name != null && name.isNotEmpty) {
+    return l10n.turnNews_courtResearchFinished(name);
+  }
+  if (hit.count > 1) {
+    return l10n.turnNews_courtResearchFinishedMany(hit.count);
+  }
+  return l10n.turnNews_courtResearchFinishedUnknown;
 }
 
 String _factionLabel(Game g, String id) => g.factionDisplayNameById(id) ?? id;
