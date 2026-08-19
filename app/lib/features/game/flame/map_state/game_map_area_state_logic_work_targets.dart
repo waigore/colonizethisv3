@@ -3,7 +3,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Work-target tile selection and order-merge helpers for [GameMapAreaStateLogic].
 abstract final class GameMapAreaStateLogicWorkTargets {
@@ -61,10 +60,7 @@ abstract final class GameMapAreaStateLogicWorkTargets {
       }
       conflicting.add(order.targetTileKey);
     }
-    for (final unit in [
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ]) {
+    for (final unit in game.worldState.allUnitsById.values) {
       if (unit.ownerId != playerId || unit.id == selectedUnitId) {
         continue;
       }

@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
@@ -45,13 +44,7 @@ void syncGpTribeFirstContact({
 
   final humanPlayerId =
       shell.panelPlayerId ?? resolveShellPanelPlayerId(shell, game);
-  Player? human;
-  for (final p in game.players) {
-    if (p.id == humanPlayerId) {
-      human = p;
-      break;
-    }
-  }
+  final human = game.playerById(humanPlayerId);
   if (human == null || !human.isHuman) return;
 
   final mapData = gameService.getMapData(game.id);
@@ -86,10 +79,7 @@ void syncGpTribeFirstContact({
 /// Watches [currentGameProvider] and syncs tribe first-contact state after
 /// each game update (turn resolution, load, visibility changes).
 class TribeFirstContactSyncListener extends ConsumerStatefulWidget {
-  const TribeFirstContactSyncListener({
-    super.key,
-    required this.child,
-  });
+  const TribeFirstContactSyncListener({super.key, required this.child});
 
   final Widget child;
 

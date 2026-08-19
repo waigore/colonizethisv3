@@ -52,14 +52,7 @@ class GameMapAreaCivilianDraftProjection {
         for (final unitId in marker.unitIds) unitId,
     };
     if (civilianUnitIdsToProject.isEmpty) {
-      for (final u in game.worldState.oldWorld.units) {
-        if (!ownerIds.contains(u.ownerId) || !_isCivilianUnitType(u.type)) {
-          continue;
-        }
-        if (u.tileKey == null || u.tileKey!.isEmpty) continue;
-        civilianUnitIdsToProject.add(u.id);
-      }
-      for (final u in game.worldState.newWorld.units) {
+      for (final u in game.worldState.allUnitsById.values) {
         if (!ownerIds.contains(u.ownerId) || !_isCivilianUnitType(u.type)) {
           continue;
         }
@@ -72,10 +65,7 @@ class GameMapAreaCivilianDraftProjection {
     }
 
     final unitsById = <String, ct_models.Unit>{
-      for (final u in game.worldState.oldWorld.units)
-        if (ownerIds.contains(u.ownerId) && _isCivilianUnitType(u.type))
-          u.id: u,
-      for (final u in game.worldState.newWorld.units)
+      for (final u in game.worldState.allUnitsById.values)
         if (ownerIds.contains(u.ownerId) && _isCivilianUnitType(u.type))
           u.id: u,
     };
@@ -84,7 +74,7 @@ class GameMapAreaCivilianDraftProjection {
     }
     final visibilityByTile = ownerIds.length == 1
         ? game.worldState.playerVisibilityByTile[ownerIds.single] ??
-            const <String, String>{}
+              const <String, String>{}
         : const <String, String>{};
 
     final projectedByTile = <String, List<_ProjectedCivilianUnit>>{};

@@ -1,4 +1,3 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -116,15 +115,8 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
         );
   }
 
-  ct_models.Unit? findUnitById(String unitId) {
-    for (final unit in widget.game.worldState.oldWorld.units) {
-      if (unit.id == unitId) return unit;
-    }
-    for (final unit in widget.game.worldState.newWorld.units) {
-      if (unit.id == unitId) return unit;
-    }
-    return null;
-  }
+  ct_models.Unit? findUnitById(String unitId) =>
+      widget.game.worldState.tryGetUnitById(unitId);
 
   void startWorkTargetSelection(String unitId, String workTarget) {
     if (civilianRelocateSelection != null) {
