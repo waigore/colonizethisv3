@@ -62,7 +62,7 @@ To station a Spy in a rival Great Power’s land: select a rival land tile → o
 
 When a research seat is funded at **Low** or higher, and that rival has already unlocked the technology you are researching, the next **Next turn** adds about **+15% RP** per such rival (two rivals stack). On `GAME40001` **Slots**, the green **+N RP** line already includes that bonus. Tap it for the breakdown; a **Spy insight** line names those courts (for example **Spy insight — France already knows this (+15%)**). The number uses Spies still in place after spy work that turn — if a Spy is caught before research applies, the live gain can be a little lower.
 
-Home **Counter-espionage** is separate: on **owned** land, **Assign** then the **Counter-espionage** work. It does not grant the research bonus. Do not bet a whole plan on spies alone.
+Home **Counter-espionage** is separate: on **owned** land, tap **Counter-espionage** on `MAP20001` **Province sea-zone overlay** Civilian then **Assign** on an idle Spy, or open `UNIT10001` and **Assign** then **Counter-espionage**. It protects the whole realm, not only that province. It does not grant the research bonus. Do not bet a whole plan on spies alone.
 
 ## Counsel
 
@@ -93,6 +93,7 @@ Rival courts also fill research seats and spend gold on funding. They keep work 
 - [x] Does not document an unavailable Tree goal control; mentions spy insight on the Slots **+N RP** preview and RP breakdown.
 - [x] States that empty seats / funding None are legal strategic thrift and that end-turn does not warn about unused research capacity.
 - [x] Explains the **Research this turn** header on Slots, **+N RP** breakdown entry, sequential multi-seat funding honesty, and the research debt floor.
+- [x] Documents home **Counter-espionage** from `MAP20001` Civilian as well as `UNIT10001` **Assign**, and that it protects the whole realm.
 - [x] Sources match the chapter coverage map.
 
 ## Sources

@@ -28,7 +28,7 @@ const Map<String, String> workTargetLabels = {
   kWorkTargetBuildPort: 'Build port',
   kWorkTargetBuildFort: 'Build fort',
   kWorkTargetBuildRail: 'Build rail',
-  kWorkTargetCounterSpy: 'Counter spy',
+  kWorkTargetCounterSpy: 'Counter-espionage',
   kWorkTargetPurchaseLand: 'Purchase land',
 };
 

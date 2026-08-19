@@ -26,6 +26,8 @@ Widget buildCivilianSectionFiltered({
   required PlayerView playerView,
   required Orders draftOrders,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
+  ProvinceOverlayCounterEspionageProps counterEspionage =
+      kProvinceOverlayCounterEspionageHidden,
 }) {
   final visible = civilian
       .where(
@@ -36,18 +38,26 @@ Widget buildCivilianSectionFiltered({
         ),
       )
       .toList();
-  final stationSpyButton = !stationSpy.showControl
-      ? null
-      : Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: CtActionTextButton(
-            label: l10n.provinceOverlay_stationSpyAction,
-            tooltip: stationSpy.tooltip,
-            enabled: stationSpy.enabled,
-            onPressed: stationSpy.enabled ? stationSpy.onTap : null,
-          ),
-        );
-  if (visible.isEmpty && stationSpyButton == null) {
+  final stationSpyButton = _civilianShortcutControl(
+    showControl: stationSpy.showControl,
+    label: l10n.provinceOverlay_stationSpyAction,
+    tooltip: stationSpy.tooltip,
+    enabled: stationSpy.enabled,
+    onTap: stationSpy.onTap,
+  );
+  final counterEspionageButton = _civilianShortcutControl(
+    showControl: counterEspionage.showControl,
+    label: l10n.provinceOverlay_counterEspionageAction,
+    tooltip: counterEspionage.tooltip,
+    enabled: counterEspionage.enabled,
+    onTap: counterEspionage.onTap,
+    gist: counterEspionage.gist,
+  );
+  final extras = <Widget>[
+    if (stationSpyButton != null) stationSpyButton,
+    if (counterEspionageButton != null) counterEspionageButton,
+  ];
+  if (visible.isEmpty && extras.isEmpty) {
     return buildOverlaySection(
       l10n.provinceOverlay_sectionCivilian,
       overlayEmptyBodyDashText(),
@@ -59,7 +69,7 @@ Widget buildCivilianSectionFiltered({
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [overlayEmptyBodyDashText(), stationSpyButton!],
+        children: [overlayEmptyBodyDashText(), ...extras],
       ),
     );
   }
@@ -108,6 +118,7 @@ Widget buildCivilianSectionFiltered({
           );
         }),
         ?stationSpyButton,
+        ?counterEspionageButton,
       ],
     ),
   );
@@ -259,4 +270,40 @@ List<Widget> _navalMissionActions(
       ),
     ),
   ];
+}
+
+Widget? _civilianShortcutControl({
+  required bool showControl,
+  required String label,
+  required String tooltip,
+  required bool enabled,
+  required VoidCallback? onTap,
+  String gist = '',
+}) {
+  if (!showControl) return null;
+  final button = CtActionTextButton(
+    label: label,
+    tooltip: tooltip,
+    enabled: enabled,
+    onPressed: enabled ? onTap : null,
+  );
+  return Padding(
+    padding: const EdgeInsets.only(top: 4),
+    child: gist.isEmpty
+        ? button
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              button,
+              Text(
+                gist,
+                style: TextStyle(
+                  color: EditorialMonoclePalette.muted,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+  );
 }

@@ -275,6 +275,25 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'This tile cannot be occupied.';
 
   @override
+  String get provinceOverlay_counterEspionageAction => 'Counter-espionage';
+
+  @override
+  String get provinceOverlay_counterEspionageGist =>
+      'Protects the whole realm, not only this province.';
+
+  @override
+  String get provinceOverlay_counterEspionageOneSpyTooltip =>
+      'One Spy is enough; extra Spies do not add more.';
+
+  @override
+  String get provinceOverlay_counterEspionageDisabledAlreadyPostedTooltip =>
+      'A Spy is already posted for the whole realm.';
+
+  @override
+  String get provinceOverlay_counterEspionageDisabledNoIdleSpyTooltip =>
+      'No idle Spy can take this post.';
+
+  @override
   String provinceOverlay_invadeArmyAction(String provinceName) {
     return 'Invade $provinceName';
   }
