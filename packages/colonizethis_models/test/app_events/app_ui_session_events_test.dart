@@ -27,12 +27,14 @@ void main() {
         explorerOnly: true,
         spyOnly: true,
         relocateShortcutTargetTileKey: 'r1|p1|2|2',
+        counterSpyShortcutTargetTileKey: 'r1|p1|0|0',
       );
       expect(civilians.tileScopeTileKey, 'r1|p1|1|1');
       expect(civilians.explorerOnly, isTrue);
       expect(civilians.builderOnly, isFalse);
       expect(civilians.spyOnly, isTrue);
       expect(civilians.relocateShortcutTargetTileKey, 'r1|p1|2|2');
+      expect(civilians.counterSpyShortcutTargetTileKey, 'r1|p1|0|0');
     });
 
     test('ConfirmDialogEvent invokes its result callback', () {

@@ -37,6 +37,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
     this.purchaseLandShortcutTargetTileKey,
     this.upgradeTownShortcutTargetTileKey,
     this.relocateShortcutTargetTileKey,
+    this.counterSpyShortcutTargetTileKey,
     this.readOnly = false,
   });
 
@@ -108,6 +109,9 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
 
   /// Optional selected tile key for immediate Spy Relocate (Refs #4439).
   final String? relocateShortcutTargetTileKey;
+
+  /// Optional province-level tile key for Spy Counter-espionage (Refs #4528).
+  final String? counterSpyShortcutTargetTileKey;
 
   /// When true, work assign/cancel and train are disabled (observe mode).
   @override

@@ -83,6 +83,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
     this.blockadeStatus = ProvinceBlockadeStatus.none,
     this.stationSpy = kProvinceOverlayStationSpyHidden,
+    this.counterEspionage = kProvinceOverlayCounterEspionageHidden,
     this.showEstablishConsulateControl = false,
     this.establishConsulateEnabled = false,
     this.establishConsulatePending = false,
@@ -161,6 +162,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final ProvinceDetachAndSailOverlayControls detachAndSail;
   final ProvinceBlockadeStatus blockadeStatus;
   final ProvinceOverlayStationSpyProps stationSpy;
+  final ProvinceOverlayCounterEspionageProps counterEspionage;
   final bool showEstablishConsulateControl;
   final bool establishConsulateEnabled;
   final bool establishConsulatePending;
@@ -266,6 +268,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       detachAndSail: detachAndSail,
       blockadeStatus: blockadeStatus,
       stationSpy: stationSpy,
+      counterEspionage: counterEspionage,
       showEstablishConsulateControl: showEstablishConsulateControl,
       establishConsulateEnabled: establishConsulateEnabled,
       establishConsulatePending: establishConsulatePending,
