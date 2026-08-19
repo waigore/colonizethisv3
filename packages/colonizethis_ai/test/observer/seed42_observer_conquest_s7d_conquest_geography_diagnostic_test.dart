@@ -8,7 +8,7 @@ import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
     show ObserverGoalPhase;
 import 'package:colonizethis_test/test.dart';
 
-import 'support/s7d/diagnostic_json.dart';
+import '../support/s7d/diagnostic_json.dart';
 
 void main() {
   group('buildSeed42S7dConquestGeographyDiagnosticJson', () {

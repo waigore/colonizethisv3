@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Observer seed-42 per-GP Old World conquest gate (Refs #2509).
 ///
@@ -22,7 +22,9 @@ void main() {
       final campaign = runSeed42ObserverCampaign(turns: 100);
 
       int owProvincesFor(Game game, String gpId) => game
-          .worldState.oldWorld.provinces
+          .worldState
+          .oldWorld
+          .provinces
           .where((p) => p.ownerId == gpId)
           .length;
 

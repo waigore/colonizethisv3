@@ -1,12 +1,11 @@
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_data/colonizethis_data.dart'
     hide cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/cheapest_regiment_build_treasury_cost.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Seed-42 Path F lock-recovery acceptance regression (Refs #2924).
 ///
@@ -72,7 +71,8 @@ void main() {
                 regimentBuildsWhileAffordable[gpId]! +
                 orders
                     .where(
-                      (o) => RegimentEconomyCatalog.byId.containsKey(o.unitType),
+                      (o) =>
+                          RegimentEconomyCatalog.byId.containsKey(o.unitType),
                     )
                     .length;
           }
@@ -83,7 +83,8 @@ void main() {
             for (final deal in entry.value.deals) {
               final seller = deal.sellerFactionId;
               if (!lifetimeSellerCredit.containsKey(seller)) continue;
-              lifetimeSellerCredit[seller] = lifetimeSellerCredit[seller]! +
+              lifetimeSellerCredit[seller] =
+                  lifetimeSellerCredit[seller]! +
                   (deal.quantity * deal.pricePerUnit).round();
             }
           }
@@ -107,27 +108,31 @@ void main() {
         expect(
           wasBrokeAfterStart[gpId],
           isTrue,
-          reason: 'Refs #2924 fixture: $gpId should fall below $threshold '
+          reason:
+              'Refs #2924 fixture: $gpId should fall below $threshold '
               'during the 100-turn EXPAND lock (maxTreasury='
               '${maxTreasury[gpId]}).',
         );
         expect(
           recoveredAfterBroke[gpId],
           isTrue,
-          reason: 'Refs #2924: $gpId never recovered to treasury >= $threshold '
+          reason:
+              'Refs #2924: $gpId never recovered to treasury >= $threshold '
               'after being broke (maxTreasury=${maxTreasury[gpId]}, '
               'lifetimeSellerCredit=${lifetimeSellerCredit[gpId]}).',
         );
         expect(
           lifetimeSellerCredit[gpId],
           greaterThan(0),
-          reason: 'Refs #2924 Path F: $gpId received zero world-market seller '
+          reason:
+              'Refs #2924 Path F: $gpId received zero world-market seller '
               'credits across 100 turns.',
         );
         expect(
           regimentBuildsWhileAffordable[gpId],
           greaterThan(0),
-          reason: 'Refs #2924 Path F: $gpId emitted no regiment builds on a '
+          reason:
+              'Refs #2924 Path F: $gpId emitted no regiment builds on a '
               'turn with treasury >= $threshold (maxTreasury='
               '${maxTreasury[gpId]}).',
         );

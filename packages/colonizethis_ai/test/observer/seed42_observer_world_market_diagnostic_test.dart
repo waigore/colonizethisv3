@@ -18,16 +18,15 @@
 import 'dart:convert';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
-import 'support/seed42_observer_world_market_diagnostic_support.dart';
+import '../support/cheapest_regiment_build_treasury_cost.dart';
+import '../support/seed42_observer_campaign.dart';
+import '../support/seed42_observer_world_market_diagnostic_support.dart';
 
 void main() {
   setUpAll(() {
@@ -62,15 +61,18 @@ void main() {
           // reflects what the planner saw entering turn t+1: carry-forward
           // residuals, cargo / bid-type cap, and the treasury the suggester
           // gated on.
-          final preTurnSnapshot = <String,
-              ({
-                int treasuryStart,
-                int cargo,
-                int bidTypeCap,
-                int cfOffers,
-                int cfBids,
-                ObserverGoalPhase phase,
-              })>{};
+          final preTurnSnapshot =
+              <
+                String,
+                ({
+                  int treasuryStart,
+                  int cargo,
+                  int bidTypeCap,
+                  int cfOffers,
+                  int cfBids,
+                  ObserverGoalPhase phase,
+                })
+              >{};
           for (final gpId in kSeed42WorldMarketDiagnosticGreatPowerIds) {
             final view = buildPlayerView(game, topo, gpId);
             final snap = AIWorldSnapshot.fromPlayerView(view, topology: topo);
@@ -79,11 +81,11 @@ void main() {
             final treasuryStart = player?.treasury ?? 0;
             final cargo = cargoHoldsForHomeFleet(game, gpId);
             final bidTypeCap = worldMarketBidTypeCap(game, gpId);
-            final cfOffers = (game.worldMarketState
-                    .carryForwardOffersByFactionId[gpId] ??
+            final cfOffers =
+                (game.worldMarketState.carryForwardOffersByFactionId[gpId] ??
                 const <TradeOrder>[]);
-            final cfBids = (game
-                    .worldMarketState.carryForwardBidsByFactionId[gpId] ??
+            final cfBids =
+                (game.worldMarketState.carryForwardBidsByFactionId[gpId] ??
                 const <TradeOrder>[]);
             preTurnSnapshot[gpId] = (
               treasuryStart: treasuryStart,
@@ -98,10 +100,11 @@ void main() {
           // Capture trade-order emission per GP from the orders the
           // orchestrator produced this turn (F7-wired
           // `tradeOrdersByPlayerId`).
-          final emittedThisTurn = <String,
-              ({int offers, int bids, int offerQty, int bidQty})>{};
+          final emittedThisTurn =
+              <String, ({int offers, int bids, int offerQty, int bidQty})>{};
           for (final gpId in kSeed42WorldMarketDiagnosticGreatPowerIds) {
-            final orders = fullAi.orders.tradeOrdersByPlayerId[gpId] ??
+            final orders =
+                fullAi.orders.tradeOrdersByPlayerId[gpId] ??
                 const <TradeOrder>[];
             var offers = 0;
             var bids = 0;
@@ -114,8 +117,8 @@ void main() {
                   offerQty += o.quantity;
                   offerQuantityByCommodityByGp[gpId]![o.commodityId] =
                       (offerQuantityByCommodityByGp[gpId]![o.commodityId] ??
-                              0) +
-                          o.quantity;
+                          0) +
+                      o.quantity;
                 case TradeOrderType.bid:
                   bids += 1;
                   bidQty += o.quantity;
@@ -174,20 +177,20 @@ void main() {
                     (dealCountsAsSeller[deal.sellerFactionId] ?? 0) + 1;
                 treasuryCreditedAsSeller[deal.sellerFactionId] =
                     (treasuryCreditedAsSeller[deal.sellerFactionId] ?? 0) +
-                        dealValue;
-                sellerDealQuantityByCommodityByGp[deal.sellerFactionId]![
-                        deal.commodityId] =
-                    (sellerDealQuantityByCommodityByGp[deal.sellerFactionId]![
-                                deal.commodityId] ??
-                            0) +
-                        deal.quantity;
+                    dealValue;
+                sellerDealQuantityByCommodityByGp[deal.sellerFactionId]![deal
+                        .commodityId] =
+                    (sellerDealQuantityByCommodityByGp[deal
+                            .sellerFactionId]![deal.commodityId] ??
+                        0) +
+                    deal.quantity;
               }
               if (dealCountsAsBuyer.containsKey(deal.buyerFactionId)) {
                 dealCountsAsBuyer[deal.buyerFactionId] =
                     (dealCountsAsBuyer[deal.buyerFactionId] ?? 0) + 1;
                 treasurySpentAsBuyer[deal.buyerFactionId] =
                     (treasurySpentAsBuyer[deal.buyerFactionId] ?? 0) +
-                        dealValue;
+                    dealValue;
               }
             }
           }
@@ -228,14 +231,14 @@ void main() {
         for (final gpId in kSeed42WorldMarketDiagnosticGreatPowerIds)
           gpId: buildSeed42WorldMarketGpRollup(
             rows: perTurnRows[gpId]!,
-            offerQuantityByCommodity: kSeed42WorldMarketDiagnosticFailingGreatPowerIds
-                    .contains(gpId)
+            offerQuantityByCommodity:
+                kSeed42WorldMarketDiagnosticFailingGreatPowerIds.contains(gpId)
                 ? offerQuantityByCommodityByGp[gpId]!
                 : const <String, int>{},
             sellerDealQuantityByCommodity:
                 kSeed42WorldMarketDiagnosticFailingGreatPowerIds.contains(gpId)
-                    ? sellerDealQuantityByCommodityByGp[gpId]!
-                    : const <String, int>{},
+                ? sellerDealQuantityByCommodityByGp[gpId]!
+                : const <String, int>{},
             cheapestRegimentBuildTreasuryCost: cheapest,
           ),
       };
@@ -273,7 +276,8 @@ void main() {
         expect(
           perTurnRows[gpId]!.length,
           100,
-          reason: 'Refs #2924 per-turn diagnostic: $gpId per-turn row '
+          reason:
+              'Refs #2924 per-turn diagnostic: $gpId per-turn row '
               'count should equal 100 (one record per turn).',
         );
       }

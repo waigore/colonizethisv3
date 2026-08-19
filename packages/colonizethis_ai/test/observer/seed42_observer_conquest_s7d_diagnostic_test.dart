@@ -2,7 +2,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/s7d/run_seed42_s7d_diagnostic_campaign.dart';
+import '../support/s7d/run_seed42_s7d_diagnostic_campaign.dart';
 
 /// Seed-42 turn-100 EXPAND-arm S7-D diagnostic (Refs #2847 / #3967 / #3977).
 ///

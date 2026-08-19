@@ -6,7 +6,7 @@
 
 import 'package:colonizethis_test/test.dart';
 
-import 'support/s7d/diagnostic_json.dart';
+import '../support/s7d/diagnostic_json.dart';
 
 void main() {
   group('Seed42S7dDiagnosticJsonKeys.feedstock', () {
@@ -22,17 +22,20 @@ void main() {
       );
     });
 
-    test('negative: feedstock keys do not overlap lock-recovery Step-0 keys', () {
-      final overlap = Seed42S7dDiagnosticJsonKeys.feedstock.intersection(
-        Seed42S7dDiagnosticJsonKeys.lockRecovery,
-      );
-      expect(
-        overlap,
-        isEmpty,
-        reason:
-            'feedstock and lock-recovery diagnostic surfaces must stay '
-            'disjoint so topical contracts can evolve independently',
-      );
-    });
+    test(
+      'negative: feedstock keys do not overlap lock-recovery Step-0 keys',
+      () {
+        final overlap = Seed42S7dDiagnosticJsonKeys.feedstock.intersection(
+          Seed42S7dDiagnosticJsonKeys.lockRecovery,
+        );
+        expect(
+          overlap,
+          isEmpty,
+          reason:
+              'feedstock and lock-recovery diagnostic surfaces must stay '
+              'disjoint so topical contracts can evolve independently',
+        );
+      },
+    );
   });
 }

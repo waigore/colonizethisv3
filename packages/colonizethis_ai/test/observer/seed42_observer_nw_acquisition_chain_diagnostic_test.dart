@@ -2,15 +2,14 @@ import 'dart:convert';
 
 import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
     show regimentCountForPlayer;
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show cheapestRegimentBuildTreasuryCost;
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'support/seed42_observer_campaign.dart';
+import '../support/cheapest_regiment_build_treasury_cost.dart';
+import '../support/seed42_observer_campaign.dart';
 
 /// Seed-42 Path E NW-acquisition **chain** diagnostic (Refs #2924).
 ///
@@ -50,7 +49,7 @@ import 'support/seed42_observer_campaign.dart';
 ///
 /// ```
 /// (cd packages/colonizethis_ai && dart test \
-///     test/seed42_observer_nw_acquisition_chain_diagnostic_test.dart \
+///     test/observer/seed42_observer_nw_acquisition_chain_diagnostic_test.dart \
 ///     --run-skipped)
 /// ```
 ///
@@ -71,10 +70,7 @@ void main() {
     () {
       final allGpIds = [for (var i = 1; i <= 6; i++) 'gp$i'];
 
-      int nwCountOwnedBy(Game g, String gpId) => g
-          .worldState
-          .newWorld
-          .provinces
+      int nwCountOwnedBy(Game g, String gpId) => g.worldState.newWorld.provinces
           .where((p) => p.ownerId == gpId)
           .length;
 
@@ -149,7 +145,8 @@ void main() {
                 armyMovesToNw[gpId] = armyMovesToNw[gpId]! + 1;
               }
             }
-            navalMovesTotal[gpId] = navalMovesTotal[gpId]! +
+            navalMovesTotal[gpId] =
+                navalMovesTotal[gpId]! +
                 (merged.navalMoveOrdersByPlayerId[gpId]?.length ?? 0);
             for (final order
                 in merged.navalMissionOrdersByPlayerId[gpId] ?? const []) {
@@ -159,8 +156,7 @@ void main() {
                     navalBeachheadMissions[gpId]! + 1;
               }
             }
-            for (final order
-                in merged.workOrdersByPlayerId[gpId] ?? const []) {
+            for (final order in merged.workOrdersByPlayerId[gpId] ?? const []) {
               final byTarget = workOrdersByTarget[gpId]!;
               byTarget[order.target] = (byTarget[order.target] ?? 0) + 1;
             }
