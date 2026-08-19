@@ -4,7 +4,7 @@
 /// [applyFaithfulFullAiTestHandoff] -> N-turn
 /// `generateOrdersForGameFullAI` -> `mergeOrderLists` ->
 /// `validateOrdersAndResolveTurnFromTrustedOrders` resolve loop duplicated
-/// across the top-level `seed42_observer_*` integration tests. Each migrated
+/// across the `test/observer/seed42_observer_*` integration tests. Each migrated
 /// test supplies only its per-turn observation via [onBeforeResolve] /
 /// [onAfterResolve] and reads the start / end game from the returned
 /// [Seed42ObserverCampaignResult]; the init, handoff, per-turn order
@@ -38,13 +38,14 @@ import 'faithful_full_ai_test_handoff.dart';
 /// harness uses for order generation and resolution so per-turn phase
 /// classification (`buildPlayerView` / `runPhasePlanners`) can run inside the
 /// callback without re-inlining the campaign init.
-typedef Seed42ObserverBeforeResolve = void Function(
-  int turn,
-  FullAIResult fullAi,
-  Game game,
-  MapTopology topology,
-  Map<String, TileMapResult> tileMapByRegion,
-);
+typedef Seed42ObserverBeforeResolve =
+    void Function(
+      int turn,
+      FullAIResult fullAi,
+      Game game,
+      MapTopology topology,
+      Map<String, TileMapResult> tileMapByRegion,
+    );
 
 /// Per-turn observation hook invoked immediately **after** turn [turn] is
 /// resolved, receiving the resolved [game] for that turn.

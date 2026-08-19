@@ -451,10 +451,17 @@ rules:
 
   - rule_id: repo.app_lib_player_by_id_lookup
     group: architecture
-    title: app/lib must use game.playerById for id lookups (Refs #2575)
+    title: app/lib must use game.playerById for id lookups (Refs #2575, #4534)
     spec: SPEC/program/repo-lint.md
-    runner: shell
-    argv: [tool/check_app_lib_player_by_id_lookup.sh]
+    runner: dart
+    script: tool/check_app_lib_player_by_id_lookup.dart
+
+  - rule_id: repo.app_lib_unit_lookup_sot
+    group: architecture
+    title: app/lib must use WorldState unit lookup SoT (Refs #4534)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_lib_unit_lookup_sot.dart
 
   - rule_id: repo.app_lib_fleet_by_id_lookup
     group: architecture
@@ -1999,6 +2006,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_s7d_support_suite_size.dart
+
+  - rule_id: repo.ai_observer_suite_size
+    group: testing
+    title: colonizethis_ai test/observer/**/*.dart must stay at or under 400 physical lines (Refs #4530)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_suite_size.dart
 
   - rule_id: repo.ai_test_support_file_size
     group: testing

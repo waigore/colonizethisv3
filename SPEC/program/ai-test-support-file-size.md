@@ -6,7 +6,7 @@ Keep `packages/colonizethis_ai/test/support/**` modules small and topic-focused 
 
 ## Scope
 
-- **In scope:** every `*.dart` file under `packages/colonizethis_ai/test/support/` **except** `test/support/s7d/**` (gated by `repo.ai_s7d_support_suite_size`).
+- **In scope:** every `*.dart` file under `packages/colonizethis_ai/test/support/` **except** `test/support/s7d/**` (gated by `repo.ai_s7d_support_suite_size`). Observer campaign suites under `test/observer/` are gated separately by `repo.ai_observer_suite_size` (400 physical; Refs #4530).
 - **Ceiling:** **400 physical lines** per file (matches peer `repo.data_test_file_size` / economy test-support pattern).
 - **Allowlist:** empty shrink-only grandfather; stale entries fail CI.
 

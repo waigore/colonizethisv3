@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/human_units_for_work_target.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
@@ -52,20 +53,11 @@ abstract final class GameMapAreaProvinceActionStatesProspect {
       return (showIcon: false, enabled: false, hasExplorerUnits: false);
     }
 
-    final allUnits = <ct_models.Unit>[
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ];
-    final explorerUnits = allUnits
-        .where((unit) => unit.ownerId == humanPlayerId)
-        .where(
-          (unit) =>
-              workOrderTargetsByUnitType[unit.type]?.contains(
-                kWorkTargetProspect,
-              ) ??
-              false,
-        )
-        .toList();
+    final explorerUnits = humanUnitsMatchingWorkTarget(
+      game: game,
+      playerId: humanPlayerId,
+      workTarget: kWorkTargetProspect,
+    );
     if (explorerUnits.isEmpty) {
       return (showIcon: true, enabled: false, hasExplorerUnits: false);
     }

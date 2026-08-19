@@ -54,14 +54,36 @@ void main() {
       }
     });
 
-    test('passes for an allowlisted flat integration test', () {
+    test('passes for an allowlisted flat package-surface test', () {
       final temp = Directory.systemTemp.createTempSync('ai-mirror-allow-');
       try {
         final aiTest = Directory(
           p.join(temp.path, 'packages', 'colonizethis_ai', 'test'),
         )..createSync(recursive: true);
         _writeDartFile(
-          p.join(aiTest.path, 'seed42_gp4_war_focus_test.dart'),
+          p.join(aiTest.path, 'ai_config_test.dart'),
+          "import 'package:test/test.dart';\nvoid main() {}\n",
+        );
+
+        final exitCode = runCheckAiTestMirrorsLib(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 0);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('passes for a nested observer campaign test', () {
+      final temp = Directory.systemTemp.createTempSync('ai-mirror-observer-');
+      try {
+        final aiTest = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_ai', 'test'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(aiTest.path, 'observer', 'seed42_gp4_war_focus_test.dart'),
           "import 'package:test/test.dart';\nvoid main() {}\n",
         );
 
@@ -137,6 +159,17 @@ void main() {
           'packages/colonizethis_ai/test/tactical/tactical_ai_test.dart',
         ),
         isNull,
+      );
+    });
+
+    test('allowlist is only the three package-surface tests (Refs #4530)', () {
+      expect(
+        aiTestMirrorsLibAllowlist,
+        unorderedEquals(<String>[
+          'ai_config_test.dart',
+          'ai_di_export_test.dart',
+          'seed_bundle_test.dart',
+        ]),
       );
     });
 

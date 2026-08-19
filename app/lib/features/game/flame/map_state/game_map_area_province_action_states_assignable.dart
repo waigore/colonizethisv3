@@ -1,10 +1,10 @@
+import 'package:colonizethis_app/core/utils/human_units_for_work_target.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Shared visibility/enablement for province-overlay inline actions that
@@ -40,17 +40,11 @@ abstract final class GameMapAreaProvinceActionStatesAssignable {
     if (game.playerById(humanPlayerId) == null) return kHidden;
     if (!passesTileGate()) return kHidden;
 
-    final matchingUnits = <ct_models.Unit>[
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ]
-        .where((unit) => unit.ownerId == humanPlayerId)
-        .where(
-          (unit) =>
-              workOrderTargetsByUnitType[unit.type]?.contains(workTarget) ??
-              false,
-        )
-        .toList();
+    final matchingUnits = humanUnitsMatchingWorkTarget(
+      game: game,
+      playerId: humanPlayerId,
+      workTarget: workTarget,
+    );
     if (matchingUnits.isEmpty) {
       return (showIcon: true, enabled: false, hasMatchingUnits: false);
     }

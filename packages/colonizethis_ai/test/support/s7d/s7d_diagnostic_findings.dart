@@ -20,7 +20,7 @@
 ///
 /// ```
 /// (cd packages/colonizethis_ai && dart test \
-///     test/seed42_observer_conquest_s7d_diagnostic_test.dart \
+///     test/observer/seed42_observer_conquest_s7d_diagnostic_test.dart \
 ///     --run-skipped)
 /// ```
 ///

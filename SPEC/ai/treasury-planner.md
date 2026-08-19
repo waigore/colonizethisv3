@@ -136,7 +136,7 @@ Given current `Stockpile`, `productionAssignments`, and `game.worldMarketState.p
 
 ## Affluent-GP speculative bidding (Refs #2924 F10)
 
-F10 supplements the F1–F5 deficit-based bid path so the world market clears even when no Great Power currently has a strict input shortfall. Without it the seed-42 "EXPAND geographic peer-war lock" stays gridlocked at zero deals (per the diagnostic in `packages/colonizethis_ai/test/seed42_observer_world_market_lock_recovery_diagnostic_test.dart`): every GP offers, none bids, and the failing GPs never earn treasury through legitimate trade. F10 lets treasury-rich GPs *choose* to spend treasury on inventory ahead of any modelled deficit, providing the buy-side demand that converts other GPs' offers into deals.
+F10 supplements the F1–F5 deficit-based bid path so the world market clears even when no Great Power currently has a strict input shortfall. Without it the seed-42 "EXPAND geographic peer-war lock" stays gridlocked at zero deals (per the diagnostic in `packages/colonizethis_ai/test/observer/seed42_observer_world_market_lock_recovery_diagnostic_test.dart`): every GP offers, none bids, and the failing GPs never earn treasury through legitimate trade. F10 lets treasury-rich GPs *choose* to spend treasury on inventory ahead of any modelled deficit, providing the buy-side demand that converts other GPs' offers into deals.
 
 ### Affluence gate
 
@@ -182,7 +182,7 @@ The selection set, scoring, and cap distribution are pure functions of `Stockpil
 
 ## Lock-recovery liquidity alignment (Refs #2924 F11)
 
-F11 closes the seed-42 gridlock where every GP emits urgent **offers** (typically `grain`) below the regiment treasury threshold but **bids** target other commodities and land on different integer priority tiers than urgent offers, so [DealMatcher](../program/world-market-resolution.md) clears zero deals and `lifetimeSellerCredit` stays at `0` (see `packages/colonizethis_ai/test/seed42_observer_world_market_lock_recovery_diagnostic_test.dart`).
+F11 closes the seed-42 gridlock where every GP emits urgent **offers** (typically `grain`) below the regiment treasury threshold but **bids** target other commodities and land on different integer priority tiers than urgent offers, so [DealMatcher](../program/world-market-resolution.md) clears zero deals and `lifetimeSellerCredit` stays at `0` (see `packages/colonizethis_ai/test/observer/seed42_observer_world_market_lock_recovery_diagnostic_test.dart`).
 
 ### Priority-tier alignment
 
@@ -1195,7 +1195,7 @@ test fixtures or hand-built game objects.
 
 ### Verification surface
 
-- Test file: `packages/colonizethis_ai/test/seed42_observer_treasury_planner_trade_emission_test.dart`.
+- Test file: `packages/colonizethis_ai/test/observer/seed42_observer_treasury_planner_trade_emission_test.dart`.
 - Entrypoint exercised: `generateOrdersForGameFullAI(game, topology, tileMapByRegion: …)` against the seed-42 game `init.game.copyWith(aiControlByGpId: {for (final p in init.game.players) p.id: true})`.
 - Output read: `result.orders.tradeOrdersByPlayerId` — the same map persisted to `Orders` after F7 orchestrator append.
 
@@ -1264,7 +1264,7 @@ failing lever can be isolated before any Path F tuning code lands.
 
 ### Verification surface
 
-- Test file: `packages/colonizethis_ai/test/seed42_observer_world_market_diagnostic_test.dart`.
+- Test file: `packages/colonizethis_ai/test/observer/seed42_observer_world_market_diagnostic_test.dart`.
 - Entrypoint exercised: `generateOrdersForGameFullAI` + `validateOrdersAndResolveTurnFromTrustedOrders`
   in the same 100-turn loop as `seed42_observer_conquest_s7d_diagnostic_test.dart`
   (Refs #2847 S7-D) so the two diagnostics agree on the simulation harness
@@ -1334,7 +1334,7 @@ still fails the test.
 ## Seed-42 Path F lock-recovery acceptance (Refs #2924)
 
 The primary #2924 acceptance surface is the skipped integration regression
-`packages/colonizethis_ai/test/seed42_observer_world_market_lock_recovery_regression_test.dart`
+`packages/colonizethis_ai/test/observer/seed42_observer_world_market_lock_recovery_regression_test.dart`
 (~4 min, `dart test --run-skipped`). It exercises the same faithful Full-AI
 handoff as `support/faithful_full_ai_test_handoff.dart` (every GP
 `isHuman: false`, every GP AI-controlled) so diplomacy intervention does not

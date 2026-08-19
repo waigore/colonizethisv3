@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/core/utils/human_units_for_work_target.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
@@ -6,7 +7,6 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'game_map_area_province_action_states.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Explore inline-action visibility/enablement for province overlay.
@@ -81,19 +81,11 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
       return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
     }
 
-    final allUnits = <ct_models.Unit>[
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ];
-    final hasExplorerUnits = allUnits
-        .where((unit) => unit.ownerId == humanPlayerId)
-        .any(
-          (unit) =>
-              workOrderTargetsByUnitType[unit.type]?.contains(
-                kWorkTargetExplore,
-              ) ??
-              false,
-        );
+    final hasExplorerUnits = humanUnitsMatchingWorkTarget(
+      game: game,
+      playerId: humanPlayerId,
+      workTarget: kWorkTargetExplore,
+    ).isNotEmpty;
 
     final eligibleTileKeys =
         cachedExploreEligibleTileKeys ??
@@ -111,7 +103,9 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
       // explore tile), show the inline action disabled (not hidden) so the
       // overlay can surface the rejection tooltip. Other ineligibility reasons
       // keep the icon hidden as before.
-      final ownerId = game.worldState.tryGetProvince(prefixedProvinceId)?.ownerId;
+      final ownerId = game.worldState
+          .tryGetProvince(prefixedProvinceId)
+          ?.ownerId;
       if (explorerConsulateGateBlocksMinorTribeProvince(
         game: game,
         playerId: humanPlayerId,

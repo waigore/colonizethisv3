@@ -3,6 +3,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/commodity_display_name.dart';
@@ -123,15 +124,8 @@ class DevelopmentPanelOverview extends StatelessWidget {
     return '${row.unitType}: $workLabel$location — $progress';
   }
 
-  Unit? _unitForRow(DevelopmentAssignedCivilianRow row) {
-    for (final unit in [
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ]) {
-      if (unit.id == row.unitId) return unit;
-    }
-    return null;
-  }
+  Unit? _unitForRow(DevelopmentAssignedCivilianRow row) =>
+      game.worldState.tryGetUnitById(row.unitId);
 
   WorkOrder? _pendingOrderForUnit(String unitId) {
     for (final order

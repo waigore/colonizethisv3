@@ -4,7 +4,7 @@ Captured against `dev` for issue #2924. Refresh with:
 
 ```bash
 (cd packages/colonizethis_ai && dart test \
-    test/seed42_observer_world_market_diagnostic_test.dart \
+    test/observer/seed42_observer_world_market_diagnostic_test.dart \
     --run-skipped)
 ```
 
