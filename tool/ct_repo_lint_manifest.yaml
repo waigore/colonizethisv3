@@ -1277,7 +1277,7 @@ rules:
 
   - rule_id: repo.world_test_no_upstream_domain_deps
     group: architecture
-    title: colonizethis_world test/** and pubspec must not depend on colonizethis_logic or colonizethis_turn (Refs #4515)
+    title: colonizethis_world test/** and pubspec must not depend on colonizethis_logic, colonizethis_turn, or colonizethis_orders (Refs #4515)
     spec: SPEC/program/world-test-no-upstream-domain-deps.md
     runner: dart
     script: tool/check_world_test_no_upstream_domain_deps.dart
