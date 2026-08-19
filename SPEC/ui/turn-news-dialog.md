@@ -36,6 +36,8 @@ The dialog renders under the editorial-monocle dark theme catalog (`SPEC/ui/pixe
 - **Given** the turn news dialog is built, **when** the action row is inspected, **then** the Close button is a `CtNinePatchButton` (no Material `TextButton` / `ElevatedButton`).
 - **Given** `TurnNewsDigest.lines` is empty and the court snapshot includes at least one qualifying family, **when** `DLG50001` opens, **then** the UI layer shows a **Your court** block and does **not** show **No major events last turn.**
 - **Given** the player taps **open Events** on the court block, **when** the tap is handled, **then** the UI layer pops `DLG50001` and sets `showPlayerTurnEventsFeed == true` on the loaded game without opening the feed on ordinary **Close**.
+- **Given** Widgetbook **Turn news** includes **Empty digest + court**, **Gazette + court**, and **Court + spy footer**, **when** `app/test/widgetbook_turn_news_court_variants_test.dart` runs, **then** each use case is wired into `turnNewsDialogDirectories` and pumps without exceptions (Refs #4532).
+- **Given** `DLG50001` empty gazette with court block or court + spy footer under `AppThemes.editorialMonocle`, **when** `app/test/turn_news_dialog_goldens_test.dart` captures each keyed `RepaintBoundary`, **then** each `matchesGoldenFile` baseline under `app/test/goldens/turn_news_court*.png` matches the committed PNG (Refs #4532).
 
 ## Copy
 
