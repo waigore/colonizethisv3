@@ -101,7 +101,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP10001 labour/feeding tab-bar indicator (Refs #4506; measured 85_954).
 // raised for GAME40001 research seat finish-time line (Refs #4511; measured 86_127).
 // raised for Blockade capital-link UI + MAP20001 under-blockade status (Refs #4516; measured 86_075).
-const _maxMainLines = 87000;
+// raised for DLG50001 Your-court block + turn-event buffer (Refs #4532; measured 87_183).
+const _maxMainLines = 87500;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
