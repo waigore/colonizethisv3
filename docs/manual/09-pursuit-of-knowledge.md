@@ -33,11 +33,12 @@ Efficiency is exactly **2.0** RP per gold at Low, Medium, and High, and **2.5** 
 - Seat assignments stay across turns until unlock or cancel. The Tree has no goal-highlight control for the player to use.
 - **Empty seats and funding None are legal.** You may leave a seat empty or set funding to **None** when gold is needed for builds, recruits, diplomacy, or the market. That is a treasury choice, not a mistake. Ending the turn does **not** warn about unused research seats the way it may list idle civilians — review seats on `GAME40001` when you mean to invest again.
 - **Research this turn:** On `GAME40001` **Slots**, under **Research Slots**, read **Research this turn: −£X · +Y RP** for the empire-wide gold and RP the next **Next turn** will apply across all funded seats (seats spend in order). When nothing will spend, the panel shows **Research this turn: no spend**. Tap the green **+N RP** control when it is shown to open the per-seat breakdown. That control is hidden when funding is **None** or the spend is blocked. When a later seat is blocked because earlier seats already used the treasury, read the greyed gold row’s plain-language hint and the header totals. If stationed Spies will speed a seat, that bonus is already inside **+Y RP** and the per-seat **+N RP** number.
+- **When the work finishes:** On each assigned seat that will spend this turn, a line under the bar says **Completes next turn** when this turn’s RP covers what remains, or **Finishes in N turns** otherwise. A year may appear in parentheses when the campaign can still reach that year. The line uses the funding you have chosen now — raise or lower funding (or a stationed Spy speeds the seat) and the line updates. It is not a promise if you change funding later. If funding is **None**, or the seat cannot spend because gold is blocked, that line is not shown; the gold row and the breakdown still explain why. Tap **+N RP** to also read remaining RP and **About N more turns at this funding**. You do not need to divide remaining RP by this turn’s RP yourself.
 - Research spend may use a debt floor: treasury may not go below **0** with no qualifying labour tech, **−500** with **Money Lending**, or **−1000** with **Money Lending** and **Banking**. A later seat can show no RP when the walk would push past that floor.
 
 ### Categories on the Tree
 
-The Tree is one scrollable chart. Nodes are colour-coded and show a category icon. There are **no** category filter controls. Tap any node (including locked ones) for name, era, category, RP cost, prerequisites, and effects. When a technology is ready to research and you have an empty seat, tap **Research this** on that dialog to seat it at **Medium** without leaving the Tree. If every seat is full, choose which seat to replace (the same forfeit warning as **Cancel** appears when that seat already has progress). Funding and **Cancel** still live on **Slots**.
+The Tree is one scrollable chart. Nodes are colour-coded and show a category icon. There are **no** category filter controls. Tap any node (including locked ones) for name, era, category, RP cost, prerequisites, and effects. When that technology already sits in a seat that will spend this turn, the dialog also shows the same **Completes next turn** / **Finishes in N turns** line as Slots. The line is not shown for a technology that is not in a seat, for **Details** from **Choose tech**, or when that seat will not spend. When a technology is ready to research and you have an empty seat, tap **Research this** on that dialog to seat it at **Medium** without leaving the Tree. If every seat is full, choose which seat to replace (the same forfeit warning as **Cancel** appears when that seat already has progress). Funding and **Cancel** still live on **Slots**.
 
 The Tree’s colours and icons mark these groups (civilian and diplomacy use separate icons on the chart; the catalog docs also name seven research groups that cover the same unlocks):
 
@@ -93,6 +94,7 @@ Rival courts also fill research seats and spend gold on funding. They keep work 
 - [x] Does not document an unavailable Tree goal control; mentions spy insight on the Slots **+N RP** preview and RP breakdown.
 - [x] States that empty seats / funding None are legal strategic thrift and that end-turn does not warn about unused research capacity.
 - [x] Explains the **Research this turn** header on Slots, **+N RP** breakdown entry, sequential multi-seat funding honesty, and the research debt floor.
+- [x] Documents the Slots finish-time line (**Completes next turn** / **Finishes in N turns**), year omission when the campaign cannot reach that year, None/blocked omission, **+N RP** remaining-RP and **About N more turns at this funding** restatement, and the same line on the Tree dialog for a seated spending technology.
 - [x] Documents home **Counter-espionage** from `MAP20001` Civilian as well as `UNIT10001` **Assign**, and that it protects the whole realm.
 - [x] Sources match the chapter coverage map.
 
@@ -108,6 +110,7 @@ Rival courts also fill research seats and spend gold on funding. They keep work 
 - `SPEC/game/tech-tree-new-world.md`
 - `SPEC/game/research-state.md`
 - `SPEC/game/tech-and-extraction-cap.md`
+- `SPEC/game/turn-time-mapping.md`
 - `SPEC/program/orders.md`
 - `SPEC/program/research-resolution.md`
 - `SPEC/program/turn-resolution-phases.md`
