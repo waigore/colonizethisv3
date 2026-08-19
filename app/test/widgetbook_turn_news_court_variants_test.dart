@@ -34,6 +34,27 @@ void main() {
       });
     }
 
+    testWidgets('Gazette + court story pumps without exceptions', (
+      WidgetTester tester,
+    ) async {
+      final useCase = findWidgetbookUseCase(
+        turnNewsDialogDirectories,
+        folderName: folderName,
+        useCaseName: 'Gazette + court',
+      );
+      await pumpWidgetbookUseCaseAtSize(
+        tester,
+        useCase,
+        size: const Size(800, 640),
+      );
+      await tester.pumpAndSettle(const Duration(milliseconds: 200));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(TurnNewsDialog), findsOneWidget);
+      expect(find.textContaining('Your court:'), findsOneWidget);
+      expect(find.text('No major events last turn.'), findsNothing);
+    });
+
     testWidgets('Empty digest + court story shows court block without empty copy', (
       WidgetTester tester,
     ) async {
