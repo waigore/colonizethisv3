@@ -4,6 +4,7 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -54,12 +55,7 @@ class ChooseTechOptionRow extends StatelessWidget {
   final TechDefinition tech;
   final VoidCallback onAssign;
 
-  Player? get _player {
-    for (final p in game.players) {
-      if (p.id == contextPlayerId) return p;
-    }
-    return null;
-  }
+  Player? get _player => game.playerById(contextPlayerId);
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +64,7 @@ class ChooseTechOptionRow extends StatelessWidget {
     final player = _player;
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(
-          color: EditorialMonoclePalette.border,
-          width: 1,
-        ),
+        border: Border.all(color: EditorialMonoclePalette.border, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(CtSpacing.m),
@@ -213,14 +206,8 @@ class ChooseTechOptionSubtitle extends StatelessWidget {
       style: TextStyle(
         color: EditorialMonoclePalette.muted,
         fontSize: 10,
-        fontFamilyFallback: const <String>[
-          'SF Mono',
-          'Menlo',
-          'monospace',
-        ],
-        fontFeatures: const <FontFeature>[
-          FontFeature.tabularFigures(),
-        ],
+        fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
+        fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
       ),
     );
   }
@@ -235,10 +222,7 @@ class ChooseTechOptionEffectLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(
-        color: EditorialMonoclePalette.muted,
-        fontSize: 10,
-      ),
+      style: TextStyle(color: EditorialMonoclePalette.muted, fontSize: 10),
     );
   }
 }

@@ -451,10 +451,17 @@ rules:
 
   - rule_id: repo.app_lib_player_by_id_lookup
     group: architecture
-    title: app/lib must use game.playerById for id lookups (Refs #2575)
+    title: app/lib must use game.playerById for id lookups (Refs #2575, #4534)
     spec: SPEC/program/repo-lint.md
-    runner: shell
-    argv: [tool/check_app_lib_player_by_id_lookup.sh]
+    runner: dart
+    script: tool/check_app_lib_player_by_id_lookup.dart
+
+  - rule_id: repo.app_lib_unit_lookup_sot
+    group: architecture
+    title: app/lib must use WorldState unit lookup SoT (Refs #4534)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_lib_unit_lookup_sot.dart
 
   - rule_id: repo.app_lib_fleet_by_id_lookup
     group: architecture
