@@ -184,6 +184,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 ## Sources
 
 - `SPEC/game/ships-and-naval.md`
+- `SPEC/game/capital-and-connectivity.md`
 - `SPEC/game/tech-tree-naval.md`
 - `SPEC/program/orders.md`
 - `SPEC/program/naval-movement-resolution.md`

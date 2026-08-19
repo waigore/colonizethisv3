@@ -1,7 +1,11 @@
 // Visual goldens for MAP20001 Naval Blockade / Beachhead variants (Refs #4413).
 // SPEC/ui/province-sea-zone-detail-overlay.md § States and variants.
 
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_naval_mission.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
@@ -12,11 +16,14 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'golden_capture_harness.dart';
+import 'naval_mission_goldens_test_support.dart';
 
 class _NavalMissionGoldenCase {
   const _NavalMissionGoldenCase({
@@ -28,6 +35,7 @@ class _NavalMissionGoldenCase {
     required this.beachheadEnabled,
     this.blockadeTooltip = '',
     this.beachheadTooltip = '',
+    this.blockadeStatus = ProvinceBlockadeStatus.none,
     this.overlaySize = const Size(460, 680),
     this.surfaceSize = const Size(640, 720),
   });
@@ -40,6 +48,7 @@ class _NavalMissionGoldenCase {
   final bool beachheadEnabled;
   final String blockadeTooltip;
   final String beachheadTooltip;
+  final ProvinceBlockadeStatus blockadeStatus;
   final Size overlaySize;
   final Size surfaceSize;
 }
@@ -108,6 +117,24 @@ const List<_NavalMissionGoldenCase> _cases = [
     overlaySize: Size(320, 680),
     surfaceSize: Size(640, 720),
   ),
+  _NavalMissionGoldenCase(
+    name: 'Naval Under blockade',
+    goldenFile: 'goldens/province_overlay_under_blockade.png',
+    showBlockade: false,
+    blockadeEnabled: false,
+    showBeachhead: false,
+    beachheadEnabled: false,
+    blockadeStatus: ProvinceBlockadeStatus.portBlockaded,
+  ),
+  _NavalMissionGoldenCase(
+    name: 'Naval Under blockade capital',
+    goldenFile: 'goldens/province_overlay_under_blockade_capital.png',
+    showBlockade: false,
+    blockadeEnabled: false,
+    showBeachhead: false,
+    beachheadEnabled: false,
+    blockadeStatus: ProvinceBlockadeStatus.capitalBlockaded,
+  ),
 ];
 
 void main() {
@@ -152,7 +179,9 @@ void main() {
                 beachheadEnabled: c.beachheadEnabled,
                 beachheadTooltip: c.beachheadTooltip,
                 onBeachheadTap: () {},
+                blockadeStatus: c.blockadeStatus,
               ),
+              blockadeStatus: c.blockadeStatus,
               onClose: () {},
             ),
           ),
@@ -198,10 +227,119 @@ void main() {
         expect(beachheadFinder, findsNothing);
       }
 
+      if (c.blockadeStatus != ProvinceBlockadeStatus.none) {
+        final statusText =
+            c.blockadeStatus == ProvinceBlockadeStatus.capitalBlockaded
+            ? l10n.provinceOverlay_underBlockadeCapital
+            : l10n.provinceOverlay_underBlockade;
+        final statusFinder = find.text(statusText);
+        expect(statusFinder, findsOneWidget);
+        await tester.ensureVisible(statusFinder);
+        await tester.pump();
+      }
+
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile(c.goldenFile),
       );
     });
   }
+
+  testWidgets(
+    'golden: observe-mode host still shows Under blockade (Refs #4516)',
+    (WidgetTester tester) async {
+      const surfaceSize = Size(640, 720);
+      const overlaySize = Size(460, 680);
+      await configureGoldenSurface(tester, size: surfaceSize);
+      configureGoldenView(
+        tester,
+        physicalSize: surfaceSize,
+        devicePixelRatio: 1.0,
+      );
+
+      const target = 'oldWorld|enemy1';
+      final blockadeGame = buildNavalMissionHumanOwnedBlockadedPortGame();
+      final GameMapData mapData = (
+        combinedTopology: navalMissionWarTopology(),
+        tileMapByRegion: const <String, TileMapResult>{},
+        topologyByRegion: const <String, MapTopology>{},
+        warpLinks: null,
+      );
+      late ProvinceNavalMissionOverlayControls hostControls;
+      await tester.pumpWidget(
+        wrapGoldenBoundary(
+          boundaryKey: const ValueKey<String>('unused_host_probe'),
+          includeLocalizations: true,
+          child: Builder(
+            builder: (context) {
+              hostControls = buildProvinceNavalMissionOverlayControls(
+                context: context,
+                game: blockadeGame,
+                humanPlayerId: navalMissionGoldenHumanId,
+                playerView: demoHumanPlayerViewForOverlay,
+                displayId: target,
+                draftOrders: const Orders(),
+                mapData: mapData,
+                canMutateViaUi: false,
+                bus: AppEventBus(),
+                isSeaZone: false,
+              );
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      expect(hostControls.showBlockade, isFalse);
+      expect(hostControls.showBeachhead, isFalse);
+      expect(hostControls.blockadeStatus, ProvinceBlockadeStatus.portBlockaded);
+
+      const boundaryKey = ValueKey<String>(
+        'province_overlay_under_blockade_observe_golden',
+      );
+      final overlayGame = demoGameForOverlay;
+      await tester.pumpWidget(
+        wrapGoldenBoundary(
+          boundaryKey: boundaryKey,
+          includeLocalizations: true,
+          child: SizedBox(
+            width: overlaySize.width,
+            height: overlaySize.height,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: overlayGame,
+              region: demoRegionForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
+              humanPlayerId: overlayGame.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
+              omniscientDetail: true,
+              navalMission: hostControls,
+              blockadeStatus: hostControls.blockadeStatus,
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await pumpForGolden(tester);
+
+      expect(tester.takeException(), isNull);
+      final statusFinder = find.text(l10n.provinceOverlay_underBlockade);
+      expect(statusFinder, findsOneWidget);
+      await tester.ensureVisible(statusFinder);
+      await tester.pump();
+      expect(
+        find.widgetWithText(
+          CtActionTextButton,
+          l10n.provinceOverlay_blockadeAction,
+        ),
+        findsNothing,
+      );
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile(
+          'goldens/province_overlay_under_blockade_observe.png',
+        ),
+      );
+    },
+  );
 }

@@ -104,6 +104,7 @@ Other Great Powers submit comparable decrees under the same validation and turn 
 - `SPEC/game/workers-and-population.md`
 - `SPEC/game/military-armies.md`
 - `SPEC/game/ships-and-naval.md`
+- `SPEC/game/capital-and-connectivity.md`
 - `SPEC/game/diplomacy.md`
 - `SPEC/ui/diplomacy-panel.md`
 - `SPEC/ui/diplomacy-detail-screen.md`

@@ -92,49 +92,48 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: mission menu shows cancel pending row (Refs #4213)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('navalMissionMenuCancelPendingGolden');
-      final game = buildNavalMissionMenuPeacetimeGame();
-      final fleet = game.worldState.fleets.single;
-      final availability = navalMissionAvailabilityForFleet(
+  testWidgets('golden: mission menu shows cancel pending row (Refs #4213)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('navalMissionMenuCancelPendingGolden');
+    final game = buildNavalMissionMenuPeacetimeGame();
+    final fleet = game.worldState.fleets.single;
+    final availability = navalMissionAvailabilityForFleet(
+      game: game,
+      topology: const MapTopology(),
+      playerId: navalMissionGoldenHumanId,
+      fleet: fleet,
+      currentOrders: Orders(
+        navalMissionOrdersByPlayerId: {
+          navalMissionGoldenHumanId: const [
+            NavalMissionOrder(fleetId: 'sea_named', mission: 'patrol'),
+          ],
+        },
+      ),
+    );
+
+    await pumpNavalMissionGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      child: NavalMissionMenuDialog(
         game: game,
-        topology: const MapTopology(),
-        playerId: navalMissionGoldenHumanId,
         fleet: fleet,
-        currentOrders: Orders(
-          navalMissionOrdersByPlayerId: {
-            navalMissionGoldenHumanId: const [
-              NavalMissionOrder(fleetId: 'sea_named', mission: 'patrol'),
-            ],
-          },
-        ),
-      );
+        availability: availability,
+      ),
+    );
 
-      await pumpNavalMissionGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        child: NavalMissionMenuDialog(
-          game: game,
-          fleet: fleet,
-          availability: availability,
-        ),
-      );
+    expect(tester.takeException(), isNull);
+    expect(find.text('Cancel pending mission'), findsOneWidget);
+    // CtDialogShell scrolls when Sail + missions + cancel exceed maxHeight;
+    // bring Cancel pending into the captured frame (Refs #4343).
+    await tester.ensureVisible(find.text('Cancel pending mission'));
+    await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull);
-      expect(find.text('Cancel pending mission'), findsOneWidget);
-      // CtDialogShell scrolls when Sail + missions + cancel exceed maxHeight;
-      // bring Cancel pending into the captured frame (Refs #4343).
-      await tester.ensureVisible(find.text('Cancel pending mission'));
-      await tester.pumpAndSettle();
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/naval_mission_menu_cancel_pending.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/naval_mission_menu_cancel_pending.png'),
+    );
+  });
 
   testWidgets(
     'golden: blockade target picker lists war-enemy provinces (Refs #4213)',
@@ -177,6 +176,45 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/naval_mission_target_blockade.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: blockade target picker shows capital-port extra line (Refs #4516)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'navalMissionTargetBlockadeCapitalGolden',
+      );
+      const enemyCap = 'oldWorld|enemy1';
+      final game = buildNavalMissionCapitalPortTargetGame();
+      final fleet = game.worldState.fleets.single;
+
+      await pumpNavalMissionGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        child: NavalMissionTargetDialog(
+          game: game,
+          mission: FleetMission.blockade,
+          fleet: fleet,
+          targetProvinceIds: const [enemyCap],
+          humanPlayerId: navalMissionGoldenHumanId,
+          initialTargetProvinceId: enemyCap,
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Select target — Blockade'), findsOneWidget);
+      expect(
+        find.text(
+          'At a capital port, sea-only and overseas links are cut; land roads still reach inland tiles.',
+        ),
+        findsOneWidget,
+      );
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/naval_mission_target_blockade_capital.png'),
       );
     },
   );
