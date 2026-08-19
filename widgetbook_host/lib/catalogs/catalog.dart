@@ -30,6 +30,7 @@ import 'package:hive/hive.dart' show Box;
 import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart'
@@ -205,6 +206,7 @@ part 'catalog_panel_map_owner_standing_stories.dart';
 part 'catalog_panel_map_political_sight_stories.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
+part 'catalog_turn_news_stories.dart';
 part 'catalog_panels_technology_spy_insight.dart';
 part 'catalog_panels_technology_tree_assign.dart';
 part 'catalog_panels_counsel.dart';

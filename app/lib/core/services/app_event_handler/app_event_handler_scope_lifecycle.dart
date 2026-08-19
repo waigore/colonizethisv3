@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_intel.dart';
@@ -218,6 +219,9 @@ mixin AppEventHandlerScopeDialogBuilders
     final game = container.read(currentGameProvider);
     final digest = params?['digest'] as TurnNewsDigest?;
     final newTurnNumber = params?['newTurnNumber'] as int?;
+    final courtSummary =
+        params?['courtSummary'] as TurnNewsCourtSummary? ??
+        const TurnNewsCourtSummary.empty();
     if (game == null || digest == null || newTurnNumber == null) {
       return const SizedBox.shrink();
     }
@@ -235,6 +239,7 @@ mixin AppEventHandlerScopeDialogBuilders
       game: game,
       digest: digest,
       newTurnNumber: newTurnNumber,
+      courtSummary: courtSummary,
       spyReportCount: spyCount,
       onOpenIntelligence: spyCount > 0
           ? () {
@@ -246,6 +251,22 @@ mixin AppEventHandlerScopeDialogBuilders
               );
             }
           : null,
+      onOpenEvents: courtSummary.isEmpty
+          ? null
+          : () {
+              Navigator.of(ctx).pop();
+              final current = container.read(currentGameProvider);
+              if (current == null) {
+                return;
+              }
+              container.read(currentGameProvider.notifier).setGame(
+                    current.copyWith(
+                      mapViewState: current.mapViewState.copyWith(
+                        showPlayerTurnEventsFeed: true,
+                      ),
+                    ),
+                  );
+            },
     );
   }
 }
