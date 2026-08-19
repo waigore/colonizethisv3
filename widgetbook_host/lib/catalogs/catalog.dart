@@ -205,6 +205,7 @@ part 'catalog_panel_map_owner_standing_stories.dart';
 part 'catalog_panel_map_political_sight_stories.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
+part 'catalog_turn_news_stories.dart';
 part 'catalog_panels_technology_spy_insight.dart';
 part 'catalog_panels_technology_tree_assign.dart';
 part 'catalog_panels_counsel.dart';
