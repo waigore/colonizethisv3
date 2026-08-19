@@ -13,6 +13,7 @@ import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
+import 'province_sea_zone_detail_overlay_civilian_shortcut_control.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
@@ -26,6 +27,8 @@ Widget buildCivilianSectionFiltered({
   required PlayerView playerView,
   required Orders draftOrders,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
+  ProvinceOverlayCounterEspionageProps counterEspionage =
+      kProvinceOverlayCounterEspionageHidden,
 }) {
   final visible = civilian
       .where(
@@ -36,18 +39,26 @@ Widget buildCivilianSectionFiltered({
         ),
       )
       .toList();
-  final stationSpyButton = !stationSpy.showControl
-      ? null
-      : Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: CtActionTextButton(
-            label: l10n.provinceOverlay_stationSpyAction,
-            tooltip: stationSpy.tooltip,
-            enabled: stationSpy.enabled,
-            onPressed: stationSpy.enabled ? stationSpy.onTap : null,
-          ),
-        );
-  if (visible.isEmpty && stationSpyButton == null) {
+  final stationSpyButton = buildProvinceOverlayCivilianShortcutControl(
+    showControl: stationSpy.showControl,
+    label: l10n.provinceOverlay_stationSpyAction,
+    tooltip: stationSpy.tooltip,
+    enabled: stationSpy.enabled,
+    onTap: stationSpy.onTap,
+  );
+  final counterEspionageButton = buildProvinceOverlayCivilianShortcutControl(
+    showControl: counterEspionage.showControl,
+    label: l10n.provinceOverlay_counterEspionageAction,
+    tooltip: counterEspionage.tooltip,
+    enabled: counterEspionage.enabled,
+    onTap: counterEspionage.onTap,
+    gist: counterEspionage.gist,
+  );
+  final extras = <Widget>[
+    if (stationSpyButton != null) stationSpyButton,
+    if (counterEspionageButton != null) counterEspionageButton,
+  ];
+  if (visible.isEmpty && extras.isEmpty) {
     return buildOverlaySection(
       l10n.provinceOverlay_sectionCivilian,
       overlayEmptyBodyDashText(),
@@ -59,7 +70,7 @@ Widget buildCivilianSectionFiltered({
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [overlayEmptyBodyDashText(), stationSpyButton!],
+        children: [overlayEmptyBodyDashText(), ...extras],
       ),
     );
   }
@@ -108,6 +119,7 @@ Widget buildCivilianSectionFiltered({
           );
         }),
         ?stationSpyButton,
+        ?counterEspionageButton,
       ],
     ),
   );

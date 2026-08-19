@@ -54,7 +54,11 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   required String? buildRailShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
   required String? upgradeTownShortcutTargetTileKey,
+  String? counterSpyShortcutTargetTileKey,
 }) {
+  final hasCounterSpyShortcut =
+      counterSpyShortcutTargetTileKey != null &&
+      counterSpyShortcutTargetTileKey.isNotEmpty;
   final hasExploreShortcut =
       exploreShortcutTargetTileKey != null &&
       exploreShortcutTargetTileKey.isNotEmpty;
@@ -82,7 +86,9 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   final hasUpgradeTownShortcut =
       upgradeTownShortcutTargetTileKey != null &&
       upgradeTownShortcutTargetTileKey.isNotEmpty;
-  final targetTileKey = hasPurchaseLandShortcut
+  final targetTileKey = hasCounterSpyShortcut
+      ? counterSpyShortcutTargetTileKey
+      : hasPurchaseLandShortcut
       ? purchaseLandShortcutTargetTileKey
       : hasBuildRoadShortcut
       ? buildRoadShortcutTargetTileKey
@@ -102,7 +108,9 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
       ? prospectShortcutTargetTileKey
       : null;
   if (targetTileKey == null || targetTileKey.isEmpty) return;
-  final workTarget = hasPurchaseLandShortcut
+  final workTarget = hasCounterSpyShortcut
+      ? kWorkTargetCounterSpy
+      : hasPurchaseLandShortcut
       ? kWorkTargetPurchaseLand
       : hasBuildRoadShortcut
       ? kWorkTargetBuildRoad

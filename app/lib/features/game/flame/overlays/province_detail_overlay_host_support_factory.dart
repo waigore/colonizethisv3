@@ -180,6 +180,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final navalMission = missions.navalMission;
   final detachAndSail = missions.detachAndSail;
   final stationSpy = missions.stationSpy;
+  final counterEspionage = missions.counterEspionage;
 
   return ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -247,6 +248,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     detachAndSail: detachAndSail,
     blockadeStatus: navalMission.blockadeStatus,
     stationSpy: stationSpy,
+    counterEspionage: counterEspionage,
     showEstablishConsulateControl:
         canMutateViaUi && establishConsulateState.showControl,
     establishConsulateEnabled:

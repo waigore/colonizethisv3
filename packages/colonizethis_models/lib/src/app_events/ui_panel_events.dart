@@ -43,6 +43,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.purchaseLandShortcutTargetTileKey,
     this.upgradeTownShortcutTargetTileKey,
     this.relocateShortcutTargetTileKey,
+    this.counterSpyShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -99,6 +100,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province Station spy Relocate shortcut.
   final String? relocateShortcutTargetTileKey;
+
+  /// Optional province-level tile key used by the Counter-espionage shortcut.
+  final String? counterSpyShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.

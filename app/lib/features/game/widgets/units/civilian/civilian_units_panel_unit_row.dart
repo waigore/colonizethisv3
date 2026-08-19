@@ -37,6 +37,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     required this.purchaseLandShortcutTargetTileKey,
     required this.upgradeTownShortcutTargetTileKey,
     required this.relocateShortcutTargetTileKey,
+    this.counterSpyShortcutTargetTileKey,
     this.readOnly = false,
     super.key,
   });
@@ -61,6 +62,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   final String? purchaseLandShortcutTargetTileKey;
   final String? upgradeTownShortcutTargetTileKey;
   final String? relocateShortcutTargetTileKey;
+  final String? counterSpyShortcutTargetTileKey;
   final bool readOnly;
 
   @override
@@ -129,6 +131,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
       upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
       relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
+      counterSpyShortcutTargetTileKey: counterSpyShortcutTargetTileKey,
     );
     final selected = isTileScope && isSelectedInTileScope;
     return CivilianUnitRowCard(

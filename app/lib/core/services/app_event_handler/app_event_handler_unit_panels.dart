@@ -69,6 +69,7 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
           upgradeTownShortcutTargetTileKey:
               event.upgradeTownShortcutTargetTileKey,
           relocateShortcutTargetTileKey: event.relocateShortcutTargetTileKey,
+          counterSpyShortcutTargetTileKey: event.counterSpyShortcutTargetTileKey,
         ),
       );
     },

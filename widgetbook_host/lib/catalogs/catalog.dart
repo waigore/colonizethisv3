@@ -199,6 +199,7 @@ part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_naval_mission_stories.dart';
 part 'catalog_panel_map_detach_sail_stories.dart';
 part 'catalog_panel_map_station_spy_stories.dart';
+part 'catalog_panel_map_counter_espionage_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
 part 'catalog_panel_map_owner_standing_stories.dart';
 part 'catalog_panel_map_political_sight_stories.dart';
