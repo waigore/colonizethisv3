@@ -13,6 +13,7 @@ import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
+import 'province_sea_zone_detail_overlay_civilian_shortcut_control.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
@@ -38,14 +39,14 @@ Widget buildCivilianSectionFiltered({
         ),
       )
       .toList();
-  final stationSpyButton = _civilianShortcutControl(
+  final stationSpyButton = buildProvinceOverlayCivilianShortcutControl(
     showControl: stationSpy.showControl,
     label: l10n.provinceOverlay_stationSpyAction,
     tooltip: stationSpy.tooltip,
     enabled: stationSpy.enabled,
     onTap: stationSpy.onTap,
   );
-  final counterEspionageButton = _civilianShortcutControl(
+  final counterEspionageButton = buildProvinceOverlayCivilianShortcutControl(
     showControl: counterEspionage.showControl,
     label: l10n.provinceOverlay_counterEspionageAction,
     tooltip: counterEspionage.tooltip,
@@ -270,40 +271,4 @@ List<Widget> _navalMissionActions(
       ),
     ),
   ];
-}
-
-Widget? _civilianShortcutControl({
-  required bool showControl,
-  required String label,
-  required String tooltip,
-  required bool enabled,
-  required VoidCallback? onTap,
-  String gist = '',
-}) {
-  if (!showControl) return null;
-  final button = CtActionTextButton(
-    label: label,
-    tooltip: tooltip,
-    enabled: enabled,
-    onPressed: enabled ? onTap : null,
-  );
-  return Padding(
-    padding: const EdgeInsets.only(top: 4),
-    child: gist.isEmpty
-        ? button
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              button,
-              Text(
-                gist,
-                style: TextStyle(
-                  color: EditorialMonoclePalette.muted,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-  );
 }
