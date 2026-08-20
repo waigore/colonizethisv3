@@ -189,13 +189,17 @@ class DiplomacyRow extends StatelessWidget {
     final TextStyle style = _economicLineStyle(context);
     final lines = <Widget>[];
     if (data.activeSubsidyPercent != null) {
+      final int percent = data.activeSubsidyPercent!;
+      final String compactLine = l10n.diplomacy_panel_outgoingSubsidy(
+        percent,
+        data.displayName,
+      );
       lines.addAll([
         const SizedBox(height: 4),
-        Text(
-          l10n.diplomacy_panel_outgoingSubsidy(
-            data.activeSubsidyPercent!,
-            data.displayName,
-          ),
+        _subsidyEconomicLine(
+          compactLine: compactLine,
+          targetDisplayName: data.displayName,
+          percent: percent,
           style: style,
         ),
       ]);
@@ -210,15 +214,39 @@ class DiplomacyRow extends StatelessWidget {
       ]);
     }
     if (data.pendingSubsidyPercent != null) {
+      final int percent = data.pendingSubsidyPercent!;
+      final String compactLine = l10n.diplomacy_panel_pendingSubsidy(percent);
       lines.addAll([
         const SizedBox(height: 4),
-        Text(
-          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyPercent!),
+        _subsidyEconomicLine(
+          compactLine: compactLine,
+          targetDisplayName: data.displayName,
+          percent: percent,
           style: style,
         ),
       ]);
     }
     return lines;
+  }
+
+  Widget _subsidyEconomicLine({
+    required String compactLine,
+    required String targetDisplayName,
+    required int percent,
+    required TextStyle style,
+  }) {
+    final String summary = subsidyPriceEffectSummary(
+      targetDisplayName: targetDisplayName,
+      percent: percent,
+    );
+    return Tooltip(
+      message: summary,
+      child: Text(
+        compactLine,
+        style: style,
+        semanticsLabel: '$compactLine. $summary',
+      ),
+    );
   }
 
   Widget _buildActionButtons({bool alignEnd = false}) {

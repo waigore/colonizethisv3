@@ -290,8 +290,15 @@ void main() {
       expect(find.text('Cost: No per-turn gold charge.'), findsOneWidget);
       expect(
         find.text(
-          'Effect: 5% subsidy with $targetName while active; '
-          'market terms are affected.',
+          'Effect: On deals that fill with $targetName, you pay 5% more when '
+          'buying from them and receive 5% less when selling to them.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Effect: Only fills with $targetName are adjusted; other courts are '
+          'unchanged.',
         ),
         findsOneWidget,
       );
@@ -301,8 +308,8 @@ void main() {
 
       expect(
         find.text(
-          'Effect: 10% subsidy with $targetName while active; '
-          'market terms are affected.',
+          'Effect: On deals that fill with $targetName, you pay 10% more when '
+          'buying from them and receive 10% less when selling to them.',
         ),
         findsOneWidget,
       );

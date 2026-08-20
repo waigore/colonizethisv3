@@ -3,8 +3,10 @@
 
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
     show grantOrSubsidyDialogId;
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'diplomacy_panel_orders_pump_support.dart';
@@ -83,6 +85,42 @@ void main() {
         find.text('Outgoing subsidy: $percent% to Free City'),
         findsOneWidget,
       );
+      final Text line = tester.widget<Text>(
+        find.text('Outgoing subsidy: $percent% to Free City'),
+      );
+      expect(
+        line.semanticsLabel,
+        'Outgoing subsidy: $percent% to Free City. '
+        '${subsidyPriceEffectSummary(targetDisplayName: 'Free City', percent: percent)}',
+      );
+    });
+
+    testWidgets('pending subsidy line exposes buy/sell semantics', (
+      WidgetTester tester,
+    ) async {
+      const percent = 15;
+      await pumpDiplomacyOrdersPanel(
+        tester,
+        game: buildDiplomacyRichPanelTestGame(),
+        tall: true,
+        minorsTab: true,
+        currentOrders: diplomacyPendingOrders(
+          const DiplomaticOrder(
+            type: DiplomaticOrderType.setSubsidy,
+            targetFactionId: diplomacyOrdersMinorId,
+            amount: percent,
+          ),
+        ),
+      );
+
+      final Text line = tester.widget<Text>(
+        find.text('Pending subsidy: $percent% (resolves end of turn)'),
+      );
+      expect(
+        line.semanticsLabel,
+        contains('pay $percent% more'),
+      );
+      expect(line.semanticsLabel, contains('receive $percent% less'));
     });
 
     testWidgets('pending grantAid shows amount line and Cancel', (

@@ -113,9 +113,21 @@ List<String> _grantAid(String target, int amount) => [
   'Effect: Standing with $target improves when the grant resolves.',
 ];
 
+/// First-order subsidy treasury consequences (plain prose, no Cost/Effect labels).
+/// Refs #4546; SPEC/game/world-market.md § Subsidy price adjustment.
+String subsidyPriceEffectSummary({
+  required String targetDisplayName,
+  required int percent,
+}) {
+  return 'On deals that fill with $targetDisplayName, you pay $percent% more '
+      'when buying from them and receive $percent% less when selling to them. '
+      'Only fills with $targetDisplayName are adjusted.';
+}
+
 List<String> _setSubsidy(String target, int percent) => [
   'Cost: No per-turn gold charge.',
-  'Effect: ${percent}% subsidy with $target while active; market terms are affected.',
+  'Effect: On deals that fill with $target, you pay $percent% more when buying from them and receive $percent% less when selling to them.',
+  'Effect: Only fills with $target are adjusted; other courts are unchanged.',
 ];
 
 List<String> _establishOverture({
