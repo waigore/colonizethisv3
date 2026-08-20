@@ -28,9 +28,51 @@ int workerFoodPerUnitForTier(WorkerTier tier) {
   }
 }
 
+/// Labour units per turn for one worker at [tier].
+int workerLabourPerTurnForTier(WorkerTier tier) {
+  switch (tier) {
+    case WorkerTier.peasant:
+      return WorkerPool.labourPerPeasantTurn;
+    case WorkerTier.apprentice:
+      return WorkerPool.labourPerApprenticeTurn;
+    case WorkerTier.journeyman:
+      return WorkerPool.labourPerJourneymanTurn;
+    case WorkerTier.master:
+      return WorkerPool.labourPerMasterTurn;
+  }
+}
+
+/// Headcount in [pool] for [tier].
+int workerPoolCountForTier(WorkerPool pool, WorkerTier tier) {
+  switch (tier) {
+    case WorkerTier.peasant:
+      return pool.peasants;
+    case WorkerTier.apprentice:
+      return pool.apprentices;
+    case WorkerTier.journeyman:
+      return pool.journeymen;
+    case WorkerTier.master:
+      return pool.masters;
+  }
+}
+
+/// Working (idle-labour) count for [tier] in [idle].
+int workerIdleCountForTier(WorkerIdleCounts idle, WorkerTier tier) {
+  switch (tier) {
+    case WorkerTier.peasant:
+      return idle.peasants;
+    case WorkerTier.apprentice:
+      return idle.apprentices;
+    case WorkerTier.journeyman:
+      return idle.journeymen;
+    case WorkerTier.master:
+      return idle.masters;
+  }
+}
+
 /// Luxury commodity id consumed by [assignWorkerLuxury] for [tier].
 ///
-/// Peasant has no luxury. Trained ids match `_allocateConsumption`.
+/// Peasant has no luxury. Trained ids match [allocateConsumption].
 String? workerLuxuryCommodityIdForTier(WorkerTier tier) {
   switch (tier) {
     case WorkerTier.peasant:

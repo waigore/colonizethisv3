@@ -11,8 +11,8 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'development_panel_assigned_civilians.dart';
 import 'development_panel_connectivity.dart';
 import 'development_panel_model.dart';
+import 'development_panel_read_model_owned_scopes.dart';
 import 'development_panel_read_model_scopes.dart';
-import 'province_improvable_resource_counts.dart';
 
 export 'development_panel_connectivity.dart';
 export 'development_panel_model.dart';
@@ -74,7 +74,7 @@ DevelopmentPanelRegionScopes buildDevelopmentPanelRegionScopes({
   required ConnectivityResult? playerConnectivity,
   PlayerView? playerView,
 }) {
-  final ownedScopes = _buildOwnedScopes(
+  final ownedScopes = buildDevelopmentPanelOwnedScopes(
     game: game,
     playerId: playerId,
     regionId: regionId,
@@ -185,39 +185,4 @@ DevelopmentPanelRegionScopes buildDevelopmentPanelRegionScopesForPlayer({
     playerConnectivity: connectivityByPlayer[playerId],
     playerView: playerView,
   );
-}
-
-List<DevelopmentPanelScopeRow> _buildOwnedScopes({
-  required Game game,
-  required String playerId,
-  required String regionId,
-  required Map<String, TileMapResult> tileMapByRegion,
-  required Map<String, String> provinceDisplayNamesById,
-  required ProvinceOwnerCache ownerCache,
-  PlayerView? playerView,
-}) {
-  final ownedProvinces =
-      ownerCache.provincesOwnedByInRegion(playerId, regionId);
-  final ownedScopes = <DevelopmentPanelScopeRow>[];
-  for (final province in ownedProvinces) {
-    final improvable = developmentImprovableRowsFromCounts(
-      provinceImprovableResourceTileCounts(
-        game: game,
-        provinceId: province.id,
-        ownerId: playerId,
-        tileMapByRegion: tileMapByRegion,
-      ),
-      playerView: playerView,
-    );
-    ownedScopes.add(
-      DevelopmentPanelScopeRow(
-        scopeKey: province.id,
-        provinceId: province.id,
-        displayName:
-            provinceDisplayNamesById[province.id] ?? province.id,
-        improvableCommodities: improvable,
-      ),
-    );
-  }
-  return ownedScopes;
 }
