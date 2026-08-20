@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'treasury_committed_spend.dart';
-import 'treasury_details_format.dart';
 import 'treasury_details_panel.dart';
 
 export 'treasury_details_format.dart';
