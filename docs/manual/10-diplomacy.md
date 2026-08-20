@@ -42,7 +42,7 @@ Each diplomacy row shows a **PEACE** or **WAR** chip, an optional **ALLIANCE** c
 ### Aid, subsidy, and boycott
 
 18. **Grant Aid** requires an Embassy and enough gold. Open `DIPL20001`, choose a positive amount in £1000 steps (minimum £1000), read **Cost** and **Effect**, and tap **Submit**. That stages the one-time transfer with no second confirm. It improves standing when the turn finishes. Tap **Cancel** on the `GAME30001` row if you change your mind before **Next turn**.
-19. **Set Subsidy** uses the same `DIPL20001` dialog. It is available only toward a Minor Nation or Tribe with an Embassy (not toward another Great Power). Choose 5%, 10%, 15%, or 20%; the dialog shows there is no per-turn gold charge and that market terms are affected. **Submit** stages the subsidy with no second confirm.
+19. **Set Subsidy** uses the same `DIPL20001` dialog. It is available only toward a Minor Nation or Tribe with an Embassy (not toward another Great Power). Choose 5%, 10%, 15%, or 20%. **Cost** says there is no per-turn gold charge. **Effect** says that on deals that fill with that court you pay that percent more when buying from them and receive that percent less when selling to them. Hover or long-press the outgoing or pending subsidy line on `GAME30001` for the same meaning. **Submit** stages the subsidy with no second confirm.
 20. **Boycott** targets another Great Power. You need at least one colony, must be at peace, and cannot already boycott that target. It blocks trade between that Great Power and all Tribes that are your colonies. It also blocks that target’s Merchant **purchase land**, **Grant Aid**, and **Set Subsidy** toward those colony Tribes, and cancels the target’s subsidies to those Tribes when the boycott applies. **Revoke Boycott** ends an active boycott. War between the two Great Powers ends the boycott automatically.
 
 ### Limits this turn
@@ -87,6 +87,7 @@ Rival allies join a defensive call to arms when their standing with the defended
 - [x] Explains peace/war chips, the ten-word ladder, formal **ALLIANCE**, Embassy, colony, treasury, and target-type preconditions.
 - [x] States Grant Aid’s £1000 minimum-step rule and Set Subsidy’s 5–20% range in 5-point steps.
 - [x] Distinguishes Grant Aid / Set Subsidy (`DIPL20001` **Submit**, Cost / Effect in that dialog, no second confirmation) from other diplomacy confirms.
+- [x] States Set Subsidy **Effect** as paying the chosen percent more when buying from that court and receiving that percent less when selling to them, with no per-turn gold charge, and that the `GAME30001` subsidy line repeats that meaning on hover or long-press.
 - [x] Covers per-target-per-turn limits and the same-turn post-break lock (including **Establish FTP** and the printed Alliance disabled reason).
 - [x] Explains the overture chain, Diplomatic Expertise (and the tech-table vs orders disagreement), Empire Building, and the distinct Minor/Tribe/Great Power Join Empire outcomes.
 - [x] Cites `GAME30001`, `GAME30002`, `GAME30003`, `DIPL20001`, `MAP20001`, `OVL30001`, `OVL40001`, and `OVL50001` with their player-facing flows.
