@@ -4,8 +4,8 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/foundation.dart';
 
-import 'game_map_area_province_action_states.dart';
-import 'game_map_area_province_action_states_assignable.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show GameMapAreaProvinceActionStatesAssignable, ProvinceInlineActionState;
 
 /// Build-railroad inline-action visibility/enablement for province overlay.
 /// Refs #4383 — MAP20001 Tile Road / railroad row shortcut.
@@ -19,7 +19,7 @@ abstract final class GameMapAreaProvinceActionStatesBuildRail {
     return roadLevel == 1 || roadLevel == 2;
   }
 
-  static ({bool showIcon, bool enabled, bool hasRailBuilderUnits}) compute({
+  static ProvinceInlineActionState compute({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -44,13 +44,8 @@ abstract final class GameMapAreaProvinceActionStatesBuildRail {
           tileCanConceivablyTakeBuildRailStep(roadLevel: roadLevel),
     );
     if (!state.showIcon && !state.enabled && !state.hasMatchingUnits) {
-      return GameMapAreaProvinceActionStates
-          .kHiddenRailBuilderInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
-    return (
-      showIcon: state.showIcon,
-      enabled: state.enabled,
-      hasRailBuilderUnits: state.hasMatchingUnits,
-    );
+    return state;
   }
 }

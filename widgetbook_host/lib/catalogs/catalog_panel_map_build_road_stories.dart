@@ -1,28 +1,28 @@
 // coverage:ignore-file
-// Dev-only Widgetbook catalog part; MAP20001 Build railroad overlay stories (Refs #4383).
+// Dev-only Widgetbook catalog part; MAP20001 Build road overlay stories (Refs #4260).
 part of 'catalog.dart';
 
-/// MAP20001 Tile **Build railroad** inline-action use cases. Refs #4383.
-List<WidgetbookUseCase> get provinceOverlayBuildRailroadUseCases => [
+/// MAP20001 Tile **Build road** inline-action use cases. Refs #4260.
+List<WidgetbookUseCase> get provinceOverlayBuildRoadUseCases => [
   WidgetbookUseCase(
-    name: 'Standalone — tile Build railroad enabled',
-    builder: (context) => _provinceOverlayBuildRailroadStory(
+    name: 'Standalone — tile Build road enabled',
+    builder: (context) => _provinceOverlayBuildRoadStory(
       showIcon: true,
       enabled: true,
       hasMatchingUnits: true,
     ),
   ),
   WidgetbookUseCase(
-    name: 'Standalone — tile Build railroad disabled',
-    builder: (context) => _provinceOverlayBuildRailroadStory(
+    name: 'Standalone — tile Build road disabled',
+    builder: (context) => _provinceOverlayBuildRoadStory(
       showIcon: true,
       enabled: false,
       hasMatchingUnits: false,
     ),
   ),
   WidgetbookUseCase(
-    name: 'Standalone — tile Build railroad hidden',
-    builder: (context) => _provinceOverlayBuildRailroadStory(
+    name: 'Standalone — tile Build road hidden',
+    builder: (context) => _provinceOverlayBuildRoadStory(
       showIcon: false,
       enabled: false,
       hasMatchingUnits: false,
@@ -30,8 +30,8 @@ List<WidgetbookUseCase> get provinceOverlayBuildRailroadUseCases => [
   ),
 ];
 
-/// MAP20001 Tile **Build railroad** inline-action variants. Refs #4383.
-Widget _provinceOverlayBuildRailroadStory({
+/// MAP20001 Tile **Build road** inline-action variants. Refs #4260.
+Widget _provinceOverlayBuildRoadStory({
   required bool showIcon,
   required bool enabled,
   required bool hasMatchingUnits,
@@ -49,7 +49,7 @@ Widget _provinceOverlayBuildRailroadStory({
       humanPlayerId: game.players.first.id,
       playerView: demoHumanPlayerViewForOverlay,
       civilianInlineActions: provinceOverlayInlineActions(
-        buildRail: (
+        buildRoad: (
           showIcon: showIcon,
           enabled: enabled,
           hasMatchingUnits: hasMatchingUnits,
@@ -59,10 +59,10 @@ Widget _provinceOverlayBuildRailroadStory({
         onExploreWithExplorerTap: null,
         onProspectWithExplorerTap: null,
         onBuildImprovementTap: null,
-        onBuildRoadTap: null,
+        onBuildRoadTap: () {},
         onBuildFortTap: null,
         onBuildPortTap: null,
-        onBuildRailroadTap: () {},
+        onBuildRailroadTap: null,
         onPurchaseLandTap: null,
       ),
       onClose: () {},

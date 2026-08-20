@@ -2,16 +2,15 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import 'game_map_area_province_action_states.dart';
-import 'game_map_area_province_action_states_assignable.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show GameMapAreaProvinceActionStatesAssignable, ProvinceInlineActionState;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Build-improvement inline-action visibility/enablement for province overlay.
 abstract final class GameMapAreaProvinceActionStatesBuildImprovement {
-  static ({bool showIcon, bool enabled, bool hasBuilderUnits}) compute({
+  static ProvinceInlineActionState compute({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -51,12 +50,8 @@ abstract final class GameMapAreaProvinceActionStatesBuildImprovement {
       },
     );
     if (!state.showIcon && !state.enabled && !state.hasMatchingUnits) {
-      return GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
-    return (
-      showIcon: state.showIcon,
-      enabled: state.enabled,
-      hasBuilderUnits: state.hasMatchingUnits,
-    );
+    return state;
   }
 }

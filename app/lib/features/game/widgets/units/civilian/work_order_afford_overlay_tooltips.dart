@@ -19,9 +19,9 @@ String provinceOverlayBuildImprovementTooltip({
   required Orders currentOrders,
   required String selectedTileKey,
   required bool enabled,
-  required bool hasBuilderUnits,
+  required bool hasMatchingUnits,
 }) {
-  if (!hasBuilderUnits) {
+  if (!hasMatchingUnits) {
     return l10n.provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip;
   }
   final preview = previewWorkOrderAffordAtTile(
@@ -56,9 +56,9 @@ String provinceOverlayBuildRoadTooltip({
   required Orders currentOrders,
   required String selectedTileKey,
   required bool enabled,
-  required bool hasEngineerUnits,
+  required bool hasMatchingUnits,
 }) {
-  if (!hasEngineerUnits) {
+  if (!hasMatchingUnits) {
     return l10n.provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip;
   }
   final preview = previewWorkOrderAffordAtTile(
@@ -96,9 +96,9 @@ String provinceOverlayBuildFortTooltip({
   required Orders currentOrders,
   required String selectedTileKey,
   required bool enabled,
-  required bool hasEngineerUnits,
+  required bool hasMatchingUnits,
 }) {
-  if (!hasEngineerUnits) {
+  if (!hasMatchingUnits) {
     return l10n.provinceOverlay_tileBuildFortDisabledNoEngineerTooltip;
   }
   final preview = previewWorkOrderAffordAtTile(
@@ -136,9 +136,9 @@ String provinceOverlayBuildPortTooltip({
   required Orders currentOrders,
   required String selectedTileKey,
   required bool enabled,
-  required bool hasEngineerUnits,
+  required bool hasMatchingUnits,
 }) {
-  if (!hasEngineerUnits) {
+  if (!hasMatchingUnits) {
     return l10n.provinceOverlay_tileBuildPortDisabledNoEngineerTooltip;
   }
   final preview = previewWorkOrderAffordAtTile(
@@ -176,9 +176,9 @@ String provinceOverlayBuildRailroadTooltip({
   required Orders currentOrders,
   required String selectedTileKey,
   required bool enabled,
-  required bool hasRailBuilderUnits,
+  required bool hasMatchingUnits,
 }) {
-  if (!hasRailBuilderUnits) {
+  if (!hasMatchingUnits) {
     return l10n.provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip;
   }
   final preview = previewWorkOrderAffordAtTile(

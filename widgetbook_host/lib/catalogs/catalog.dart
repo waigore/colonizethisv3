@@ -94,6 +94,7 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mi
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
@@ -196,6 +197,10 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_build_port_stories.dart';
 part 'catalog_panel_map_build_railroad_stories.dart';
+part 'catalog_panel_map_build_road_stories.dart';
+part 'catalog_panel_map_build_fort_stories.dart';
+part 'catalog_panel_map_purchase_land_stories.dart';
+part 'catalog_panel_map_upgrade_town_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_naval_mission_stories.dart';
 part 'catalog_panel_map_detach_sail_stories.dart';

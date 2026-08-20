@@ -18,9 +18,9 @@ String provinceOverlayPurchaseLandTooltip({
   required String selectedTileKey,
   required String provinceId,
   required bool enabled,
-  required bool hasMerchantUnits,
+  required bool hasMatchingUnits,
 }) {
-  if (!hasMerchantUnits) {
+  if (!hasMatchingUnits) {
     return l10n.provinceOverlay_tilePurchaseLandDisabledNoMerchantTooltip;
   }
   final province = game.worldState.tryGetProvince(provinceId);

@@ -80,7 +80,7 @@ void main() {
         );
       }
 
-      ({bool showIcon, bool enabled, bool hasExplorerUnits}) prospectState({
+      ({bool showIcon, bool enabled, bool hasMatchingUnits}) prospectState({
         required ct_models.Game game,
         required VisibilityLevel visibility,
         Map<String, TileMapResult>? tileMapByRegion,
@@ -114,7 +114,7 @@ void main() {
         required VisibilityLevel visibility,
         required bool showIcon,
         required bool enabled,
-        bool? hasExplorerUnits,
+        bool? hasMatchingUnits,
         Map<String, TileMapResult>? tileMapByRegion,
       }) {
         test(name, () {
@@ -125,8 +125,8 @@ void main() {
           );
           expect(state.showIcon, showIcon);
           expect(state.enabled, enabled);
-          if (hasExplorerUnits != null) {
-            expect(state.hasExplorerUnits, hasExplorerUnits);
+          if (hasMatchingUnits != null) {
+            expect(state.hasMatchingUnits, hasMatchingUnits);
           }
         });
       }
@@ -137,7 +137,7 @@ void main() {
         visibility: VisibilityLevel.fullyVisible,
         showIcon: true,
         enabled: true,
-        hasExplorerUnits: true,
+        hasMatchingUnits: true,
       );
       expectProspect(
         name: 'hides icon when selected tile already prospected',
@@ -145,7 +145,7 @@ void main() {
         visibility: VisibilityLevel.fogged,
         showIcon: false,
         enabled: false,
-        hasExplorerUnits: false,
+        hasMatchingUnits: false,
       );
       expectProspect(
         name: 'shows disabled icon when human has zero explorer units',
@@ -153,7 +153,7 @@ void main() {
         visibility: VisibilityLevel.fullyVisible,
         showIcon: true,
         enabled: false,
-        hasExplorerUnits: false,
+        hasMatchingUnits: false,
       );
       // Refs #3753 R4/R4b: Minor/Tribe prospect needs Consulate+.
       expectProspect(
@@ -187,7 +187,7 @@ void main() {
         visibility: VisibilityLevel.unknown,
         showIcon: false,
         enabled: false,
-        hasExplorerUnits: false,
+        hasMatchingUnits: false,
       );
       expectProspect(
         name:
@@ -196,7 +196,7 @@ void main() {
         visibility: VisibilityLevel.fullyVisible,
         showIcon: false,
         enabled: false,
-        hasExplorerUnits: false,
+        hasMatchingUnits: false,
         tileMapByRegion: {
           'oldWorld': TileMapResult(
             width: 1,
@@ -279,7 +279,7 @@ void main() {
         TileVisibility.unrevealed,
       ]);
 
-      ({bool showIcon, bool enabled, bool hasExplorerUnits}) explore(
+      ({bool showIcon, bool enabled, bool hasMatchingUnits}) explore(
         ct_models.Game g,
         RegionMapViewData region,
       ) => GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
