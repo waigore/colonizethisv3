@@ -4,6 +4,7 @@
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/treasury_details_indicator_support.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
@@ -164,20 +165,29 @@ void main() {
     );
 
     testWidgets(
-      'AC: tapping treasury indicator toggles exact and abbreviated display',
+      'AC: tapping treasury indicator opens details; Exact/Compact inside popover',
       (WidgetTester tester) async {
         await pumpShell(tester);
         final treasuryIndicator = find.byKey(kTreasuryIndicatorKey);
         expect(treasuryIndicator, findsOneWidget);
         expect(find.text('12,345'), findsOneWidget);
 
+        // Finite pumps only — GameScreen / Flame keep the clock unsettled.
         await tester.tap(treasuryIndicator);
         await tester.pump();
-        expect(find.text('12.3k'), findsOneWidget);
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byKey(kTreasuryDetailsPanelKey), findsOneWidget);
 
-        await tester.tap(treasuryIndicator);
+        await tester.tap(find.byKey(TreasuryDetailsPanel.compactFormatKey));
         await tester.pump();
-        expect(find.text('12,345'), findsOneWidget);
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.text('12.3k'), findsWidgets);
+
+        await tester.tap(find.byKey(TreasuryDetailsPanel.closeButtonKey));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byKey(kTreasuryDetailsPanelKey), findsNothing);
+        expect(find.text('12.3k'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );

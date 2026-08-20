@@ -83,13 +83,6 @@ class GameMapControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final cargoHoldLabel = cargoNotDefined
-        ? kObserveNotDefinedLabel
-        : l10n.mapControls_cargoHold(
-            isCargoUsedReliable ? '$cargoUsed' : '—',
-            '$cargoCapacity',
-          );
-
     return Column(
       children: [
         GameTopBar(
@@ -103,43 +96,64 @@ class GameMapControls extends StatelessWidget {
           pauseTooltip: l10n.game_pauseMenu_tooltip,
           observeBannerLabel: observeBannerLabel,
         ),
-        GameTabBar(
-          regionIndex: regionIndex,
-          onRegionIndexChanged: onRegionIndexChanged,
-          oldWorldLabel: l10n.region_oldWorld,
-          newWorldLabel: l10n.region_newWorld,
-          treasury: treasury,
-          treasuryDelta: treasuryDelta,
-          treasuryNotDefined: treasuryNotDefined,
-          treasuryObserveLabel: kObserveNotDefinedLabel,
-          treasuryCommittedLines: treasuryCommittedLines,
-          cargoUsed: cargoUsed,
-          cargoCapacity: cargoCapacity,
-          cargoNotDefined: cargoNotDefined,
-          isCargoUsedReliable: isCargoUsedReliable,
-          cargoHoldLabel: cargoHoldLabel,
-          showLabourFeedingIndicator: showLabourFeedingIndicator,
-          labourFeedingLabel: labourFeedingLabel,
-          labourFeedingNotDefined: labourFeedingNotDefined,
-          labourReadiness: labourReadiness,
-          forcesFeeding: forcesFeeding,
-          oldWorldRace: oldWorldRace,
-          onOldWorldRaceTap: onOldWorldRaceTap,
-          oldWorldRaceNarrow: oldWorldRaceNarrow,
-          trailing: _GameMapControlsTabBarTrailing(
-            playersBarToggleTooltip: l10n.mapControls_playersBarToggle,
-            showPlayersBar: showPlayersBar,
-            onTogglePlayersBar: onTogglePlayersBar,
-            playerTurnEventsFeedNotDefined: playerTurnEventsFeedNotDefined,
-            playerTurnEventsFeedCount: playerTurnEventsFeedCount,
-            playerTurnEventsFeedTooltip: l10n.playerTurnFeed_eventsChip(
-              playerTurnEventsFeedCount,
-            ),
-            showPlayerTurnEventsFeed: showPlayerTurnEventsFeed,
-            onTogglePlayerTurnEventsFeed: onTogglePlayerTurnEventsFeed,
-          ),
-        ),
+        _GameMapControlsTabBar(parent: this),
       ],
+    );
+  }
+}
+
+/// Tab-bar host extracted so [GameMapControls.build] stays under the
+/// `widget_build_method_too_long` budget (Refs #4560).
+class _GameMapControlsTabBar extends StatelessWidget {
+  const _GameMapControlsTabBar({required this.parent});
+
+  final GameMapControls parent;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final cargoHoldLabel = parent.cargoNotDefined
+        ? kObserveNotDefinedLabel
+        : l10n.mapControls_cargoHold(
+            parent.isCargoUsedReliable ? '${parent.cargoUsed}' : '—',
+            '${parent.cargoCapacity}',
+          );
+
+    return GameTabBar(
+      regionIndex: parent.regionIndex,
+      onRegionIndexChanged: parent.onRegionIndexChanged,
+      oldWorldLabel: l10n.region_oldWorld,
+      newWorldLabel: l10n.region_newWorld,
+      treasury: parent.treasury,
+      treasuryDelta: parent.treasuryDelta,
+      treasuryNotDefined: parent.treasuryNotDefined,
+      treasuryObserveLabel: kObserveNotDefinedLabel,
+      treasuryCommittedLines: parent.treasuryCommittedLines,
+      cargoUsed: parent.cargoUsed,
+      cargoCapacity: parent.cargoCapacity,
+      cargoNotDefined: parent.cargoNotDefined,
+      isCargoUsedReliable: parent.isCargoUsedReliable,
+      cargoHoldLabel: cargoHoldLabel,
+      showLabourFeedingIndicator: parent.showLabourFeedingIndicator,
+      labourFeedingLabel: parent.labourFeedingLabel,
+      labourFeedingNotDefined: parent.labourFeedingNotDefined,
+      labourReadiness: parent.labourReadiness,
+      forcesFeeding: parent.forcesFeeding,
+      oldWorldRace: parent.oldWorldRace,
+      onOldWorldRaceTap: parent.onOldWorldRaceTap,
+      oldWorldRaceNarrow: parent.oldWorldRaceNarrow,
+      trailing: _GameMapControlsTabBarTrailing(
+        playersBarToggleTooltip: l10n.mapControls_playersBarToggle,
+        showPlayersBar: parent.showPlayersBar,
+        onTogglePlayersBar: parent.onTogglePlayersBar,
+        playerTurnEventsFeedNotDefined: parent.playerTurnEventsFeedNotDefined,
+        playerTurnEventsFeedCount: parent.playerTurnEventsFeedCount,
+        playerTurnEventsFeedTooltip: l10n.playerTurnFeed_eventsChip(
+          parent.playerTurnEventsFeedCount,
+        ),
+        showPlayerTurnEventsFeed: parent.showPlayerTurnEventsFeed,
+        onTogglePlayerTurnEventsFeed: parent.onTogglePlayerTurnEventsFeed,
+      ),
     );
   }
 }

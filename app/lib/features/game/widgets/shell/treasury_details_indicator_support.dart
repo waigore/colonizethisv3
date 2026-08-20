@@ -187,11 +187,6 @@ class TreasuryDetailsPanel extends StatelessWidget {
       color: EditorialMonoclePalette.muted,
       fontStyle: FontStyle.italic,
     );
-    final String treasuryLabel = formatTreasuryAmount(
-      treasury,
-      showExact: showExact,
-    );
-    final String? deltaLabel = formatTreasuryDeltaLabel(projectedDelta);
 
     return DecoratedBox(
       key: kTreasuryDetailsPanelKey,
@@ -209,37 +204,13 @@ class TreasuryDetailsPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        l10n.mapControls_treasury_details_current(treasuryLabel),
-                        style: rowStyle,
-                      ),
-                      if (deltaLabel != null) ...<Widget>[
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.mapControls_treasury_details_forecast(deltaLabel),
-                          style: rowStyle,
-                        ),
-                      ],
-                      if (committedLines.isNotEmpty) ...<Widget>[
-                        const SizedBox(height: CtSpacing.s),
-                        Text(
-                          l10n.mapControls_treasury_details_committedHeading,
-                          style: rowStyle.copyWith(
-                            color: EditorialMonoclePalette.accentDim,
-                          ),
-                        ),
-                        for (final line in committedLines) ...<Widget>[
-                          const SizedBox(height: 4),
-                          Text(
-                            _committedLineLabel(l10n, line, showExact),
-                            style: rowStyle,
-                          ),
-                        ],
-                      ],
-                    ],
+                  child: _TreasuryDetailsRows(
+                    l10n: l10n,
+                    treasury: treasury,
+                    projectedDelta: projectedDelta,
+                    committedLines: committedLines,
+                    showExact: showExact,
+                    rowStyle: rowStyle,
                   ),
                 ),
                 CtIconAction(
@@ -252,22 +223,10 @@ class TreasuryDetailsPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: CtSpacing.s),
-            Row(
-              children: <Widget>[
-                _FormatToggle(
-                  key: exactFormatKey,
-                  label: l10n.mapControls_treasury_details_formatExact,
-                  selected: showExact,
-                  onTap: () => onShowExactChanged(true),
-                ),
-                const SizedBox(width: CtSpacing.s),
-                _FormatToggle(
-                  key: compactFormatKey,
-                  label: l10n.mapControls_treasury_details_formatCompact,
-                  selected: !showExact,
-                  onTap: () => onShowExactChanged(false),
-                ),
-              ],
+            _TreasuryFormatToggles(
+              l10n: l10n,
+              showExact: showExact,
+              onShowExactChanged: onShowExactChanged,
             ),
             const SizedBox(height: CtSpacing.s),
             Text(
@@ -277,6 +236,99 @@ class TreasuryDetailsPanel extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TreasuryDetailsRows extends StatelessWidget {
+  const _TreasuryDetailsRows({
+    required this.l10n,
+    required this.treasury,
+    required this.projectedDelta,
+    required this.committedLines,
+    required this.showExact,
+    required this.rowStyle,
+  });
+
+  final AppLocalizations l10n;
+  final int treasury;
+  final int? projectedDelta;
+  final List<TreasuryCommittedSpendLine> committedLines;
+  final bool showExact;
+  final TextStyle rowStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final String treasuryLabel = formatTreasuryAmount(
+      treasury,
+      showExact: showExact,
+    );
+    final String? deltaLabel = formatTreasuryDeltaLabel(projectedDelta);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          l10n.mapControls_treasury_details_current(treasuryLabel),
+          style: rowStyle,
+        ),
+        if (deltaLabel != null) ...<Widget>[
+          const SizedBox(height: 4),
+          Text(
+            l10n.mapControls_treasury_details_forecast(deltaLabel),
+            style: rowStyle,
+          ),
+        ],
+        if (committedLines.isNotEmpty) ...<Widget>[
+          const SizedBox(height: CtSpacing.s),
+          Text(
+            l10n.mapControls_treasury_details_committedHeading,
+            style: rowStyle.copyWith(
+              color: EditorialMonoclePalette.accentDim,
+            ),
+          ),
+          for (final line in committedLines) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(
+              _committedLineLabel(l10n, line, showExact),
+              style: rowStyle,
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _TreasuryFormatToggles extends StatelessWidget {
+  const _TreasuryFormatToggles({
+    required this.l10n,
+    required this.showExact,
+    required this.onShowExactChanged,
+  });
+
+  final AppLocalizations l10n;
+  final bool showExact;
+  final ValueChanged<bool> onShowExactChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        _FormatToggle(
+          key: TreasuryDetailsPanel.exactFormatKey,
+          label: l10n.mapControls_treasury_details_formatExact,
+          selected: showExact,
+          onTap: () => onShowExactChanged(true),
+        ),
+        const SizedBox(width: CtSpacing.s),
+        _FormatToggle(
+          key: TreasuryDetailsPanel.compactFormatKey,
+          label: l10n.mapControls_treasury_details_formatCompact,
+          selected: !showExact,
+          onTap: () => onShowExactChanged(false),
+        ),
+      ],
     );
   }
 }
