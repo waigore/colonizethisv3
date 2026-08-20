@@ -253,7 +253,7 @@ rules:
 
   - rule_id: repo.combat_lib_file_size
     group: structure
-    title: colonizethis_combat lib files must stay at or below the phase-4 280 physical-line ceiling (Refs #4284)
+    title: colonizethis_combat lib files must stay at or below the phase-5 250 physical-line ceiling (Refs #4545)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_combat_lib_file_size.dart
