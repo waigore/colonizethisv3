@@ -23,6 +23,7 @@ When tests are run (e.g. via `tool/test_coverage.py` or `dart test` / `flutter t
 ## Package layout
 
 - **packages/colonizethis_test/** — Dev-only package, not published.
+- **lib/game_test_fixtures.dart** — Stable public import for shared [Game] / [WorldState] test factories (`TestFixtures`). Implementation may live under `lib/src/`; consumers must not import `lib/src/` directly (Refs #4547).
 - **lib/test.dart** — Sets `Logger.level = Level.off`, then exports `package:test/test.dart`. Use for all tests (Dart and Flutter); Flutter test files add `package:flutter_test/flutter_test.dart` for widget APIs.
 - For **Flutter** widget/integration tests: import `package:colonizethis_test/test.dart` first (to suppress logs), then `package:flutter_test/flutter_test.dart` for test APIs.
 
