@@ -28,11 +28,11 @@ A regiment is trainable only after its unlocking technology is researched. Being
 2. Select **Train** to open `UNIT50001` **Train military dialog** (header **Train Military**).
 3. Choose unlocked regiments with the **−** and **+** buttons on each regiment row. Each row shows the regiment's **category and combat role** (e.g. melee line, ranged firepower, siege guns) plus **ongoing food upkeep per turn** so you can weigh battlefield role and ownership cost against treasury, goods, and peasant build costs before queuing.
 4. When the unlocking technology is missing, the row shows **Requires:** and that technology’s name; you cannot change the count.
-5. The dialog accounts for the combined treasury, peasants, and listed goods of all selected regiments — including a **Horses** chip for cavalry types that need horses.
+5. The dialog accounts for the combined treasury, peasants, and listed goods of all selected regiments — including a **Horses** chip for cavalry types that need horses. The **Peasants** chip shows how many remain free after peasants already promised to queued worker training or ship builds; when some are promised, a short line under the chips names that promise (for example **3 already promised to worker training**). Tap the **Peasants** chip for a short family breakdown. **+** will not raise a count past the free peasant total.
 6. Tap outside the dialog (or use system back) to queue the training. There is no Close button. Each regiment consumes one peasant when training finishes, alongside its treasury and goods cost.
 7. After you confirm **Next turn**, the game carries out training. New regiments appear in the **Home Army** at the capital when that finishes — not when you tap. They do not appear directly in a field army.
 
-A lack of peasants, goods, treasury, or the required technology prevents training. Military training shares the peasant reserve with worker and naval training, so a full queue in one area can prevent another from being raised.
+A lack of peasants, goods, treasury, or the required technology prevents training. Military training shares the peasant reserve with worker and naval training, so a full queue in one area can prevent another from being raised — and the Train Military chip shows that before you over-queue.
 
 ### Armies and generals
 

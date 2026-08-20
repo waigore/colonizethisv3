@@ -2,7 +2,7 @@
 
 **Screen ID:** `UNIT50001` — stable; do not reassign.
 **SPEC/ui** — Modal dialog for queuing military regiment training orders. Implementation: `app/lib/features/game/widgets/train/train_military_dialog.dart`. Integrates with [military-units-panel.md](military-units-panel.md), [empire-overview.md](empire-overview.md), and [buttons-nine-patch.md](buttons-nine-patch.md). Game model: [military-units.md](../game/military-units.md), [tech-tree-military.md](../game/tech-tree-military.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md). Province identity: [world-model-identity.md](../game/world-model-identity.md).
-**Widgetbook:** `Train Military Dialog` → `app/lib/widgetbook/catalog_part3.dart`.
+**Widgetbook:** `Train Military Dialog` → `widgetbook_host/lib/catalogs/catalog_screens_combat.dart` (use cases: `Standalone` clean pool, `Reserved peasants`).
 
 **Mockup:** [mockups/UNIT50001-train-military-dialog.html](mockups/UNIT50001-train-military-dialog.html)
 ---
@@ -24,7 +24,7 @@ The Train Military dialog lets the player queue military regiment build orders i
 ## Layout
 
 - **Header:** centered `Train Military` title via `TrainDialogHeader` — no `×` close button and no brass section dividers between sections (#3568 parity); the dialog dismisses via scrim tap / system back and applies orders on close.
-- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`; see [components/train-dialog-chrome.md](components/train-dialog-chrome.md)). Shows `Treasury`, `Peasants`, and regiment-input commodities `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze` as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £8,000 / £10,000`, `Peasants: 7 / 8`, `Lumber: 2 / 5`. Treasury uses `£` + comma grouping on both sides (e.g. `£10,000`), matching the civilian dialog.
+- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`; see [components/train-dialog-chrome.md](components/train-dialog-chrome.md)). Shows `Treasury`, `Peasants`, and regiment-input commodities `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze` as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form, updating live on every stepper toggle — e.g. `Treasury: £8,000 / £10,000`, `Peasants: 7 / 8`, `Lumber: 2 / 5`. **Peasants remaining** uses the GDD reservation ledger ([workers-and-population.md](../game/workers-and-population.md) § Peasant reservation): `available = pool.peasants − (queued peasant-consuming worker trains + queued military/naval builds outside this dialog’s managed set)`; chip remaining = `available − this dialog’s counts`; chip total = `pool.peasants`. When other-family reservation is `> 0`, a muted one-line gist under the bar names those families in player words (e.g. `3 already promised to worker training`, `2 already promised to ships`) — never order class names. Tap/tooltip on the Peasants chip shows a short family breakdown only. Treasury uses `£` + comma grouping on both sides (e.g. `£10,000`), matching the civilian dialog.
 - **Per-item cost colour:** In each regiment row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` independently when `remaining` for that resource is less than this regiment's per-unit cost for it (considering committed totals). Sufficient items stay in the normal colour. Only the deficient item turns red.
 - **Deficit hint:** Same wording style as civilian — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Peasants low`) below the box.
 - **Rows:** One row per `RegimentEconomyCatalog.all` entry as a single line — left info `Column` (regiment name above benefit/cost copy and the icon-bearing build-cost summary) plus the stepper on the right (vertically centered).
@@ -47,7 +47,7 @@ The Train Military dialog lets the player queue military regiment build orders i
 - Locked regiments: name prefixed with the 🔒 glyph (`kTrainDialogLockPrefix`), row subdued at `0.5` opacity (`kTrainDialogLockedOpacity`), and steppers disabled.
 - `+` uses aggregate affordability across all currently selected regiment rows:
   - treasury
-  - peasants (`workerPool.peasants`, 1 consumed per military regiment)
+  - peasants (`available` from the reservation ledger above, 1 consumed per military regiment)
   - commodity stockpile requirements for all selected rows
 - When `+` is disabled **specifically** due to resource insufficiency (not a tech lock), it renders the `--danger` button variant (red border/label), distinct from the tech-locked disabled appearance.
 
@@ -64,7 +64,7 @@ On every stepper change:
 Affordability requires all constraints:
 
 - `totalTreasuryCost <= Player.treasury`
-- `totalPeasantCost <= Player.workerPool.peasants`
+- `totalPeasantCost <= availablePeasants` (pool minus other-family reservation; this dialog’s managed capital military orders are counted only via local stepper counts)
 - `totalCommodityCost[c] <= Player.stockpile.quantityOf(c)` for each required commodity
 
 ---
@@ -134,6 +134,22 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 - **Given** the Train Military dialog is open, **when** the user reads a regiment row’s primary title text, **then** the UI layer shows the roster display name (e.g. `Peasant Levies` for `peasant_levies`), not the snake_case `unitType` id string.
 
 - **Given** the Train Military dialog is open with treasury `10000` and peasants `8`, **when** the user queues `1` Peasant Levies (`£2,000 + 1 peasant`), **then** the resource bar treasury chip reads `Treasury: £8,000 / £10,000` and the peasants chip reads `Peasants: 7 / 8`.
+
+- **Given** 8 peasants and 3 queued peasant-consuming worker trains with no other military/naval builds, **when** `UNIT50001` opens at zero regiment counts, **then** the Peasants chip remaining is `5 / 8` and a muted promised gist names worker training.
+
+- **Given** that reserved state, **when** the player taps `+` on an unlocked regiment five times, **then** the fifth increment is accepted and a sixth is refused; the Peasants chip reads `0 / 8` after five.
+
+- **Given** 8 peasants, no worker trains, and 2 queued ship builds, **when** `UNIT50001` opens at zero regiment counts, **then** remaining is `6 / 8` and the gist names ships (not worker training).
+
+- **Given** the dialog reopens with 2 of its own regiment orders already staged and no other reservations, **when** it renders, **then** remaining is `6 / 8` (own counts counted once, not twice) and the promised gist is omitted.
+
+- **Given** no other-family reservation, **when** the resource bar renders, **then** the promised gist is omitted.
+
+- **Given** the player requests Peasants-chip details, **when** the tooltip/popover renders, **then** it lists promised families in player words and does not show order class names.
+
+- **Given** a 320–360 dp viewport with a promised gist shown, **when** the resource bar lays out, **then** the gist wraps without horizontal overflow.
+
+- **Given** Widgetbook Train Military stories include reserved-peasant and clean-pool cases, **when** those stories pump, **then** they take no exception.
 
 - **Given** the Train Military dialog has a regiment row that requires `castIron` and remaining `castIron` is less than that requirement, **when** the row renders, **then** only the `castIron` inline cost item renders in `EditorialMonoclePalette.danger` and the other sufficient cost items remain in the normal colour.
 

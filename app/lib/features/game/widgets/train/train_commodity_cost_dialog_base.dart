@@ -103,7 +103,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
     final newTreasury = totalTreasuryCost() + econ.buildTreasuryCost;
     final newPeasants = totalPeasantCost() + 1;
     if (newTreasury > treasury) return false;
-    if (newPeasants > peasants) return false;
+    if (newPeasants > availablePeasants()) return false;
 
     final totals = totalCommodityCosts();
     for (final input in econ.buildInputs.entries) {
@@ -124,6 +124,8 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
         remainingTreasury: remainingTreasury(),
         peasants: peasants,
         remainingPeasants: remainingPeasants(),
+        peasantsPromisedGist: peasantsPromisedGist(l10n),
+        peasantsPromisedDetails: peasantsPromisedDetails(l10n),
         stockpile: player?.stockpile ?? const Stockpile(),
         committedCommodities: totalCommodityCosts(),
         commodityIds: resourceBarCommodityIds,

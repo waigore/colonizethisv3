@@ -263,4 +263,106 @@ void main() {
       }
     },
   );
+
+  testWidgets(
+    'golden: UNIT50001 Train Military — promised-peasant gist under resource '
+    'bar (Refs #4566)',
+    (WidgetTester tester) async {
+      const key = ValueKey<String>('train_military_dialog_promised_golden');
+      final base = fx.military();
+      final human = base.players.firstWhere((p) => p.id == fx.humanPlayerId);
+      final reservedGame = base.copyWith(
+        players: [
+          human.copyWith(
+            workerPool: human.workerPool.copyWith(peasants: 8),
+          ),
+          ...base.players.where((p) => p.id != fx.humanPlayerId),
+        ],
+      );
+      final orders = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          fx.humanPlayerId: List<RecruitWorkerOrder>.generate(
+            3,
+            (_) => const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+          ),
+        },
+      );
+
+      await pumpTrainDialogsGoldenHost(
+        tester,
+        TrainMilitaryDialog(
+          game: reservedGame,
+          humanPlayerId: fx.humanPlayerId,
+          currentOrders: orders,
+          bus: AppEventBus.create(),
+        ),
+        key,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('5 / 8'), findsOneWidget);
+      expect(
+        find.textContaining('already promised to worker training'),
+        findsOneWidget,
+      );
+      expectEditorialMonocleDarkChrome(tester);
+
+      await expectLater(
+        find.byKey(key),
+        matchesGoldenFile('goldens/train_military_dialog_promised_peasants.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: UNIT50001 Train Military — narrow 320 dp with promised gist '
+    '(Refs #4566 wrap)',
+    (WidgetTester tester) async {
+      const key = ValueKey<String>('train_military_promised_320_golden');
+      final base = fx.military();
+      final human = base.players.firstWhere((p) => p.id == fx.humanPlayerId);
+      final reservedGame = base.copyWith(
+        players: [
+          human.copyWith(
+            workerPool: human.workerPool.copyWith(peasants: 8),
+          ),
+          ...base.players.where((p) => p.id != fx.humanPlayerId),
+        ],
+      );
+      final orders = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          fx.humanPlayerId: List<RecruitWorkerOrder>.generate(
+            3,
+            (_) => const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+          ),
+        },
+      );
+
+      await pumpTrainDialogsGoldenHost(
+        tester,
+        TrainMilitaryDialog(
+          game: reservedGame,
+          humanPlayerId: fx.humanPlayerId,
+          currentOrders: orders,
+          bus: AppEventBus.create(),
+        ),
+        key,
+        surfaceSize: const Size(320, 900),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('5 / 8'), findsOneWidget);
+      expect(
+        find.textContaining('already promised to worker training'),
+        findsOneWidget,
+      );
+
+      await expectLater(
+        find.byKey(key),
+        matchesGoldenFile(
+          'goldens/train_military_dialog_promised_peasants_320.png',
+        ),
+      );
+    },
+  );
 }

@@ -2774,6 +2774,41 @@
   "@trainDialog_costPeasantsTooltip": {
     "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the peasant worker icon in a train-dialog unit-row cost summary."
   },
+  "trainUnits_promisedToWorkerTraining": "{count} already promised to worker training",
+  "@trainUnits_promisedToWorkerTraining": {
+    "description": "Muted Peasants gist clause when queued trained-worker hires reserve peasants (UNIT50001/UNIT60001).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainUnits_promisedToShips": "{count} already promised to ships",
+  "@trainUnits_promisedToShips": {
+    "description": "Muted Peasants gist clause when queued naval builds reserve peasants (UNIT50001).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainUnits_promisedToRegiments": "{count} already promised to regiments",
+  "@trainUnits_promisedToRegiments": {
+    "description": "Muted Peasants gist clause when queued military builds reserve peasants (UNIT60001).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainUnits_peasantsChipDetailsHeader": "Peasants already promised:",
+  "@trainUnits_peasantsChipDetailsHeader": {
+    "description": "Header line in the Peasants chip tooltip/details on Train Military/Naval."
+  },
+  "trainUnits_peasantsChipDetailsEmpty": "No peasants promised to other training.",
+  "@trainUnits_peasantsChipDetailsEmpty": {
+    "description": "Peasants chip tooltip when no other-family reservation exists."
+  },
   "trainDialog_costCommodityTooltip": "{name} ({category})",
   "@trainDialog_costCommodityTooltip": {
     "description": "Tooltip shown for a commodity resource icon in a train-dialog unit-row cost summary, combining the commodity display name and its category (e.g. 'Fabric (manufactured)').",

@@ -1468,6 +1468,22 @@ abstract class AppLocalizations {
   /// worker icon in a train-dialog unit-row cost summary.
   String get trainDialog_costPeasantsTooltip;
 
+  /// Muted Peasants gist clause when queued trained-worker hires reserve
+  /// peasants (UNIT50001/UNIT60001).
+  String trainUnits_promisedToWorkerTraining(int count);
+
+  /// Muted Peasants gist clause when queued naval builds reserve peasants.
+  String trainUnits_promisedToShips(int count);
+
+  /// Muted Peasants gist clause when queued military builds reserve peasants.
+  String trainUnits_promisedToRegiments(int count);
+
+  /// Header line in the Peasants chip tooltip/details on Train Military/Naval.
+  String get trainUnits_peasantsChipDetailsHeader;
+
+  /// Peasants chip tooltip when no other-family reservation exists.
+  String get trainUnits_peasantsChipDetailsEmpty;
+
   /// Tooltip shown for a commodity resource icon in a train-dialog unit-row
   /// cost summary, combining the commodity display name and its category
   /// (e.g. 'Fabric (manufactured)').
