@@ -53,6 +53,45 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Land combat — outcome variants (Refs #4548)',
+        builder: (context) => _playerTurnEventFeedCardStoryFrame(
+          child: PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon: Attacker victory. '
+                    'Castile lost 2 regiments; Portugal lost 1.',
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon: Defender holds. '
+                    'Castile lost 5 regiments; Portugal lost 0.',
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon: Stalemate. '
+                    'Castile lost 0 regiments; Portugal lost 0.',
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon: Both armies destroyed. '
+                    'Castile lost 4 regiments; Portugal lost 3.',
+                onTap: () {},
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Market summary — tappable link to Deal Book',
         builder: (context) => _playerTurnEventFeedCardStoryFrame(
           child: PlayerTurnEventFeedCard(

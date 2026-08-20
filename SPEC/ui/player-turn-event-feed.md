@@ -92,6 +92,20 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 
 ---
 
+## Widgetbook
+
+**Folder:** `Player Turn Event Feed Card` → `widgetbook_host/lib/catalogs/catalog_event_feed.dart`.
+
+| Use case | Proves |
+|----------|--------|
+| Research complete — tappable link to Technology | Chevron + tappable research row |
+| Diplomacy declare war — tappable link to detail | Chevron + tappable diplomacy row |
+| Land combat — outcome variants (Refs #4548) | Attacker victory, defender holds, stalemate, both armies destroyed copy with regiment-loss counts |
+| Market summary — tappable link to Deal Book | Market totals row |
+| Populated / Empty / Mobile / Narrow variants | Card chrome and width contracts |
+
+---
+
 ## Acceptance criteria (Given-When-Then)
 
 - Given a running game map shell with human player `P`, when the app receives relevant forwarded app game events and then `TurnResolutionCompleteEvent` for game `G`, then the feed shows one ordered list containing only `P`-relevant lines from that resolved turn.
