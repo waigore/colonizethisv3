@@ -19,7 +19,6 @@ import '../tile_map_grid.dart';
 import 'tile_map_generator_args.dart';
 import 'topology_inference.dart';
 
-export 'tile_map_generator_lakes_test_api.dart' show fillLakesPass4ForTest;
 export 'tile_map_params.dart';
 export 'tile_map_generator_types.dart';
 
