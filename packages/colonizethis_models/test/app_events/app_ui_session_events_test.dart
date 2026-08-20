@@ -110,6 +110,7 @@ void main() {
         provinceId: 'r1|p1',
         attackerId: 'A',
         defenderId: 'D',
+        outcomeName: 'attackerVictory',
         winnerId: 'A',
         turnNumber: 2,
         casualties: {'A': 1},

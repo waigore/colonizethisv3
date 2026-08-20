@@ -58,17 +58,26 @@ Game runOneLandBattle(
   }
   state = outcome.state;
   final winnerId = outcome.winnerId;
-  final casualties = outcome.casualties;
+  final outcomeName = outcome.outcomeName;
+  final attackerCasualtyCount = outcome.attackerCasualtyCount;
+  final defenderCasualtyCount = outcome.defenderCasualtyCount;
 
-  if (sink.hasGameEvent && winnerId != null && ctx.attackers.isNotEmpty) {
+  if (sink.hasGameEvent && ctx.attackers.isNotEmpty) {
+    final attackerId = ctx.attackers.first.factionId;
     sink.emit(
       CombatResultEvent(
         provinceId: ctx.provinceId,
-        attackerId: ctx.attackers.first.factionId,
+        attackerId: attackerId,
         defenderId: ctx.defenderFactionId,
+        outcomeName: outcomeName,
         winnerId: winnerId,
         turnNumber: turn,
-        casualties: casualties,
+        attackerCasualtyCount: attackerCasualtyCount,
+        defenderCasualtyCount: defenderCasualtyCount,
+        casualties: {
+          attackerId: attackerCasualtyCount,
+          ctx.defenderFactionId: defenderCasualtyCount,
+        },
       ),
     );
   }

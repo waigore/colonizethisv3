@@ -20,8 +20,11 @@ class CombatResultEvent extends GameEvent {
     required this.provinceId,
     required this.attackerId,
     required this.defenderId,
-    required this.winnerId,
+    required this.outcomeName,
     required this.turnNumber,
+    this.winnerId,
+    this.attackerCasualtyCount = 0,
+    this.defenderCasualtyCount = 0,
     this.casualties = const {},
   });
 
@@ -29,10 +32,22 @@ class CombatResultEvent extends GameEvent {
   final String provinceId;
   final String attackerId;
   final String defenderId;
-  final String winnerId;
+
+  /// [EngagementResult.name] for the resolved land battle (Refs #4548).
+  final String outcomeName;
+
+  /// Set for decisive outcomes; null for stalemate or mutual annihilation.
+  final String? winnerId;
   final int turnNumber;
 
-  /// Casualties by player id.
+  /// Regiment losses on the attacking side (Refs #4548).
+  final int attackerCasualtyCount;
+
+  /// Regiment losses on the defending side (Refs #4548).
+  final int defenderCasualtyCount;
+
+  /// Legacy per-faction casualty map; prefer [attackerCasualtyCount] /
+  /// [defenderCasualtyCount] for UI.
   final Map<String, int> casualties;
 }
 

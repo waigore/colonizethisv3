@@ -33,6 +33,7 @@
   - Economy turn summary when event `playerId` equals human id and at least one of `treasuryDelta != 0` or a non-empty `stockpileDeltas` map (Refs #4308).
   - Overture advanced when human id equals offerer GP id or target faction id.
 - Formatting lives in Flutter UI; logic payloads remain ids.
+- Land combat rows (`AppCombatResultEvent`, Refs #4548): one line per resolved land battle the human fought. Copy names the province, states the handbook outcome (`Attacker victory`, `Defender holds`, `Stalemate`, `Both armies destroyed`) from `outcomeName`, and shows both sides' regiment-loss counts (including `0`). Never use `{winner} defeated {defeated}` as the sole result; never show raw unit ids or resolver enum names. Tap still opens `MAP20001` on the battle province.
 - Turn-batch ordering (v1): within a committed turn batch, `AppOverseasProfitCreditedEvent`, `AppMarketTurnSummaryEvent`, and `AppEconomyTurnSummaryEvent` rows append after `AppWorkOrderCompletedEvent` entries and before `AppPlayerProvinceDiscoveredEvent` / `AppPlayerSeaZoneDiscoveredEvent` rows (Refs #4226, #4270, #4308).
 - Diplomacy formatting (v1.1 slice): known `changeType` values render concrete outcome copy (`declare_war`, `peace`, `alliance`, `break_alliance`), with a safe generic fallback for unknown values.
 - **Spy-gated digest lines (Refs #4476):** After the human-filtered GameToUI batch, append last-turn spy-report facts from `Game.lastTurnIntelligenceDigest` for the human observer (not public world gazette lines). Each row uses the same **Our spy in {court} reports:** prefix as `GAME30003`. Tap opens `GAME30003` (or `GAME30002` for that court). Third-party research/combat/diplomacy stay **out** of the feed unless a Spy is posted in that court.
@@ -91,6 +92,20 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 
 ---
 
+## Widgetbook
+
+**Folder:** `Player Turn Event Feed Card` → `widgetbook_host/lib/catalogs/catalog_event_feed.dart`.
+
+| Use case | Proves |
+|----------|--------|
+| Research complete — tappable link to Technology | Chevron + tappable research row |
+| Diplomacy declare war — tappable link to detail | Chevron + tappable diplomacy row |
+| Land combat — outcome variants (Refs #4548) | Attacker victory, defender holds, stalemate, both armies destroyed copy with regiment-loss counts |
+| Market summary — tappable link to Deal Book | Market totals row |
+| Populated / Empty / Mobile / Narrow variants | Card chrome and width contracts |
+
+---
+
 ## Acceptance criteria (Given-When-Then)
 
 - Given a running game map shell with human player `P`, when the app receives relevant forwarded app game events and then `TurnResolutionCompleteEvent` for game `G`, then the feed shows one ordered list containing only `P`-relevant lines from that resolved turn.
@@ -126,7 +141,10 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given a human `AppEconomyTurnSummaryEvent` with `treasuryDelta != 0` and/or non-empty `stockpileDeltas`, when the feed renders after turn commit, then exactly one Realm economy-summary row appears with signed treasury and commodity display names (never raw commodity ids) and a trailing chevron (Refs #4308).
 - Given a human `AppEconomyTurnSummaryEvent` row, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.production` with the same route args as the empire left-rail Production button (Refs #4308).
 - Given an `AppEconomyTurnSummaryEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4308).
-- Given a human `AppGeneralMedalGainedEvent` after a land battle win, when the feed renders after turn commit, then the row shows plain-language copy that a general earned a medal with the new count (e.g. `Victory at {province}: a general earned a medal (now N).`) and uses the word **general**, not "commander" (Refs #4234).
+- Given a human `AppCombatResultEvent` after a land battle the human fought, when the feed renders after turn commit, then the row names the province, states the handbook outcome in plain language, and shows both sides' regiment-loss counts including zero (Refs #4548).
+- Given a stalemate or mutual-annihilation land battle the human fought, when the Combat phase completes and the feed commits, then the row appears (not silent) and does not falsely claim one side defeated the other (Refs #4548).
+- Given a tappable land-combat row whose province anchor resolves, when the user taps it, then the app emits `LocateMapTileEvent` and `OpenMapTileDetailEvent` for that province (unchanged from v1; Refs #4548).
+- Given an `AppGeneralMedalGainedEvent` after a land battle win, when the feed renders after turn commit, then the row shows plain-language copy that a general earned a medal with the new count (e.g. `Victory at {province}: a general earned a medal (now N).`) and uses the word **general**, not "commander" (Refs #4234).
 - Given an `AppGeneralMedalGainedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4234).
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).
 - Given The Player toggles `showPlayerTurnEventsFeed` and saves the game, when the game is loaded, then `mapViewState.showPlayerTurnEventsFeed` restores with the same value.

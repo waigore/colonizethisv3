@@ -13,17 +13,20 @@ CtEventFeedEntry? mapCtTurnFeedCombatDiscoveryEvent({
   return switch (event) {
     ct_models.AppCombatResultEvent(
       :final provinceId,
-      :final winnerId,
       :final attackerId,
       :final defenderId,
+      :final outcomeName,
+      :final attackerCasualtyCount,
+      :final defenderCasualtyCount,
     ) =>
       ctTurnFeedEntry(
         text: CtEventFeedText.combatResolvedLine(
           provinceLabel: context.provinceLabel(provinceId),
-          winnerLabel: context.factionLabel(winnerId),
-          defeatedLabel: context.factionLabel(
-            winnerId == attackerId ? defenderId : attackerId,
-          ),
+          outcomeLabel: CtEventFeedText.landBattleOutcomeLabel(outcomeName),
+          attackerLabel: context.factionLabel(attackerId),
+          defenderLabel: context.factionLabel(defenderId),
+          attackerLosses: attackerCasualtyCount,
+          defenderLosses: defenderCasualtyCount,
         ),
         onTap: context.provinceOverlayTapForProvince(provinceId),
       ),

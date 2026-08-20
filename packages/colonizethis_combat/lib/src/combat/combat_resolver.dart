@@ -6,6 +6,7 @@ import 'battle_general_assignment.dart';
 import 'combat_resolver_multi_attacker_loop.dart';
 import 'combat_resolver_post_battle.dart';
 import 'conflict_detection.dart';
+import 'land_battle_resolution_summary.dart';
 
 export 'combat_constants.dart';
 export 'combat_engagement.dart' show resolveEngagement;
@@ -16,6 +17,22 @@ export 'combat_types.dart';
 /// Resolves one battle context and returns updated Game state.
 /// SPEC/program/combat-resolution.md.
 Game resolveBattleContext(
+  Game game,
+  BattleContext ctx, {
+  Map<String, double> feedingCoverageByPlayerId = const {},
+  CombatPhaseGeneralLedger? combatGeneralLedger,
+}) {
+  return resolveBattleContextWithSummary(
+    game,
+    ctx,
+    feedingCoverageByPlayerId: feedingCoverageByPlayerId,
+    combatGeneralLedger: combatGeneralLedger,
+  ).game;
+}
+
+/// Resolves one battle context and returns updated Game plus event summary.
+({Game game, LandBattleResolutionSummary summary})
+resolveBattleContextWithSummary(
   Game game,
   BattleContext ctx, {
   Map<String, double> feedingCoverageByPlayerId = const {},
@@ -78,5 +95,15 @@ Game resolveBattleContext(
     'casualtiesApplied=${loop.allCasualties.length} ownerAfter=$ownerAfter',
   );
 
-  return resolved;
+  final summary = landBattleSummaryFromAutoResolve(
+    ctx: ctx,
+    allCasualties: loop.allCasualties,
+    attackerCasualtyCount: loop.attackerCasualtyCount,
+    defenderCasualtyCount: loop.defenderCasualtyCount,
+    defenderUnitIdsAfterLoop: loop.defenderUnitIds,
+    survivingAttackerFactionId: loop.survivingAttackerFactionId,
+    provinceChangedOwner: post.provinceChangedOwner,
+  );
+
+  return (game: resolved, summary: summary);
 }

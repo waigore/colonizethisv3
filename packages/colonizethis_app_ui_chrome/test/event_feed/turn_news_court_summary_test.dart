@@ -97,6 +97,7 @@ void main() {
           AppCombatResultEvent(
             attackerId: 'gp1',
             defenderId: 'gp2',
+            outcomeName: 'attackerVictory',
             winnerId: 'gp1',
             provinceId: 'oldWorld|p1',
             turnNumber: 1,

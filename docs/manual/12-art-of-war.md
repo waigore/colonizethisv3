@@ -79,6 +79,8 @@ After Quick Battle, `CMPT20001` **Quick battle screen** shows the result first (
 
 Then `CMPT50001` **Quick battle result dialog** opens (**OK**), repeating the outcome and listing casualties for attacker and defender, including zero when a side lost no regiments. Read those numbers with the map result: victory with severe losses may still leave a frontier too weak to hold.
 
+After **Auto-Resolve**, there is no second result dialog. Open `OVL70001` **Player turn event feed** (newspaper button on the map bar, or **open Events** from `DLG50001` **Turn news dialog**) to read each land battle you fought: province name, outcome (**Attacker victory**, **Defender holds**, **Stalemate**, or **Both armies destroyed**), and regiment losses for both sides. Tap a combat line to open `MAP20001` **Province sea-zone overlay** on that province and see who remains.
+
 ## Counsel
 
 **Counsel.** Hark, my liege: do not mistake an empty-looking frontier for a safe one. An army may take an undefended province at once, yet a fort or a second enemy army can turn the next advance into a costly siege.
