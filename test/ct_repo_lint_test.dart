@@ -75,6 +75,7 @@ void main() {
       expect(ids, contains('repo.app_lib_no_broad_suggest_work_orders'));
       expect(ids, contains('repo.app_lib_player_by_id_lookup'));
       expect(ids, contains('repo.app_lib_unit_lookup_sot'));
+      expect(ids, contains('repo.app_province_inline_action_state'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(
         rules

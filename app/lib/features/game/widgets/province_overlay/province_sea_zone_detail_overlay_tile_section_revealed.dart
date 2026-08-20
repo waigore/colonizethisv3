@@ -6,6 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
@@ -43,36 +44,16 @@ Widget buildRevealedTileSection({
   required int x,
   required int y,
   required CellViewData cell,
-  required bool showExploreActionIcon,
-  required bool exploreActionEnabled,
-  VoidCallback? onExploreWithExplorerTap,
-  required bool showProspectActionIcon,
-  required bool prospectActionEnabled,
-  VoidCallback? onProspectWithExplorerTap,
-  required bool showBuildImprovementActionIcon,
-  required bool buildImprovementActionEnabled,
-  required bool buildImprovementActionHasBuilderUnits,
-  VoidCallback? onBuildImprovementTap,
+  required ProvinceActionStates civilianInlineActions,
+  required ProvinceInlineActionCallbacks inlineActionCallbacks,
   required Orders currentOrders,
-  required bool showBuildRoadActionIcon,
-  required bool buildRoadActionEnabled,
-  required bool buildRoadActionHasEngineerUnits,
-  VoidCallback? onBuildRoadTap,
-  required bool showBuildPortActionIcon,
-  required bool buildPortActionEnabled,
-  required bool buildPortActionHasEngineerUnits,
-  VoidCallback? onBuildPortTap,
-  required bool showBuildRailroadActionIcon,
-  required bool buildRailroadActionEnabled,
-  required bool buildRailroadActionHasRailBuilderUnits,
-  VoidCallback? onBuildRailroadTap,
-  required bool showPurchaseLandActionIcon,
-  required bool purchaseLandActionEnabled,
-  required bool purchaseLandActionHasMerchantUnits,
-  VoidCallback? onPurchaseLandTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
+  final explore = civilianInlineActions.explore;
+  final prospect = civilianInlineActions.prospect;
+  final buildImprovement = civilianInlineActions.buildImprovement;
+  final purchaseLand = civilianInlineActions.purchaseLand;
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
@@ -107,10 +88,10 @@ Widget buildRevealedTileSection({
   final consulateTooltip = MediaQuery.sizeOf(context).width < kNarrowBreakpoint
       ? l10n.provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip
       : l10n.provinceOverlay_tileConsulateRequiredForExploreTooltip;
-  final exploreTooltip = (!exploreActionEnabled && consulateGated)
+  final exploreTooltip = (!explore.enabled && consulateGated)
       ? consulateTooltip
       : l10n.provinceOverlay_tileExploreWithExplorerTooltip;
-  final prospectTooltip = (!prospectActionEnabled && consulateGated)
+  final prospectTooltip = (!prospect.enabled && consulateGated)
       ? consulateTooltip
       : l10n.provinceOverlay_tileProspectWithExplorerTooltip;
 
@@ -122,22 +103,26 @@ Widget buildRevealedTileSection({
           style: overlayFgBodyStyle(),
         ),
       ),
-      if (showExploreActionIcon)
+      if (explore.showIcon)
         CtIconAction(
           tooltip: exploreTooltip,
-          onPressed: exploreActionEnabled ? onExploreWithExplorerTap : null,
+          onPressed: explore.enabled
+              ? inlineActionCallbacks.onExploreWithExplorerTap
+              : null,
           icon: Icons.explore,
-          enabled: exploreActionEnabled,
+          enabled: explore.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
         ),
-      if (showProspectActionIcon)
+      if (prospect.showIcon)
         CtIconAction(
           tooltip: prospectTooltip,
-          onPressed: prospectActionEnabled ? onProspectWithExplorerTap : null,
+          onPressed: prospect.enabled
+              ? inlineActionCallbacks.onProspectWithExplorerTap
+              : null,
           icon: Icons.travel_explore,
-          enabled: prospectActionEnabled,
+          enabled: prospect.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
@@ -150,8 +135,8 @@ Widget buildRevealedTileSection({
     humanPlayerId: humanPlayerId,
     currentOrders: currentOrders,
     selectedTileKey: selectedTileKey,
-    enabled: buildImprovementActionEnabled,
-    hasBuilderUnits: buildImprovementActionHasBuilderUnits,
+    enabled: buildImprovement.enabled,
+    hasMatchingUnits: buildImprovement.hasMatchingUnits,
   );
   final improvementRow = Row(
     children: [
@@ -164,14 +149,14 @@ Widget buildRevealedTileSection({
           visibleResourceId: resourceVisible,
         ),
       ),
-      if (showBuildImprovementActionIcon)
+      if (buildImprovement.showIcon)
         CtIconAction(
           tooltip: buildImprovementTooltip,
-          onPressed: buildImprovementActionEnabled
-              ? onBuildImprovementTap
+          onPressed: buildImprovement.enabled
+              ? inlineActionCallbacks.onBuildImprovementTap
               : null,
           icon: Icons.handyman,
-          enabled: buildImprovementActionEnabled,
+          enabled: buildImprovement.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
@@ -205,11 +190,8 @@ Widget buildRevealedTileSection({
           provinceId: provinceId,
           resourceVisible: resourceVisible,
           resourceLabel: resourceLabel,
-          showPurchaseLandActionIcon: showPurchaseLandActionIcon,
-          purchaseLandActionEnabled: purchaseLandActionEnabled,
-          purchaseLandActionHasMerchantUnits:
-              purchaseLandActionHasMerchantUnits,
-          onPurchaseLandTap: onPurchaseLandTap,
+          purchaseLandAction: purchaseLand,
+          onPurchaseLandTap: inlineActionCallbacks.onPurchaseLandTap,
         ),
         prospectedRow,
         improvementRow,
@@ -222,19 +204,12 @@ Widget buildRevealedTileSection({
           selectedTileKey: selectedTileKey,
           provinceId: provinceId,
           roadLevel: roadLevel,
-          showBuildRoadActionIcon: showBuildRoadActionIcon,
-          buildRoadActionEnabled: buildRoadActionEnabled,
-          buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
-          onBuildRoadTap: onBuildRoadTap,
-          showBuildPortActionIcon: showBuildPortActionIcon,
-          buildPortActionEnabled: buildPortActionEnabled,
-          buildPortActionHasEngineerUnits: buildPortActionHasEngineerUnits,
-          onBuildPortTap: onBuildPortTap,
-          showBuildRailroadActionIcon: showBuildRailroadActionIcon,
-          buildRailroadActionEnabled: buildRailroadActionEnabled,
-          buildRailroadActionHasRailBuilderUnits:
-              buildRailroadActionHasRailBuilderUnits,
-          onBuildRailroadTap: onBuildRailroadTap,
+          buildRoadAction: civilianInlineActions.buildRoad,
+          onBuildRoadTap: inlineActionCallbacks.onBuildRoadTap,
+          buildPortAction: civilianInlineActions.buildPort,
+          onBuildPortTap: inlineActionCallbacks.onBuildPortTap,
+          buildRailAction: civilianInlineActions.buildRail,
+          onBuildRailroadTap: inlineActionCallbacks.onBuildRailroadTap,
           tileConnectivity: tileConnectivity,
           blockadeStatus: blockadeStatus,
         ),

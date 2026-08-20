@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_assignable.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -110,10 +111,7 @@ void main() {
         selectedTileKey: 'bad',
         selectedRegion: region,
       );
-      expect(
-        state,
-        GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
-      );
+      expect(state, GameMapAreaProvinceActionStatesAssignable.kHidden);
     });
 
     test('buildImprovement returns hidden state for malformed tile key', () {
@@ -123,10 +121,7 @@ void main() {
         selectedTileKey: 'bad',
         playerView: _emptyPlayerView('gp1'),
       );
-      expect(
-        state,
-        GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
-      );
+      expect(state, GameMapAreaProvinceActionStatesAssignable.kHidden);
     });
 
     test('prospect returns hidden state for malformed tile key', () {
@@ -143,15 +138,11 @@ void main() {
       expect(state.enabled, isFalse);
     });
 
-    test('legacy state-logic constants forward to province-actions module', () {
-      expect(
-        GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
-        GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
-      );
-      expect(
-        GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
-        GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
-      );
+    test('Assignable.kHidden is the canonical hidden inline-action state', () {
+      const hidden = GameMapAreaProvinceActionStatesAssignable.kHidden;
+      expect(hidden.showIcon, isFalse);
+      expect(hidden.enabled, isFalse);
+      expect(hidden.hasMatchingUnits, isFalse);
     });
 
     test('forwarder buildImprovement parity with direct module call', () {

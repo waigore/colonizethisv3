@@ -4,7 +4,6 @@ library;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_political.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show explorerConsulateGateBlocksMinorTribeProvince;
@@ -23,8 +22,7 @@ String tileRadialActionTooltip({
   required String provinceId,
   required Orders currentOrders,
   required bool enabled,
-  required bool hasExplorerUnits,
-  required bool hasBuilderUnits,
+  required bool hasMatchingUnits,
 }) {
   switch (action) {
     case TileRadialCatalogAction.explore:
@@ -54,7 +52,7 @@ String tileRadialActionTooltip({
         currentOrders: currentOrders,
         selectedTileKey: tileKey,
         enabled: enabled,
-        hasBuilderUnits: hasBuilderUnits,
+        hasMatchingUnits: hasMatchingUnits,
       );
   }
 }

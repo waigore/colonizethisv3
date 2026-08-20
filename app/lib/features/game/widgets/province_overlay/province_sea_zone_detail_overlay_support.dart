@@ -10,6 +10,54 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
+
+/// Tap callbacks for civilian inline actions on [ProvinceSeaZoneDetailOverlay].
+typedef ProvinceInlineActionCallbacks = ({
+  VoidCallback? onExploreWithExplorerTap,
+  VoidCallback? onProspectWithExplorerTap,
+  VoidCallback? onBuildImprovementTap,
+  VoidCallback? onBuildRoadTap,
+  VoidCallback? onBuildFortTap,
+  VoidCallback? onBuildPortTap,
+  VoidCallback? onBuildRailroadTap,
+  VoidCallback? onPurchaseLandTap,
+});
+
+const ProvinceInlineActionCallbacks kEmptyProvinceInlineActionCallbacks = (
+  onExploreWithExplorerTap: null,
+  onProspectWithExplorerTap: null,
+  onBuildImprovementTap: null,
+  onBuildRoadTap: null,
+  onBuildFortTap: null,
+  onBuildPortTap: null,
+  onBuildRailroadTap: null,
+  onPurchaseLandTap: null,
+);
+
+/// Builds [ProvinceActionStates] with optional slot overrides (Widgetbook/tests).
+ProvinceActionStates provinceOverlayInlineActions({
+  ProvinceInlineActionState? explore,
+  ProvinceInlineActionState? prospect,
+  ProvinceInlineActionState? buildImprovement,
+  ProvinceInlineActionState? buildRoad,
+  ProvinceInlineActionState? buildFort,
+  ProvinceInlineActionState? buildPort,
+  ProvinceInlineActionState? buildRail,
+  ProvinceInlineActionState? purchaseLand,
+}) {
+  return (
+    explore: explore ?? kHiddenProvinceActionStates.explore,
+    prospect: prospect ?? kHiddenProvinceActionStates.prospect,
+    buildImprovement:
+        buildImprovement ?? kHiddenProvinceActionStates.buildImprovement,
+    buildRoad: buildRoad ?? kHiddenProvinceActionStates.buildRoad,
+    buildFort: buildFort ?? kHiddenProvinceActionStates.buildFort,
+    buildPort: buildPort ?? kHiddenProvinceActionStates.buildPort,
+    buildRail: buildRail ?? kHiddenProvinceActionStates.buildRail,
+    purchaseLand: purchaseLand ?? kHiddenProvinceActionStates.purchaseLand,
+  );
+}
 
 /// Tab / wide-layout body bundle for [ProvinceSeaZoneDetailOverlay].
 class OverlayContent {

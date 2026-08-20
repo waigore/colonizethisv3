@@ -24,7 +24,6 @@ Widget buildMilitarySectionByOwner({
   required int fortLevel,
   required bool showBuildFortActionIcon,
   required bool buildFortActionEnabled,
-  required bool buildFortActionHasEngineerUnits,
   required String buildFortTooltip,
   VoidCallback? onBuildFortTap,
   bool showMoveArmyControl = false,
@@ -129,8 +128,11 @@ Widget buildMilitarySectionByOwner({
     ..sort((a, b) {
       if (a == humanPlayerId) return -1;
       if (b == humanPlayerId) return 1;
-      return ownerNameForProvinceOverlay(l10n, game, a)
-          .compareTo(ownerNameForProvinceOverlay(l10n, game, b));
+      return ownerNameForProvinceOverlay(
+        l10n,
+        game,
+        a,
+      ).compareTo(ownerNameForProvinceOverlay(l10n, game, b));
     });
   return buildOverlaySection(
     l10n.provinceOverlay_sectionMilitary,
