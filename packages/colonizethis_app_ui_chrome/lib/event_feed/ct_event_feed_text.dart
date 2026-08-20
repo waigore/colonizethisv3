@@ -110,6 +110,18 @@ class CtEventFeedText {
     };
   }
 
+  /// Handbook labels for [NavalBattleOutcome.name] (Refs #4558).
+  /// Side1 is attacker / side2 defender after naval side normalization.
+  static String navalBattleOutcomeLabel(String outcomeName) {
+    return switch (outcomeName) {
+      'side1Victory' => 'Attacker victory',
+      'side2Victory' => 'Defender holds',
+      'stalemate' => 'Stalemate',
+      'mutualDestruction' => 'Both fleets destroyed',
+      _ => 'Naval battle resolved',
+    };
+  }
+
   /// Legacy winner/defeated phrasing; prefer [combatResolvedLine] (Refs #4548).
   @Deprecated('Use combatResolvedLine with outcome and loss counts')
   static String combatResolvedWinnerLine({
@@ -127,9 +139,27 @@ class CtEventFeedText {
 
   static String navalCombatResolvedLine({
     required String seaZoneLabel,
-    required String outcomeName,
-  }) =>
-      '$seaZoneLabel naval battle resolved! Outcome: $outcomeName!';
+    required String outcomeLabel,
+    required String side1Label,
+    required String side2Label,
+    required int side1Losses,
+    required int side2Losses,
+    bool side1Retreated = false,
+    bool side2Retreated = false,
+  }) {
+    final buffer = StringBuffer(
+      '$seaZoneLabel: $outcomeLabel. '
+      '$side1Label lost $side1Losses ships; '
+      '$side2Label lost $side2Losses ships.',
+    );
+    if (side1Retreated) {
+      buffer.write(' $side1Label retreated.');
+    }
+    if (side2Retreated) {
+      buffer.write(' $side2Label retreated.');
+    }
+    return buffer.toString();
+  }
 
   static String provinceDiscoveredLine(String provinceLabel) =>
       '$provinceLabel discovered!';

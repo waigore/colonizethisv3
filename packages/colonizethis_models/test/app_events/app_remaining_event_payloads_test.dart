@@ -111,11 +111,14 @@ void main() {
           seaZoneId: 'sz1',
           side1OwnerId: 'A',
           side2OwnerId: 'B',
-          outcomeName: 'decisive',
+          outcomeName: 'side1Victory',
           turnNumber: 3,
           winnerOwnerId: 'A',
-        ).winnerOwnerId,
-        'A',
+          side1CasualtyCount: 2,
+          side2CasualtyCount: 1,
+          side2Retreated: true,
+        ).side1CasualtyCount,
+        2,
       );
       expect(
         const AppDiplomacyChangeEvent(

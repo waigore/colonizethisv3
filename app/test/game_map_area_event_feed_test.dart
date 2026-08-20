@@ -185,7 +185,7 @@ void main() {
         ),
       ], turnNumber: 2);
 
-      final navalLine = find.textContaining('naval battle resolved');
+      final navalLine = find.textContaining('Attacker victory');
       expect(navalLine, findsOneWidget);
       await tester.tap(navalLine);
       await tester.pump();
@@ -213,7 +213,7 @@ void main() {
         ),
       ], turnNumber: 2);
 
-      final navalLine = find.textContaining('naval battle resolved');
+      final navalLine = find.textContaining('Attacker victory');
       expect(navalLine, findsOneWidget);
       await tester.tap(navalLine);
       await tester.pump();
