@@ -2,11 +2,10 @@
 // SPEC/program/tile-map-gen-algorithm.md — automated tests only.
 
 import 'package:colonizethis_map/package_logger.dart';
-
-import 'tile_map_gen_continent_join_pass.dart';
-import 'tile_map_generator_lakes_provinces.dart';
-import 'tile_map_grid_graph.dart';
-import 'tile_map_params.dart';
+import 'package:colonizethis_map/src/gen/tile_map_gen_continent_join_pass.dart';
+import 'package:colonizethis_map/src/gen/tile_map_generator_lakes_provinces.dart';
+import 'package:colonizethis_map/src/gen/tile_map_grid_graph.dart';
+import 'package:colonizethis_map/src/gen/tile_map_params.dart';
 
 /// Runs Pass 4 **lake fill only** on a grid at post-Pass-3 semantics (sea =
 /// [seaZoneId], land = `_land` sentinel). Intended for **automated tests**;
