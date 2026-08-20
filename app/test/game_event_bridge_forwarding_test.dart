@@ -38,6 +38,8 @@ void main() {
           outcomeName: 'side1Victory',
           turnNumber: 4,
           winnerOwnerId: 'gp1',
+          side1CasualtyCount: 1,
+          side2CasualtyCount: 3,
           side1Retreated: false,
           side2Retreated: true,
         ),
@@ -52,6 +54,8 @@ void main() {
       expect(evt.outcomeName, 'side1Victory');
       expect(evt.turnNumber, 4);
       expect(evt.winnerOwnerId, 'gp1');
+      expect(evt.side1CasualtyCount, 1);
+      expect(evt.side2CasualtyCount, 3);
       expect(evt.side1Retreated, isFalse);
       expect(evt.side2Retreated, isTrue);
     });

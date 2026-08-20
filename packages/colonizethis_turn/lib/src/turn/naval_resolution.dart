@@ -185,6 +185,10 @@ Game runNavalInterceptionCombatPhase(
       outcomeName: result.outcome.name,
       turnNumber: turn,
       winnerOwnerId: winnerOwnerId,
+      side1CasualtyCount:
+          battle.side1.ships.length - result.survivingShipsSide1.length,
+      side2CasualtyCount:
+          battle.side2.ships.length - result.survivingShipsSide2.length,
       side1Retreated: result.side1Retreated,
       side2Retreated: result.side2Retreated,
     );

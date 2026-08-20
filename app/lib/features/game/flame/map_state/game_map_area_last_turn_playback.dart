@@ -171,10 +171,24 @@ mixin GameMapAreaLastTurnPlayback
             '${factionLabel(newOwnerId)} now controls it!',
       ct_models.AppNavalCombatResultEvent(
         :final seaZoneId,
+        :final side1OwnerId,
+        :final side2OwnerId,
         :final outcomeName,
+        :final side1CasualtyCount,
+        :final side2CasualtyCount,
+        :final side1Retreated,
+        :final side2Retreated,
       ) =>
-        '${seaZoneLabel(seaZoneId)} naval battle resolved! '
-            'Outcome: $outcomeName!',
+        CtEventFeedText.navalCombatResolvedLine(
+          seaZoneLabel: seaZoneLabel(seaZoneId),
+          outcomeLabel: CtEventFeedText.navalBattleOutcomeLabel(outcomeName),
+          side1Label: factionLabel(side1OwnerId),
+          side2Label: factionLabel(side2OwnerId),
+          side1Losses: side1CasualtyCount,
+          side2Losses: side2CasualtyCount,
+          side1Retreated: side1Retreated,
+          side2Retreated: side2Retreated,
+        ),
       ct_models.AppWorkOrderCompletedEvent(
         :final provinceId,
         :final workTarget,
