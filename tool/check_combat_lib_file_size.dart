@@ -1,8 +1,8 @@
 // Physical line ratchet for colonizethis_combat lib source (repo rule:
 // `repo.combat_lib_file_size`).
 //
-// Phase 4 (#4284) splits near-cap combat orchestration modules so lib files stay
-// below a peer-aligned 280 physical-line ceiling (economy ≤310, turn ≤400).
+// Phase 5 (#4545) splits near-cap combat orchestration modules so lib files stay
+// below a peer-aligned 250 physical-line ceiling (economy ≤260, diplomacy ≤300).
 // Generated suffixes are excluded.
 import 'dart:convert';
 import 'dart:io';
@@ -11,12 +11,12 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for phase-4 post-split target (≤280 physical lines).
-const int combatLibFileSizeCeiling = 280;
+/// Ratchet ceiling for phase-5 post-split target (≤250 physical lines).
+const int combatLibFileSizeCeiling = 250;
 
 const String _combatLibRelativePath = 'packages/colonizethis_combat/lib';
 
-/// Hot files still above the phase-4 ceiling during transition slices. Shrink-only
+/// Hot files still above the phase-5 ceiling during transition slices. Shrink-only
 /// allowlist; remove entries as splits land.
 const List<String> combatLibFileSizeGrandfathered = <String>[];
 
@@ -80,7 +80,7 @@ int runCheckCombatLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_combat_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4284).',
+      '(ceiling $ceiling; Refs #4545).',
     );
     return 0;
   }
@@ -88,7 +88,7 @@ int runCheckCombatLibFileSize(
   violations.sort();
   logE(
     'check_combat_lib_file_size: found ${violations.length} violation(s) '
-    'under $_combatLibRelativePath (phase-4 ceiling $ceiling; Refs #4284):',
+    'under $_combatLibRelativePath (phase-5 ceiling $ceiling; Refs #4545):',
   );
   for (final violation in violations) {
     logE(' - $violation');
