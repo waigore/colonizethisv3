@@ -1386,5 +1386,5 @@ Deferred: optional additional `setUpAll` group fixture caches; stretch ≤7,800 
 | A | Consumption allocation SoT + labour-readiness dedup | `economy_consumption_allocation.dart`; `labour_readiness.dart` routes through single sequence | #4550 |
 | B | Extraction snapshot + non-GP shared splits | `tile_extraction_display_contribution.dart`, `non_gp_faction_walk.dart`, `non_gp_tile_contribution.dart`, `non_gp_tile_walk.dart` | #4550 |
 | C | Remaining type/compute bags for 250 headroom | `trade_order_suggester_types.dart`, `deal_matcher_inputs.dart`, `industry_counsel_growth_stage_category.dart`, `development_panel_read_model_owned_scopes.dart` | #4550 |
-| D | Snapshot suite densify + CI ratchets | OOB/projection scenarios in test_support; `province_extraction_snapshot_builder_test.dart` thin runner; `economySourceFileSizeCeiling` 250; `economyTestFileSizeCeiling` 300 | #4550 |
+| D | Snapshot suite densify + CI ratchets | OOB row in existing snapshot scenario table; projection leftover cases in economy test-tree `province_extraction_projection_scenarios.dart` (keeps `repo.economy_test_support_loc` ≤6590); thin snapshot runner; `economySourceFileSizeCeiling` 250; `economyTestFileSizeCeiling` 300 | #4550 |
 

@@ -1,6 +1,8 @@
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'province_extraction_projection_scenarios.dart';
+
 void runProvinceExtractionSnapshotScenario(
   ProvinceExtractionSnapshotScenario scenario,
 ) {
@@ -11,12 +13,6 @@ void runProvinceImprovableCountsScenario(
   ProvinceImprovableCountsScenario scenario,
 ) {
   assertProvinceImprovableCounts(scenario.pin);
-}
-
-void runProvinceExtractionProjectionScenario(
-  ProvinceExtractionProjectionScenario scenario,
-) {
-  assertProvinceExtractionProjection(scenario);
 }
 
 void main() {
