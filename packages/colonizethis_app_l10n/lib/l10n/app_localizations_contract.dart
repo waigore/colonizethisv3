@@ -3325,6 +3325,9 @@ abstract class AppLocalizations {
   /// Confirm button label for transfer-to-home dialog.
   String get naval_transferToHome_confirm;
 
+  /// Live Home Fleet cargo-hold consequence on transfer into Home Fleet. Refs #4544.
+  String naval_transferToHome_homeCargoConsequence(int remaining, String used);
+
   /// Diplomacy list section heading.
   String get diplomacy_section_greatPowers;
 
