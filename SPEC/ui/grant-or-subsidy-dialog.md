@@ -44,7 +44,7 @@ Subsidy mode (`isSubsidy == true`) reuses the same chrome but flips the unit to 
 |         [ − ]      10%      [ + ]                |  stepper, step 5%, clamped 5–20%
 |                                                  |  no below-minimum hint (treasury-independent)
 |        Cost: No per-turn gold charge.            |  live Cost/Effect (always, subsidy Submit is enabled)
-|        Effect: 5% subsidy with {name}…           |
+|        Effect: On deals that fill with {name},   |  pay P% more buying / receive P% less selling (Refs #4546)
 |              [ Cancel ]    [ Submit ]            |
 +--------------------------------------------------+
 ```
@@ -58,7 +58,7 @@ Subsidy mode (`isSubsidy == true`) reuses the same chrome but flips the unit to 
   - **Amount:** Grant mode renders `Text(diplomacy_currencyAmount(amount))` (e.g. `£1,000`); subsidy mode renders `Text('$amount%')` (e.g. `10%`; Refs #3753 R3). Either way the label uses the dark-theme `headlineSmall` slot (display font), color `EditorialMonoclePalette.fg`, `letterSpacing == amountFontSize * 0.04`, minimum content width 80 dp. Stable widget key `Key('grantOrSubsidyDialogAmount')`.
   - **Plus button:** keyed `diplo_amount_plus`. Surface fill `EditorialMonoclePalette.surfaceLite`, 1 dp `EditorialMonoclePalette.accentDim` outline, label `+` painted in `EditorialMonoclePalette.accent` using a monospace `TextStyle`. Disabled (`onPressed == null`) when `canAdjust == false`.
 - **Below-minimum hint:** `diplomacy_treasuryBelowMinimum(step)` rendered with the dark-theme `bodySmall` slot, color `EditorialMonoclePalette.danger`, `fontStyle == FontStyle.italic`. Shown only when `canAdjust == false`. This is a **grant-mode** affordance only — subsidy mode is treasury-independent (`canAdjust` is always `true` for subsidy; Refs #3753 R3), so the hint never renders in subsidy mode. Stable widget key `Key('grantOrSubsidyDialogWarning')`.
-- **Cost / Effect preview (Refs #4415):** When Submit is enabled, the dialog shows the same first-order lines as `buildDiplomacyConfirmPreviewLines` for the current grant amount or subsidy percent (bodySmall, `EditorialMonoclePalette.muted`, wrap inside the shell). Lines update when the stepper changes the amount. When Submit is disabled (grant treasury below one step, displayed amount `0`), Cost / Effect lines are **absent** and the UI layer does **not** call the preview builder with amount `0`. Stable widget key `Key('grantOrSubsidyDialogPreview')`. Subsidy **Effect** lines state first-order buy/sell treasury consequences (pay `{percent}%` more when buying from that court, receive `{percent}%` less when selling to them on fills with that court only) and do **not** use “market terms are affected” as the sole consequence (Refs #4546).
+- **Cost / Effect preview (Refs #4415, #4546):** When Submit is enabled, the dialog shows the same first-order lines as `buildDiplomacyConfirmPreviewLines` for the current grant amount or subsidy percent (bodySmall, `EditorialMonoclePalette.muted`, wrap inside the shell). Subsidy Effect uses `subsidyFillPriceConsequence` (pay P% more buying from that court / receive P% less selling to them on fills **with that court**); Cost remains `No per-turn gold charge.` Copy does **not** use “market terms are affected” as the only consequence, and does not print hidden relation scores or the `+0.2` per-percent boost. Lines update when the stepper changes the amount. When Submit is disabled (grant treasury below one step, displayed amount `0`), Cost / Effect lines are **absent** and the UI layer does **not** call the preview builder with amount `0`. Stable widget key `Key('grantOrSubsidyDialogPreview')`.
 - **Footer:** Right-aligned `Row` with `CtNinePatchButton` Cancel (`common_cancel`) and `CtNinePatchButton` Submit (`game_callToArms_submit`). Submit enabled only when `_canSubmit` is true. (Cancel keeps the standard brass label; Submit follows the catalog `CtNinePatchButton` enabled/disabled treatment.)
 
 All colors resolve from `EditorialMonoclePalette` tokens; no hard-coded hex literals are permitted in the implementation (mirrors the regression guard pattern adopted by other DLG*/OVL* dark-chrome slices under #2867).
@@ -137,7 +137,11 @@ The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/dipl
 
 - Given `DIPL20001` is open in grant mode with a valid amount `A`, when the dialog renders, then it shows the Cost and Effect lines `buildDiplomacyConfirmPreviewLines` would produce for `grantAid` of `A`, and those lines update when the stepper changes `A` (Refs #4415).
 
-- Given `DIPL20001` is open in subsidy mode with a valid percent `P`, when the dialog renders, then it shows the Cost / Effect lines for `setSubsidy` of `P` and updates them when the stepper changes `P` (Refs #4415). **Effect** states pay `{P}%` more when buying from that court and receive `{P}%` less when selling to them on fills with that court only; **Cost** still says no per-turn gold charge; copy does not use “market terms are affected” as the sole consequence (Refs #4546).
+- Given `DIPL20001` is open in subsidy mode with a valid percent `P`, when the dialog renders, then it shows the Cost / Effect lines for `setSubsidy` of `P` and updates them when the stepper changes `P` (Refs #4415).
+
+- Given `DIPL20001` is open in subsidy mode at **10%** toward a named court, when Cost/Effect render, then Effect states that on deals filling with that court the player pays **10% more** when buying from them and receives **10% less** when selling to them, Cost still says there is no per-turn gold charge, and the UI layer does not use “market terms are affected” as the only consequence (Refs #4546). Tests: `packages/colonizethis_diplomacy/test/diplomacy/diplomacy_confirm_preview_test.dart`, `app/test/diplomacy_dialogs_test.dart`.
+
+- Given the subsidy Effect is shown, when copy is inspected, then hidden relation scores, `−50`/`−10` penalties, and the `+0.2` per-percent boost constant are absent (Refs #4546).
 
 - Given `DIPL20001` is open in grant mode with `treasury < grantAidAmountStep` (Submit disabled, displayed amount `0`), when the dialog renders, then Cost / Effect preview lines are absent and the below-minimum hint remains; the UI layer does not invoke `buildDiplomacyConfirmPreviewLines` with amount `0` (Refs #4415).
 
@@ -181,10 +185,10 @@ Pinning test: `app/test/grant_or_subsidy_dialog_320dp_min_viewport_test.dart`. T
 
 ## Widgetbook
 
-Catalog folder: **Grant or Subsidy Dialog** (registered in `app/lib/widgetbook/catalog.dart`). Use cases:
+Catalog folder: **Grant or Subsidy Dialog** (registered in `widgetbook_host/lib/catalogs/catalog.dart` via `catalog_dialogs_grant_or_subsidy.dart`). Use cases:
 
 1. **Grant mode — treasury sufficient:** Minimal `Game` + two players; human treasury 5000; demo opener calls `showDialog` with `isSubsidy: false`. Stepper opens at the snapped default amount; Cost / Effect lines are visible (Refs #4415).
-2. **Subsidy mode — percent stepper:** Minimal `Game` + two players; human treasury 0; demo opener calls `showDialog` with `isSubsidy: true`. The percent stepper (5–20%, step 5) opens at `kSubsidyPercentDefault` (5%) and both step buttons stay enabled (subsidy is treasury-independent; Refs #3753 R3); Cost / Effect lines are visible.
+2. **Subsidy mode — percent stepper:** Minimal `Game` + two players; human treasury 0; demo opener calls `showDialog` with `isSubsidy: true`. The percent stepper (5–20%, step 5) opens at `kSubsidyPercentDefault` (5%) and both step buttons stay enabled (subsidy is treasury-independent; Refs #3753 R3); Cost / Effect lines show no per-turn gold charge and the buy/sell fill percents (Refs #4546).
 3. **Grant mode — treasury below minimum:** Human treasury below `grantAidAmountStep`; below-minimum hint shown; Cost / Effect lines absent (Refs #4415).
 
 Automated widget tests: `app/test/diplomacy_dialogs_test.dart` (covers stepper, default amount, submit emit, treasury-below-minimum disable, and Cancel); `app/test/grant_or_subsidy_dialog_320dp_min_viewport_test.dart` (320 dp minimum-viewport pin per § 320 dp viewport pin above). Visual goldens (Refs #4415): `app/test/diplomacy_grant_subsidy_dialog_goldens_test.dart` pins `goldens/dipl20001_grant_preview.png`, `goldens/dipl20001_subsidy_preview.png`, `goldens/dipl20001_grant_below_minimum.png`, and `goldens/dipl20001_grant_preview_320dp.png` under `AppThemes.editorialMonocle`.

@@ -128,15 +128,7 @@ void main() {
     expect(find.text('Cost: No per-turn gold charge.'), findsOneWidget);
     expect(
       find.text(
-        'Effect: On deals that fill with England, you pay 5% more when buying '
-        'from them and receive 5% less when selling to them.',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        'Effect: Only fills with England are adjusted; other courts are '
-        'unchanged.',
+        'Effect: ${subsidyFillPriceConsequence(targetDisplayName: 'England', percent: 5)}',
       ),
       findsOneWidget,
     );

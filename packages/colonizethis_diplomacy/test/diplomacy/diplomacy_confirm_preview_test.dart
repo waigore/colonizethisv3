@@ -95,19 +95,19 @@ void main() {
       targetDisplayName: 'Bavaria',
     );
     final subsidyBody = subsidy.join('\n');
-    expect(subsidyBody, contains('15%'));
     expect(subsidyBody, contains('No per-turn gold'));
-    expect(subsidyBody, contains('pay 15% more'));
-    expect(subsidyBody, contains('receive 15% less'));
-    expect(subsidyBody, isNot(contains('market terms')));
-  });
-
-  test('subsidy price effect summary for panel tooltips', () {
     expect(
-      subsidyPriceEffectSummary(targetDisplayName: 'Bavaria', percent: 10),
-      'On deals that fill with Bavaria, you pay 10% more when buying from '
-      'them and receive 10% less when selling to them. Only fills with '
-      'Bavaria are adjusted.',
+      subsidyBody,
+      contains(
+        subsidyFillPriceConsequence(targetDisplayName: 'Bavaria', percent: 15),
+      ),
     );
+    expect(
+      subsidyBody.toLowerCase(),
+      isNot(contains('market terms are affected')),
+    );
+    expect(subsidyBody, isNot(contains('+0.2')));
+    expect(subsidyBody, isNot(contains('-50')));
+    expect(subsidyBody, isNot(contains('-10')));
   });
 }

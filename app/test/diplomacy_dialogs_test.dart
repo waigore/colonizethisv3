@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_body.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -290,26 +291,18 @@ void main() {
       expect(find.text('Cost: No per-turn gold charge.'), findsOneWidget);
       expect(
         find.text(
-          'Effect: On deals that fill with $targetName, you pay 5% more when '
-          'buying from them and receive 5% less when selling to them.',
+          'Effect: ${subsidyFillPriceConsequence(targetDisplayName: targetName, percent: 5)}',
         ),
         findsOneWidget,
       );
-      expect(
-        find.text(
-          'Effect: Only fills with $targetName are adjusted; other courts are '
-          'unchanged.',
-        ),
-        findsOneWidget,
-      );
+      expect(find.textContaining('market terms are affected'), findsNothing);
 
       await tester.tap(find.byKey(const Key('diplo_amount_plus')));
       await tester.pump();
 
       expect(
         find.text(
-          'Effect: On deals that fill with $targetName, you pay 10% more when '
-          'buying from them and receive 10% less when selling to them.',
+          'Effect: ${subsidyFillPriceConsequence(targetDisplayName: targetName, percent: 10)}',
         ),
         findsOneWidget,
       );

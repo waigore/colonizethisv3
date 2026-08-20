@@ -189,17 +189,15 @@ class DiplomacyRow extends StatelessWidget {
     final TextStyle style = _economicLineStyle(context);
     final lines = <Widget>[];
     if (data.activeSubsidyPercent != null) {
-      final int percent = data.activeSubsidyPercent!;
-      final String compactLine = l10n.diplomacy_panel_outgoingSubsidy(
-        percent,
-        data.displayName,
-      );
       lines.addAll([
         const SizedBox(height: 4),
         _subsidyEconomicLine(
-          compactLine: compactLine,
-          targetDisplayName: data.displayName,
-          percent: percent,
+          compact: l10n.diplomacy_panel_outgoingSubsidy(
+            data.activeSubsidyPercent!,
+            data.displayName,
+          ),
+          percent: data.activeSubsidyPercent!,
+          lineKey: const Key('diplomacyOutgoingSubsidyLine'),
           style: style,
         ),
       ]);
@@ -214,14 +212,14 @@ class DiplomacyRow extends StatelessWidget {
       ]);
     }
     if (data.pendingSubsidyPercent != null) {
-      final int percent = data.pendingSubsidyPercent!;
-      final String compactLine = l10n.diplomacy_panel_pendingSubsidy(percent);
       lines.addAll([
         const SizedBox(height: 4),
         _subsidyEconomicLine(
-          compactLine: compactLine,
-          targetDisplayName: data.displayName,
-          percent: percent,
+          compact: l10n.diplomacy_panel_pendingSubsidy(
+            data.pendingSubsidyPercent!,
+          ),
+          percent: data.pendingSubsidyPercent!,
+          lineKey: const Key('diplomacyPendingSubsidyLine'),
           style: style,
         ),
       ]);
@@ -230,22 +228,18 @@ class DiplomacyRow extends StatelessWidget {
   }
 
   Widget _subsidyEconomicLine({
-    required String compactLine,
-    required String targetDisplayName,
+    required String compact,
     required int percent,
+    required Key lineKey,
     required TextStyle style,
   }) {
-    final String summary = subsidyPriceEffectSummary(
-      targetDisplayName: targetDisplayName,
+    final tooltip = subsidyFillPriceConsequenceTooltip(
+      targetDisplayName: data.displayName,
       percent: percent,
     );
     return Tooltip(
-      message: summary,
-      child: Text(
-        compactLine,
-        style: style,
-        semanticsLabel: '$compactLine. $summary',
-      ),
+      message: tooltip,
+      child: Text(compact, key: lineKey, style: style, semanticsLabel: tooltip),
     );
   }
 
