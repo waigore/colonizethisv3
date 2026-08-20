@@ -843,6 +843,29 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainDialog_costPeasantsTooltip => 'Peasants';
 
   @override
+  String trainUnits_promisedToWorkerTraining(int count) {
+    return '$count already promised to worker training';
+  }
+
+  @override
+  String trainUnits_promisedToShips(int count) {
+    return '$count already promised to ships';
+  }
+
+  @override
+  String trainUnits_promisedToRegiments(int count) {
+    return '$count already promised to regiments';
+  }
+
+  @override
+  String get trainUnits_peasantsChipDetailsHeader =>
+      'Peasants already promised:';
+
+  @override
+  String get trainUnits_peasantsChipDetailsEmpty =>
+      'No peasants promised to other training.';
+
+  @override
   String trainDialog_costCommodityTooltip(String name, String category) {
     return '$name ($category)';
   }

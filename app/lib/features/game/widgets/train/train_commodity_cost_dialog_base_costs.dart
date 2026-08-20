@@ -2,6 +2,8 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../production/commodity_ui_helpers.dart';
 import 'train_commodity_cost_dialog_base.dart';
+import 'train_peasant_reservation.dart';
+import 'train_peasant_reservation_copy.dart';
 
 extension CommodityCostTrainDialogCosts on CommodityCostTrainDialogState {
   int totalTreasuryCost() {
@@ -32,17 +34,40 @@ extension CommodityCostTrainDialogCosts on CommodityCostTrainDialogState {
     return totals;
   }
 
+  TrainOtherFamilyPeasantReservation otherFamilyPeasantReservation() {
+    return trainOtherFamilyPeasantReservation(
+      currentOrders: widget.currentOrders,
+      playerId: widget.humanPlayerId,
+      capitalProvinceId: player?.capitalProvinceId,
+      managedUnitTypeIds: unitTypeIds.toSet(),
+      managedOrdersAreMilitary: ordersAreMilitary,
+    );
+  }
+
+  /// Peasants free for this dialog before local stepper counts.
+  int availablePeasants() => trainAvailablePeasants(
+    poolPeasants: peasants,
+    otherFamily: otherFamilyPeasantReservation(),
+  );
+
   int remainingTreasury() => treasury - totalTreasuryCost();
 
-  int remainingPeasants() => peasants - totalPeasantCost();
+  /// Remaining = available (pool − other families) − this dialog's counts.
+  int remainingPeasants() => availablePeasants() - totalPeasantCost();
 
   int remainingCommodity(String commodityId, Map<String, int> committed) =>
       stockpileQty(commodityId) - (committed[commodityId] ?? 0);
 
+  String? peasantsPromisedGist(AppLocalizations l10n) =>
+      trainPeasantsPromisedGist(l10n, otherFamilyPeasantReservation());
+
+  String peasantsPromisedDetails(AppLocalizations l10n) =>
+      trainPeasantsPromisedDetails(l10n, otherFamilyPeasantReservation());
+
   String? commodityCostDeficitHint(AppLocalizations l10n) {
     final deficits = <String>[];
     if (totalTreasuryCost() > treasury) deficits.add('Treasury');
-    if (totalPeasantCost() > peasants) deficits.add('Peasants');
+    if (totalPeasantCost() > availablePeasants()) deficits.add('Peasants');
     final totalComms = totalCommodityCosts();
     for (final e in totalComms.entries) {
       if (e.value > stockpileQty(e.key)) {

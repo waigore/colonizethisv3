@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../config/constants.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../widgets/resource_icon.dart';
 import '../production/commodity_ui_helpers.dart';
@@ -17,6 +18,8 @@ class CommodityCostTrainDialogResourceBar extends StatelessWidget {
     required this.remainingTreasury,
     required this.peasants,
     required this.remainingPeasants,
+    this.peasantsPromisedGist,
+    required this.peasantsPromisedDetails,
     required this.stockpile,
     required this.committedCommodities,
     required this.commodityIds,
@@ -28,6 +31,14 @@ class CommodityCostTrainDialogResourceBar extends StatelessWidget {
   final int remainingTreasury;
   final int peasants;
   final int remainingPeasants;
+
+  /// Muted one-line gist when other families have reserved peasants; omitted
+  /// when null/empty.
+  final String? peasantsPromisedGist;
+
+  /// Peasants-chip tooltip/tap details (family breakdown in player words).
+  final String peasantsPromisedDetails;
+
   final Map<String, int> committedCommodities;
   final Stockpile stockpile;
   final List<String> commodityIds;
@@ -51,6 +62,7 @@ class CommodityCostTrainDialogResourceBar extends StatelessWidget {
             ],
           ),
         ),
+        ..._buildPromisedGist(context),
         ..._buildDeficitHint(context),
       ],
     );
@@ -69,19 +81,45 @@ class CommodityCostTrainDialogResourceBar extends StatelessWidget {
 
   Widget _buildPeasantsChip() {
     return TrainDialogResourceChip(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const WorkerIcon(workerType: 'peasant', size: 14),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              l10n.trainUnits_peasantsValue('$remainingPeasants / $peasants'),
-            ),
+      child: Tooltip(
+        message: peasantsPromisedDetails,
+        triggerMode: TooltipTriggerMode.tap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: kMinTouchTargetSize,
+            minWidth: kMinTouchTargetSize,
           ),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const WorkerIcon(workerType: 'peasant', size: 14),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  l10n.trainUnits_peasantsValue(
+                    '$remainingPeasants / $peasants',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  List<Widget> _buildPromisedGist(BuildContext context) {
+    final gist = peasantsPromisedGist;
+    if (gist == null || gist.isEmpty) return const [];
+    return [
+      const SizedBox(height: 4),
+      Text(
+        gist,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: EditorialMonoclePalette.muted,
+        ),
+      ),
+    ];
   }
 
   Widget _buildCommodityChip(String commodityId) {

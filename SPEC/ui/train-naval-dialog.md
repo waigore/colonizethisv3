@@ -2,7 +2,7 @@
 
 **Screen ID:** `UNIT60001` — stable; do not reassign.
 **SPEC/ui** — Modal dialog for queuing naval (ship) training orders. Implementation: `app/lib/features/game/widgets/train/train_naval_dialog.dart`. Integrates with [naval-units-panel.md](naval-units-panel.md) and the shared [components/train-dialog-chrome.md](components/train-dialog-chrome.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md), [tech-tree-naval.md](../game/tech-tree-naval.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md).
-**Widgetbook:** `Train Naval Dialog` → `app/lib/widgetbook/catalog_screens_combat.dart`.
+**Widgetbook:** `Train Naval Dialog` → `widgetbook_host/lib/catalogs/catalog_screens_combat.dart` (use cases: `Standalone` clean pool, `Reserved peasants`).
 **Mockup:** [mockups/UNIT60001-train-naval-dialog.html](mockups/UNIT60001-train-naval-dialog.html)
 
 ---
@@ -24,7 +24,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 ## Layout
 
 - **Header:** centered `Train Naval` title via `TrainDialogHeader` — no `×` close button and no brass section dividers between sections (#3568 parity); the dialog dismisses via scrim tap / system back and applies orders on close.
-- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`). Shows `Treasury`, `Peasants`, and the union of all ship-input commodities `lumber`, `fabric`, `castIron`, `coal` (every commodity referenced by `ShipEconomyCatalog.buildInputs`) as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £42,000 / £50,000`, `Peasants: 19 / 20`, `Lumber: 8 / 10`. Treasury uses `£` + comma grouping on both sides.
+- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`). Shows `Treasury`, `Peasants`, and the union of all ship-input commodities `lumber`, `fabric`, `castIron`, `coal` as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form — e.g. `Treasury: £42,000 / £50,000`, `Peasants: 19 / 20`, `Lumber: 8 / 10`. **Peasants remaining** uses the same GDD reservation ledger as [train-military-dialog.md](train-military-dialog.md): `available = pool.peasants − (queued peasant-consuming worker trains + queued military/naval builds outside this dialog’s managed set)`; chip remaining = `available − this dialog’s counts`; chip total = `pool.peasants`. When other-family reservation is `> 0`, a muted one-line gist names those families in player words (e.g. worker training, regiments). Tap/tooltip on the Peasants chip shows the short family breakdown. Treasury uses `£` + comma grouping on both sides.
 - **Per-item cost colour:** In each ship row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` (`EditorialMonoclePalette.danger`) independently when `remaining` for that resource is less than this ship's per-unit cost for it (considering committed totals). Sufficient items stay normal.
 - **Deficit hint:** Same wording style as civilian/military — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`) below the box.
 - **Rows:** One row per `ShipEconomyCatalog.all` entry (all 12 ship types) as a single line — left info `Column` (ship name above the icon-bearing cost summary) plus the stepper on the right.
@@ -45,7 +45,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 - Locked ships: name prefixed with the 🔒 glyph (`kTrainDialogLockPrefix`), row subdued at `0.5` opacity (`kTrainDialogLockedOpacity`), and steppers disabled.
 - `+` uses aggregate affordability across all currently selected rows:
   - treasury
-  - peasants (`workerPool.peasants`, 1 consumed per ship)
+  - peasants (`available` from the reservation ledger above, 1 consumed per ship)
   - commodity stockpile requirements for all selected rows
 - When `+` is disabled **specifically** due to resource insufficiency (not a tech lock), it renders the `--danger` button variant (red border/label), distinct from the tech-locked disabled appearance.
 
@@ -62,7 +62,7 @@ On every stepper change:
 Affordability requires all constraints:
 
 - `totalTreasuryCost <= Player.treasury`
-- `totalPeasantCost <= Player.workerPool.peasants`
+- `totalPeasantCost <= availablePeasants` (pool minus other-family reservation; this dialog’s managed capital naval orders are counted only via local stepper counts)
 - `totalCommodityCost[c] <= Player.stockpile.quantityOf(c)` for each required commodity
 
 ---
@@ -110,6 +110,12 @@ The dialog uses the shared `app/lib/features/game/widgets/train/train_unit_dialo
 - **Given** the Train Naval dialog is open, **when** the user views the resource bar, **then** the UI layer shows treasury, peasants, and naval-input commodities (`lumber`, `fabric`, `castIron`, `coal`) with existing icons inside the shared boxed inset strip.
 
 - **Given** treasury `50000` and peasants `20`, **when** the user queues `1` Carrack (`£8,000 + 1 peasant`), **then** the treasury chip reads `Treasury: £42,000 / £50,000` and the peasants chip reads `Peasants: 19 / 20`.
+
+- **Given** 8 peasants and 3 queued peasant-consuming worker trains with no other military/naval builds, **when** `UNIT60001` opens at zero ship counts, **then** the Peasants chip remaining is `5 / 8` and a muted promised gist names worker training.
+
+- **Given** 8 peasants, no worker trains, and 2 queued capital regiment builds, **when** `UNIT60001` opens at zero ship counts, **then** remaining is `6 / 8` and the gist names regiments.
+
+- **Given** Widgetbook Train Naval stories include reserved-peasant and clean-pool cases, **when** those stories pump, **then** they take no exception.
 
 - **Given** a ship row that requires `castIron` and remaining `castIron` is less than that requirement, **when** the row renders, **then** only the `castIron` inline cost item renders in `EditorialMonoclePalette.danger` and the other sufficient items remain normal.
 

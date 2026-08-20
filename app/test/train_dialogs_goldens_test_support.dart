@@ -99,9 +99,10 @@ class TrainDialogsGoldenFixtures {
 Future<void> pumpTrainDialogsGoldenHost(
   WidgetTester tester,
   Widget child,
-  Key key,
-) async {
-  await configureGoldenSurface(tester, size: trainDialogsGoldenHostViewport);
+  Key key, {
+  Size surfaceSize = trainDialogsGoldenHostViewport,
+}) async {
+  await configureGoldenSurface(tester, size: surfaceSize);
   await tester.pumpWidget(trainDialogsGoldenHost(boundaryKey: key, child: child));
   await pumpForGolden(tester);
 }
