@@ -1,9 +1,9 @@
 // Wave-7 headroom gate: colonizethis_map gen/view/render modules ≤250 NCL.
-// SPEC/program/repo-lint.md (`repo.map_lib_file_size_headroom`, Refs #4112, #4297, #4371).
+// SPEC/program/repo-lint.md (`repo.map_lib_file_size_headroom`, Refs #4112, #4297, #4371, #4561).
 //
 // Complements `repo.map_lib_file_size` (500 NCL hard cap) with a peer-aligned
-// 300 non-comment-line advisory ratchet so near-cap modules gain headroom after
-// wave-6 splits without lowering the 500 ceiling.
+// 250 non-comment-line advisory ratchet so near-cap modules gain headroom after
+// wave-7 splits without lowering the 500 ceiling.
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
