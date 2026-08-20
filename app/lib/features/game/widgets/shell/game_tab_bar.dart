@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 
 import 'game_tab_bar_state.dart';
 import 'old_world_race_snapshot.dart';
+import 'treasury_committed_spend.dart';
 
 export 'game_tab_bar_state.dart' show GameTabBarState;
 export 'old_world_race_snapshot.dart' show OldWorldRaceSnapshot;
+export 'treasury_committed_spend.dart'
+    show TreasuryCommittedSpendLine, TreasuryCommittedSpendFamily;
 
 /// In-game shell tab bar: 34 px dark editorial-monocle chrome with region
 /// tabs, treasury, cargo, labour/feeding, Old World race chip, and trailing toggles.
@@ -26,6 +29,7 @@ class GameTabBar extends StatefulWidget {
     required this.treasury,
     required this.treasuryDelta,
     required this.treasuryNotDefined,
+    this.treasuryCommittedLines = const <TreasuryCommittedSpendLine>[],
     required this.cargoUsed,
     required this.cargoCapacity,
     required this.cargoNotDefined,
@@ -50,6 +54,7 @@ class GameTabBar extends StatefulWidget {
   final int treasury;
   final int? treasuryDelta;
   final bool treasuryNotDefined;
+  final List<TreasuryCommittedSpendLine> treasuryCommittedLines;
   final String? treasuryObserveLabel;
   final int cargoUsed;
   final int cargoCapacity;

@@ -194,6 +194,7 @@ List<WidgetbookNode> get gameTabBarDirectories => [
           ),
         ),
       ),
+      ..._treasuryDetailsTabBarStories,
       WidgetbookUseCase(
         name: 'Extraction disc legend — wide',
         builder: (context) {
@@ -583,6 +584,7 @@ Widget _gameTabBarStoryFrame({
   int regionIndex = 0,
   int treasury = 12345,
   int? treasuryDelta,
+  bool treasuryNotDefined = false,
   int unreadBadgeCount = 0,
   bool showFeed = false,
   bool showPlayersBar = true,
@@ -611,6 +613,7 @@ Widget _gameTabBarStoryFrame({
               regionIndex: regionIndex,
               treasury: treasury,
               treasuryDelta: treasuryDelta,
+              treasuryNotDefined: treasuryNotDefined,
               unreadBadgeCount: unreadBadgeCount,
               showFeed: showFeed,
               showPlayersBar: showPlayersBar,
@@ -636,6 +639,7 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.regionIndex,
     required this.treasury,
     required this.treasuryDelta,
+    this.treasuryNotDefined = false,
     required this.unreadBadgeCount,
     required this.showFeed,
     required this.showPlayersBar,
@@ -653,6 +657,7 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final int regionIndex;
   final int treasury;
   final int? treasuryDelta;
+  final bool treasuryNotDefined;
   final int unreadBadgeCount;
   final bool showFeed;
   final bool showPlayersBar;
@@ -687,7 +692,7 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       newWorldLabel: 'New World',
       treasury: widget.treasury,
       treasuryDelta: widget.treasuryDelta,
-      treasuryNotDefined: false,
+      treasuryNotDefined: widget.treasuryNotDefined,
       cargoUsed: widget.cargoUsed,
       cargoCapacity: widget.cargoCapacity,
       cargoNotDefined: false,
