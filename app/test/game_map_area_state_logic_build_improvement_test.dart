@@ -51,9 +51,7 @@ void main() {
         ),
         ownUnitsById: {},
         provincesById: {},
-        visibilityByTile: const {
-          selectedTileKey: VisibilityLevel.fullyVisible,
-        },
+        visibilityByTile: const {selectedTileKey: VisibilityLevel.fullyVisible},
         prospectedTiles: {},
         diplomacyByOtherId: {},
       );
@@ -68,8 +66,7 @@ void main() {
       }) {
         final stockpile = ct_models.Stockpile(
           quantities:
-              stockpileQuantities ??
-              const {'lumber': 999, 'castIron': 999},
+              stockpileQuantities ?? const {'lumber': 999, 'castIron': 999},
         );
         return ct_models.Game(
           id: 'g',
@@ -138,7 +135,7 @@ void main() {
         );
       }
 
-      ({bool showIcon, bool enabled, bool hasBuilderUnits}) buildState({
+      ({bool showIcon, bool enabled, bool hasMatchingUnits}) buildState({
         required ct_models.Game game,
         MapTopology? topology,
         PlayerView? playerView,
@@ -182,7 +179,7 @@ void main() {
         final state = buildState(game: makeGame());
         expect(state.showIcon, isTrue);
         expect(state.enabled, isFalse);
-        expect(state.hasBuilderUnits, isTrue);
+        expect(state.hasMatchingUnits, isTrue);
       });
 
       test('hides icon when tile has no resource', () {
@@ -201,7 +198,7 @@ void main() {
         );
         expect(state.showIcon, isTrue);
         expect(state.enabled, isFalse);
-        expect(state.hasBuilderUnits, isFalse);
+        expect(state.hasMatchingUnits, isFalse);
       });
 
       // Pipeline contract (A), Refs #1990 — SPEC/program/order-suggestions.md §

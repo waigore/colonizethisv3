@@ -94,6 +94,7 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mi
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';

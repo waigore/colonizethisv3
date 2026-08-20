@@ -147,7 +147,7 @@ void main() {
         onProspectWithExplorerTap: () {},
         showBuildImprovementActionIcon: true,
         buildImprovementActionEnabled: true,
-        buildImprovementActionHasBuilderUnits: true,
+        buildImprovementActionHasMatchingUnits: true,
         onBuildImprovementTap: () {},
       );
       final exploreFinder = find.byTooltip('Explore with explorer');

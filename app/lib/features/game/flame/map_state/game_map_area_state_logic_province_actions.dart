@@ -4,6 +4,8 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'game_map_area_province_action_states.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show ProvinceInlineActionState;
 import 'game_map_area_province_action_states_establish_consulate.dart';
 import 'game_map_area_province_action_states_offer_peace.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -15,8 +17,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
   /// Returns province-overlay prospect action visibility + enablement.
   ///
   /// Thin forwarder to [GameMapAreaProvinceActionStates.prospect] (#2575).
-  static ({bool showIcon, bool enabled, bool hasExplorerUnits})
-  provinceProspectActionState({
+  static ProvinceInlineActionState provinceProspectActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -50,8 +51,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     currentOrders: currentOrders,
   );
 
-  static ({bool showIcon, bool enabled, bool hasExplorerUnits})
-  provinceExploreActionState({
+  static ProvinceInlineActionState provinceExploreActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -70,8 +70,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
   /// SPEC anchor: `SPEC/program/order-suggestions.md` § Authoritative pipeline
   /// references this method by name; the forwarder keeps that reference valid
   /// after the #2575 module split.
-  static ({bool showIcon, bool enabled, bool hasBuilderUnits})
-  provinceBuildImprovementActionState({
+  static ProvinceInlineActionState provinceBuildImprovementActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -91,8 +90,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits})
-  provinceBuildRoadActionState({
+  static ProvinceInlineActionState provinceBuildRoadActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -112,8 +110,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits})
-  provinceBuildFortActionState({
+  static ProvinceInlineActionState provinceBuildFortActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -133,8 +130,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits})
-  provinceBuildPortActionState({
+  static ProvinceInlineActionState provinceBuildPortActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -154,8 +150,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasRailBuilderUnits})
-  provinceBuildRailActionState({
+  static ProvinceInlineActionState provinceBuildRailActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -175,8 +170,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasMerchantUnits})
-  provincePurchaseLandActionState({
+  static ProvinceInlineActionState provincePurchaseLandActionState({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,

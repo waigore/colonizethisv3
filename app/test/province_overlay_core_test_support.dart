@@ -14,6 +14,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleProvinceIdForOverlay,
         sampleSeaZoneIdForOverlay,
         sampleTileKeyForProvinceOverlay;
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 
@@ -65,7 +66,9 @@ RegionMapViewData regionWithVisibility(
 ) {
   return regionWithCells(
     base,
-    base.cells.map((c) => copyProvinceOverlayCell(c, visibility: visibilityFor(c))).toList(),
+    base.cells
+        .map((c) => copyProvinceOverlayCell(c, visibility: visibilityFor(c)))
+        .toList(),
   );
 }
 
@@ -94,7 +97,7 @@ Future<void> pumpProvinceOverlay(
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
-  bool buildImprovementActionHasBuilderUnits = false,
+  bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
   Size? mediaQuerySize,
   bool settle = true,
@@ -113,17 +116,33 @@ Future<void> pumpProvinceOverlay(
           playerView: demoHumanPlayerViewForOverlay,
           onHighlightTile: onHighlightTile,
           onClose: onClose,
-          showProspectActionIcon: showProspectActionIcon,
-          prospectActionEnabled: prospectActionEnabled,
-          onProspectWithExplorerTap: onProspectWithExplorerTap,
-          showExploreActionIcon: showExploreActionIcon,
-          exploreActionEnabled: exploreActionEnabled,
-          onExploreWithExplorerTap: onExploreWithExplorerTap,
-          showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-          buildImprovementActionEnabled: buildImprovementActionEnabled,
-          buildImprovementActionHasBuilderUnits:
-              buildImprovementActionHasBuilderUnits,
-          onBuildImprovementTap: onBuildImprovementTap,
+          civilianInlineActions: provinceOverlayInlineActions(
+            explore: (
+              showIcon: showExploreActionIcon,
+              enabled: exploreActionEnabled,
+              hasMatchingUnits: exploreActionEnabled,
+            ),
+            prospect: (
+              showIcon: showProspectActionIcon,
+              enabled: prospectActionEnabled,
+              hasMatchingUnits: prospectActionEnabled,
+            ),
+            buildImprovement: (
+              showIcon: showBuildImprovementActionIcon,
+              enabled: buildImprovementActionEnabled,
+              hasMatchingUnits: buildImprovementActionHasMatchingUnits,
+            ),
+          ),
+          inlineActionCallbacks: (
+            onExploreWithExplorerTap: onExploreWithExplorerTap,
+            onProspectWithExplorerTap: onProspectWithExplorerTap,
+            onBuildImprovementTap: onBuildImprovementTap,
+            onBuildRoadTap: null,
+            onBuildFortTap: null,
+            onBuildPortTap: null,
+            onBuildRailroadTap: null,
+            onPurchaseLandTap: null,
+          ),
         ),
       ),
     ),
@@ -146,7 +165,7 @@ Future<void> pumpProvinceOverlayDemo(
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
-  bool buildImprovementActionHasBuilderUnits = false,
+  bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
   Size? mediaQuerySize,
   Game? game,
@@ -165,7 +184,8 @@ Future<void> pumpProvinceOverlayDemo(
     onExploreWithExplorerTap: onExploreWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+    buildImprovementActionHasMatchingUnits:
+        buildImprovementActionHasMatchingUnits,
     onBuildImprovementTap: onBuildImprovementTap,
     mediaQuerySize: mediaQuerySize,
     game: game,

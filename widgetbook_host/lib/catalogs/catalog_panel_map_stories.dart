@@ -76,49 +76,49 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
       WidgetbookUseCase(
         name: 'Standalone — tile Build road enabled',
         builder: (context) => _provinceOverlayBuildRoadStory(
-          showBuildRoadActionIcon: true,
-          buildRoadActionEnabled: true,
-          buildRoadActionHasEngineerUnits: true,
+          showIcon: true,
+          enabled: true,
+          hasMatchingUnits: true,
         ),
       ),
       WidgetbookUseCase(
         name: 'Standalone — tile Build road disabled',
         builder: (context) => _provinceOverlayBuildRoadStory(
-          showBuildRoadActionIcon: true,
-          buildRoadActionEnabled: false,
-          buildRoadActionHasEngineerUnits: false,
+          showIcon: true,
+          enabled: false,
+          hasMatchingUnits: false,
         ),
       ),
       WidgetbookUseCase(
         name: 'Standalone — tile Build road hidden',
         builder: (context) => _provinceOverlayBuildRoadStory(
-          showBuildRoadActionIcon: false,
-          buildRoadActionEnabled: false,
-          buildRoadActionHasEngineerUnits: false,
+          showIcon: false,
+          enabled: false,
+          hasMatchingUnits: false,
         ),
       ),
       WidgetbookUseCase(
         name: 'Standalone — tile Build fort enabled',
         builder: (context) => _provinceOverlayBuildFortStory(
-          showBuildFortActionIcon: true,
-          buildFortActionEnabled: true,
-          buildFortActionHasEngineerUnits: true,
+          showIcon: true,
+          enabled: true,
+          hasMatchingUnits: true,
         ),
       ),
       WidgetbookUseCase(
         name: 'Standalone — tile Build fort disabled',
         builder: (context) => _provinceOverlayBuildFortStory(
-          showBuildFortActionIcon: true,
-          buildFortActionEnabled: false,
-          buildFortActionHasEngineerUnits: false,
+          showIcon: true,
+          enabled: false,
+          hasMatchingUnits: false,
         ),
       ),
       WidgetbookUseCase(
         name: 'Standalone — tile Build fort hidden',
         builder: (context) => _provinceOverlayBuildFortStory(
-          showBuildFortActionIcon: false,
-          buildFortActionEnabled: false,
-          buildFortActionHasEngineerUnits: false,
+          showIcon: false,
+          enabled: false,
+          hasMatchingUnits: false,
         ),
       ),
       ...provinceOverlayBuildPortUseCases,
@@ -126,25 +126,25 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
       WidgetbookUseCase(
         name: 'Standalone — tile Purchase land enabled',
         builder: (context) => _provinceOverlayPurchaseLandStory(
-          showPurchaseLandActionIcon: true,
-          purchaseLandActionEnabled: true,
-          purchaseLandActionHasMerchantUnits: true,
+          showIcon: true,
+          enabled: true,
+          hasMatchingUnits: true,
         ),
       ),
       WidgetbookUseCase(
         name: 'Standalone — tile Purchase land disabled',
         builder: (context) => _provinceOverlayPurchaseLandStory(
-          showPurchaseLandActionIcon: true,
-          purchaseLandActionEnabled: false,
-          purchaseLandActionHasMerchantUnits: false,
+          showIcon: true,
+          enabled: false,
+          hasMatchingUnits: false,
         ),
       ),
       WidgetbookUseCase(
         name: 'Standalone — tile Purchase land hidden',
         builder: (context) => _provinceOverlayPurchaseLandStory(
-          showPurchaseLandActionIcon: false,
-          purchaseLandActionEnabled: false,
-          purchaseLandActionHasMerchantUnits: false,
+          showIcon: false,
+          enabled: false,
+          hasMatchingUnits: false,
         ),
       ),
       WidgetbookUseCase(
@@ -294,9 +294,9 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
 
 /// MAP20001 Military **Build fort** inline-action variants. Refs #4280.
 Widget _provinceOverlayBuildFortStory({
-  required bool showBuildFortActionIcon,
-  required bool buildFortActionEnabled,
-  required bool buildFortActionHasEngineerUnits,
+  required bool showIcon,
+  required bool enabled,
+  required bool hasMatchingUnits,
 }) {
   final game = demoGameForOverlay;
   final region = demoRegionForOverlay;
@@ -310,10 +310,23 @@ Widget _provinceOverlayBuildFortStory({
       selectedTileKey: sampleTileKeyForProvinceOverlay,
       humanPlayerId: game.players.first.id,
       playerView: demoHumanPlayerViewForOverlay,
-      showBuildFortActionIcon: showBuildFortActionIcon,
-      buildFortActionEnabled: buildFortActionEnabled,
-      buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
-      onBuildFortTap: () {},
+      civilianInlineActions: provinceOverlayInlineActions(
+        buildFort: (
+          showIcon: showIcon,
+          enabled: enabled,
+          hasMatchingUnits: hasMatchingUnits,
+        ),
+      ),
+      inlineActionCallbacks: (
+        onExploreWithExplorerTap: null,
+        onProspectWithExplorerTap: null,
+        onBuildImprovementTap: null,
+        onBuildRoadTap: null,
+        onBuildFortTap: () {},
+        onBuildPortTap: null,
+        onBuildRailroadTap: null,
+        onPurchaseLandTap: null,
+      ),
       onClose: () {},
     ),
   );
@@ -321,9 +334,9 @@ Widget _provinceOverlayBuildFortStory({
 
 /// MAP20001 Tile **Build road** inline-action variants. Refs #4260.
 Widget _provinceOverlayBuildRoadStory({
-  required bool showBuildRoadActionIcon,
-  required bool buildRoadActionEnabled,
-  required bool buildRoadActionHasEngineerUnits,
+  required bool showIcon,
+  required bool enabled,
+  required bool hasMatchingUnits,
 }) {
   final game = demoGameForOverlay;
   final region = demoRegionForOverlay;
@@ -337,10 +350,23 @@ Widget _provinceOverlayBuildRoadStory({
       selectedTileKey: sampleTileKeyForProvinceOverlay,
       humanPlayerId: game.players.first.id,
       playerView: demoHumanPlayerViewForOverlay,
-      showBuildRoadActionIcon: showBuildRoadActionIcon,
-      buildRoadActionEnabled: buildRoadActionEnabled,
-      buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
-      onBuildRoadTap: () {},
+      civilianInlineActions: provinceOverlayInlineActions(
+        buildRoad: (
+          showIcon: showIcon,
+          enabled: enabled,
+          hasMatchingUnits: hasMatchingUnits,
+        ),
+      ),
+      inlineActionCallbacks: (
+        onExploreWithExplorerTap: null,
+        onProspectWithExplorerTap: null,
+        onBuildImprovementTap: null,
+        onBuildRoadTap: () {},
+        onBuildFortTap: null,
+        onBuildPortTap: null,
+        onBuildRailroadTap: null,
+        onPurchaseLandTap: null,
+      ),
       onClose: () {},
     ),
   );
@@ -348,9 +374,9 @@ Widget _provinceOverlayBuildRoadStory({
 
 /// MAP20001 Tile **Purchase land** inline-action variants. Refs #4274.
 Widget _provinceOverlayPurchaseLandStory({
-  required bool showPurchaseLandActionIcon,
-  required bool purchaseLandActionEnabled,
-  required bool purchaseLandActionHasMerchantUnits,
+  required bool showIcon,
+  required bool enabled,
+  required bool hasMatchingUnits,
 }) {
   final game = demoGameForOverlay;
   final region = demoRegionForOverlay;
@@ -364,10 +390,23 @@ Widget _provinceOverlayPurchaseLandStory({
       selectedTileKey: sampleTileKeyForProvinceOverlay,
       humanPlayerId: game.players.first.id,
       playerView: demoHumanPlayerViewForOverlay,
-      showPurchaseLandActionIcon: showPurchaseLandActionIcon,
-      purchaseLandActionEnabled: purchaseLandActionEnabled,
-      purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
-      onPurchaseLandTap: () {},
+      civilianInlineActions: provinceOverlayInlineActions(
+        purchaseLand: (
+          showIcon: showIcon,
+          enabled: enabled,
+          hasMatchingUnits: hasMatchingUnits,
+        ),
+      ),
+      inlineActionCallbacks: (
+        onExploreWithExplorerTap: null,
+        onProspectWithExplorerTap: null,
+        onBuildImprovementTap: null,
+        onBuildRoadTap: null,
+        onBuildFortTap: null,
+        onBuildPortTap: null,
+        onBuildRailroadTap: null,
+        onPurchaseLandTap: () {},
+      ),
       onClose: () {},
     ),
   );

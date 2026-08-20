@@ -14,6 +14,8 @@ import 'game_map_area_province_action_states_offer_peace.dart';
 import 'game_map_area_province_action_states_prospect.dart';
 import 'game_map_area_province_action_states_purchase_land.dart';
 import 'game_map_area_province_action_states_upgrade_town.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show ProvinceInlineActionState;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -30,39 +32,8 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 class GameMapAreaProvinceActionStates {
   GameMapAreaProvinceActionStates._();
 
-  static const ({bool showIcon, bool enabled, bool hasExplorerUnits})
-  kHiddenExplorerInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasExplorerUnits: false,
-  );
-  static const ({bool showIcon, bool enabled, bool hasBuilderUnits})
-  kHiddenBuilderInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasBuilderUnits: false,
-  );
-  static const ({bool showIcon, bool enabled, bool hasEngineerUnits})
-  kHiddenEngineerInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasEngineerUnits: false,
-  );
-  static const ({bool showIcon, bool enabled, bool hasRailBuilderUnits})
-  kHiddenRailBuilderInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasRailBuilderUnits: false,
-  );
-  static const ({bool showIcon, bool enabled, bool hasMerchantUnits})
-  kHiddenMerchantInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasMerchantUnits: false,
-  );
-
   /// Returns province-overlay prospect action visibility + enablement.
-  static ({bool showIcon, bool enabled, bool hasExplorerUnits}) prospect({
+  static ProvinceInlineActionState prospect({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -96,7 +67,7 @@ class GameMapAreaProvinceActionStates {
     currentOrders: currentOrders,
   );
 
-  static ({bool showIcon, bool enabled, bool hasExplorerUnits}) explore({
+  static ProvinceInlineActionState explore({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -112,8 +83,7 @@ class GameMapAreaProvinceActionStates {
     cachedExploreEligibleTileKeys: cachedExploreEligibleTileKeys,
   );
 
-  static ({bool showIcon, bool enabled, bool hasBuilderUnits})
-  buildImprovement({
+  static ProvinceInlineActionState buildImprovement({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -133,7 +103,7 @@ class GameMapAreaProvinceActionStates {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildRoad({
+  static ProvinceInlineActionState buildRoad({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -153,7 +123,7 @@ class GameMapAreaProvinceActionStates {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildFort({
+  static ProvinceInlineActionState buildFort({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -173,7 +143,7 @@ class GameMapAreaProvinceActionStates {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildPort({
+  static ProvinceInlineActionState buildPort({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -193,7 +163,7 @@ class GameMapAreaProvinceActionStates {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasRailBuilderUnits}) buildRail({
+  static ProvinceInlineActionState buildRail({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -213,7 +183,7 @@ class GameMapAreaProvinceActionStates {
     tileMapByRegion: tileMapByRegion,
   );
 
-  static ({bool showIcon, bool enabled, bool hasMerchantUnits}) purchaseLand({
+  static ProvinceInlineActionState purchaseLand({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,

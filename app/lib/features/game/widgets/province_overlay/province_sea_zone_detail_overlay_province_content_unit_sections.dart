@@ -18,6 +18,7 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mi
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 
 ({Widget economic, Widget military, Widget civilian, Widget naval})
@@ -33,9 +34,7 @@ buildProvinceIntelGatedUnitSections({
   required List<Unit> civilian,
   required List<Fleet> fleetsInPort,
   required int fortLevel,
-  required bool showBuildFortActionIcon,
-  required bool buildFortActionEnabled,
-  required bool buildFortActionHasEngineerUnits,
+  required ProvinceInlineActionState buildFortAction,
   required String? selectedTileKey,
   VoidCallback? onBuildFortTap,
   bool showMoveArmyControl = false,
@@ -91,9 +90,8 @@ buildProvinceIntelGatedUnitSections({
           provinceId: provinceId,
           draftOrders: draftOrders,
           fortLevel: fortLevel,
-          showBuildFortActionIcon: showBuildFortActionIcon,
-          buildFortActionEnabled: buildFortActionEnabled,
-          buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
+          showBuildFortActionIcon: buildFortAction.showIcon,
+          buildFortActionEnabled: buildFortAction.enabled,
           buildFortTooltip: selectedTileKey == null
               ? l10n.provinceOverlay_tileBuildFortDisabledTooltip
               : provinceOverlayBuildFortTooltip(
@@ -102,8 +100,8 @@ buildProvinceIntelGatedUnitSections({
                   humanPlayerId: humanPlayerId,
                   currentOrders: draftOrders,
                   selectedTileKey: selectedTileKey,
-                  enabled: buildFortActionEnabled,
-                  hasEngineerUnits: buildFortActionHasEngineerUnits,
+                  enabled: buildFortAction.enabled,
+                  hasMatchingUnits: buildFortAction.hasMatchingUnits,
                 ),
           onBuildFortTap: onBuildFortTap,
           showMoveArmyControl: showMoveArmyControl,
