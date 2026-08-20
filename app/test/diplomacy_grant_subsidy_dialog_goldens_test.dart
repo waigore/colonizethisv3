@@ -128,8 +128,7 @@ void main() {
     expect(find.text('Cost: No per-turn gold charge.'), findsOneWidget);
     expect(
       find.text(
-        'Effect: 5% subsidy with England while active; '
-        'market terms are affected.',
+        'Effect: ${subsidyFillPriceConsequence(targetDisplayName: 'England', percent: 5)}',
       ),
       findsOneWidget,
     );

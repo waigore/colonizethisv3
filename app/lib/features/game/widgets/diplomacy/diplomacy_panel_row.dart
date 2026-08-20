@@ -191,11 +191,13 @@ class DiplomacyRow extends StatelessWidget {
     if (data.activeSubsidyPercent != null) {
       lines.addAll([
         const SizedBox(height: 4),
-        Text(
-          l10n.diplomacy_panel_outgoingSubsidy(
+        _subsidyEconomicLine(
+          compact: l10n.diplomacy_panel_outgoingSubsidy(
             data.activeSubsidyPercent!,
             data.displayName,
           ),
+          percent: data.activeSubsidyPercent!,
+          lineKey: const Key('diplomacyOutgoingSubsidyLine'),
           style: style,
         ),
       ]);
@@ -212,13 +214,33 @@ class DiplomacyRow extends StatelessWidget {
     if (data.pendingSubsidyPercent != null) {
       lines.addAll([
         const SizedBox(height: 4),
-        Text(
-          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyPercent!),
+        _subsidyEconomicLine(
+          compact: l10n.diplomacy_panel_pendingSubsidy(
+            data.pendingSubsidyPercent!,
+          ),
+          percent: data.pendingSubsidyPercent!,
+          lineKey: const Key('diplomacyPendingSubsidyLine'),
           style: style,
         ),
       ]);
     }
     return lines;
+  }
+
+  Widget _subsidyEconomicLine({
+    required String compact,
+    required int percent,
+    required Key lineKey,
+    required TextStyle style,
+  }) {
+    final tooltip = subsidyFillPriceConsequenceTooltip(
+      targetDisplayName: data.displayName,
+      percent: percent,
+    );
+    return Tooltip(
+      message: tooltip,
+      child: Text(compact, key: lineKey, style: style, semanticsLabel: tooltip),
+    );
   }
 
   Widget _buildActionButtons({bool alignEnd = false}) {

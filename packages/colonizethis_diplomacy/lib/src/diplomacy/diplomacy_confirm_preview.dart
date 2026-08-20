@@ -113,9 +113,26 @@ List<String> _grantAid(String target, int amount) => [
   'Effect: Standing with $target improves when the grant resolves.',
 ];
 
+/// First-order buy/sell fill copy for a subsidy percent (Refs #4546).
+/// Applies only to fills with [targetDisplayName]; not a per-turn gold charge.
+String subsidyFillPriceConsequence({
+  required String targetDisplayName,
+  required int percent,
+}) =>
+    'On deals that fill with $targetDisplayName, you pay $percent% more when '
+    'buying from them and receive $percent% less when selling to them.';
+
+/// Compact-row Tooltip / semantics for active or pending subsidy (GAME30001).
+String subsidyFillPriceConsequenceTooltip({
+  required String targetDisplayName,
+  required int percent,
+}) =>
+    '${subsidyFillPriceConsequence(targetDisplayName: targetDisplayName, percent: percent)} '
+    'There is no per-turn gold charge.';
+
 List<String> _setSubsidy(String target, int percent) => [
   'Cost: No per-turn gold charge.',
-  'Effect: ${percent}% subsidy with $target while active; market terms are affected.',
+  'Effect: ${subsidyFillPriceConsequence(targetDisplayName: target, percent: percent)}',
 ];
 
 List<String> _establishOverture({

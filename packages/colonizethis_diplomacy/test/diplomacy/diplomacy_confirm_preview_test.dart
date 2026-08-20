@@ -95,7 +95,19 @@ void main() {
       targetDisplayName: 'Bavaria',
     );
     final subsidyBody = subsidy.join('\n');
-    expect(subsidyBody, contains('15%'));
     expect(subsidyBody, contains('No per-turn gold'));
+    expect(
+      subsidyBody,
+      contains(
+        subsidyFillPriceConsequence(targetDisplayName: 'Bavaria', percent: 15),
+      ),
+    );
+    expect(
+      subsidyBody.toLowerCase(),
+      isNot(contains('market terms are affected')),
+    );
+    expect(subsidyBody, isNot(contains('+0.2')));
+    expect(subsidyBody, isNot(contains('-50')));
+    expect(subsidyBody, isNot(contains('-10')));
   });
 }

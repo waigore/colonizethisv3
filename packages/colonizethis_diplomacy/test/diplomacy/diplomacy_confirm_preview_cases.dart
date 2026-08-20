@@ -125,6 +125,32 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     },
   ),
   (
+    name:
+        'set subsidy states buy surcharge and sell discount without vague market terms',
+    order: const DiplomaticOrder(
+      type: DiplomaticOrderType.setSubsidy,
+      targetFactionId: previewMinorId,
+      amount: 10,
+    ),
+    targetDisplayName: 'Bavaria',
+    assertLines: (lines, body) {
+      expect(body, contains('No per-turn gold charge'));
+      expect(
+        body,
+        contains(
+          subsidyFillPriceConsequence(
+            targetDisplayName: 'Bavaria',
+            percent: 10,
+          ),
+        ),
+      );
+      expect(body.toLowerCase(), isNot(contains('market terms are affected')));
+      expect(body, isNot(contains('+0.2')));
+      expect(body, isNot(contains('-50')));
+      expect(body, isNot(contains('-10')));
+    },
+  ),
+  (
     name: 'embassy overture shows single treasury cost',
     order: const DiplomaticOrder(
       type: DiplomaticOrderType.establishOverture,
