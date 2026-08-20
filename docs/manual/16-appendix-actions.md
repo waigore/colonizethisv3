@@ -67,7 +67,7 @@ Declare War, Offer Peace, Alliance, Break Alliance, or Establish Overture toward
 | Cancel pending or in-progress work | `UNIT10001` **Civilian units panel** → civilian **Cancel** → confirmation. | Pending order is removed; in-progress work clears and unit returns to origin; no material refund. |
 | Split / combine armies | `UNIT20001` **Military units panel** → **Split Army**, or select same-province armies → **Combine**. Map/province-panel detach-then-move also opens Split Army (**Detach a field army**) before `DLG20001`. | Immediate; split needs a non-empty regiment subset; combine requires same province. |
 | Split / combine fleets | `UNIT30001` **Naval units panel** → **Split**, or select fleets sharing one port/sea zone → **Combine**. Map **Detach and sail** also opens Home Fleet split (**Detach a squadron**) before `DLG30001`. Home Fleet split shows remaining cargo holds versus this turn’s overseas load. | Immediate; non-Home split retains one ship; Home Fleet survives empty. |
-| Transfer to Home Fleet | `UNIT30001` **Naval units panel** → eligible fleet **Transfer to Home Fleet** → `DLG40001` → **Transfer**. | Immediate; selected hulls move home; the fleet must be in a port that meets the capital-port rules for transfer. |
+| Transfer to Home Fleet | `UNIT30001` **Naval units panel** → eligible fleet **Transfer to Home Fleet** → `DLG40001` → **Transfer**. | Immediate; selected hulls move home; the fleet must be in a port that meets the capital-port rules for transfer. A line shows remaining Home Fleet holds, this turn’s overseas load, and holds free for trade bids. |
 
 ## Counsel
 
