@@ -197,6 +197,10 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_build_port_stories.dart';
 part 'catalog_panel_map_build_railroad_stories.dart';
+part 'catalog_panel_map_build_road_stories.dart';
+part 'catalog_panel_map_build_fort_stories.dart';
+part 'catalog_panel_map_purchase_land_stories.dart';
+part 'catalog_panel_map_upgrade_town_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_naval_mission_stories.dart';
 part 'catalog_panel_map_detach_sail_stories.dart';
