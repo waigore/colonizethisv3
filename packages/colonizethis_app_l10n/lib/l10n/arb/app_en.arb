@@ -4777,6 +4777,103 @@
   "@mapControls_cargoHold_details_counsel": {
     "description": "Counsel line in the cargo details popover."
   },
+  "mapControls_treasury_details_current": "Treasury: {amount}",
+  "@mapControls_treasury_details_current": {
+    "description": "Current treasury row in the map gold details popover (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_forecast": "Next-turn forecast: {delta}",
+  "@mapControls_treasury_details_forecast": {
+    "description": "Signed Next-turn forecast row in the map gold details popover (Refs #4560).",
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_committedHeading": "Already committed",
+  "@mapControls_treasury_details_committedHeading": {
+    "description": "Heading above non-zero committed gold lines (Refs #4560)."
+  },
+  "mapControls_treasury_details_line_research": "Research funding: £{amount}",
+  "@mapControls_treasury_details_line_research": {
+    "description": "Committed research spend line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_marketBids": "Market bids: £{amount}",
+  "@mapControls_treasury_details_line_marketBids": {
+    "description": "Committed staged market bid spend line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_grantAid": "Grant aid: £{amount}",
+  "@mapControls_treasury_details_line_grantAid": {
+    "description": "Committed grant-aid spend line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_overtures": "Diplomatic overtures: £{amount}",
+  "@mapControls_treasury_details_line_overtures": {
+    "description": "Committed overture treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_recruitWorkers": "Recruit and train workers: £{amount}",
+  "@mapControls_treasury_details_line_recruitWorkers": {
+    "description": "Committed recruit/train worker treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_trainUnits": "Train units: £{amount}",
+  "@mapControls_treasury_details_line_trainUnits": {
+    "description": "Committed build-unit treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_purchaseLand": "Purchase land: £{amount}",
+  "@mapControls_treasury_details_line_purchaseLand": {
+    "description": "Committed purchase-land treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_formatExact": "Exact",
+  "@mapControls_treasury_details_formatExact": {
+    "description": "Exact number format toggle in the treasury details popover (Refs #4560)."
+  },
+  "mapControls_treasury_details_formatCompact": "Compact",
+  "@mapControls_treasury_details_formatCompact": {
+    "description": "Compact number format toggle in the treasury details popover (Refs #4560)."
+  },
+  "mapControls_treasury_details_counsel": "The signed forecast also includes extraction, riches converting to gold, market fills, and the rest of Next turn — those are not listed here.",
+  "@mapControls_treasury_details_counsel": {
+    "description": "Counsel line explaining non-itemized forecast effects (Refs #4560)."
+  },
   "mapControls_labourFeeding": "{effective}/{capacity}",
   "@mapControls_labourFeeding": {
     "description": "Map tab-bar labour/feeding indicator fraction (Refs #4506).",

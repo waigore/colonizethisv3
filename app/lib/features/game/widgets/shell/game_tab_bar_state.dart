@@ -2,7 +2,6 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../screens/game/game_screen_shared.dart' show kTreasuryIndicatorKey;
 import 'cargo_hold_indicator_support.dart';
@@ -11,30 +10,15 @@ import 'game_tab_bar.dart';
 import 'game_tab_bar_indicators.dart';
 import 'game_tab_bar_region_tabs.dart';
 import 'old_world_race_chip.dart';
+import 'treasury_details_indicator_support.dart';
 
 /// Stateful implementation for [GameTabBar] (Refs #4117 de-part).
 class GameTabBarState extends State<GameTabBar> {
+  final GlobalKey _treasuryAnchorKey = GlobalKey();
   final GlobalKey _cargoHoldAnchorKey = GlobalKey();
   final GlobalKey _labourFeedingAnchorKey = GlobalKey();
 
-  static final NumberFormat _exactTreasuryFormat =
-      NumberFormat.decimalPattern();
-  static final NumberFormat _abbrevTreasuryFormat = NumberFormat.compact(
-    locale: 'en_US',
-  );
   bool _showExactTreasury = true;
-
-  String _formatTreasury(int value) {
-    if (_showExactTreasury) {
-      return _exactTreasuryFormat.format(value);
-    }
-    final compactRaw = _abbrevTreasuryFormat.format(value);
-    final compact = compactRaw.replaceAll('K', 'k');
-    if (compact.contains('.') || !compact.endsWith('k')) {
-      return compact;
-    }
-    return compact.replaceFirst('k', '.0k');
-  }
 
   Color? _treasuryDeltaColor(int? delta) {
     if (delta == null || delta == 0) {
@@ -45,16 +29,6 @@ class GameTabBarState extends State<GameTabBar> {
         : EditorialMonoclePalette.danger;
   }
 
-  String? _treasuryDeltaLabel(int? delta) {
-    if (delta == null || delta == 0) {
-      return null;
-    }
-    if (delta > 0) {
-      return '+$delta';
-    }
-    return '$delta';
-  }
-
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -62,10 +36,10 @@ class GameTabBarState extends State<GameTabBar> {
         .copyWith(fontFamily: 'monospace', fontSize: 11, height: 1.0);
     final treasuryLabel = widget.treasuryNotDefined
         ? (widget.treasuryObserveLabel ?? '—')
-        : _formatTreasury(widget.treasury);
+        : formatTreasuryAmount(widget.treasury, showExact: _showExactTreasury);
     final deltaLabel = widget.treasuryNotDefined
         ? null
-        : _treasuryDeltaLabel(widget.treasuryDelta);
+        : formatTreasuryDeltaLabel(widget.treasuryDelta);
     final deltaColor = _treasuryDeltaColor(
       deltaLabel == null ? null : widget.treasuryDelta,
     );
@@ -157,20 +131,46 @@ class GameTabBarState extends State<GameTabBar> {
                             key: kTreasuryIndicatorKey,
                             onTap: widget.treasuryNotDefined
                                 ? null
-                                : () => setState(
-                                    () => _showExactTreasury =
-                                        !_showExactTreasury,
-                                  ),
-                            child: GameTabBarTreasuryIndicator(
-                              treasuryLabel: treasuryLabel,
-                              deltaLabel: deltaLabel,
-                              deltaColor: deltaColor,
-                              labelStyle: monoBody.copyWith(
-                                color: EditorialMonoclePalette.accentDim,
-                              ),
-                              deltaStyle: monoBody.copyWith(
-                                fontSize: 10,
-                                color: deltaColor,
+                                : () {
+                                    final RenderBox? tabBarBox =
+                                        context.findRenderObject()
+                                            as RenderBox?;
+                                    final double chromeBottomY =
+                                        (tabBarBox
+                                                ?.localToGlobal(Offset.zero)
+                                                .dy ??
+                                            0) +
+                                        GameTabBar.height;
+                                    showTreasuryDetailsPopover(
+                                      context: context,
+                                      anchorKey: _treasuryAnchorKey,
+                                      chromeBottomY: chromeBottomY,
+                                      l10n: l10n,
+                                      treasury: widget.treasury,
+                                      projectedDelta: widget.treasuryDelta,
+                                      committedLines:
+                                          widget.treasuryCommittedLines,
+                                      showExact: _showExactTreasury,
+                                      onShowExactChanged: (bool next) {
+                                        setState(
+                                          () => _showExactTreasury = next,
+                                        );
+                                      },
+                                    );
+                                  },
+                            child: KeyedSubtree(
+                              key: _treasuryAnchorKey,
+                              child: GameTabBarTreasuryIndicator(
+                                treasuryLabel: treasuryLabel,
+                                deltaLabel: deltaLabel,
+                                deltaColor: deltaColor,
+                                labelStyle: monoBody.copyWith(
+                                  color: EditorialMonoclePalette.accentDim,
+                                ),
+                                deltaStyle: monoBody.copyWith(
+                                  fontSize: 10,
+                                  color: deltaColor,
+                                ),
                               ),
                             ),
                           ),

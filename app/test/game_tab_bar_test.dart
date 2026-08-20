@@ -10,59 +10,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
+import 'game_tab_bar_test_support.dart';
 
 /// Widget tests for the in-game shell tab bar (issue #2861 S2).
 void main() {
   suppressLogsForTests();
 
-  Widget hostFor({
-    int regionIndex = 0,
-    ValueChanged<int>? onRegionIndexChanged,
-    int treasury = 12345,
-    int? treasuryDelta,
-    bool treasuryNotDefined = false,
-    String cargoHoldLabel = '3/12',
-    int cargoUsed = 3,
-    int cargoCapacity = 12,
-    bool cargoNotDefined = false,
-    bool isCargoUsedReliable = true,
-    double width = 600,
-    Widget? trailing,
-  }) {
-    return buildAppShell(
-      child: Scaffold(
-        body: SizedBox(
-          width: width,
-          height: 120,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              GameTabBar(
-                regionIndex: regionIndex,
-                onRegionIndexChanged: onRegionIndexChanged ?? (_) {},
-                oldWorldLabel: 'Old World',
-                newWorldLabel: 'New World',
-                treasury: treasury,
-                treasuryDelta: treasuryDelta,
-                treasuryNotDefined: treasuryNotDefined,
-                cargoUsed: cargoUsed,
-                cargoCapacity: cargoCapacity,
-                cargoNotDefined: cargoNotDefined,
-                isCargoUsedReliable: isCargoUsedReliable,
-                cargoHoldLabel: cargoHoldLabel,
-                trailing: trailing ?? const SizedBox(width: 32, height: 32),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   testWidgets('paints surface fill + 1 px border bottom edge', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor());
+    await tester.pumpWidget(hostGameTabBar());
     await tester.pump();
 
     final decoratedBox = tester.widget<DecoratedBox>(
@@ -80,7 +37,7 @@ void main() {
   testWidgets('pins the bar height to GameTabBar.height (34 dp)', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor());
+    await tester.pumpWidget(hostGameTabBar());
     await tester.pump();
 
     final surfaceSize = tester.getSize(find.byKey(GameTabBar.surfaceKey));
@@ -89,7 +46,7 @@ void main() {
   testWidgets('active region tab label uses --accent', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor(regionIndex: 0));
+    await tester.pumpWidget(hostGameTabBar(regionIndex: 0));
     await tester.pump();
 
     final oldWorldLabel = tester.widget<Text>(find.text('Old World'));
@@ -98,7 +55,7 @@ void main() {
   testWidgets('inactive region tab label uses --muted', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor(regionIndex: 0));
+    await tester.pumpWidget(hostGameTabBar(regionIndex: 0));
     await tester.pump();
 
     final newWorldLabel = tester.widget<Text>(find.text('New World'));
@@ -107,7 +64,7 @@ void main() {
   testWidgets('positive treasury delta resolves to --success', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor(treasuryDelta: 250));
+    await tester.pumpWidget(hostGameTabBar(treasuryDelta: 250));
     await tester.pump();
 
     final deltaText = tester.widget<Text>(find.text('+250'));
@@ -116,34 +73,19 @@ void main() {
   testWidgets('negative treasury delta resolves to --danger', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor(treasuryDelta: -400));
+    await tester.pumpWidget(hostGameTabBar(treasuryDelta: -400));
     await tester.pump();
 
     final deltaText = tester.widget<Text>(find.text('-400'));
     expect(deltaText.style?.color, EditorialMonoclePalette.danger);
   });
-  testWidgets('tapping treasury toggles exact and abbreviated modes', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(hostFor(treasury: 12345));
-    await tester.pump();
 
-    expect(find.text('12,345'), findsOneWidget);
-
-    await tester.tap(find.byKey(kTreasuryIndicatorKey));
-    await tester.pump();
-    expect(find.text('12.3k'), findsOneWidget);
-
-    await tester.tap(find.byKey(kTreasuryIndicatorKey));
-    await tester.pump();
-    expect(find.text('12,345'), findsOneWidget);
-  });
   testWidgets('region tab tap calls onRegionIndexChanged', (
     WidgetTester tester,
   ) async {
     var selected = 0;
     await tester.pumpWidget(
-      hostFor(
+      hostGameTabBar(
         onRegionIndexChanged: (index) => selected = index,
       ),
     );
@@ -156,7 +98,7 @@ void main() {
   testWidgets('cargo hold indicator renders supplied label', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor(cargoHoldLabel: '7/20'));
+    await tester.pumpWidget(hostGameTabBar(cargoHoldLabel: '7/20'));
     await tester.pump();
 
     expect(find.byKey(kCargoHoldIndicatorKey), findsOneWidget);
@@ -166,7 +108,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      hostFor(
+      hostGameTabBar(
         cargoHoldLabel: '10/12',
         cargoUsed: 10,
         cargoCapacity: 12,
@@ -181,7 +123,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      hostFor(
+      hostGameTabBar(
         cargoHoldLabel: '12/12',
         cargoUsed: 12,
         cargoCapacity: 12,
@@ -195,7 +137,7 @@ void main() {
   testWidgets('cargo tooltip exposes plain-language overseas vs holds', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor());
+    await tester.pumpWidget(hostGameTabBar());
     await tester.pump();
 
     expect(
@@ -206,7 +148,7 @@ void main() {
   testWidgets('tapping cargo opens details panel with breakdown rows', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor());
+    await tester.pumpWidget(hostGameTabBar());
     await tester.pump();
 
     await tester.tap(find.byKey(kCargoHoldIndicatorKey));
@@ -224,7 +166,7 @@ void main() {
   testWidgets('dismiss cargo panel via close and reopen on next tap', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor());
+    await tester.pumpWidget(hostGameTabBar());
     await tester.pump();
 
     await tester.tap(find.byKey(kCargoHoldIndicatorKey));
@@ -243,7 +185,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      hostFor(
+      hostGameTabBar(
         cargoHoldLabel: '—/12',
         cargoUsed: 0,
         cargoCapacity: 12,
@@ -316,7 +258,7 @@ void main() {
   testWidgets('negative: treasury delta does not use Material green/red', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(hostFor(treasuryDelta: 100));
+    await tester.pumpWidget(hostGameTabBar(treasuryDelta: 100));
     await tester.pump();
 
     final deltaText = tester.widget<Text>(find.text('+100'));
@@ -329,7 +271,7 @@ void main() {
     (WidgetTester tester) async {
       const Key trailingKey = Key('test_trailing');
       await tester.pumpWidget(
-        hostFor(
+        hostGameTabBar(
           treasuryDelta: 250,
           trailing: const SizedBox(key: trailingKey, width: 28, height: 22),
         ),
@@ -366,7 +308,7 @@ void main() {
     (WidgetTester tester) async {
       const Key trailingKey = Key('test_trailing');
       await tester.pumpWidget(
-        hostFor(
+        hostGameTabBar(
           trailing: const SizedBox(key: trailingKey, width: 28, height: 22),
         ),
       );

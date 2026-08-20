@@ -526,6 +526,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'relation_meter_test.dart' ||
       name == 'game_top_bar_test.dart' ||
       name == 'game_tab_bar_test.dart' ||
+      name == 'game_tab_bar_treasury_details_test.dart' ||
       name == 'player_turn_event_feed_chrome_test.dart' ||
       name == 'game_side_menu_test.dart' ||
       name == 'ct_dark_scaffold_test.dart' ||
