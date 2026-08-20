@@ -162,7 +162,7 @@ rules:
 
   - rule_id: repo.economy_test_file_size
     group: testing
-    title: colonizethis_economy test files must stay at or below 400 physical lines (Refs #3823)
+    title: colonizethis_economy test files must stay at or below 300 physical lines (Refs #4550)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_file_size.dart
@@ -267,7 +267,7 @@ rules:
 
   - rule_id: repo.economy_source_file_size
     group: structure
-    title: colonizethis_economy lib files must stay at or below the phase-8 260 physical-line ceiling (Refs #4299)
+    title: colonizethis_economy lib files must stay at or below the phase-9 250 physical-line ceiling (Refs #4550)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_source_file_size.dart

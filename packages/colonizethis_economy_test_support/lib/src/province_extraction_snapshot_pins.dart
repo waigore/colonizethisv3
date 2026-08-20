@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'extraction_fixture_support.dart';
+import 'province_extraction_projection_scenarios.dart';
 import 'province_extraction_snapshot_scenarios.dart';
 
 void assertProvinceExtractionSnapshot(ProvinceExtractionSnapshotScenario scenario) {
@@ -93,5 +94,192 @@ void assertProvinceImprovableCounts(ProvinceImprovableCountsPin pin) {
       );
       expect(counts, isEmpty);
   }
+}
+
+void assertProvinceExtractionProjection(
+  ProvinceExtractionProjectionScenario scenario,
+) {
+  switch (scenario.pin) {
+    case ProvinceExtractionProjectionPin.draftImproveIgnored:
+      _assertDraftImproveIgnoredProjection();
+    case ProvinceExtractionProjectionPin.ownershipChangeRefreshesDisplay:
+      _assertOwnershipChangeProjection();
+  }
+}
+
+void _assertDraftImproveIgnoredProjection() {
+  const tk = 'oldWorld|p1|0|0';
+  const provinceId = 'oldWorld|p1';
+  final map = TileMapResult(
+    width: 2,
+    height: 1,
+    grid: const [
+      ['p1', 'p1'],
+    ],
+    resourceGrid: const [
+      [Resource.grain, Resource.grain],
+    ],
+  );
+  final topology = const MapTopology(
+    nodes: [
+      TopologyNode(
+        id: 'p1',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: [],
+  );
+
+  final unresolvedGame = resourceExtractorGame(
+    tileState: tileStateFromSpecs([const TileImprovementSpec(tk, 1, 4)]),
+  );
+  final unresolved = projectProvinceExtraction(
+    game: unresolvedGame,
+    tileMapByRegion: {'oldWorld': map},
+    topology: topology,
+    provinceId: provinceId,
+    techCapForPlayer: (_) => 4,
+  );
+  expect(unresolved, isNotNull);
+  final unresolvedGrain = unresolved!.byCommodity['grain']!;
+  expect(unresolvedGrain.full, 1);
+
+  final again = projectProvinceExtraction(
+    game: unresolvedGame,
+    tileMapByRegion: {'oldWorld': map},
+    topology: topology,
+    provinceId: provinceId,
+    techCapForPlayer: (_) => 4,
+  );
+  expect(again, unresolved);
+
+  final resolvedGame = resourceExtractorGame(
+    tileState: tileStateFromSpecs([const TileImprovementSpec(tk, 2, 4)]),
+  );
+  final resolved = projectProvinceExtraction(
+    game: resolvedGame,
+    tileMapByRegion: {'oldWorld': map},
+    topology: topology,
+    provinceId: provinceId,
+    techCapForPlayer: (_) => 4,
+  );
+  expect(resolved, isNotNull);
+  expect(resolved!.byCommodity['grain']!.full, 2);
+  expect(resolved.byCommodity['grain']!.full, isNot(unresolvedGrain.full));
+}
+
+void _assertOwnershipChangeProjection() {
+  const tk = 'oldWorld|p1|0|0';
+  const provinceId = 'oldWorld|p1';
+  const otherProvinceId = 'oldWorld|p2';
+  final map = TileMapResult(
+    width: 2,
+    height: 1,
+    grid: const [
+      ['p1', 'p1'],
+    ],
+    resourceGrid: const [
+      [Resource.grain, Resource.grain],
+    ],
+  );
+  final topology = const MapTopology(
+    nodes: [
+      TopologyNode(
+        id: 'p1',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'p2',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: [],
+  );
+  final tileState = tileStateFromSpecs([
+    const TileImprovementSpec(tk, 2, 4),
+  ]);
+
+  Player gp({required String id, required String capitalId}) {
+    return Player(
+      id: id,
+      displayName: id,
+      isHuman: id == 'pl1',
+      capitalProvinceId: capitalId,
+      capitalTile: CapitalTile(
+        regionId: 'oldWorld',
+        provinceId: capitalId,
+        x: 0,
+        y: 0,
+      ),
+      techUnlocked: const {kTechIdMoldboardPlow: true},
+    );
+  }
+
+  Game gameWithOwner(String p1OwnerId) {
+    final p2OwnerId = p1OwnerId == 'pl1' ? 'pl2' : 'pl1';
+    return gameForNonGpExtractionTest(
+      id: 'g_ownership_projection',
+      capitalTileGrainBonusPerTurn: 3,
+      tileState: tileState,
+      provinces: [
+        Province(
+          id: provinceId,
+          regionId: 'oldWorld',
+          ownerId: p1OwnerId,
+          townDevelopmentLevel: 4,
+        ),
+        Province(
+          id: otherProvinceId,
+          regionId: 'oldWorld',
+          ownerId: p2OwnerId,
+          townDevelopmentLevel: 4,
+        ),
+      ],
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          provinceId: [tk],
+          otherProvinceId: <String>[],
+        },
+      },
+      players: [
+        gp(
+          id: 'pl1',
+          capitalId: p1OwnerId == 'pl1' ? provinceId : otherProvinceId,
+        ),
+        gp(
+          id: 'pl2',
+          capitalId: p1OwnerId == 'pl2' ? provinceId : otherProvinceId,
+        ),
+      ],
+    );
+  }
+
+  final before = projectProvinceExtraction(
+    game: gameWithOwner('pl1'),
+    tileMapByRegion: {'oldWorld': map},
+    topology: topology,
+    provinceId: provinceId,
+    techCapForPlayer: (_) => 4,
+  );
+  expect(before, isNotNull);
+  expect(before!.ownerId, 'pl1');
+  expect(before.byCommodity['grain']!.full, greaterThan(0));
+  expect(before.capitalGrainBonus, 3);
+
+  final after = projectProvinceExtraction(
+    game: gameWithOwner('pl2'),
+    tileMapByRegion: {'oldWorld': map},
+    topology: topology,
+    provinceId: provinceId,
+    techCapForPlayer: (_) => 4,
+  );
+  expect(after, isNotNull);
+  expect(after!.ownerId, 'pl2');
+  expect(after.byCommodity['grain']!.full, greaterThan(0));
+  expect(after.capitalGrainBonus, 3);
+  expect(after.ownerId, isNot(before.ownerId));
 }
 // dart format on

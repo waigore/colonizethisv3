@@ -37,6 +37,7 @@ export 'src/tile_extraction_pipeline_scenarios.dart';
 export 'src/trade_cargo_capacity_scenarios.dart';
 export 'src/treasury_scenarios/treasury_scenarios.dart';
 export 'src/projected_cost_engine_scenarios.dart';
+export 'src/province_extraction_projection_scenarios.dart';
 export 'src/province_extraction_snapshot_pins.dart';
 export 'src/province_extraction_snapshot_scenarios.dart';
 export 'src/purchased_tile_fixture_support.dart';
