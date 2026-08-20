@@ -13,7 +13,11 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckCombatLibFileSize', () {
-    test('passes on current repo tree under phase-4 ceiling', () {
+    test('combatLibFileSizeCeiling is pinned at phase-5 target', () {
+      expect(combatLibFileSizeCeiling, 250);
+    });
+
+    test('passes on current repo tree under phase-5 ceiling', () {
       expect(runCheckCombatLibFileSize('.'), 0);
     });
 
@@ -23,13 +27,13 @@ void main() {
       _writeFile(
         root,
         'packages/colonizethis_combat/lib/src/combat/fat.dart',
-        List.generate(12, (i) => '// line $i').join('\n'),
+        List.generate(252, (i) => '// line $i').join('\n'),
       );
 
       final errors = <String>[];
       final code = runCheckCombatLibFileSize(
         root.path,
-        ceiling: 10,
+        ceiling: 250,
         grandfatheredPaths: const [],
         info: (_) {},
         err: errors.add,

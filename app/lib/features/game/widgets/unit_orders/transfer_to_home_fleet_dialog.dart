@@ -11,6 +11,7 @@ import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_transfer_list.dart';
 import '../province_overlay/sea_zone_name_resolver.dart';
 import '../units/shared/region_labels.dart';
+import 'home_fleet_cargo_consequence.dart';
 
 class TransferToHomeFleetDialog extends StatelessWidget {
   const TransferToHomeFleetDialog({
@@ -20,6 +21,9 @@ class TransferToHomeFleetDialog extends StatelessWidget {
     required this.game,
     required this.humanPlayerId,
     required this.bus,
+    this.overseasCargoUsed = 0,
+    this.isCargoUsedReliable = true,
+    this.cargoNotDefined = false,
   });
 
   /// SPEC/ui/transfer-to-home-fleet-dialog.md — [UiScreenIds.transferToHomeFleetDialog].
@@ -30,6 +34,9 @@ class TransferToHomeFleetDialog extends StatelessWidget {
   final Game game;
   final String humanPlayerId;
   final AppEventBus bus;
+  final int overseasCargoUsed;
+  final bool isCargoUsedReliable;
+  final bool cargoNotDefined;
 
   Map<String, int> _countsForFleet(Fleet fleet) {
     final counts = <String, int>{};
@@ -107,12 +114,11 @@ class TransferToHomeFleetDialog extends StatelessWidget {
     final sourceInitialCounts = _countsForFleet(sourceFleet);
     final homeInitialCounts = _countsForFleet(homeFleet);
     final TextStyle titleStyle =
-        (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
-            .copyWith(
-              color: EditorialMonoclePalette.accent,
-              letterSpacing: 0.05 * 16,
-              fontWeight: FontWeight.w600,
-            );
+        (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)).copyWith(
+          color: EditorialMonoclePalette.accent,
+          letterSpacing: 0.05 * 16,
+          fontWeight: FontWeight.w600,
+        );
     return CtDialogShell(
       maxWidth: 560,
       maxHeight: 520,
@@ -122,10 +128,7 @@ class TransferToHomeFleetDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              l10n.naval_transferToHome_dialogTitle,
-              style: titleStyle,
-            ),
+            Text(l10n.naval_transferToHome_dialogTitle, style: titleStyle),
             CtGap.l,
             CtTransferList(
               listHeight: 240,
@@ -151,6 +154,13 @@ class TransferToHomeFleetDialog extends StatelessWidget {
               },
               onCancel: () => Navigator.of(context).pop(),
               onConfirm: (left, right) => _handleConfirm(left, context),
+              extraContentBuilder: (_, right) => homeFleetTransferCargoLine(
+                l10n: l10n,
+                rightCounts: right,
+                overseasUsed: overseasCargoUsed,
+                isCargoUsedReliable: isCargoUsedReliable,
+                cargoNotDefined: cargoNotDefined,
+              ),
             ),
           ],
         ),
