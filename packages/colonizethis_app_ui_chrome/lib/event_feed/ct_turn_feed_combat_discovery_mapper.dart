@@ -54,12 +54,24 @@ CtEventFeedEntry? mapCtTurnFeedCombatDiscoveryEvent({
       ),
     ct_models.AppNavalCombatResultEvent(
       :final seaZoneId,
+      :final side1OwnerId,
+      :final side2OwnerId,
       :final outcomeName,
+      :final side1CasualtyCount,
+      :final side2CasualtyCount,
+      :final side1Retreated,
+      :final side2Retreated,
     ) =>
       ctTurnFeedEntry(
         text: CtEventFeedText.navalCombatResolvedLine(
           seaZoneLabel: context.seaZoneLabel(seaZoneId),
-          outcomeName: outcomeName,
+          outcomeLabel: CtEventFeedText.navalBattleOutcomeLabel(outcomeName),
+          side1Label: context.factionLabel(side1OwnerId),
+          side2Label: context.factionLabel(side2OwnerId),
+          side1Losses: side1CasualtyCount,
+          side2Losses: side2CasualtyCount,
+          side1Retreated: side1Retreated,
+          side2Retreated: side2Retreated,
         ),
         onTap: context.navalCombatTapForSeaZone(seaZoneId),
       ),
