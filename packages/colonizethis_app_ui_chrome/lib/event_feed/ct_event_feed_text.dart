@@ -90,6 +90,30 @@ class CtEventFeedText {
 
   static String combatResolvedLine({
     required String provinceLabel,
+    required String outcomeLabel,
+    required String attackerLabel,
+    required String defenderLabel,
+    required int attackerLosses,
+    required int defenderLosses,
+  }) =>
+      '$provinceLabel: $outcomeLabel. '
+      '$attackerLabel lost $attackerLosses regiments; '
+      '$defenderLabel lost $defenderLosses.';
+
+  static String landBattleOutcomeLabel(String outcomeName) {
+    return switch (outcomeName) {
+      'attackerVictory' => 'Attacker victory',
+      'defenderVictory' => 'Defender holds',
+      'stalemate' => 'Stalemate',
+      'mutualAnnihilation' => 'Both armies destroyed',
+      _ => 'Battle resolved',
+    };
+  }
+
+  /// Legacy winner/defeated phrasing; prefer [combatResolvedLine] (Refs #4548).
+  @Deprecated('Use combatResolvedLine with outcome and loss counts')
+  static String combatResolvedWinnerLine({
+    required String provinceLabel,
     required String winnerLabel,
     required String defeatedLabel,
   }) =>

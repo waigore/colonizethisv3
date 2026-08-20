@@ -9,15 +9,21 @@ class AppCombatResultEvent extends GameToUIEvent {
     required this.provinceId,
     required this.attackerId,
     required this.defenderId,
-    required this.winnerId,
+    required this.outcomeName,
     required this.turnNumber,
+    this.winnerId,
+    this.attackerCasualtyCount = 0,
+    this.defenderCasualtyCount = 0,
     this.casualties = const {},
   });
   final String provinceId;
   final String attackerId;
   final String defenderId;
-  final String winnerId;
+  final String outcomeName;
+  final String? winnerId;
   final int turnNumber;
+  final int attackerCasualtyCount;
+  final int defenderCasualtyCount;
   final Map<String, int> casualties;
 }
 

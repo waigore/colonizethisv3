@@ -9,6 +9,7 @@ export 'src/combat/combat_mode_selection.dart';
 export 'src/combat/combat_resolver.dart';
 export 'src/combat/combat_resolver_probabilistic.dart';
 export 'src/combat/conflict_detection.dart';
+export 'src/combat/land_battle_resolution_summary.dart';
 export 'src/combat/military_attack_economy.dart';
 export 'src/combat/military_strength.dart';
 export 'src/combat/naval_combat_resolver.dart';

@@ -14,6 +14,8 @@ import 'military_strength.dart';
 /// Result of the multi-attacker engagement loop inside [resolveBattleContext].
 ({
   Set<String> allCasualties,
+  int attackerCasualtyCount,
+  int defenderCasualtyCount,
   String? survivingAttackerFactionId,
   List<String> defenderUnitIds,
   Map<String, General> generalsById,
@@ -41,6 +43,8 @@ runLandBattleMultiAttackerLoop({
   final defenderEffectiveLevelByFaction = <String, int>{};
 
   final allCasualties = <String>{};
+  var attackerCasualtyCount = 0;
+  var defenderCasualtyCount = 0;
   String? survivingAttackerFactionId;
 
   final initialDefenderCount = ctx.defenderUnitIds.length;
@@ -128,6 +132,8 @@ runLandBattleMultiAttackerLoop({
       'defCasualties=${outcome.defenderCasualties.length}',
     );
 
+    attackerCasualtyCount += outcome.attackerCasualties.length;
+    defenderCasualtyCount += outcome.defenderCasualties.length;
     for (final id in outcome.attackerCasualties) {
       allCasualties.add(id);
     }
@@ -168,6 +174,8 @@ runLandBattleMultiAttackerLoop({
 
   return (
     allCasualties: allCasualties,
+    attackerCasualtyCount: attackerCasualtyCount,
+    defenderCasualtyCount: defenderCasualtyCount,
     survivingAttackerFactionId: survivingAttackerFactionId,
     defenderUnitIds: defenderUnitIds,
     generalsById: generalsById,

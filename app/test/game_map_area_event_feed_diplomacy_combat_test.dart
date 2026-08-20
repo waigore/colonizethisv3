@@ -92,12 +92,15 @@ void main() {
           provinceId: 'oldWorld|cap',
           attackerId: harness.humanId,
           defenderId: harness.opponentId,
+          outcomeName: 'attackerVictory',
           winnerId: harness.humanId,
           turnNumber: 1,
+          attackerCasualtyCount: 1,
+          defenderCasualtyCount: 2,
         ),
       ], turnNumber: 2);
 
-      final line = find.textContaining('battle resolved!');
+      final line = find.textContaining('Attacker victory');
       expect(line, findsOneWidget);
       expect(find.byIcon(Icons.chevron_right), findsNothing);
       await tester.tap(line);

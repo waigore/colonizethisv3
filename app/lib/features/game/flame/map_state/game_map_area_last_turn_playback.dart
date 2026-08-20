@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_app_ui_chrome/event_feed/ct_event_feed_text.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -148,13 +149,20 @@ mixin GameMapAreaLastTurnPlayback
     return switch (event) {
       ct_models.AppCombatResultEvent(
         :final provinceId,
-        :final winnerId,
         :final attackerId,
         :final defenderId,
+        :final outcomeName,
+        :final attackerCasualtyCount,
+        :final defenderCasualtyCount,
       ) =>
-        '${provinceLabel(provinceId)} battle resolved! '
-            '${factionLabel(winnerId)} defeated '
-            '${factionLabel(winnerId == attackerId ? defenderId : attackerId)}!',
+        CtEventFeedText.combatResolvedLine(
+          provinceLabel: provinceLabel(provinceId),
+          outcomeLabel: CtEventFeedText.landBattleOutcomeLabel(outcomeName),
+          attackerLabel: factionLabel(attackerId),
+          defenderLabel: factionLabel(defenderId),
+          attackerLosses: attackerCasualtyCount,
+          defenderLosses: defenderCasualtyCount,
+        ),
       ct_models.AppProvinceCapturedEvent(
         :final provinceId,
         :final newOwnerId,

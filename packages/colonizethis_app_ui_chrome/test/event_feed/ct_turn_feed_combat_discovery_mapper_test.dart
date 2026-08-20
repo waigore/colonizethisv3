@@ -12,8 +12,11 @@ void main() {
           provinceId: 'oldWorld|cap',
           attackerId: 'gp1',
           defenderId: 'gp2',
+          outcomeName: 'attackerVictory',
           winnerId: 'gp1',
           turnNumber: 1,
+          attackerCasualtyCount: 2,
+          defenderCasualtyCount: 1,
         ),
         TurnFeedTestContext(
           provinceOverlayTapForProvince: (provinceId) {
@@ -25,11 +28,63 @@ void main() {
 
       expect(
         entry.text,
-        'Capital battle resolved! gp1 defeated gp2!',
+        'Capital: Attacker victory. gp1 lost 2 regiments; gp2 lost 1.',
       );
       expect(entry.linkAffordance, isFalse);
       entry.onTap?.call();
       expect(tappedProvince, 'oldWorld|cap');
+    });
+
+    test('stalemate and zero-loss rows use handbook outcome labels', () {
+      final stalemate = singleTurnFeedEntry(
+        const AppCombatResultEvent(
+          provinceId: 'oldWorld|cap',
+          attackerId: 'gp1',
+          defenderId: 'gp2',
+          outcomeName: 'stalemate',
+          turnNumber: 1,
+        ),
+        TurnFeedTestContext(),
+      );
+      expect(
+        stalemate.text,
+        'Capital: Stalemate. gp1 lost 0 regiments; gp2 lost 0.',
+      );
+
+      final mutual = singleTurnFeedEntry(
+        const AppCombatResultEvent(
+          provinceId: 'oldWorld|cap',
+          attackerId: 'gp1',
+          defenderId: 'gp2',
+          outcomeName: 'mutualAnnihilation',
+          turnNumber: 1,
+          attackerCasualtyCount: 4,
+          defenderCasualtyCount: 3,
+        ),
+        TurnFeedTestContext(),
+      );
+      expect(
+        mutual.text,
+        'Capital: Both armies destroyed. gp1 lost 4 regiments; gp2 lost 3.',
+      );
+
+      final defenderHolds = singleTurnFeedEntry(
+        const AppCombatResultEvent(
+          provinceId: 'oldWorld|cap',
+          attackerId: 'gp1',
+          defenderId: 'gp2',
+          outcomeName: 'defenderVictory',
+          winnerId: 'gp2',
+          turnNumber: 1,
+          attackerCasualtyCount: 5,
+          defenderCasualtyCount: 0,
+        ),
+        TurnFeedTestContext(),
+      );
+      expect(
+        defenderHolds.text,
+        'Capital: Defender holds. gp1 lost 5 regiments; gp2 lost 0.',
+      );
     });
 
     test('AppGeneralMedalGainedEvent uses province medal line', () {

@@ -34,8 +34,11 @@ class GameEventBridge {
             provinceId: event.provinceId,
             attackerId: event.attackerId,
             defenderId: event.defenderId,
+            outcomeName: event.outcomeName,
             winnerId: event.winnerId,
             turnNumber: event.turnNumber,
+            attackerCasualtyCount: event.attackerCasualtyCount,
+            defenderCasualtyCount: event.defenderCasualtyCount,
             casualties: event.casualties,
           ),
         );

@@ -2,15 +2,16 @@ import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_combat/colonizethis_combat.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 import 'combat_phase_land_battle_outcome.dart';
 import 'turn_event_sink.dart';
 
 /// Outcome of applying one land battle resolution path (quick or auto-resolve).
 typedef LandBattleApplyOutcome = ({
   Game state,
+  String outcomeName,
+  int attackerCasualtyCount,
+  int defenderCasualtyCount,
   String? winnerId,
-  Map<String, int> casualties,
 });
 
 LandBattleApplyOutcome applyQuickBattleLandBattle(
@@ -41,18 +42,8 @@ LandBattleApplyOutcome applyQuickBattleLandBattle(
     'defCasualties=${qbResult.defenderCasualties.length}',
   );
 
-  final String? winnerId;
-  if (qbResult.winner == QuickBattleWinner.attacker) {
-    winnerId = ctx.attackers.isNotEmpty ? ctx.attackers.first.factionId : null;
-  } else if (qbResult.winner == QuickBattleWinner.defender) {
-    winnerId = ctx.defenderFactionId;
-  } else {
-    winnerId = null;
-  }
-  final casualties = {
-    for (final id in qbResult.attackerCasualties) id: 1,
-    for (final id in qbResult.defenderCasualties) id: 1,
-  };
+  final summary = landBattleSummaryFromQuickBattle(ctx: ctx, qbResult: qbResult);
+  final winnerId = summary.winnerFactionId;
 
   if (qbResult.winner == QuickBattleWinner.attacker &&
       qbResult.provinceFlips &&
@@ -97,7 +88,13 @@ LandBattleApplyOutcome applyQuickBattleLandBattle(
     }
   }
 
-  return (state: state, winnerId: winnerId, casualties: casualties);
+  return (
+    state: state,
+    outcomeName: summary.outcomeName,
+    attackerCasualtyCount: summary.attackerCasualtyCount,
+    defenderCasualtyCount: summary.defenderCasualtyCount,
+    winnerId: winnerId,
+  );
 }
 
 LandBattleApplyOutcome applyAutoResolveLandBattle(
@@ -110,20 +107,16 @@ LandBattleApplyOutcome applyAutoResolveLandBattle(
   CombatPhaseGeneralLedger combatGeneralLedger, {
   required TurnEventSink sink,
 }) {
-  state = resolveBattleContext(
+  final resolved = resolveBattleContextWithSummary(
     state,
     ctx,
     feedingCoverageByPlayerId: feedingCoverageByPlayerId,
     combatGeneralLedger: combatGeneralLedger,
   );
-  final province = ProvinceId.isPrefixed(ctx.provinceId)
-      ? state.worldState.tryGetProvince(ctx.provinceId)
-      : state.worldState.tryGetProvinceByRegion(
-          ctx.regionId,
-          ctx.provinceId,
-        );
-  final victorId = province?.ownerId;
-  final winnerId = victorId;
+  state = resolved.game;
+  final summary = resolved.summary;
+  final winnerId = summary.winnerFactionId;
+  final victorId = winnerId;
 
   if (victorId != null && victorId != ctx.defenderFactionId) {
     state = appendLandBattleVictoryEvidence(
@@ -150,7 +143,9 @@ LandBattleApplyOutcome applyAutoResolveLandBattle(
 
   return (
     state: state,
+    outcomeName: summary.outcomeName,
+    attackerCasualtyCount: summary.attackerCasualtyCount,
+    defenderCasualtyCount: summary.defenderCasualtyCount,
     winnerId: winnerId,
-    casualties: const <String, int>{},
   );
 }
