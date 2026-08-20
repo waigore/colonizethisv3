@@ -1,9 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'worker_economy.dart';
-
 /// Worker tier keys for labour-readiness breakdown rows.
-enum WorkerTierKey { peasant, apprentice, journeyman, master }
+/// Alias of [WorkerTier] so diagnostics share the models SoT.
+typedef WorkerTierKey = WorkerTier;
 
 /// Primary cause when effective labour is below full pool capacity.
 enum LabourReadinessCauseKind { food, luxury }
@@ -82,4 +81,22 @@ class WorkerConsumptionBreakdown {
   final int journeymenWithLuxury;
   final int mastersWithLuxury;
   final bool militaryOrNavyConsumesFoodBeforeWorkers;
+
+  int fedCountForTier(WorkerTier tier) {
+    return switch (tier) {
+      WorkerTier.peasant => fedPeasants,
+      WorkerTier.apprentice => fedApprentices,
+      WorkerTier.journeyman => fedJourneymen,
+      WorkerTier.master => fedMasters,
+    };
+  }
+
+  int luxuryCountForTier(WorkerTier tier) {
+    return switch (tier) {
+      WorkerTier.peasant => 0,
+      WorkerTier.apprentice => apprenticesWithLuxury,
+      WorkerTier.journeyman => journeymenWithLuxury,
+      WorkerTier.master => mastersWithLuxury,
+    };
+  }
 }

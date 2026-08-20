@@ -1,10 +1,11 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'economy_consumption_allocation.dart';
 import 'economy_consumption_phases.dart';
 import 'military_navy_food_counts.dart';
 
+export 'economy_consumption_allocation.dart' show ConsumptionAllocation, allocateConsumption;
 export 'economy_consumption_phases.dart'
     show ConsumptionUnknownShipTypeException, consumeFoodUnits;
 export 'military_navy_food_counts.dart';
@@ -45,7 +46,7 @@ WorkerIdleCounts previewWorkerIdleLabour({
   required WorkerPool workers,
   MilitaryNavyFoodCounts foodCounts = const MilitaryNavyFoodCounts(),
 }) {
-  return _allocateConsumption(
+  return allocateConsumption(
     stockpile: stockpile,
     workers: workers,
     foodCounts: foodCounts,
@@ -74,7 +75,7 @@ ConsumptionResult resolveConsumption({
   required WorkerPool workers,
   MilitaryNavyFoodCounts foodCounts = const MilitaryNavyFoodCounts(),
 }) {
-  final alloc = _allocateConsumption(
+  final alloc = allocateConsumption(
     stockpile: stockpile,
     workers: workers,
     foodCounts: foodCounts,
@@ -93,76 +94,5 @@ ConsumptionResult resolveConsumption({
     fullyFedRegiments: alloc.fullyFedRegiments,
     totalShips: alloc.totalShips,
     fullyFedShips: alloc.fullyFedShips,
-  );
-}
-
-({
-  Stockpile stockpile,
-  WorkerIdleCounts idleLabour,
-  int totalRegiments,
-  int fullyFedRegiments,
-  int totalShips,
-  int fullyFedShips,
-})
-_allocateConsumption({
-  required Stockpile stockpile,
-  required WorkerPool workers,
-  required MilitaryNavyFoodCounts foodCounts,
-}) {
-  // Order: land military → navy → workers (food), then per-tier luxury.
-  final (
-    afterMilitary,
-    totalRegiments,
-    fullyFedRegiments,
-  ) = consumeMilitaryFood(
-    stockpile: stockpile,
-    militaryUnits: foodCounts.militaryUnits,
-    regimentCountsById: foodCounts.regimentCountsById,
-  );
-
-  final (afterNavy, totalShips, fullyFedShips) = consumeNavyFood(
-    stockpile: afterMilitary,
-    shipCountsById: foodCounts.shipCountsById,
-  );
-
-  final fed = consumeWorkerFood(stockpile: afterNavy, workers: workers);
-  var current = fed.stockpile;
-
-  // Masters → Journeymen → Apprentices → Peasants
-  final (s1, mastersWithLuxury) = assignWorkerLuxury(
-    stockpile: current,
-    foodFedCount: fed.fedMasters,
-    luxuryId: workerLuxuryCommodityIdForTier(WorkerTier.master)!,
-  );
-  current = s1;
-
-  final (s2, journeymenWithLuxury) = assignWorkerLuxury(
-    stockpile: current,
-    foodFedCount: fed.fedJourneymen,
-    luxuryId: workerLuxuryCommodityIdForTier(WorkerTier.journeyman)!,
-  );
-  current = s2;
-
-  final (s3, apprenticesWithLuxury) = assignWorkerLuxury(
-    stockpile: current,
-    foodFedCount: fed.fedApprentices,
-    luxuryId: workerLuxuryCommodityIdForTier(WorkerTier.apprentice)!,
-  );
-  current = s3;
-
-  final idleLabour = WorkerIdleCounts(
-    peasants: fed.fedPeasants,
-    apprentices: apprenticesWithLuxury,
-    journeymen: journeymenWithLuxury,
-    masters: mastersWithLuxury,
-  );
-
-  return (
-    stockpile: current,
-    idleLabour: idleLabour,
-    totalRegiments: totalRegiments,
-    fullyFedRegiments: fullyFedRegiments,
-    totalShips: totalShips,
-    fullyFedShips: fullyFedShips,
   );
 }
