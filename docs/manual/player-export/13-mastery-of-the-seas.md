@@ -132,8 +132,10 @@ A fleet may have a pending **move** or a pending **mission** for the turn, never
 **Naval units panel** shows **Transfer to Home Fleet** on a regular fleet row when a Home Fleet exists in that region (Old World or New World). Tapping it opens **Transfer to home fleet** (title **Transfer Ships to Home Fleet**).
 
 1. Move one or more ship types from the source list to the Home Fleet list.
-2. Confirm **Transfer**. The selected ships join the Home Fleet at once.
-3. A regular fleet that gives up every ship is removed; the Home Fleet remains, even with no ships.
+2. Read the line under the lists: remaining Home Fleet cargo holds after this transfer, this turn’s overseas load, and how many holds stay free for trade bids. Warships add no holds.
+3. If the line turns a warm accent, no holds are spare. If it turns red, remaining holds would fall short. You can still tap **Transfer** — the line warns, it does not lock.
+4. Confirm **Transfer**. The selected ships join the Home Fleet at once.
+5. A regular fleet that gives up every ship is removed; the Home Fleet remains, even with no ships.
 
 The screens do not all describe the same moment when a transfer is allowed. **Transfer to Home Fleet** is the button you can tap whenever a Home Fleet exists in that region. The transfer dialog itself is written for a source fleet already in port at the capital. **Combine** can also move selected ships into the Home Fleet when the source is in port at the capital, or at sea in a sea next to the capital. Docking at the capital on **Next turn** merges the whole arriving fleet into the Home Fleet. Use the control you can tap; if confirm does not complete, that fleet is not in a place the game will accept.
 

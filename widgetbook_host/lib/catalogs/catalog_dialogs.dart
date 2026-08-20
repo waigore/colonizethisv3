@@ -625,6 +625,29 @@ List<WidgetbookNode> get moveFleetDialogDirectories => [
   return (game: game, source: source, home: home);
 }
 
+Widget _transferToHomeFleetOpenButton(
+  BuildContext innerContext,
+  ({Game game, Fleet source, Fleet home}) fixture,
+) {
+  return ElevatedButton(
+    onPressed: () {
+      showDialog<void>(
+        context: innerContext,
+        builder: (_) => TransferToHomeFleetDialog(
+          sourceFleet: fixture.source,
+          homeFleet: fixture.home,
+          game: fixture.game,
+          humanPlayerId: 'gp_transfer_story',
+          bus: AppEventBus.create(),
+          overseasCargoUsed: 2,
+        ),
+      );
+    },
+    // ignore: avoid_hardcoded_strings_in_widgets
+    child: const Text('Open Transfer to Home Fleet'),
+  );
+}
+
 /// Transfer to Home Fleet Dialog stories. SPEC/ui/transfer-to-home-fleet-dialog.md.
 List<WidgetbookNode> get transferToHomeFleetDialogDirectories => [
   WidgetbookFolder(
@@ -635,24 +658,22 @@ List<WidgetbookNode> get transferToHomeFleetDialogDirectories => [
         builder: (context) {
           final fixture = _transferToHomeFleetStoryFixture();
           return _moveDialogStoryFrame(
-            open: (innerContext) {
-              return ElevatedButton(
-                onPressed: () {
-                  showDialog<void>(
-                    context: innerContext,
-                    builder: (_) => TransferToHomeFleetDialog(
-                      sourceFleet: fixture.source,
-                      homeFleet: fixture.home,
-                      game: fixture.game,
-                      humanPlayerId: 'gp_transfer_story',
-                      bus: AppEventBus.create(),
-                    ),
-                  );
-                },
-                // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('Open Transfer to Home Fleet'),
-              );
-            },
+            open: (innerContext) =>
+                _transferToHomeFleetOpenButton(innerContext, fixture),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Cargo line wraps (320 dp)',
+        builder: (context) {
+          final fixture = _transferToHomeFleetStoryFixture();
+          return SizedBox(
+            width: 320,
+            height: 640,
+            child: _moveDialogStoryFrame(
+              open: (innerContext) =>
+                  _transferToHomeFleetOpenButton(innerContext, fixture),
+            ),
           );
         },
       ),

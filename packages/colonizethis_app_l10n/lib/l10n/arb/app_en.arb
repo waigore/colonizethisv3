@@ -5664,6 +5664,18 @@
   "@naval_transferToHome_confirm": {
     "description": "Primary action label for transfer-to-home dialog (#2867 R12)."
   },
+  "naval_transferToHome_homeCargoConsequence": "Cargo holds remaining after this transfer: {remaining} (overseas load this turn: {used}).",
+  "@naval_transferToHome_homeCargoConsequence": {
+    "description": "Live Home Fleet cargo-hold consequence on transfer into Home Fleet (Refs #4544).",
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      }
+    }
+  },
   "diplomacy_section_greatPowers": "Great Powers",
   "@diplomacy_section_greatPowers": {
     "description": "Diplomacy list section heading."

@@ -11,70 +11,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combat_effective_strength.dart';
 import 'combat_rng.dart';
+import 'combat_resolver_probabilistic_casualties.dart';
+import 'combat_resolver_probabilistic_types.dart';
 import 'combat_types.dart';
 import 'military_strength.dart';
 
-/// Maximum number of combat rounds per engagement.
-const int maxCombatRounds = 5;
-
-/// Lethality factor: expected casualties per round scale.
-const double combatLethalityK = 1.0;
-
-/// Hit probability clamp [min, max].
-const double hitProbabilityMin = 0.15;
-const double hitProbabilityMax = 0.85;
-
-/// Result of one round in probabilistic combat.
-class ProbabilisticRoundResult {
-  const ProbabilisticRoundResult({
-    required this.roundNumber,
-    required this.rawAttackerStrength,
-    required this.rawDefenderStrength,
-    required this.effectiveAttackerStrength,
-    required this.effectiveDefenderStrength,
-    required this.probabilityAttackerHits,
-    required this.probabilityDefenderHits,
-    required this.lambdaDefender,
-    required this.lambdaAttacker,
-    required this.defenderCasualties,
-    required this.attackerCasualties,
-    required this.attackersRemaining,
-    required this.defendersRemaining,
-  });
-
-  final int roundNumber;
-  final double rawAttackerStrength;
-  final double rawDefenderStrength;
-  final double effectiveAttackerStrength;
-  final double effectiveDefenderStrength;
-  final double probabilityAttackerHits;
-  final double probabilityDefenderHits;
-  final double lambdaDefender;
-  final double lambdaAttacker;
-  final List<String> defenderCasualties;
-  final List<String> attackerCasualties;
-  final int attackersRemaining;
-  final int defendersRemaining;
-}
-
-/// Result of probabilistic engagement with per-round details.
-class ProbabilisticEngagementOutcome {
-  const ProbabilisticEngagementOutcome({
-    required this.result,
-    required this.attackerCasualties,
-    required this.defenderCasualties,
-    required this.attackerStrength,
-    required this.defenderStrength,
-    required this.rounds,
-  });
-
-  final EngagementResult result;
-  final List<String> attackerCasualties;
-  final List<String> defenderCasualties;
-  final double attackerStrength;
-  final double defenderStrength;
-  final List<ProbabilisticRoundResult> rounds;
-}
+export 'combat_resolver_probabilistic_types.dart';
 
 /// Resolves one engagement probabilistically (up to [maxCombatRounds] rounds).
 /// Uses clamped hit odds, Poisson-sampled casualties, and strength-weighted
@@ -152,16 +94,16 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
     final lambdaDef = combatLethalityK * pAtt;
     final lambdaAtt = combatLethalityK * pDef;
 
-    final nDefCas = _poissonSample(lambdaDef, rng).clamp(0, defList.length);
-    final nAttCas = _poissonSample(lambdaAtt, rng).clamp(0, attList.length);
+    final nDefCas = poissonSample(lambdaDef, rng).clamp(0, defList.length);
+    final nAttCas = poissonSample(lambdaAtt, rng).clamp(0, attList.length);
 
-    final defCasIds = _selectCasualtiesWeighted(
+    final defCasIds = selectCasualtiesWeighted(
       defList,
       nDefCas,
       defenderEffectiveMilitaryLevel,
       rng,
     );
-    final attCasIds = _selectCasualtiesWeighted(attList, nAttCas, 4, rng);
+    final attCasIds = selectCasualtiesWeighted(attList, nAttCas, 4, rng);
 
     for (final id in defCasIds) {
       defList = defList.where((u) => u.id != id).toList();
@@ -212,56 +154,4 @@ ProbabilisticEngagementOutcome resolveEngagementProbabilistic({
     defenderStrength: initialDefStr,
     rounds: roundResults,
   );
-}
-
-int _poissonSample(double lambda, Random rng) {
-  if (lambda <= 0) return 0;
-  final L = exp(-lambda);
-  var k = 0;
-  var p = 1.0;
-  do {
-    k++;
-    p *= rng.nextDouble();
-    if (p <= 0) return k - 1;
-  } while (p > L);
-  return k - 1;
-}
-
-/// Select [n] casualties using inverse-strength weighting (stronger = less likely).
-List<String> _selectCasualtiesWeighted(
-  List<Unit> units,
-  int n,
-  int effectiveEra,
-  Random rng,
-) {
-  if (n <= 0 || units.isEmpty) return [];
-  if (n >= units.length) return units.map((u) => u.id).toList();
-
-  final weights = <double>[];
-  for (final u in units) {
-    final s = unitStrength(u, effectiveEra);
-    weights.add(1.0 / (s + 0.1));
-  }
-  final ids = units.map((u) => u.id).toList();
-  final alive = List<bool>.filled(ids.length, true);
-  final chosen = <String>[];
-
-  for (var i = 0; i < n; i++) {
-    var total = 0.0;
-    for (var j = 0; j < weights.length; j++) {
-      if (alive[j]) total += weights[j];
-    }
-    if (total <= 0) break;
-    var r = rng.nextDouble() * total;
-    for (var j = 0; j < weights.length; j++) {
-      if (!alive[j]) continue;
-      r -= weights[j];
-      if (r <= 0) {
-        chosen.add(ids[j]);
-        alive[j] = false;
-        break;
-      }
-    }
-  }
-  return chosen;
 }
