@@ -53,6 +53,8 @@ class AppNavalCombatResultEvent extends GameToUIEvent {
     required this.outcomeName,
     required this.turnNumber,
     this.winnerOwnerId,
+    this.side1CasualtyCount = 0,
+    this.side2CasualtyCount = 0,
     this.side1Retreated = false,
     this.side2Retreated = false,
   });
@@ -62,6 +64,8 @@ class AppNavalCombatResultEvent extends GameToUIEvent {
   final String outcomeName;
   final int turnNumber;
   final String? winnerOwnerId;
+  final int side1CasualtyCount;
+  final int side2CasualtyCount;
   final bool side1Retreated;
   final bool side2Retreated;
 }

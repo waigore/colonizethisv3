@@ -58,7 +58,7 @@ The pulses wait until **Victory overlay** is gone; closing the newspaper while i
 
 ### The newspaper feed
 
-On `MAP10001` **Empire overview / map area**, the newspaper button sits on the map bar after treasury, cargo, the labour readout, and the Old World race chip. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide `OVL70001` **Player turn event feed** without leaving `GAME10001` **Game screen**. Land battles you fought appear with the province, the outcome in plain words, and both sides' regiment losses (including zero); tap a combat line to open that province on the map.
+On `MAP10001` **Empire overview / map area**, the newspaper button sits on the map bar after treasury, cargo, the labour readout, and the Old World race chip. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide `OVL70001` **Player turn event feed** without leaving `GAME10001` **Game screen**. Land battles you fought appear with the province, the outcome in plain words, and both sides' regiment losses (including zero); tap a combat line to open that province on the map. Sea battles you fought appear the same way with the sea name, the outcome in plain words, both sides' ship losses (including zero), and a note when a court retreated; tap opens that sea when the map can find it.
 
 Use the feed with turn news: the dialog is the formal summary; the feed keeps relevant lines on the map while you inspect. It replaces its entries each completed turn.
 
@@ -68,7 +68,7 @@ Tap a line for the matching place or screen:
 2. Diplomacy and overture lines open the other nation’s `GAME30002` **Diplomacy detail screen**. Spy-caught and spy-defected rows also open that court’s `GAME30002` **Diplomacy detail screen**.
 3. Spy report lines (the same **Our spy in {court} reports:** wording as Intelligence) open `GAME30003` **Intelligence Council** or that court’s `GAME30002` **Diplomacy detail screen**.
 4. Completed work orders open `UNIT10001` **Civilian units panel** focused on the person who finished the task.
-5. Land combat and province capture lines open `MAP20001` **Province sea-zone overlay**. Naval combat opens that same screen when the map can find the sea; otherwise that line is not tappable. Discovery pans the map to the new province or sea. Medal lines use the word **general**.
+5. Land combat and province capture lines open `MAP20001` **Province sea-zone overlay**. Naval combat lines use the same plain-language outcome and loss style as land battles and open that same screen when the map can find the sea; otherwise that line is not tappable. Discovery pans the map to the new province or sea. Medal lines use the word **general**.
 6. Rejected orders open the panel or screen that owns that order type (for example civilian work opens Civilian units, trade opens Trade).
 7. When your own market bids or offers filled or carried forward last turn, a short **Market:** line summarizes bought and sold totals (and orders carried when any). Tap it to open `GAME60001` **Trade screen** on the **Deal Book** tab. Overseas-profit lines remain separate and use the same Trade / Deal Book tap.
 8. When treasury or stores changed materially last turn, a **Realm:** line summarizes the net treasury and largest store movers. Tap it to open `GAME20001` **Production screen** for last turn’s real totals, not the **Available** forecast.

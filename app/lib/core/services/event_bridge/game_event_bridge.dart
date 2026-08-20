@@ -51,6 +51,8 @@ class GameEventBridge {
             outcomeName: event.outcomeName,
             turnNumber: event.turnNumber,
             winnerOwnerId: event.winnerOwnerId,
+            side1CasualtyCount: event.side1CasualtyCount,
+            side2CasualtyCount: event.side2CasualtyCount,
             side1Retreated: event.side1Retreated,
             side2Retreated: event.side2Retreated,
           ),
