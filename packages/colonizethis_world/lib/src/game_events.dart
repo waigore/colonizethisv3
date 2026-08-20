@@ -79,6 +79,8 @@ class NavalCombatResultEvent extends GameEvent {
     required this.outcomeName,
     required this.turnNumber,
     this.winnerOwnerId,
+    this.side1CasualtyCount = 0,
+    this.side2CasualtyCount = 0,
     this.side1Retreated = false,
     this.side2Retreated = false,
   });
@@ -94,6 +96,12 @@ class NavalCombatResultEvent extends GameEvent {
 
   /// Set when [outcomeName] is a decisive victory for one side.
   final String? winnerOwnerId;
+
+  /// Ships sunk on side1 (starting hulls − survivors). Includes 0.
+  final int side1CasualtyCount;
+
+  /// Ships sunk on side2 (starting hulls − survivors). Includes 0.
+  final int side2CasualtyCount;
   final bool side1Retreated;
   final bool side2Retreated;
 }

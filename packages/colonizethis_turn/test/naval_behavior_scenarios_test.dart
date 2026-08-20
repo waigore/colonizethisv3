@@ -55,6 +55,16 @@ void main() {
         final ev = navalEvent!;
         expect(ev.side1OwnerId, 'p1');
         expect(ev.side2OwnerId, 'p2');
+        expect(ev.side1CasualtyCount, greaterThanOrEqualTo(0));
+        expect(ev.side2CasualtyCount, greaterThanOrEqualTo(0));
+        expect(
+          ev.side1CasualtyCount,
+          lessThanOrEqualTo(2),
+        );
+        expect(
+          ev.side2CasualtyCount,
+          lessThanOrEqualTo(2),
+        );
       },
     );
 

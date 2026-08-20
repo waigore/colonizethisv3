@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_ui_chrome/event_feed/ct_event_feed_text.dart';
 
 import 'turn_feed_test_context.dart';
 
@@ -126,8 +127,11 @@ void main() {
           seaZoneId: 'sea1',
           side1OwnerId: 'gp1',
           side2OwnerId: 'gp2',
-          outcomeName: 'Decisive',
+          outcomeName: 'side1Victory',
           turnNumber: 1,
+          side1CasualtyCount: 1,
+          side2CasualtyCount: 2,
+          side2Retreated: true,
         ),
         TurnFeedTestContext(
           navalCombatTapForSeaZone: (seaZoneId) {
@@ -139,10 +143,45 @@ void main() {
 
       expect(
         entry.text,
-        'sea1 naval battle resolved! Outcome: Decisive!',
+        'sea1: Attacker victory. gp1 lost 1 ships; gp2 lost 2 ships. '
+        'gp2 retreated.',
       );
       entry.onTap?.call();
       expect(tappedSea, 'sea1');
+    });
+
+    test('AppNavalCombatResultEvent unknown outcome falls back', () {
+      final entry = singleTurnFeedEntry(
+        const AppNavalCombatResultEvent(
+          seaZoneId: 'sea1',
+          side1OwnerId: 'gp1',
+          side2OwnerId: 'gp2',
+          outcomeName: 'futureEnumValue',
+          turnNumber: 1,
+        ),
+        TurnFeedTestContext(),
+      );
+
+      expect(
+        entry.text,
+        'sea1: Naval battle resolved. gp1 lost 0 ships; gp2 lost 0 ships.',
+      );
+      expect(entry.text.contains('futureEnumValue'), isFalse);
+    });
+
+    test('AppNavalCombatResultEvent maps each handbook outcome', () {
+      expect(
+        CtEventFeedText.navalBattleOutcomeLabel('side2Victory'),
+        'Defender holds',
+      );
+      expect(
+        CtEventFeedText.navalBattleOutcomeLabel('stalemate'),
+        'Stalemate',
+      );
+      expect(
+        CtEventFeedText.navalBattleOutcomeLabel('mutualDestruction'),
+        'Both fleets destroyed',
+      );
     });
 
     test('AppPlayerProvinceDiscoveredEvent locates province', () {
