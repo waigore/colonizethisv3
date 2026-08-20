@@ -29,13 +29,15 @@ const _mapLibRoot = 'packages/colonizethis_map/lib';
 /// Whole-file exemptions (paths relative to the repo root).
 ///
 /// - `tile_map_grid.dart` defines the canonical traversal API itself.
-/// - `tile_map_grid_graph.dart` holds BFS / flood-fill / neighbour graph
-///   algorithms whose traversal order is not row-major cell iteration.
+/// - `tile_map_grid_graph_connectivity.dart` and `tile_map_grid_graph_ocean.dart`
+///   hold BFS / flood-fill / neighbour graph algorithms whose traversal order
+///   is not row-major cell iteration (Refs #4561 split).
 /// - `tile_map_manhattan_distance_transform.dart` is a two-pass (forward +
 ///   reverse) distance transform; it is not a forward-only row-major walk.
 const _exemptFiles = <String>{
   'packages/colonizethis_map/lib/src/tile_map_grid.dart',
-  'packages/colonizethis_map/lib/src/gen/tile_map_grid_graph.dart',
+  'packages/colonizethis_map/lib/src/gen/tile_map_grid_graph_connectivity.dart',
+  'packages/colonizethis_map/lib/src/gen/tile_map_grid_graph_ocean.dart',
   'packages/colonizethis_map/lib/src/gen/tile_map_manhattan_distance_transform.dart',
 };
 

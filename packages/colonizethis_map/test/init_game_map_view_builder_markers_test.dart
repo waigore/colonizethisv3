@@ -4,6 +4,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/init_game_map_view_fixtures.dart';
+import 'support/init_game_map_view_warp_marker_scenarios.dart';
 
 void main() {
   group('buildInitGameMapViewData markers', () {
@@ -154,103 +155,11 @@ void main() {
 
   group('buildInitGameMapViewData warp zone markers', () {
     test('includes warp zone markers from warpLinks (bidirectional)', () {
-      final game = minimalGame(id: 'warp');
-      final warpLinks = [
-        WarpLink(
-          regionId: 'oldWorld',
-          seaZoneId: 's1',
-          otherRegionId: 'newWorld',
-          otherSeaZoneId: 's3',
-        ),
-        WarpLink(
-          regionId: 'oldWorld',
-          seaZoneId: 's2',
-          otherRegionId: 'newWorld',
-          otherSeaZoneId: 's2',
-        ),
-      ];
-      final viewData = buildViewDataForScenario(
-        dualRegionScenario(
-          game: game,
-          oldWorldGrid: const [
-            ['s1', 's2', 's3'],
-          ],
-          oldWorldTopology: regionTopology(
-            regionId: 'oldWorld',
-            seaZoneIds: const ['s1', 's2', 's3'],
-          ),
-          newWorldGrid: const [
-            ['s1', 's2', 's3'],
-          ],
-          newWorldTopology: regionTopology(
-            regionId: 'newWorld',
-            seaZoneIds: const ['s1', 's2', 's3'],
-          ),
-        ),
-        warpLinks: warpLinks,
-      );
-
-      // Old World should have 2 warp markers (s1 and s2).
-      expect(viewData.oldWorld.warpMarkers, hasLength(2));
-      final s1Marker = viewData.oldWorld.warpMarkers.singleWhere(
-        (m) => m.seaZoneId == 's1',
-      );
-      expect(s1Marker.x, 0); // s1 is at tile index 0
-      expect(s1Marker.y, 0);
-      expect(s1Marker.otherRegionId, 'newWorld');
-      expect(s1Marker.otherSeaZoneId, 's3');
-
-      final s2Marker = viewData.oldWorld.warpMarkers.singleWhere(
-        (m) => m.seaZoneId == 's2',
-      );
-      expect(s2Marker.x, 1); // s2 is at tile index 1
-      expect(s2Marker.y, 0);
-      expect(s2Marker.otherRegionId, 'newWorld');
-      expect(s2Marker.otherSeaZoneId, 's2');
-
-      // New World should have 2 warp markers (s3 and s2) via reverse lookup.
-      expect(viewData.newWorld.warpMarkers, hasLength(2));
-      final nwS3Marker = viewData.newWorld.warpMarkers.singleWhere(
-        (m) => m.seaZoneId == 's3',
-      );
-      expect(nwS3Marker.x, 2); // s3 is at tile index 2
-      expect(nwS3Marker.y, 0);
-      expect(nwS3Marker.otherRegionId, 'oldWorld');
-      expect(nwS3Marker.otherSeaZoneId, 's1');
-
-      final nwS2Marker = viewData.newWorld.warpMarkers.singleWhere(
-        (m) => m.seaZoneId == 's2',
-      );
-      expect(nwS2Marker.x, 1); // s2 is at tile index 1
-      expect(nwS2Marker.y, 0);
-      expect(nwS2Marker.otherRegionId, 'oldWorld');
-      expect(nwS2Marker.otherSeaZoneId, 's2');
+      expectBidirectionalWarpMarkersFromLinks();
     });
 
     test('empty warpMarkers when warpLinks is null', () {
-      final viewData = buildViewDataForScenario(
-        dualRegionScenario(
-          game: minimalGame(id: 'no-warp'),
-          oldWorldGrid: const [
-            ['s1'],
-          ],
-          oldWorldTopology: regionTopology(
-            regionId: 'oldWorld',
-            seaZoneIds: const ['s1'],
-          ),
-          newWorldGrid: const [
-            ['s1'],
-          ],
-          newWorldTopology: regionTopology(
-            regionId: 'newWorld',
-            seaZoneIds: const ['s1'],
-          ),
-        ),
-        warpLinks: null,
-      );
-
-      expect(viewData.oldWorld.warpMarkers, isEmpty);
-      expect(viewData.newWorld.warpMarkers, isEmpty);
+      expectEmptyWarpMarkersWhenLinksNull();
     });
   });
 }
