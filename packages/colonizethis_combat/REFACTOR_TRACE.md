@@ -451,3 +451,50 @@ Delivered in this slice:
 
 Post-split max lib file: `quick_battle_resolver_engine.dart` **≈268** phys (ceiling **280**).
 
+## Phase 5 — slice A (Refs #4545)
+
+Delivered in this slice:
+
+- Extracted `ProbabilisticRoundResult`, `ProbabilisticEngagementOutcome`, and round constants into `combat_resolver_probabilistic_types.dart`.
+- Moved `_poissonSample` / `_selectCasualtiesWeighted` into `combat_resolver_probabilistic_casualties.dart`.
+- `combat_resolver_probabilistic.dart` remains the barrel-exported entry for `resolveEngagementProbabilistic`; re-exports types.
+
+Post-split physical lines (approx.): `combat_resolver_probabilistic.dart` **~157** (was 267); `combat_resolver_probabilistic_types.dart` **~45**; `combat_resolver_probabilistic_casualties.dart` **~75**.
+
+Deferred to slices B–D on #4545: Quick Battle engine split, snapshot densify, 250 ratchet.
+
+## Phase 5 — slice B (Refs #4545)
+
+Delivered in this slice:
+
+- Split `quick_battle_resolver_engine.dart` into single-concern siblings:
+  - `quick_battle_resolver_engine_groups.dart` (group/CP bookkeeping)
+  - `quick_battle_resolver_engine_strike.dart` (strike-strength math)
+  - `quick_battle_resolver_engine_emplaced.dart` (emplaced mixed losses)
+- `quick_battle_resolver_engine.dart` re-exports siblings; `#3448` copy-disposition marker preserved on `copyGroups`.
+
+Post-split physical lines (approx.): `quick_battle_resolver_engine.dart` **~35** (was 268); largest sibling **~153** phys.
+
+Deferred to slices C–D on #4545: snapshot densify, 250 ratchet.
+
+## Phase 5 — slice C (Refs #4545)
+
+Delivered in this slice:
+
+- Replaced imperative `combat_engagement_snapshot_test.dart` (#4090 characterization) with `runLabeledScenarioGroup` runner.
+- Added `combat_engagement_snapshot_scenarios.dart` under `test/combat/` (9 labeled rows; support-package LOC/file-size ratchets precluded a support-module home).
+
+Post-split physical lines (approx.): `combat_engagement_snapshot_test.dart` **~10** (was 209); support scenario module **~220** phys.
+
+Deferred to slice D on #4545: lib size CI ratchet 280→250.
+
+## Phase 5 — slice D (Refs #4545)
+
+Delivered in this slice:
+
+- Lowered `combatLibFileSizeCeiling` to **250** with an empty grandfather list.
+- Pinned constant in `test/check_combat_lib_file_size_test.dart`.
+- Updated `tool/ct_repo_lint_manifest.yaml` title and `SPEC/program/repo-lint.md` `repo.combat_lib_file_size` row.
+
+Post-split max lib file: `conflict_detection.dart` / `battle_general_assignment.dart` **≈213** phys (ceiling **250**).
+
