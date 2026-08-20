@@ -34,7 +34,7 @@ If a Merchant finished **Purchase land** on a Minor Nation or Tribe tile, that l
 
 When a Minor Nation or Tribe sells and several Great Powers bid at the same rank (after first-right fills), buyers who hold a **Consulate** or higher with that seller are served first, then by hidden relation. Great-Power sellers keep the ordinary order. This never beats first right of refusal either.
 
-A **subsidy** you set toward a Minor Nation or Tribe (Chapter 10) does not pay them each turn. Deals between you and that court are cheaper when you sell to them and dearer when you buy from them, by the subsidy percent.
+A **subsidy** you set toward a Minor Nation or Tribe (Chapter 10) does not pay them each turn. Deals between you and that court are cheaper when you sell to them and dearer when you buy from them, by the subsidy percent. **Set Subsidy** on Diplomacy prints those percents on **Cost** and **Effect** before you submit; the Diplomacy row line repeats that meaning if you hover or long-press it.
 
 A **boycott** (Chapter 10) can leave bids and colony-Tribe sales between the boycotted Great Power and the issuer’s colony Tribes unfilled, in both directions.
 

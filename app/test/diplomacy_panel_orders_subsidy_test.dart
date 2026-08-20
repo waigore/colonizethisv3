@@ -3,6 +3,7 @@
 
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
     show grantOrSubsidyDialogId;
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -51,6 +52,15 @@ void main() {
         find.text('Pending subsidy: $percent% (resolves end of turn)'),
         findsOneWidget,
       );
+      expect(
+        find.byTooltip(
+          subsidyFillPriceConsequenceTooltip(
+            targetDisplayName: 'Free City',
+            percent: percent,
+          ),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Set Subsidy ($percent%)'), findsNothing);
 
       await tapVisibleDiplomacy(tester, find.text('Cancel').first);
@@ -81,6 +91,15 @@ void main() {
 
       expect(
         find.text('Outgoing subsidy: $percent% to Free City'),
+        findsOneWidget,
+      );
+      expect(
+        find.byTooltip(
+          subsidyFillPriceConsequenceTooltip(
+            targetDisplayName: 'Free City',
+            percent: percent,
+          ),
+        ),
         findsOneWidget,
       );
     });
