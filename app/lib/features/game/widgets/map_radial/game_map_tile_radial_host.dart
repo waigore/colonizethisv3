@@ -150,10 +150,14 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
             provinceId: provinceId,
             currentOrders: draftOrders,
             enabled: spoke.enabled,
-            hasExplorerUnits: spoke.action == TileRadialCatalogAction.explore
-                ? states.explore.hasExplorerUnits
-                : states.prospect.hasExplorerUnits,
-            hasBuilderUnits: states.buildImprovement.hasBuilderUnits,
+            hasMatchingUnits: switch (spoke.action) {
+              TileRadialCatalogAction.explore =>
+                states.explore.hasMatchingUnits,
+              TileRadialCatalogAction.prospect =>
+                states.prospect.hasMatchingUnits,
+              TileRadialCatalogAction.buildImprovement =>
+                states.buildImprovement.hasMatchingUnits,
+            },
           ),
         ),
     ];

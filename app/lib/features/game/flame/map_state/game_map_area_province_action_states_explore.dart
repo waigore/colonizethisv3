@@ -5,7 +5,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import 'game_map_area_province_action_states.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show GameMapAreaProvinceActionStatesAssignable, ProvinceInlineActionState;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 
@@ -33,7 +34,7 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
     return cache.get(humanPlayerId, kWorkTargetExplore);
   }
 
-  static ({bool showIcon, bool enabled, bool hasExplorerUnits}) compute({
+  static ProvinceInlineActionState compute({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -43,13 +44,13 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
   }) {
     final parsed = tryParseTileKey(selectedTileKey);
     if (parsed == null || parsed.regionId != selectedRegion.regionId) {
-      return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
     final tileProvinceId = parsed.provinceLocalId;
     final prefixedProvinceId = parsed.prefixedProvinceId;
     final province = game.worldState.tryGetProvince(prefixedProvinceId);
     if (province == null) {
-      return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
 
     final x = parsed.x;
@@ -58,18 +59,18 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
         y < 0 ||
         x >= selectedRegion.width ||
         y >= selectedRegion.height) {
-      return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
     final selectedCell = selectedRegion.cellAt(x, y);
     if (selectedCell.visibility == TileVisibility.unrevealed) {
-      return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
 
     final provinceCells = selectedRegion.cells
         .where((cell) => !cell.isSea && cell.regionCellId == tileProvinceId)
         .toList();
     if (provinceCells.isEmpty) {
-      return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
     final hasUnrevealed = provinceCells.any(
       (cell) => cell.visibility == TileVisibility.unrevealed,
@@ -78,10 +79,10 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
       (cell) => cell.visibility != TileVisibility.unrevealed,
     );
     if (!hasUnrevealed || !hasRevealed) {
-      return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
 
-    final hasExplorerUnits = humanUnitsMatchingWorkTarget(
+    final hasMatchingUnits = humanUnitsMatchingWorkTarget(
       game: game,
       playerId: humanPlayerId,
       workTarget: kWorkTargetExplore,
@@ -114,16 +115,16 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
         return (
           showIcon: true,
           enabled: false,
-          hasExplorerUnits: hasExplorerUnits,
+          hasMatchingUnits: hasMatchingUnits,
         );
       }
-      return GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
 
     return (
       showIcon: true,
-      enabled: hasExplorerUnits,
-      hasExplorerUnits: hasExplorerUnits,
+      enabled: hasMatchingUnits,
+      hasMatchingUnits: hasMatchingUnits,
     );
   }
 }

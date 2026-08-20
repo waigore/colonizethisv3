@@ -479,6 +479,13 @@ rules:
     runner: dart
     script: tool/check_app_lib_unit_lookup_sot.dart
 
+  - rule_id: repo.app_province_inline_action_state
+    group: architecture
+    title: app/lib/features/game civilian inline-action state uses hasMatchingUnits (Refs #4559)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_province_inline_action_state.dart
+
   - rule_id: repo.app_lib_fleet_by_id_lookup
     group: architecture
     title: app/lib must use game.fleetById for id lookups (Refs #2575)

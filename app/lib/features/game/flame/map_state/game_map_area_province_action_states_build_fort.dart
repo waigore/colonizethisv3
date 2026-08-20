@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import 'game_map_area_province_action_states.dart';
-import 'game_map_area_province_action_states_assignable.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show GameMapAreaProvinceActionStatesAssignable, ProvinceInlineActionState;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 
@@ -18,8 +18,7 @@ abstract final class GameMapAreaProvinceActionStatesBuildFort {
     required Map<String, bool>? techUnlocked,
   }) {
     if (fortLevel >= 3) return false;
-    if (fortLevel == 1 &&
-        techUnlocked?[kTechIdMineEngineering] != true) {
+    if (fortLevel == 1 && techUnlocked?[kTechIdMineEngineering] != true) {
       return false;
     }
     if (fortLevel == 2 && techUnlocked?[kTechIdModernForts] != true) {
@@ -38,7 +37,7 @@ abstract final class GameMapAreaProvinceActionStatesBuildFort {
     return province?.townTileKey == selectedTileKey;
   }
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) compute({
+  static ProvinceInlineActionState compute({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -52,7 +51,7 @@ abstract final class GameMapAreaProvinceActionStatesBuildFort {
       game: game,
       selectedTileKey: selectedTileKey,
     )) {
-      return GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
     final player = game.playerById(humanPlayerId);
     final parsed = tryParseTileKey(selectedTileKey);
@@ -78,12 +77,8 @@ abstract final class GameMapAreaProvinceActionStatesBuildFort {
           ),
     );
     if (!state.showIcon && !state.enabled && !state.hasMatchingUnits) {
-      return GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState;
+      return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
-    return (
-      showIcon: state.showIcon,
-      enabled: state.enabled,
-      hasEngineerUnits: state.hasMatchingUnits,
-    );
+    return state;
   }
 }

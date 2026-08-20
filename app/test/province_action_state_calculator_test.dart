@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_assignable.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
@@ -6,6 +7,8 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         demoHumanPlayerViewForOverlay,
         demoRegionForOverlay,
         sampleTileKeyForProvinceOverlay;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show PlayerView, VisibilityLevel;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -31,22 +34,78 @@ void main() {
 
         expect(
           states.explore,
-          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
+          GameMapAreaProvinceActionStatesAssignable.kHidden,
         );
         expect(
           states.prospect,
-          GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState,
+          GameMapAreaProvinceActionStatesAssignable.kHidden,
         );
         expect(
           states.buildImprovement,
-          GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState,
+          GameMapAreaProvinceActionStatesAssignable.kHidden,
         );
         expect(
           states.buildRoad,
-          GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState,
+          GameMapAreaProvinceActionStatesAssignable.kHidden,
         );
       },
     );
+
+    test('AC11 (negative) missing matching units keeps showIcon true with '
+        'hasMatchingUnits false (build-improvement disabled-icon contract)', () {
+      const humanPlayerId = 'gp1';
+      const selectedTileKey = 'oldWorld|p1|0|0';
+      const selectedProvinceId = 'oldWorld|p1';
+      final game = ct_models.Game(
+        id: 'g',
+        worldState: ct_models.WorldState(
+          turnState: const ct_models.TurnState(
+            phase: ct_models.TurnPhase.orders,
+            turnNumber: 1,
+          ),
+          oldWorld: ct_models.RegionData(
+            provinces: const [
+              ct_models.Province(id: selectedProvinceId, regionId: 'oldWorld'),
+            ],
+            units: const [],
+          ),
+          newWorld: const ct_models.RegionData(provinces: [], units: []),
+          resourceByTileKey: const {selectedTileKey: 'grain'},
+        ),
+        players: const [
+          ct_models.Player(
+            id: humanPlayerId,
+            displayName: 'Human',
+            isHuman: true,
+          ),
+        ],
+      );
+      final state =
+          GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: PlayerView(
+              playerId: humanPlayerId,
+              player: const ct_models.Player(
+                id: humanPlayerId,
+                displayName: 'Human',
+                isHuman: true,
+              ),
+              ownUnitsById: {},
+              provincesById: {},
+              visibilityByTile: const {
+                selectedTileKey: VisibilityLevel.fullyVisible,
+              },
+              prospectedTiles: {},
+              diplomacyByOtherId: {},
+            ),
+          );
+
+      expect(state.showIcon, isTrue);
+      expect(state.enabled, isFalse);
+      expect(state.hasMatchingUnits, isFalse);
+    });
 
     test(
       'AC (positive) forwards each state identically to the GameMapAreaStateLogic '
@@ -74,38 +133,38 @@ void main() {
 
         final expectedExplore =
             GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: tileKey,
-          selectedRegion: region,
-          workTargetSelectionCache: cache,
-        );
+              game: game,
+              humanPlayerId: humanPlayerId,
+              selectedTileKey: tileKey,
+              selectedRegion: region,
+              workTargetSelectionCache: cache,
+            );
         final expectedProspect =
             GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: tileKey,
-          playerView: playerView,
-          topology: null,
-          currentOrders: orders,
-          tileMapByRegion: null,
-        );
+              game: game,
+              humanPlayerId: humanPlayerId,
+              selectedTileKey: tileKey,
+              playerView: playerView,
+              topology: null,
+              currentOrders: orders,
+              tileMapByRegion: null,
+            );
         final expectedBuild =
             GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: tileKey,
-          playerView: playerView,
-          workTargetSelectionCache: cache,
-        );
+              game: game,
+              humanPlayerId: humanPlayerId,
+              selectedTileKey: tileKey,
+              playerView: playerView,
+              workTargetSelectionCache: cache,
+            );
         final expectedBuildRoad =
             GameMapAreaStateLogicProvinceActions.provinceBuildRoadActionState(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: tileKey,
-          playerView: playerView,
-          workTargetSelectionCache: cache,
-        );
+              game: game,
+              humanPlayerId: humanPlayerId,
+              selectedTileKey: tileKey,
+              playerView: playerView,
+              workTargetSelectionCache: cache,
+            );
 
         expect(states.explore, expectedExplore);
         expect(states.prospect, expectedProspect);

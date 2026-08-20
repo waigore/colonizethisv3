@@ -58,14 +58,6 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     workTargetSelectionCache: workTargetSelectionCache,
     mapData: mapData,
   );
-  final exploreState = actionStates.explore;
-  final prospectState = actionStates.prospect;
-  final buildImprovementState = actionStates.buildImprovement;
-  final buildRoadState = actionStates.buildRoad;
-  final buildFortState = actionStates.buildFort;
-  final buildPortState = actionStates.buildPort;
-  final buildRailState = actionStates.buildRail;
-  final purchaseLandState = actionStates.purchaseLand;
   final upgradeTownState =
       GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
         game: game,
@@ -113,14 +105,14 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     draftOrders: draftOrders,
     mapData: mapData,
     selectedTileKey: selectedTileKey,
-    exploreEnabled: exploreState.enabled,
-    prospectEnabled: prospectState.enabled,
-    buildImprovementEnabled: buildImprovementState.enabled,
-    buildRoadEnabled: buildRoadState.enabled,
-    buildFortEnabled: buildFortState.enabled,
-    buildPortEnabled: buildPortState.enabled,
-    buildRailEnabled: buildRailState.enabled,
-    purchaseLandEnabled: purchaseLandState.enabled,
+    exploreEnabled: actionStates.explore.enabled,
+    prospectEnabled: actionStates.prospect.enabled,
+    buildImprovementEnabled: actionStates.buildImprovement.enabled,
+    buildRoadEnabled: actionStates.buildRoad.enabled,
+    buildFortEnabled: actionStates.buildFort.enabled,
+    buildPortEnabled: actionStates.buildPort.enabled,
+    buildRailEnabled: actionStates.buildRail.enabled,
+    purchaseLandEnabled: actionStates.purchaseLand.enabled,
     provinceId: displayId,
     upgradeTownEnabled: upgradeTownState.enabled,
     upgradeTownTargetTileKey: upgradeTownState.townTileKey,
@@ -182,6 +174,11 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final stationSpy = missions.stationSpy;
   final counterEspionage = missions.counterEspionage;
 
+  final gatedInlineActions = gateProvinceInlineActionsForUi(
+    states: actionStates,
+    canMutateViaUi: canMutateViaUi,
+  );
+
   return ProvinceSeaZoneDetailOverlay(
     game: game,
     region: region,
@@ -197,40 +194,18 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
     onClose: onClose,
-    showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
-    prospectActionEnabled: canMutateViaUi && prospectState.enabled,
-    showExploreActionIcon: canMutateViaUi && exploreState.showIcon,
-    exploreActionEnabled: canMutateViaUi && exploreState.enabled,
-    showBuildImprovementActionIcon:
-        canMutateViaUi && buildImprovementState.showIcon,
-    buildImprovementActionEnabled:
-        canMutateViaUi && buildImprovementState.enabled,
-    buildImprovementActionHasBuilderUnits:
-        buildImprovementState.hasBuilderUnits,
-    showBuildRoadActionIcon: canMutateViaUi && buildRoadState.showIcon,
-    buildRoadActionEnabled: canMutateViaUi && buildRoadState.enabled,
-    buildRoadActionHasEngineerUnits: buildRoadState.hasEngineerUnits,
-    showBuildFortActionIcon: canMutateViaUi && buildFortState.showIcon,
-    buildFortActionEnabled: canMutateViaUi && buildFortState.enabled,
-    buildFortActionHasEngineerUnits: buildFortState.hasEngineerUnits,
-    showBuildPortActionIcon: canMutateViaUi && buildPortState.showIcon,
-    buildPortActionEnabled: canMutateViaUi && buildPortState.enabled,
-    buildPortActionHasEngineerUnits: buildPortState.hasEngineerUnits,
-    showBuildRailroadActionIcon: canMutateViaUi && buildRailState.showIcon,
-    buildRailroadActionEnabled: canMutateViaUi && buildRailState.enabled,
-    buildRailroadActionHasRailBuilderUnits: buildRailState.hasRailBuilderUnits,
-    showPurchaseLandActionIcon: canMutateViaUi && purchaseLandState.showIcon,
-    purchaseLandActionEnabled: canMutateViaUi && purchaseLandState.enabled,
-    purchaseLandActionHasMerchantUnits: purchaseLandState.hasMerchantUnits,
+    civilianInlineActions: gatedInlineActions,
+    inlineActionCallbacks: (
+      onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
+      onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
+      onBuildImprovementTap: shortcuts.onBuildImprovementTap,
+      onBuildRoadTap: shortcuts.onBuildRoadTap,
+      onBuildFortTap: shortcuts.onBuildFortTap,
+      onBuildPortTap: shortcuts.onBuildPortTap,
+      onBuildRailroadTap: shortcuts.onBuildRailroadTap,
+      onPurchaseLandTap: shortcuts.onPurchaseLandTap,
+    ),
     omniscientDetail: omniscientDetail,
-    onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
-    onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
-    onBuildImprovementTap: shortcuts.onBuildImprovementTap,
-    onBuildRoadTap: shortcuts.onBuildRoadTap,
-    onBuildFortTap: shortcuts.onBuildFortTap,
-    onBuildPortTap: shortcuts.onBuildPortTap,
-    onBuildRailroadTap: shortcuts.onBuildRailroadTap,
-    onPurchaseLandTap: shortcuts.onPurchaseLandTap,
     showUpgradeTownControl: canMutateViaUi && upgradeTownState.showControl,
     upgradeTownEnabled: canMutateViaUi && upgradeTownState.enabled,
     upgradeTownHasBuilderUnits: upgradeTownState.hasBuilderUnits,
