@@ -9,6 +9,7 @@ import '../../flame/overlays/province_detail_overlay_host_support_tile_connectiv
     show ProvinceTileConnectivityDisplay;
 import '../../flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
+import '../../flame/map_state/province_action_state_calculator.dart';
 import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
 import '../../flame/map_state/province_naval_mission_action_state.dart'
@@ -36,36 +37,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.draftOrders = const Orders(),
     this.onHighlightTile,
     this.onClose,
-    this.showProspectActionIcon = false,
-    this.prospectActionEnabled = false,
-    this.onProspectWithExplorerTap,
-    this.showExploreActionIcon = false,
-    this.exploreActionEnabled = false,
-    this.onExploreWithExplorerTap,
-    this.showBuildImprovementActionIcon = false,
-    this.buildImprovementActionEnabled = false,
-    this.buildImprovementActionHasBuilderUnits = false,
-    this.onBuildImprovementTap,
-    this.showBuildRoadActionIcon = false,
-    this.buildRoadActionEnabled = false,
-    this.buildRoadActionHasEngineerUnits = false,
-    this.onBuildRoadTap,
-    this.showBuildFortActionIcon = false,
-    this.buildFortActionEnabled = false,
-    this.buildFortActionHasEngineerUnits = false,
-    this.onBuildFortTap,
-    this.showBuildPortActionIcon = false,
-    this.buildPortActionEnabled = false,
-    this.buildPortActionHasEngineerUnits = false,
-    this.onBuildPortTap,
-    this.showBuildRailroadActionIcon = false,
-    this.buildRailroadActionEnabled = false,
-    this.buildRailroadActionHasRailBuilderUnits = false,
-    this.onBuildRailroadTap,
-    this.showPurchaseLandActionIcon = false,
-    this.purchaseLandActionEnabled = false,
-    this.purchaseLandActionHasMerchantUnits = false,
-    this.onPurchaseLandTap,
+    this.civilianInlineActions = kHiddenProvinceActionStates,
+    this.inlineActionCallbacks = kEmptyProvinceInlineActionCallbacks,
     this.showUpgradeTownControl = false,
     this.upgradeTownEnabled = false,
     this.upgradeTownHasBuilderUnits = false,
@@ -115,36 +88,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final void Function(String? tileKey)? onHighlightTile;
   final void Function(Iterable<String>? tileKeys)? onHighlightTiles;
   final VoidCallback? onClose;
-  final bool showProspectActionIcon;
-  final bool prospectActionEnabled;
-  final VoidCallback? onProspectWithExplorerTap;
-  final bool showExploreActionIcon;
-  final bool exploreActionEnabled;
-  final VoidCallback? onExploreWithExplorerTap;
-  final bool showBuildImprovementActionIcon;
-  final bool buildImprovementActionEnabled;
-  final bool buildImprovementActionHasBuilderUnits;
-  final VoidCallback? onBuildImprovementTap;
-  final bool showBuildRoadActionIcon;
-  final bool buildRoadActionEnabled;
-  final bool buildRoadActionHasEngineerUnits;
-  final VoidCallback? onBuildRoadTap;
-  final bool showBuildFortActionIcon;
-  final bool buildFortActionEnabled;
-  final bool buildFortActionHasEngineerUnits;
-  final VoidCallback? onBuildFortTap;
-  final bool showBuildPortActionIcon;
-  final bool buildPortActionEnabled;
-  final bool buildPortActionHasEngineerUnits;
-  final VoidCallback? onBuildPortTap;
-  final bool showBuildRailroadActionIcon;
-  final bool buildRailroadActionEnabled;
-  final bool buildRailroadActionHasRailBuilderUnits;
-  final VoidCallback? onBuildRailroadTap;
-  final bool showPurchaseLandActionIcon;
-  final bool purchaseLandActionEnabled;
-  final bool purchaseLandActionHasMerchantUnits;
-  final VoidCallback? onPurchaseLandTap;
+  final ProvinceActionStates civilianInlineActions;
+  final ProvinceInlineActionCallbacks inlineActionCallbacks;
   final bool showUpgradeTownControl;
   final bool upgradeTownEnabled;
   final bool upgradeTownHasBuilderUnits;
@@ -219,38 +164,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       draftOrders: draftOrders,
       selectedTileKey: selectedTileKey,
       onHighlightTile: onHighlightTile,
-      showProspectActionIcon: showProspectActionIcon,
-      prospectActionEnabled: prospectActionEnabled,
-      onProspectWithExplorerTap: onProspectWithExplorerTap,
-      showExploreActionIcon: showExploreActionIcon,
-      exploreActionEnabled: exploreActionEnabled,
-      onExploreWithExplorerTap: onExploreWithExplorerTap,
-      showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-      buildImprovementActionEnabled: buildImprovementActionEnabled,
-      buildImprovementActionHasBuilderUnits:
-          buildImprovementActionHasBuilderUnits,
-      onBuildImprovementTap: onBuildImprovementTap,
-      showBuildRoadActionIcon: showBuildRoadActionIcon,
-      buildRoadActionEnabled: buildRoadActionEnabled,
-      buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
-      onBuildRoadTap: onBuildRoadTap,
-      showBuildFortActionIcon: showBuildFortActionIcon,
-      buildFortActionEnabled: buildFortActionEnabled,
-      buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
-      onBuildFortTap: onBuildFortTap,
-      showBuildPortActionIcon: showBuildPortActionIcon,
-      buildPortActionEnabled: buildPortActionEnabled,
-      buildPortActionHasEngineerUnits: buildPortActionHasEngineerUnits,
-      onBuildPortTap: onBuildPortTap,
-      showBuildRailroadActionIcon: showBuildRailroadActionIcon,
-      buildRailroadActionEnabled: buildRailroadActionEnabled,
-      buildRailroadActionHasRailBuilderUnits:
-          buildRailroadActionHasRailBuilderUnits,
-      onBuildRailroadTap: onBuildRailroadTap,
-      showPurchaseLandActionIcon: showPurchaseLandActionIcon,
-      purchaseLandActionEnabled: purchaseLandActionEnabled,
-      purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
-      onPurchaseLandTap: onPurchaseLandTap,
+      civilianInlineActions: civilianInlineActions,
+      inlineActionCallbacks: inlineActionCallbacks,
       showUpgradeTownControl: showUpgradeTownControl,
       upgradeTownEnabled: upgradeTownEnabled,
       upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,

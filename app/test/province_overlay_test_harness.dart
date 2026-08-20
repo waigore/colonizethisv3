@@ -3,10 +3,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        PlayerView,
-        ProvinceImprovableCommodityCount,
-        buildPlayerView;
+    show PlayerView, ProvinceImprovableCommodityCount, buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +14,8 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 import 'app_shell_harness.dart';
@@ -99,7 +98,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
-  bool buildImprovementActionHasBuilderUnits = false,
+  bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
   bool showEstablishConsulateControl = false,
   bool establishConsulateEnabled = false,
@@ -134,17 +133,33 @@ Widget buildProvinceOverlayDarkThemeShell({
     onClose: onClose,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
-    showProspectActionIcon: showProspectActionIcon,
-    prospectActionEnabled: prospectActionEnabled,
-    onProspectWithExplorerTap: onProspectWithExplorerTap,
-    showExploreActionIcon: showExploreActionIcon,
-    exploreActionEnabled: exploreActionEnabled,
-    onExploreWithExplorerTap: onExploreWithExplorerTap,
-    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-    buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits:
-        buildImprovementActionHasBuilderUnits,
-    onBuildImprovementTap: onBuildImprovementTap,
+    civilianInlineActions: provinceOverlayInlineActions(
+      explore: (
+        showIcon: showExploreActionIcon,
+        enabled: exploreActionEnabled,
+        hasMatchingUnits: exploreActionEnabled,
+      ),
+      prospect: (
+        showIcon: showProspectActionIcon,
+        enabled: prospectActionEnabled,
+        hasMatchingUnits: prospectActionEnabled,
+      ),
+      buildImprovement: (
+        showIcon: showBuildImprovementActionIcon,
+        enabled: buildImprovementActionEnabled,
+        hasMatchingUnits: buildImprovementActionHasMatchingUnits,
+      ),
+    ),
+    inlineActionCallbacks: (
+      onExploreWithExplorerTap: onExploreWithExplorerTap,
+      onProspectWithExplorerTap: onProspectWithExplorerTap,
+      onBuildImprovementTap: onBuildImprovementTap,
+      onBuildRoadTap: null,
+      onBuildFortTap: null,
+      onBuildPortTap: null,
+      onBuildRailroadTap: null,
+      onPurchaseLandTap: null,
+    ),
     showEstablishConsulateControl: showEstablishConsulateControl,
     establishConsulateEnabled: establishConsulateEnabled,
     establishConsulatePending: establishConsulatePending,
@@ -202,7 +217,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
-  bool buildImprovementActionHasBuilderUnits = false,
+  bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
   bool showEstablishConsulateControl = false,
   bool establishConsulateEnabled = false,
@@ -247,8 +262,8 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       onExploreWithExplorerTap: onExploreWithExplorerTap,
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
-      buildImprovementActionHasBuilderUnits:
-          buildImprovementActionHasBuilderUnits,
+      buildImprovementActionHasMatchingUnits:
+          buildImprovementActionHasMatchingUnits,
       onBuildImprovementTap: onBuildImprovementTap,
       showEstablishConsulateControl: showEstablishConsulateControl,
       establishConsulateEnabled: establishConsulateEnabled,

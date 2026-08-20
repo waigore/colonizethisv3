@@ -1,6 +1,7 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
 library;
 
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
@@ -42,9 +43,7 @@ Widget buildTileResourceLabelRow({
   required String provinceId,
   required String? resourceVisible,
   required String resourceLabel,
-  required bool showPurchaseLandActionIcon,
-  required bool purchaseLandActionEnabled,
-  required bool purchaseLandActionHasMerchantUnits,
+  required ProvinceInlineActionState purchaseLandAction,
   VoidCallback? onPurchaseLandTap,
 }) {
   final bodyStyle = overlayFgBodyStyle();
@@ -55,8 +54,8 @@ Widget buildTileResourceLabelRow({
     currentOrders: currentOrders,
     selectedTileKey: selectedTileKey,
     provinceId: provinceId,
-    enabled: purchaseLandActionEnabled,
-    hasMerchantUnits: purchaseLandActionHasMerchantUnits,
+    enabled: purchaseLandAction.enabled,
+    hasMatchingUnits: purchaseLandAction.hasMatchingUnits,
   );
   return Row(
     crossAxisAlignment: CrossAxisAlignment.center,
@@ -66,12 +65,12 @@ Widget buildTileResourceLabelRow({
         ResourceLabelInline(commodityId: resourceVisible, labelStyle: bodyStyle)
       else
         Text(resourceLabel, style: bodyStyle),
-      if (showPurchaseLandActionIcon)
+      if (purchaseLandAction.showIcon)
         CtIconAction(
           tooltip: purchaseLandTooltip,
-          onPressed: purchaseLandActionEnabled ? onPurchaseLandTap : null,
+          onPressed: purchaseLandAction.enabled ? onPurchaseLandTap : null,
           icon: Icons.payments,
-          enabled: purchaseLandActionEnabled,
+          enabled: purchaseLandAction.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
@@ -111,17 +110,11 @@ List<Widget> buildTileRoadLabelWidgets({
   required String selectedTileKey,
   required String provinceId,
   required int? roadLevel,
-  required bool showBuildRoadActionIcon,
-  required bool buildRoadActionEnabled,
-  required bool buildRoadActionHasEngineerUnits,
+  required ProvinceInlineActionState buildRoadAction,
   VoidCallback? onBuildRoadTap,
-  required bool showBuildPortActionIcon,
-  required bool buildPortActionEnabled,
-  required bool buildPortActionHasEngineerUnits,
+  required ProvinceInlineActionState buildPortAction,
   VoidCallback? onBuildPortTap,
-  required bool showBuildRailroadActionIcon,
-  required bool buildRailroadActionEnabled,
-  required bool buildRailroadActionHasRailBuilderUnits,
+  required ProvinceInlineActionState buildRailAction,
   VoidCallback? onBuildRailroadTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
@@ -137,8 +130,8 @@ List<Widget> buildTileRoadLabelWidgets({
     humanPlayerId: humanPlayerId,
     currentOrders: currentOrders,
     selectedTileKey: selectedTileKey,
-    enabled: buildRoadActionEnabled,
-    hasEngineerUnits: buildRoadActionHasEngineerUnits,
+    enabled: buildRoadAction.enabled,
+    hasMatchingUnits: buildRoadAction.hasMatchingUnits,
   );
   final buildPortTooltip = provinceOverlayBuildPortTooltip(
     l10n: l10n,
@@ -146,8 +139,8 @@ List<Widget> buildTileRoadLabelWidgets({
     humanPlayerId: humanPlayerId,
     currentOrders: currentOrders,
     selectedTileKey: selectedTileKey,
-    enabled: buildPortActionEnabled,
-    hasEngineerUnits: buildPortActionHasEngineerUnits,
+    enabled: buildPortAction.enabled,
+    hasMatchingUnits: buildPortAction.hasMatchingUnits,
   );
   final buildRailroadTooltip = provinceOverlayBuildRailroadTooltip(
     l10n: l10n,
@@ -155,8 +148,8 @@ List<Widget> buildTileRoadLabelWidgets({
     humanPlayerId: humanPlayerId,
     currentOrders: currentOrders,
     selectedTileKey: selectedTileKey,
-    enabled: buildRailroadActionEnabled,
-    hasRailBuilderUnits: buildRailroadActionHasRailBuilderUnits,
+    enabled: buildRailAction.enabled,
+    hasMatchingUnits: buildRailAction.hasMatchingUnits,
   );
   void openDetails() {
     showProvinceTileDetailsDialog(
@@ -185,32 +178,32 @@ List<Widget> buildTileRoadLabelWidgets({
           child: transportText,
         ),
       ),
-      if (showBuildRoadActionIcon)
+      if (buildRoadAction.showIcon)
         CtIconAction(
           tooltip: buildRoadTooltip,
-          onPressed: buildRoadActionEnabled ? onBuildRoadTap : null,
+          onPressed: buildRoadAction.enabled ? onBuildRoadTap : null,
           icon: Icons.add_road,
-          enabled: buildRoadActionEnabled,
+          enabled: buildRoadAction.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
         ),
-      if (showBuildPortActionIcon)
+      if (buildPortAction.showIcon)
         CtIconAction(
           tooltip: buildPortTooltip,
-          onPressed: buildPortActionEnabled ? onBuildPortTap : null,
+          onPressed: buildPortAction.enabled ? onBuildPortTap : null,
           icon: Icons.anchor,
-          enabled: buildPortActionEnabled,
+          enabled: buildPortAction.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
         ),
-      if (showBuildRailroadActionIcon)
+      if (buildRailAction.showIcon)
         CtIconAction(
           tooltip: buildRailroadTooltip,
-          onPressed: buildRailroadActionEnabled ? onBuildRailroadTap : null,
+          onPressed: buildRailAction.enabled ? onBuildRailroadTap : null,
           icon: Icons.directions_railway,
-          enabled: buildRailroadActionEnabled,
+          enabled: buildRailAction.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
