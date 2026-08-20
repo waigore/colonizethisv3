@@ -85,4 +85,56 @@ void main() {
       contains('—'),
     );
   });
+
+  test('transfer line uses transfer wording, free-for-trade, and em dash', () {
+    final l10n = AppLocalizationsEn();
+    expect(
+      homeFleetTransferCargoLineText(
+        l10n: l10n,
+        remainingHolds: 7,
+        overseasUsed: 4,
+        isCargoUsedReliable: true,
+        cargoNotDefined: false,
+      ),
+      'Cargo holds remaining after this transfer: 7 (overseas load this turn: 4). Free for trade bids: 3',
+    );
+    expect(
+      homeFleetTransferCargoLineText(
+        l10n: l10n,
+        remainingHolds: 3,
+        overseasUsed: 4,
+        isCargoUsedReliable: true,
+        cargoNotDefined: false,
+      ),
+      contains('Free for trade bids: 0'),
+    );
+    expect(
+      homeFleetTransferFreeLabel(
+        remainingHolds: 1,
+        overseasUsed: 9,
+        isCargoUsedReliable: false,
+        cargoNotDefined: false,
+      ),
+      '—',
+    );
+    expect(
+      homeFleetTransferFreeLabel(
+        remainingHolds: 1,
+        overseasUsed: 9,
+        isCargoUsedReliable: true,
+        cargoNotDefined: true,
+      ),
+      '—',
+    );
+    expect(
+      homeFleetTransferCargoLineText(
+        l10n: l10n,
+        remainingHolds: 3,
+        overseasUsed: 2,
+        isCargoUsedReliable: false,
+        cargoNotDefined: false,
+      ),
+      isNot(contains('split')),
+    );
+  });
 }

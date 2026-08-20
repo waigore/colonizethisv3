@@ -1,5 +1,5 @@
-// Home Fleet remaining-holds vs overseas-load line (Refs #4448).
-// SPEC/ui/naval-units-fleet-management.md.
+// Home Fleet remaining-holds vs overseas-load line (Refs #4448, #4544).
+// SPEC/ui/naval-units-fleet-management.md; SPEC/ui/transfer-to-home-fleet-dialog.md.
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -75,6 +75,67 @@ Widget homeFleetSplitCargoLine({
   );
   return Text(
     homeFleetSplitCargoLineText(
+      l10n: l10n,
+      remainingHolds: remaining,
+      overseasUsed: overseasUsed,
+      isCargoUsedReliable: isCargoUsedReliable,
+      cargoNotDefined: cargoNotDefined,
+    ),
+    style: TextStyle(color: color),
+  );
+}
+
+String homeFleetTransferFreeLabel({
+  required int remainingHolds,
+  required int overseasUsed,
+  required bool isCargoUsedReliable,
+  required bool cargoNotDefined,
+}) {
+  if (cargoNotDefined || !isCargoUsedReliable) return '—';
+  final free = remainingHolds - overseasUsed;
+  return '${free < 0 ? 0 : free}';
+}
+
+String homeFleetTransferCargoLineText({
+  required AppLocalizations l10n,
+  required int remainingHolds,
+  required int overseasUsed,
+  required bool isCargoUsedReliable,
+  required bool cargoNotDefined,
+}) {
+  final usedLabel = homeFleetSplitCargoUsedLabel(
+    overseasUsed: overseasUsed,
+    isCargoUsedReliable: isCargoUsedReliable,
+    cargoNotDefined: cargoNotDefined,
+  );
+  final freeLabel = homeFleetTransferFreeLabel(
+    remainingHolds: remainingHolds,
+    overseasUsed: overseasUsed,
+    isCargoUsedReliable: isCargoUsedReliable,
+    cargoNotDefined: cargoNotDefined,
+  );
+  return '${l10n.naval_transferToHome_homeCargoConsequence(remainingHolds, usedLabel)} ${l10n.mapControls_cargoHold_details_free(freeLabel)}';
+}
+
+/// Live cargo-consequence line for Transfer to Home Fleet (`DLG40001`).
+///
+/// Remaining holds come from Home Fleet / right staged counts (Refs #4544).
+Widget homeFleetTransferCargoLine({
+  required AppLocalizations l10n,
+  required Map<String, int> rightCounts,
+  required int overseasUsed,
+  required bool isCargoUsedReliable,
+  required bool cargoNotDefined,
+}) {
+  final remaining = cargoHoldsForTypeCounts(rightCounts);
+  final color = homeFleetSplitCargoLineColor(
+    remainingHolds: remaining,
+    overseasUsed: overseasUsed,
+    isCargoUsedReliable: isCargoUsedReliable,
+    cargoNotDefined: cargoNotDefined,
+  );
+  return Text(
+    homeFleetTransferCargoLineText(
       l10n: l10n,
       remainingHolds: remaining,
       overseasUsed: overseasUsed,

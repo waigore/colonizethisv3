@@ -680,6 +680,11 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get naval_transferToHome_confirm => 'Transfer';
 
   @override
+  String naval_transferToHome_homeCargoConsequence(int remaining, String used) {
+    return 'Cargo holds remaining after this transfer: $remaining (overseas load this turn: $used).';
+  }
+
+  @override
   String get diplomacy_section_greatPowers => 'Great Powers';
 
   @override
