@@ -21,6 +21,7 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 .transfer{display:flex;gap:12px;margin-bottom:16px}
 .col{flex:1;background:var(--surface);border:1px solid var(--border);padding:10px}.col h4{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.04em;color:var(--fg);margin-bottom:2px}.col .loc{font-size:10px;color:var(--muted);margin-bottom:8px;font-style:italic}
 .ship-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}.ship-row:last-child{border-bottom:none}.ship-row .name{flex:1}.ship-row .total{font-family:monospace;font-size:12px;color:var(--muted);margin-top:4px}
+.cargo{margin:0 0 12px;font-size:12px;color:var(--muted);line-height:1.4}
 .btn{padding:4px 10px;font-family:monospace;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:color 0.15s;min-width:32px}
 .btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.btn-minus:hover{color:var(--fg)}.btn-minus:disabled{opacity:0.3;cursor:not-allowed}
 .btn-plus{background:var(--surface-lite);border:1px solid var(--accent-dim);color:var(--accent)}.btn-plus:hover{color:var(--accent)}.btn-plus:disabled{opacity:0.3;cursor:not-allowed}
@@ -51,6 +52,7 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
       <div class="total" id="home-total">Total: 1 ship</div>
     </div>
   </div>
+  <p class="cargo" id="cargo">Cargo holds remaining after this transfer: 3 (overseas load this turn: 2). Free for trade bids: 1</p>
   <div class="actions">
     <button class="btn btn-act btn-cancel" onclick="location.reload()">Cancel</button>
     <button class="btn btn-act btn-confirm" id="confirm" disabled onclick="location.reload()">Confirm Transfer</button>
@@ -76,6 +78,10 @@ function render(){
   document.getElementById('home-total').textContent=`Total: ${counts.home.carrack+counts.home.fluyte} ships`
   const moved=counts.source.carrack<2||counts.source.fluyte<1
   document.getElementById('confirm').disabled=!moved
+  const holds=counts.home.carrack*3+counts.home.fluyte*4
+  const used=2
+  const free=Math.max(0,holds-used)
+  document.getElementById('cargo').textContent=`Cargo holds remaining after this transfer: ${holds} (overseas load this turn: ${used}). Free for trade bids: ${free}`
 }
 render()
 </script>

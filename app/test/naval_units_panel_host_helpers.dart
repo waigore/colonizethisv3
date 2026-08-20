@@ -25,6 +25,9 @@ Widget buildNavalPanel({
   MapTopology topology = const MapTopology(),
   Orders draftOrders = const Orders(),
   String? locationScopeKey,
+  int overseasCargoUsed = 0,
+  bool isCargoUsedReliable = true,
+  bool cargoNotDefined = false,
 }) {
   final resolvedBus = bus ?? AppEventBus.create();
   return buildPanelScaffoldShell(
@@ -35,6 +38,9 @@ Widget buildNavalPanel({
       topology: topology,
       draftOrders: draftOrders,
       locationScopeKey: locationScopeKey,
+      overseasCargoUsed: overseasCargoUsed,
+      isCargoUsedReliable: isCargoUsedReliable,
+      cargoNotDefined: cargoNotDefined,
     ),
   );
 }
@@ -52,6 +58,9 @@ Future<void> pumpNavalPanel(
   Orders draftOrders = const Orders(),
   String? locationScopeKey,
   Widget? widget,
+  int overseasCargoUsed = 0,
+  bool isCargoUsedReliable = true,
+  bool cargoNotDefined = false,
 }) async {
   await pumpSettledWidget(
     tester,
@@ -63,6 +72,9 @@ Future<void> pumpNavalPanel(
           topology: topology,
           draftOrders: draftOrders,
           locationScopeKey: locationScopeKey,
+          overseasCargoUsed: overseasCargoUsed,
+          isCargoUsedReliable: isCargoUsedReliable,
+          cargoNotDefined: cargoNotDefined,
         ),
   );
 }

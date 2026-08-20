@@ -246,6 +246,9 @@ mixin NavalUnitsPanelCombine
         game: widget.game,
         humanPlayerId: widget.humanPlayerId,
         bus: widget.bus,
+        overseasCargoUsed: widget.overseasCargoUsed,
+        isCargoUsedReliable: widget.isCargoUsedReliable,
+        cargoNotDefined: widget.cargoNotDefined,
       ),
     );
   }

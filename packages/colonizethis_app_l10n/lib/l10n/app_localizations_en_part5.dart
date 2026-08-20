@@ -2,6 +2,11 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
+  String naval_transferToHome_homeCargoConsequence(int remaining, String used) {
+    return 'Cargo holds remaining after this transfer: $remaining (overseas load this turn: $used).';
+  }
+
+  @override
   String get techEffectSummary_heavy_artillery_0 =>
       'Improves: Royal Artillery regiment upgrade path';
 

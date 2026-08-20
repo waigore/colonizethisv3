@@ -132,8 +132,10 @@ A fleet may have a pending **move** or a pending **mission** for the turn, never
 `UNIT30001` **Naval units panel** shows **Transfer to Home Fleet** on a regular fleet row when a Home Fleet exists in that region (Old World or New World). Tapping it opens `DLG40001` **Transfer to home fleet** (title **Transfer Ships to Home Fleet**).
 
 1. Move one or more ship types from the source list to the Home Fleet list.
-2. Confirm **Transfer**. The selected ships join the Home Fleet at once.
-3. A regular fleet that gives up every ship is removed; the Home Fleet remains, even with no ships.
+2. Read the line under the lists: remaining Home Fleet cargo holds after this transfer, this turn’s overseas load, and how many holds stay free for trade bids. Warships add no holds.
+3. If the line turns a warm accent, no holds are spare. If it turns red, remaining holds would fall short. You can still tap **Transfer** — the line warns, it does not lock.
+4. Confirm **Transfer**. The selected ships join the Home Fleet at once.
+5. A regular fleet that gives up every ship is removed; the Home Fleet remains, even with no ships.
 
 The screens do not all describe the same moment when a transfer is allowed. **Transfer to Home Fleet** is the button you can tap whenever a Home Fleet exists in that region. The transfer dialog itself is written for a source fleet already in port at the capital. **Combine** can also move selected ships into the Home Fleet when the source is in port at the capital, or at sea in a sea next to the capital. Docking at the capital on **Next turn** merges the whole arriving fleet into the Home Fleet. Use the control you can tap; if confirm does not complete, that fleet is not in a place the game will accept.
 
@@ -176,7 +178,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 - [ ] Documents panel **Split** (**Split Fleet** / **Confirm Split**, then a separate **Move**) versus map **Detach a squadron** / **Detach and choose destination** (then `DLG30001`).
 - [ ] Documents **Combine**: two or more fleets in the same port or the same sea merge at once; ships join the Home Fleet when it is checked; empty non-Home fleets are removed.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing; Blockade cuts the target port’s link to its capital (and sea-only overseas links when the target is a capital port); Join Home Fleet via dock/transfer only (not the mission menu).
-- [ ] Documents `DLG40001` **Transfer Ships to Home Fleet** as a button the player can tap, and records in player language that the screens do not all agree on when a transfer is allowed.
+- [ ] Documents `DLG40001` **Transfer Ships to Home Fleet** as a button the player can tap, records in player language that the screens do not all agree on when a transfer is allowed, and that a live line shows remaining Home Fleet holds, this turn’s overseas load, and holds free for trade bids.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.
 - [ ] Explains Home-Fleet cargo capacity on the `MAP10001` crate `used/capacity` row, why the Home Fleet itself cannot sail, and that overseas cargo can be raided.
 - [ ] Describes other Great Powers only through what they do at sea and their chosen leader — not private motives the player cannot see.
