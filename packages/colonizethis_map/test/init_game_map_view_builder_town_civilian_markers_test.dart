@@ -4,6 +4,8 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/init_game_map_view_fixtures.dart';
+import 'support/init_game_map_view_army_marker_scenarios.dart';
+import 'support/init_game_map_view_civilian_marker_scenarios.dart';
 import 'support/init_game_map_view_town_civilian_scenarios.dart';
 
 void main() {
@@ -64,59 +66,18 @@ void main() {
   group('buildInitGameMapViewData civilian tile markers', () {
     test(
       'builds deterministic player-owned civilian tile markers with priority and stack counts',
-      () {
-        final game = civilianMarkersGame();
-        final viewData = buildViewDataForScenario(
-          civilianMarkersScenario(game),
-        );
-
-        final markers = viewData.oldWorld.civilianTileMarkers;
-        expect(markers, hasLength(2));
-
-        final tile00 = markers.singleWhere(
-          (m) => m.tileKey == 'oldWorld|p1|0|0',
-        );
-        expect(tile00.stackCount, 2);
-        expect(tile00.representativeUnitType, kUnitTypeBuilder);
-        expect(tile00.representativeIsAssigned, isTrue);
-        expect(tile00.unitIds, equals(['u_builder', 'u_spy']));
-        expect(tile00.unitTypes['u_builder'], kUnitTypeBuilder);
-        expect(tile00.unitTypes['u_spy'], kUnitTypeSpy);
-
-        final tile10 = markers.singleWhere(
-          (m) => m.tileKey == 'oldWorld|p2|1|0',
-        );
-        expect(tile10.stackCount, 1);
-        expect(tile10.representativeUnitType, kUnitTypeEngineer);
-        expect(tile10.representativeIsAssigned, isFalse);
-        expect(tile10.unitIds, equals(['u_engineer']));
-      },
+      expectPlayerOwnedCivilianTileMarkers,
     );
 
     test(
       'capital marker and stacked civilian marker can co-exist on same tile key',
-      () {
-        final game = capitalCivilianOverlapGame();
-        final viewData = buildViewDataForScenario(
-          capitalCivilianOverlapScenario(game),
-        );
-
-        expect(viewData.oldWorld.capitalMarkers, hasLength(1));
-        final cap = viewData.oldWorld.capitalMarkers.single;
-        expect(cap.x, 0);
-        expect(cap.y, 0);
-
-        expect(viewData.oldWorld.civilianTileMarkers, hasLength(1));
-        final marker = viewData.oldWorld.civilianTileMarkers.single;
-        expect(marker.tileKey, 'oldWorld|p1|0|0');
-        expect(marker.stackCount, 2);
-      },
+      expectCapitalAndCivilianMarkerCoexist,
     );
   });
 
   group('buildInitGameMapViewData armyTileMarkers (Refs #4384)', () {
     test('draws empty Home Army at the capital town tile', () {
-      final view = _armyMarkerView(
+      final view = armyMarkerView(
         armies: const [
           Army(
             id: 'army_home',
@@ -139,7 +100,7 @@ void main() {
     });
 
     test('mixed capital stack counts Home plus field army', () {
-      final view = _armyMarkerView(
+      final view = armyMarkerView(
         armies: const [
           Army(
             id: 'army_field',
@@ -166,7 +127,7 @@ void main() {
     });
 
     test('omits AI-owned armies even when stationed at a town', () {
-      final view = _armyMarkerView(
+      final view = armyMarkerView(
         armies: const [
           Army(
             id: 'army_ai',
@@ -184,7 +145,7 @@ void main() {
     });
 
     test('omits empty non-Home field armies', () {
-      final view = _armyMarkerView(
+      final view = armyMarkerView(
         armies: const [
           Army(
             id: 'army_empty_field',
@@ -225,47 +186,4 @@ void main() {
       );
     });
   });
-}
-
-InitGameMapViewData _armyMarkerView({
-  required List<Army> armies,
-  List<Player> extraPlayers = const [],
-}) {
-  return buildViewDataForScenario(
-    oldWorldFocusedScenario(
-      game: minimalGame(
-        id: 'army-markers',
-        oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-            townTileKey: 'oldWorld|p1|0|0',
-          ),
-        ],
-        armies: armies,
-        players: [
-          const Player(
-            id: 'gp1',
-            displayName: 'GP1',
-            isHuman: true,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|p1',
-              x: 0,
-              y: 0,
-            ),
-          ),
-          ...extraPlayers,
-        ],
-      ),
-      oldWorldGrid: const [
-        ['p1'],
-      ],
-      oldWorldTopology: regionTopology(
-        regionId: 'oldWorld',
-        provinceIds: const ['p1'],
-      ),
-    ),
-  );
 }
