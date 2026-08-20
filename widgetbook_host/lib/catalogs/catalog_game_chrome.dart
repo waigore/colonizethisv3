@@ -195,6 +195,118 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Treasury details — committed spend (Refs #4560)',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+          child: Builder(
+            builder: (BuildContext ctx) {
+              final l10n = appL10n(ctx);
+              return Center(
+                child: SizedBox(
+                  width: 280,
+                  child: TreasuryDetailsPanel(
+                    l10n: l10n,
+                    treasury: 12345,
+                    projectedDelta: -400,
+                    committedLines: const [
+                      TreasuryCommittedSpendLine(
+                        family: TreasuryCommittedSpendFamily.research,
+                        amount: 150,
+                      ),
+                      TreasuryCommittedSpendLine(
+                        family: TreasuryCommittedSpendFamily.grantAid,
+                        amount: 1000,
+                      ),
+                    ],
+                    showExact: true,
+                    onShowExactChanged: (_) {},
+                    onClose: () {},
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Treasury details — forecast only (Refs #4560)',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+          child: Builder(
+            builder: (BuildContext ctx) {
+              final l10n = appL10n(ctx);
+              return Center(
+                child: SizedBox(
+                  width: 280,
+                  child: TreasuryDetailsPanel(
+                    l10n: l10n,
+                    treasury: 8000,
+                    projectedDelta: 250,
+                    committedLines: const [],
+                    showExact: true,
+                    onShowExactChanged: (_) {},
+                    onClose: () {},
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Treasury details — observe disabled (Refs #4560)',
+        builder: (context) => _gameTabBarStoryFrame(
+          treasuryNotDefined: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Treasury details — mobile 360×640 (Refs #4560)',
+        builder: (context) => SizedBox(
+          width: 360,
+          height: 640,
+          child: widgetbookEditorialMonocleApp(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+            child: Builder(
+              builder: (BuildContext ctx) {
+                final l10n = appL10n(ctx);
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: SizedBox(
+                      width: 280,
+                      child: TreasuryDetailsPanel(
+                        l10n: l10n,
+                        treasury: 12345,
+                        projectedDelta: -400,
+                        committedLines: const [
+                          TreasuryCommittedSpendLine(
+                            family: TreasuryCommittedSpendFamily.marketBids,
+                            amount: 320,
+                          ),
+                        ],
+                        showExact: false,
+                        onShowExactChanged: (_) {},
+                        onClose: () {},
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Extraction disc legend — wide',
         builder: (context) {
           final GlobalKey anchor = GlobalKey();
@@ -583,6 +695,7 @@ Widget _gameTabBarStoryFrame({
   int regionIndex = 0,
   int treasury = 12345,
   int? treasuryDelta,
+  bool treasuryNotDefined = false,
   int unreadBadgeCount = 0,
   bool showFeed = false,
   bool showPlayersBar = true,
@@ -611,6 +724,7 @@ Widget _gameTabBarStoryFrame({
               regionIndex: regionIndex,
               treasury: treasury,
               treasuryDelta: treasuryDelta,
+              treasuryNotDefined: treasuryNotDefined,
               unreadBadgeCount: unreadBadgeCount,
               showFeed: showFeed,
               showPlayersBar: showPlayersBar,
@@ -636,6 +750,7 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.regionIndex,
     required this.treasury,
     required this.treasuryDelta,
+    this.treasuryNotDefined = false,
     required this.unreadBadgeCount,
     required this.showFeed,
     required this.showPlayersBar,
@@ -653,6 +768,7 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final int regionIndex;
   final int treasury;
   final int? treasuryDelta;
+  final bool treasuryNotDefined;
   final int unreadBadgeCount;
   final bool showFeed;
   final bool showPlayersBar;
@@ -687,7 +803,7 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       newWorldLabel: 'New World',
       treasury: widget.treasury,
       treasuryDelta: widget.treasuryDelta,
-      treasuryNotDefined: false,
+      treasuryNotDefined: widget.treasuryNotDefined,
       cargoUsed: widget.cargoUsed,
       cargoCapacity: widget.cargoCapacity,
       cargoNotDefined: false,

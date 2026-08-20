@@ -146,6 +146,65 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
       'Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.';
 
   @override
+  String mapControls_treasury_details_current(String amount) {
+    return 'Treasury: $amount';
+  }
+
+  @override
+  String mapControls_treasury_details_forecast(String delta) {
+    return 'Next-turn forecast: $delta';
+  }
+
+  @override
+  String get mapControls_treasury_details_committedHeading =>
+      'Already committed';
+
+  @override
+  String mapControls_treasury_details_line_research(String amount) {
+    return 'Research funding: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_marketBids(String amount) {
+    return 'Market bids: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_grantAid(String amount) {
+    return 'Grant aid: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_overtures(String amount) {
+    return 'Diplomatic overtures: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_recruitWorkers(String amount) {
+    return 'Recruit and train workers: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_trainUnits(String amount) {
+    return 'Train units: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_purchaseLand(String amount) {
+    return 'Purchase land: £$amount';
+  }
+
+  @override
+  String get mapControls_treasury_details_formatExact => 'Exact';
+
+  @override
+  String get mapControls_treasury_details_formatCompact => 'Compact';
+
+  @override
+  String get mapControls_treasury_details_counsel =>
+      'The signed forecast also includes extraction, riches converting to gold, market fills, and the rest of Next turn — those are not listed here.';
+
+  @override
   String mapControls_labourFeeding(String effective, String capacity) {
     return '$effective/$capacity';
   }

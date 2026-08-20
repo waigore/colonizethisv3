@@ -67,6 +67,8 @@ import 'package:colonizethis_app/features/game/widgets/shell/cargo_hold_indicato
 import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend.dart';
 import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend_support.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/treasury_committed_spend.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/treasury_details_indicator_support.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_generals_strip.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';

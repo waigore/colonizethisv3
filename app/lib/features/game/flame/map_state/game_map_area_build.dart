@@ -7,6 +7,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
+import '../../../../providers/treasury_committed_spend_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
@@ -63,6 +64,7 @@ mixin GameMapAreaBuild
     final turnDisplayText = l10n.game_turnDisplay(turnNumber, year);
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
+    final treasuryCommitted = ref.watch(treasuryCommittedSpendProvider);
     final labourFeedingSummary = ref.watch(labourFeedingHudSummaryProvider);
     final feedEntries = buildFeedEntries();
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
@@ -108,6 +110,7 @@ mixin GameMapAreaBuild
           treasury: treasurySummary.treasury,
           treasuryDelta: treasurySummary.projectedDelta,
           treasuryNotDefined: treasurySummary.notDefined,
+          treasuryCommittedLines: treasuryCommitted.lines,
           observeBannerLabel: shell.observeBannerLabel,
           playerTurnEventsFeedCount: feedEntries.length,
           playerTurnEventsFeedNotDefined: !shell.showPlayerChrome,

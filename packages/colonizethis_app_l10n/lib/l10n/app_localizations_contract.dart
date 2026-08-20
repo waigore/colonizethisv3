@@ -2923,6 +2923,45 @@ abstract class AppLocalizations {
   /// Counsel line in the cargo details popover.
   String get mapControls_cargoHold_details_counsel;
 
+  /// Current treasury row in the map gold details popover (Refs #4560).
+  String mapControls_treasury_details_current(String amount);
+
+  /// Signed Next-turn forecast row in the map gold details popover (Refs #4560).
+  String mapControls_treasury_details_forecast(String delta);
+
+  /// Heading above non-zero committed gold lines (Refs #4560).
+  String get mapControls_treasury_details_committedHeading;
+
+  /// Committed research spend line (Refs #4560).
+  String mapControls_treasury_details_line_research(String amount);
+
+  /// Committed staged market bid spend line (Refs #4560).
+  String mapControls_treasury_details_line_marketBids(String amount);
+
+  /// Committed grant-aid spend line (Refs #4560).
+  String mapControls_treasury_details_line_grantAid(String amount);
+
+  /// Committed overture treasury line (Refs #4560).
+  String mapControls_treasury_details_line_overtures(String amount);
+
+  /// Committed recruit/train worker treasury line (Refs #4560).
+  String mapControls_treasury_details_line_recruitWorkers(String amount);
+
+  /// Committed build-unit treasury line (Refs #4560).
+  String mapControls_treasury_details_line_trainUnits(String amount);
+
+  /// Committed purchase-land treasury line (Refs #4560).
+  String mapControls_treasury_details_line_purchaseLand(String amount);
+
+  /// Exact number format toggle in the treasury details popover (Refs #4560).
+  String get mapControls_treasury_details_formatExact;
+
+  /// Compact number format toggle in the treasury details popover (Refs #4560).
+  String get mapControls_treasury_details_formatCompact;
+
+  /// Counsel line explaining non-itemized forecast effects (Refs #4560).
+  String get mapControls_treasury_details_counsel;
+
   /// Map tab-bar labour/feeding indicator fraction (Refs #4506).
   String mapControls_labourFeeding(String effective, String capacity);
 

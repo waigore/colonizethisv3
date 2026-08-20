@@ -33,6 +33,7 @@ class GameMapControls extends StatelessWidget {
     this.isCargoUsedReliable = true,
     this.observeBannerLabel,
     this.treasuryNotDefined = false,
+    this.treasuryCommittedLines = const [],
     this.cargoNotDefined = false,
     this.playerTurnEventsFeedNotDefined = false,
     this.oldWorldRace,
@@ -67,6 +68,7 @@ class GameMapControls extends StatelessWidget {
   final bool isCargoUsedReliable;
   final String? observeBannerLabel;
   final bool treasuryNotDefined;
+  final List<TreasuryCommittedSpendLine> treasuryCommittedLines;
   final bool cargoNotDefined;
   final bool playerTurnEventsFeedNotDefined;
   final OldWorldRaceSnapshot? oldWorldRace;
@@ -110,6 +112,7 @@ class GameMapControls extends StatelessWidget {
           treasuryDelta: treasuryDelta,
           treasuryNotDefined: treasuryNotDefined,
           treasuryObserveLabel: kObserveNotDefinedLabel,
+          treasuryCommittedLines: treasuryCommittedLines,
           cargoUsed: cargoUsed,
           cargoCapacity: cargoCapacity,
           cargoNotDefined: cargoNotDefined,

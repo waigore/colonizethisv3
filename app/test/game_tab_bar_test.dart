@@ -5,6 +5,8 @@ import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.d
 import 'package:colonizethis_app/features/game/widgets/shell/cargo_hold_indicator_support.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/treasury_committed_spend.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/treasury_details_indicator_support.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +23,8 @@ void main() {
     int treasury = 12345,
     int? treasuryDelta,
     bool treasuryNotDefined = false,
+    List<TreasuryCommittedSpendLine> treasuryCommittedLines =
+        const <TreasuryCommittedSpendLine>[],
     String cargoHoldLabel = '3/12',
     int cargoUsed = 3,
     int cargoCapacity = 12,
@@ -45,6 +49,7 @@ void main() {
                 treasury: treasury,
                 treasuryDelta: treasuryDelta,
                 treasuryNotDefined: treasuryNotDefined,
+                treasuryCommittedLines: treasuryCommittedLines,
                 cargoUsed: cargoUsed,
                 cargoCapacity: cargoCapacity,
                 cargoNotDefined: cargoNotDefined,
@@ -122,22 +127,69 @@ void main() {
     final deltaText = tester.widget<Text>(find.text('-400'));
     expect(deltaText.style?.color, EditorialMonoclePalette.danger);
   });
-  testWidgets('tapping treasury toggles exact and abbreviated modes', (
+  testWidgets('tapping treasury opens details popover with forecast', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      hostFor(
+        treasury: 12345,
+        treasuryDelta: -400,
+        treasuryCommittedLines: const [
+          TreasuryCommittedSpendLine(
+            family: TreasuryCommittedSpendFamily.grantAid,
+            amount: 1000,
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('12,345'), findsOneWidget);
+
+    await tester.tap(find.byKey(kTreasuryIndicatorKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kTreasuryDetailsPanelKey), findsOneWidget);
+    expect(find.text('Treasury: 12,345'), findsOneWidget);
+    expect(find.text('Next-turn forecast: -400'), findsOneWidget);
+    expect(find.text('Grant aid: £1,000'), findsOneWidget);
+    expect(
+      find.textContaining('extraction, riches converting to gold'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Exact/Compact inside popover updates chip formatting', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(hostFor(treasury: 12345));
     await tester.pump();
 
-    expect(find.text('12,345'), findsOneWidget);
-
     await tester.tap(find.byKey(kTreasuryIndicatorKey));
-    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(TreasuryDetailsPanel.compactFormatKey));
+    await tester.pumpAndSettle();
+    expect(find.text('12.3k'), findsWidgets);
+
+    await tester.tap(find.byKey(TreasuryDetailsPanel.closeButtonKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(kTreasuryDetailsPanelKey), findsNothing);
     expect(find.text('12.3k'), findsOneWidget);
+  });
+
+  testWidgets('observe treasury does not open details popover', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(hostFor(treasuryNotDefined: true));
+    await tester.pump();
 
     await tester.tap(find.byKey(kTreasuryIndicatorKey));
-    await tester.pump();
-    expect(find.text('12,345'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kTreasuryDetailsPanelKey), findsNothing);
   });
+
   testWidgets('region tab tap calls onRegionIndexChanged', (
     WidgetTester tester,
   ) async {
