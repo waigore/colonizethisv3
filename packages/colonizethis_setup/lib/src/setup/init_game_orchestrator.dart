@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'advanced_start_bootstrap.dart';
 import 'effective_setup_seed.dart';

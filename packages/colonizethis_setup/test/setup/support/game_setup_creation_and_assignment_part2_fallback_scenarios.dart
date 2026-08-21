@@ -1,7 +1,7 @@
 // Scenario table for GameSetup creation (part 2 fallback/misc) (Refs #4349 slice D).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' show RegionData;
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
 

@@ -144,9 +144,9 @@ lines) for the split domain packages.
   `part` / `part of` under `packages/colonizethis_models/lib/`.
 - Slice D (Refs #4068) densifies oversized models suites
   (`world_market_test`, `game_test`, `app_events_test`,
-  `diplomacy_models_test`) into concern-split files at or below 400
-  physical lines, with a shared `test/support/minimal_game.dart`
-  scaffold; `repo.models_test_file_size` enforces the ceiling.
+  `diplomacy_models_test`) into concern-split files; wave 4 (#4571)
+  ratchets the test ceiling to **250** physical lines.
+  `repo.models_test_file_size` enforces the ceiling.
 
 ### Acceptance criteria
 
@@ -174,24 +174,51 @@ lines) for the split domain packages.
   the workspace, when the System runs `runCheckModelsFileSize`, then the checker
   exits non-zero and reports a stale grandfather entry for that path.
 
-## colonizethis_models 300 physical-line lib gate (Refs #4334)
+## colonizethis_models 250 physical-line lib + test gates (Refs #4571)
 
-Wave 3 tightens the models lib physical ceiling from **400 → 300** after event
-partitions and aggregate codec extracts (#4334). Every non-generated
-`packages/colonizethis_models/lib/**` Dart file must stay at or below **300**
-physical lines under `repo.models_lib_physical_file_size`, with an empty
-shrink-only grandfather allowlist.
+Wave 4 tightens the models lib physical ceiling from **300 → 250** and the
+models test physical ceiling from **400 → 250** after aggregate-host thinning,
+type-library splits, tile-key SoT alignment, and suite densify (#4571). Every
+non-generated `packages/colonizethis_models/lib/**` Dart file must stay at or
+below **250** physical lines under `repo.models_lib_physical_file_size`, and
+every `packages/colonizethis_models/test/**` Dart file must stay at or below
+**250** physical lines under `repo.models_test_file_size`, both with empty
+shrink-only grandfather allowlists. The historical **500 NCL**
+`repo.models_file_size` gate is unchanged.
 
-Wave 3 also lands `repo.models_test_mirrors_lib`: zero loose Dart sources at
-`packages/colonizethis_models/test/` root; suites live under mirrored
-subdirectories (`test/src/`, `test/app_events/`, etc.) with `test/support/`
-helpers unchanged.
+Wave 3 (#4334) had already landed `repo.models_test_mirrors_lib`: zero loose
+Dart sources at `packages/colonizethis_models/test/` root; suites live under
+mirrored subdirectories (`test/src/`, `test/app_events/`, etc.) with
+`test/support/` helpers unchanged.
 
 ### Acceptance criteria
 
 - Given every non-generated `packages/colonizethis_models/lib/**/*.dart` file,
-  when `runCheckModelsLibPhysicalFileSize` runs at ceiling **300**, then the
+  when `runCheckModelsLibPhysicalFileSize` runs at ceiling **250**, then the
   checker exits zero with an empty grandfather allowlist.
+
+- Given every Dart file under `packages/colonizethis_models/test/**`, when
+  `runCheckModelsTestFileSize` runs at ceiling **250**, then the checker exits
+  zero.
+
+- Given every Dart source under `packages/colonizethis_models/test/` except
+  `test/support/**`, when `runCheckModelsTestMirrorsLib` runs, then no file
+  sits directly at the `test/` root (each path has at least one subdirectory
+  after `test/`).
+
+## colonizethis_models 300 physical-line lib gate (Refs #4334, superseded by wave 4)
+
+Wave 3 tightened the models lib physical ceiling from **400 → 300** after event
+partitions and aggregate codec extracts (#4334). Wave 4 (#4571) ratchets this
+ceiling to **250**; the wave-3 section remains for history. Every non-generated
+`packages/colonizethis_models/lib/**` Dart file previously had to stay at or
+below **300** physical lines under `repo.models_lib_physical_file_size`.
+
+### Acceptance criteria (historical wave 3)
+
+- Given every non-generated `packages/colonizethis_models/lib/**/*.dart` file,
+  when `runCheckModelsLibPhysicalFileSize` ran at ceiling **300**, then the
+  checker exited zero with an empty grandfather allowlist.
 
 - Given every Dart source under `packages/colonizethis_models/test/` except
   `test/support/**`, when `runCheckModelsTestMirrorsLib` runs, then no file
@@ -205,8 +232,9 @@ domain package and the app. Wave 2 added a **400 physical-line cap** on
 `packages/colonizethis_models/lib/**` under `repo.models_lib_physical_file_size`,
 tighter than `repo.domain_package_source_file_size` (500 physical) for split
 domain packages and complementary to `repo.models_file_size` (500 NCL). Wave 3
-(#4334) ratchets this ceiling to **300**; the wave-2 section below documents
-the historical gate and slice progress.
+(#4334) ratcheted this ceiling to **300**; wave 4 (#4571) ratchets it to
+**250**. The wave-2 section below documents the historical gate and slice
+progress.
 
 | Artifact | Role |
 |----------|------|

@@ -95,5 +95,23 @@ void main() {
       expect(Unit.provinceIdFromTileKey('p1|0|0'), isNull);
       expect(Unit.provinceIdFromTileKey(null), isNull);
     });
+
+    test('tile-key parsers agree with parseTileKeyCoordinates SoT', () {
+      const cases = <String>[
+        'oldWorld|p1|0|0',
+        'a|b',
+        'a|b|0|0|extra',
+        'a|b|x|y',
+        'oldWorld|p1|0',
+      ];
+      for (final key in cases) {
+        final parsed = parseTileKeyCoordinates(key);
+        final expectedProvince = parsed == null
+            ? null
+            : '${parsed.regionId}|${parsed.provinceLocalId}';
+        expect(Unit.provinceIdFromTileKey(key), expectedProvince, reason: key);
+        expect(Unit.regionIdFromTileKey(key), parsed?.regionId, reason: key);
+      }
+    });
   });
 }

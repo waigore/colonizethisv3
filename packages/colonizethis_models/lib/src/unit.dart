@@ -1,8 +1,11 @@
 import 'current_work.dart';
-import 'province_id.dart';
+import 'tile_key_coordinates.dart';
+import 'unit_json.dart';
+
+export 'unit_json.dart' show UnitStatus;
 
 /// Normalizes persisted province id: tile-derived wins when [tileKey] is set.
-String _storedProvinceIdForTileAndLocation(
+String storedProvinceIdForTileAndLocation(
   String? tileKey,
   String locationHint,
 ) {
@@ -30,7 +33,7 @@ class Unit {
     this.originTileKey,
     this.assignedTileKey,
     this.currentWork,
-  }) : _storedProvinceId = _storedProvinceIdForTileAndLocation(
+  }) : _storedProvinceId = storedProvinceIdForTileAndLocation(
          tileKey,
          locationProvinceId,
        );
@@ -61,23 +64,21 @@ class Unit {
   String? get regionIdFromTile => regionIdFromTileKey(tileKey);
 
   /// Parses province id from a tile key (format regionId|localId|x|y).
-  /// Returns full id `regionId|localId` only when the key has at least four
-  /// pipe-separated segments. Otherwise returns null (no bare-local fallback).
-  /// SPEC/game/world-model-identity.md.
+  /// Returns full id `regionId|localId` when [parseTileKeyCoordinates] accepts
+  /// the key; otherwise null (short, extra-segment, and non-numeric → null).
+  /// SPEC/game/world-model-identity.md; Refs #3427, #4571.
   static String? provinceIdFromTileKey(String? tileKey) {
     if (tileKey == null || tileKey.isEmpty) return null;
-    final parts = tileKey.split('|');
-    if (parts.length >= 4) {
-      return '${parts[0]}|${parts[1]}';
-    }
-    return null;
+    final parsed = parseTileKeyCoordinates(tileKey);
+    if (parsed == null) return null;
+    return '${parsed.regionId}|${parsed.provinceLocalId}';
   }
 
-  /// Parses region id from a tile key (format regionId|localId|x|y). Returns null if invalid.
+  /// Parses region id from a tile key (format regionId|localId|x|y).
+  /// Returns null when [parseTileKeyCoordinates] rejects the key.
   static String? regionIdFromTileKey(String? tileKey) {
     if (tileKey == null || tileKey.isEmpty) return null;
-    final parts = tileKey.split('|');
-    return parts.isNotEmpty ? parts[0] : null;
+    return parseTileKeyCoordinates(tileKey)?.regionId;
   }
 
   /// Region id from [tileKey]. Throws [StateError] if tileKey is null, empty, or invalid.
@@ -99,49 +100,9 @@ class Unit {
   /// Multi-turn work in progress. SPEC/program/development-resolution.md.
   final CurrentWork? currentWork;
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': type,
-    'ownerId': ownerId,
-    'provinceId': locationProvinceId,
-    'status': status.name,
-    if (medals != 0) 'medals': medals,
-    if (tileKey != null && tileKey!.isNotEmpty) 'tileKey': tileKey,
-    if (originTileKey != null && originTileKey!.isNotEmpty)
-      'originTileKey': originTileKey,
-    if (assignedTileKey != null && assignedTileKey!.isNotEmpty)
-      'assignedTileKey': assignedTileKey,
-    if (currentWork != null) 'currentWork': currentWork!.toJson(),
-  };
+  Map<String, dynamic> toJson() => encodeUnitToJson(this);
 
-  static Unit fromJson(Map<String, dynamic> json) {
-    final cw = json['currentWork'];
-    final tileKey = json['tileKey'] as String?;
-    final rawProvince = ProvinceId.requirePrefixed(
-      json['provinceId'] as String,
-      fieldName: 'Unit.provinceId',
-    );
-    final normalizedStored = _storedProvinceIdForTileAndLocation(
-      tileKey,
-      rawProvince,
-    );
-    return Unit(
-      id: json['id'] as String,
-      type: json['type'] as String,
-      ownerId: json['ownerId'] as String,
-      locationProvinceId: normalizedStored,
-      status: _statusFromJson(json['status'] as String?),
-      medals: (json['medals'] as int?) ?? 0,
-      tileKey: tileKey,
-      originTileKey: json['originTileKey'] as String?,
-      assignedTileKey: json['assignedTileKey'] as String?,
-      currentWork: cw is Map<String, dynamic>
-          ? CurrentWork.fromJson(cw)
-          : cw is Map<Object?, Object?>
-          ? CurrentWork.fromJson(Map<String, dynamic>.from(cw))
-          : null,
-    );
-  }
+  static Unit fromJson(Map<String, dynamic> json) => decodeUnitFromJson(json);
 
   /// [clearCurrentWork] when true sets [currentWork] to null (use when cancelling work).
   /// Otherwise [currentWork] is used if provided, else kept.
@@ -213,16 +174,5 @@ class Unit {
     originTileKey,
     assignedTileKey,
     currentWork,
-  );
-}
-
-/// Minimal status for Phase 2 work and movement.
-enum UnitStatus { idle, working }
-
-UnitStatus _statusFromJson(String? value) {
-  if (value == null) return UnitStatus.idle;
-  return UnitStatus.values.firstWhere(
-    (s) => s.name == value,
-    orElse: () => UnitStatus.idle,
   );
 }
