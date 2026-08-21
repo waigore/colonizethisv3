@@ -11,7 +11,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `MoveFleetDialog` | `StatefulWidget` | `game` (`Game`), `topology` (`MapTopology`), `humanPlayerId` (`String`), `fleet` (`Fleet`), `bus` (`AppEventBus`) | Local `showDialog` modal opened from `NavalUnitsPanel` Move, map marker in-port branch, `DLG31001` Sail/Move, or Home Fleet detach-then-sail for the **new** fleet. Emits a naval move request on confirm and per-row `LocateMapTileEvent`s on locate. |
+| `MoveFleetDialog` | `StatefulWidget` | `game` (`Game`), `topology` (`MapTopology`), `humanPlayerId` (`String`), `fleet` (`Fleet`), `bus` (`AppEventBus`), `playerView` (`PlayerView?`) | Local `showDialog` modal opened from `NavalUnitsPanel` Move, map marker in-port branch, `DLG31001` Sail/Move, or Home Fleet detach-then-sail for the **new** fleet. Emits a naval move request on confirm and per-row `LocateMapTileEvent`s on locate. Optional `playerView` drives fog-respecting sea-zone hostile gist (Refs #4573); callers via `showMoveFleetDialogForFleet` supply caller view or `buildPlayerView`. |
 
 Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart`. Wrapped in a `CtDialogShell` (dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient). The legacy Material `AlertDialog` / `RadioListTile` / `TextButton` chrome is forbidden (regression guard) per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban. `_buildNavalMovePicks` plus the `_PickSeaZone` / `_PickPort` variants build the sealed `_MovePick` list and order conversion.
 
@@ -48,7 +48,7 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dar
 - Title: `moveFleet_title(fleetLabel)` when `picks.isEmpty`, else `moveFleet_titleWithDestinations(fleetLabel, picks.length)`. `fleetLabel` is `'Fleet <fleet.id>'`. Rendered with the dark-theme `titleMedium` style in `--accent` color and `letter-spacing: 0.05em` per #2867 R2.
 - Empty state: `moveFleet_noAdjacentSeaZones` replaces the picks column; Confirm stays disabled (`onPressed: null`, button paints at `CtNinePatchButton.disabledOpacity = 0.4`).
 - Body: `CtDialogShell` body is a `Column(mainAxisSize: min)` with two optional sections separated by a 12 dp gap when both render. Section headers use `CtSectionLabel` (post-#2859 S10) carrying the localized labels `moveFleet_seaZonesSection` and `moveFleet_provincesDockSection`. When `kCtE2EEnabled`, the rows column is wrapped in a `KeyedSubtree` keyed `kCtE2EMoveFleetDialogScrollRootKey`.
-- Rows: each pick renders as a shared `MoveDialogDestinationRow` ([`components/move-units-dialog-base.md`](components/move-units-dialog-base.md)) — a tappable `GestureDetector` over a `Container` painted with a 1 px `EditorialMonoclePalette.border` outline; the selected row uses a 2 px `EditorialMonoclePalette.accent` outline and a filled `--accent` dot in its leading radio slot. Row title is the localized `rowLabel`; the trailing `IconButton` (`Icons.my_location`, size 18, tooltip `moveFleet_locateOnMap`) keeps the existing `pick.emitLocate(bus, game)` contract per #2867 R7. No `RadioListTile` / Material `Radio` widgets appear in the rendered tree.
+- Rows: each pick renders as a shared `MoveDialogDestinationRow` ([`components/move-units-dialog-base.md`](components/move-units-dialog-base.md)) — a tappable `GestureDetector` over a `Container` painted with a 1 px `EditorialMonoclePalette.border` outline; the selected row uses a 2 px `EditorialMonoclePalette.accent` outline and a filled `--accent` dot in its leading radio slot. Row title is the localized `rowLabel`. **Sea-zone rows** append muted intel lines under the title from `computeMoveFleetDestinationIntelSummary` / `moveFleetDestinationIntelSummaryLines` (Refs #4573): **Fleets unknown** when `playerView` is null or every water tile in the destination sea is unrevealed; otherwise **Hostile patrol** / **Hostile blockade** when at-war hostiles at sea have those missions, else **Hostile fleets: N** when hostiles are present without Patrol/Blockade; omit the line when no at-war hostile is at sea. **Port rows** never get hostile gist (combat is at sea). The trailing `IconButton` (`Icons.my_location`, size 18, tooltip `moveFleet_locateOnMap`) keeps the existing `pick.emitLocate(bus, game)` contract per #2867 R7. No `RadioListTile` / Material `Radio` widgets appear in the rendered tree. Intel lines MUST NOT include intercept chance, combat odds, raw `FleetMission` enum names, or a ship-type dump.
 - Action row: two `CtNinePatchButton`s — Confirm (primary, `dangerVariant: false`) and Cancel (secondary, `dangerVariant: false`) — laid out inside a trailing **`Wrap(alignment: end, spacing: 8, runSpacing: 8)`** so the buttons flow onto a second run rather than overflowing the `CtDialogShell` content column at narrow viewports (Refs #2870 S8/S10). Confirm is disabled (`onPressed: null`) until `_selected != null`; Cancel is always enabled.
 - Sea-zone labels: non-warp zones show the localized sea-zone name; warp zones append `moveFleet_warpLink` for same-region warps, else `moveFleet_warpLinkToRegion(<region label>)` for cross-region warps. Names come from `seaZoneDisplayName`.
 - Port labels: province display name (fallback to id). Capital port appends ` (capital — joins Home Fleet)` per [ships-and-naval.md](../game/ships-and-naval.md) Home Fleet merge semantics. Port rows render only when the fleet is at sea and the dock target belongs to the human player.
@@ -79,6 +79,12 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dar
 | Same-region warp | Warp-zone in the same region | Row label appends `moveFleet_warpLink`. |
 | Capital dock | Dock province equals the player's capital | Row label appends ` (capital — joins Home Fleet)`. |
 | Selection | A row is tapped | `_selected` updates; Confirm becomes enabled. |
+| Hostile patrol sea | Destination sea not fully unrevealed; at-war hostile at sea on Patrol | Muted `moveFleet_destinationIntel_hostilePatrol` under the sea row title; Confirm stays enabled. |
+| Hostile blockade sea | Same visibility; at-war hostile on Blockade | Muted `moveFleet_destinationIntel_hostileBlockade`. |
+| Hostile fleets (other missions) | Same visibility; at-war hostiles at sea without Patrol/Blockade | Muted `moveFleet_destinationIntel_hostileFleets(count)`. |
+| Fleets unknown | `playerView` null or every water tile in the destination sea unrevealed | Muted `moveFleet_destinationIntel_fleetsUnknown`; no hostile counts/owners/ships. |
+| Clean sea | Full intel; no at-war hostile at sea | No hostile gist line. |
+| Port destination | Owned dock row | No hostile-fleet gist. |
 
 ---
 
@@ -109,7 +115,8 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dar
 - `MoveUnitsDialogState` / `MoveDialogDestinationRow` / `MoveDialogRadioDot` (shared move-dialog scaffold + radio row; SPEC: [`components/move-units-dialog-base.md`](components/move-units-dialog-base.md)). `_MoveFleetDialogState` extends `MoveUnitsDialogState` and supplies the sea-zone/port groups; each pick renders via `MoveDialogDestinationRow` with `content` = the localized `rowLabel` and a trailing locate `CtIconAction`, over the canonical 1 px / 2 px `--border` / `--accent` outline contract.
 - `Column`, `SizedBox`, `IconButton`, `Icon`, `Text`.
 - Forbidden in this surface (regression guard): Material `AlertDialog`, `RadioListTile`, `Radio`, `TextButton`. These are pinned by the AC below; the legacy chrome (pre-#2867 S2) used them.
-- Localized keys via `appL10n(context)`: `moveFleet_title`, `moveFleet_titleWithDestinations`, `moveFleet_noAdjacentSeaZones`, `moveFleet_seaZonesSection`, `moveFleet_provincesDockSection`, `moveFleet_warpLink`, `moveFleet_warpLinkToRegion`, `moveFleet_locateOnMap`, `common_cancel`, `common_confirm`.
+- Localized keys via `appL10n(context)`: `moveFleet_title`, `moveFleet_titleWithDestinations`, `moveFleet_noAdjacentSeaZones`, `moveFleet_seaZonesSection`, `moveFleet_provincesDockSection`, `moveFleet_warpLink`, `moveFleet_warpLinkToRegion`, `moveFleet_locateOnMap`, `moveFleet_destinationIntel_fleetsUnknown`, `moveFleet_destinationIntel_hostilePatrol`, `moveFleet_destinationIntel_hostileBlockade`, `moveFleet_destinationIntel_hostileFleets`, `common_cancel`, `common_confirm`.
+- Destination intel helpers: `move_fleet_destination_intel.dart`, `move_fleet_destination_intel_labels.dart` (Refs #4573).
 
 ---
 
@@ -139,12 +146,28 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dar
 
 - Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when `MoveFleetDialog` is rendered with a non-Home fleet (one `carrack` ship in sea zone `sea_origin`) and a topology offering exactly one adjacent sea-zone destination, then `WidgetTester.takeException()` returns `null`, the `Move fleet — Fleet <id>` title renders, the `SEA ZONES` `CtSectionLabel` renders, and both `Cancel` and `Confirm` `CtNinePatchButton` labels render (the trailing `Wrap`-based Cancel / Confirm action row flows onto a second run when the two buttons cannot fit side-by-side per `SPEC/ui/mobile-adaptation.md` § 7 — Refs #2870 S8/S10).
 
+- Given a sea-going fleet with an adjacent sea that is not fully unrevealed and holds one at-war hostile fleet on **Patrol**, when `DLG30001` renders that sea-zone row, then the UI layer shows muted `moveFleet_destinationIntel_hostilePatrol` on the row and **Confirm** stays enabled when a destination is selected (Refs #4573).
+
+- Given the same adjacency with an at-war hostile fleet on **Blockade**, when the row renders, then the UI layer shows muted `moveFleet_destinationIntel_hostileBlockade` (Refs #4573).
+
+- Given the same adjacency with at-war hostile fleets at sea whose missions are not Patrol or Blockade, when the row renders, then the UI layer shows muted `moveFleet_destinationIntel_hostileFleets(count)` without claiming Patrol or Blockade (Refs #4573).
+
+- Given the destination sea’s water tiles are all unrevealed for the human (or `playerView` is omitted), when the sea-zone row renders, then the UI layer shows `moveFleet_destinationIntel_fleetsUnknown` and does not print hostile counts, owner names, or ship types (Refs #4573).
+
+- Given no at-war hostile fleet is at sea in a fully intel-visible destination sea, when the row renders, then no hostile gist line appears (Refs #4573).
+
+- Given an owned-port destination row, when `DLG30001` renders, then no hostile-fleet gist is added on that row (Refs #4573).
+
+- Given the default sea-zone surface, when intel lines render, then they do not include intercept chance, combat odds, raw enum names, or a ship-type dump (Refs #4573).
+
 ---
 
 ## Widgetbook
 
-Catalog folder: **Move Fleet Dialog** (registered in `app/lib/widgetbook/catalog.dart`). Use case:
+Catalog folder: **Move Fleet Dialog** (registered in `widgetbook_host/lib/catalogs/catalog_dialogs.dart` + `catalog_dialogs_move_fleet_destination_intel.dart`). Use cases:
 
 1. **Default — sea zones + dock:** Minimal `Game`, `MapTopology`, and `Fleet` fixture wired so the dialog renders both sections with at least one warp-zone destination and one capital dock row, plus a fresh `AppEventBus`.
+2. **Hostile patrol destination:** Sea-zone row shows muted hostile-patrol gist (Refs #4573).
+3. **Unknown intel destination:** Sea-zone row shows **Fleets unknown** when `playerView` is omitted (Refs #4573).
 
-Automated widget tests: `app/test/move_dialogs_specs_fleet_test.dart` (fleet pins; army pins in `move_dialogs_specs_army_test.dart`); broader behavior coverage in `app/test/move_fleet_dialog_test.dart`.
+Automated widget tests: `app/test/move_dialogs_specs_fleet_test.dart` (fleet pins; army pins in `move_dialogs_specs_army_test.dart`); broader behavior coverage in `app/test/move_fleet_dialog_test.dart`; destination intel helpers in `app/test/move_fleet_destination_intel_test.dart`.

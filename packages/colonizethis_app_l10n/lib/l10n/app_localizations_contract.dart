@@ -1123,6 +1123,18 @@ abstract class AppLocalizations {
   /// Suffix appended to cross-region sea-zone destinations in move fleet dialog.
   String moveFleet_warpLinkToRegion(String region);
 
+  /// Fogged/unknown sea-zone destination intel on Move fleet dialog (#4573).
+  String get moveFleet_destinationIntel_fleetsUnknown;
+
+  /// At-war hostile fleet on Patrol in destination sea (#4573).
+  String get moveFleet_destinationIntel_hostilePatrol;
+
+  /// At-war hostile fleet on Blockade in destination sea (#4573).
+  String get moveFleet_destinationIntel_hostileBlockade;
+
+  /// At-war hostile fleets at sea without Patrol/Blockade (#4573).
+  String moveFleet_destinationIntel_hostileFleets(int count);
+
   /// Military units panel title.
   String get military_units_title;
 

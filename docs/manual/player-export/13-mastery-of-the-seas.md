@@ -76,7 +76,7 @@ If the Home Fleet has no ships, the harbor marker still opens **Naval units pane
 ### Move a sea-going fleet
 
 1. In **Naval units panel**, tap **Move** beside a sea-going fleet to open **Move fleet dialog** (title **Move fleet — Fleet \<id\>**).
-2. Select one legal adjacent destination and confirm.
+2. Select one legal adjacent destination and confirm. Sea-zone rows may show a short muted line under the name when you can see that water: **Hostile patrol** or **Hostile blockade** if an enemy fleet at war is already there on that duty, or **Hostile fleets: N** when enemies share the sea without those duties. When you cannot see the water yet, the line says **Fleets unknown**. Owned port rows do not add this line.
 3. A fleet at sea may move sea to neighbouring sea, or dock at an adjacent **owned** port. A fleet in port may undock only into an adjacent sea.
 4. Some adjacent seas are passages to the other map. Those rows add **links to** the other region (**Old World** or **New World**). Still one hop per order — no skipping across the map, and no port-to-port hops.
 5. Docking at the capital merges the arriving fleet into the Home Fleet when you confirm **Next turn** and that turn finishes.

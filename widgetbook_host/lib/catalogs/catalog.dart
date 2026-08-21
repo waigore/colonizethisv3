@@ -228,6 +228,7 @@ part 'catalog_tile_radial.dart';
 part 'catalog_dialogs.dart';
 part 'catalog_dialogs_grant_or_subsidy.dart';
 part 'catalog_dialogs_move_army_invasion_intel.dart';
+part 'catalog_dialogs_move_fleet_destination_intel.dart';
 part 'catalog_dialogs_naval_mission.dart';
 part 'catalog_primitives.dart';
 part 'catalog_data_screens.dart';
