@@ -3,6 +3,7 @@
 /// First-class library so `MarketActivity` can depend on it without a
 /// library cycle (Refs #4068 Slice C).
 
+import '../model_json_numbers.dart';
 import '../stockpile.dart';
 
 /// A single offer/bid pairing executed in the market phase.
@@ -62,20 +63,13 @@ class FilledDeal {
   };
 
   static FilledDeal fromJson(Map<String, dynamic> json) {
-    int intOrZero(Object? v) =>
-        v is int ? v : int.tryParse(v?.toString() ?? '') ?? 0;
-    double doubleOrZero(Object? v) {
-      if (v is num) return v.toDouble();
-      return double.tryParse(v?.toString() ?? '') ?? 0.0;
-    }
-
     final tileKey = json['sellerOriginTileKey'];
     return FilledDeal(
       sellerFactionId: json['sellerFactionId']?.toString() ?? '',
       buyerFactionId: json['buyerFactionId']?.toString() ?? '',
       commodityId: json['commodityId']?.toString() ?? '',
-      quantity: intOrZero(json['quantity']),
-      pricePerUnit: doubleOrZero(json['pricePerUnit']),
+      quantity: modelJsonIntOrZero(json['quantity']),
+      pricePerUnit: modelJsonDoubleOrZero(json['pricePerUnit']),
       isFtpMatch: json['isFtpMatch'] == true,
       isFirstRightOfRefusalMatch: json['isFirstRightOfRefusalMatch'] == true,
       sellerOriginTileKey: tileKey is String && tileKey.isNotEmpty

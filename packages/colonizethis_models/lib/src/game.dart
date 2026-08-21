@@ -2,7 +2,6 @@ import 'advanced_start_type.dart';
 import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
-import 'game_copy_with.dart';
 import 'game_equality.dart';
 import 'game_serialization.dart';
 import 'general.dart';
@@ -16,7 +15,8 @@ import 'victory.dart';
 import 'world_market.dart';
 import 'world_state.dart';
 
-export 'victory.dart';
+/// Re-export so barrel consumers keep `game.copyWith(...)` (Refs #4571).
+export 'game_copy_with.dart';
 
 /// Top-level game container. SPEC/game/world-model.
 class Game {
@@ -187,88 +187,6 @@ class Game {
   Map<String, dynamic> toJson() => encodeGameToJson(this);
 
   static Game fromJson(Map<String, dynamic> json) => decodeGameFromJson(json);
-
-  Game copyWith({
-    String? id,
-    WorldState? worldState,
-    List<Player>? players,
-    List<MinorNation>? minorNations,
-    List<Tribe>? tribes,
-    List<General>? generals,
-    TurnTimeMapping? turnTimeMapping,
-    CombatMode? defaultCombatMode,
-    Map<String, CombatMode>? combatModeByProvinceId,
-    List<DiplomacyRelation>? diplomacyRelations,
-    List<OvertureState>? overtureStates,
-    List<SubsidyState>? subsidyStates,
-    List<ColonyState>? colonyStates,
-    List<BoycottState>? boycottStates,
-    List<AllianceBreakCooldownState>? allianceBreakCooldowns,
-    Map<String, bool>? aiControlByGpId,
-    Map<String, int>? aiSeedByGpId,
-    Map<String, String?>? aiProfileByGpId,
-    Map<String, String>? hiddenAgendaByGpId,
-    List<DossierEvidenceEntry>? dossierEvidenceEntries,
-    List<DiplomaticEvent>? diplomaticHistoryEvents,
-    LastTurnIntelligenceDigest? lastTurnIntelligenceDigest,
-    int? globalGameSeed,
-    Map<String, List<int>>? greatPowerColorOverride,
-    VictoryState? victory,
-    bool? calendarCampaignHalted,
-    bool? infiniteMode,
-    double? richesCashMultiplier,
-    int? capitalTileGrainBonusPerTurn,
-    Map<String, String>? politicalGlyphByPlayerId,
-    String? lastHumanCompletedResearchCategory,
-    int? lastHumanResearchCategoryCompletionTurn,
-    MapViewState? mapViewState,
-    WorldMarketState? worldMarketState,
-    Set<String>? ftpPartnershipKeys,
-    Set<String>? debugDiplomacyUsedPairKeys,
-    AdvancedStartType? advancedStartType,
-  }) =>
-      gameCopyWith(
-        this,
-        id: id,
-        worldState: worldState,
-        players: players,
-        minorNations: minorNations,
-        tribes: tribes,
-        generals: generals,
-        turnTimeMapping: turnTimeMapping,
-        defaultCombatMode: defaultCombatMode,
-        combatModeByProvinceId: combatModeByProvinceId,
-        diplomacyRelations: diplomacyRelations,
-        overtureStates: overtureStates,
-        subsidyStates: subsidyStates,
-        colonyStates: colonyStates,
-        boycottStates: boycottStates,
-        allianceBreakCooldowns: allianceBreakCooldowns,
-        aiControlByGpId: aiControlByGpId,
-        aiSeedByGpId: aiSeedByGpId,
-        aiProfileByGpId: aiProfileByGpId,
-        hiddenAgendaByGpId: hiddenAgendaByGpId,
-        dossierEvidenceEntries: dossierEvidenceEntries,
-        diplomaticHistoryEvents: diplomaticHistoryEvents,
-        lastTurnIntelligenceDigest: lastTurnIntelligenceDigest,
-        globalGameSeed: globalGameSeed,
-        greatPowerColorOverride: greatPowerColorOverride,
-        victory: victory,
-        calendarCampaignHalted: calendarCampaignHalted,
-        infiniteMode: infiniteMode,
-        richesCashMultiplier: richesCashMultiplier,
-        capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
-        politicalGlyphByPlayerId: politicalGlyphByPlayerId,
-        lastHumanCompletedResearchCategory:
-            lastHumanCompletedResearchCategory,
-        lastHumanResearchCategoryCompletionTurn:
-            lastHumanResearchCategoryCompletionTurn,
-        mapViewState: mapViewState,
-        worldMarketState: worldMarketState,
-        ftpPartnershipKeys: ftpPartnershipKeys,
-        debugDiplomacyUsedPairKeys: debugDiplomacyUsedPairKeys,
-        advancedStartType: advancedStartType,
-      );
 
   @override
   bool operator ==(Object other) => gameEquals(this, other);

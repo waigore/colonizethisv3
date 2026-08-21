@@ -13,7 +13,8 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckModelsLibPhysicalFileSize', () {
-    test('passes on current repo tree under wave-2 ceiling', () {
+    test('passes on current repo tree under wave-4 250 ceiling', () {
+      expect(modelsLibPhysicalFileSizeCeiling, 250);
       expect(runCheckModelsLibPhysicalFileSize('.'), 0);
     });
 

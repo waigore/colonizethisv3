@@ -1,5 +1,5 @@
 /// [Game] JSON decode helper extracted so [game_serialization.dart] stays under
-/// the models physical-line cap (Refs #4334 wave 3). Public API remains
+/// the models physical-line cap (Refs #4334 wave 3, #4571). Public API remains
 /// [Game.fromJson] on the aggregate.
 library;
 
@@ -8,6 +8,7 @@ import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
 import 'game.dart';
+import 'game_serialization_parse.dart';
 import 'general.dart';
 import 'last_turn_intelligence_digest.dart';
 import 'map_view_state.dart';
@@ -15,20 +16,11 @@ import 'minor_nation.dart';
 import 'player.dart';
 import 'tribe.dart';
 import 'turn_time_mapping.dart';
+import 'victory.dart';
 import 'world_market.dart';
 import 'world_state.dart';
 
-List<T> parseGameModelList<T>(
-  dynamic raw,
-  T Function(Map<String, dynamic>) fromJson,
-) {
-  final list = raw as List<dynamic>? ?? const [];
-  return list
-      .map(
-        (e) => fromJson(Map<String, dynamic>.from(e as Map<dynamic, dynamic>)),
-      )
-      .toList();
-}
+export 'game_serialization_parse.dart';
 
 Game decodeGameFromJson(Map<String, dynamic> json) {
   final players = parseGameModelList(json['players'], Player.fromJson);
