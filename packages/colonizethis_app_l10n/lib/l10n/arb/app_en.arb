@@ -2135,10 +2135,31 @@
   },
   "moveFleet_warpLinkToRegion": "links to {region}",
   "@moveFleet_warpLinkToRegion": {
-    "description": "Suffix appended to cross-region sea-zone destinations in move fleet dialog.",
+    "description": "Suffix for cross-region warp sea destinations in move fleet dialog.",
     "placeholders": {
       "region": {
         "type": "String"
+      }
+    }
+  },
+  "moveFleet_destinationIntel_fleetsUnknown": "Fleets unknown",
+  "@moveFleet_destinationIntel_fleetsUnknown": {
+    "description": "Fogged/unknown sea-zone destination intel on Move fleet dialog (#4573)."
+  },
+  "moveFleet_destinationIntel_hostilePatrol": "Hostile patrol",
+  "@moveFleet_destinationIntel_hostilePatrol": {
+    "description": "At-war hostile fleet on Patrol in destination sea (#4573)."
+  },
+  "moveFleet_destinationIntel_hostileBlockade": "Hostile blockade",
+  "@moveFleet_destinationIntel_hostileBlockade": {
+    "description": "At-war hostile fleet on Blockade in destination sea (#4573)."
+  },
+  "moveFleet_destinationIntel_hostileFleets": "Hostile fleets: {count}",
+  "@moveFleet_destinationIntel_hostileFleets": {
+    "description": "At-war hostile fleets at sea without Patrol/Blockade (#4573).",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },
