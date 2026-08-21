@@ -301,7 +301,9 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 
 **Shipped vs candidate:** Shipped PNGs stay at `app/assets/images/terrain/tilesets/tileset_transport_{road,rail}_64.png`. Candidates: `pytool/out/transport_overlay_atlases_64/`. Intermediates: `pytool/out/transport_edge_contracts_64/`. Do not retarget `map_terrain_tilesets.json` until a later promotion.
 
-**Required validation:** masks `0..15` both families; unique 64px `bounding_box`es; shipped JSON still points at shipped atlases; each **shipped** 256×256 atlas has ≥2,500 opaque pixels; `flutter test test/transport_overlay_{assets,tileset_cache,mask,render_policy,visual_sanity}_test.dart`; candidate seam check `python3 pytool/test_transport_overlay_candidate_seams.py`.
+**Widgetbook-only preview (Refs #1819):** Reviewers inspect candidates in the developer Widgetbook host folder **Transport Overlay Candidates** (mask grids, network joins, shipped vs candidate). Preview copies live under `widgetbook_host/assets/transport_overlay_candidates/` and are declared only in `widgetbook_host/pubspec.yaml`. Production `MapTerrainConfig` / `TransportOverlayTilesetCache` must continue to load only shipped `transport_tilesets` paths until an explicit PO promotion copies candidates into `app/assets/images/terrain/tilesets/`.
+
+**Required validation:** masks `0..15` both families; unique 64px `bounding_box`es; shipped JSON still points at shipped atlases; each **shipped** 256×256 atlas has ≥2,500 opaque pixels; `flutter test test/transport_overlay_{assets,tileset_cache,mask,render_policy,visual_sanity}_test.dart`; candidate seam check `python3 pytool/test_transport_overlay_candidate_seams.py`; Widgetbook registration test for **Transport Overlay Candidates**.
 
 **Resumable workflow (`pytool/generate_transport_overlay_tiles_64.py`):** `--init-seed` (contracts only); `--resume` / `--mask` for inpaint; `--rebuild-atlas` (no API key) into the candidate `--out-dir`. State: `pytool/out/transport_edge_contracts_64/state.json`.
 
@@ -311,6 +313,8 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 - Given `--out-dir` resolves to `app/assets/images/terrain/tilesets` and `--allow-shipped-out-dir` is omitted, when the System starts, then it exits non-zero without writing atlas PNGs.
 - Given two candidate tiles whose masks share a complementary cardinal (N↔S or E↔W), when their shared 64-pixel edges are compared, then those edges match the family contract (identical RGBA, or per-channel delta ≤ 2) and the 14px corridor on that edge is not fully transparent.
 - Given a candidate mask tile `1..15`, when opaque pixels are counted, then none lie outside the 14px plus for that mask.
+- Given the Widgetbook host catalog is loaded, when the reviewer opens folder **Transport Overlay Candidates**, then the UI layer exposes the six use cases `Road — mask grid (candidate)`, `Rail — mask grid (candidate)`, `Road — network joins (candidate)`, `Rail — network joins (candidate)`, `Road — shipped vs candidate`, and `Rail — shipped vs candidate`, each sampling candidate atlases from `widgetbook_host` assets only.
+- Given `map_terrain_tilesets.json` `transport_tilesets` entries, when `TransportOverlayTilesetCache` resolves atlas paths, then the System uses only the shipped `app/assets/images/terrain/tilesets/tileset_transport_{road,rail}_64.png` paths and never the Widgetbook candidate asset directory.
 
 ---
 
