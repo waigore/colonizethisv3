@@ -7192,6 +7192,30 @@
   "@tileRadial_buildImprovement": {
     "description": "MAP30001 / MAP30002 catalog wedge label for Build improvement (Refs #4440)."
   },
+  "tileRadial_buildRoad": "Build road",
+  "@tileRadial_buildRoad": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build road (Refs #4570)."
+  },
+  "tileRadial_purchaseLand": "Purchase land",
+  "@tileRadial_purchaseLand": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Purchase land (Refs #4570)."
+  },
+  "tileRadial_upgradeTown": "Upgrade town",
+  "@tileRadial_upgradeTown": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Upgrade town (Refs #4570)."
+  },
+  "tileRadial_buildPort": "Build port",
+  "@tileRadial_buildPort": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build port (Refs #4570)."
+  },
+  "tileRadial_buildRailroad": "Build railroad",
+  "@tileRadial_buildRailroad": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build railroad (Refs #4570)."
+  },
+  "tileRadial_buildFort": "Build fort",
+  "@tileRadial_buildFort": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build fort (Refs #4570)."
+  },
   "tileRadial_more": "More",
   "@tileRadial_more": {
     "description": "MAP30001 More spoke label (Refs #4440)."

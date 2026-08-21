@@ -32,7 +32,7 @@ Shortcut hints use the same cost preview when the control is enabled, or a mater
 
 1. Right-click a tile on **Empire overview / map area** (or press and hold on a touch screen) to open **Tile context radial**.
 2. On a small screen, or after **More**, **More tile actions** opens instead.
-3. Enabled **Explore**, **Prospect**, or **Build improvement** uses the same civilian-panel shortcut as **Province sea-zone overlay**: you still tap **Assign** on a unit; you do not pick the tile again.
+3. Enabled civilian work on the ring (**Explore**, **Prospect**, **Build improvement**, **Build road**, **Purchase land**, **Upgrade town**, **Build port**, **Build railroad**, **Build fort**) uses the same civilian-panel shortcut as **Province sea-zone overlay**: you still tap **Assign** on a unit; you do not pick the tile again. **Upgrade town** appears only when you open the ring on the town tile itself.
 
 ### Assign from Development (one tap, no map pick)
 
