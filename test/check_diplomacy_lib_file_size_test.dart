@@ -13,7 +13,7 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckDiplomacyLibFileSize', () {
-    test('passes on current repo tree under wave-6 ceiling', () {
+    test('passes on current repo tree under the 250-line ceiling', () {
       expect(runCheckDiplomacyLibFileSize('.'), 0);
     });
 

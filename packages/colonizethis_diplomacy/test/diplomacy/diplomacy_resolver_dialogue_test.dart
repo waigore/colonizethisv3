@@ -1,5 +1,5 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_world/src/game_player_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
