@@ -15,11 +15,10 @@ import 'victory.dart';
 import 'world_market.dart';
 import 'world_state.dart';
 
-/// Re-export so barrel consumers keep `game.copyWith(...)` (Refs #4571).
-export 'game_copy_with.dart';
+part 'game_copy_with.dart';
 
 /// Top-level game container. SPEC/game/world-model.
-class Game {
+class Game with GameCopyWith {
   const Game({
     required this.id,
     required this.worldState,

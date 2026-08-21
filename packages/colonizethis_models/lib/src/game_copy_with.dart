@@ -1,25 +1,9 @@
 /// [Game.copyWith] implementation extracted so [Game] stays under the models
 /// physical-line cap (Refs #4334, #4571).
 ///
-/// Host [Game] re-exports this library so barrel consumers keep
-/// `game.copyWith(...)`.
-library;
-
-import 'advanced_start_type.dart';
-import 'combat_mode.dart';
-import 'diplomacy.dart';
-import 'dossier_evidence.dart';
-import 'game.dart';
-import 'general.dart';
-import 'last_turn_intelligence_digest.dart';
-import 'map_view_state.dart';
-import 'minor_nation.dart';
-import 'player.dart';
-import 'tribe.dart';
-import 'turn_time_mapping.dart';
-import 'victory.dart';
-import 'world_market.dart';
-import 'world_state.dart';
+/// Provided as a [mixin] (not an extension) so `import … show Game` still
+/// resolves `game.copyWith(...)` — extensions are invisible under `show`.
+part of 'game.dart';
 
 Game gameCopyWith(
   Game game, {
@@ -116,8 +100,9 @@ Game gameCopyWith(
   );
 }
 
-/// Instance [Game.copyWith] for barrel consumers (Refs #4571).
-extension GameCopyWithExtension on Game {
+/// Instance [Game.copyWith] via mixin so `show Game` importers keep access
+/// (Refs #4571). Unconstrained mixin avoids recursive `on Game` inheritance.
+mixin GameCopyWith {
   Game copyWith({
     String? id,
     WorldState? worldState,
@@ -158,7 +143,7 @@ extension GameCopyWithExtension on Game {
     AdvancedStartType? advancedStartType,
   }) =>
       gameCopyWith(
-        this,
+        this as Game,
         id: id,
         worldState: worldState,
         players: players,

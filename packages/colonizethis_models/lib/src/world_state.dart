@@ -6,11 +6,12 @@ import 'turn_state.dart';
 import 'world_state/equality_helpers.dart';
 import 'world_state_serialization.dart';
 
-export 'world_state/copy_with.dart';
 export 'world_state/focused_accessors.dart';
 
+part 'world_state/copy_with.dart';
+
 /// Snapshot at a point in time. Turn state + region data + tile state. SPEC/game/world-model.
-class WorldState {
+class WorldState with WorldStateCopyWith {
   const WorldState({
     required this.turnState,
     required this.oldWorld,
