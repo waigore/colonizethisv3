@@ -25,11 +25,11 @@ Stack (viewport)
   barrier (tap outside → dismiss)
   Positioned (clamped)
     hub: Place line (Ct text, --fg)
-    wedges ≥ 44 dp: Explore / Prospect / Build improvement
+    wedges ≥ 44 dp: up to five catalog actions (see tile-radial-catalog.md)
     More spoke
 ```
 
-Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only.
+Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only. Catalog: Explore → Prospect → Build improvement → Build road → Purchase land → Upgrade town → Build port → Build railroad → Build fort ([tile-radial-catalog.md](components/tile-radial-catalog.md)).
 
 ## Behavior
 
@@ -39,13 +39,13 @@ Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog ch
 |--------|-----------|--------|
 | Secondary pointer | Marker miss, mutate allowed | Open radial for that tile key |
 | Long-press | Pan slop not exceeded | Same |
-| Layout too small | Three wedges + More cannot fit | Skip; open `MAP30002` |
+| Layout too small | Five wedges + More cannot fit | Skip; open `MAP30002` |
 
 ### User actions → outcomes
 
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
-| Explore / Prospect / Build improvement | Overlay `enabled` | Same `OpenCivilianUnitsPanelEvent` fields as `MAP20001` | Dismiss radial |
+| Catalog wedge (nine actions) | Overlay `enabled` | Same `OpenCivilianUnitsPanelEvent` shortcut fields as `MAP20001` | Dismiss radial |
 | Disabled wedge | Visible teachable gate | None | Tooltip / semantics only (overlay refusal copy) |
 | More | Always | Open `MAP30002` | Dismiss radial |
 | Outside / Esc / pan | — | Dismiss | No order |
@@ -54,14 +54,15 @@ Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog ch
 
 | ID | Render |
 |----|--------|
-| `MAP30001` | 0–3 wedges + More |
+| `MAP30001` | 0–5 wedges + More |
 | `MAP30001` empty | Hub + More only |
 | `MAP30001` disabled | Visible disabled wedge, no commit |
+| `MAP30001` overflow | Five wedges; remainder on `MAP30002` |
 | `MAP30001` 320 dp | Clamp; else `MAP30002` |
 
 ## Widgetbook
 
-Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enabled Explore disabled; empty catalog More-only; sea-zone few shortcuts; 320 dp clamp.
+Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enabled Explore disabled; empty catalog More-only; sea-zone few shortcuts; five wedges with remainder; 320 dp clamp.
 
 ## Acceptance criteria
 

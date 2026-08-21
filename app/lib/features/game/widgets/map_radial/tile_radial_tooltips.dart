@@ -54,5 +54,66 @@ String tileRadialActionTooltip({
         enabled: enabled,
         hasMatchingUnits: hasMatchingUnits,
       );
+    case TileRadialCatalogAction.buildRoad:
+      return provinceOverlayBuildRoadTooltip(
+        l10n: l10n,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        selectedTileKey: tileKey,
+        enabled: enabled,
+        hasMatchingUnits: hasMatchingUnits,
+      );
+    case TileRadialCatalogAction.purchaseLand:
+      return provinceOverlayPurchaseLandTooltip(
+        l10n: l10n,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        selectedTileKey: tileKey,
+        provinceId: provinceId,
+        enabled: enabled,
+        hasMatchingUnits: hasMatchingUnits,
+      );
+    case TileRadialCatalogAction.upgradeTown:
+      return provinceOverlayPoliticalUpgradeTownTooltip(
+        l10n: l10n,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        townTileKey: tileKey,
+        enabled: enabled,
+        hasBuilderUnits: hasMatchingUnits,
+      );
+    case TileRadialCatalogAction.buildPort:
+      return provinceOverlayBuildPortTooltip(
+        l10n: l10n,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        selectedTileKey: tileKey,
+        enabled: enabled,
+        hasMatchingUnits: hasMatchingUnits,
+      );
+    case TileRadialCatalogAction.buildRail:
+      return provinceOverlayBuildRailroadTooltip(
+        l10n: l10n,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        selectedTileKey: tileKey,
+        enabled: enabled,
+        hasMatchingUnits: hasMatchingUnits,
+      );
+    case TileRadialCatalogAction.buildFort:
+      return provinceOverlayBuildFortTooltip(
+        l10n: l10n,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        selectedTileKey: tileKey,
+        enabled: enabled,
+        hasMatchingUnits: hasMatchingUnits,
+      );
   }
 }

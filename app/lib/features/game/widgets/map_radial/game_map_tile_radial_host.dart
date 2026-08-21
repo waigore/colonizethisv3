@@ -3,6 +3,7 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/controls/map_tile_hover_readout_copy.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_state_logic.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -101,13 +102,62 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
       workTargetSelectionCache: widget.workTargetSelectionCache,
       mapData: mapData,
     );
+    final parsed = tileKey.split('|');
+    final provinceId = parsed.length >= 2
+        ? '${parsed[0]}|${parsed[1]}'
+        : tileKey;
+    final upgradeTown =
+        GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+          provinceId: provinceId,
+          playerView: widget.playerView,
+          workTargetSelectionCache: widget.workTargetSelectionCache,
+          topology: mapData?.combinedTopology,
+          currentOrders: draftOrders,
+          tileMapByRegion: mapData?.tileMapByRegion,
+        );
+    final upgradeTownOnSelectedTile =
+        upgradeTown.showControl && upgradeTown.townTileKey == tileKey;
     return rankTileRadialCatalog(
-      exploreShowIcon: states.explore.showIcon,
-      exploreEnabled: states.explore.enabled,
-      prospectShowIcon: states.prospect.showIcon,
-      prospectEnabled: states.prospect.enabled,
-      buildImprovementShowIcon: states.buildImprovement.showIcon,
-      buildImprovementEnabled: states.buildImprovement.enabled,
+      visibility: {
+        TileRadialCatalogAction.explore: (
+          showIcon: states.explore.showIcon,
+          enabled: states.explore.enabled,
+        ),
+        TileRadialCatalogAction.prospect: (
+          showIcon: states.prospect.showIcon,
+          enabled: states.prospect.enabled,
+        ),
+        TileRadialCatalogAction.buildImprovement: (
+          showIcon: states.buildImprovement.showIcon,
+          enabled: states.buildImprovement.enabled,
+        ),
+        TileRadialCatalogAction.buildRoad: (
+          showIcon: states.buildRoad.showIcon,
+          enabled: states.buildRoad.enabled,
+        ),
+        TileRadialCatalogAction.purchaseLand: (
+          showIcon: states.purchaseLand.showIcon,
+          enabled: states.purchaseLand.enabled,
+        ),
+        TileRadialCatalogAction.upgradeTown: (
+          showIcon: upgradeTownOnSelectedTile,
+          enabled: upgradeTownOnSelectedTile && upgradeTown.enabled,
+        ),
+        TileRadialCatalogAction.buildPort: (
+          showIcon: states.buildPort.showIcon,
+          enabled: states.buildPort.enabled,
+        ),
+        TileRadialCatalogAction.buildRail: (
+          showIcon: states.buildRail.showIcon,
+          enabled: states.buildRail.enabled,
+        ),
+        TileRadialCatalogAction.buildFort: (
+          showIcon: states.buildFort.showIcon,
+          enabled: states.buildFort.enabled,
+        ),
+      },
     );
   }
 
@@ -122,6 +172,9 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
     final provinceId = parsed.length >= 2
         ? '${parsed[0]}|${parsed[1]}'
         : tileKey;
+    final mapData = tryGetGameMapData(
+      () => ref.read(gameServiceProvider).getMapData(widget.game.id),
+    );
     final states = ProvinceActionStateCalculator.compute(
       game: widget.game,
       humanPlayerId: widget.humanPlayerId,
@@ -130,10 +183,42 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
       playerView: widget.playerView,
       currentOrders: draftOrders,
       workTargetSelectionCache: widget.workTargetSelectionCache,
-      mapData: tryGetGameMapData(
-        () => ref.read(gameServiceProvider).getMapData(widget.game.id),
-      ),
+      mapData: mapData,
     );
+    final upgradeTown =
+        GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+          provinceId: provinceId,
+          playerView: widget.playerView,
+          workTargetSelectionCache: widget.workTargetSelectionCache,
+          topology: mapData?.combinedTopology,
+          currentOrders: draftOrders,
+          tileMapByRegion: mapData?.tileMapByRegion,
+        );
+    bool hasMatchingUnits(TileRadialCatalogAction action) {
+      switch (action) {
+        case TileRadialCatalogAction.explore:
+          return states.explore.hasMatchingUnits;
+        case TileRadialCatalogAction.prospect:
+          return states.prospect.hasMatchingUnits;
+        case TileRadialCatalogAction.buildImprovement:
+          return states.buildImprovement.hasMatchingUnits;
+        case TileRadialCatalogAction.buildRoad:
+          return states.buildRoad.hasMatchingUnits;
+        case TileRadialCatalogAction.purchaseLand:
+          return states.purchaseLand.hasMatchingUnits;
+        case TileRadialCatalogAction.upgradeTown:
+          return upgradeTown.hasBuilderUnits;
+        case TileRadialCatalogAction.buildPort:
+          return states.buildPort.hasMatchingUnits;
+        case TileRadialCatalogAction.buildRail:
+          return states.buildRail.hasMatchingUnits;
+        case TileRadialCatalogAction.buildFort:
+          return states.buildFort.hasMatchingUnits;
+      }
+    }
+
     return [
       for (final spoke in spokes)
         TileRadialSpokeView(
@@ -150,14 +235,7 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
             provinceId: provinceId,
             currentOrders: draftOrders,
             enabled: spoke.enabled,
-            hasMatchingUnits: switch (spoke.action) {
-              TileRadialCatalogAction.explore =>
-                states.explore.hasMatchingUnits,
-              TileRadialCatalogAction.prospect =>
-                states.prospect.hasMatchingUnits,
-              TileRadialCatalogAction.buildImprovement =>
-                states.buildImprovement.hasMatchingUnits,
-            },
+            hasMatchingUnits: hasMatchingUnits(spoke.action),
           ),
         ),
     ];

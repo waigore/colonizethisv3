@@ -383,6 +383,24 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get tileRadial_buildImprovement => 'Build improvement';
 
   @override
+  String get tileRadial_buildRoad => 'Build road';
+
+  @override
+  String get tileRadial_purchaseLand => 'Purchase land';
+
+  @override
+  String get tileRadial_upgradeTown => 'Upgrade town';
+
+  @override
+  String get tileRadial_buildPort => 'Build port';
+
+  @override
+  String get tileRadial_buildRailroad => 'Build railroad';
+
+  @override
+  String get tileRadial_buildFort => 'Build fort';
+
+  @override
   String get tileRadial_more => 'More';
 
   @override
