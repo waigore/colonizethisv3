@@ -4,6 +4,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
@@ -12,6 +13,8 @@ import '../../../../config/ui_screen_ids.dart';
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'move_fleet_destination_intel.dart';
+import 'move_fleet_destination_intel_labels.dart';
 import 'move_fleet_dialog_picks.dart';
 import 'move_units_dialog_base.dart';
 
@@ -23,6 +26,7 @@ class MoveFleetDialog extends StatefulWidget {
     required this.humanPlayerId,
     required this.fleet,
     required this.bus,
+    this.playerView,
   });
 
   /// SPEC/ui/move-fleet-dialog.md — [UiScreenIds.moveFleetDialog].
@@ -33,6 +37,7 @@ class MoveFleetDialog extends StatefulWidget {
   final String humanPlayerId;
   final Fleet fleet;
   final AppEventBus bus;
+  final PlayerView? playerView;
 
   @override
   State<MoveFleetDialog> createState() => _MoveFleetDialogState();
@@ -134,6 +139,22 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
 
   Widget _row(MoveFleetPick pick, int index) {
     final bool selected = identical(pick, _selected);
+    final theme = Theme.of(context);
+    final labelStyle = moveDialogRowLabelStyle(theme, selected: selected);
+    final muted = (theme.textTheme.bodySmall ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.muted);
+    final intel = pick is MoveFleetPickSeaZone
+        ? moveFleetDestinationIntelSummaryLines(
+            appL10n(context),
+            computeMoveFleetDestinationIntelSummary(
+              game: widget.game,
+              playerView: widget.playerView,
+              humanPlayerId: widget.humanPlayerId,
+              regionId: pick.zoneRegionId,
+              destinationSeaZoneId: pick.seaZoneId,
+            ),
+          )
+        : const <String>[];
     final row = MoveDialogDestinationRow(
       // Deterministic per-row key (CT_E2E only) so fleet-reach e2e helpers can
       // select the first available destination without Material `RadioListTile`
@@ -142,9 +163,13 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
       selected: selected,
       semanticsLabel: pick.rowLabel,
       onTap: () => setState(() => _selected = pick),
-      content: Text(
-        pick.rowLabel,
-        style: moveDialogRowLabelStyle(Theme.of(context), selected: selected),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(pick.rowLabel, style: labelStyle),
+          for (final line in intel) Text(line, style: muted),
+        ],
       ),
       trailing: CtIconAction(
         tooltip: appL10n(context).moveFleet_locateOnMap,

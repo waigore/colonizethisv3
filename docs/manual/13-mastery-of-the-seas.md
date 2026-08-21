@@ -76,7 +76,7 @@ If the Home Fleet has no ships, the harbor marker still opens `UNIT30001` **Nava
 ### Move a sea-going fleet
 
 1. In `UNIT30001` **Naval units panel**, tap **Move** beside a sea-going fleet to open `DLG30001` **Move fleet dialog** (title **Move fleet — Fleet \<id\>**).
-2. Select one legal adjacent destination and confirm.
+2. Select one legal adjacent destination and confirm. Sea-zone rows may show a short muted line under the name when you can see that water: **Hostile patrol** or **Hostile blockade** if an enemy fleet at war is already there on that duty, or **Hostile fleets: N** when enemies share the sea without those duties. When you cannot see the water yet, the line says **Fleets unknown**. Owned port rows do not add this line.
 3. A fleet at sea may move sea to neighbouring sea, or dock at an adjacent **owned** port. A fleet in port may undock only into an adjacent sea.
 4. Some adjacent seas are passages to the other map. Those rows add **links to** the other region (**Old World** or **New World**). Still one hop per order — no skipping across the map, and no port-to-port hops.
 5. Docking at the capital merges the arriving fleet into the Home Fleet when you confirm **Next turn** and that turn finishes.
@@ -173,7 +173,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 
 - [ ] Explains the complete merchant and warship roster, each ship’s required technology, and the Carrack exception. Train Naval roles match the dialog (**Merchant** or **Warship**).
 - [ ] Documents opening `UNIT30001` **Naval units panel** from **Naval Units** on the left of the map, then `UNIT60001` **Train naval dialog** for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints. Results appear after **Next turn**.
-- [ ] Documents `DLG30001` **Move fleet dialog** one adjacent hop (port to sea, or sea to sea or owned port), capital docking after **Next turn**, sea-zone revelation, and **links to** passages between the two maps.
+- [ ] Documents `DLG30001` **Move fleet dialog** one adjacent hop (port to sea, or sea to sea or owned port), capital docking after **Next turn**, sea-zone revelation, **links to** passages between the two maps, and fog-respecting sea-row hostile gist (**Hostile patrol** / **Hostile blockade** / **Hostile fleets: N** / **Fleets unknown**).
 - [ ] Documents tapping a fleet marker: Home Fleet with ships → detach-then-sail (`DLG30001` for the new fleet), empty Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with **Sail / Move**, plus `UNIT30001` **Mission**, `MAP20001` **Naval** **Detach and sail** on the owned capital, and `MAP20001` **Naval** **Blockade** / **Beachhead** (skips the mission menu when the mission is already known; `DLG31003` when several fleets qualify). A fleet may move or take one mission, never both. Beachhead/Blockade target lines stay honest when you cannot see the coast. `DLG31003` rows show ship mix when several fleets share a marker.
 - [ ] Documents panel **Split** (**Split Fleet** / **Confirm Split**, then a separate **Move**) versus map **Detach a squadron** / **Detach and choose destination** (then `DLG30001`).
 - [ ] Documents **Combine**: two or more fleets in the same port or the same sea merge at once; ships join the Home Fleet when it is checked; empty non-Home fleets are removed.

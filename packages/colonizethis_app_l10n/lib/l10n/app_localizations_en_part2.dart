@@ -420,8 +420,21 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
-  String get military_units_title => 'Military Units';
+  String get moveFleet_destinationIntel_fleetsUnknown => 'Fleets unknown';
 
+  @override
+  String get moveFleet_destinationIntel_hostilePatrol => 'Hostile patrol';
+
+  @override
+  String get moveFleet_destinationIntel_hostileBlockade => 'Hostile blockade';
+
+  @override
+  String moveFleet_destinationIntel_hostileFleets(int count) {
+    return 'Hostile fleets: $count';
+  }
+
+  @override
+  String get military_units_title => 'Military Units';
   @override
   String get military_units_counsel => 'Counsel';
 

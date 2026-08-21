@@ -187,6 +187,7 @@ Future<void> showNavalMissionFlow({
         humanPlayerId: humanPlayerId,
         fleet: fleet,
         bus: bus,
+        playerView: resolvedPlayerView,
       );
     case NavalMissionMenuChoiceMission(:final mission):
       if (mission == FleetMission.blockade ||
@@ -225,7 +226,10 @@ Future<bool?> showMoveFleetDialogForFleet({
   required String humanPlayerId,
   required Fleet fleet,
   required AppEventBus bus,
+  PlayerView? playerView,
 }) {
+  final resolvedPlayerView =
+      playerView ?? buildPlayerView(game, topology, humanPlayerId);
   return showDialog<bool>(
     context: context,
     builder: (ctx) => MoveFleetDialog(
@@ -234,6 +238,7 @@ Future<bool?> showMoveFleetDialogForFleet({
       humanPlayerId: humanPlayerId,
       fleet: fleet,
       bus: bus,
+      playerView: resolvedPlayerView,
     ),
   );
 }

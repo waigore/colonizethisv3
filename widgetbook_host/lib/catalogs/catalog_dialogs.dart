@@ -567,6 +567,7 @@ List<WidgetbookNode> get moveFleetDialogDirectories => [
           );
         },
       ),
+      ...moveFleetDestinationIntelDialogUseCases,
     ],
   ),
 ];
