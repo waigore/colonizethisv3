@@ -56,13 +56,31 @@ void main() {
     expect(find.text('Prospect'), findsOneWidget);
     expect(find.text('Explore'), findsNothing);
     expect(find.text('Spy station'), findsNothing);
+    expect(find.text('Station spy'), findsNothing);
     expect(find.text('Blockade'), findsNothing);
     expect(find.text('Beachhead'), findsNothing);
     expect(find.text('Invade'), findsNothing);
     expect(find.text('Establish Consulate'), findsNothing);
-    expect(find.text('Build road'), findsNothing);
-    expect(find.text('Purchase land'), findsNothing);
-    expect(find.text('Upgrade town'), findsNothing);
+    expect(find.text('Offer Peace'), findsNothing);
+    expect(find.text('Counter-espionage'), findsNothing);
+  });
+
+  testWidgets('remainder can list Build road overflow from the catalog', (
+    tester,
+  ) async {
+    await _pumpDialog(
+      tester,
+      remainder: const [
+        TileRadialSpokeView(
+          action: TileRadialCatalogAction.buildRoad,
+          enabled: true,
+          label: 'Build road',
+          tooltip: 'Build road',
+        ),
+      ],
+    );
+    expect(find.text('Build road'), findsOneWidget);
+    expect(find.byKey(kTileRadialBuildRoadKey), findsOneWidget);
   });
 
   testWidgets('Province details row fires the host callback', (tester) async {

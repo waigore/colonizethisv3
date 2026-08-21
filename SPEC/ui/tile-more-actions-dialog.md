@@ -17,7 +17,7 @@ Local `showDialog` is allowed. Barrier / back pop the route; the host then dismi
 
 ## Trigger conditions
 
-More spoke on `MAP30001`, or secondary gesture when three wedges plus More cannot fit after clamp.
+More spoke on `MAP30001`, or secondary gesture when five wedges plus More cannot fit after clamp.
 
 ## Layout / wireframe
 
@@ -25,10 +25,10 @@ More spoke on `MAP30001`, or secondary gesture when three wedges plus More canno
 CtDialogShell
   title: More tile actions
   Province details (first row)
-  remainder rows (Explore / Prospect / Build improvement)
+  remainder rows (catalog overflow from tile-radial-catalog.md)
 ```
 
-No Spy station, Blockade, Beachhead, Move, Invade, Consulate, Build road / railroad / port / fort, Purchase land, or Upgrade town. If remainder is empty, only Province details remains.
+No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish Consulate, or Offer Peace. Remainder may include Build road / railroad / port / fort, Purchase land, or Upgrade town when those are conceivable and did not fit on `MAP30001`. If remainder is empty, only Province details remains.
 
 ## Behavior
 
@@ -49,7 +49,7 @@ No Spy station, Blockade, Beachhead, Move, Invade, Consulate, Build road / railr
 
 ## Widgetbook
 
-Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; 320 dp.
+Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; remainder Build road overflow; 320 dp.
 
 ## Acceptance criteria
 
