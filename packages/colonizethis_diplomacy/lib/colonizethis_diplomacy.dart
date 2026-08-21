@@ -3,6 +3,7 @@ library colonizethis_diplomacy;
 
 export 'src/diplomacy/alliance_break_cooldown.dart';
 export 'src/diplomacy/alliance_resolver.dart';
+export 'src/diplomacy/alliance_process.dart';
 export 'src/diplomacy/boycott_resolver.dart';
 export 'src/diplomacy/break_alliance_resolver.dart';
 export 'src/diplomacy/diplomacy_confirm_preview.dart';
@@ -26,6 +27,10 @@ export 'src/diplomacy/diplomacy_subsidies_resolver.dart';
 export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart';
 export 'src/diplomacy/faction_absorption_engine.dart';
 export 'src/diplomacy/ftp_resolver.dart';
+export 'package:colonizethis_economy/colonizethis_economy.dart'
+    show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
+export 'package:colonizethis_world/src/world/faction_membership.dart'
+    show DiplomacyFactionMembership, isGreatPower, isMinorOrTribe;
 export 'src/diplomacy/gp_tribe_first_contact.dart';
 export 'src/diplomacy/intervention_hold_flags.dart';
 export 'src/diplomacy/intervention_resolver.dart';
