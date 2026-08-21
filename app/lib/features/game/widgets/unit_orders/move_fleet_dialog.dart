@@ -141,9 +141,9 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
     final bool selected = identical(pick, _selected);
     final theme = Theme.of(context);
     final labelStyle = moveDialogRowLabelStyle(theme, selected: selected);
-    final intelMutedStyle = (theme.textTheme.bodySmall ?? const TextStyle())
+    final muted = (theme.textTheme.bodySmall ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.muted);
-    final intelLines = pick is MoveFleetPickSeaZone
+    final intel = pick is MoveFleetPickSeaZone
         ? moveFleetDestinationIntelSummaryLines(
             appL10n(context),
             computeMoveFleetDestinationIntelSummary(
@@ -168,7 +168,7 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(pick.rowLabel, style: labelStyle),
-          for (final line in intelLines) Text(line, style: intelMutedStyle),
+          for (final line in intel) Text(line, style: muted),
         ],
       ),
       trailing: CtIconAction(

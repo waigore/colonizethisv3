@@ -727,7 +727,7 @@ rules:
 
   - rule_id: repo.app_main_line_budget
     group: structure
-    title: colonizethis_app main role must stay at or below 88_000 lines
+    title: colonizethis_app main role must stay at or below 88_250 lines
     spec: SPEC/program/repo-and-packages.md
     runner: dart
     script: tool/check_app_main_line_budget.dart

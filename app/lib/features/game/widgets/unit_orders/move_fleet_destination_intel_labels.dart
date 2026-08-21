@@ -11,9 +11,7 @@ List<String> moveFleetDestinationIntelSummaryLines(
   if (summary.intelLevel == MoveFleetDestinationIntelLevel.unknown) {
     return [l10n.moveFleet_destinationIntel_fleetsUnknown];
   }
-  if (!summary.hasHostilePresence) {
-    return const [];
-  }
+  if (!summary.hasHostilePresence) return const [];
   final lines = <String>[];
   if (summary.anyHostilePatrol == true) {
     lines.add(l10n.moveFleet_destinationIntel_hostilePatrol);
@@ -21,8 +19,7 @@ List<String> moveFleetDestinationIntelSummaryLines(
   if (summary.anyHostileBlockade == true) {
     lines.add(l10n.moveFleet_destinationIntel_hostileBlockade);
   }
-  if (summary.anyHostilePatrol != true &&
-      summary.anyHostileBlockade != true) {
+  if (summary.anyHostilePatrol != true && summary.anyHostileBlockade != true) {
     lines.add(
       l10n.moveFleet_destinationIntel_hostileFleets(
         summary.hostileAtSeaCount ?? 0,

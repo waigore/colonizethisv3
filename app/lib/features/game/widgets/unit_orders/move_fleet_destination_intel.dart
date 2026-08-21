@@ -36,11 +36,8 @@ bool moveFleetSeaZoneShowsFleetIntel({
   final tileKeys =
       game.worldState.tileKeysByRegionAndProvince[regionId]?[bucket] ??
       const <String>[];
-  if (tileKeys.isEmpty) return false;
   for (final tk in tileKeys) {
-    if (view.visibilityForTile(tk) != VisibilityLevel.unknown) {
-      return true;
-    }
+    if (view.visibilityForTile(tk) != VisibilityLevel.unknown) return true;
   }
   return false;
 }
@@ -50,8 +47,9 @@ bool _fleetMatchesDestinationSea({
   required String regionId,
   required String destinationSeaZoneId,
 }) {
-  if (!fleet.isAtSea || fleet.seaZoneId == null) return false;
-  if (fleet.regionId != regionId) return false;
+  if (!fleet.isAtSea || fleet.seaZoneId == null || fleet.regionId != regionId) {
+    return false;
+  }
   final expected = canonicalSeaZoneTileBucketKey(regionId, destinationSeaZoneId);
   final actual = canonicalSeaZoneTileBucketKey(regionId, fleet.seaZoneId!);
   return expected == actual;
@@ -64,21 +62,17 @@ MoveFleetDestinationIntelSummary computeMoveFleetDestinationIntelSummary({
   required String regionId,
   required String destinationSeaZoneId,
 }) {
-  if (playerView == null) {
-    return const MoveFleetDestinationIntelSummary(
-      intelLevel: MoveFleetDestinationIntelLevel.unknown,
-    );
-  }
-
-  if (!moveFleetSeaZoneShowsFleetIntel(
-    game: game,
-    view: playerView,
-    regionId: regionId,
-    seaZoneId: destinationSeaZoneId,
-  )) {
-    return const MoveFleetDestinationIntelSummary(
-      intelLevel: MoveFleetDestinationIntelLevel.unknown,
-    );
+  const unknown = MoveFleetDestinationIntelSummary(
+    intelLevel: MoveFleetDestinationIntelLevel.unknown,
+  );
+  if (playerView == null ||
+      !moveFleetSeaZoneShowsFleetIntel(
+        game: game,
+        view: playerView,
+        regionId: regionId,
+        seaZoneId: destinationSeaZoneId,
+      )) {
+    return unknown;
   }
 
   final enemies = enemiesOf(game, humanPlayerId);
@@ -87,13 +81,13 @@ MoveFleetDestinationIntelSummary computeMoveFleetDestinationIntelSummary({
   var anyBlockade = false;
   for (final fleet in game.worldState.fleets) {
     if (!_fleetMatchesDestinationSea(
-      fleet: fleet,
-      regionId: regionId,
-      destinationSeaZoneId: destinationSeaZoneId,
-    )) {
+          fleet: fleet,
+          regionId: regionId,
+          destinationSeaZoneId: destinationSeaZoneId,
+        ) ||
+        !enemies.contains(fleet.ownerId)) {
       continue;
     }
-    if (!enemies.contains(fleet.ownerId)) continue;
     hostileCount++;
     if (fleet.mission == FleetMission.patrol) anyPatrol = true;
     if (fleet.mission == FleetMission.blockade) anyBlockade = true;
