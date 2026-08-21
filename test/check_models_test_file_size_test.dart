@@ -7,7 +7,7 @@ import '../tool/check_models_test_file_size.dart';
 
 void main() {
   group('runCheckModelsTestFileSize', () {
-    test('fails when a models test file exceeds 400 physical lines', () {
+    test('fails when a models test file exceeds 250 physical lines', () {
       final temp = Directory.systemTemp.createTempSync('models-test-size-');
       try {
         final testDir = Directory(
@@ -15,7 +15,7 @@ void main() {
         )..createSync(recursive: true);
         final oversized = File(p.join(testDir.path, 'huge_test.dart'));
         oversized.writeAsStringSync(
-          '${List.filled(401, '// line').join('\n')}\n',
+          '${List.filled(251, '// line').join('\n')}\n',
         );
 
         final errors = <String>[];
@@ -31,7 +31,8 @@ void main() {
       }
     });
 
-    test('passes when every models test file is at or below 400 lines', () {
+    test('passes when every models test file is at or below 250 lines', () {
+      expect(modelsTestPhysicalFileSizeCeiling, 250);
       final temp = Directory.systemTemp.createTempSync('models-test-size-ok-');
       try {
         final testDir = Directory(

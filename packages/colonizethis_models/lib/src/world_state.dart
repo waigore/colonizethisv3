@@ -1,14 +1,13 @@
 import 'army.dart';
 import 'fleet.dart';
-import 'model_collection_equality.dart';
 import 'region_data.dart';
 import 'tile_map_state.dart';
 import 'turn_state.dart';
 import 'world_state/equality_helpers.dart';
 import 'world_state_serialization.dart';
 
+export 'world_state/copy_with.dart';
 export 'world_state/focused_accessors.dart';
-
 
 /// Snapshot at a point in time. Turn state + region data + tile state. SPEC/game/world-model.
 class WorldState {
@@ -88,154 +87,14 @@ class WorldState {
   /// Prefixed sea zone ids that already generated a news "first fleet" line.
   final List<String> newsDigestSeaZoneFleetDoneIds;
 
-
   Map<String, dynamic> toJson() => encodeWorldStateToJson(this);
 
   static WorldState fromJson(Map<String, dynamic> json) =>
       decodeWorldStateFromJson(json);
 
-  WorldState copyWith({
-    TurnState? turnState,
-    RegionData? oldWorld,
-    RegionData? newWorld,
-    TileMapState? tileState,
-    Map<String, String>? portsByProvinceSeaboard,
-    Map<String, Map<String, String>>? playerVisibilityByTile,
-    Map<String, Set<String>>? playerProspectedTiles,
-    List<Fleet>? fleets,
-    Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
-    Map<String, Map<String, int>>? spyRevealTurnsByPlayer,
-    Map<String, String>? purchasedTilesByTileKey,
-    Map<String, String>? resourceByTileKey,
-    Map<String, String>? seaZoneDisplayNameById,
-    int? nextShipInstanceSeq,
-    List<Army>? armies,
-    int? nextArmySeq,
-    List<String>? newsDigestProvinceRevealDoneIds,
-    List<String>? newsDigestSeaZoneFleetDoneIds,
-  }) {
-    return WorldState(
-      turnState: turnState ?? this.turnState,
-      oldWorld: oldWorld ?? this.oldWorld,
-      newWorld: newWorld ?? this.newWorld,
-      tileState: tileState ?? this.tileState,
-      portsByProvinceSeaboard:
-          portsByProvinceSeaboard ?? this.portsByProvinceSeaboard,
-      playerVisibilityByTile:
-          playerVisibilityByTile ?? this.playerVisibilityByTile,
-      playerProspectedTiles:
-          playerProspectedTiles ?? this.playerProspectedTiles,
-      fleets: fleets ?? this.fleets,
-      tileKeysByRegionAndProvince:
-          tileKeysByRegionAndProvince ?? this.tileKeysByRegionAndProvince,
-      spyRevealTurnsByPlayer:
-          spyRevealTurnsByPlayer ?? this.spyRevealTurnsByPlayer,
-      purchasedTilesByTileKey:
-          purchasedTilesByTileKey ?? this.purchasedTilesByTileKey,
-      resourceByTileKey: resourceByTileKey ?? this.resourceByTileKey,
-      seaZoneDisplayNameById:
-          seaZoneDisplayNameById ?? this.seaZoneDisplayNameById,
-      nextShipInstanceSeq: nextShipInstanceSeq ?? this.nextShipInstanceSeq,
-      armies: armies ?? this.armies,
-      nextArmySeq: nextArmySeq ?? this.nextArmySeq,
-      newsDigestProvinceRevealDoneIds:
-          newsDigestProvinceRevealDoneIds ??
-          this.newsDigestProvinceRevealDoneIds,
-      newsDigestSeaZoneFleetDoneIds:
-          newsDigestSeaZoneFleetDoneIds ?? this.newsDigestSeaZoneFleetDoneIds,
-    );
-  }
+  @override
+  bool operator ==(Object other) => worldStateEquals(this, other);
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is WorldState &&
-          runtimeType == other.runtimeType &&
-          turnState == other.turnState &&
-          oldWorld == other.oldWorld &&
-          newWorld == other.newWorld &&
-          tileState == other.tileState &&
-          modelMapEquals(
-            portsByProvinceSeaboard,
-            other.portsByProvinceSeaboard,
-          ) &&
-          worldStateNestedStringMapEquals(
-            playerVisibilityByTile,
-            other.playerVisibilityByTile,
-          ) &&
-          worldStateMapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
-          modelListEquals(fleets, other.fleets) &&
-          worldStateTileKeysByRegionEquals(
-            tileKeysByRegionAndProvince,
-            other.tileKeysByRegionAndProvince,
-          ) &&
-          worldStateSpyRevealEquals(
-            spyRevealTurnsByPlayer,
-            other.spyRevealTurnsByPlayer,
-          ) &&
-          modelMapEquals(
-            purchasedTilesByTileKey,
-            other.purchasedTilesByTileKey,
-          ) &&
-          modelMapEquals(resourceByTileKey, other.resourceByTileKey) &&
-          modelMapEquals(
-            seaZoneDisplayNameById,
-            other.seaZoneDisplayNameById,
-          ) &&
-          nextShipInstanceSeq == other.nextShipInstanceSeq &&
-          modelListEquals(armies, other.armies) &&
-          nextArmySeq == other.nextArmySeq &&
-          modelListEquals(
-            worldStateSortedCopy(newsDigestProvinceRevealDoneIds),
-            worldStateSortedCopy(other.newsDigestProvinceRevealDoneIds),
-          ) &&
-          modelListEquals(
-            worldStateSortedCopy(newsDigestSeaZoneFleetDoneIds),
-            worldStateSortedCopy(other.newsDigestSeaZoneFleetDoneIds),
-          );
-
-  @override
-  int get hashCode => Object.hash(
-    turnState,
-    oldWorld,
-    newWorld,
-    tileState,
-    Object.hashAll(portsByProvinceSeaboard.entries),
-    Object.hashAll(
-      playerVisibilityByTile.entries.map(
-        (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
-      ),
-    ),
-    Object.hashAll(
-      playerProspectedTiles.entries.map(
-        (e) => Object.hash(e.key, Object.hashAll(e.value)),
-      ),
-    ),
-    Object.hashAll(fleets),
-    Object.hashAll(
-      tileKeysByRegionAndProvince.entries.map(
-        (e) => Object.hash(
-          e.key,
-          Object.hashAll(
-            e.value.entries.map(
-              (e2) => Object.hash(e2.key, Object.hashAll(e2.value)),
-            ),
-          ),
-        ),
-      ),
-    ),
-    Object.hashAll(
-      spyRevealTurnsByPlayer.entries.map(
-        (e) => Object.hash(e.key, Object.hashAll(e.value.entries)),
-      ),
-    ),
-    Object.hashAll(purchasedTilesByTileKey.entries),
-    Object.hashAll(resourceByTileKey.entries),
-    Object.hashAll(seaZoneDisplayNameById.entries),
-    nextShipInstanceSeq,
-    Object.hashAll(armies),
-    nextArmySeq,
-    Object.hashAll(worldStateSortedCopy(newsDigestProvinceRevealDoneIds)),
-    Object.hashAll(worldStateSortedCopy(newsDigestSeaZoneFleetDoneIds)),
-  );
+  int get hashCode => worldStateHashCode(this);
 }

@@ -1,6 +1,6 @@
 // Physical line ratchet for colonizethis_models lib source
 // (`repo.models_lib_physical_file_size`). Refs #4136 Slice A; wave-3 ceiling
-// 400 → 300 (#4334).
+// 400 → 300 (#4334); wave-4 ceiling 300 → 250 (#4571).
 //
 // Stricter than `repo.domain_package_source_file_size` (500 physical) and
 // complementary to `repo.models_file_size` (500 NCL). Shrink-only grandfather
@@ -12,13 +12,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for models wave-3 post-split target (≤300 physical lines).
-const int modelsLibPhysicalFileSizeCeiling = 300;
+/// Ratchet ceiling for models wave-4 post-split target (≤250 physical lines).
+const int modelsLibPhysicalFileSizeCeiling = 250;
 
 const String _modelsLibRelativePath = 'packages/colonizethis_models/lib';
 
-/// Hot files still above the wave-2 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land. Empty after Slice B (#4136).
+/// Hot files still above the wave-4 ceiling during transition slices. Shrink-only
+/// allowlist; remove entries as splits land. Empty after #4571.
 const List<String> modelsLibPhysicalFileSizeGrandfatheredForTests = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
