@@ -1,11 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show
-        Province,
-        ProvinceId,
-        RegionData,
-        Unit,
-        WorldState,
-        WorldStateCopyWithExtension;
+    show Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../world_constants.dart';
 import 'province_lookup_indexes.dart' as indexes;
