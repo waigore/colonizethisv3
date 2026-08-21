@@ -15,10 +15,10 @@ import 'victory.dart';
 import 'world_market.dart';
 import 'world_state.dart';
 
-part 'game_copy_with.dart';
+export 'game_copy_with.dart';
 
 /// Top-level game container. SPEC/game/world-model.
-class Game with GameCopyWith {
+class Game {
   const Game({
     required this.id,
     required this.worldState,

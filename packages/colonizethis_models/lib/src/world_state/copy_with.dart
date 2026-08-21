@@ -1,10 +1,16 @@
 /// [WorldState.copyWith] extracted so the host stays under the models
 /// physical-line cap (Refs #4571).
 ///
-/// Provided as a [mixin] (not an extension) so `import … show WorldState`
-/// still resolves `worldState.copyWith(...)` — extensions are invisible
-/// under `show`.
-part of '../world_state.dart';
+/// Host [WorldState] re-exports this library so barrel consumers keep
+/// `worldState.copyWith(...)` without importing the helper path directly.
+library;
+
+import '../army.dart';
+import '../fleet.dart';
+import '../region_data.dart';
+import '../tile_map_state.dart';
+import '../turn_state.dart';
+import '../world_state.dart';
 
 WorldState worldStateCopyWith(
   WorldState state, {
@@ -59,10 +65,10 @@ WorldState worldStateCopyWith(
   );
 }
 
-/// Instance [WorldState.copyWith] via mixin so `show WorldState` importers
-/// keep access (Refs #4571). Unconstrained mixin avoids recursive
-/// `on WorldState` inheritance.
-mixin WorldStateCopyWith {
+/// Instance [WorldState.copyWith] via extension; re-exported from
+/// [world_state.dart] so barrel consumers keep the instance call shape
+/// (Refs #4571).
+extension WorldStateCopyWithExtension on WorldState {
   WorldState copyWith({
     TurnState? turnState,
     RegionData? oldWorld,
@@ -84,7 +90,7 @@ mixin WorldStateCopyWith {
     List<String>? newsDigestSeaZoneFleetDoneIds,
   }) =>
       worldStateCopyWith(
-        this as WorldState,
+        this,
         turnState: turnState,
         oldWorld: oldWorld,
         newWorld: newWorld,
