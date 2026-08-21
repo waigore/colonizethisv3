@@ -2640,6 +2640,24 @@ abstract class AppLocalizations {
   /// MAP30001 / MAP30002 Build improvement wedge label (Refs #4440).
   String get tileRadial_buildImprovement;
 
+  /// MAP30001 / MAP30002 Build road wedge label (Refs #4570).
+  String get tileRadial_buildRoad;
+
+  /// MAP30001 / MAP30002 Purchase land wedge label (Refs #4570).
+  String get tileRadial_purchaseLand;
+
+  /// MAP30001 / MAP30002 Upgrade town wedge label (Refs #4570).
+  String get tileRadial_upgradeTown;
+
+  /// MAP30001 / MAP30002 Build port wedge label (Refs #4570).
+  String get tileRadial_buildPort;
+
+  /// MAP30001 / MAP30002 Build railroad wedge label (Refs #4570).
+  String get tileRadial_buildRailroad;
+
+  /// MAP30001 / MAP30002 Build fort wedge label (Refs #4570).
+  String get tileRadial_buildFort;
+
   /// MAP30001 More spoke label (Refs #4440).
   String get tileRadial_more;
 

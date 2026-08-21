@@ -4,6 +4,7 @@ List<TileRadialSpokeView> _tileRadialDemoWedges({
   bool exploreEnabled = true,
   bool prospectEnabled = true,
   bool includeBuild = true,
+  bool includeExtended = false,
 }) {
   return [
     TileRadialSpokeView(
@@ -31,6 +32,24 @@ List<TileRadialSpokeView> _tileRadialDemoWedges({
         // ignore: avoid_hardcoded_strings_in_widgets
         tooltip: 'Build improvement',
       ),
+    if (includeExtended) ...[
+      const TileRadialSpokeView(
+        action: TileRadialCatalogAction.buildRoad,
+        enabled: true,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        label: 'Build road',
+        // ignore: avoid_hardcoded_strings_in_widgets
+        tooltip: 'Build road',
+      ),
+      const TileRadialSpokeView(
+        action: TileRadialCatalogAction.purchaseLand,
+        enabled: true,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        label: 'Purchase land',
+        // ignore: avoid_hardcoded_strings_in_widgets
+        tooltip: 'Purchase land',
+      ),
+    ],
   ];
 }
 
@@ -109,6 +128,20 @@ List<WidgetbookNode> get tileRadialDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Five wedges with remainder',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: _tileRadialDemoWedges(includeExtended: true),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: '320 dp clamp',
         builder: (context) => _tileRadialStoryFrame(
           width: 320,
@@ -148,6 +181,35 @@ List<WidgetbookNode> get tileRadialDirectories => [
             // ignore: avoid_hardcoded_strings_in_widgets
             placeLine: 'Place: Wessex',
             remainder: _tileRadialDemoWedges(includeBuild: false).sublist(1),
+            onAction: (_) {},
+            onProvinceDetails: () {},
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Remainder Build road overflow',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileMoreActionsDialog(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            remainder: const [
+              TileRadialSpokeView(
+                action: TileRadialCatalogAction.buildRoad,
+                enabled: true,
+                // ignore: avoid_hardcoded_strings_in_widgets
+                label: 'Build road',
+                // ignore: avoid_hardcoded_strings_in_widgets
+                tooltip: 'Build road',
+              ),
+              TileRadialSpokeView(
+                action: TileRadialCatalogAction.upgradeTown,
+                enabled: false,
+                // ignore: avoid_hardcoded_strings_in_widgets
+                label: 'Upgrade town',
+                // ignore: avoid_hardcoded_strings_in_widgets
+                tooltip: 'Upgrade town disabled',
+              ),
+            ],
             onAction: (_) {},
             onProvinceDetails: () {},
           ),

@@ -103,8 +103,9 @@ const _packageName = 'colonizethis_app';
 // raised for Blockade capital-link UI + MAP20001 under-blockade status (Refs #4516; measured 86_075).
 // raised for DLG50001 Your-court block + turn-event buffer (Refs #4532; measured 87_183).
 // raised for MAP10001 treasury forecast gold-HUD details (Refs #4560; measured 87_687).
+// raised for MAP20001 remaining civilian work radial shortcuts (Refs #4570; measured 88_240).
 // raised for DLG30001 Move fleet hostile destination intel (Refs #4573; measured 88_116).
-const _maxMainLines = 88250;
+const _maxMainLines = 88500;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

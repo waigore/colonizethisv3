@@ -133,6 +133,70 @@ void main() {
     },
   );
 
+  test('Build road catalog event matches MAP20001 engineer shortcut fields', () {
+    final event = tileRadialCatalogPanelEvent(
+      TileRadialCatalogAction.buildRoad,
+      _kTileKey,
+    );
+    expect(event.engineerOnly, isTrue);
+    expect(event.buildRoadShortcutTargetTileKey, _kTileKey);
+    expect(event.buildImprovementShortcutTargetTileKey, isNull);
+  });
+
+  test(
+    'Purchase land catalog event matches MAP20001 merchant shortcut fields',
+    () {
+      final event = tileRadialCatalogPanelEvent(
+        TileRadialCatalogAction.purchaseLand,
+        _kTileKey,
+      );
+      expect(event.merchantOnly, isTrue);
+      expect(event.purchaseLandShortcutTargetTileKey, _kTileKey);
+    },
+  );
+
+  test(
+    'Upgrade town catalog event matches MAP20001 builder upgrade fields',
+    () {
+      final event = tileRadialCatalogPanelEvent(
+        TileRadialCatalogAction.upgradeTown,
+        _kTileKey,
+      );
+      expect(event.builderOnly, isTrue);
+      expect(event.upgradeTownShortcutTargetTileKey, _kTileKey);
+    },
+  );
+
+  test('Build port catalog event matches MAP20001 engineer port fields', () {
+    final event = tileRadialCatalogPanelEvent(
+      TileRadialCatalogAction.buildPort,
+      _kTileKey,
+    );
+    expect(event.engineerOnly, isTrue);
+    expect(event.buildPortShortcutTargetTileKey, _kTileKey);
+  });
+
+  test(
+    'Build railroad catalog event matches MAP20001 rail-builder fields',
+    () {
+      final event = tileRadialCatalogPanelEvent(
+        TileRadialCatalogAction.buildRail,
+        _kTileKey,
+      );
+      expect(event.railBuilderOnly, isTrue);
+      expect(event.buildRailShortcutTargetTileKey, _kTileKey);
+    },
+  );
+
+  test('Build fort catalog event matches MAP20001 engineer fort fields', () {
+    final event = tileRadialCatalogPanelEvent(
+      TileRadialCatalogAction.buildFort,
+      _kTileKey,
+    );
+    expect(event.engineerOnly, isTrue);
+    expect(event.buildFortShortcutTargetTileKey, _kTileKey);
+  });
+
   test('Explore with no explorer is a silent no-op', () {
     final game = _game();
     final bus = AppEventBus.create();

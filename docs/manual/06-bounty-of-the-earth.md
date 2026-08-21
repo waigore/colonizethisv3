@@ -32,7 +32,7 @@ Shortcut hints use the same cost preview when the control is enabled, or a mater
 
 1. Right-click a tile on `MAP10001` **Empire overview / map area** (or press and hold on a touch screen) to open `MAP30001` **Tile context radial**.
 2. On a small screen, or after **More**, `MAP30002` **More tile actions** opens instead.
-3. Enabled **Explore**, **Prospect**, or **Build improvement** uses the same civilian-panel shortcut as `MAP20001`: you still tap **Assign** on a unit; you do not pick the tile again.
+3. Enabled civilian work on the ring (**Explore**, **Prospect**, **Build improvement**, **Build road**, **Purchase land**, **Upgrade town**, **Build port**, **Build railroad**, **Build fort**) uses the same civilian-panel shortcut as `MAP20001`: you still tap **Assign** on a unit; you do not pick the tile again. **Upgrade town** appears only when you open the ring on the town tile itself.
 
 ### Assign from Development (one tap, no map pick)
 
@@ -155,6 +155,7 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 - `SPEC/ui/empire-buttons.md`
 - `SPEC/ui/tile-context-radial.md`
 - `SPEC/ui/tile-more-actions-dialog.md`
+- `SPEC/ui/components/tile-radial-catalog.md`
 - `SPEC/ai/civilian-work-planner.md`
 - `SPEC/ai/growth-stage-planner.md`
 - `SPEC/ai/civilian-build-planner.md`
