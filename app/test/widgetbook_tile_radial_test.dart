@@ -1,4 +1,4 @@
-// Widgetbook mount pins for MAP30001 / MAP30002. Refs #4440.
+// Widgetbook mount pins for MAP30001 / MAP30002. Refs #4440, #4570.
 
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_context_radial.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_more_actions_dialog.dart';
@@ -22,6 +22,7 @@ void main() {
       'Prospect enabled Explore disabled',
       'Empty catalog More-only',
       'Sea-zone few shortcuts',
+      'Five wedges with remainder',
       '320 dp clamp',
     ]) {
       testWidgets('$useCaseName mounts', (tester) async {
@@ -47,6 +48,7 @@ void main() {
     for (final useCaseName in [
       'Empty remainder',
       'Remainder Prospect',
+      'Remainder Build road overflow',
       '320 dp',
     ]) {
       testWidgets('$useCaseName mounts', (tester) async {
