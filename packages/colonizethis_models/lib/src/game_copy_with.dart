@@ -1,11 +1,14 @@
 /// [Game.copyWith] implementation extracted so [Game] stays under the models
-/// wave-3 physical-line cap (Refs #4334).
+/// physical-line cap (Refs #4334, #4571).
+///
+/// Host [Game] re-exports this library so barrel consumers keep
+/// `game.copyWith(...)` without importing the helper path directly.
 library;
 
 import 'advanced_start_type.dart';
 import 'combat_mode.dart';
-import 'diplomacy.dart';
 import 'dossier_evidence.dart';
+import 'diplomacy.dart';
 import 'game.dart';
 import 'general.dart';
 import 'last_turn_intelligence_digest.dart';
@@ -111,4 +114,90 @@ Game gameCopyWith(
         debugDiplomacyUsedPairKeys ?? game.debugDiplomacyUsedPairKeys,
     advancedStartType: advancedStartType ?? game.advancedStartType,
   );
+}
+
+/// Instance [Game.copyWith] via extension; re-exported from [game.dart]
+/// so barrel consumers keep the instance call shape (Refs #4571).
+extension GameCopyWithExtension on Game {
+  Game copyWith({
+    String? id,
+    WorldState? worldState,
+    List<Player>? players,
+    List<MinorNation>? minorNations,
+    List<Tribe>? tribes,
+    List<General>? generals,
+    TurnTimeMapping? turnTimeMapping,
+    CombatMode? defaultCombatMode,
+    Map<String, CombatMode>? combatModeByProvinceId,
+    List<DiplomacyRelation>? diplomacyRelations,
+    List<OvertureState>? overtureStates,
+    List<SubsidyState>? subsidyStates,
+    List<ColonyState>? colonyStates,
+    List<BoycottState>? boycottStates,
+    List<AllianceBreakCooldownState>? allianceBreakCooldowns,
+    Map<String, bool>? aiControlByGpId,
+    Map<String, int>? aiSeedByGpId,
+    Map<String, String?>? aiProfileByGpId,
+    Map<String, String>? hiddenAgendaByGpId,
+    List<DossierEvidenceEntry>? dossierEvidenceEntries,
+    List<DiplomaticEvent>? diplomaticHistoryEvents,
+    LastTurnIntelligenceDigest? lastTurnIntelligenceDigest,
+    int? globalGameSeed,
+    Map<String, List<int>>? greatPowerColorOverride,
+    VictoryState? victory,
+    bool? calendarCampaignHalted,
+    bool? infiniteMode,
+    double? richesCashMultiplier,
+    int? capitalTileGrainBonusPerTurn,
+    Map<String, String>? politicalGlyphByPlayerId,
+    String? lastHumanCompletedResearchCategory,
+    int? lastHumanResearchCategoryCompletionTurn,
+    MapViewState? mapViewState,
+    WorldMarketState? worldMarketState,
+    Set<String>? ftpPartnershipKeys,
+    Set<String>? debugDiplomacyUsedPairKeys,
+    AdvancedStartType? advancedStartType,
+  }) =>
+      gameCopyWith(
+        this,
+        id: id,
+        worldState: worldState,
+        players: players,
+        minorNations: minorNations,
+        tribes: tribes,
+        generals: generals,
+        turnTimeMapping: turnTimeMapping,
+        defaultCombatMode: defaultCombatMode,
+        combatModeByProvinceId: combatModeByProvinceId,
+        diplomacyRelations: diplomacyRelations,
+        overtureStates: overtureStates,
+        subsidyStates: subsidyStates,
+        colonyStates: colonyStates,
+        boycottStates: boycottStates,
+        allianceBreakCooldowns: allianceBreakCooldowns,
+        aiControlByGpId: aiControlByGpId,
+        aiSeedByGpId: aiSeedByGpId,
+        aiProfileByGpId: aiProfileByGpId,
+        hiddenAgendaByGpId: hiddenAgendaByGpId,
+        dossierEvidenceEntries: dossierEvidenceEntries,
+        diplomaticHistoryEvents: diplomaticHistoryEvents,
+        lastTurnIntelligenceDigest: lastTurnIntelligenceDigest,
+        globalGameSeed: globalGameSeed,
+        greatPowerColorOverride: greatPowerColorOverride,
+        victory: victory,
+        calendarCampaignHalted: calendarCampaignHalted,
+        infiniteMode: infiniteMode,
+        richesCashMultiplier: richesCashMultiplier,
+        capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+        politicalGlyphByPlayerId: politicalGlyphByPlayerId,
+        lastHumanCompletedResearchCategory:
+            lastHumanCompletedResearchCategory,
+        lastHumanResearchCategoryCompletionTurn:
+            lastHumanResearchCategoryCompletionTurn,
+        mapViewState: mapViewState,
+        worldMarketState: worldMarketState,
+        ftpPartnershipKeys: ftpPartnershipKeys,
+        debugDiplomacyUsedPairKeys: debugDiplomacyUsedPairKeys,
+        advancedStartType: advancedStartType,
+      );
 }

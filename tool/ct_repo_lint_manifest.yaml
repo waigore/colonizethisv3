@@ -1071,7 +1071,7 @@ rules:
 
   - rule_id: repo.models_test_file_size
     group: testing
-    title: colonizethis_models test files must stay at or below 400 physical lines (Refs #4068)
+    title: colonizethis_models test files must stay at or below 250 physical lines (Refs #4571)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_models_test_file_size.dart
@@ -1085,7 +1085,7 @@ rules:
 
   - rule_id: repo.models_lib_physical_file_size
     group: structure
-    title: colonizethis_models lib files must stay at or below 300 physical lines (Refs #4334)
+    title: colonizethis_models lib files must stay at or below 250 physical lines (Refs #4571)
     spec: SPEC/program/dart-file-non-comment-line-size.md
     runner: dart
     script: tool/check_models_lib_physical_file_size.dart

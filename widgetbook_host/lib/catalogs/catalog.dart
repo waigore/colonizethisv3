@@ -190,6 +190,8 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'transport_overlay_candidate_preview.dart';
+
 // Widgetbook catalog parts grouped by UI domain (Refs #3546 item 6). Files are
 // named by the surface family they register (panels, screens, dialogs, chrome,
 // primitives, …) rather than by an arbitrary size-based `catalog_partN` index.
@@ -197,6 +199,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // that exceeds the cap is split into clearly-named sibling parts rather than a
 // numbered fragment. The `repo.app_widgetbook_file_naming` gate enforces the
 // no-`catalog_partN` convention.
+part 'catalog_transport_overlay_candidates.dart';
 part 'catalog_panel_map_build_port_stories.dart';
 part 'catalog_panel_map_build_railroad_stories.dart';
 part 'catalog_panel_map_build_road_stories.dart';
@@ -359,6 +362,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...transferListDirectories,
   ...mainMenuDirectories,
   ...mapWidgetDirectories,
+  ...transportOverlayCandidatesDirectories,
   ...workOrderAffordPreviewDirectories,
   ...provinceOverlayDirectories,
   ...productionPanelDirectories,

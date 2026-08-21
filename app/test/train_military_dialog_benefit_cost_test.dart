@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/features/game/widgets/train/train_military_regiment_role_display.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
