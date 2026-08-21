@@ -3,7 +3,8 @@
 
 import 'package:colonizethis_test/test.dart';
 
-import 'evidence_rules_scenarios.dart';
+import 'evidence_rules_scenario_helpers.dart';
+import 'evidence_rules_war_peace_scenarios.dart';
 
 void main() {
   group('evidenceForIsolationistCallToArmsRefuse', () {

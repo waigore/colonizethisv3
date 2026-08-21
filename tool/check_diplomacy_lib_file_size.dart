@@ -1,8 +1,8 @@
 // Physical line ratchet for colonizethis_diplomacy lib source (repo rule:
 // `repo.colonizethis_diplomacy_lib_file_size`).
 //
-// Wave 6 (#4341) lowers the peer-aligned physical-line ceiling from wave-5's
-// 400 to 300. Generated suffixes are excluded.
+// Wave 7 (#4574) lowers the peer-aligned physical-line ceiling from 300 to
+// 250. Generated suffixes are excluded.
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,13 +10,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-6 post-split target (≤300 physical lines).
-const int diplomacyLibFileSizeCeiling = 300;
+/// Ratchet ceiling for wave-7 post-split target (≤250 physical lines).
+const int diplomacyLibFileSizeCeiling = 250;
 
 const String _diplomacyLibRelativePath = 'packages/colonizethis_diplomacy/lib';
 
-/// Hot files still above the wave-6 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land. Empty when wave-6 completes (#4341).
+/// Hot files still above the wave-7 ceiling during transition slices. Shrink-only
+/// allowlist; remove entries as splits land. Empty when wave-7 completes (#4574).
 const List<String> diplomacyLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -82,7 +82,7 @@ int runCheckDiplomacyLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_diplomacy_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4130, #4341).',
+      '(ceiling $ceiling; Refs #4130, #4341, #4574).',
     );
     return 0;
   }
@@ -90,7 +90,7 @@ int runCheckDiplomacyLibFileSize(
   violations.sort();
   logE(
     'check_diplomacy_lib_file_size: found ${violations.length} violation(s) '
-    'under $_diplomacyLibRelativePath (wave-6 ceiling $ceiling; Refs #4130, #4341):',
+    'under $_diplomacyLibRelativePath (wave-7 ceiling $ceiling; Refs #4130, #4341, #4574):',
   );
   for (final violation in violations) {
     logE(' - $violation');

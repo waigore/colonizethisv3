@@ -1,8 +1,3 @@
-/// Diplomacy phase resolution. SPEC/program/diplomacy-resolution.md.
-/// Steps: overture payments (two-way accept/reject), advance overtures,
-/// Join Empire/Colony, alliance proposals, Declare War/Peace, intervention
-/// (GP embassy or purchased land when a GP declares war on a Minor/Tribe),
-/// relation modifiers, score update.
 library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -18,18 +13,12 @@ export 'package:colonizethis_world/src/world/faction_membership.dart'
 import 'alliance_resolver.dart';
 import 'boycott_resolver.dart';
 import 'break_alliance_resolver.dart';
-import 'diplomacy_relation_lookup.dart';
 import 'ftp_resolver.dart';
 import 'diplomacy_subsidies_relations_resolver.dart';
 import 'intervention_resolver.dart';
 import 'overture_resolver.dart';
 import 'war_resolver.dart';
 
-export 'diplomacy_relation_lookup.dart';
-export 'diplomacy_power_score.dart';
-export 'package:colonizethis_economy/colonizethis_economy.dart'
-    show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
-export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
 export 'ftp_resolver.dart'
     show aiGpAcceptsFtp, breakFtpOnEmbassyLoss, breakFtpOnWar;
 export 'diplomacy_relation_lookup.dart'
@@ -37,35 +26,12 @@ export 'diplomacy_relation_lookup.dart'
 export 'intervention_resolver.dart'
     show applyInterventionChoice, needsInterventionChoice;
 export 'diplomacy_logging.dart' show diploLog;
+export 'diplomacy_relation_lookup.dart';
+export 'diplomacy_power_score.dart';
+export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
+export 'package:colonizethis_economy/colonizethis_economy.dart'
+    show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
 
-/// Target GP is "nearly defeated" for Join Empire: ≤3 provinces and does not hold its original capital tile province. SPEC/game/diplomacy.md.
-bool isGreatPowerNearlyDefeatedForJoinEmpire(
-  Game game,
-  String gpId, {
-  DiplomacyFactionMembership? factionMembership,
-}) {
-  final isGp =
-      factionMembership?.isGreatPower(gpId) ?? isGreatPower(game, gpId);
-  if (!isGp) return false;
-  final player = game.playerById(gpId);
-  final capId = player?.capitalProvinceId;
-  if (capId == null) return false;
-  final capProv = game.worldState.tryGetProvince(capId);
-  if (capProv == null) return false;
-  if (capProv.ownerId == gpId) return false;
-  final n = provinceCountOwnedBy(game, gpId);
-  return n <= 3;
-}
-
-/// Resolves Diplomacy phase. Runs before Movement per turn-resolution-phases.
-/// When an AI applies declare war or offer peace, [onDialogue] is invoked with
-/// a [DialogueEvent] (SPEC/ai/dialogue-and-mood.md).
-/// Returns [DiplomacyPhaseResult]: when an overture targets a human GP and
-/// [overtureDecisions] does not supply a decision, returns pending so turn
-/// resolution can block. When [overtureDecisions] is provided (resume path),
-/// applies those decisions and does not suspend.
-/// Call to arms: after GP–GP war declarations, allies of the defender may need
-/// to join or refuse; [callToArmsDecisions] supplies human responses on resume.
 DiplomacyPhaseResult resolveDiplomacyPhase(
   Game game,
   Orders orders, {

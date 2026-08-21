@@ -6,7 +6,7 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// SPEC: SPEC/program/repo-lint.md (Refs #3837).
 ///
-/// Forbid `package:colonizethis_diplomacy/src/` imports in diplomacy tests.
+/// Forbid diplomacy and world package `src/` imports in diplomacy tests.
 /// Tests must use the public barrel or shared test_support fixtures.
 const _diplomacyTestPrefix = 'packages/colonizethis_diplomacy/test/';
 
@@ -16,7 +16,7 @@ const _srcImportAllowlist = <String>{
 };
 
 final RegExp _forbiddenSrcImport = RegExp(
-  r'''import\s+['"]package:colonizethis_diplomacy/src/[^'"]+['"]\s*;''',
+  r'''import\s+['"]package:colonizethis_(?:diplomacy|world)/src/[^'"]+['"]\s*;''',
 );
 
 bool diplomacyTestNoSrcImportsPathInScope(String slashPath) {
@@ -33,9 +33,8 @@ String? diplomacyTestNoSrcImportsViolationReason(
     return null;
   }
   if (_forbiddenSrcImport.hasMatch(content)) {
-    return 'use `package:colonizethis_diplomacy/colonizethis_diplomacy.dart` '
-        'or colonizethis_diplomacy_test_support instead of src/ imports '
-        '(Refs #3837)';
+    return 'use public package barrels or colonizethis_diplomacy_test_support '
+        'instead of src/ imports (Refs #3837, #4574)';
   }
   return null;
 }

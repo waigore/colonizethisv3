@@ -4,7 +4,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../diplomacy/diplomacy_shared_helpers.dart' show isAiControlledForEvidence;
+import '../diplomacy/diplomacy_shared_helpers.dart'
+    show isAiControlledForEvidence;
 
 /// Human Great Power ids (observers for whom we store evidence).
 List<String> humanObserverIds(Game game) {
@@ -22,6 +23,28 @@ List<String>? evidenceObservers(Game game, String subjectId) {
   final observers = humanObserverIds(game);
   if (observers.isEmpty) return null;
   return observers;
+}
+
+/// Builds one identical evidence entry for each human observer.
+List<DossierEvidenceEntry> evidenceEntriesForObservers(
+  List<String> observerIds, {
+  required String subjectId,
+  required String agendaType,
+  required int turnNumber,
+  required String description,
+  required int scoreDelta,
+}) {
+  return [
+    for (final observerId in observerIds)
+      DossierEvidenceEntry(
+        observerId: observerId,
+        subjectId: subjectId,
+        agendaType: agendaType,
+        turnNumber: turnNumber,
+        description: description,
+        scoreDelta: scoreDelta,
+      ),
+  ];
 }
 
 /// True when [actorGpId] refused call-to-arms toward [targetGpId] in the same
