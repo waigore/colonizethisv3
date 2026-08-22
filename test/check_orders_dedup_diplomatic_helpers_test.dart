@@ -40,5 +40,16 @@ if (!isGreatPower(ctx.game, targetId)) {
     test('passes on current repo tree', () {
       expect(runCheckOrdersDedupDiplomaticHelpers('.'), 0);
     });
+
+    test('skips shared reject helpers that implement the SoT patterns', () {
+      expect(
+        findInlinedDiplomaticRelationGuardViolations(
+          relativePath:
+              'packages/colonizethis_orders/lib/src/orders/validators/diplomatic/diplomatic_sub_validator_rejects.dart',
+          source: 'if (relation?.atWar ?? false) {}',
+        ),
+        isNotEmpty,
+      );
+    });
   });
 }

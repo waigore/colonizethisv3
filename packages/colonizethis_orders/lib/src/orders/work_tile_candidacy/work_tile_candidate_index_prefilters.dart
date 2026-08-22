@@ -1,60 +1,15 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../build_rail_work_rules.dart';
-import '../diplomatic_access_helpers.dart';
 import '../order_work_constants.dart';
 import '../orders_application_helpers.dart';
+import 'work_tile_candidate_index_prefilter_town.dart';
+import 'work_tile_candidate_index_prefilter_walkers.dart';
 import 'work_tile_candidate_index_types.dart';
 
-typedef WorkTilePrefilterOp = void Function(WorkTilePrefilterSession c);
-
-void forEachPrefixedProvinceTile({
-  required Map<String, Map<String, List<String>>> tileKeysByRegion,
-  required void Function(String provinceId, String tileKey) onTile,
-}) {
-  for (final regionEntry in tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      for (final tileKey in provinceEntry.value) {
-        onTile(provinceId, tileKey);
-      }
-    }
-  }
-}
-
-void addAllTilesInOwnedPrefixedProvinces({
-  required Map<String, Map<String, List<String>>> tileKeysByRegion,
-  required Set<String> ownedProvinceIds,
-  required Set<String> result,
-}) {
-  for (final regionEntry in tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (!ownedProvinceIds.contains(provinceId)) continue;
-      result.addAll(provinceEntry.value);
-    }
-  }
-}
-
-void addCandidateTilesForTownWork({
-  required Game game,
-  required Set<String> ownedProvinceIds,
-  required Set<String> result,
-}) {
-  final world = game.worldState;
-  for (final provinceId in ownedProvinceIds) {
-    final province = world.tryGetProvince(provinceId);
-    if (province == null) continue;
-    final townTileKey = province.townTileKey;
-    if (townTileKey == null || townTileKey.isEmpty) continue;
-    result.add(townTileKey);
-  }
-}
+export 'work_tile_candidate_index_prefilter_town.dart';
+export 'work_tile_candidate_index_prefilter_walkers.dart';
 
 void prefilterWtBuildImprovement(WorkTilePrefilterSession c) {
   forEachPrefixedProvinceTile(
@@ -106,52 +61,6 @@ void prefilterWtBuildRail(WorkTilePrefilterSession c) {
       }
       c.result.add(tileKey);
     },
-  );
-}
-
-void prefilterWtTownWork(WorkTilePrefilterSession c) {
-  addCandidateTilesForTownWork(
-    game: c.game,
-    ownedProvinceIds: c.ownedProvinceIds,
-    result: c.result,
-  );
-}
-
-void prefilterWtUpgradeTown(WorkTilePrefilterSession c) {
-  addCandidateTilesForTownWork(
-    game: c.game,
-    ownedProvinceIds: c.ownedProvinceIds,
-    result: c.result,
-  );
-  addMinorTribeTownTilesForEmbassyUpgrade(c);
-}
-
-void addMinorTribeTownTilesForEmbassyUpgrade(WorkTilePrefilterSession c) {
-  final factionMembership =
-      c.factionMembership ?? DiplomacyFactionMembership.from(c.game);
-  for (final regionEntry in c.tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (c.ownedProvinceIds.contains(provinceId)) continue;
-      final province = c.game.worldState.tryGetProvince(provinceId);
-      if (province == null) continue;
-      final ownerId = province.ownerId;
-      if (ownerId == null || ownerId == c.playerId) continue;
-      if (!factionMembership.isMinorOrTribe(ownerId)) continue;
-      if (!hasPeaceTimeEmbassy(c.game, c.playerId, ownerId)) continue;
-      final townTileKey = province.townTileKey;
-      if (townTileKey == null || townTileKey.isEmpty) continue;
-      c.result.add(townTileKey);
-    }
-  }
-}
-
-void prefilterWtOwnedProvinceTiles(WorkTilePrefilterSession c) {
-  addAllTilesInOwnedPrefixedProvinces(
-    tileKeysByRegion: c.tileKeysByRegion,
-    ownedProvinceIds: c.ownedProvinceIds,
-    result: c.result,
   );
 }
 
@@ -223,10 +132,7 @@ final Map<String, WorkTilePrefilterOp> workTargetPrefilters =
       kWorkTargetBuildImprovement: prefilterWtBuildImprovement,
       kWorkTargetBuildRoad: prefilterWtBuildRoad,
       'build_rail': prefilterWtBuildRail,
-      kWorkTargetUpgradeTown: prefilterWtUpgradeTown,
-      kWorkTargetBuildFort: prefilterWtTownWork,
-      kWorkTargetBuildPort: prefilterWtOwnedProvinceTiles,
-      kWorkTargetCounterSpy: prefilterWtOwnedProvinceTiles,
+      ...workTargetTownPrefilters,
       kWorkTargetPurchaseLand: prefilterWtPurchaseLand,
       kWorkTargetExplore: prefilterWtExplore,
       kWorkTargetProspect: prefilterWtProspect,
