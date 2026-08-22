@@ -40,6 +40,12 @@ Contract:
 - The exported **symbol set** consumed by `colonizethis_ai` is unchanged by the
   Phase 3 narrowing; only the export routing (deep `src/` → domain barrel)
   changes, so AI planner behaviour and tests are preserved.
+- Dart `show` lists do not pull in extensions from a class's library
+  automatically. When AI calls methods on IncrementalCandidateValidator
+  that live on companion extensions (for example
+  IncrementalCandidateValidatorArmyNaval.isArmyMoveAccepted), those
+  extension names MUST appear in the colonizethis_orders barrel `show`
+  list on `ai_api.dart` (Refs #4587).
 
 ## Enforcement: `repo.ai_api_narrow_surface`
 
@@ -57,6 +63,7 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 - **Given** the post-#4508 `ai_api.dart` on `dev`, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** no `export 'package:colonizethis_orders/src/...'` directives remain (feedstock and counsel contract files are barrel-published).
 - **Given** a deep export whose file is reachable only transitively through a sub-barrel (e.g. `orders/orders.dart` re-exporting it), **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** the directive is flagged as a barrel bypass.
 - **Given** the `packages/colonizethis_logic/lib/ai_api.dart` file is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports `Missing AI contract file`.
+- **Given** `colonizethis_ai` calls IncrementalCandidateValidator.isArmyMoveAccepted through `package:colonizethis_logic/ai_api.dart`, **when** the analyzer compiles that AI library, **then** `ai_api.dart` re-exports IncrementalCandidateValidatorArmyNaval (not only the class name) so the method resolves.
 - **Given** a domain referenced by an `ai_api.dart` deep export whose barrel file `lib/<domain>.dart` is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports the missing barrel.
 
 ## Enforcement: `repo.app_narrow_logic_import` (Refs #4240 Slice A)

@@ -41,6 +41,7 @@ export 'package:colonizethis_world/colonizethis_world.dart'
 export 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         IncrementalCandidateValidator,
+        IncrementalCandidateValidatorArmyNaval,
         applyArmyMoveOrderForPlayer,
         armyMoveCandidateDestinationProvinceIds,
         feedstockBootstrapBuildImprovementCastIronWaived,

@@ -4,117 +4,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-/// Copied local Game factory for distant-sea EOT pins (do not import world `test/`).
-Game _distantSeaVisibilityGame({
-  List<Province> oldWorldProvinces = const [],
-  List<Province> newWorldProvinces = const [],
-  required Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince,
-  required List<Player> players,
-  List<Fleet> fleets = const [],
-  Map<String, Map<String, String>> playerVisibilityByTile = const {},
-  int turnNumber = 0,
-  String id = 'g1',
-}) {
-  return Game(
-    id: id,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.endOfTurn, turnNumber: turnNumber),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: RegionData(provinces: newWorldProvinces),
-      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-      fleets: fleets,
-      playerVisibilityByTile: playerVisibilityByTile,
-    ),
-    players: players,
-  );
-}
-
-MapTopology _provinceSeaZoneTopology({
-  required String regionId,
-  required String provinceLocalId,
-  required String seaZoneId,
-}) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: provinceLocalId,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: seaZoneId,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [TopologyEdge(id1: seaZoneId, id2: provinceLocalId)],
-  );
-}
-
-MapTopology _provinceSeaChainTopology(String regionId) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: 'p1',
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 's1',
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: 's2',
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [
-      TopologyEdge(id1: 'p1', id2: 's1'),
-      TopologyEdge(id1: 's1', id2: 's2'),
-    ],
-  );
-}
-
-MapTopology _dualRegionLandOnlyTopology() {
-  return const MapTopology(
-    nodes: [
-      TopologyNode(
-        id: 'p1',
-        regionId: kRegionOldWorld,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 'P2',
-        regionId: kRegionNewWorld,
-        type: TopologyNodeType.province,
-      ),
-    ],
-  );
-}
-
-({MapTopology combined, MapTopology ow, MapTopology nw})
-_owSeaChainWithIsolatedNwSea() {
-  final ow = _provinceSeaChainTopology(kRegionOldWorld);
-  const nw = MapTopology(
-    nodes: [
-      TopologyNode(
-        id: 'nwSea',
-        regionId: kRegionNewWorld,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-  );
-  return (
-    combined: MapTopology(
-      nodes: [...ow.nodes, ...nw.nodes],
-      edges: [...ow.edges, ...nw.edges],
-    ),
-    ow: ow,
-    nw: nw,
-  );
-}
+import 'end_of_turn_distant_sea_fog_integration_test_cases.dart';
 
 void main() {
   group('applyDistantSeaZoneFogRevert end-of-turn integration', () {
@@ -123,12 +13,12 @@ void main() {
       () {
         const ow = 'oldWorld';
         const tileS1 = 'oldWorld|s1|0|0';
-        final topology = _provinceSeaZoneTopology(
+        final topology = provinceSeaZoneTopology(
           regionId: ow,
           provinceLocalId: 'p1',
           seaZoneId: 's1',
         );
-        final game = _distantSeaVisibilityGame(
+        final game = distantSeaVisibilityGame(
           oldWorldProvinces: const [
             Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
           ],
@@ -158,8 +48,8 @@ void main() {
         const ow = 'oldWorld';
         const tileS1 = 'oldWorld|s1|0|0';
         const tileS2 = 'oldWorld|s2|0|0';
-        final topology = _provinceSeaChainTopology(ow);
-        final game = _distantSeaVisibilityGame(
+        final topology = provinceSeaChainTopology(ow);
+        final game = distantSeaVisibilityGame(
           turnNumber: 5,
           oldWorldProvinces: const [
             Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
@@ -199,8 +89,8 @@ void main() {
       const ow = kRegionOldWorld;
       const nw = kRegionNewWorld;
       const tileNwSea = 'newWorld|nwSea|0|0';
-      final topologies = _owSeaChainWithIsolatedNwSea();
-      final game = _distantSeaVisibilityGame(
+      final topologies = owSeaChainWithIsolatedNwSea();
+      final game = distantSeaVisibilityGame(
         id: 'g_eot_2023',
         turnNumber: 5,
         oldWorldProvinces: const [
@@ -256,8 +146,8 @@ void main() {
         const ow = 'oldWorld';
         const nw = 'newWorld';
         const nwTile = 'newWorld|P2|0|0';
-        final topology = _dualRegionLandOnlyTopology();
-        final game = _distantSeaVisibilityGame(
+        final topology = dualRegionLandOnlyTopology();
+        final game = distantSeaVisibilityGame(
           oldWorldProvinces: const [
             Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
           ],

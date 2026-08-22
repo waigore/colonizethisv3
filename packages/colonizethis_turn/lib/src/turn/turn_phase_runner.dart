@@ -1,12 +1,9 @@
 import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'economy_turn_summary_events.dart';
-import 'last_turn_intelligence_digest.dart';
-import 'turn_news_digest.dart';
 import 'turn_phase_handler_registry.dart';
+import 'turn_pipeline_completion.dart';
 import 'turn_pipeline_state.dart';
-import 'turn_resolution_events.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
@@ -26,31 +23,13 @@ TurnResolutionResult runTurnResolutionPipeline({
     turnLog.i('turn $turn resolve skipped (calendar halted)');
     // Halted: start and end are the same state, so a single visibility index
     // serves both discovery events and the news digest (4 builds -> 1).
-    final haltedIndex = buildProvinceVisibilityIndex(gameAtResolutionStart);
-    emitPlayerDiscoveryEvents(
-      gameAtResolutionStart,
-      gameAtResolutionStart,
-      turn,
-      runConfig.eventSink,
-      beforeIndex: haltedIndex,
-      afterIndex: haltedIndex,
-    );
-    emitEconomyTurnSummaryEvents(
+    return completeTurnPipeline(
       start: gameAtResolutionStart,
       end: gameAtResolutionStart,
       turn: turn,
       sink: runConfig.eventSink,
-    );
-    final news = buildTurnNewsDigestForComplete(
-      start: gameAtResolutionStart,
-      end: gameAtResolutionStart,
-      startIndex: haltedIndex,
-      endIndex: haltedIndex,
-    );
-    return _completeWithIntel(
-      start: gameAtResolutionStart,
-      news: news,
       turnEvents: collectedEvents,
+      reuseStartIndexForEnd: true,
     );
   }
   var acc = TurnPipelineState(game: gameAtResolutionStart);
@@ -105,49 +84,14 @@ TurnResolutionResult runTurnResolutionPipeline({
   }
 
   turnLog.i('turn $turn resolve end');
-  // Build each per-state visibility index once and reuse it across discovery
-  // events and the news digest instead of recomputing both (4 builds -> 2).
-  final beforeIndex = buildProvinceVisibilityIndex(gameAtResolutionStart);
-  final afterIndex = buildProvinceVisibilityIndex(acc.game);
-  emitPlayerDiscoveryEvents(
-    gameAtResolutionStart,
-    acc.game,
-    turn,
-    runConfig.eventSink,
-    beforeIndex: beforeIndex,
-    afterIndex: afterIndex,
-  );
-  emitEconomyTurnSummaryEvents(
+  return completeTurnPipeline(
     start: gameAtResolutionStart,
     end: acc.game,
     turn: turn,
     sink: runConfig.eventSink,
-  );
-  final news = buildTurnNewsDigestForComplete(
-    start: gameAtResolutionStart,
-    end: acc.game,
-    startIndex: beforeIndex,
-    endIndex: afterIndex,
-  );
-  return _completeWithIntel(
-    start: gameAtResolutionStart,
-    news: news,
     turnEvents: collectedEvents,
+    reuseStartIndexForEnd: false,
   );
-}
-
-TurnResolutionComplete _completeWithIntel({
-  required Game start,
-  required ({TurnNewsDigest? digest, Game game}) news,
-  required List<GameEvent> turnEvents,
-}) {
-  final game = persistLastTurnIntelligenceDigest(
-    start: start,
-    end: news.game,
-    worldNews: news.digest,
-    turnEvents: turnEvents,
-  );
-  return TurnResolutionComplete(game, turnNewsDigest: news.digest);
 }
 
 void _emitPhaseTrace({

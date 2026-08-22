@@ -3,19 +3,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_effects_projector.dart';
 export 'order_effects_projector.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 import 'order_engine.g.dart';
 import 'order_engine_slot.dart';
 import 'order_engine_test_hooks.dart';
 export 'order_engine_test_hooks.dart';
 import 'order_engine_validation_run.dart';
-import 'order_resolution_context.dart';
 import 'order_validation_result.dart';
 import 'order_validator_factory.dart';
 export 'order_validator_factory.dart';
 import 'orders_logging.dart';
 export 'order_validation_result.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'order_engine_default_validator_factory.dart';
 export 'validator_bundle.dart'
     show
         OrderValidators,
@@ -39,7 +38,7 @@ class OrderEngine with OrderEngineGeneratedOrderMethods {
     OrderValidatorFactory? validatorFactory,
     OrderEffectsProjector? projector,
   }) : _orders = copyInitialOrdersForEngine(initialOrders),
-       _validatorFactory = validatorFactory ?? _defaultOrderValidatorFactory,
+       _validatorFactory = validatorFactory ?? defaultOrderValidatorFactory,
        _projector = projector;
 
   Orders _orders;
@@ -203,36 +202,4 @@ class OrderEngine with OrderEngineGeneratedOrderMethods {
       defaultAssignments: defaultAssignments,
     );
   }
-}
-
-OrderValidators _defaultOrderValidatorFactory(
-  Game game,
-  Player player,
-  String playerId,
-  OrderResolutionContext resolution,
-  MapTopology topology,
-  List<DiplomaticOrder> diplomaticOrders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Set<String> civilianDraftMoveUnitIds,
-  Set<String> devExclusiveTiles,
-  Stockpile stockpile,
-  int treasury,
-  DiplomacyFactionMembership factionMembership,
-  WorkerPool workerPool,
-) {
-  return createOrderValidators(
-    game: game,
-    player: player,
-    playerId: playerId,
-    resolution: resolution,
-    topology: topology,
-    diplomaticOrders: diplomaticOrders,
-    tileMapByRegion: tileMapByRegion,
-    civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-    devExclusiveTiles: devExclusiveTiles,
-    stockpile: stockpile,
-    treasury: treasury,
-    factionMembership: factionMembership,
-    workerPool: workerPool,
-  );
 }

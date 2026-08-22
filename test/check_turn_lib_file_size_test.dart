@@ -14,14 +14,14 @@ void _writeFile(Directory root, String relative, String source) {
 void main() {
   group('runCheckTurnLibFileSize', () {
     test(
-      'passes on current repo tree under wave-7 300 physical-line ceiling',
+      'passes on current repo tree under wave-8 250 physical-line ceiling',
       () {
         expect(runCheckTurnLibFileSize('.'), 0);
       },
     );
 
-    test('ceiling is 300 after #4342 Slice D ratchet', () {
-      expect(turnLibFileSizeCeiling, 300);
+    test('ceiling is 250 after #4583 Slice B ratchet', () {
+      expect(turnLibFileSizeCeiling, 250);
     });
 
     test('grandfather allowlist is empty after #4342', () {
