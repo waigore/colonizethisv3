@@ -1,20 +1,16 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
-    show
-        DevelopmentImprovableCommodityRow,
-        DevelopmentPanelRegionModel,
-        DevelopmentPanelScopeRow;
+    show DevelopmentPanelRegionModel, DevelopmentPanelScopeRow;
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show DevelopmentAssignRowState, DevelopmentImproveAssignCandidate;
 import 'package:flutter/material.dart';
 
-import '../../../../widgets/commodity_display_name.dart';
-import '../../../../widgets/ct_action_text_button.dart';
 import '../../../../widgets/ct_spacing.dart';
+
 import '../../widgets/units/shared/region_section_header.dart';
-import 'development_assign_preview.dart';
 import 'development_panel_keys.dart';
+import 'development_panel_scope_commodity_rows.dart';
 
 /// Province and purchased-land scope list for one region tab.
 class DevelopmentPanelScopeList extends StatelessWidget {
@@ -138,7 +134,7 @@ class _ScopeCard extends StatelessWidget {
             )
           else
             ...scope.improvableCommodities.map(
-              (row) => _ImprovableCommodityRow(
+              (row) => DevelopmentImprovableCommodityRowView(
                 l10n: l10n,
                 scopeKey: scope.scopeKey,
                 row: row,
@@ -151,125 +147,6 @@ class _ScopeCard extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-}
-
-class _ImprovableCommodityRow extends StatelessWidget {
-  const _ImprovableCommodityRow({
-    required this.l10n,
-    required this.scopeKey,
-    required this.row,
-    required this.textTheme,
-    required this.assignRowStateFor,
-    required this.onShowTiles,
-    required this.onAssign,
-    required this.provinceDisplayNamesById,
-  });
-
-  final AppLocalizations l10n;
-
-  final String scopeKey;
-  final DevelopmentImprovableCommodityRow row;
-  final TextTheme textTheme;
-  final DevelopmentAssignRowState Function(String scopeKey, String commodityId)
-  assignRowStateFor;
-  final void Function(Set<String> tileKeys, {String? selectedTileKey})
-  onShowTiles;
-  final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
-  final Map<String, String> provinceDisplayNamesById;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayName = commodityDisplayName(l10n, row.commodityId);
-    final assignState = assignRowStateFor(scopeKey, row.commodityId);
-    final previewLine = formatDevelopmentAssignPreviewLine(
-      l10n: l10n,
-      assignState: assignState,
-      provinceDisplayNamesById: provinceDisplayNamesById,
-    );
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ImprovableCommodityActionsRow(
-            l10n: l10n,
-            scopeKey: scopeKey,
-            row: row,
-            textTheme: textTheme,
-            displayName: displayName,
-            assignState: assignState,
-            onShowTiles: onShowTiles,
-            onAssign: onAssign,
-          ),
-          if (previewLine != null)
-            DevelopmentAssignPreviewCaption(
-              scopeKey: scopeKey,
-              commodityId: row.commodityId,
-              previewLine: previewLine,
-              textTheme: textTheme,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ImprovableCommodityActionsRow extends StatelessWidget {
-  const _ImprovableCommodityActionsRow({
-    required this.l10n,
-    required this.scopeKey,
-    required this.row,
-    required this.textTheme,
-    required this.displayName,
-    required this.assignState,
-    required this.onShowTiles,
-    required this.onAssign,
-  });
-
-  final AppLocalizations l10n;
-  final String scopeKey;
-  final DevelopmentImprovableCommodityRow row;
-  final TextTheme textTheme;
-  final String displayName;
-  final DevelopmentAssignRowState assignState;
-  final void Function(Set<String> tileKeys, {String? selectedTileKey})
-  onShowTiles;
-  final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
-
-  @override
-  Widget build(BuildContext context) {
-    final assignTooltip = assignState.disabledReason;
-    final assignButton = CtActionTextButton(
-      key: DevelopmentPanelKeys.assignButtonKey(scopeKey, row.commodityId),
-      label: l10n.civilian_units_assign,
-      onPressed: assignState.enabled && assignState.candidate != null
-          ? () => onAssign(assignState.candidate!)
-          : null,
-    );
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.development_improvableCount(row.count, displayName),
-            style: textTheme.bodySmall,
-          ),
-        ),
-        CtActionTextButton(
-          key: DevelopmentPanelKeys.showButtonKey(scopeKey, row.commodityId),
-          label: l10n.development_show,
-          onPressed: () => onShowTiles(
-            row.tileKeys.toSet(),
-            selectedTileKey: assignState.candidate?.targetTileKey,
-          ),
-        ),
-        const SizedBox(width: CtSpacing.s),
-        if (assignTooltip != null && !assignState.enabled)
-          Tooltip(message: assignTooltip, child: assignButton)
-        else
-          assignButton,
-      ],
     );
   }
 }
