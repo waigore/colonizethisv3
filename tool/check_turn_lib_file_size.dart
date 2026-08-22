@@ -11,13 +11,14 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-7 post-split target (≤300 physical lines).
-/// Wave 4 landed 400 (Refs #4113); wave 7 tightens to 300 (Refs #4342).
-const int turnLibFileSizeCeiling = 300;
+/// Ratchet ceiling for wave-8 post-split target (≤250 physical lines).
+/// Wave 4 landed 400 (Refs #4113); wave 7 tightens to 300 (Refs #4342);
+/// wave 8 tightens to 250 (Refs #4583).
+const int turnLibFileSizeCeiling = 250;
 
 const String _turnLibRelativePath = 'packages/colonizethis_turn/lib';
 
-/// Shrink-only grandfather; empty after wave-7 splits (Refs #4342).
+/// Shrink-only grandfather; empty after wave-8 splits (Refs #4583).
 const List<String> turnLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');

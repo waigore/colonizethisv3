@@ -13,23 +13,28 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckTurnTestFileSize', () {
-    test('passes on current repo tree under wave-4 ceiling', () {
-      expect(runCheckTurnTestFileSize('.'), 0);
+    test(
+      'passes on current repo tree under wave-8 300 physical-line ceiling',
+      () {
+        expect(runCheckTurnTestFileSize('.'), 0);
+      },
+    );
+
+    test('ceiling is 300 after #4583 Slice C ratchet', () {
+      expect(turnTestFileSizeCeiling, 300);
     });
 
     test('ignores test/support paths governed by support LOC gate', () {
-      final root = Directory.systemTemp.createTempSync('turn_test_size_support');
+      final root = Directory.systemTemp.createTempSync(
+        'turn_test_size_support',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,
         'packages/colonizethis_turn/test/support/fat.dart',
         List.generate(12, (i) => '// support $i').join('\n'),
       );
-      _writeFile(
-        root,
-        'packages/colonizethis_turn/test/ok.dart',
-        '// small\n',
-      );
+      _writeFile(root, 'packages/colonizethis_turn/test/ok.dart', '// small\n');
 
       expect(runCheckTurnTestFileSize(root.path, ceiling: 10), 0);
     });
