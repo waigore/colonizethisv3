@@ -10,14 +10,10 @@ import 'package:flutter/material.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/gp_nation_color_pennant.dart';
 import 'tech_definition_detail_assign.dart';
+import 'tech_definition_detail_sections.dart';
 import 'tech_effect_summary.dart';
-import 'tech_gp_researchers.dart';
-import 'tech_researchers_list_dialog.dart';
 import 'tech_tree_finish_line.dart';
-import 'tech_ui_helpers.dart';
 
 export 'tech_definition_detail_assign.dart' show TechTreeAssignConfig;
 
@@ -79,7 +75,7 @@ class _TechDefinitionDetailBody extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _TechDefinitionHeader(tech: tech, theme: theme, l10n: l10n),
+        TechDefinitionHeader(tech: tech, theme: theme, l10n: l10n),
         if (treeAssign != null)
           TechTreeFinishLine(
             game: game,
@@ -88,10 +84,17 @@ class _TechDefinitionDetailBody extends StatelessWidget {
             currentOrders: treeAssign!.currentOrders,
           ),
         if (tech.prerequisiteIds.isNotEmpty)
-          _TechPrerequisiteList(tech: tech, theme: theme, l10n: l10n),
+          TechPrerequisiteList(tech: tech, theme: theme, l10n: l10n),
         if (effects.isNotEmpty)
-          _TechEffectList(effects: effects, theme: theme, l10n: l10n),
-        ..._researchedBySection(context, game, player, tech.id, l10n, theme),
+          TechEffectList(effects: effects, theme: theme, l10n: l10n),
+        ...techDefinitionResearchedBySection(
+          context,
+          game,
+          player,
+          tech.id,
+          l10n,
+          theme,
+        ),
         if (treeAssign != null) ...[
           CtGap.m,
           TechTreeAssignSection(
@@ -115,157 +118,4 @@ class _TechDefinitionDetailBody extends StatelessWidget {
       ],
     );
   }
-}
-
-class _TechDefinitionHeader extends StatelessWidget {
-  const _TechDefinitionHeader({
-    required this.tech,
-    required this.theme,
-    required this.l10n,
-  });
-
-  final TechDefinition tech;
-  final ThemeData theme;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(techDisplayName(tech.id), style: theme.textTheme.titleMedium),
-        CtGap.m,
-        Text(
-          l10n.techTree_eraCategory(
-            eraRoman(tech.era),
-            techCategoryLabelL10n(l10n, tech.category),
-          ),
-          style: theme.textTheme.bodySmall,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.techTree_researchPoints(tech.cost),
-          style: theme.textTheme.bodyMedium,
-        ),
-      ],
-    );
-  }
-}
-
-class _TechPrerequisiteList extends StatelessWidget {
-  const _TechPrerequisiteList({
-    required this.tech,
-    required this.theme,
-    required this.l10n,
-  });
-
-  final TechDefinition tech;
-  final ThemeData theme;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CtGap.m,
-        Text(l10n.techTree_prerequisites, style: theme.textTheme.labelLarge),
-        ...tech.prerequisiteIds.map(
-          (id) => Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              l10n.techTree_prerequisiteBullet(techDisplayName(id)),
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TechEffectList extends StatelessWidget {
-  const _TechEffectList({
-    required this.effects,
-    required this.theme,
-    required this.l10n,
-  });
-
-  final List<String> effects;
-  final ThemeData theme;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CtGap.m,
-        Text(l10n.techTree_effects, style: theme.textTheme.labelLarge),
-        ...effects.map(
-          (e) => Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              l10n.techTree_bulletItem(e),
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-List<Widget> _researchedBySection(
-  BuildContext context,
-  Game game,
-  Player player,
-  String techId,
-  AppLocalizations l10n,
-  ThemeData theme,
-) {
-  final researchers = orderGpResearchers(
-    researchers: gpPlayersWithTechUnlocked(game, techId),
-    contextPlayerId: player.id,
-    game: game,
-  );
-  if (researchers.isEmpty) {
-    return const [];
-  }
-  return [
-    CtGap.m,
-    GestureDetector(
-      onLongPress: () => TechResearchersListDialog.show(
-        context,
-        game: game,
-        techId: techId,
-        contextPlayerId: player.id,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.techTree_researchedBy, style: theme.textTheme.labelLarge),
-          for (final gp in researchers)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                children: [
-                  GpNationColorPennant(
-                    color: gpMapColorForPlayer(game, gp.id),
-                    highlighted: gp.id == player.id,
-                  ),
-                  const SizedBox(width: CtSpacing.m),
-                  Expanded(
-                    child: Text(
-                      gp.displayName,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    ),
-  ];
 }

@@ -6,12 +6,12 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// Ratchet ceiling for hand-written Dart under `app/lib/core/services/**`.
-const int appCoreServicesFileSizeCeiling = 300;
+const int appCoreServicesFileSizeCeiling = 260;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
 /// PR-blocking structural check: files under `app/lib/core/services/**` must
-/// stay at or below 300 physical lines (Refs #4450 AC3).
+/// stay at or below 260 physical lines (Refs #4450 AC3, #4582).
 int runCheckAppCoreServicesFileSize(
   String repoRoot, {
   void Function(String line)? info,

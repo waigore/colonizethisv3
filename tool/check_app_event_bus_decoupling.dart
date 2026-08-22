@@ -173,6 +173,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // local-by-design rationale as `naval_mission_flow.dart`
   // (Refs #4213, #4413).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow_support.dart',
+  // Move Fleet local `showDialog` extracted from `naval_mission_flow.dart`
+  // (`showMoveFleetDialogForFleet` / DLG30001). Same local-by-design
+  // rationale as the parent flow (Refs #4213, #4343, #4582).
+  'app/lib/features/game/widgets/unit_orders/naval_mission_move_dialog.dart',
   // MAP20001 Tile teaching helper — read-only connectivity/port/caption
   // details opened from transport cluster tap or named Tile details action
   // within the province overlay (Refs #4369). Same local-by-design rationale

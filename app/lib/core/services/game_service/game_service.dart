@@ -6,6 +6,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
+import 'game_service_diplomacy_resume.dart';
 import 'game_service_map_cache.dart';
 import 'game_service_new_game_setup.dart';
 import 'game_service_turn_resume.dart';
@@ -17,7 +18,7 @@ export 'try_get_game_map_data.dart';
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
-class GameService {
+class GameService with GameServiceDiplomacyResume {
   /// Number of coarse progress steps reported by [createNewGameAsync]. SPEC/ui/game-initializing.md.
   static const int newGameSetupProgressStepCount = 5;
   GameService(
@@ -171,64 +172,6 @@ class GameService {
     topology: topology,
     tileMapByRegion: tileMapByRegion,
     onGameEvent: onGameEvent,
-  );
-
-  /// Resumes turn resolution after the user has submitted call to arms decisions.
-  TurnResolutionResult resumeCallToArmsDecisions(
-    Game game,
-    List<CallToArmsDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) => gameServiceResumeTurnFromDiplomacy(
-    this,
-    game,
-    orders,
-    onGameEvent: onGameEvent,
-    callToArmsDecisions: decisions,
-  );
-
-  /// Resumes after overture accept/reject; may complete or pending. SPEC/program/dialogue-system.md.
-  TurnResolutionResult resumeOvertureDecisions(
-    Game game,
-    List<OvertureOffer> pendingOvertures,
-    List<OvertureDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) => gameServiceResumeTurnFromDiplomacy(
-    this,
-    game,
-    orders,
-    onGameEvent: onGameEvent,
-    overtureDecisions: decisions,
-  );
-
-  /// Resumes turn resolution after FTP accept/reject decisions (Diplomacy phase).
-  TurnResolutionResult resumeFtpDecisions(
-    Game game,
-    List<FtpOffer> pendingFtpOffers,
-    List<FtpDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) => gameServiceResumeTurnFromDiplomacy(
-    this,
-    game,
-    orders,
-    onGameEvent: onGameEvent,
-    ftpDecisions: decisions,
-  );
-
-  /// Resumes after human intervention choices (GP declared war on Minor/Tribe).
-  TurnResolutionResult resumeInterventionDecisions(
-    Game game,
-    List<InterventionDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) => gameServiceResumeTurnFromDiplomacy(
-    this,
-    game,
-    orders,
-    onGameEvent: onGameEvent,
-    interventionDecisions: decisions,
   );
 
   /// Resolves one turn and returns the updated game; throws if resolution is pending overtures.
