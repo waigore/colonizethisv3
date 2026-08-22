@@ -6,7 +6,7 @@
 
 ## Responsibility
 
-Expose a **discriminated** pending state so `GameScreen` shows exactly one of: overture dialogue, intervention dialogue, or call-to-arms dialogue. Turn resolution may return only **one** pending kind at a time; resuming may chain to another kind — the provider is **replaced** wholesale on each result.
+Expose a **discriminated** pending state so `GameScreen` shows exactly one of: overture dialogue, intervention dialogue, call-to-arms dialogue, or Favored Trading Partner dialogue. Turn resolution may return only **one** pending kind at a time; resuming may chain to another kind — the provider is **replaced** wholesale on each result.
 
 ---
 
@@ -17,6 +17,7 @@ Sealed variants (conceptual):
 - **Overtures** — `List<OvertureOffer>`.
 - **Intervention** — `List<InterventionPrompt>` (logic types).
 - **Call to arms** — `List<CallToArmsPending>`.
+- **Favored Trading Partner** — `List<FtpOffer>`.
 
 `null` means no pending diplomacy gate.
 
@@ -24,7 +25,7 @@ Sealed variants (conceptual):
 
 ## API
 
-Notifier methods: `setOvertures`, `setIntervention`, `setCallToArms`, `clear`. Setting any variant **clears** the others implicitly (single state field).
+Notifier methods: `setOvertures`, `setIntervention`, `setCallToArms`, `setFtp`, `clear`. Setting any variant **clears** the others implicitly (single state field).
 
 ---
 

@@ -57,6 +57,7 @@ abstract final class UiScreenIds {
   static const String observeModeOverlay = 'OVL60001';
   static const String playerTurnEventFeed = 'OVL70001';
   static const String tribeFirstContactOverlay = 'OVL80001';
+  static const String ftpDialogueOverlay = 'OVL90001';
 
   // DLG — modal dialogs (non-route)
   static const String newGameLeaderSelectionDialog = 'DLG10001';

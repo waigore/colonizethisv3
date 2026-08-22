@@ -14,9 +14,9 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | Combat mode choice intel | [`combat-mode-choice-intel.md`](combat-mode-choice-intel.md) | `CMPT10001` (combat mode choice dialog). |
 | Tile radial catalog | [`tile-radial-catalog.md`](tile-radial-catalog.md) | `MAP30001` (tile context radial), `MAP30002` (more tile actions). |
 | `CtDarkScaffold` | [`ct-dark-scaffold.md`](ct-dark-scaffold.md) | `CtGameFeatureScreenShell` (dark-chrome path) and any dark-theme screen. |
-| `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention). |
+| `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention), `OVL90001` (Favored Trading Partner). |
 | `TitledDialogueChrome` / `buildTitledDialogueChrome` | [`titled-dialogue-chrome.md`](titled-dialogue-chrome.md) | `OVL10001` (game-start intro), `OVL80001` (tribe first contact). |
-| `DialogueTristateDecisionRow` | [`dialogue-tristate-decision-row.md`](dialogue-tristate-decision-row.md) | `OVL30001` (overture), `OVL40001` (call-to-arms). |
+| `DialogueTristateDecisionRow` | [`dialogue-tristate-decision-row.md`](dialogue-tristate-decision-row.md) | `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL90001` (Favored Trading Partner). |
 | `CtGameFeatureScreenShell` | [`ct-game-feature-screen-shell.md`](ct-game-feature-screen-shell.md) | `GAME20001` (production), `GAME30001` (diplomacy), `GAME40001` (technology), `GAME60001` (trade). |
 | `CtPanelWithTopBar` | [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md) | `CtScreenShell`, `UnitsPanelShell`. |
 | `CtTransferList` | [`ct-transfer-list.md`](ct-transfer-list.md) | `DLG40001` (transfer to home fleet), Split Fleet dialog, Split Army dialog. |

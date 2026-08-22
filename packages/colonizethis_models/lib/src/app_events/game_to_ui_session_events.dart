@@ -37,6 +37,14 @@ class CallToArmsRequiredEvent extends GameToUIEvent {
   final List<Object> pending;
 }
 
+/// Emitted when Favored Trading Partner offers need a human Accept/Reject.
+class FtpRequiredEvent extends GameToUIEvent {
+  const FtpRequiredEvent({required this.offers});
+
+  /// [FtpOffer] from colonizethis_diplomacy (kept as Object to avoid package cycle).
+  final List<Object> offers;
+}
+
 /// Emitted when save/load completes.
 class SaveGameCompleteEvent extends GameToUIEvent {
   const SaveGameCompleteEvent({required this.gameId});
