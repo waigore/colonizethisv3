@@ -10,6 +10,9 @@ const _diplomaticValidatorsDir =
 const _diplomaticSubValidatorRelative =
     'packages/colonizethis_orders/lib/src/orders/validators/diplomatic/diplomatic_sub_validator.dart';
 
+const _diplomaticSubValidatorRejectsRelative =
+    'packages/colonizethis_orders/lib/src/orders/validators/diplomatic/diplomatic_sub_validator_rejects.dart';
+
 /// Ensures per-type diplomatic sub-validators reuse shared helpers from
 /// [diplomatic_sub_validator.dart] instead of inlining relation/amount/stage
 /// checks (Refs #3500).
@@ -31,7 +34,10 @@ int runCheckOrdersDedupDiplomaticHelpers(
   for (final entity in diplomaticDir.listSync(recursive: false)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
     final relativePath = p.relative(entity.path, from: root);
-    if (relativePath == _diplomaticSubValidatorRelative) continue;
+    if (relativePath == _diplomaticSubValidatorRelative ||
+        relativePath == _diplomaticSubValidatorRejectsRelative) {
+      continue;
+    }
     final source = entity.readAsStringSync();
     violations.addAll(
       findInlinedDiplomaticRelationGuardViolations(
