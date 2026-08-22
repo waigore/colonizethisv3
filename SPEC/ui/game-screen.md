@@ -91,11 +91,11 @@ The screen never paints chrome around the map / Flame canvas itself; layout for 
 | Intro overlay | `game != null && !introShownIds.contains(game.id)` | The whole screen is wrapped in `GameStartIntroOverlay`; dismissing marks the id shown via `gameIdsWithIntroShownProvider.notifier.markShown`. |
 | Pending overtures | `pendingDiplomacy is PendingDiplomacyOvertures && offers.isNotEmpty` | Wraps the content in `OvertureDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeOvertureDecisions` and applies the result via `applyTurnResolutionResult(ref, result)`. |
 | Pending interventions | `pendingDiplomacy is PendingDiplomacyIntervention && prompts.isNotEmpty` | Wraps the content in `InterventionDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeInterventionDecisions`. |
-| Pending call-to-arms | `pendingDiplomacy is PendingDiplomacyCallToArms && pending.isNotEmpty` | Wraps the content in `CallToArmsDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeCallToArmsDecisions`. |
+| Pending Favored Trading Partner | `pendingDiplomacy is PendingDiplomacyFtp && offers.isNotEmpty` | Wraps the content in `FtpDialogueOverlay`; `onDecisions` invokes `gameServiceProvider.resumeFtpDecisions`. |
 | Turn resolution in progress | `turnResolutionBlockingProvider == true` | Next turn button is disabled (`onPressed == null`); the pause button is disabled (`onPressed == null`); per [`app-ui-wiring.md`](../program/app-ui-wiring.md) the Processing Turn dialog is shown by the next-turn handler, not this widget. |
 | Exit confirm | Android back / `PopScope.onPopInvoked` | Local `showDialog` (`useRootNavigator: true`) opens the Exit-to-Main-Menu `CtDialogShell`; on confirm the screen emits `NavigateToShellEvent`. |
 
-The pending-diplomacy variants are mutually exclusive — exactly one wrapper is used per build pass, matching the `switch` order: overtures, interventions, call-to-arms.
+The pending-diplomacy variants are mutually exclusive — exactly one wrapper is used per build pass, matching the `switch` order: overtures, interventions, call-to-arms, Favored Trading Partner.
 
 ---
 
@@ -128,7 +128,7 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
 - `CtScreenShell` (`app/lib/widgets/ct_screen_shell.dart`) — outer container. On the **map shell** path it is constructed with `showTitleBar: false` so no `game_screenTitle` ("Game") band paints above `GameTopBar` (mockup `.topbar` only; issue #2861 M2). On the Flame-canvas fallback path it retains the localized `game_screenTitle` title band.
 - `GameMapArea` ([`empire-overview.md`](empire-overview.md)) or `GameWidget(ColonizeThisGame())` — map vs Flame canvas branch.
 - `CtNinePatchButton` (Next turn) and `IconButton` (`Icons.menu`, pause).
-- `VictoryOverlay`, `GameStartIntroOverlay`, `OvertureDialogueOverlay`, `InterventionDialogueOverlay`, `CallToArmsDialogueOverlay`, `GameToUIBusListener`.
+- `VictoryOverlay`, `GameStartIntroOverlay`, `OvertureDialogueOverlay`, `InterventionDialogueOverlay`, `CallToArmsDialogueOverlay`, `FtpDialogueOverlay`, `GameToUIBusListener`.
 - Local-by-design dialogs (per [`app-ui-wiring.md`](../program/app-ui-wiring.md)): `NextTurnConfirmationDialog`, `TurnResolutionProcessingDialog`, exit-to-main-menu confirm `CtDialogShell`.
 - Localized strings via `appL10n(context).game_*`.
 
@@ -191,6 +191,10 @@ Cross-screen navigation uses bus events only (no `Navigator.pushNamed` for cross
 - Given `pendingDiplomacyProvider == PendingDiplomacyCallToArms(pending: [<non-empty>])` and overtures and interventions are empty,
   When `GameScreen.build` runs,
   Then the visible content is wrapped in exactly one `CallToArmsDialogueOverlay`.
+
+- Given `pendingDiplomacyProvider == PendingDiplomacyFtp(offers: [<non-empty>])` and other pending kinds are empty,
+  When `GameScreen.build` runs,
+  Then the visible content is wrapped in exactly one `FtpDialogueOverlay`.
 
 - Given `pendingDiplomacyProvider != null` but its only collection is empty (e.g. `PendingDiplomacyOvertures(offers: [])`),
   When `GameScreen.build` runs,

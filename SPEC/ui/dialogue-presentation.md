@@ -47,7 +47,7 @@ The app presents **PendingDialoguePoint**s from the dialogue system. It uses **J
 
 - **Dialogue overlay / modal component:** Owns the DialogueRunner and a view that displays the current line and options. Receives PendingDialoguePoint(s); starts the appropriate node; on option selected, emits outcome to the game/orchestration layer which calls the resume API. Built from CtDialogShell and catalog components; no Material dialog widgets.
 - **Placement:** Managed by the game screen or a top-level orchestrator that decides modal vs overlay based on presentationMode and blocking. When turn resolution returns TurnResolutionPendingOvertures, the orchestrator converts to PendingDialoguePoint(s) and shows the dialogue (modal) until the user submits OvertureDecisions.
-- **Pending diplomacy state:** The app uses a **single** Riverpod notifier for at most one blocking gate (overtures, intervention, or call to arms); see [pending-diplomacy-state.md](pending-diplomacy-state.md). `GameScreen` shows one overlay according to that state.
+- **Pending diplomacy state:** The app uses a **single** Riverpod notifier for at most one blocking gate (overtures, intervention, call to arms, or Favored Trading Partner); see [pending-diplomacy-state.md](pending-diplomacy-state.md). `GameScreen` shows one overlay according to that state.
 
 ---
 
