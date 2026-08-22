@@ -25,11 +25,7 @@ void registerDiplomacyVictoryOverturesTests() {
               topology: fixture.topology,
               orders: const Orders(),
             );
-            expect(
-              next.victory,
-              isNotNull,
-              reason: 'count=${scenario.count}',
-            );
+            expect(next.victory, isNotNull, reason: 'count=${scenario.count}');
             expect(next.victory!.winnerPlayerId, 'p1');
             expect(next.victory!.type, VictoryType.military);
           }
@@ -64,9 +60,7 @@ void registerDiplomacyVictoryOverturesTests() {
         'endOfTurn no victory when only Minor/Tribe has ≥31 OW provinces',
         () {
           final fixture = turnTestOwProvinceStacksFixture(
-            stacks: [
-              (ownerId: 'minor1', count: 31, localIdPrefix: 'P'),
-            ],
+            stacks: [(ownerId: 'minor1', count: 31, localIdPrefix: 'P')],
             turnNumber: 2,
             players: const [
               Player(id: 'p1', displayName: 'GP1', isHuman: true),
@@ -106,20 +100,9 @@ void registerDiplomacyVictoryOverturesTests() {
         'endOfTurn phase leaves game unchanged when victory already set',
         () {
           const ow = kRegionOldWorld;
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 10,
-              ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                ],
-              ),
-              newWorld: const RegionData(),
-            ),
+          final game = turnTestOwGame(
+            turnNumber: 10,
+            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
             players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
             victory: VictoryState(
               winnerPlayerId: 'p1',
