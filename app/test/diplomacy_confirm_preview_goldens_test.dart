@@ -212,4 +212,112 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'golden: Boycott confirm full embargo copy with two colonies (Refs #4584)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('diplomacy_confirm_boycott_golden');
+      final game = _twoColonyPreviewGame();
+      final message = buildDiplomacyConfirmPreviewMessage(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.boycott,
+          targetFactionId: _targetGp,
+        ),
+        game: game,
+        humanPlayerId: _humanId,
+        targetDisplayName: 'Spain',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(360, 420),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(title: 'Boycott', message: message),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('No treasury charge'), findsOneWidget);
+      expect(find.textContaining('will not fill'), findsOneWidget);
+      expect(find.textContaining('cannot purchase land'), findsOneWidget);
+      expect(
+        find.textContaining('cancelled when this resolves'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Aztec'), findsWidgets);
+      expect(find.textContaining('Inca'), findsWidgets);
+      expect(find.textContaining('When:'), findsNothing);
+      expect(find.text('65'), findsNothing);
+      expect(find.textContaining('tribe_aztec'), findsNothing);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_confirm_boycott.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: Revoke Boycott confirm restores court work copy (Refs #4584)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_confirm_revoke_boycott_golden',
+      );
+      final game = _twoColonyPreviewGame();
+      final message = buildDiplomacyConfirmPreviewMessage(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.revokeBoycott,
+          targetFactionId: _targetGp,
+        ),
+        game: game,
+        humanPlayerId: _humanId,
+        targetDisplayName: 'Spain',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(360, 360),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(title: 'Revoke Boycott', message: message),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('No treasury charge'), findsOneWidget);
+      expect(find.textContaining('Ends the embargo'), findsOneWidget);
+      expect(find.textContaining('purchase land'), findsOneWidget);
+      expect(find.textContaining('When:'), findsNothing);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_confirm_revoke_boycott.png'),
+      );
+    },
+  );
 }
+
+Game _twoColonyPreviewGame() => diplomacyGame(
+  players: const [
+    Player(
+      id: _humanId,
+      displayName: 'England',
+      isHuman: true,
+      treasury: 50_000,
+    ),
+    Player(id: _targetGp, displayName: 'Spain', isHuman: false),
+  ],
+  tribes: const [
+    Tribe(id: 'tribe_aztec', displayName: 'Aztec'),
+    Tribe(id: 'tribe_inca', displayName: 'Inca'),
+  ],
+  colonyStates: const [
+    ColonyState(tribeId: 'tribe_aztec', colonyOfGpId: _humanId, sinceTurn: 1),
+    ColonyState(tribeId: 'tribe_inca', colonyOfGpId: _humanId, sinceTurn: 1),
+  ],
+);
