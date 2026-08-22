@@ -1,54 +1,9 @@
 import 'dart:collection';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+import 'order_suggestion_pass_context.dart';
+import 'work_target_selection_population.dart';
 
-import 'order_work_constants.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
-import 'incremental_candidate_validator.dart';
-import 'order_resolution_context.dart';
-import 'order_suggestion_context.dart';
-import 'work_tile_candidacy/work_tile_candidacy.dart';
-
-/// Inputs for populating per-player work-target tile selection caches.
-///
-/// SPEC/program/order-suggestions.md — cache contract; Refs #2277 (worker reuse).
-class WorkTargetSelectionSnapshot {
-  const WorkTargetSelectionSnapshot({
-    required this.game,
-    required this.playerId,
-    required this.playerView,
-    required this.topology,
-    required this.currentOrders,
-    required this.tileMapByRegion,
-    this.sharedCandidateValidator,
-    this.playerOwnedProvinceIds,
-  });
-
-  final Game game;
-  final String playerId;
-  final PlayerView playerView;
-  final MapTopology topology;
-  final Orders currentOrders;
-  final Map<String, TileMapResult>? tileMapByRegion;
-
-  /// Prefixed province ids owned by [playerId]. When set on a snapshot passed to
-  /// [PerPlayerWorkTargetSelectionCache.refresh], population reuses this set
-  /// instead of rescanning [allProvinces] per unit × work target (Refs #2394).
-  final Set<String>? playerOwnedProvinceIds;
-
-  /// When non-null on the **output** snapshot passed to population strategies,
-  /// all default population paths reuse this instance instead of rebuilding
-  /// [IncrementalCandidateValidator.forPlayer] per work target (Refs #2394).
-  ///
-  /// Callers may also set this on the **input** snapshot passed to [refresh];
-  /// when set, [refresh] reuses that validator instead of constructing one
-  /// (must match the same `(game, topology, playerId, currentOrders, …)` tuple).
-  final IncrementalCandidateValidator? sharedCandidateValidator;
-}
-
-typedef WorkTargetSelectionPopulationStrategy =
-    Set<String> Function(WorkTargetSelectionSnapshot snapshot);
+export 'work_target_selection_snapshot.dart';
 
 /// Per-player cache for deterministic work-target tile selection (UI + workers).
 ///
@@ -58,7 +13,7 @@ class PerPlayerWorkTargetSelectionCache {
   PerPlayerWorkTargetSelectionCache({
     Map<String, WorkTargetSelectionPopulationStrategy>? strategies,
   }) : _strategies = strategies == null
-           ? _defaultStrategies
+           ? workTargetSelectionDefaultStrategies
            : Map<String, WorkTargetSelectionPopulationStrategy>.from(
                strategies,
              );
@@ -83,35 +38,11 @@ class PerPlayerWorkTargetSelectionCache {
     return out;
   }
 
-  /// Reuses [WorkTargetSelectionSnapshot.sharedCandidateValidator] when set;
-  /// otherwise builds one and pays [DiplomacyFactionMembership.from] only on
-  /// that path (Refs #2394 — avoid redundant membership scans per strategy).
-  static IncrementalCandidateValidator _sharedOrBuildValidator(
-    WorkTargetSelectionSnapshot s,
-  ) {
-    final existing = s.sharedCandidateValidator;
-    if (existing != null) {
-      return existing;
-    }
-    return buildIncrementalCandidateValidator(
-      game: s.game,
-      topology: s.topology,
-      playerId: s.playerId,
-      baseOrders: s.currentOrders,
-      tileMapByRegion: s.tileMapByRegion,
-      resolution: orderResolutionContextFromView(s.playerView, s.game),
-      factionMembership: DiplomacyFactionMembership.from(s.game),
-    );
-  }
-
   void refresh(WorkTargetSelectionSnapshot snapshot) {
-    final sharedValidator = _sharedOrBuildValidator(snapshot);
+    final sharedValidator = sharedOrBuildWorkTargetValidator(snapshot);
     final playerOwnedProvinceIds =
         snapshot.playerOwnedProvinceIds ??
-        <String>{
-          for (final e in snapshot.playerView.provincesById.entries)
-            if (e.value.ownerId == snapshot.playerId) e.key,
-        };
+        ownedProvinceIdsFromView(snapshot.playerView, snapshot.playerId);
     final snapshotForPopulation = WorkTargetSelectionSnapshot(
       game: snapshot.game,
       playerId: snapshot.playerId,
@@ -134,106 +65,4 @@ class PerPlayerWorkTargetSelectionCache {
   void clear() {
     _cacheByPlayerAndTarget.clear();
   }
-
-  static final Map<String, WorkTargetSelectionPopulationStrategy>
-  _defaultStrategies = {
-    for (final target in _mergedValidWorkTargets)
-      target: (WorkTargetSelectionSnapshot s) =>
-          _populateMergedValidForTarget(s, target),
-    for (final target in _idleNoPendingWorkTargets)
-      target: (WorkTargetSelectionSnapshot s) =>
-          _populateIdleNoPendingTargets(s, target),
-  };
-
-  static const _mergedValidWorkTargets = <String>{
-    kWorkTargetExplore,
-    kWorkTargetCounterSpy,
-    kWorkTargetPurchaseLand,
-  };
-
-  static const _idleNoPendingWorkTargets = <String>{
-    kWorkTargetProspect,
-    kWorkTargetBuildImprovement,
-    kWorkTargetUpgradeTown,
-    kWorkTargetBuildRoad,
-    kWorkTargetBuildPort,
-    kWorkTargetBuildFort,
-    kWorkTargetBuildRail,
-  };
-
-  /// Per-unit union of `getValidWorkOrderTileKeysWithVisibility` (same as
-  /// `explore` cache population).
-  static Set<String> _populateMergedValidForTarget(
-    WorkTargetSelectionSnapshot s,
-    String workTarget,
-  ) {
-    final sharedValidator = _sharedOrBuildValidator(s);
-    final merged = <String>{};
-    for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
-      final supportsTarget =
-          workOrderTargetsByUnitType[unit.type]?.contains(workTarget) ?? false;
-      if (!supportsTarget) {
-        continue;
-      }
-      final valid = getValidWorkOrderTileKeysWithVisibility(
-        game: s.game,
-        topology: s.topology,
-        view: s.playerView,
-        unitId: unit.id,
-        workTarget: workTarget,
-        currentOrders: s.currentOrders,
-        tileMapByRegion: s.tileMapByRegion,
-        sharedCandidateValidator: sharedValidator,
-        playerOwnedProvinceIds: s.playerOwnedProvinceIds,
-      );
-      merged.addAll(valid);
-    }
-    return merged;
-  }
-
-  static Set<String> _populateIdleNoPendingTargets(
-    WorkTargetSelectionSnapshot s,
-    String workTarget,
-  ) {
-    final sharedValidator = _sharedOrBuildValidator(s);
-    final pendingWorkUnitIds = <String>{
-      for (final w
-          in s.currentOrders.workOrdersByPlayerId[s.playerId] ??
-              const <WorkOrder>[])
-        w.unitId,
-    };
-    final merged = <String>{};
-    for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
-      final supportsTarget =
-          workOrderTargetsByUnitType[unit.type]?.contains(workTarget) ?? false;
-      if (!supportsTarget) {
-        continue;
-      }
-      final isIdleNow = unit.status == UnitStatus.idle;
-      if (!isIdleNow || unit.currentWork != null) {
-        continue;
-      }
-      if (pendingWorkUnitIds.contains(unit.id)) {
-        continue;
-      }
-      final valid = getValidWorkOrderTileKeysWithVisibility(
-        game: s.game,
-        topology: s.topology,
-        view: s.playerView,
-        unitId: unit.id,
-        workTarget: workTarget,
-        currentOrders: s.currentOrders,
-        tileMapByRegion: s.tileMapByRegion,
-        sharedCandidateValidator: sharedValidator,
-        playerOwnedProvinceIds: s.playerOwnedProvinceIds,
-      );
-      merged.addAll(valid);
-    }
-    return merged;
-  }
-
-  static Iterable<Unit> _humanCivilianUnits(Game game, String playerId) =>
-      game.worldState.allUnitsById.values.where(
-        (unit) => unit.ownerId == playerId,
-      );
 }
