@@ -1,9 +1,10 @@
 /// First-order diplomacy confirmation copy for player commit dialogs.
-/// SPEC/ui/diplomacy-panel.md § Confirmation preview; Refs #4181.
+/// SPEC/ui/diplomacy-panel.md § Confirmation preview; Refs #4181, #4584.
 library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'diplomacy_boycott_confirm_preview.dart';
 import 'diplomacy_declare_war_third_party_preview.dart';
 import 'diplomacy_relation_constants.dart';
 import 'diplomacy_relation_lookup.dart';
@@ -44,9 +45,17 @@ List<String> buildDiplomacyConfirmPreviewLines({
     case DiplomaticOrderType.establishFtp:
       return _establishFtp(targetDisplayName);
     case DiplomaticOrderType.boycott:
-      return _boycott(targetDisplayName);
+      return boycottConfirmPreviewLines(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        targetDisplayName: targetDisplayName,
+      );
     case DiplomaticOrderType.revokeBoycott:
-      return _revokeBoycott(targetDisplayName);
+      return revokeBoycottConfirmPreviewLines(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        targetDisplayName: targetDisplayName,
+      );
     case DiplomaticOrderType.grantAid:
       return _grantAid(
         targetDisplayName,
@@ -96,16 +105,6 @@ List<String> _breakAlliance(String target) => [
 
 List<String> _establishFtp(String target) =>
     favoredTradingPartnerConfirmLines(target);
-
-List<String> _boycott(String target) => [
-  'Cost: No treasury charge.',
-  'Effect: Blocks trade between $target and your colonies while active.',
-];
-
-List<String> _revokeBoycott(String target) => [
-  'Cost: No treasury charge.',
-  'Effect: Ends your trade embargo against $target through your colonies.',
-];
 
 List<String> _grantAid(String target, int amount) => [
   'Cost: £$amount from your treasury when the grant resolves.',
