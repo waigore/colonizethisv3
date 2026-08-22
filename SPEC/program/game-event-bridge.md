@@ -42,6 +42,7 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 | `SpyCaughtEvent` | `AppSpyCaughtEvent` | player turn feed |
 | `SpyDefectedEvent` | `AppSpyDefectedEvent` | player turn feed |
 | (pending overtures; not a `GameEvent`) | `OvertureRequiredEvent` from `GameService` | overture dialog |
+| (pending FTP; not a `GameEvent`) | `FtpRequiredEvent` from `GameService` | Favored Trading Partner overlay |
 
 `App*` field shapes mirror the logic events; source of truth: `packages/colonizethis_models/lib/src/app_events.dart`.
 
@@ -54,6 +55,8 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 ## Overture flow
 
 When `resolveTurnForGame` returns `TurnResolutionPendingOvertures`, `GameService` emits `OvertureRequiredEvent` on `eventBus` **before** returning, so listeners see it synchronously with the pending result.
+
+When `resolveTurnForGame` returns `TurnResolutionPendingFtp`, `GameService` emits `FtpRequiredEvent` on `eventBus` **before** returning.
 
 ## Player turn event feed integration (v1)
 

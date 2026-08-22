@@ -545,6 +545,19 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String get game_ftp_title => 'Favored Trading Partner';
+
+  @override
+  String get game_ftp_intro =>
+      'A rival court offers Favored Trading Partner. Accept or reject each offer. This prefers fills at the same rank; it does not change prices and does not beat First right of refusal.';
+
+  @override
+  String get game_ftp_accept => 'Accept';
+
+  @override
+  String get game_ftp_reject => 'Reject';
+
+  @override
   String game_intervention_loadError(String error) {
     return 'Could not load intervention dialogue: $error';
   }

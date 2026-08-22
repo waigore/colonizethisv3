@@ -298,6 +298,48 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
   ),
 ];
 
+/// Favored Trading Partner Dialogue Overlay stories. SPEC/ui/favored-trading-partner-dialogue-overlay.md.
+List<WidgetbookNode> get ftpDialogueOverlayDirectories => [
+  WidgetbookFolder(
+    name: 'Favored Trading Partner Dialogue Overlay',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — one pending offer',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: FtpDialogueOverlay(
+            game: _callToArmsStoryGame(),
+            pending: const [
+              FtpOffer(proposerGpId: 'gp_portugal', targetGpId: 'gp_player'),
+            ],
+            onDecisions: (_) {},
+            child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Two pending offers',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: FtpDialogueOverlay(
+            game: _callToArmsStoryGame(),
+            pending: const [
+              FtpOffer(proposerGpId: 'gp_portugal', targetGpId: 'gp_player'),
+              FtpOffer(proposerGpId: 'gp_spain', targetGpId: 'gp_player'),
+            ],
+            onDecisions: (_) {},
+            child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
 Widget _moveDialogStoryFrame({required Widget Function(BuildContext) open}) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,

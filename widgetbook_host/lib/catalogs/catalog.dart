@@ -116,6 +116,7 @@ import 'package:colonizethis_app/features/game/turn_resolution/staged_decree_rev
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show CivilianMissingWorkOrderEntry, navalMissionAvailabilityForFleet;
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/ftp_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_choice_buttons.dart';
@@ -381,6 +382,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameStartIntroOverlayDirectories,
   ...overtureDialogueOverlayDirectories,
   ...callToArmsDialogueOverlayDirectories,
+  ...ftpDialogueOverlayDirectories,
   ...turnNewsDialogDirectories,
   ...victoryUiDirectories,
   ...playersBarDirectories,

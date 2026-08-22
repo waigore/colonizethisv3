@@ -13,6 +13,7 @@ import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/ftp_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
@@ -187,6 +188,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'CallToArmsDialogueOverlay': (
     actual: CallToArmsDialogueOverlay.screenId,
     expected: UiScreenIds.callToArmsDialogueOverlay,
+  ),
+  'FtpDialogueOverlay': (
+    actual: FtpDialogueOverlay.screenId,
+    expected: UiScreenIds.ftpDialogueOverlay,
   ),
   'DebugLogViewerScreen': (
     actual: DebugLogViewerScreen.screenId,

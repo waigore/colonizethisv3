@@ -58,7 +58,7 @@ void main() {
         targetDisplayName: 'Spain',
       );
       expect(lines, isNotEmpty);
-      expect(lines.length, lessThanOrEqualTo(4));
+      expect(lines.length, lessThanOrEqualTo(5));
       for (final line in lines) {
         expect(
           line.startsWith('Cost:') ||

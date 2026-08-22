@@ -75,7 +75,7 @@ void main() {
             targetFactionId: 'gp2',
           ),
         ),
-        'Establish FTP',
+        'Establish Favored partner',
       );
     });
 
