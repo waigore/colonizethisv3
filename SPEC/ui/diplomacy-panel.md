@@ -372,6 +372,8 @@ In addition, a **Diplomatic Standing Chips** folder isolates the `DiplomacyStand
 
 A **Declare War confirm — named formal ally** use case renders `CtConfirmDialog` with `buildDiplomacyConfirmPreviewMessage` for a Spain target whose persisted formal ally is France, proving the third-party Effect line (Refs #4409).
 
+**Boycott confirm — two named colonies** and **Revoke Boycott confirm — two named colonies** render the same `CtConfirmDialog` host with two human colony display names (Aztec and Inca) so the full embargo Effect lines are reviewable (Refs #4584).
+
 ---
 
 ## Acceptance criteria
@@ -495,6 +497,7 @@ A **Declare War confirm — named formal ally** use case renders `CtConfirmDialo
 - **Boycott confirm first-order and names (Refs #4584):** Given that confirm, when copy is inspected, then **Cost** still says there is no treasury charge, hidden relation scores and −50/−10 are absent, and colony names are display names (no raw tribe ids).
 - **Revoke Boycott confirm restores court work copy (Refs #4584):** Given `GAME30001` **Revoke Boycott** confirm for an active pair boycott, when the dialog renders, then **Effect** states that the embargo ends so that court may again trade with, purchase land in, and grant aid or subsidies toward the human’s colony tribes.
 - **Boycott confirm covers the current colony set (Refs #4584):** Given the human holds two colony Tribes, when **Boycott** confirm renders, then the copy names both (or `your colony tribes` when more than three), never a single tribe pinned at order time.
+- **Boycott confirm Widgetbook and goldens (Refs #4584):** Given the Diplomacy Panel Widgetbook use cases `Boycott confirm — two named colonies` and `Revoke Boycott confirm — two named colonies` are mounted under `AppThemes.editorialMonocle`, when the host goldens in `app/test/diplomacy_confirm_preview_goldens_test.dart` capture each `CtConfirmDialog`, then the captured `RepaintBoundary` matches `app/test/goldens/diplomacy_confirm_boycott.png` and `app/test/goldens/diplomacy_confirm_revoke_boycott.png` via `matchesGoldenFile`, Cost still says there is no treasury charge, and Boycott Effect names world-market fill block, blocked purchase land / grant aid / set subsidy, and subsidy cancel.
 - **S14 widget: Boycott confirm emits order (Refs #3753):** Given a Great Power row at peace, the human Great Power holds a colony, and no active boycott exists for the `(human, target)` pair, when the user taps **Boycott** and confirms, then the UI layer emits `AppendDiplomaticOrderRequestedEvent` with `order.type == boycott` and `order.targetFactionId == target`. Pin: `app/test/diplomacy_panel_orders_test.dart` — `colony holder shows Boycott enabled on GP row`.
 
 - **S14 widget: Revoke Boycott confirm emits order (Refs #3753):** Given a Great Power row and an active `BoycottState` with `gpId == human` and `targetGpId == target`, when the user taps **Revoke Boycott** and confirms, then the UI layer emits `AppendDiplomaticOrderRequestedEvent` with `order.type == revokeBoycott`. Pin: `app/test/diplomacy_panel_orders_test.dart` — `active boycott shows Revoke Boycott enabled on GP row`.
