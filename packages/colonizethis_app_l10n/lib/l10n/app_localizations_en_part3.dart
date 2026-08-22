@@ -989,18 +989,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String provinceOverlay_extractionQuantity(int quantity, String name) {
     return '$quantity $name';
   }
-
-  @override
-  String provinceOverlay_extractionQuantityPartial(
-    int effective,
-    int full,
-    String name,
-  ) {
-    return '$effective ($full) $name';
-  }
-
-  @override
-  String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
-    return ' (incl. +$bonus capital grain bonus)';
-  }
 }
