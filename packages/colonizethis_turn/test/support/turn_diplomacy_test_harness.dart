@@ -17,6 +17,12 @@ Game turnTestOwGame({
   List<Player>? players,
   List<DiplomacyRelation>? diplomacyRelations,
   List<Unit> units = const [],
+  TileMapState? tileState,
+  TurnTimeMapping? turnTimeMapping,
+  VictoryState? victory,
+  List<MinorNation> minorNations = const [],
+  List<OvertureState> overtureStates = const [],
+  int capitalTileGrainBonusPerTurn = 5,
 }) {
   return Game(
     id: id,
@@ -25,6 +31,7 @@ Game turnTestOwGame({
       oldWorld: RegionData(provinces: provinces, units: units),
       newWorld: const RegionData(),
       fleets: fleets,
+      tileState: tileState ?? const TileMapState(),
     ),
     players:
         players ??
@@ -33,16 +40,25 @@ Game turnTestOwGame({
           Player(id: 'p2', displayName: 'B', isHuman: true),
         ],
     diplomacyRelations: diplomacyRelations ?? const [],
+    turnTimeMapping: turnTimeMapping,
+    victory: victory,
+    minorNations: minorNations,
+    overtureStates: overtureStates,
+    capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
   );
 }
 
 /// OW+NW cross-region [Game] with one owned province per region.
 Game turnTestOwNwCrossRegionGame({
   String ownerId = 'p1',
+  String owProvinceLocalId = 'P1',
+  String nwProvinceLocalId = 'P2',
   List<Unit> owUnits = const [],
   List<Unit> nwUnits = const [],
   Map<String, Map<String, String>>? playerVisibilityByTile,
   Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+  TileMapState? tileState,
+  List<Player>? players,
 }) {
   const ow = kRegionOldWorld;
   const nw = kRegionNewWorld;
@@ -52,20 +68,29 @@ Game turnTestOwNwCrossRegionGame({
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
       oldWorld: RegionData(
         provinces: [
-          Province(id: '$ow|P1', regionId: ow, ownerId: ownerId),
+          Province(
+            id: '$ow|$owProvinceLocalId',
+            regionId: ow,
+            ownerId: ownerId,
+          ),
         ],
         units: owUnits,
       ),
       newWorld: RegionData(
         provinces: [
-          Province(id: '$nw|P2', regionId: nw, ownerId: ownerId),
+          Province(
+            id: '$nw|$nwProvinceLocalId',
+            regionId: nw,
+            ownerId: ownerId,
+          ),
         ],
         units: nwUnits,
       ),
       playerVisibilityByTile: playerVisibilityByTile ?? const {},
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
+      tileState: tileState ?? const TileMapState(),
     ),
-    players: [Player(id: ownerId, displayName: 'A', isHuman: true)],
+    players: players ?? [Player(id: ownerId, displayName: 'A', isHuman: true)],
   );
 }
 
@@ -92,9 +117,7 @@ Game turnTestSpyFogOwNwSameLocalIdGame({
         units: owUnits,
       ),
       newWorld: RegionData(
-        provinces: [
-          Province(id: '$nw|P1', regionId: nw, ownerId: 'p2'),
-        ],
+        provinces: [Province(id: '$nw|P1', regionId: nw, ownerId: 'p2')],
       ),
       playerVisibilityByTile: {
         'p1': {
