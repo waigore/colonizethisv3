@@ -14,9 +14,7 @@
 /// at the 320 dp minimum viewport (SPEC/ui/mobile-adaptation.md §7).
 library;
 
-
 import 'package:flutter/material.dart';
-
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -24,6 +22,8 @@ import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_row_controls.dart';
 import 'trade_screen_market_row_header.dart';
 import 'trade_screen_market_tab.dart';
+
+export 'trade_screen_market_row_compact.dart';
 
 class MarketCommodityRow extends StatelessWidget {
   const MarketCommodityRow({
@@ -155,131 +155,6 @@ class MarketCommodityRow extends StatelessWidget {
           onDirectionChanged: onDirectionChanged,
           onIncrement: onIncrement,
           onDecrement: onDecrement,
-        ),
-      ],
-    );
-  }
-}
-
-/// Wide-layout (≥ 600 dp) Market row: two-line compact structure with the
-/// volume readout and interactive controls sharing line 2 (Refs #4227).
-class MarketCommodityRowCompact extends StatelessWidget {
-  const MarketCommodityRowCompact({
-    super.key,
-    required this.commodityId,
-    required this.commodityDisplayName,
-    required this.priceText,
-    required this.volumeText,
-    required this.stagedOrder,
-    required this.sellableHeadroom,
-    required this.offerCap,
-    required this.canSelectBid,
-    required this.nameStyle,
-    required this.priceStyle,
-    required this.volumeStyle,
-    required this.quantityStyle,
-    required this.onDirectionChanged,
-    required this.onIncrement,
-    required this.onDecrement,
-    this.priceDeltaCoins,
-    this.priceDeltaTooltip = '',
-    this.showFirstRightChip = false,
-    this.firstRightChipLabel = '',
-    this.firstRightTooltip = '',
-    this.counselStar,
-  });
-
-  final CommodityId commodityId;
-  final String commodityDisplayName;
-  final String priceText;
-  final String volumeText;
-  final int? priceDeltaCoins;
-  final String priceDeltaTooltip;
-  final TradeOrder? stagedOrder;
-  final int sellableHeadroom;
-  final int offerCap;
-  final bool canSelectBid;
-  final TextStyle nameStyle;
-  final TextStyle priceStyle;
-  final TextStyle volumeStyle;
-  final TextStyle quantityStyle;
-  final ValueChanged<TradeOrderType?> onDirectionChanged;
-  final VoidCallback onIncrement;
-  final VoidCallback onDecrement;
-  final bool showFirstRightChip;
-  final String firstRightChipLabel;
-  final String firstRightTooltip;
-  final Widget? counselStar;
-
-  bool get _hasStagedOrder => stagedOrder != null;
-
-  String get _quantityText => stagedOrder == null
-      ? TradeScreenMarketKeys.marketRowQuantityIdleGlyph
-      : stagedOrder!.quantity.toString();
-
-  bool get _canDecrement =>
-      stagedOrder != null &&
-      stagedOrder!.quantity > TradeScreenMarketKeys.marketRowQuantityMin;
-
-  bool get _canIncrement {
-    if (!_hasStagedOrder) return false;
-    if (stagedOrder!.type == TradeOrderType.offer) {
-      return stagedOrder!.quantity < offerCap;
-    }
-    return true;
-  }
-
-  bool get _canSelectOffer {
-    if (stagedOrder?.type == TradeOrderType.offer) return true;
-    return offerCap > 0;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        MarketCommodityRowHeader(
-          commodityId: commodityId,
-          commodityDisplayName: commodityDisplayName,
-          priceText: priceText,
-          sellableHeadroom: sellableHeadroom,
-          nameStyle: nameStyle,
-          priceStyle: priceStyle,
-          priceDeltaCoins: priceDeltaCoins,
-          priceDeltaTooltip: priceDeltaTooltip,
-          showFirstRightChip: showFirstRightChip,
-          firstRightChipLabel: firstRightChipLabel,
-          firstRightTooltip: firstRightTooltip,
-          counselStar: counselStar,
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Flexible(
-                fit: FlexFit.loose,
-                child: Text(volumeText, style: volumeStyle),
-              ),
-              Flexible(
-                child: MarketCommodityRowControls(
-                  commodityId: commodityId,
-                  stagedType: stagedOrder?.type,
-                  quantityText: _quantityText,
-                  quantityStyle: quantityStyle,
-                  canDecrement: _canDecrement,
-                  canIncrement: _canIncrement,
-                  canSelectOffer: _canSelectOffer,
-                  canSelectBid: canSelectBid,
-                  onDirectionChanged: onDirectionChanged,
-                  onIncrement: onIncrement,
-                  onDecrement: onDecrement,
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );

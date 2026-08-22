@@ -7,6 +7,11 @@ import '../tool/check_app_flame_lib_physical_file_size.dart';
 const _flameRel = 'app/lib/features/game/flame';
 
 void main() {
+  test('wave-20 ceiling is 260', () {
+    expect(appFlameLibPhysicalFileSizeCeiling, 260);
+    expect(appFlameLibPhysicalFileSizeGrandfatheredForTests, isEmpty);
+  });
+
   test('passes for the real app flame subtree with grandfather allowlist', () {
     final logs = <String>[];
     final code = runCheckAppFlameLibPhysicalFileSize(
@@ -33,7 +38,7 @@ void main() {
     Directory('${temp.path}/$_flameRel').createSync(recursive: true);
     File('${temp.path}/$_flameRel/huge.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(301, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(261, 'final x = 1;').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppFlameLibPhysicalFileSize(
@@ -45,7 +50,7 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge.dart'));
-    expect(logs.join('\n'), contains('physical lines > 300'));
+    expect(logs.join('\n'), contains('physical lines > 260'));
   });
 
   test('fails when the flame directory is missing', () {

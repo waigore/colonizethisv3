@@ -7,13 +7,13 @@ import 'package:path/path.dart' as p;
 
 /// Ratchet ceiling for hand-written Dart under
 /// `app/lib/features/game/turn_resolution/**`.
-const int appTurnResolutionFileSizeCeiling = 300;
+const int appTurnResolutionFileSizeCeiling = 260;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
 /// PR-blocking structural check: files under
-/// `app/lib/features/game/turn_resolution/**` must stay at or below 300
-/// physical lines (Refs #4512 AC6 / AC8).
+/// `app/lib/features/game/turn_resolution/**` must stay at or below 260
+/// physical lines (Refs #4512 AC6 / AC8, #4582).
 int runCheckAppTurnResolutionFileSize(
   String repoRoot, {
   void Function(String line)? info,

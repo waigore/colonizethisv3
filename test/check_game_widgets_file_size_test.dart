@@ -5,7 +5,11 @@ import 'package:test/test.dart';
 import '../tool/check_game_widgets_file_size.dart';
 
 void main() {
-  test('fails when a game widget file exceeds 300 lines', () {
+  test('wave-20 ceiling is 260', () {
+    expect(gameWidgetsFileSizeCeiling, 260);
+  });
+
+  test('fails when a game widget file exceeds 260 lines', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_game_widgets_file_size_fail_',
     );
@@ -14,7 +18,7 @@ void main() {
     final violatingFile = File(
       '${temp.path}/app/lib/features/game/widgets/huge_panel.dart',
     )..createSync(recursive: true);
-    violatingFile.writeAsStringSync(List.filled(301, '// line').join('\n'));
+    violatingFile.writeAsStringSync(List.filled(261, '// line').join('\n'));
 
     final logs = <String>[];
     final code = runCheckGameWidgetsFileSize(
@@ -25,7 +29,7 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge_panel.dart'));
-    expect(logs.join('\n'), contains('301 physical lines > 300'));
+    expect(logs.join('\n'), contains('261 physical lines > 260'));
   });
 
   test('fails when game widgets directory is missing', () {
@@ -45,7 +49,7 @@ void main() {
     expect(logs.join('\n'), contains('widgets not found'));
   });
 
-  test('passes when all game widget files are at or below 300 lines', () {
+  test('passes when all game widget files are at or below 260 lines', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_game_widgets_file_size_pass_',
     );
@@ -53,7 +57,7 @@ void main() {
 
     final okFile = File('${temp.path}/app/lib/features/game/widgets/panel.dart')
       ..createSync(recursive: true);
-    okFile.writeAsStringSync(List.filled(300, '// line').join('\n'));
+    okFile.writeAsStringSync(List.filled(260, '// line').join('\n'));
 
     final code = runCheckGameWidgetsFileSize(temp.path);
     expect(code, 0);
@@ -70,7 +74,7 @@ void main() {
       final violatingFile = File(
         '${temp.path}/app/lib/features/game/widgets/huge_panel.dart',
       )..createSync(recursive: true);
-      violatingFile.writeAsStringSync(List.filled(301, '// line').join('\n'));
+      violatingFile.writeAsStringSync(List.filled(261, '// line').join('\n'));
 
       final toolDir = Directory('${temp.path}/tool')
         ..createSync(recursive: true);
@@ -91,7 +95,7 @@ exempt_files:
 
       expect(code, 1);
       expect(logs.join('\n'), contains('huge_panel.dart'));
-      expect(logs.join('\n'), contains('301 physical lines > 300'));
+      expect(logs.join('\n'), contains('261 physical lines > 260'));
     },
   );
 }

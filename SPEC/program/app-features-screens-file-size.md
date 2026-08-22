@@ -23,8 +23,9 @@ during transition slices).
 
 - **Physical lines:** `LineSplitter` line count of the file's UTF-8 text (same
   as `const LineSplitter().convert(content).length` in the checker).
-- **Threshold:** each scanned file must have **300** physical lines or fewer
-  (301 or more fails unless on the shrink-only grandfather allowlist).
+- **Threshold:** each scanned file must have **260** physical lines or fewer
+  (261 or more fails unless on the shrink-only grandfather allowlist).
+  Wave-20 #4582 lowered the wave-15 **300** cap.
 
 During wave-15 transition slices, files above the cap may appear on the
 shrink-only grandfather in the checker source; stale entries (missing path or
@@ -34,14 +35,14 @@ close (#4352).
 ## Acceptance criteria
 
 - Given a temporary workspace that contains
-  `app/lib/features/game/screens/over.dart` with **301** physical lines and no
+  `app/lib/features/game/screens/over.dart` with **261** physical lines and no
   grandfather entry, when the System runs
   `runCheckAppFeaturesScreensLibPhysicalFileSize` with that workspace root,
   then the checker exits non-zero and the error output names `over.dart` and
-  reports a line count strictly greater than 300.
+  reports a line count strictly greater than 260.
 
 - Given a temporary workspace whose only matching file is
-  `app/lib/features/game/screens/ok.dart` with exactly **300** physical lines,
+  `app/lib/features/game/screens/ok.dart` with exactly **260** physical lines,
   when the System runs `runCheckAppFeaturesScreensLibPhysicalFileSize`, then the
   checker exits zero.
 
@@ -54,4 +55,4 @@ close (#4352).
   `dart run tool/ct_repo_lint.dart` and rule
   `repo.app_features_screens_lib_physical_file_size` is in scope, then every
   non-grandfathered file under `app/lib/features/game/screens/**` passes the
-  300 physical-line ceiling (Refs #4352).
+  260 physical-line ceiling (Refs #4352, #4582).

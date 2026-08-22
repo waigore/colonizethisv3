@@ -10,8 +10,8 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for app feature screens (≤300 physical lines).
-const int appFeaturesScreensLibPhysicalFileSizeCeiling = 300;
+/// Ratchet ceiling for app feature screens (≤260 physical lines; Refs #4582).
+const int appFeaturesScreensLibPhysicalFileSizeCeiling = 260;
 
 const String _screensLibRelativePath = 'app/lib/features/game/screens';
 

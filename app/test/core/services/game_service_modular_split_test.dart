@@ -17,16 +17,16 @@ void main() {
 
   group('GameService modular split (Refs #2575, #4117, #4183)', () {
     test('game_service cluster does not import colonizethis_logic barrel', () {
-      final gameServiceDir = Directory(
-        'lib/core/services/game_service',
-      );
+      final gameServiceDir = Directory('lib/core/services/game_service');
       final offenders = <String>[];
       for (final entity in gameServiceDir.listSync(recursive: false)) {
         if (entity is! File || !entity.path.endsWith('.dart')) {
           continue;
         }
         final contents = entity.readAsStringSync();
-        if (contents.contains("package:colonizethis_logic/colonizethis_logic.dart")) {
+        if (contents.contains(
+          "package:colonizethis_logic/colonizethis_logic.dart",
+        )) {
           offenders.add(entity.path);
         }
       }
@@ -37,60 +37,74 @@ void main() {
       );
     });
 
-    test('newGameSetupProgressStepCount remains on GameService', () {
+    test('diplomacy resume APIs remain on GameService', () {
       expect(GameService.newGameSetupProgressStepCount, 5);
+      expect((GameService s) => s.resumeOvertureDecisions, isNotNull);
+      expect((GameService s) => s.resumeFtpDecisions, isNotNull);
+      expect((GameService s) => s.resumeCallToArmsDecisions, isNotNull);
+      expect((GameService s) => s.resumeInterventionDecisions, isNotNull);
+      expect((GameService s) => s.runTurnResolution, isNotNull);
+      expect((GameService s) => s.nextTurn, isNotNull);
     });
 
-    test('GameMapData and GameMapCache are importable from de-parted libraries', () {
-      expect(GameMapData, isNotNull);
-      expect(GameMapCache, isNotNull);
-      expect(TurnTraceSession, isNotNull);
-    });
+    test(
+      'GameMapData and GameMapCache are importable from de-parted libraries',
+      () {
+        expect(GameMapData, isNotNull);
+        expect(GameMapCache, isNotNull);
+        expect(TurnTraceSession, isNotNull);
+      },
+    );
 
-    test('map-cache seam loads persisted map data through gameServiceRequireMapData', () async {
-      final hiveDir = await Directory.systemTemp.createTemp('ct_gs_modular_');
-      addTearDown(() async {
-        await Hive.close();
-        if (await hiveDir.exists()) {
-          await hiveDir.delete(recursive: true);
-        }
-      });
-      Hive.init(hiveDir.path);
-      final box = await Hive.openBox<dynamic>('games_modular');
-      final service = GameService(box, GameSaveAdapter());
-      const gameId = 'modular_map';
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['oldWorld|M1'],
-        ],
-      );
-      const topo = MapTopology(nodes: [], edges: []);
-      service.state.adapter.saveMapData(
-        box,
-        gameId,
-        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
-        topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
-        combinedTopology: topo,
-      );
-      service.state.adapter.save(
-        box,
-        Game(
-          id: gameId,
-          worldState: const WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
+    test(
+      'map-cache seam loads persisted map data through gameServiceRequireMapData',
+      () async {
+        final hiveDir = await Directory.systemTemp.createTemp('ct_gs_modular_');
+        addTearDown(() async {
+          await Hive.close();
+          if (await hiveDir.exists()) {
+            await hiveDir.delete(recursive: true);
+          }
+        });
+        Hive.init(hiveDir.path);
+        final box = await Hive.openBox<dynamic>('games_modular');
+        final service = GameService(box, GameSaveAdapter());
+        const gameId = 'modular_map';
+        final tileMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['oldWorld|M1'],
+          ],
+        );
+        const topo = MapTopology(nodes: [], edges: []);
+        service.state.adapter.saveMapData(
+          box,
+          gameId,
+          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+          topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+          combinedTopology: topo,
+        );
+        service.state.adapter.save(
+          box,
+          Game(
+            id: gameId,
+            worldState: const WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: const [
+              Player(id: 'gp1', displayName: 'Human', isHuman: true),
+            ],
           ),
-          players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
-        ),
-      );
+        );
 
-      final cache = gameServiceRequireMapData(service, gameId);
-      expect(cache.tileMapByRegion['oldWorld']?.width, 1);
-      expect(service.hasMapCacheEntry(gameId), isTrue);
-    });
+        final cache = gameServiceRequireMapData(service, gameId);
+        expect(cache.tileMapByRegion['oldWorld']?.width, 1);
+        expect(service.hasMapCacheEntry(gameId), isTrue);
+      },
+    );
 
     test('turn-trace session seam seeds via GameServiceState', () async {
       final hiveDir = await Directory.systemTemp.createTemp('ct_gs_trace_');
