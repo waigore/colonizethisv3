@@ -86,6 +86,14 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
         name: 'Declare War confirm — named formal ally',
         builder: (context) => _declareWarConfirmNamedAllyStory(),
       ),
+      WidgetbookUseCase(
+        name: 'Boycott confirm — two named colonies',
+        builder: (context) => boycottConfirmTwoColoniesStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Revoke Boycott confirm — two named colonies',
+        builder: (context) => revokeBoycottConfirmTwoColoniesStory(),
+      ),
     ],
   ),
   // SPEC/ui/diplomacy-panel.md § Relative power line — isolated stories for
