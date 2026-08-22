@@ -930,7 +930,7 @@ rules:
 
   - rule_id: repo.turn_test_integration_inline_game_ctor
     group: testing
-    title: colonizethis_turn integration scenarios must not inline Game(...) (grandfathered files exempt; Refs #4252, #4168)
+    title: colonizethis_turn integration scenarios must not inline Game(...) (empty allowlist; Refs #4252, #4168, #4583)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_test_integration_inline_game_ctor.dart

@@ -1,5 +1,4 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import '../turn_resolver_test_harness.dart';
@@ -12,13 +11,9 @@ void registerCombatMovementDialogueTests() {
         () {
           final dialogueEvents = <DialogueEvent>[];
           final next = resolveTurnComplete(
-            game: Game(
-              id: 'g1',
-              worldState: const WorldState(
-                turnState: TurnState(phase: TurnPhase.orders, turnNumber: 100),
-                oldWorld: RegionData(),
-                newWorld: RegionData(),
-              ),
+            game: turnTestOwGame(
+              turnNumber: 100,
+              provinces: const [],
               players: const [
                 Player(id: 'gp1', displayName: 'AI One', isHuman: false),
                 Player(id: 'gp2', displayName: 'AI Two', isHuman: false),

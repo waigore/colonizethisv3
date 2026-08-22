@@ -19,7 +19,7 @@ void main() {
       _writeFile(
         root,
         'packages/colonizethis_turn/test/support/integration/'
-        'resolve_turn_combat_movement_scenarios.dart',
+            'resolve_turn_combat_movement_scenarios.dart',
         "final game = adjacentOwP1P2Game();\n",
       );
 
@@ -38,7 +38,29 @@ void main() {
       _writeFile(
         root,
         'packages/colonizethis_turn/test/support/integration/'
-        'resolve_turn_new_scenarios.dart',
+            'resolve_turn_new_scenarios.dart',
+        'final game = Game(id: "g1");\n',
+      );
+
+      final logs = <String>[];
+      final code = runCheckTurnTestIntegrationInlineGameCtor(
+        root.path,
+        info: logs.add,
+        err: logs.add,
+      );
+      expect(code, 1);
+      expect(logs.join('\n'), contains('resolve_turn_new_scenarios.dart'));
+    });
+
+    test('fails when a former grandfathered file inlines Game(', () {
+      final root = Directory.systemTemp.createTempSync(
+        'turn_integ_game_no_grandfather',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      _writeFile(
+        root,
+        'packages/colonizethis_turn/test/support/integration/'
+            'resolve_turn_economy_continued_scenarios.dart',
         'final game = Game(id: "g1");\n',
       );
 
@@ -51,28 +73,8 @@ void main() {
       expect(code, 1);
       expect(
         logs.join('\n'),
-        contains('resolve_turn_new_scenarios.dart'),
+        contains('resolve_turn_economy_continued_scenarios.dart'),
       );
-    });
-
-    test('grandfathers allowlisted integration files with inline Game(', () {
-      final root =
-          Directory.systemTemp.createTempSync('turn_integ_game_grandfather');
-      addTearDown(() => root.deleteSync(recursive: true));
-      _writeFile(
-        root,
-        'packages/colonizethis_turn/test/support/integration/'
-        'resolve_turn_economy_continued_scenarios.dart',
-        'final game = Game(id: "g1");\n',
-      );
-
-      final logs = <String>[];
-      final code = runCheckTurnTestIntegrationInlineGameCtor(
-        root.path,
-        info: logs.add,
-        err: logs.add,
-      );
-      expect(code, 0, reason: logs.join('\n'));
     });
   });
 }
