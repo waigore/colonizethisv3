@@ -2,7 +2,9 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_army_move_destinations.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_pass_context.dart';
+import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import '../scenario_runner.dart';
@@ -22,6 +24,12 @@ void ospcRunCappedProbeLoopRespectsCaps() {final accepted = <int>[]; final probe
 void ospcRunOwnedProvinceIdsFromView() {final view = buildPlayerView(orderSuggestionPassContextOwnedProvincesGame(),orderSuggestionPassContextTopology,orderSuggestionPassContextGp1Id,); expect(ownedProvinceIdsFromView(view,orderSuggestionPassContextGp1Id),{ProvinceId.full(kOldWorldRegionId,'p1'),});}
 
 void ospcRunOwnedProvinceIdsForPlayerMatchesCache() {final game = orderSuggestionPassContextOwnedProvincesGame(); final fromHelper = ownedProvinceIdsForPlayer(game.worldState,orderSuggestionPassContextGp1Id); final fromCache = <String>{for (final p in ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(orderSuggestionPassContextGp1Id)) ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId,p.id),}; expect(fromHelper,fromCache); expect(fromHelper,{ProvinceId.full(kOldWorldRegionId,'p1'),});}
+
+void ospcRunArmyMoveCacheMissEqualsOwnedForPlayer() {final game = orderSuggestionPassContextOwnedProvincesGame(); expect(armyMovePlayerOwnedProvinceIds(game: game,playerId: orderSuggestionPassContextGp1Id),ownedProvinceIdsForPlayer(game.worldState,orderSuggestionPassContextGp1Id),);}
+
+void ospcRunOwnedHelpersEmptyWhenPlayerOwnsNone() {final game = orderSuggestionPassContextOwnedProvincesGame(); final view = buildPlayerView(game,orderSuggestionPassContextTopology,orderSuggestionPassContextGp1Id,); expect(ownedProvinceIdsForPlayer(game.worldState,'nobody'),isEmpty); expect(ownedProvinceIdsFromView(view,'nobody'),isEmpty); expect(armyMovePlayerOwnedProvinceIds(game: game,playerId: 'nobody'),isEmpty);}
+
+void ospcRunWorkCacheDefaultOwnershipEqualsView() {Set<String>? captured; final cache = PerPlayerWorkTargetSelectionCache(strategies: {'x': (s) {captured = s.playerOwnedProvinceIds; return const <String>{};},},); final game = orderSuggestionPassContextOwnedProvincesGame(); final view = buildPlayerView(game,orderSuggestionPassContextTopology,orderSuggestionPassContextGp1Id,); cache.refresh(WorkTargetSelectionSnapshot(game: game,playerId: orderSuggestionPassContextGp1Id,playerView: view,topology: orderSuggestionPassContextTopology,currentOrders: const Orders(),tileMapByRegion: null,),); expect(captured,ownedProvinceIdsFromView(view,orderSuggestionPassContextGp1Id));}
 
 /// Scenarios for indexExistingTargetsByEntityId.
 List<RunnableScenario> indexExistingTargetsByEntityIdScenarios() => [
@@ -48,4 +56,7 @@ List<RunnableScenario> ownedProvinceIdsFromViewScenarios() => [
 /// Scenarios for ownedProvinceIdsForPlayer.
 List<RunnableScenario> ownedProvinceIdsForPlayerScenarios() => [
   rs('ownedProvinceIdsForPlayer matches ProvinceOwnerCache projection', ospcRunOwnedProvinceIdsForPlayerMatchesCache, '#4258'),
+  rs('armyMovePlayerOwnedProvinceIds cache-miss equals ownedProvinceIdsForPlayer', ospcRunArmyMoveCacheMissEqualsOwnedForPlayer, '#4587'),
+  rs('owned helpers return empty when player owns no provinces', ospcRunOwnedHelpersEmptyWhenPlayerOwnsNone, '#4587'),
+  rs('work-target cache default ownership equals ownedProvinceIdsFromView', ospcRunWorkCacheDefaultOwnershipEqualsView, '#4587'),
 ];

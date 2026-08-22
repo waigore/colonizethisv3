@@ -1,4 +1,4 @@
-// Wave 9 (#4508) near-cap lib splits and ratcheted ceiling to 300 physical lines;
+// Wave 10 (#4587) near-cap lib splits and ratcheted ceiling to 250 physical lines;
 // shrink-only grandfather remains empty.
 import 'dart:convert';
 import 'dart:io';
@@ -7,8 +7,8 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling chosen at wave-9 post-split target (300 physical lines).
-const int ordersLibSourceFileSizeCeiling = 300;
+/// Ratchet ceiling chosen at wave-10 post-split target (250 physical lines).
+const int ordersLibSourceFileSizeCeiling = 250;
 
 const String _ordersLibRelativePath = 'packages/colonizethis_orders/lib';
 
@@ -79,7 +79,7 @@ int runCheckOrdersLibSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_orders_lib_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4246, #4317, #4508).',
+      '(ceiling $ceiling; Refs #4246, #4317, #4508, #4587).',
     );
     return 0;
   }
@@ -87,7 +87,7 @@ int runCheckOrdersLibSourceFileSize(
   violations.sort();
   logE(
     'check_orders_lib_source_file_size: found ${violations.length} violation(s) '
-    'under $_ordersLibRelativePath (wave-9 ceiling $ceiling; Refs #4246, #4317, #4508):',
+    'under $_ordersLibRelativePath (wave-10 ceiling $ceiling; Refs #4246, #4317, #4508, #4587):',
   );
   for (final violation in violations) {
     logE(' - $violation');
