@@ -23,7 +23,12 @@ const _targetGp = 'gp2';
 
 Game _previewGame() => diplomacyGame(
   players: const [
-    Player(id: _humanId, displayName: 'England', isHuman: true, treasury: 50_000),
+    Player(
+      id: _humanId,
+      displayName: 'England',
+      isHuman: true,
+      treasury: 50_000,
+    ),
     Player(id: _targetGp, displayName: 'Spain', isHuman: false),
   ],
 );
@@ -46,7 +51,9 @@ void main() {
   testWidgets(
     'golden: Break Alliance confirm preview with immediate timing (Refs #4181)',
     (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('diplomacy_confirm_break_alliance_golden');
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_confirm_break_alliance_golden',
+      );
       final message = _previewMessage(
         const DiplomaticOrder(
           type: DiplomaticOrderType.breakAlliance,
@@ -61,10 +68,7 @@ void main() {
         settle: false,
         scaffoldBackgroundColor:
             AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        child: CtConfirmDialog(
-          title: 'Break Alliance',
-          message: message,
-        ),
+        child: CtConfirmDialog(title: 'Break Alliance', message: message),
       );
 
       expect(tester.takeException(), isNull);
@@ -82,47 +86,47 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: Declare War confirm preview @ 320dp (Refs #4181)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('diplomacy_confirm_declare_war_320dp_golden');
-      final message = _previewMessage(
-        const DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar,
-          targetFactionId: _targetGp,
-        ),
-      );
+  testWidgets('golden: Declare War confirm preview @ 320dp (Refs #4181)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'diplomacy_confirm_declare_war_320dp_golden',
+    );
+    final message = _previewMessage(
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: _targetGp,
+      ),
+    );
 
-      await pumpGoldenHost(
-        tester,
-        boundaryKey: boundaryKey,
-        physicalSize: const Size(kMinViewportWidth, 360),
-        settle: false,
-        scaffoldBackgroundColor:
-            AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        child: CtConfirmDialog(
-          title: 'Declare War',
-          message: message,
-        ),
-      );
+    await pumpGoldenHost(
+      tester,
+      boundaryKey: boundaryKey,
+      physicalSize: const Size(kMinViewportWidth, 360),
+      settle: false,
+      scaffoldBackgroundColor:
+          AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      child: CtConfirmDialog(title: 'Declare War', message: message),
+    );
 
-      expect(tester.takeException(), isNull);
-      expectEditorialMonocleDarkChrome(tester);
-      expect(find.textContaining('War with Spain'), findsOneWidget);
-      expect(find.textContaining('overtures'), findsOneWidget);
-      expect(find.textContaining('When:'), findsNothing);
+    expect(tester.takeException(), isNull);
+    expectEditorialMonocleDarkChrome(tester);
+    expect(find.textContaining('War with Spain'), findsOneWidget);
+    expect(find.textContaining('overtures'), findsOneWidget);
+    expect(find.textContaining('When:'), findsNothing);
 
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/diplomacy_confirm_declare_war_320dp.png'),
-      );
-    },
-  );
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/diplomacy_confirm_declare_war_320dp.png'),
+    );
+  });
 
   testWidgets(
     'golden: Consulate overture confirm preview with single £ cost (Refs #4181)',
     (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('diplomacy_confirm_consulate_golden');
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_confirm_consulate_golden',
+      );
       final message = buildDiplomacyConfirmPreviewMessage(
         order: const DiplomaticOrder(
           type: DiplomaticOrderType.establishOverture,
@@ -148,10 +152,7 @@ void main() {
         settle: false,
         scaffoldBackgroundColor:
             AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        child: CtConfirmDialog(
-          title: 'Consulate',
-          message: message,
-        ),
+        child: CtConfirmDialog(title: 'Consulate', message: message),
       );
 
       expect(tester.takeException(), isNull);
@@ -165,4 +166,112 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'golden: Boycott confirm full embargo copy with two colonies (Refs #4584)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('diplomacy_confirm_boycott_golden');
+      final game = _twoColonyPreviewGame();
+      final message = buildDiplomacyConfirmPreviewMessage(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.boycott,
+          targetFactionId: _targetGp,
+        ),
+        game: game,
+        humanPlayerId: _humanId,
+        targetDisplayName: 'Spain',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(360, 420),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(title: 'Boycott', message: message),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('No treasury charge'), findsOneWidget);
+      expect(find.textContaining('will not fill'), findsOneWidget);
+      expect(find.textContaining('cannot purchase land'), findsOneWidget);
+      expect(
+        find.textContaining('cancelled when this resolves'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Aztec'), findsWidgets);
+      expect(find.textContaining('Inca'), findsWidgets);
+      expect(find.textContaining('When:'), findsNothing);
+      expect(find.text('65'), findsNothing);
+      expect(find.textContaining('tribe_aztec'), findsNothing);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_confirm_boycott.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: Revoke Boycott confirm restores court work copy (Refs #4584)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_confirm_revoke_boycott_golden',
+      );
+      final game = _twoColonyPreviewGame();
+      final message = buildDiplomacyConfirmPreviewMessage(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.revokeBoycott,
+          targetFactionId: _targetGp,
+        ),
+        game: game,
+        humanPlayerId: _humanId,
+        targetDisplayName: 'Spain',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(360, 360),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(title: 'Revoke Boycott', message: message),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('No treasury charge'), findsOneWidget);
+      expect(find.textContaining('Ends the embargo'), findsOneWidget);
+      expect(find.textContaining('purchase land'), findsOneWidget);
+      expect(find.textContaining('When:'), findsNothing);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_confirm_revoke_boycott.png'),
+      );
+    },
+  );
 }
+
+Game _twoColonyPreviewGame() => diplomacyGame(
+  players: const [
+    Player(
+      id: _humanId,
+      displayName: 'England',
+      isHuman: true,
+      treasury: 50_000,
+    ),
+    Player(id: _targetGp, displayName: 'Spain', isHuman: false),
+  ],
+  tribes: const [
+    Tribe(id: 'tribe_aztec', displayName: 'Aztec'),
+    Tribe(id: 'tribe_inca', displayName: 'Inca'),
+  ],
+  colonyStates: const [
+    ColonyState(tribeId: 'tribe_aztec', colonyOfGpId: _humanId, sinceTurn: 1),
+    ColonyState(tribeId: 'tribe_inca', colonyOfGpId: _humanId, sinceTurn: 1),
+  ],
+);
