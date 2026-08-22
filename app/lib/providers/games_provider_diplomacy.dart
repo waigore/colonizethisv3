@@ -2,7 +2,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart' show CallToA
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// At most one blocking diplomacy gate from turn resolution (overture, intervention, CTA).
+/// At most one blocking diplomacy gate from turn resolution (overture, intervention, CTA, FTP).
 /// SPEC/ui/pending-diplomacy-state.md, SPEC/program/dialogue-system.md.
 sealed class PendingDiplomacyState {
   const PendingDiplomacyState();

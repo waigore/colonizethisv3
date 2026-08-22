@@ -225,13 +225,14 @@ void main() {
       },
     ),
     (
-      name: 'Establish FTP confirm shows favoured-trading preview (Refs #4181)',
+      name: 'Establish Favored partner confirm shows matching preview (Refs #4586)',
       game: diplomacyConfirmPreviewFtpGame,
-      actionFinder: () => find.text('Establish FTP'),
+      actionFinder: () => find.text('Establish Favored partner'),
       minorsTab: false,
       assertBody: (body) {
         expect(body, contains('No treasury charge'));
-        expect(body.toLowerCase(), contains('favoured-trading-partner'));
+        expect(body, contains('Favored Trading Partners'));
+        expect(body, contains('same bid rank'));
         expect(body, isNot(contains('When:')));
       },
     ),

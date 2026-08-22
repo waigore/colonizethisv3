@@ -24,7 +24,7 @@ String diplomacyActionLabel(DiplomaticOrder order) {
           ? 'Set Subsidy (${order.amount}%)'
           : 'Set Subsidy';
     case DiplomaticOrderType.establishFtp:
-      return 'Establish FTP';
+      return 'Establish Favored partner';
     case DiplomaticOrderType.boycott:
       return 'Boycott';
     case DiplomaticOrderType.revokeBoycott:

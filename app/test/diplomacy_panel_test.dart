@@ -90,7 +90,7 @@ void main() {
           find.descendant(of: gp2Row, matching: find.text('More actions')),
           findsOneWidget,
         );
-        for (final label in ['Embassy', 'Establish FTP', 'Offer Peace']) {
+        for (final label in ['Embassy', 'Establish Favored partner', 'Offer Peace']) {
           expect(
             find.descendant(of: gp2Row, matching: find.text(label)),
             findsNothing,
@@ -100,7 +100,7 @@ void main() {
           find.descendant(of: gp2Row, matching: find.text('More actions')),
         );
         await tester.pumpAndSettle();
-        for (final label in ['Embassy', 'Establish FTP', 'Offer Peace']) {
+        for (final label in ['Embassy', 'Establish Favored partner', 'Offer Peace']) {
           expect(
             find.descendant(of: gp2Row, matching: find.text(label)),
             findsOneWidget,

@@ -78,7 +78,7 @@ Defined in **`colonizethis_models`** (`app_events.dart`, exports).
 - **`UIActionEvent`** — dialogs, navigation, panels, map locate/selection intents, grants/subsidy submit, **`QuickStartNewGameEvent`** (main-menu default campaign; composition-root handler via `AppEventHandlerScope.extraActionHandlers`); concrete types in source and **[app-ui-wiring.md](app-ui-wiring.md)**. Map minimap camera intents: **`RequestRegionMapCameraCenterWorldEvent`**, **`RequestRegionMapCameraPanWorldDeltaEvent`**, **`RequestRegionMapSetZoomMultiplierEvent`** ([empire-overview.md](../ui/empire-overview.md) § Region minimap). For `RequestRegionMapSetZoomMultiplierEvent`, the map host clamps `m` to **`[0.5, 8.0]`** (fit-relative zoom multiplier band).
 - **`SessionCommandEvent`** — session mutations applied by long-lived shell listeners (e.g. **`AppEventHandlerScope`**), not by **`AppEventHandler`**. Includes **`RemovePendingWorkOrderRequestedEvent`**, **`CancelInProgressCivilianWorkRequestedEvent`**, **`NavalFleetsUpdatedEvent`**, **`NavalSplitFleetRequestedEvent`**, **`NavalMoveFleetRequestedEvent`**, **`NavalMissionRequestedEvent`**, **`NavalMissionCancelRequestedEvent`** (naval panel / map → current‑turn orders draft), **`ArmyMoveRequestedEvent`** (optional **`declareWarTargetFactionId`** when the move dialog committed an invasion that requires a same-turn **declare war**), **`ArmySplitRequestedEvent`**, **`ArmyCombineRequestedEvent`**, **`LandArmiesUpdatedEvent`** (military panel → orders draft / game state per TDD), **`TrainCivilianBuildOrdersCommittedEvent`**, **`TrainMilitaryBuildOrdersCommittedEvent`**.
 - **`UISystemEvent`** — snackbar, overlay, notify.
-- **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`InterventionRequiredEvent`**, **`CallToArmsRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
+- **`GameToUIEvent`** — e.g. **`TurnResolutionCompleteEvent`**, **`OvertureRequiredEvent`**, **`FtpRequiredEvent`**, **`InterventionRequiredEvent`**, **`CallToArmsRequiredEvent`**, **`NewGameCreatedEvent`**, **`SaveGameCompleteEvent`**, plus bridge types **`AppCombatResultEvent`**, **`AppProvinceCapturedEvent`**, **`AppDiplomacyChangeEvent`**, **`AppResearchCompleteEvent`**, **`AppVictorySetEvent`**, **`AppOrderRejectedEvent`** (**SPEC/program/game-event-bridge.md**).
 
 ---
 
@@ -144,6 +144,7 @@ class AppEventHandler {
 - **`TurnResolutionCompleteEvent`** after `runTurnResolution` or any resume method completes with **`TurnResolutionComplete`**
 - **`NewGameCreatedEvent`** after a new game is created and saved (sync **`createNewGame()`** or async phased **`createNewGameAsync()`** used by the shell)
 - **`OvertureRequiredEvent`** when `runTurnResolution` or a resume method returns **`TurnResolutionPendingOvertures`**
+- **`FtpRequiredEvent`** when `runTurnResolution` or a resume method returns **`TurnResolutionPendingFtp`**
 - **`InterventionRequiredEvent`** when `runTurnResolution` or a resume method returns **`TurnResolutionPendingIntervention`**
 - **`CallToArmsRequiredEvent`** when `runTurnResolution` or a resume method returns **`TurnResolutionPendingCallToArms`**
 
@@ -201,6 +202,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 - Given a `GameEventBridge` started, When the logic bus publishes `ProvinceCapturedEvent`, `DiplomacyChangeEvent`, `ResearchCompleteEvent`, `VictorySetEvent`, or `OrderRejectedEvent`, Then `AppEventBus` receives the corresponding `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppVictorySetEvent`, or `AppOrderRejectedEvent`.
 - Given a `GameEventBridge` started, When `stop()` is called, Then subsequent events on the logic bus are not forwarded.
 - Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingOvertures`, Then `AppEventBus` has emitted `OvertureRequiredEvent` before the result is returned.
+- Given `GameService` with `eventBus` set, When `gameServiceEmitTurnResolutionEvents` is given `TurnResolutionPendingFtp`, Then `AppEventBus` has emitted `FtpRequiredEvent` whose `offers` match `pendingFtpOffers`.
 - Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingIntervention`, Then `AppEventBus` has emitted `InterventionRequiredEvent` before the result is returned.
 - Given `GameService` with `eventBus` set, When `runTurnResolution` returns `TurnResolutionPendingCallToArms`, Then `AppEventBus` has emitted `CallToArmsRequiredEvent` before the result is returned.
 

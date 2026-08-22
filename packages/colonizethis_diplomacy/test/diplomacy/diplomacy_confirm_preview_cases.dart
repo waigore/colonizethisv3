@@ -187,8 +187,12 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     targetDisplayName: 'Spain',
     assertLines: (lines, body) {
       expect(body, contains('No treasury charge'));
-      expect(body.toLowerCase(), contains('favoured-trading-partner'));
+      expect(body, contains('Favored Trading Partners'));
+      expect(body, contains('same bid rank'));
+      expect(body, contains('Prices do not change'));
+      expect(body, contains('First right of refusal'));
       expect(lines.any((l) => l.startsWith('When:')), isFalse);
+      expect(body, isNot(contains('65')));
     },
   ),
   (

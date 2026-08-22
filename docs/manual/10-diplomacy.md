@@ -28,7 +28,7 @@ Each diplomacy row shows a **PEACE** or **WAR** chip, an optional **ALLIANCE** c
 8. **Offer Peace** requires war. Use the `GAME30001` row, or **Offer Peace** on `MAP20001` Political when that province’s owner is at war with you. Minor Nations and Tribes never refuse peace. Another Great Power must agree. Peace does not change borders.
 9. **Alliance** targets another Great Power at peace when no formal alliance already exists. Order validation accepts that offer at peace with no formal treaty; the game-design standing table also names Alliance at standing 76 or higher. Those two SPECs disagree — this handbook does not invent a **Friendly** or **Devoted** button gate until they agree. A successful treaty creates formal mutual defence.
 10. **Break Alliance** requires that treaty. On the human panel it ends immediately after confirmation rather than waiting for **Next turn**. A voluntary break harms standing with the former ally and with other courts the same way a refused call to arms does. The confirm on `GAME30001` does not print the −50 / −10 figures; those numbers appear on `OVL40001` **Call to arms dialogue overlay** under **Refuse**.
-11. After you voluntarily break an alliance on this turn, you cannot **Alliance**, **Establish Overture**, **Establish FTP**, **Grant Aid**, or **Set Subsidy** with that same court for the rest of the turn. War and peace stay available. Disabled **Alliance** copy reads **On cooldown after breaking alliance — available next turn**. The lock clears next turn.
+11. After you voluntarily break an alliance on this turn, you cannot **Alliance**, **Establish Overture**, **Establish Favored partner**, **Grant Aid**, or **Set Subsidy** with that same court for the rest of the turn. War and peace stay available. Disabled **Alliance** copy reads **On cooldown after breaking alliance — available next turn**. The lock clears next turn.
 
 ### Overtures
 
@@ -39,22 +39,27 @@ Each diplomacy row shows a **PEACE** or **WAR** chip, an optional **ALLIANCE** c
 16. War clears ordinary overtures and prevents new ones until peace returns. After peace, rebuild the chain from the start (Great Power auto-embassies are the documented exception).
 17. **Join Empire** follows a Non-Aggression Pact and needs the required standing and treasury. Toward a Minor Nation or Tribe, the default cost is £5000 plus £2000 per province the target owns. A Minor Nation is absorbed: its provinces, units, and fleets transfer to you. A Tribe instead becomes your colony, remaining on the map under its own ownership. Against another Great Power, Join Empire requires Empire Building and a nearly defeated target: three or fewer total provinces and loss of its original capital — do not invent a Great Power per-province charge beyond that.
 
+### Favored Trading Partner
+
+18. **Establish Favored partner** targets another Great Power at peace when you hold an Embassy with them. The confirm on `GAME30001` says there is no treasury charge. **Effect** says that if they accept you become Favored Trading Partners; that fills between you are preferred when you buy or sell the same good at the same rank; that prices do not change; and that this does not beat First right of refusal. It never prints a hidden standing number.
+
 ### Aid, subsidy, and boycott
 
-18. **Grant Aid** requires an Embassy and enough gold. Open `DIPL20001`, choose a positive amount in £1000 steps (minimum £1000), read **Cost** and **Effect**, and tap **Submit**. That stages the one-time transfer with no second confirm. It improves standing when the turn finishes. Tap **Cancel** on the `GAME30001` row if you change your mind before **Next turn**.
-19. **Set Subsidy** uses the same `DIPL20001` dialog. It is available only toward a Minor Nation or Tribe with an Embassy (not toward another Great Power). Choose 5%, 10%, 15%, or 20%. **Cost** says there is no per-turn gold charge. **Effect** says that on deals that fill with that court you pay that percent more when buying from them and receive that percent less when selling to them. Hover or long-press the outgoing or pending subsidy line on `GAME30001` for the same meaning. **Submit** stages the subsidy with no second confirm.
-20. **Boycott** targets another Great Power. You need at least one colony, must be at peace, and cannot already boycott that target. The confirm on `GAME30001` shows **Cost: No treasury charge.** **Effect** lines say world-market deals between that court and your colony Tribes will not fill either way; that court cannot **purchase land**, **Grant Aid**, or **Set Subsidy** toward those colonies; and subsidies they already pay those colonies are cancelled when this resolves. The same embargo applies to every Tribe that is your colony at resolution, not one tribe chosen on the button. **Revoke Boycott** confirm says the embargo ends so that court may again trade with, purchase land in, and grant aid or subsidies toward those colonies. War between the two Great Powers also ends the boycott.
+19. **Grant Aid** requires an Embassy and enough gold. Open `DIPL20001`, choose a positive amount in £1000 steps (minimum £1000), read **Cost** and **Effect**, and tap **Submit**. That stages the one-time transfer with no second confirm. It improves standing when the turn finishes. Tap **Cancel** on the `GAME30001` row if you change your mind before **Next turn**.
+20. **Set Subsidy** uses the same `DIPL20001` dialog. It is available only toward a Minor Nation or Tribe with an Embassy (not toward another Great Power). Choose 5%, 10%, 15%, or 20%. **Cost** says there is no per-turn gold charge. **Effect** says that on deals that fill with that court you pay that percent more when buying from them and receive that percent less when selling to them. Hover or long-press the outgoing or pending subsidy line on `GAME30001` for the same meaning. **Submit** stages the subsidy with no second confirm.
+21. **Boycott** targets another Great Power. You need at least one colony, must be at peace, and cannot already boycott that target. The confirm on `GAME30001` shows **Cost: No treasury charge.** **Effect** lines say world-market deals between that court and your colony Tribes will not fill either way; that court cannot **purchase land**, **Grant Aid**, or **Set Subsidy** toward those colonies; and subsidies they already pay those colonies are cancelled when this resolves. The same embargo applies to every Tribe that is your colony at resolution, not one tribe chosen on the button. **Revoke Boycott** confirm says the embargo ends so that court may again trade with, purchase land in, and grant aid or subsidies toward those colonies. War between the two Great Powers also ends the boycott.
 
 ### Limits this turn
 
-21. After you lock **Declare War**, **Offer Peace**, **Alliance**, or **Establish Overture** toward a court, you cannot add another diplomacy decree toward that same court this turn (except **Boycott** / **Revoke Boycott**). **Grant Aid** and **Set Subsidy** may both appear toward the same court, but only once each. **Boycott** and **Revoke Boycott** each may appear once per target and do not block the other diplomacy families.
+22. After you lock **Declare War**, **Offer Peace**, **Alliance**, or **Establish Overture** toward a court, you cannot add another diplomacy decree toward that same court this turn (except **Boycott** / **Revoke Boycott**). **Grant Aid** and **Set Subsidy** may both appear toward the same court, but only once each. **Boycott** and **Revoke Boycott** each may appear once per target and do not block the other diplomacy families.
 
 ### Incoming offers after Next turn
 
-22. After you confirm **Next turn**, the game may stop and ask you to answer.
-23. On `OVL30001` **Overture dialogue**, read the spoken intro, tap **Continue**, then set **Accept** or **Reject** on every row. Each row shows plain **Effect** lines under the choices. **Submit** stays off until every offer is chosen; then tap **Submit** so the turn can finish.
-24. On `OVL40001` **Call to arms dialogue overlay**, there is no intro. Each row names the formal treaty, then **Join** or **Refuse**, with plain **Effect** lines. **Submit** is gated the same way: pick every row, then **Submit**.
-25. On `OVL50001` **Pending Intervention**, read the spoken intro and the situation, then choose **Intervene**, **Do naught**, or **Diplomatic protest**. Each choice shows an **Effect** line (protest names −10). An aggressor reaction follows before the turn continues.
+23. After you confirm **Next turn**, the game may stop and ask you to answer.
+24. On `OVL30001` **Overture dialogue**, read the spoken intro, tap **Continue**, then set **Accept** or **Reject** on every row. Each row shows plain **Effect** lines under the choices. **Submit** stays off until every offer is chosen; then tap **Submit** so the turn can finish.
+25. On `OVL40001` **Call to arms dialogue overlay**, there is no intro. Each row names the formal treaty, then **Join** or **Refuse**, with plain **Effect** lines. **Submit** is gated the same way: pick every row, then **Submit**.
+26. On `OVL50001` **Pending Intervention**, read the spoken intro and the situation, then choose **Intervene**, **Do naught**, or **Diplomatic protest**. Each choice shows an **Effect** line (protest names −10). An aggressor reaction follows before the turn continues.
+27. On `OVL90001` **Favored Trading Partner dialogue overlay**, there is no spoken intro. Each row names the offering court, then **Accept** or **Reject**, with the same first-order **Effect** meaning as the Diplomacy confirm. **Submit** stays off until every offer is chosen; then tap **Submit** so the turn can finish.
 
 ## Counsel
 
@@ -88,11 +93,11 @@ Rival allies join a defensive call to arms when their standing with the defended
 - [x] States Grant Aid’s £1000 minimum-step rule and Set Subsidy’s 5–20% range in 5-point steps.
 - [x] Distinguishes Grant Aid / Set Subsidy (`DIPL20001` **Submit**, Cost / Effect in that dialog, no second confirmation) from other diplomacy confirms.
 - [x] States Set Subsidy **Effect** as paying the chosen percent more when buying from that court and receiving that percent less when selling to them, with no per-turn gold charge, and that the `GAME30001` subsidy line repeats that meaning on hover or long-press.
-- [x] Covers per-target-per-turn limits and the same-turn post-break lock (including **Establish FTP** and the printed Alliance disabled reason).
+- [x] Covers per-target-per-turn limits and the same-turn post-break lock (including **Establish Favored partner** and the printed Alliance disabled reason).
 - [x] Explains the overture chain, Diplomatic Expertise (and the tech-table vs orders disagreement), Empire Building, and the distinct Minor/Tribe/Great Power Join Empire outcomes.
-- [x] Cites `GAME30001`, `GAME30002`, `GAME30003`, `DIPL20001`, `MAP20001`, `OVL30001`, `OVL40001`, and `OVL50001` with their player-facing flows.
+- [x] Cites `GAME30001`, `GAME30002`, `GAME30003`, `DIPL20001`, `MAP20001`, `OVL30001`, `OVL40001`, `OVL50001`, and `OVL90001` with their player-facing flows.
 - [x] Distinguishes public **World briefing** from Spy-only court reports on `GAME30003`.
-- [x] Explains pending overtures, calls to arms, and interventions without exposing hidden agenda type ids.
+- [x] Explains pending overtures, calls to arms, interventions, and Favored Trading Partner answers without exposing hidden agenda type ids.
 - [x] Explains **Relative power:** and its province, military, and naval comparison.
 
 ## Sources
@@ -109,6 +114,7 @@ Rival allies join a defensive call to arms when their standing with the defended
 - `SPEC/ui/grant-or-subsidy-dialog.md`
 - `SPEC/ui/overture-dialogue-overlay.md`
 - `SPEC/ui/call-to-arms-dialogue-overlay.md`
+- `SPEC/ui/favored-trading-partner-dialogue-overlay.md`
 - `SPEC/ui/pending-diplomacy-state.md`
 - `SPEC/ui/screens/pending-intervention-overlay.md`
 - `SPEC/ui/screen-registry.md`
