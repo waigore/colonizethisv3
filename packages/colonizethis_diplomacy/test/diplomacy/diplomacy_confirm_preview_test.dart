@@ -21,6 +21,13 @@ void main() {
       MinorNation(id: previewMinorId, displayName: 'Bavaria'),
     ],
     tribes: const [Tribe(id: previewTribeId, displayName: 'Aztec')],
+    colonyStates: const [
+      ColonyState(
+        tribeId: previewTribeId,
+        colonyOfGpId: previewHumanId,
+        sinceTurn: 1,
+      ),
+    ],
     oldWorld: RegionData(
       provinces: [
         Province(
@@ -110,5 +117,64 @@ void main() {
     expect(subsidyBody, isNot(contains('+0.2')));
     expect(subsidyBody, isNot(contains('-50')));
     expect(subsidyBody, isNot(contains('-10')));
+  });
+
+  test('boycott names every current colony not a single pinned tribe', () {
+    final game = baseGame().copyWith(
+      tribes: const [
+        Tribe(id: previewTribeId, displayName: 'Aztec'),
+        Tribe(id: 'tribe2', displayName: 'Inca'),
+      ],
+      colonyStates: const [
+        ColonyState(
+          tribeId: previewTribeId,
+          colonyOfGpId: previewHumanId,
+          sinceTurn: 1,
+        ),
+        ColonyState(
+          tribeId: 'tribe2',
+          colonyOfGpId: previewHumanId,
+          sinceTurn: 2,
+        ),
+      ],
+    );
+    final body = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.boycott,
+        targetFactionId: previewTargetGp,
+      ),
+      game: game,
+      humanPlayerId: previewHumanId,
+      targetDisplayName: 'Spain',
+    ).join('\n');
+    expect(body, contains('Aztec and Inca'));
+    expect(body, isNot(contains('tribe1')));
+    expect(body, isNot(contains('tribe2')));
+  });
+
+  test('boycott uses generic colony phrase when the roster is long', () {
+    final tribes = <Tribe>[
+      for (var i = 1; i <= 4; i++)
+        Tribe(id: 'tribe$i', displayName: 'Tribe $i'),
+    ];
+    final colonies = <ColonyState>[
+      for (var i = 1; i <= 4; i++)
+        ColonyState(
+          tribeId: 'tribe$i',
+          colonyOfGpId: previewHumanId,
+          sinceTurn: i,
+        ),
+    ];
+    final body = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.boycott,
+        targetFactionId: previewTargetGp,
+      ),
+      game: baseGame().copyWith(tribes: tribes, colonyStates: colonies),
+      humanPlayerId: previewHumanId,
+      targetDisplayName: 'Spain',
+    ).join('\n');
+    expect(body, contains('your colony tribes'));
+    expect(body, isNot(contains('tribe1')));
   });
 }
