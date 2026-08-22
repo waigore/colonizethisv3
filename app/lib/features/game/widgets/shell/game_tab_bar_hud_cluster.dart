@@ -54,100 +54,12 @@ class GameTabBarHudCluster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String usedToken = bar.isCargoUsedReliable ? '${bar.cargoUsed}' : '—';
-    final String capacityToken = '${bar.cargoCapacity}';
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
-          key: kTreasuryIndicatorKey,
-          onTap: bar.treasuryNotDefined
-              ? null
-              : () {
-                  showTreasuryDetailsPopover(
-                    context: context,
-                    anchorKey: treasuryAnchorKey,
-                    chromeBottomY: _chromeBottomY(context),
-                    l10n: l10n,
-                    treasury: bar.treasury,
-                    projectedDelta: bar.treasuryDelta,
-                    committedLines: bar.treasuryCommittedLines,
-                    showExact: showExactTreasury,
-                    onShowExactChanged: onShowExactTreasuryChanged,
-                  );
-                },
-          child: KeyedSubtree(
-            key: treasuryAnchorKey,
-            child: GameTabBarTreasuryIndicator(
-              treasuryLabel: treasuryLabel,
-              deltaLabel: deltaLabel,
-              deltaColor: deltaColor,
-              labelStyle: monoBody.copyWith(
-                color: EditorialMonoclePalette.accentDim,
-              ),
-              deltaStyle: monoBody.copyWith(fontSize: 10, color: deltaColor),
-            ),
-          ),
-        ),
-        GameTabBarCargoHoldIndicator(
-          key: cargoHoldAnchorKey,
-          cargoHoldLabel: bar.cargoHoldLabel,
-          labelStyle: monoBody,
-          numericColor: cargoNumericColor,
-          tooltip: cargoInteractive
-              ? l10n.mapControls_cargoHold_tooltip(usedToken, capacityToken)
-              : null,
-          semanticsLabel: cargoInteractive
-              ? l10n.mapControls_cargoHold_semanticsLabel(
-                  usedToken,
-                  capacityToken,
-                )
-              : bar.cargoHoldLabel,
-          onTap: cargoInteractive
-              ? () {
-                  showCargoHoldDetailsPopover(
-                    context: context,
-                    anchorKey: cargoHoldAnchorKey,
-                    chromeBottomY: _chromeBottomY(context),
-                    l10n: l10n,
-                    cargoUsed: bar.cargoUsed,
-                    cargoCapacity: bar.cargoCapacity,
-                    isCargoUsedReliable: bar.isCargoUsedReliable,
-                  );
-                }
-              : null,
-        ),
-        if (bar.showLabourFeedingIndicator)
-          GameTabBarLabourFeedingIndicator(
-            key: labourFeedingAnchorKey,
-            labourFeedingLabel: bar.labourFeedingLabel,
-            labelStyle: monoBody,
-            numericColor: labourNumericColor,
-            tooltip: labourFeedingInteractive
-                ? l10n.mapControls_labourFeeding_tooltip(
-                    bar.labourReadiness!.effectiveLabour.toString(),
-                    bar.labourReadiness!.fullCapacity.toString(),
-                  )
-                : null,
-            semanticsLabel: labourFeedingInteractive
-                ? l10n.mapControls_labourFeeding_semanticsLabel(
-                    bar.labourReadiness!.effectiveLabour.toString(),
-                    bar.labourReadiness!.fullCapacity.toString(),
-                  )
-                : bar.labourFeedingLabel,
-            onTap: labourFeedingInteractive
-                ? () {
-                    showLabourFeedingDetailsPopover(
-                      context: context,
-                      anchorKey: labourFeedingAnchorKey,
-                      chromeBottomY: _chromeBottomY(context),
-                      l10n: l10n,
-                      labourReadiness: bar.labourReadiness!,
-                      forcesFeeding: bar.forcesFeeding!,
-                    );
-                  }
-                : null,
-          ),
+        _treasuryIndicator(context),
+        _cargoHoldIndicator(context),
+        if (bar.showLabourFeedingIndicator) _labourFeedingIndicator(context),
         if (bar.oldWorldRace != null)
           OldWorldRaceChip(
             snapshot: bar.oldWorldRace!,
@@ -157,6 +69,102 @@ class GameTabBarHudCluster extends StatelessWidget {
         const SizedBox(width: GameTabBar.clusterTrailingGap),
         bar.trailing,
       ],
+    );
+  }
+
+  Widget _treasuryIndicator(BuildContext context) {
+    return GestureDetector(
+      key: kTreasuryIndicatorKey,
+      onTap: bar.treasuryNotDefined
+          ? null
+          : () {
+              showTreasuryDetailsPopover(
+                context: context,
+                anchorKey: treasuryAnchorKey,
+                chromeBottomY: _chromeBottomY(context),
+                l10n: l10n,
+                treasury: bar.treasury,
+                projectedDelta: bar.treasuryDelta,
+                committedLines: bar.treasuryCommittedLines,
+                showExact: showExactTreasury,
+                onShowExactChanged: onShowExactTreasuryChanged,
+              );
+            },
+      child: KeyedSubtree(
+        key: treasuryAnchorKey,
+        child: GameTabBarTreasuryIndicator(
+          treasuryLabel: treasuryLabel,
+          deltaLabel: deltaLabel,
+          deltaColor: deltaColor,
+          labelStyle: monoBody.copyWith(
+            color: EditorialMonoclePalette.accentDim,
+          ),
+          deltaStyle: monoBody.copyWith(fontSize: 10, color: deltaColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _cargoHoldIndicator(BuildContext context) {
+    final String usedToken = bar.isCargoUsedReliable ? '${bar.cargoUsed}' : '—';
+    final String capacityToken = '${bar.cargoCapacity}';
+    return GameTabBarCargoHoldIndicator(
+      key: cargoHoldAnchorKey,
+      cargoHoldLabel: bar.cargoHoldLabel,
+      labelStyle: monoBody,
+      numericColor: cargoNumericColor,
+      tooltip: cargoInteractive
+          ? l10n.mapControls_cargoHold_tooltip(usedToken, capacityToken)
+          : null,
+      semanticsLabel: cargoInteractive
+          ? l10n.mapControls_cargoHold_semanticsLabel(usedToken, capacityToken)
+          : bar.cargoHoldLabel,
+      onTap: cargoInteractive
+          ? () {
+              showCargoHoldDetailsPopover(
+                context: context,
+                anchorKey: cargoHoldAnchorKey,
+                chromeBottomY: _chromeBottomY(context),
+                l10n: l10n,
+                cargoUsed: bar.cargoUsed,
+                cargoCapacity: bar.cargoCapacity,
+                isCargoUsedReliable: bar.isCargoUsedReliable,
+              );
+            }
+          : null,
+    );
+  }
+
+  Widget _labourFeedingIndicator(BuildContext context) {
+    return GameTabBarLabourFeedingIndicator(
+      key: labourFeedingAnchorKey,
+      labourFeedingLabel: bar.labourFeedingLabel,
+      labelStyle: monoBody,
+      numericColor: labourNumericColor,
+      tooltip: labourFeedingInteractive
+          ? l10n.mapControls_labourFeeding_tooltip(
+              bar.labourReadiness!.effectiveLabour.toString(),
+              bar.labourReadiness!.fullCapacity.toString(),
+            )
+          : null,
+      semanticsLabel: labourFeedingInteractive
+          ? l10n.mapControls_labourFeeding_semanticsLabel(
+              bar.labourReadiness!.effectiveLabour.toString(),
+              bar.labourReadiness!.fullCapacity.toString(),
+            )
+          : bar.labourFeedingLabel,
+      onTap: labourFeedingInteractive
+          ? () {
+              showLabourFeedingDetailsPopover(
+                context: context,
+                anchorKey: labourFeedingAnchorKey,
+                chromeBottomY: _chromeBottomY(context),
+                l10n: l10n,
+                labourReadiness: bar.labourReadiness!,
+                forcesFeeding: bar.forcesFeeding!,
+              );
+            }
+          : null,
     );
   }
 }
