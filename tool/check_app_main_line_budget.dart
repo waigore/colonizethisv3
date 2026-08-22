@@ -105,7 +105,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP10001 treasury forecast gold-HUD details (Refs #4560; measured 87_687).
 // raised for MAP20001 remaining civilian work radial shortcuts (Refs #4570; measured 88_240).
 // raised for DLG30001 Move fleet hostile destination intel (Refs #4573; measured 88_116).
-const _maxMainLines = 88500;
+// raised for GAME20001 Available → Trade Market highlight (Refs #4581; measured 88_627).
+const _maxMainLines = 88700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

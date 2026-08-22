@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Wraps a tradeable Available [CtResourceCell] as a Trade deep-link control.
-///
-/// SPEC/ui/production-panel.md § Available → Trade (Refs #4581).
 class ProductionAvailableTradeCell extends StatelessWidget {
   const ProductionAvailableTradeCell({
     required this.cell,

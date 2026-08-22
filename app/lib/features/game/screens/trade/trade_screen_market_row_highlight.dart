@@ -2,9 +2,6 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-/// Counsel-star highlight chrome plus first-frame scroll for Production inbound.
-///
-/// SPEC/ui/trade-screen.md `highlightCommodityId` (Refs #4581).
 class MarketCommodityRowHighlight extends StatefulWidget {
   const MarketCommodityRowHighlight({
     required this.commodityId,
