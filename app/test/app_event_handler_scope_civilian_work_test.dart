@@ -1,53 +1,20 @@
-import 'dart:io';
-
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        kWorkTargetCounterSpy,
-        kWorkTargetExplore,
-        kWorkTargetProspect,
-        kUnitTypeExplorer,
-        kUnitTypeSpy;
+    show kWorkTargetCounterSpy, kWorkTargetExplore, kWorkTargetProspect;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
-
-class _ScopeProbe extends ConsumerWidget {
-  const _ScopeProbe();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(currentOrdersProvider);
-    return const SizedBox.shrink();
-  }
-}
+import 'app_event_handler_scope_civilian_work_support.dart';
 
 void main() {
   suppressLogsForTests();
 
-  setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_app_event_handler_scope_civilian_work');
-    await Hive.openBox<dynamic>(HiveBoxNames.games);
-  });
+  setUpAll(openCivilianWorkHive);
 
-  tearDownAll(() async {
-    await Hive.box<dynamic>(HiveBoxNames.games).clear();
-    await Hive.close();
-    final dir = Directory(
-      './.dart_tool/test_hive_app_event_handler_scope_civilian_work',
-    );
-    if (dir.existsSync()) {
-      await dir.delete(recursive: true);
-    }
-  });
+  tearDownAll(closeCivilianWorkHive);
 
   setUp(() {
     AppEventBus.reset();
@@ -58,80 +25,15 @@ void main() {
       final bus = AppEventBus.create();
       resetCivilianWorkUpsertValidationPassCountForTests();
 
-      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-      await tester.pumpWidget(
-        buildAppShell(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) {
-              ref.onDispose(bus.dispose);
-              return bus;
-            }),
-          ],
-          shellWrapper: (app) => AppEventHandlerScope(child: app),
-          child: const Scaffold(body: _ScopeProbe()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(_ScopeProbe)),
-      );
+      final container = await pumpCivilianWorkScope(tester, bus);
 
       const playerId = 'gp1';
       const explorerId = 'u_explorer';
       const secondExplorerId = 'u_explorer_two';
-      final game = Game(
-        id: 'g_upsert_validation_once',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                ownerId: playerId,
-              ),
-            ],
-            units: [
-              Unit(
-                id: explorerId,
-                type: kUnitTypeExplorer,
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|p1',
-                tileKey: 'oldWorld|p1|0|0',
-                status: UnitStatus.idle,
-              ),
-              Unit(
-                id: secondExplorerId,
-                type: kUnitTypeExplorer,
-                ownerId: playerId,
-                locationProvinceId: 'oldWorld|p1',
-                tileKey: 'oldWorld|p1|0|0',
-                status: UnitStatus.idle,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              'oldWorld|p1': ['oldWorld|p1|0|0', 'oldWorld|p1|0|1'],
-            },
-          },
-          playerVisibilityByTile: const {
-            playerId: {
-              'oldWorld|p1|0|0': 'fullyVisible',
-              'oldWorld|p1|0|1': 'unknown',
-            },
-          },
-        ),
-        players: const [
-          Player(
-            id: playerId,
-            displayName: 'Human',
-            isHuman: true,
-            treasury: 5000,
-          ),
-        ],
+      final game = civilianWorkTwoExplorerGame(
+        playerId: playerId,
+        explorerId: explorerId,
+        secondExplorerId: secondExplorerId,
       );
 
       container.read(currentGameProvider.notifier).setGame(game);
@@ -185,81 +87,20 @@ void main() {
     'CivilianMoveRequestedEvent stages validated Spy MoveOrder (Refs #4219)',
     (tester) async {
       final bus = AppEventBus.create();
-
-      await tester.pumpWidget(
-        buildAppShell(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) {
-              ref.onDispose(bus.dispose);
-              return bus;
-            }),
-          ],
-          shellWrapper: (app) => AppEventHandlerScope(child: app),
-          child: const Scaffold(body: _ScopeProbe()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(_ScopeProbe)),
-      );
+      final container = await pumpCivilianWorkScope(tester, bus);
 
       const humanId = 'h1';
       const rivalId = 'gp2';
       const spyId = 'spy1';
       const homeTile = 'oldWorld|p1|0|0';
       const destTile = 'oldWorld|p2|0|0';
-
-      final game = Game(
-        id: 'g_spy_move_handler',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                displayName: 'Home',
-                ownerId: humanId,
-              ),
-              Province(
-                id: 'oldWorld|p2',
-                regionId: 'oldWorld',
-                displayName: 'Rival Land',
-                ownerId: rivalId,
-              ),
-            ],
-            units: [
-              Unit(
-                id: spyId,
-                type: kUnitTypeSpy,
-                ownerId: humanId,
-                locationProvinceId: 'oldWorld|p1',
-                tileKey: homeTile,
-                status: UnitStatus.idle,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              'oldWorld|p1': [homeTile, 'oldWorld|p1|1|0'],
-              'oldWorld|p2': [destTile, 'oldWorld|p2|1|0'],
-            },
-          },
-          playerVisibilityByTile: const {
-            humanId: {
-              homeTile: 'fullyVisible',
-              destTile: 'fullyVisible',
-              'oldWorld|p1|1|0': 'fullyVisible',
-              'oldWorld|p2|1|0': 'fullyVisible',
-            },
-          },
-        ),
-        players: const [
-          Player(id: humanId, displayName: 'Human', isHuman: true),
-          Player(id: rivalId, displayName: 'Rival', isHuman: false),
-        ],
+      final game = civilianWorkSpyMoveGame(
+        humanId: humanId,
+        rivalId: rivalId,
+        spyId: spyId,
+        homeTile: homeTile,
+        destTile: destTile,
+        gameId: 'g_spy_move_handler',
       );
 
       container.read(currentGameProvider.notifier).setGame(game);
@@ -288,79 +129,20 @@ void main() {
     'CivilianMoveRequestedEvent clears conflicting counter-spy WorkOrder (Refs #4219)',
     (tester) async {
       final bus = AppEventBus.create();
-
-      await tester.pumpWidget(
-        buildAppShell(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) {
-              ref.onDispose(bus.dispose);
-              return bus;
-            }),
-          ],
-          shellWrapper: (app) => AppEventHandlerScope(child: app),
-          child: const Scaffold(body: _ScopeProbe()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(_ScopeProbe)),
-      );
+      final container = await pumpCivilianWorkScope(tester, bus);
 
       const humanId = 'h1';
       const rivalId = 'gp2';
       const spyId = 'spy1';
       const homeTile = 'oldWorld|p1|0|0';
       const destTile = 'oldWorld|p2|0|0';
-
-      final game = Game(
-        id: 'g_spy_move_xor_work',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                displayName: 'Home',
-                ownerId: humanId,
-              ),
-              Province(
-                id: 'oldWorld|p2',
-                regionId: 'oldWorld',
-                displayName: 'Rival Land',
-                ownerId: rivalId,
-              ),
-            ],
-            units: [
-              Unit(
-                id: spyId,
-                type: kUnitTypeSpy,
-                ownerId: humanId,
-                locationProvinceId: 'oldWorld|p1',
-                tileKey: homeTile,
-                status: UnitStatus.idle,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              'oldWorld|p1': [homeTile],
-              'oldWorld|p2': [destTile],
-            },
-          },
-          playerVisibilityByTile: const {
-            humanId: {
-              homeTile: 'fullyVisible',
-              destTile: 'fullyVisible',
-            },
-          },
-        ),
-        players: const [
-          Player(id: humanId, displayName: 'Human', isHuman: true),
-          Player(id: rivalId, displayName: 'Rival', isHuman: false),
-        ],
+      final game = civilianWorkSpyMoveGame(
+        humanId: humanId,
+        rivalId: rivalId,
+        spyId: spyId,
+        homeTile: homeTile,
+        destTile: destTile,
+        gameId: 'g_spy_move_xor_work',
       );
 
       container.read(currentGameProvider.notifier).setGame(game);

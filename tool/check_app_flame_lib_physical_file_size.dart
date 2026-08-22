@@ -9,14 +9,15 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for app flame wave-15 post-split target (≤300 physical lines).
-const int appFlameLibPhysicalFileSizeCeiling = 300;
+/// Ratchet ceiling for app flame wave-20 post-split target (≤260 physical lines).
+const int appFlameLibPhysicalFileSizeCeiling = 260;
 
 const String _flameLibRelativePath = 'app/lib/features/game/flame';
 
 /// Hot files still above the wave-15 ceiling during transition slices.
 /// Shrink-only allowlist; remove entries as splits land. Refs #4352.
-const List<String> appFlameLibPhysicalFileSizeGrandfatheredForTests = <String>[];
+const List<String> appFlameLibPhysicalFileSizeGrandfatheredForTests =
+    <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
