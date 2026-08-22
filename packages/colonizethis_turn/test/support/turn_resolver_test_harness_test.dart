@@ -90,6 +90,39 @@ void main() {
       expect(game.worldState.armies, isNotEmpty);
     });
 
+    test(
+      'turnTestOwGame and turnTestOwNwCrossRegionGame accept wave-8 fields',
+      () {
+        const ow = kRegionOldWorld;
+        const nw = kRegionNewWorld;
+        final owGame = turnTestOwGame(
+          turnNumber: 10,
+          provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+          players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
+          victory: VictoryState(
+            winnerPlayerId: 'p1',
+            type: VictoryType.military,
+            turnNumber: 10,
+          ),
+          turnTimeMapping: TurnTimeMapping.gdd01,
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M')],
+          capitalTileGrainBonusPerTurn: 0,
+        );
+        expect(owGame.victory?.winnerPlayerId, 'p1');
+        expect(owGame.turnTimeMapping, TurnTimeMapping.gdd01);
+        expect(owGame.minorNations.single.id, 'minor1');
+        expect(owGame.capitalTileGrainBonusPerTurn, 0);
+
+        final cross = turnTestOwNwCrossRegionGame(
+          ownerId: 'pl1',
+          owProvinceLocalId: 'p1',
+          nwProvinceLocalId: 'n1',
+        );
+        expect(cross.worldState.oldWorld.provinces.single.id, '$ow|p1');
+        expect(cross.worldState.newWorld.provinces.single.id, '$nw|n1');
+      },
+    );
+
     test('turnTestOwTileKey builds 1x1 OW tile keys', () {
       expect(turnTestOwTileKey('P2'), 'oldWorld|P2|0|0');
       expect(turnTestNwTileKey('N1'), 'newWorld|N1|0|0');
