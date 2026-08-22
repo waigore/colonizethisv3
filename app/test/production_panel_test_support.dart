@@ -12,8 +12,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_pan
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'app_shell_harness.dart';
-import 'panel_fixtures/production.dart'
-    show productionPanelTestGameFor;
+import 'panel_fixtures/production.dart' show productionPanelTestGameFor;
 export 'panel_fixtures/production.dart'
     show
         productionPanelTestFullPlayer,
@@ -28,9 +27,8 @@ LabourReadinessSnapshot labourReadinessForPlayer(Player player) =>
     );
 
 /// Forces-food readiness for tests that construct [ProductionPanel] directly.
-ForceFeedingSnapshot forcesFeedingForPlayer(Player player) => previewForceFeeding(
-  stockpile: player.stockpile,
-);
+ForceFeedingSnapshot forcesFeedingForPlayer(Player player) =>
+    previewForceFeeding(stockpile: player.stockpile);
 
 /// Holds allocation map in state so [ProductionPanel] rebuilds after each change
 /// (matches Riverpod-driven app behaviour; required for long-press repeat tests).
@@ -50,6 +48,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
     this.canEditLabour = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
+    this.onOpenTradeMarket,
   });
 
   final Game displayGame;
@@ -66,6 +65,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
   final Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId;
   final ProductionOpenCounselCallback? onOpenCounsel;
+  final void Function(String commodityId)? onOpenTradeMarket;
 
   @override
   State<ProductionPanelTestWrapper> createState() =>
@@ -104,6 +104,7 @@ class _ProductionPanelTestWrapperState
       starredProduceRecommendationsByRecipeId:
           widget.starredProduceRecommendationsByRecipeId,
       onOpenCounsel: widget.onOpenCounsel,
+      onOpenTradeMarket: widget.onOpenTradeMarket,
     );
   }
 }
@@ -120,8 +121,10 @@ Widget buildProductionPanel({
   ProductionLabourCallbacks? labourCallbacks,
   bool canEditLabour = true,
   Map<String, IndustryCounselRecommendation>
-  starredProduceRecommendationsByRecipeId = const {},
+      starredProduceRecommendationsByRecipeId =
+      const {},
   ProductionOpenCounselCallback? onOpenCounsel,
+  void Function(String commodityId)? onOpenTradeMarket,
   LabourReadinessSnapshot? labourReadinessOverride,
   ForceFeedingSnapshot? forcesFeedingOverride,
   double width = 800,
@@ -134,8 +137,7 @@ Widget buildProductionPanel({
         workers: player.workerPool,
         stockpile: player.stockpile,
       );
-  final forcesFeeding =
-      forcesFeedingOverride ?? forcesFeedingForPlayer(player);
+  final forcesFeeding = forcesFeedingOverride ?? forcesFeedingForPlayer(player);
   final netDeltasByCommodity = <String, int>{};
   for (final entry in desiredOutputByRecipe.entries) {
     final recipe = ProductionRecipesCatalog.byId[entry.key];
@@ -167,6 +169,7 @@ Widget buildProductionPanel({
         starredProduceRecommendationsByRecipeId:
             starredProduceRecommendationsByRecipeId,
         onOpenCounsel: onOpenCounsel,
+        onOpenTradeMarket: onOpenTradeMarket,
       ),
     ),
     viewport: Size(width, height),

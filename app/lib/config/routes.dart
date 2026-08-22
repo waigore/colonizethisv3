@@ -4,7 +4,8 @@ import 'route_paths.dart';
 import '../features/debug_log/debug_log_viewer_screen.dart';
 import '../features/game/screens/game/game_screen.dart';
 import '../features/game/screens/diplomacy/diplomacy_detail_screen.dart';
-import '../features/game/widgets/diplomacy/diplomacy_panel.dart' show FactionKind;
+import '../features/game/widgets/diplomacy/diplomacy_panel.dart'
+    show FactionKind;
 import '../features/game/screens/diplomacy/diplomacy_screen.dart';
 import '../features/game/screens/diplomacy/intelligence_council_screen.dart';
 import '../features/game/screens/production/production_screen.dart';
@@ -120,6 +121,7 @@ class Routes {
             game: game,
             player: player,
             initialTabIndex: initialTabIndex,
+            highlightCommodityId: args['highlightCommodityId'] as String?,
           ),
         );
       case RoutePaths.victory:
@@ -131,10 +133,8 @@ class Routes {
       case RoutePaths.development:
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => DevelopmentScreen(
-            game: game,
-            humanPlayerId: humanPlayerId,
-          ),
+          builder: (_) =>
+              DevelopmentScreen(game: game, humanPlayerId: humanPlayerId),
         );
       case RoutePaths.counsel:
         return MaterialPageRoute<void>(

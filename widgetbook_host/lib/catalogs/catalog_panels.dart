@@ -137,6 +137,10 @@ List<WidgetbookNode> get productionPanelDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Tap Available opens Trade',
+        builder: (context) => ProductionPanelStory(onOpenTradeMarket: (_) {}),
+      ),
     ],
   ),
 ];

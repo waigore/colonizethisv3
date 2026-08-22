@@ -161,6 +161,7 @@ Widget _tradeScreenDefaultStory({
   List<OvertureState> overtureStates = const <OvertureState>[],
   Map<String, bool>? techUnlocked,
   Game? gameOverride,
+  String? highlightCommodityId,
 }) {
   final game =
       gameOverride ??
@@ -173,7 +174,11 @@ Widget _tradeScreenDefaultStory({
   final player = game.players.first;
   return _tradeScreenProviderScope(
     initialOrders: initialOrders,
-    child: TradeScreen(game: game, player: player),
+    child: TradeScreen(
+      game: game,
+      player: player,
+      highlightCommodityId: highlightCommodityId,
+    ),
   );
 }
 
@@ -736,6 +741,11 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         builder: (context) => _tradeScreenDefaultStory(
           stockpile: const <CommodityId, int>{'timber': 80},
         ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — highlighted commodity from Production (Refs #4581)',
+        builder: (context) =>
+            _tradeScreenDefaultStory(highlightCommodityId: 'timber'),
       ),
       WidgetbookUseCase(
         name: 'Deal Book tab — empty (Refs #2993 E7)',

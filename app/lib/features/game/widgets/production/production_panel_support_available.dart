@@ -13,6 +13,7 @@ import '../../../../widgets/resource_icon.dart';
 import 'commodity_ui_helpers.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'production_available_grid.dart';
+import 'production_available_trade_cell.dart';
 import 'production_labour_helpers.dart';
 import 'production_panel_constants.dart';
 import 'production_panel_support_available_sections.dart';
@@ -32,6 +33,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
+    this.onOpenTradeMarket,
     super.key,
   });
 
@@ -47,6 +49,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
   final Orders? currentOrders;
   final ProductionLabourCallbacks? labourCallbacks;
   final bool canEditLabour;
+  final void Function(String commodityId)? onOpenTradeMarket;
 
   /// Quantity shown in Available commodity cells for tradeable stock.
   ///
@@ -64,13 +67,23 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
 
   Widget _buildCommodityCell(Commodity c, int qty, int change) {
     final name = commodityDisplayName(l10n, c.id);
-    return CtResourceCell(
+    final cell = CtResourceCell(
       key: ValueKey<String>('production_available_cell_${c.id}'),
       iconBuilder: (_) =>
           ResourceIcon(commodityId: c.id, size: CtResourceCell.leadingIconSize),
       name: name,
       quantity: qty,
       delta: change == 0 ? null : change,
+    );
+    final openTrade = onOpenTradeMarket;
+    if (openTrade == null || !isWorldMarketTradeableCommodity(c.id)) {
+      return cell;
+    }
+    return ProductionAvailableTradeCell(
+      cell: cell,
+      onOpenTrade: () => openTrade(c.id),
+      tooltip: l10n.production_availableSellableTooltip,
+      semanticLabel: l10n.production_availableOpenTradeSemantic(name),
     );
   }
 

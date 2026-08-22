@@ -91,19 +91,19 @@ Future<void> pumpTradeScreen(
   Player? player,
   Size? viewport,
   int? initialTabIndex,
+  String? highlightCommodityId,
   bool selectDealBookTab = false,
   bool globalObserve = false,
   bool canMutateViaUi = true,
   List<Override> extraOverrides = const <Override>[],
 }) async {
   final Player resolved = player ?? _humanOrFirst(game);
-  final TradeScreen screen = initialTabIndex == null
-      ? TradeScreen(game: game, player: resolved)
-      : TradeScreen(
-          game: game,
-          player: resolved,
-          initialTabIndex: initialTabIndex,
-        );
+  final TradeScreen screen = TradeScreen(
+    game: game,
+    player: resolved,
+    initialTabIndex: initialTabIndex ?? 0,
+    highlightCommodityId: highlightCommodityId,
+  );
   await pumpAppShell(
     tester,
     viewport: viewport,
@@ -148,6 +148,7 @@ Future<ProviderContainer> pumpTradeScreenWithContainer(
   List<Override> extraOverrides = const <Override>[],
   Map<String, int> initialDesiredOutputByRecipe = const <String, int>{},
   int? initialTabIndex,
+  String? highlightCommodityId,
 }) async {
   final Player resolved = player ?? _humanOrFirst(game);
   final ProviderContainer container = ProviderContainer(
@@ -176,13 +177,12 @@ Future<ProviderContainer> pumpTradeScreenWithContainer(
         .read(productionDesiredOutputProvider.notifier)
         .replaceAll(initialDesiredOutputByRecipe);
   }
-  final TradeScreen screen = initialTabIndex == null
-      ? TradeScreen(game: game, player: resolved)
-      : TradeScreen(
-          game: game,
-          player: resolved,
-          initialTabIndex: initialTabIndex,
-        );
+  final TradeScreen screen = TradeScreen(
+    game: game,
+    player: resolved,
+    initialTabIndex: initialTabIndex ?? 0,
+    highlightCommodityId: highlightCommodityId,
+  );
   await pumpAppShellWithContainer(
     tester,
     container: container,
