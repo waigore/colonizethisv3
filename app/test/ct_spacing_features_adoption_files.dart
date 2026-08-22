@@ -19,6 +19,7 @@ const List<String> ctSpacingMigratedFeatureFiles = <String>[
   // game_side_menu.dart is a de-parted barrel; panel module owns the inset.
   'lib/features/game/flame/controls/game_side_menu_panel.dart',
   'lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
+  'lib/features/game/flame/overlays/next_turn_confirmation_idle_row.dart',
   // victory_overlay.dart is a de-parted barrel; panel module owns the inset.
   'lib/features/game/flame/overlays/victory_overlay_panel.dart',
   // diplomacy_detail_screen.dart is a de-parted barrel; sections module owns the

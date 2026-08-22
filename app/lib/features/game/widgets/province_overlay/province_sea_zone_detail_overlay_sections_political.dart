@@ -4,13 +4,12 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_chrome_relation_badges.dart'
-    show DiplomacyAllianceBadge;
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/core/utils/faction_display_name.dart';
 
+import 'province_sea_zone_detail_overlay_sections_political_controls.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
     show WorldStateProvinceLookup, kRegionNewWorld, kRegionOldWorld;
@@ -95,14 +94,14 @@ Widget buildPoliticalSection({
         Text(l10n.provinceOverlay_name(name), style: bodyStyle),
         Text(l10n.provinceOverlay_owner(ownerName), style: bodyStyle),
         if (showOwnerStanding)
-          ..._buildOwnerStandingLine(
+          ...buildOwnerStandingLine(
             l10n: l10n,
             atWar: ownerStandingAtWar,
             showAllianceBadge: showOwnerAllianceBadge,
             bodyStyle: bodyStyle,
           ),
         if (showOfferPeaceControl)
-          ..._buildOfferPeaceControl(
+          ...buildOfferPeaceControl(
             l10n: l10n,
             enabled: offerPeaceEnabled,
             pending: offerPeacePending,
@@ -114,7 +113,7 @@ Widget buildPoliticalSection({
         if (sightPhrase != null)
           Text(l10n.provinceOverlay_sight(sightPhrase), style: bodyStyle),
         if (showEstablishConsulateControl)
-          ..._buildEstablishConsulateControl(
+          ...buildEstablishConsulateControl(
             l10n: l10n,
             ownerName: ownerName,
             enabled: establishConsulateEnabled,
@@ -155,113 +154,6 @@ Widget buildPoliticalSection({
       ],
     ),
   );
-}
-
-List<Widget> _buildOwnerStandingLine({
-  required AppLocalizations l10n,
-  required bool atWar,
-  required bool showAllianceBadge,
-  required TextStyle bodyStyle,
-}) {
-  final standing = atWar
-      ? l10n.provinceOverlay_ownerStandingAtWar
-      : l10n.provinceOverlay_ownerStandingAtPeace;
-  return [
-    Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(standing, style: bodyStyle),
-          if (showAllianceBadge) const DiplomacyAllianceBadge(),
-        ],
-      ),
-    ),
-  ];
-}
-
-List<Widget> _buildOfferPeaceControl({
-  required AppLocalizations l10n,
-  required bool enabled,
-  required bool pending,
-  required String? rejectionReason,
-  required VoidCallback? onTap,
-  required bool isNarrow,
-  required TextStyle bodyStyle,
-}) {
-  final label = pending
-      ? l10n.provinceOverlay_cancelOfferPeaceAction
-      : l10n.provinceOverlay_offerPeaceAction;
-  final tooltip = enabled || rejectionReason == null ? label : rejectionReason;
-  return [
-    Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          CtActionTextButton(
-            label: label,
-            tooltip: tooltip,
-            semanticLabel: !enabled && rejectionReason != null
-                ? l10n.provinceOverlay_offerPeaceDisabledSemantics(
-                    rejectionReason,
-                  )
-                : label,
-            enabled: enabled,
-            onPressed: enabled ? onTap : null,
-          ),
-          if (isNarrow && !enabled && rejectionReason != null)
-            Text(rejectionReason, style: bodyStyle),
-        ],
-      ),
-    ),
-  ];
-}
-
-List<Widget> _buildEstablishConsulateControl({
-  required AppLocalizations l10n,
-  required String ownerName,
-  required bool enabled,
-  required bool pending,
-  required String? rejectionReason,
-  required VoidCallback? onTap,
-  required bool isNarrow,
-  required TextStyle bodyStyle,
-}) {
-  final label = pending
-      ? l10n.provinceOverlay_cancelEstablishConsulateAction
-      : l10n.provinceOverlay_establishConsulateAction;
-  final tooltip = enabled || rejectionReason == null ? label : rejectionReason;
-  return [
-    Text(l10n.provinceOverlay_noConsulateWith(ownerName), style: bodyStyle),
-    Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          CtActionTextButton(
-            label: label,
-            tooltip: tooltip,
-            semanticLabel: !enabled && rejectionReason != null
-                ? l10n.provinceOverlay_establishConsulateDisabledSemantics(
-                    rejectionReason,
-                  )
-                : label,
-            enabled: enabled,
-            onPressed: enabled ? onTap : null,
-          ),
-          if (isNarrow && !enabled && rejectionReason != null)
-            Text(rejectionReason, style: bodyStyle),
-        ],
-      ),
-    ),
-  ];
 }
 
 Province? findProvinceForSeaZoneOverlay(Game game, String provinceId) =>

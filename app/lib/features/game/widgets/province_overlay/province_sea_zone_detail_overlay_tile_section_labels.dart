@@ -23,6 +23,7 @@ import 'province_sea_zone_detail_overlay_tile_section_label_text.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 export 'province_sea_zone_detail_overlay_tile_section_label_text.dart';
+export 'province_sea_zone_detail_overlay_tile_section_connectivity.dart';
 export 'province_sea_zone_detail_overlay_tile_details.dart'
     show
         kProvinceTileDetailsActionKey,
@@ -219,44 +220,4 @@ List<Widget> buildTileRoadLabelWidgets({
     ),
   );
   return [transportRow, detailsAction];
-}
-
-/// Default-surface connectivity: stranded exception only (Refs #4369).
-List<Widget> buildTileConnectivityLabelWidgets({
-  required BuildContext context,
-  required AppLocalizations l10n,
-  required Game game,
-  required String humanPlayerId,
-  required String provinceId,
-  required int? roadLevel,
-  required ProvinceTileConnectivityDisplay? tileConnectivity,
-  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
-}) {
-  if (!showDefaultStrandedCapitalLink(tileConnectivity)) {
-    return const [];
-  }
-  final bodyStyle = overlayFgBodyStyle();
-  void openDetails() {
-    showProvinceTileDetailsDialog(
-      context: context,
-      l10n: l10n,
-      game: game,
-      humanPlayerId: humanPlayerId,
-      provinceId: provinceId,
-      roadLevel: roadLevel,
-      tileConnectivity: tileConnectivity,
-      blockadeStatus: blockadeStatus,
-    );
-  }
-
-  return [
-    GestureDetector(
-      onTap: openDetails,
-      behavior: HitTestBehavior.opaque,
-      child: Text(
-        tileCapitalLinkLine(l10n, tileConnectivity!),
-        style: bodyStyle,
-      ),
-    ),
-  ];
 }

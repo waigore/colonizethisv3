@@ -10,6 +10,7 @@ import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'treasury_committed_spend.dart';
 import 'treasury_details_format.dart';
+import 'treasury_details_format_toggles.dart';
 
 /// Plain-language treasury forecast breakdown surfaced on player tap.
 class TreasuryDetailsPanel extends StatelessWidget {
@@ -79,10 +80,12 @@ class TreasuryDetailsPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: CtSpacing.s),
-            _TreasuryFormatToggles(
+            TreasuryFormatToggles(
               l10n: l10n,
               showExact: showExact,
               onShowExactChanged: onShowExactChanged,
+              exactFormatKey: exactFormatKey,
+              compactFormatKey: compactFormatKey,
             ),
             const SizedBox(height: CtSpacing.s),
             Text(
@@ -139,51 +142,13 @@ class _TreasuryDetailsRows extends StatelessWidget {
           const SizedBox(height: CtSpacing.s),
           Text(
             l10n.mapControls_treasury_details_committedHeading,
-            style: rowStyle.copyWith(
-              color: EditorialMonoclePalette.accentDim,
-            ),
+            style: rowStyle.copyWith(color: EditorialMonoclePalette.accentDim),
           ),
           for (final line in committedLines) ...<Widget>[
             const SizedBox(height: 4),
-            Text(
-              _committedLineLabel(l10n, line, showExact),
-              style: rowStyle,
-            ),
+            Text(_committedLineLabel(l10n, line, showExact), style: rowStyle),
           ],
         ],
-      ],
-    );
-  }
-}
-
-class _TreasuryFormatToggles extends StatelessWidget {
-  const _TreasuryFormatToggles({
-    required this.l10n,
-    required this.showExact,
-    required this.onShowExactChanged,
-  });
-
-  final AppLocalizations l10n;
-  final bool showExact;
-  final ValueChanged<bool> onShowExactChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        _FormatToggle(
-          key: TreasuryDetailsPanel.exactFormatKey,
-          label: l10n.mapControls_treasury_details_formatExact,
-          selected: showExact,
-          onTap: () => onShowExactChanged(true),
-        ),
-        const SizedBox(width: CtSpacing.s),
-        _FormatToggle(
-          key: TreasuryDetailsPanel.compactFormatKey,
-          label: l10n.mapControls_treasury_details_formatCompact,
-          selected: !showExact,
-          onTap: () => onShowExactChanged(false),
-        ),
       ],
     );
   }
@@ -220,48 +185,4 @@ TextStyle _treasuryDetailsRowStyle(BuildContext context) {
     fontSize: 11,
     height: 1.3,
   );
-}
-
-class _FormatToggle extends StatelessWidget {
-  const _FormatToggle({
-    super.key,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: selected
-              ? EditorialMonoclePalette.bg
-              : EditorialMonoclePalette.surface,
-          border: Border.all(
-            color: selected
-                ? EditorialMonoclePalette.accent
-                : EditorialMonoclePalette.border,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected
-                  ? EditorialMonoclePalette.accent
-                  : EditorialMonoclePalette.muted,
-              fontSize: 11,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -9,6 +9,7 @@ import 'region_map_component_render_core_overlays.dart';
 import 'region_map_component_render_markers_army.dart';
 import 'region_map_component_render_markers_selection.dart';
 import 'region_map_component_render_markers_settlements.dart';
+import 'region_map_component_render_markers_settlements_warp.dart';
 import 'region_map_component_render_markers_units.dart';
 import 'region_map_component_render_player_territory_outline.dart';
 import 'region_map_component_render_political.dart';

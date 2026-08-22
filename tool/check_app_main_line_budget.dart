@@ -106,6 +106,7 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 remaining civilian work radial shortcuts (Refs #4570; measured 88_240).
 // raised for DLG30001 Move fleet hostile destination intel (Refs #4573; measured 88_116).
 // raised for GAME20001 Available → Trade Market highlight (Refs #4581; measured 88_627).
+// raised for wave-20 host splits (Refs #4582; measured 88_684).
 const _maxMainLines = 88700;
 
 int runCheckAppMainLineBudget(

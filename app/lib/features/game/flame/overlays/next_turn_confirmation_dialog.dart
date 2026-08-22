@@ -3,9 +3,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import '../../../../config/ui_screen_ids.dart';
-import '../../widgets/civilian/civilian_unit_type_icon.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
-import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_toggle_switch.dart';
@@ -13,6 +11,7 @@ import 'package:colonizethis_logic/civilian_intel_api.dart'
     show CivilianMissingWorkOrderEntry;
 
 import '../../turn_resolution/staged_decree_review.dart';
+import 'next_turn_confirmation_idle_row.dart';
 import 'staged_decree_review_section.dart';
 
 /// Outcome of [showNextTurnConfirmationDialog].
@@ -135,7 +134,7 @@ class _NextTurnConfirmationDialogState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (final entry in widget.civiliansMissingWork)
-                      _IdleCivilianWarningRow(
+                      NextTurnIdleCivilianWarningRow(
                         key: ValueKey('idle-civilian-warning-${entry.unitId}'),
                         entry: entry,
                         bodyStyle: bodyStyle,
@@ -197,67 +196,6 @@ class _NextTurnConfirmationDialogState
                 child: Text(l10n.common_yes),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IdleCivilianWarningRow extends StatelessWidget {
-  const _IdleCivilianWarningRow({
-    super.key,
-    required this.entry,
-    required this.bodyStyle,
-    required this.mutedStyle,
-    required this.locateTooltip,
-    required this.noWorkOrderLabel,
-    required this.onGoTo,
-  });
-
-  final CivilianMissingWorkOrderEntry entry;
-  final TextStyle bodyStyle;
-  final TextStyle mutedStyle;
-  final String locateTooltip;
-  final String noWorkOrderLabel;
-  final VoidCallback? onGoTo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: CtSpacing.m),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CivilianUnitTypeIcon(unitType: entry.type),
-          const SizedBox(width: CtSpacing.m),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.type,
-                  style: bodyStyle,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  entry.locationLabel,
-                  style: mutedStyle,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  noWorkOrderLabel,
-                  style: mutedStyle,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          CtIconAction(
-            key: ValueKey('idle-civilian-locate-${entry.unitId}'),
-            icon: Icons.my_location,
-            tooltip: locateTooltip,
-            onPressed: onGoTo,
           ),
         ],
       ),

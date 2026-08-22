@@ -6,12 +6,12 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// Ratchet ceiling for hand-written catalog widgets under `app/lib/widgets/**`.
-const int appCatalogWidgetsFileSizeCeiling = 300;
+const int appCatalogWidgetsFileSizeCeiling = 260;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
 /// PR-blocking structural check: files under `app/lib/widgets/**` must stay
-/// at or below 300 physical lines (Refs #4352 AC4).
+/// at or below 260 physical lines (Refs #4352 AC4, #4582).
 int runCheckAppCatalogWidgetsFileSize(
   String repoRoot, {
   void Function(String line)? info,
@@ -21,9 +21,7 @@ int runCheckAppCatalogWidgetsFileSize(
   final logE = err ?? stderr.writeln;
   final widgetsDir = Directory(p.join(repoRoot, 'app', 'lib', 'widgets'));
   if (!widgetsDir.existsSync()) {
-    logE(
-      'check_app_catalog_widgets_file_size: app/lib/widgets not found.',
-    );
+    logE('check_app_catalog_widgets_file_size: app/lib/widgets not found.');
     return 1;
   }
 
@@ -35,10 +33,9 @@ int runCheckAppCatalogWidgetsFileSize(
     if (entity is! File || !entity.path.endsWith('.dart')) {
       continue;
     }
-    final relativePath = p.relative(entity.path, from: repoRoot).replaceAll(
-      '\\',
-      '/',
-    );
+    final relativePath = p
+        .relative(entity.path, from: repoRoot)
+        .replaceAll('\\', '/');
     if (_generatedSuffix.hasMatch(relativePath)) {
       continue;
     }
@@ -56,7 +53,7 @@ int runCheckAppCatalogWidgetsFileSize(
   if (violations.isEmpty) {
     logI(
       'check_app_catalog_widgets_file_size: no violations found '
-      '(ceiling $appCatalogWidgetsFileSizeCeiling; Refs #4352).',
+      '(ceiling $appCatalogWidgetsFileSizeCeiling; Refs #4352, #4582).',
     );
     return 0;
   }

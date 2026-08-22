@@ -3,13 +3,11 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-import '../../screens/game/game_screen_shared.dart' show kTreasuryIndicatorKey;
 import 'cargo_hold_indicator_support.dart';
 import 'labour_feeding_indicator_support.dart';
 import 'game_tab_bar.dart';
-import 'game_tab_bar_indicators.dart';
+import 'game_tab_bar_hud_cluster.dart';
 import 'game_tab_bar_region_tabs.dart';
-import 'old_world_race_chip.dart';
 import 'treasury_details_indicator_support.dart';
 
 /// Stateful implementation for [GameTabBar] (Refs #4117 de-part).
@@ -44,10 +42,6 @@ class GameTabBarState extends State<GameTabBar> {
       deltaLabel == null ? null : widget.treasuryDelta,
     );
     final AppLocalizations l10n = appL10n(context);
-    final String usedToken = widget.isCargoUsedReliable
-        ? '${widget.cargoUsed}'
-        : '—';
-    final String capacityToken = '${widget.cargoCapacity}';
     final Color cargoNumericColor = cargoHoldNumericColor(
       used: widget.cargoUsed,
       capacity: widget.cargoCapacity,
@@ -57,8 +51,8 @@ class GameTabBarState extends State<GameTabBar> {
     final bool cargoInteractive = !widget.cargoNotDefined;
     final bool labourFeedingInteractive =
         widget.showLabourFeedingIndicator && !widget.labourFeedingNotDefined;
-    final Color labourNumericColor = widget.labourReadiness == null ||
-            widget.forcesFeeding == null
+    final Color labourNumericColor =
+        widget.labourReadiness == null || widget.forcesFeeding == null
         ? EditorialMonoclePalette.muted
         : labourFeedingNumericColor(
             labourReadiness: widget.labourReadiness!,
@@ -124,151 +118,24 @@ class GameTabBarState extends State<GameTabBar> {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GestureDetector(
-                            key: kTreasuryIndicatorKey,
-                            onTap: widget.treasuryNotDefined
-                                ? null
-                                : () {
-                                    final RenderBox? tabBarBox =
-                                        context.findRenderObject()
-                                            as RenderBox?;
-                                    final double chromeBottomY =
-                                        (tabBarBox
-                                                ?.localToGlobal(Offset.zero)
-                                                .dy ??
-                                            0) +
-                                        GameTabBar.height;
-                                    showTreasuryDetailsPopover(
-                                      context: context,
-                                      anchorKey: _treasuryAnchorKey,
-                                      chromeBottomY: chromeBottomY,
-                                      l10n: l10n,
-                                      treasury: widget.treasury,
-                                      projectedDelta: widget.treasuryDelta,
-                                      committedLines:
-                                          widget.treasuryCommittedLines,
-                                      showExact: _showExactTreasury,
-                                      onShowExactChanged: (bool next) {
-                                        setState(
-                                          () => _showExactTreasury = next,
-                                        );
-                                      },
-                                    );
-                                  },
-                            child: KeyedSubtree(
-                              key: _treasuryAnchorKey,
-                              child: GameTabBarTreasuryIndicator(
-                                treasuryLabel: treasuryLabel,
-                                deltaLabel: deltaLabel,
-                                deltaColor: deltaColor,
-                                labelStyle: monoBody.copyWith(
-                                  color: EditorialMonoclePalette.accentDim,
-                                ),
-                                deltaStyle: monoBody.copyWith(
-                                  fontSize: 10,
-                                  color: deltaColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                          GameTabBarCargoHoldIndicator(
-                            key: _cargoHoldAnchorKey,
-                            cargoHoldLabel: widget.cargoHoldLabel,
-                            labelStyle: monoBody,
-                            numericColor: cargoNumericColor,
-                            tooltip: cargoInteractive
-                                ? l10n.mapControls_cargoHold_tooltip(
-                                    usedToken,
-                                    capacityToken,
-                                  )
-                                : null,
-                            semanticsLabel: cargoInteractive
-                                ? l10n.mapControls_cargoHold_semanticsLabel(
-                                    usedToken,
-                                    capacityToken,
-                                  )
-                                : widget.cargoHoldLabel,
-                            onTap: cargoInteractive
-                                ? () {
-                                    final RenderBox? tabBarBox =
-                                        context.findRenderObject()
-                                            as RenderBox?;
-                                    final double chromeBottomY =
-                                        (tabBarBox
-                                                ?.localToGlobal(Offset.zero)
-                                                .dy ??
-                                            0) +
-                                        GameTabBar.height;
-                                    showCargoHoldDetailsPopover(
-                                      context: context,
-                                      anchorKey: _cargoHoldAnchorKey,
-                                      chromeBottomY: chromeBottomY,
-                                      l10n: l10n,
-                                      cargoUsed: widget.cargoUsed,
-                                      cargoCapacity: widget.cargoCapacity,
-                                      isCargoUsedReliable:
-                                          widget.isCargoUsedReliable,
-                                    );
-                                  }
-                                : null,
-                          ),
-                          if (widget.showLabourFeedingIndicator)
-                            GameTabBarLabourFeedingIndicator(
-                              key: _labourFeedingAnchorKey,
-                              labourFeedingLabel: widget.labourFeedingLabel,
-                              labelStyle: monoBody,
-                              numericColor: labourNumericColor,
-                              tooltip: labourFeedingInteractive
-                                  ? l10n.mapControls_labourFeeding_tooltip(
-                                      widget.labourReadiness!.effectiveLabour
-                                          .toString(),
-                                      widget.labourReadiness!.fullCapacity
-                                          .toString(),
-                                    )
-                                  : null,
-                              semanticsLabel: labourFeedingInteractive
-                                  ? l10n
-                                        .mapControls_labourFeeding_semanticsLabel(
-                                      widget.labourReadiness!.effectiveLabour
-                                          .toString(),
-                                      widget.labourReadiness!.fullCapacity
-                                          .toString(),
-                                    )
-                                  : widget.labourFeedingLabel,
-                              onTap: labourFeedingInteractive
-                                  ? () {
-                                      final RenderBox? tabBarBox =
-                                          context.findRenderObject()
-                                              as RenderBox?;
-                                      final double chromeBottomY =
-                                          (tabBarBox
-                                                  ?.localToGlobal(Offset.zero)
-                                                  .dy ??
-                                              0) +
-                                          GameTabBar.height;
-                                      showLabourFeedingDetailsPopover(
-                                        context: context,
-                                        anchorKey: _labourFeedingAnchorKey,
-                                        chromeBottomY: chromeBottomY,
-                                        l10n: l10n,
-                                        labourReadiness: widget.labourReadiness!,
-                                        forcesFeeding: widget.forcesFeeding!,
-                                      );
-                                    }
-                                  : null,
-                            ),
-                          if (widget.oldWorldRace != null)
-                            OldWorldRaceChip(
-                              snapshot: widget.oldWorldRace!,
-                              narrow: widget.oldWorldRaceNarrow,
-                              onTap: widget.onOldWorldRaceTap,
-                            ),
-                          const SizedBox(width: GameTabBar.clusterTrailingGap),
-                          widget.trailing,
-                        ],
+                      child: GameTabBarHudCluster(
+                        bar: widget,
+                        l10n: l10n,
+                        monoBody: monoBody,
+                        treasuryLabel: treasuryLabel,
+                        deltaLabel: deltaLabel,
+                        deltaColor: deltaColor,
+                        cargoNumericColor: cargoNumericColor,
+                        cargoInteractive: cargoInteractive,
+                        labourFeedingInteractive: labourFeedingInteractive,
+                        labourNumericColor: labourNumericColor,
+                        showExactTreasury: _showExactTreasury,
+                        onShowExactTreasuryChanged: (bool next) {
+                          setState(() => _showExactTreasury = next);
+                        },
+                        treasuryAnchorKey: _treasuryAnchorKey,
+                        cargoHoldAnchorKey: _cargoHoldAnchorKey,
+                        labourFeedingAnchorKey: _labourFeedingAnchorKey,
                       ),
                     ),
                   ),

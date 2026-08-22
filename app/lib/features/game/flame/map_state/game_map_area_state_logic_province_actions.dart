@@ -8,6 +8,7 @@ import 'game_map_area_province_action_states_assignable.dart'
     show ProvinceInlineActionState;
 import 'game_map_area_province_action_states_establish_consulate.dart';
 import 'game_map_area_province_action_states_offer_peace.dart';
+import 'game_map_area_province_action_states_upgrade_town.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -205,7 +206,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     MapTopology? topology,
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
-  }) => GameMapAreaProvinceActionStates.upgradeTown(
+  }) => GameMapAreaProvinceActionStatesUpgradeTown.compute(
     game: game,
     humanPlayerId: humanPlayerId,
     provinceId: provinceId,
@@ -223,7 +224,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     required String provinceId,
     required MapTopology? topology,
     required ct_models.Orders currentOrders,
-  }) => GameMapAreaProvinceActionStates.establishConsulate(
+  }) => GameMapAreaProvinceActionStatesEstablishConsulate.compute(
     game: game,
     humanPlayerId: humanPlayerId,
     provinceId: provinceId,
@@ -238,7 +239,7 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     required MapTopology? topology,
     required ct_models.Orders currentOrders,
     required bool isSeaZone,
-  }) => GameMapAreaProvinceActionStates.offerPeace(
+  }) => GameMapAreaProvinceActionStatesOfferPeace.compute(
     game: game,
     humanPlayerId: humanPlayerId,
     provinceId: provinceId,
