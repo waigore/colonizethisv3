@@ -242,7 +242,14 @@ void main() {
       actionFinder: () => find.text('Boycott'),
       minorsTab: false,
       assertBody: (body) {
-        expect(body.toLowerCase(), contains('colonies'));
+        expect(body, contains('No treasury charge'));
+        expect(body, contains('will not fill in either direction'));
+        expect(body.toLowerCase(), contains('purchase land'));
+        expect(body.toLowerCase(), contains('grant aid'));
+        expect(body.toLowerCase(), contains('cancelled'));
+        expect(body, contains('Aztec'));
+        expect(body, isNot(contains('t1')));
+        expect(body, isNot(contains('-50')));
         expect(body, isNot(contains('When:')));
       },
     ),
@@ -260,7 +267,12 @@ void main() {
       actionFinder: () => find.text('Revoke Boycott'),
       minorsTab: false,
       assertBody: (body) {
+        expect(body, contains('No treasury charge'));
         expect(body.toLowerCase(), contains('embargo'));
+        expect(body.toLowerCase(), contains('purchase land'));
+        expect(body.toLowerCase(), contains('grant aid'));
+        expect(body, contains('Aztec'));
+        expect(body, isNot(contains('t1')));
         expect(body, isNot(contains('When:')));
       },
     ),

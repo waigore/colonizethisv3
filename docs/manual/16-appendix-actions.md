@@ -55,8 +55,8 @@ Most begin at `GAME30001` **Diplomacy screen** → select a court (which opens `
 | Establish Overture | `GAME30001`, or `MAP20001` Political **Establish Consulate** for a Consulate-gated Minor/Tribe province. One stage at a time; relation, treasury, target, and technology gates apply. Stages: Trade Consulate → Embassy → Non-Aggression Pact → **Join Empire** (last stage — Great Power: Empire Building tech and nearly defeated target; Minor: absorption; Tribe: colony). | Target accepts/rejects after Next turn during diplomacy; pending Consulate may be cancelled from the same map control. |
 | Grant Aid | Embassy; positive £1,000 steps; sufficient treasury. `DIPL20001` **Grant or subsidy dialog** — **Submit** stages the pending transfer (Cost / Effect shown there; no second confirmation). | Transfer and relation effect after Next turn during diplomacy. |
 | Set Subsidy | Embassy; Minor/Tribe only; 5–20% in steps of 5. `DIPL20001` **Submit** stages the pending subsidy (no second confirmation). Cost / Effect name pay-more / receive-less percents on fills with that court. | No per-turn gold charge; those percents apply only to fills with that court. |
-| Boycott | Great Power target; own at least one colony; peace; no existing boycott. | Colonial trade embargo. |
-| Revoke Boycott | Active boycott required. | Ends embargo. |
+| Boycott | Great Power target; own at least one colony; peace; no existing boycott. | Confirm: no treasury charge; blocks market fills with your colony Tribes; blocks that court’s purchase land, Grant Aid, and Set Subsidy toward them; cancels their subsidies to those colonies. |
+| Revoke Boycott | Active boycott required. | Confirm: no treasury charge; ends the embargo so that court may trade, purchase land, grant aid, and set subsidies toward your colony Tribes again. |
 
 Declare War, Offer Peace, Alliance, Break Alliance, or Establish Overture toward a court blocks further ordinary diplomacy toward that same court this turn. Grant Aid and Set Subsidy may still sit together, once each. Boycott and Revoke Boycott are separate.
 
