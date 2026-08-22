@@ -32,6 +32,7 @@ import 'incremental_candidate_validator_factory.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';
 
+export 'incremental_candidate_validator_army_naval.dart';
 export 'incremental_candidate_validator_cache.dart';
 export 'incremental_candidate_validator_replay.dart';
 
@@ -192,66 +193,5 @@ class IncrementalCandidateValidator {
       if (w.unitId == candidate.unitId) return false;
     }
     return true;
-  }
-
-  bool isArmyMoveAccepted(ArmyMoveOrder candidate) {
-    const validator = ArmyMoveValidator();
-    return validator
-        .validate(
-          candidate,
-          game,
-          playerId,
-          diplomaticOrders,
-          view,
-          topology,
-          previousRejected: false,
-          armiesById: _armiesById(),
-          factionMembership: _factionMembership(),
-        )
-        .isAccepted;
-  }
-
-  /// Lazy O(1) army lookup map. Cached for the lifetime of this validator
-  /// (single suggestion pass). Avoids rebuilding `armies.where(id == ...)` per
-  /// candidate probe (Refs #2394, SPEC/program/order-suggestions.md).
-  Map<String, Army> _armiesById() {
-    final cached = cache.armiesById;
-    if (cached != null) {
-      return cached;
-    }
-    final computed = <String, Army>{
-      for (final a in game.worldState.armies) a.id: a,
-    };
-    cache.armiesById = computed;
-    return computed;
-  }
-
-  /// One [NavalOrderValidator] per incremental pass: it snapshots fleet ids
-  /// once; reuse avoids rebuilding the fleet map on every naval probe (Refs
-  /// #2394, SPEC/program/order-suggestions.md).
-  NavalOrderValidator _navalOrderValidator() {
-    final cached = cache.navalOrderValidator;
-    if (cached != null) {
-      return cached;
-    }
-    final built = NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    );
-    cache.navalOrderValidator = built;
-    return built;
-  }
-
-  bool isNavalMoveAccepted(NavalMoveOrder candidate) {
-    return _navalOrderValidator()
-        .validateNavalMove(candidate, previousRejected: false)
-        .isAccepted;
-  }
-
-  bool isNavalMissionAccepted(NavalMissionOrder candidate) {
-    return _navalOrderValidator()
-        .validateNavalMission(candidate, previousRejected: false)
-        .isAccepted;
   }
 }

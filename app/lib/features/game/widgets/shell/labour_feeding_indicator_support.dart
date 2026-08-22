@@ -1,15 +1,13 @@
-import 'dart:async';
-
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../production/force_feeding_readiness_labels.dart';
 import '../production/labour_readiness_labels.dart';
+import 'chrome_anchored_popover.dart';
 
 /// Stable key for widget tests that open the labour/feeding details popover.
 const Key kLabourFeedingDetailsPanelKey = Key('labour_feeding_details_panel');
@@ -46,94 +44,20 @@ Future<void> showLabourFeedingDetailsPopover({
   required LabourReadinessSnapshot labourReadiness,
   required ForceFeedingSnapshot forcesFeeding,
 }) {
-  final RenderBox? renderBox =
-      anchorKey.currentContext?.findRenderObject() as RenderBox?;
-  if (renderBox == null) {
-    return Future<void>.value();
-  }
-
-  final OverlayState overlay = Overlay.of(context);
-  final Offset anchorTopLeft = renderBox.localToGlobal(Offset.zero);
-  final Size anchorSize = renderBox.size;
-  final Completer<void> closed = Completer<void>();
-
-  late OverlayEntry entry;
-  void dismiss() {
-    if (!closed.isCompleted) {
-      closed.complete();
-    }
-    entry.remove();
-  }
-
-  entry = OverlayEntry(
-    builder: (BuildContext overlayContext) {
-      final double viewportWidth = MediaQuery.sizeOf(overlayContext).width;
-      const double panelMaxWidth = 280;
-      final double panelWidth = panelMaxWidth.clamp(0, viewportWidth - 16);
-      final double anchorRight = anchorTopLeft.dx + anchorSize.width;
-      double panelLeft = anchorRight - panelWidth;
-      panelLeft = panelLeft.clamp(8, viewportWidth - panelWidth - 8);
-      final double panelTop =
-          anchorTopLeft.dy + anchorSize.height + 4 - chromeBottomY;
-
-      return Positioned(
-        top: chromeBottomY,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        child: Shortcuts(
-          shortcuts: const <ShortcutActivator, Intent>{
-            SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
-          },
-          child: Actions(
-            actions: <Type, Action<Intent>>{
-              DismissIntent: CallbackAction<DismissIntent>(
-                onInvoke: (_) {
-                  dismiss();
-                  return null;
-                },
-              ),
-            },
-            child: Focus(
-              autofocus: true,
-              child: Stack(
-                children: <Widget>[
-                  Positioned.fill(
-                    child: GestureDetector(
-                      onTap: dismiss,
-                      behavior: HitTestBehavior.opaque,
-                      child: ColoredBox(
-                        color: EditorialMonoclePalette.dialogScrim.withValues(
-                          alpha: 0.35,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: panelTop,
-                    left: panelLeft,
-                    width: panelWidth,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: LabourFeedingDetailsPanel(
-                        l10n: l10n,
-                        labourReadiness: labourReadiness,
-                        forcesFeeding: forcesFeeding,
-                        onClose: dismiss,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+  return showChromeAnchoredPopover(
+    context: context,
+    anchorKey: anchorKey,
+    chromeBottomY: chromeBottomY,
+    placement: ChromeAnchoredPopoverPlacement.rightAlignBelow,
+    panelBuilder: (VoidCallback dismiss, VoidCallback _) {
+      return LabourFeedingDetailsPanel(
+        l10n: l10n,
+        labourReadiness: labourReadiness,
+        forcesFeeding: forcesFeeding,
+        onClose: dismiss,
       );
     },
   );
-
-  overlay.insert(entry);
-  return closed.future;
 }
 
 /// Plain-language labour and feeding breakdown surfaced on player tap.

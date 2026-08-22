@@ -479,6 +479,13 @@ rules:
     runner: dart
     script: tool/check_app_lib_unit_lookup_sot.dart
 
+  - rule_id: repo.app_chrome_popover_sot
+    group: architecture
+    title: chrome HUD/legend popovers share one OverlayEntry host (Refs #4582)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_chrome_popover_sot.dart
+
   - rule_id: repo.app_province_inline_action_state
     group: architecture
     title: app/lib/features/game civilian inline-action state uses hasMatchingUnits (Refs #4559)
@@ -902,14 +909,14 @@ rules:
 
   - rule_id: repo.turn_lib_file_size
     group: structure
-    title: colonizethis_turn lib files must stay at or below the wave-7 300 physical-line ceiling (Refs #4113, #4342)
+    title: colonizethis_turn lib files must stay at or below the wave-8 250 physical-line ceiling (Refs #4113, #4342, #4583)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_lib_file_size.dart
 
   - rule_id: repo.turn_test_file_size
     group: testing
-    title: colonizethis_turn non-support test files must stay at or below the wave-4 400 physical-line ceiling (Refs #4113)
+    title: colonizethis_turn non-support test files must stay at or below the wave-8 300 physical-line ceiling (Refs #4113, #4583)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_test_file_size.dart
@@ -923,7 +930,7 @@ rules:
 
   - rule_id: repo.turn_test_integration_inline_game_ctor
     group: testing
-    title: colonizethis_turn integration scenarios must not inline Game(...) (grandfathered files exempt; Refs #4252, #4168)
+    title: colonizethis_turn integration scenarios must not inline Game(...) (empty allowlist; Refs #4252, #4168, #4583)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_test_integration_inline_game_ctor.dart
@@ -1717,7 +1724,7 @@ rules:
 
   - rule_id: repo.orders_lib_source_file_size
     group: structure
-    title: colonizethis_orders lib files must stay at or below the wave-9 300 physical-line ceiling (Refs #4508)
+    title: colonizethis_orders lib files must stay at or below the wave-10 250 physical-line ceiling (Refs #4587)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_lib_source_file_size.dart

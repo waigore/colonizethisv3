@@ -22,12 +22,7 @@ Set<String> armyMovePlayerOwnedProvinceIds({
   if (view != null) {
     return ownedProvinceIdsFromView(view, playerId);
   }
-  return {
-    for (final p in ProvinceOwnerCache.of(
-      game.worldState,
-    ).provincesOwnedBy(playerId))
-      toFullProvinceId(p.regionId, p.id),
-  };
+  return ownedProvinceIdsForPlayer(game.worldState, playerId);
 }
 
 /// Destination province ids for army moves (Military Units picker parity): adjacent

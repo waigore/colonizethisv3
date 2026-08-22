@@ -4,23 +4,16 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// SPEC: SPEC/program/repo-lint.md (Refs #4252, #4168).
+/// SPEC: SPEC/program/repo-lint.md (Refs #4252, #4168, #4583).
 ///
-/// Forbid new inline `Game(` constructor calls under
-/// `packages/colonizethis_turn/test/support/integration/**`. Existing
-/// grandfathered scenario files may retain inline scaffolding until migrated to
-/// harness builders.
+/// Forbid inline `Game(` constructor calls under
+/// `packages/colonizethis_turn/test/support/integration/**`. Wave 8 emptied
+/// the wave-5 grandfather allowlist; use harness builders instead.
 const _integrationPrefix =
     'packages/colonizethis_turn/test/support/integration/';
 
-/// Grandfathered integration scenario files that still inline `Game(` (Refs
-/// #4168 wave-5 deferral). New integration files must not add inline `Game(`.
-const _allowlistedRelativePaths = <String>{
-  'packages/colonizethis_turn/test/support/integration/resolve_turn_combat_movement_dialogue_scenarios.dart',
-  'packages/colonizethis_turn/test/support/integration/resolve_turn_diplomacy_victory_endgame_scenarios.dart',
-  'packages/colonizethis_turn/test/support/integration/resolve_turn_diplomacy_victory_overtures_scenarios.dart',
-  'packages/colonizethis_turn/test/support/integration/resolve_turn_economy_continued_scenarios.dart',
-};
+/// Empty after wave 8 (#4583); shrink-only if any path is ever re-added.
+const _allowlistedRelativePaths = <String>{};
 
 /// Matches an inline `Game(` constructor call (standalone identifier, not
 /// `gameWithTwoGps(` etc.).
@@ -48,7 +41,7 @@ String? turnTestIntegrationInlineGameCtorViolationReason(
   }
   return 'constructs Game(...) inline; use harness builders from '
       '`test/support/turn_*_test_harness.dart` or '
-      '`turn_resolver_test_harness.dart` (Refs #4252, #4168)';
+      '`turn_resolver_test_harness.dart` (Refs #4252, #4168, #4583)';
 }
 
 String _stripLineComments(String content) {

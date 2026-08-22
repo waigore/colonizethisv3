@@ -106,6 +106,7 @@ void main() {
       expect(const NewGameCreatedEvent(gameId: 'g1').gameId, 'g1');
       expect(const InterventionRequiredEvent(prompts: []).prompts, isEmpty);
       expect(const CallToArmsRequiredEvent(pending: []).pending, isEmpty);
+      expect(const FtpRequiredEvent(offers: []).offers, isEmpty);
       expect(
         const AppNavalCombatResultEvent(
           seaZoneId: 'sz1',

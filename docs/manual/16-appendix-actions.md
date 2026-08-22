@@ -43,14 +43,15 @@ A **Great Power** is a playable nation at the map table. Your **Home Army** and 
 
 Most begin at `GAME30001` **Diplomacy screen** → select a court (which opens `GAME30002` **Diplomacy detail screen**, or use list-row actions on `GAME30001`) → choose a printed action and confirm, then resolve after Next turn during diplomacy. The first Consulate stage also has a focused entry at `MAP20001` Political when that missing relationship blocks Explore or Prospect. **Offer Peace** is also available on `MAP20001` Political when the province owner is at war with you.
 
-**Counsel.** The Diplomacy screen also offers **Establish FTP** (Favored Trading Partner). The orders catalog in this chapter’s Sources lists diplomacy decree types but does not name an FTP decree type — both are recorded here; this handbook does not decide which document is authoritative.
+**Counsel.** The Diplomacy screen also offers **Establish Favored partner**. That treaty prefers fills at the same bid rank; it does not change prices and does not beat First right of refusal.
 
 | Decree | Cost / key refusal | Result |
 |---|---|---|
 | Declare War | Must be at peace; may accompany an invasion. Confirm names other courts that may be called to defend or asked to intervene. | War before movement after Next turn. |
 | Offer Peace | Must be at war; target must accept. `GAME30001` row, or `MAP20001` Political when that province’s owner is at war with you. | Peace if accepted; borders unchanged. |
 | Alliance | Great Power only; peace; no existing formal alliance. | Treaty if accepted. |
-| Break Alliance | Formal alliance required. `GAME30001` panel **Break Alliance** confirmation is immediate for the human player. | Treaty ends immediately; same-pair alliance, overture, aid, subsidy, and FTP blocked until next turn; Declare War and Offer Peace remain allowed. |
+| Break Alliance | Formal alliance required. `GAME30001` panel **Break Alliance** confirmation is immediate for the human player. | Treaty ends immediately; same-pair alliance, overture, aid, subsidy, and Favored Trading Partner blocked until next turn; Declare War and Offer Peace remain allowed. |
+| Establish Favored partner | Great Power target; Embassy; peace. Confirm names same-rank fill preference, unchanged prices, and that First right still wins. | Treaty if accepted; matching tie-break after Next turn. |
 | Establish Overture | `GAME30001`, or `MAP20001` Political **Establish Consulate** for a Consulate-gated Minor/Tribe province. One stage at a time; relation, treasury, target, and technology gates apply. Stages: Trade Consulate → Embassy → Non-Aggression Pact → **Join Empire** (last stage — Great Power: Empire Building tech and nearly defeated target; Minor: absorption; Tribe: colony). | Target accepts/rejects after Next turn during diplomacy; pending Consulate may be cancelled from the same map control. |
 | Grant Aid | Embassy; positive £1,000 steps; sufficient treasury. `DIPL20001` **Grant or subsidy dialog** — **Submit** stages the pending transfer (Cost / Effect shown there; no second confirmation). | Transfer and relation effect after Next turn during diplomacy. |
 | Set Subsidy | Embassy; Minor/Tribe only; 5–20% in steps of 5. `DIPL20001` **Submit** stages the pending subsidy (no second confirmation). Cost / Effect name pay-more / receive-less percents on fills with that court. | No per-turn gold charge; those percents apply only to fills with that court. |
@@ -77,7 +78,7 @@ Declare War, Offer Peace, Alliance, Break Alliance, or Establish Overture toward
 
 ## The other courts
 
-Other Great Powers submit comparable decrees under the same validation and turn order. Their diplomacy may pause the turn until you answer through `OVL30001` **Overture dialogue**, `OVL40001` **Call to arms dialogue overlay**, or `OVL50001` **Pending intervention overlay**.
+Other Great Powers submit comparable decrees under the same validation and turn order. Their diplomacy may pause the turn until you answer through `OVL30001` **Overture dialogue**, `OVL40001` **Call to arms dialogue overlay**, `OVL50001` **Pending intervention overlay**, or `OVL90001` **Favored Trading Partner dialogue overlay**.
 
 ## Consequences
 
@@ -138,5 +139,6 @@ Other Great Powers submit comparable decrees under the same validation and turn 
 - `SPEC/ui/turn-news-dialog.md`
 - `SPEC/ui/overture-dialogue-overlay.md`
 - `SPEC/ui/call-to-arms-dialogue-overlay.md`
+- `SPEC/ui/favored-trading-partner-dialogue-overlay.md`
 - `SPEC/ui/screens/pending-intervention-overlay.md`
 - `SPEC/ui/empire-buttons.md`

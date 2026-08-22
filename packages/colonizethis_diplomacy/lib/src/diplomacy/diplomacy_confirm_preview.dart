@@ -8,6 +8,7 @@ import 'diplomacy_declare_war_third_party_preview.dart';
 import 'diplomacy_relation_constants.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_resolver.dart';
+import 'favored_trading_partner_preview.dart';
 
 /// Short structured confirm body lines (Cost / Effect / When as applicable).
 List<String> buildDiplomacyConfirmPreviewLines({
@@ -93,10 +94,8 @@ List<String> _breakAlliance(String target) => [
   'Effect: Other Great Powers take a lesser hit to standing with you.',
 ];
 
-List<String> _establishFtp(String target) => [
-  'Cost: No treasury charge.',
-  'Effect: Offers favoured-trading-partner terms with $target if they accept.',
-];
+List<String> _establishFtp(String target) =>
+    favoredTradingPartnerConfirmLines(target);
 
 List<String> _boycott(String target) => [
   'Cost: No treasury charge.',

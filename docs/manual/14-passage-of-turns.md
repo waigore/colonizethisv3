@@ -25,7 +25,7 @@ The campaign calendar advances with the turn. By default, turn 1 is 1500; turns 
 11. Empty research seats or funding set to **None** are **not** listed here: holding gold back from research is a normal choice. Review `GAME40001` **Technology screen** only when you mean to. A funded research assignment you already set can appear under **Staged this turn**; unused seats still do not.
 12. Choose **Yes** to commit the displayed turn, or **No** to keep planning.
 13. After **Yes**, a **Processing Turn** screen appears. You cannot close it, tap the map, or tap **Next turn** until the turn finishes. The three-line button still opens `GAME50001` **Game side menu**. **Game Paused** / `SHEL40001` **Pause menu panel** does not open until **Processing Turn** closes.
-14. The turn may pause when diplomacy needs your answer. Give that answer on `OVL30001` **Overture dialogue**, `OVL50001` **Pending intervention overlay**, or `OVL40001` **Call to arms dialogue overlay** before the rest of the turn can continue.
+14. The turn may pause when diplomacy needs your answer. Give that answer on `OVL30001` **Overture dialogue**, `OVL50001` **Pending intervention overlay**, `OVL40001` **Call to arms dialogue overlay**, or `OVL90001` **Favored Trading Partner dialogue overlay** before the rest of the turn can continue.
 
 ### What happens after Next turn
 
@@ -115,7 +115,7 @@ Their choices are not passive. A rival may strengthen its industry, seek an alli
 - [ ] Explains the map tab-bar labour readout (`effective/full capacity`) before **Next turn**, including empty-pool `0/0`, colour tiers, and popover detail without blocking end turn.
 - [ ] Explains ending a turn via operable `DLG60001` **Next turn confirmation**, including both titles, the turn-number body, **Staged this turn**, **Review decrees**, go-to without ending the turn, **No work order** rows, and **Processing Turn**.
 - [ ] States that `DLG60001` may warn about idle Explorer, Builder, Engineer, Merchant, and Rail Builder civilians (not Spies) but does **not** warn about empty or unfunded research seats.
-- [ ] Summarizes what happens after **Next turn** in the game’s fixed order, including recipes and unused labour, and states that results appear after that work, including possible diplomacy answers on `OVL30001`, `OVL50001`, and `OVL40001`.
+- [ ] Summarizes what happens after **Next turn** in the game’s fixed order, including recipes and unused labour, and states that results appear after that work, including possible diplomacy answers on `OVL30001`, `OVL50001`, `OVL40001`, and `OVL90001`.
 - [ ] Documents `DLG50001` **Turn news dialog**, **No major events last turn.**, victory precedence, and the spy-report **open Intelligence** line to `GAME30003` **Intelligence Council**; documents operable `OVL70001` **Player turn event feed** (newspaper button after treasury and cargo; hidden default; badge), including spy-court, combat, discovery, and medal taps.
 - [ ] Documents last-turn pulses on `MAP10001` **Empire overview / map area** after turn news (or after **View Final State** on military victory or **Campaign complete**), Old/New World tab switch, Skip/tap without opening panels, the six-place cap, and that the feed keeps the full list.
 - [ ] Documents `SHEL40001` pause actions plus `DLG70001` saving (20-save cap), `DLG80001` loading, and `DLG90001` settings (no-work-order switch immediate; map themes on restart).
@@ -146,6 +146,7 @@ Their choices are not passive. A rival may strengthen its industry, seek an alli
 - `SPEC/ui/overture-dialogue-overlay.md`
 - `SPEC/ui/screens/pending-intervention-overlay.md`
 - `SPEC/ui/call-to-arms-dialogue-overlay.md`
+- `SPEC/ui/favored-trading-partner-dialogue-overlay.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/trade-screen.md`

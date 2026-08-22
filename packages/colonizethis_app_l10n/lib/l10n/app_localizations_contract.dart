@@ -500,6 +500,18 @@ abstract class AppLocalizations {
   /// First-order Refuse effect under each call-to-arms row (Refs #4364).
   String game_callToArms_effectRefuse(String defender);
 
+  /// Title when the human must Accept or Reject Favored Trading Partner offers.
+  String get game_ftp_title;
+
+  /// Short explanation above incoming Favored Trading Partner rows.
+  String get game_ftp_intro;
+
+  /// Accept an incoming Favored Trading Partner offer.
+  String get game_ftp_accept;
+
+  /// Reject an incoming Favored Trading Partner offer.
+  String get game_ftp_reject;
+
   /// Error banner when intervention Yarn fails to load.
   String game_intervention_loadError(String error);
 

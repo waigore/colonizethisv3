@@ -71,7 +71,7 @@ void main() {
         findsNothing,
       );
       expect(
-        find.descendant(of: gp2Row(), matching: find.text('Establish FTP')),
+        find.descendant(of: gp2Row(), matching: find.text('Establish Favored partner')),
         findsNothing,
       );
     });
@@ -91,7 +91,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: gp2Row(), matching: find.text('Establish FTP')),
+        find.descendant(of: gp2Row(), matching: find.text('Establish Favored partner')),
         findsOneWidget,
       );
       expect(

@@ -30,7 +30,7 @@ If a Merchant finished **Purchase land** on a Minor Nation or Tribe tile, that l
 2. **Overseas profit** — when another Great Power buys those goods, you receive a treasury share that grows with how friendly that court is toward the seller (hidden relation). Other Great Powers that hold an **Embassy** with the seller may receive a smaller share (one tenth of their relation portion), even if they do not own the tile. Embassy holders can still receive that smaller share on Minor or Tribe sales when no tile was purchased.
 3. **Riches** from a purchased gold, silver, gems, diamonds, or spices tile go into **your** treasury, not the Minor’s.
 
-**Favored Trading Partner** is a diplomacy agreement that only breaks ties inside the same bid rank when a Great Power sells; it never beats first right of refusal.
+**Favored Trading Partner** is a diplomacy agreement you offer with **Establish Favored partner** on `GAME30001` (or answer on `OVL90001` when a rival offers it). It only breaks ties inside the same bid rank when a Great Power sells; it never beats first right of refusal, and it does not change prices.
 
 When a Minor Nation or Tribe sells and several Great Powers bid at the same rank (after first-right fills), buyers who hold a **Consulate** or higher with that seller are served first, then by hidden relation. Great-Power sellers keep the ordinary order. This never beats first right of refusal either.
 
@@ -112,6 +112,7 @@ When a rival court’s treasury runs low, it leans toward the market: sell surpl
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/grant-or-subsidy-dialog.md`
 - `SPEC/ui/diplomacy-panel.md`
+- `SPEC/ui/favored-trading-partner-dialogue-overlay.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ui/empire-buttons.md`
 - `SPEC/ui/player-turn-event-feed.md`

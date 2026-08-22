@@ -887,6 +887,22 @@
       }
     }
   },
+  "game_ftp_title": "Favored Trading Partner",
+  "@game_ftp_title": {
+    "description": "Title when the human must Accept or Reject Favored Trading Partner offers (OVL90001, Refs #4586)."
+  },
+  "game_ftp_intro": "A rival court offers Favored Trading Partner. Accept or reject each offer. This prefers fills at the same rank; it does not change prices and does not beat First right of refusal.",
+  "@game_ftp_intro": {
+    "description": "Short explanation above incoming Favored Trading Partner rows (Refs #4586)."
+  },
+  "game_ftp_accept": "Accept",
+  "@game_ftp_accept": {
+    "description": "Accept an incoming Favored Trading Partner offer."
+  },
+  "game_ftp_reject": "Reject",
+  "@game_ftp_reject": {
+    "description": "Reject an incoming Favored Trading Partner offer."
+  },
   "game_intervention_loadError": "Could not load intervention dialogue: {error}",
   "@game_intervention_loadError": {
     "description": "Error banner when intervention Yarn fails to load.",
