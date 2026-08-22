@@ -192,7 +192,7 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     },
   ),
   (
-    name: 'boycott states colony trade embargo',
+    name: 'boycott states full colony embargo effects',
     order: const DiplomaticOrder(
       type: DiplomaticOrderType.boycott,
       targetFactionId: previewTargetGp,
@@ -200,12 +200,20 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     targetDisplayName: 'Spain',
     assertLines: (lines, body) {
       expect(body, contains('No treasury charge'));
-      expect(body.toLowerCase(), contains('colonies'));
+      expect(body, contains('will not fill in either direction'));
+      expect(body.toLowerCase(), contains('purchase land'));
+      expect(body.toLowerCase(), contains('grant aid'));
+      expect(body.toLowerCase(), contains('subsid'));
+      expect(body.toLowerCase(), contains('cancelled'));
+      expect(body, contains('Aztec'));
+      expect(body, isNot(contains(previewTribeId)));
+      expect(body, isNot(contains('-50')));
+      expect(body, isNot(contains('-10')));
       expect(lines.any((l) => l.startsWith('When:')), isFalse);
     },
   ),
   (
-    name: 'revoke boycott ends trade embargo copy',
+    name: 'revoke boycott restores trade and court work copy',
     order: const DiplomaticOrder(
       type: DiplomaticOrderType.revokeBoycott,
       targetFactionId: previewTargetGp,
@@ -214,8 +222,11 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     assertLines: (lines, body) {
       expect(body, contains('No treasury charge'));
       expect(body.toLowerCase(), contains('embargo'));
+      expect(body.toLowerCase(), contains('purchase land'));
+      expect(body.toLowerCase(), contains('grant aid'));
+      expect(body, contains('Aztec'));
+      expect(body, isNot(contains(previewTribeId)));
       expect(lines.any((l) => l.startsWith('When:')), isFalse);
     },
   ),
 ];
-
