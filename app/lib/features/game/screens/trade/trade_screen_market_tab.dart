@@ -43,7 +43,6 @@
 /// above the list when its plumbing arrives — Refs #2988 §UI Design).
 library;
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,11 +68,13 @@ class MarketTabContent extends ConsumerWidget {
     required this.game,
     required this.playerId,
     required this.canEdit,
+    this.highlightCommodityId,
   });
 
   final Game game;
   final String playerId;
   final bool canEdit;
+  final String? highlightCommodityId;
 
   /// Rendered when a commodity has no entry in [WorldMarketState.prices]
   /// (typically only happens in unit tests / Widgetbook stories that
@@ -115,10 +116,12 @@ class MarketTabContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final Orders orders = ref.watch(currentOrdersProvider);
-    final CurrentOrdersNotifier ordersNotifier =
-        ref.read(currentOrdersProvider.notifier);
-    final Map<String, int> desiredOutputByRecipe =
-        ref.watch(productionDesiredOutputProvider);
+    final CurrentOrdersNotifier ordersNotifier = ref.read(
+      currentOrdersProvider.notifier,
+    );
+    final Map<String, int> desiredOutputByRecipe = ref.watch(
+      productionDesiredOutputProvider,
+    );
     final bus = ref.read(appEventBusProvider);
     int? readProjectedTreasuryDelta() {
       try {

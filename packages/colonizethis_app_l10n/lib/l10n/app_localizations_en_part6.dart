@@ -481,4 +481,18 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
   String get tradeDealBook_detailNoMatchingBuys =>
       'Wait for rivals to bid on this good, or lower your offer price next turn.';
+
+  @override
+  String provinceOverlay_extractionQuantityPartial(
+    int effective,
+    int full,
+    String name,
+  ) {
+    return '$effective ($full) $name';
+  }
+
+  @override
+  String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
+    return ' (incl. +$bonus capital grain bonus)';
+  }
 }

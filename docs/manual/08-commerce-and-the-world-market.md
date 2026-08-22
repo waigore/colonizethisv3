@@ -40,7 +40,7 @@ A **boycott** (Chapter 10) can leave bids and colony-Tribe sales between the boy
 
 ### Where you act in the UI
 
-1. On `GAME10001` **Game screen**, tap the **Trade** icon on the left of the map to open `GAME60001` **Trade screen**.
+1. On `GAME10001` **Game screen**, tap the **Trade** icon on the left of the map to open `GAME60001` **Trade screen**. You can also tap a tradeable good on `GAME20001` **Production screen** **Available**; that opens the same Trade screen on **Market**, already focused on that good.
 2. Stay on the **Market** tab. Goods are grouped under **Food**, **Raw Materials**, and **Manufactured**.
 3. On a row, tap **None**, **Bid**, or **Offer**, then use **−** / **+** to set quantity. Bid and offer cannot both be on for the same good.
 4. Watch **Bid goods: U of C**, **Cargo remaining: X**, and **Bid budget: R of B**. Tap **?** beside a limit for a short explanation.
@@ -49,7 +49,7 @@ A **boycott** (Chapter 10) can leave bids and colony-Tribe sales between the boy
 7. A number in parentheses **(N)** beside the name is how many you can still offer after industry reservations and staged offers.
 8. When you still hold first right on that good, **First right** appears beside the name — rest on it (or press and hold) for bid priority and overseas profit. Riches never appear as rows.
 9. On **Deal Book**, read **Your bids** and **Your offers**. Filled lines sit under **Filled** as **Timber — 5 at £30 = £150** (display name, not a catalog id). Leftovers sit under **Still open** as **Timber — 5**, sometimes with a short reason beneath (for example treasury ran short, no matching sales last turn). Tap **Details** on a reason line for one next-step hint. When a leftover bid or offer did not carry forward because cargo or stores no longer covered it, **Did not stay open** lists that vanished order. Filled lines may show **First right** or **Favored partner**. When rivals bought goods under your purchased-tile rights last turn, **Overseas profit** lists each credited good, quantity, and treasury amount. Totals are **Total spent** and **Total received**. Empty panels read **No bids placed last turn.** / **No offers placed last turn.**
-10. On `GAME20001` **Production screen**, the **Available** amounts for tradeable goods already match the Market **(N)** figure — they are not a separate labelled readout.
+10. On `GAME20001` **Production screen**, the **Available** amounts for tradeable goods already match the Market **(N)** figure — they are not a separate labelled readout. Tap that cell to jump to this Market row.
 11. After you confirm **Next turn**, the game matches deals. Confirm fills on Deal Book and on `OVL70001` **Player turn event feed**. Market lines look like **Market: bought £240 · sold £160**. Overseas-profit lines look like **Overseas profit credited: £… Tap to open Deal Book.** Tap either kind of line to open Deal Book. Do not look to turn news for market fills.
 
 ### Trade Counsel

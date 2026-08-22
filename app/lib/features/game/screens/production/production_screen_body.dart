@@ -141,6 +141,18 @@ class ProductionScreenBody extends ConsumerWidget {
         }),
       );
     }
+
+    void openTradeMarket(String commodityId) {
+      bus.emit(
+        NavigateToRouteEvent(Routes.trade, {
+          'game': displayGame,
+          'humanPlayerId': displayPlayer.id,
+          'initialTabIndex': 0,
+          'highlightCommodityId': commodityId,
+        }),
+      );
+    }
+
     final labourCallbacks = ProductionLabourCallbacks(
       onAppendRecruitOrder: (tier) {
         if (!canEdit) return;
@@ -198,11 +210,14 @@ class ProductionScreenBody extends ConsumerWidget {
           : null,
       onDesiredOutputChanged: (next) {
         if (!canEdit) return;
-        shellRef.read(productionDesiredOutputProvider.notifier).replaceAll(next);
+        shellRef
+            .read(productionDesiredOutputProvider.notifier)
+            .replaceAll(next);
       },
       starredProduceRecommendationsByRecipeId:
           starredProduceRecommendationsByRecipeId,
       onOpenCounsel: openCounsel,
+      onOpenTradeMarket: openTradeMarket,
     );
     if (kCtE2EEnabled) {
       updateCtE2eProductionPanelSnapshotIfEnabled(
@@ -217,7 +232,10 @@ class ProductionScreenBody extends ConsumerWidget {
           tileMapByRegion: panelTileMaps,
         ),
       );
-      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: productionPanel);
+      return KeyedSubtree(
+        key: kCtE2EProductionPanelRootKey,
+        child: productionPanel,
+      );
     }
     return productionPanel;
   }

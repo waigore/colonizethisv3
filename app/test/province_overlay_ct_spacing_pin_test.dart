@@ -90,9 +90,11 @@ void main() {
     });
 
     test('tile road caption uses labelSmall TextTheme slot', () {
-      // Road/rail gloss caption styling lives in the Tile details panel (#4369).
+      // Road/rail gloss caption styling lives in the Tile details panel (#4369),
+      // extracted to the dialog file during overlay file-size split.
       final source = File(
-        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart',
+        'lib/features/game/widgets/province_overlay/'
+        'province_sea_zone_detail_overlay_tile_details_dialog.dart',
       ).readAsStringSync();
       expect(source, contains('textTheme.labelSmall'));
       expect(
