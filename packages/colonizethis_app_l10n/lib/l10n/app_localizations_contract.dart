@@ -2018,6 +2018,12 @@ abstract class AppLocalizations {
   /// Production panel subheader for available resources.
   String get production_available;
 
+  /// On-request copy for tradeable Available quantity (sellable headroom).
+  String get production_availableSellableTooltip;
+
+  /// Semantics label for opening Trade from a tradeable Available cell.
+  String production_availableOpenTradeSemantic(String name);
+
   /// Production panel category heading.
   String get production_food;
 

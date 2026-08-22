@@ -14,7 +14,6 @@
 /// swap each tab body in place without remounting the strip.
 library;
 
-
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -34,12 +33,14 @@ class TradeScreenTabsBody extends StatelessWidget {
     required this.playerId,
     required this.canEdit,
     this.initialTabIndex = 0,
+    this.highlightCommodityId,
   });
 
   final Game game;
   final String playerId;
   final bool canEdit;
   final int initialTabIndex;
+  final String? highlightCommodityId;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +60,7 @@ class TradeScreenTabsBody extends StatelessWidget {
               game: game,
               playerId: playerId,
               canEdit: canEdit,
+              highlightCommodityId: highlightCommodityId,
             ),
             DealBookTabContent(
               key: TradeScreenDealBookKeys.dealBookTabBodyKey,

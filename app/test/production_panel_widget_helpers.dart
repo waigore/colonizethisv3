@@ -26,6 +26,7 @@ Future<void> pumpProductionPanelSettled(
   Map<String, int> desiredOutputByRecipe = const {},
   ValueChanged<Map<String, int>>? onDesiredOutputChanged,
   VoidCallback? onOpenCommodityBreakdown,
+  void Function(String commodityId)? onOpenTradeMarket,
   double width = 800,
   double height = 500,
 }) async {
@@ -36,6 +37,7 @@ Future<void> pumpProductionPanelSettled(
       desiredOutputByRecipe: desiredOutputByRecipe,
       onDesiredOutputChanged: onDesiredOutputChanged,
       onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+      onOpenTradeMarket: onOpenTradeMarket,
       width: width,
       height: height,
     ),

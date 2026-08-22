@@ -251,6 +251,15 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get production_available => 'Available';
 
   @override
+  String get production_availableSellableTooltip =>
+      'How many you can still sell after industry reservations and offers '
+      'already staged. Tap to open Trade.';
+
+  @override
+  String production_availableOpenTradeSemantic(String name) =>
+      'Open Trade for $name';
+
+  @override
   String get production_food => 'Food';
 
   @override

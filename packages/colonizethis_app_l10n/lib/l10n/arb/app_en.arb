@@ -3183,6 +3183,19 @@
   "@production_available": {
     "description": "Production panel subheader for available resources."
   },
+  "production_availableSellableTooltip": "How many you can still sell after industry reservations and offers already staged. Tap to open Trade.",
+  "@production_availableSellableTooltip": {
+    "description": "Tooltip for tradeable Production Available cells: sellable headroom meaning and tap opens Trade."
+  },
+  "production_availableOpenTradeSemantic": "Open Trade for {name}",
+  "@production_availableOpenTradeSemantic": {
+    "description": "Semantics label for tapping a tradeable Available cell to open Trade Market.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "production_food": "Food",
   "@production_food": {
     "description": "Production panel category heading."

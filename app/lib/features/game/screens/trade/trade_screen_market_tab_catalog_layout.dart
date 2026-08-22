@@ -10,6 +10,7 @@ import 'trade_market_staging_context.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_tab.dart';
 import 'trade_screen_market_tab_catalog_row.dart';
+import 'trade_screen_market_row_highlight.dart';
 
 extension MarketTabContentCatalogLayout on MarketTabContent {
   List<Widget> buildNarrowCommodityList({
@@ -24,17 +25,23 @@ extension MarketTabContentCatalogLayout on MarketTabContent {
     return <Widget>[
       for (int index = 0; index < commodities.length; index++)
         Padding(
-          key: TradeScreenMarketKeys.marketCommodityRowKey(commodities[index].id),
+          key: TradeScreenMarketKeys.marketCommodityRowKey(
+            commodities[index].id,
+          ),
           padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
-          child: buildCommodityRow(
-            commodity: commodities[index],
-            compact: false,
-            staging: staging,
-            nameStyle: nameStyle,
-            priceStyle: priceStyle,
-            volumeStyle: volumeStyle,
-            quantityStyle: quantityStyle,
-            l10n: l10n,
+          child: MarketCommodityRowHighlight(
+            commodityId: commodities[index].id,
+            highlighted: highlightCommodityId == commodities[index].id,
+            child: buildCommodityRow(
+              commodity: commodities[index],
+              compact: false,
+              staging: staging,
+              nameStyle: nameStyle,
+              priceStyle: priceStyle,
+              volumeStyle: volumeStyle,
+              quantityStyle: quantityStyle,
+              l10n: l10n,
+            ),
           ),
         ),
     ];
@@ -52,8 +59,9 @@ extension MarketTabContentCatalogLayout on MarketTabContent {
     final List<Widget> rows = <Widget>[];
     for (int index = 0; index < commodities.length; index += 2) {
       final Commodity left = commodities[index];
-      final Commodity? right =
-          index + 1 < commodities.length ? commodities[index + 1] : null;
+      final Commodity? right = index + 1 < commodities.length
+          ? commodities[index + 1]
+          : null;
       rows.add(
         Padding(
           padding: EdgeInsets.only(
@@ -66,15 +74,19 @@ extension MarketTabContentCatalogLayout on MarketTabContent {
                 child: Padding(
                   key: TradeScreenMarketKeys.marketCommodityRowKey(left.id),
                   padding: EdgeInsets.zero,
-                  child: buildCommodityRow(
-                    commodity: left,
-                    compact: true,
-                    staging: staging,
-                    nameStyle: nameStyle,
-                    priceStyle: priceStyle,
-                    volumeStyle: volumeStyle,
-                    quantityStyle: quantityStyle,
-                    l10n: l10n,
+                  child: MarketCommodityRowHighlight(
+                    commodityId: left.id,
+                    highlighted: highlightCommodityId == left.id,
+                    child: buildCommodityRow(
+                      commodity: left,
+                      compact: true,
+                      staging: staging,
+                      nameStyle: nameStyle,
+                      priceStyle: priceStyle,
+                      volumeStyle: volumeStyle,
+                      quantityStyle: quantityStyle,
+                      l10n: l10n,
+                    ),
                   ),
                 ),
               ),
@@ -83,17 +95,23 @@ extension MarketTabContentCatalogLayout on MarketTabContent {
                 child: right == null
                     ? const SizedBox.shrink()
                     : Padding(
-                        key: TradeScreenMarketKeys.marketCommodityRowKey(right.id),
+                        key: TradeScreenMarketKeys.marketCommodityRowKey(
+                          right.id,
+                        ),
                         padding: EdgeInsets.zero,
-                        child: buildCommodityRow(
-                          commodity: right,
-                          compact: true,
-                          staging: staging,
-                          nameStyle: nameStyle,
-                          priceStyle: priceStyle,
-                          volumeStyle: volumeStyle,
-                          quantityStyle: quantityStyle,
-                          l10n: l10n,
+                        child: MarketCommodityRowHighlight(
+                          commodityId: right.id,
+                          highlighted: highlightCommodityId == right.id,
+                          child: buildCommodityRow(
+                            commodity: right,
+                            compact: true,
+                            staging: staging,
+                            nameStyle: nameStyle,
+                            priceStyle: priceStyle,
+                            volumeStyle: volumeStyle,
+                            quantityStyle: quantityStyle,
+                            l10n: l10n,
+                          ),
                         ),
                       ),
               ),
