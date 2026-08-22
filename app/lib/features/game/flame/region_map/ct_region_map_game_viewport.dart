@@ -7,9 +7,10 @@ import 'region_map_viewport_snapshot.dart'
     show kRegionMapZoomMultiplierMax, kRegionMapZoomMultiplierMin;
 
 void _ctRegionMapGameFinishCameraMove(CtRegionMapGameFields game) {
-  (game as CtRegionMapGameCamera).clampCameraToMap();
+  final camera = game as CtRegionMapGameCamera;
+  camera.clampCameraToMap();
   game.onRegionViewChanged?.call();
-  (game).emitViewportSnapshot();
+  camera.emitViewportSnapshot();
 }
 
 void ctRegionMapGameSetCameraCenterWorld(
@@ -31,7 +32,10 @@ void ctRegionMapGamePanCameraWorld(
   _ctRegionMapGameFinishCameraMove(game);
 }
 
-void ctRegionMapGameCenterOnTileKey(CtRegionMapGameFields game, String tileKey) {
+void ctRegionMapGameCenterOnTileKey(
+  CtRegionMapGameFields game,
+  String tileKey,
+) {
   final parsed = tryParseTileKey(tileKey);
   if (parsed == null || parsed.regionId != game.region.regionId) return;
   final x = parsed.x;
