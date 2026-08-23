@@ -92,7 +92,7 @@ PlayerView buildPlayerView(Game game, MapTopology _, String playerId) {
 
   // Units owned by this player across both regions.
   final ownUnitsById = <String, Unit>{};
-  for (final u in allUnitsFromWorld(game.worldState)) {
+  for (final u in game.worldState.allUnitsById.values) {
     if (u.ownerId == playerId) {
       ownUnitsById[u.id] = u;
     }

@@ -2513,6 +2513,13 @@ rules:
     runner: dart
     script: tool/check_logic_units_by_id_rebuild.dart
 
+  - rule_id: repo.world_lib_unit_lookup_sot
+    group: architecture
+    title: colonizethis_world lib/src must not call allUnitsFromWorld( except unit_lookup.dart (Refs #4611)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_lib_unit_lookup_sot.dart
+
   - rule_id: repo.logic_validator_units_params
     group: architecture
     title: colonizethis_logic orders/ helpers must thread OrderResolutionContext instead of Map<String, Unit> unitsById (Refs #2836)
