@@ -29,7 +29,6 @@ Future<void> tapFirstAssignInCivilianPanel(WidgetTester tester) =>
     e2eTapFirstAssignInCivilianPanel(tester);
 
 /// AC1 alias for [e2eAwaitCivilianWorkMenuMounted] (Refs #2336 / #4075).
-/// AC1 alias for [e2eAwaitCivilianWorkMenuMounted] (Refs #2336 / #4075).
 Future<void> awaitCivilianWorkMenuMounted(
   WidgetTester tester, {
   Duration timeout = kE2eDefaultCivilianWorkMenuMountTimeout,
@@ -48,18 +47,15 @@ Future<void> tapAssignOnCivilianRowWithTitle(
 ) => e2eTapAssignOnCivilianRowWithTitle(tester, unitTypeTitle);
 
 /// AC1 alias for [e2eTapCivilianWorkOrderLabel] (Refs #2336 / #4075).
-/// AC1 alias for [e2eTapCivilianWorkOrderLabel] (Refs #2336 / #4075).
 Future<void> tapCivilianWorkOrderLabel(
   WidgetTester tester,
   String workOrderLabel,
 ) => e2eTapCivilianWorkOrderLabel(tester, workOrderLabel);
 
 /// AC1 alias for [e2eTapMoveOnFirstNonHomeFleet] (Refs #2336 / #4075).
-/// AC1 alias for [e2eTapMoveOnFirstNonHomeFleet] (Refs #2336 / #4075).
 Future<bool> tapMoveOnFirstNonHomeFleet(WidgetTester tester) =>
     e2eTapMoveOnFirstNonHomeFleet(tester);
 
-/// AC1 alias for [e2ePickMoveDestinationAndConfirm] (Refs #2336 / #4075).
 /// AC1 alias for [e2ePickMoveDestinationAndConfirm] (Refs #2336 / #4075).
 Future<void> pickMoveDestinationAndConfirm(
   WidgetTester tester,
@@ -75,7 +71,6 @@ Future<void> pickMoveDestinationAndConfirm(
   maxWarpDragProbes: maxWarpDragProbes,
 );
 
-/// AC1 alias for [e2eTryNavalMoveSegment] (Refs #2336 / #4075).
 /// AC1 alias for [e2eTryNavalMoveSegment] (Refs #2336 / #4075).
 Future<void> tryNavalMoveSegment(
   WidgetTester tester,
@@ -96,7 +91,6 @@ Future<void> tryNavalMoveSegment(
 );
 
 /// AC1 alias for [e2eAttemptFirstFleetMoveOrCancel] (Refs #2336 / #4075).
-/// AC1 alias for [e2eAttemptFirstFleetMoveOrCancel] (Refs #2336 / #4075).
 Future<E2eFirstFleetMoveOutcome> attemptFirstFleetMoveOrCancel(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -114,7 +108,6 @@ Future<E2eFirstFleetMoveOutcome> attemptFirstFleetMoveOrCancel(
 );
 
 /// AC1 alias for [e2eAnyExplorerHasEnabledExploreAssignFleet] (Refs #2336 / #4075).
-/// AC1 alias for [e2eAnyExplorerHasEnabledExploreAssignFleet] (Refs #2336 / #4075).
 Future<bool> anyExplorerHasEnabledExploreAssignFleet(
   WidgetTester tester, {
   Duration maxUiResponseWait = kE2eDefaultBundledExploreSweepWait,
@@ -125,7 +118,6 @@ Future<bool> anyExplorerHasEnabledExploreAssignFleet(
   maxPanelSweepSteps: maxPanelSweepSteps,
 );
 
-/// AC1 alias for [e2eAwaitNwCoastalOrVisibleLandForBundledExplore] (Refs #2336 / #4075).
 /// AC1 alias for [e2eAwaitNwCoastalOrVisibleLandForBundledExplore] (Refs #2336 / #4075).
 Future<void> awaitNwCoastalOrVisibleLandForBundledExplore(
   WidgetTester tester,
@@ -142,7 +134,6 @@ Future<void> awaitNwCoastalOrVisibleLandForBundledExplore(
 );
 
 /// AC1 alias for [e2eCheckExploreEnabledFromCivilianPanel] (Refs #2336 / #4075).
-/// AC1 alias for [e2eCheckExploreEnabledFromCivilianPanel] (Refs #2336 / #4075).
 Future<bool> checkExploreEnabledFromCivilianPanel(
   WidgetTester tester, {
   E2ePerfLog? perf,
@@ -158,7 +149,6 @@ Future<bool> checkExploreEnabledFromCivilianPanel(
   phaseTimingLabel: phaseTimingLabel,
 );
 
-/// AC1 alias for [e2eAwaitExploreEnabledFromCivilianPanel] (Refs #2336 / #4075).
 /// AC1 alias for [e2eAwaitExploreEnabledFromCivilianPanel] (Refs #2336 / #4075).
 Future<bool> awaitExploreEnabledFromCivilianPanel(
   WidgetTester tester,
@@ -182,7 +172,6 @@ Future<void> ensureAllRelocated64pxPngsLoad() =>
 Future<void> ensureAllRelocated64pxPngsLoadSuiteOnce() =>
     e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
 
-/// AC1 alias for [e2eEnterFleetReachScenarioReady] (Refs #2336 / #4075).
 /// AC1 alias for [e2ePickFirstValidWorkTileAndAwaitOverlayClear] (Refs #2336 / #4075).
 Future<void> pickFirstValidWorkTileAndAwaitOverlayClear(
   WidgetTester tester, {
@@ -200,7 +189,6 @@ Future<void> pickFirstValidWorkTileAndAwaitOverlayClear(
   perf: perf,
 );
 
-/// AC1 alias for [e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear] (Refs #2336 / #4075).
 /// AC1 alias for [e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear] (Refs #2336 / #4075).
 Future<bool> maybePickFirstValidWorkTileAndAwaitOverlayClear(
   WidgetTester tester, {
@@ -222,7 +210,6 @@ Future<bool> maybePickFirstValidWorkTileAndAwaitOverlayClear(
   perf: perf,
 );
 
-/// AC1 alias for [e2eHandleBundledExploreFailure] (Refs #2336 / #4075).
 /// AC1 alias for [e2eHandleBundledExploreFailure] (Refs #2336 / #4075).
 Future<void> handleBundledExploreFailure(
   WidgetTester tester, {
