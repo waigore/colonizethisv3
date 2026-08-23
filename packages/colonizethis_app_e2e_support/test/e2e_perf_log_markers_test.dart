@@ -27,28 +27,11 @@
 library;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 import 'support/e2e_perf_log_markers_guard_group.dart';
-
-/// Captures every `debugPrint` line emitted while [body] runs and restores
-/// the original printer afterwards (defensive in `finally` so a thrown
-/// expectation does not leak the override into later tests).
-List<String> _captureDebugPrints(void Function() body) {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
+import 'support/e2e_perf_log_markers_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -56,7 +39,7 @@ void main() {
   group('E2ePerfLog.bumpCounter', () {
     test('emits canonical E2E_COUNTER marker on the first call', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('turn_loop_iterations');
       });
       expect(
@@ -74,7 +57,7 @@ void main() {
 
     test('increments by 1 by default across successive calls', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('next_turn_taps');
         perf.bumpCounter('next_turn_taps');
         perf.bumpCounter('next_turn_taps');
@@ -96,7 +79,7 @@ void main() {
 
     test('accumulates by the explicit `by` step when supplied', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('frames', by: 5);
         perf.bumpCounter('frames', by: 2);
       });
@@ -115,7 +98,7 @@ void main() {
 
     test('appends `|meta=…` suffix when `meta:` is supplied', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('wait_until_found_calls', meta: 'phase=open_panel');
       });
       expect(
@@ -133,7 +116,7 @@ void main() {
 
     test('omits the `|meta=…` suffix when `meta:` is null', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('plain_counter');
       });
       expect(lines, hasLength(1));
@@ -149,7 +132,7 @@ void main() {
 
     test('tracks counters independently within the same instance', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('a');
         perf.bumpCounter('b');
         perf.bumpCounter('a');
@@ -175,7 +158,7 @@ void main() {
   group('E2ePerfLog.timing', () {
     test('emits canonical E2E_TIMING marker with milliseconds', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.timing('open_panel_civilian', const Duration(milliseconds: 123));
       });
       expect(
@@ -193,7 +176,7 @@ void main() {
 
     test('uses Duration.inMilliseconds (truncates sub-millisecond input)', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         // 1500 microseconds == 1.5ms; Duration.inMilliseconds truncates to 1.
         perf.timing('phase_a', const Duration(microseconds: 1500));
         perf.timing('phase_b', Duration.zero);
@@ -215,7 +198,7 @@ void main() {
 
     test('appends `|meta=…` suffix when `meta:` is supplied', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.timing(
           'fleet_move_segment',
           const Duration(milliseconds: 250),
@@ -239,7 +222,7 @@ void main() {
 
     test('omits the `|meta=…` suffix when `meta:` is null', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.timing('plain_phase', const Duration(milliseconds: 7));
       });
       expect(lines, hasLength(1));
@@ -254,7 +237,7 @@ void main() {
 
     test('does not mutate counter state', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('mixed');
         perf.timing('mixed', const Duration(milliseconds: 9));
         perf.bumpCounter('mixed');

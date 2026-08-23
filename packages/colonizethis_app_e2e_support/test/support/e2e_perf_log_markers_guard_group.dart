@@ -1,16 +1,16 @@
 // Extracted from e2e_perf_log_markers_test.dart (#4598 Slice C).
 library;
 
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+
+import 'e2e_perf_log_markers_harness.dart';
 
 void registerE2ePerfLogMarkersGuardGroup() {
   group('E2ePerfLog testName', () {
     test('embeds the constructor-supplied testName in every marker', () {
       final perf = E2ePerfLog('new_game_full_turn');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('open_panel_civilian');
         perf.timing('open_panel_civilian', const Duration(milliseconds: 12));
       });
@@ -30,7 +30,7 @@ void registerE2ePerfLogMarkersGuardGroup() {
     test('keeps counters scoped to a single instance', () {
       final perfA = E2ePerfLog('scenario_a');
       final perfB = E2ePerfLog('scenario_b');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perfA.bumpCounter('shared');
         perfB.bumpCounter('shared');
         perfA.bumpCounter('shared');
