@@ -2,26 +2,32 @@
 // (`repo.app_e2e_support_test_file_size`).
 //
 // SPEC: SPEC/program/repo-lint.md (§ app e2e support test file size).
-// Refs #4075, #4195, #4344.
+// Refs #4075, #4195, #4344, #4598.
 //
-// Cap is 400 physical lines. Files currently over the cap are listed in
+// Cap is 300 physical lines. Files currently over the cap are listed in
 // [appE2eSupportTestFileSizeAllowlistForTests] (shrink-only). A stale
 // allowlist entry (missing file, or file now ≤ cap) fails so the backlog
-// cannot retain slack. `test/support/**` harness modules should prefer ≤400
+// cannot retain slack. `test/support/**` harness modules should prefer ≤300
 // physical lines (same hygiene as `repo.app_test_support_file_size`).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 400;
+const _maxPhysicalLines = 300;
 
 const String _testsRelativePath = 'packages/colonizethis_app_e2e_support/test';
 
 /// Oversized e2e-support `test/**` files accepted as a shrink-only baseline
 /// (Refs #4075). Remove an entry only after the file is at or under
 /// [_maxPhysicalLines].
-const List<String> appE2eSupportTestFileSizeAllowlistForTests = <String>[];
+const List<String> appE2eSupportTestFileSizeAllowlistForTests = <String>[
+  'packages/colonizethis_app_e2e_support/test/e2e_await_panel_mount_after_opener_tap_test.dart',
+  'packages/colonizethis_app_e2e_support/test/e2e_check_explore_enabled_from_civilian_panel_test.dart',
+  'packages/colonizethis_app_e2e_support/test/e2e_dismiss_snackbar_if_present_test.dart',
+  'packages/colonizethis_app_e2e_support/test/e2e_shared_lib_topic_split_test.dart',
+  'packages/colonizethis_app_e2e_support/test/e2e_wait_for_next_turn_label_advance_test.dart',
+];
 
 int runCheckAppE2eSupportTestFileSize(
   String repoRoot, {
