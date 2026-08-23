@@ -13,6 +13,8 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_
     show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
+import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
+
 import 'province_overlay_unit_partition.dart';
 import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_province_content_intel.dart';
