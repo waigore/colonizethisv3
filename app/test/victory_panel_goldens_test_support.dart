@@ -17,6 +17,7 @@ RegionMapViewData victoryPanelGoldenSampleOldWorldRegion() =>
 
 Game victoryPanelGoldenStandingsGame() {
   return buildPanelTestGame(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 42),
     players: [
       panelTestHumanPlayer(id: 'gp1', displayName: 'England'),
       const Player(id: 'gp2', displayName: 'France', isHuman: false),

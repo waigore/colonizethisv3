@@ -42,9 +42,22 @@ void main() {
         game: victoryPanelGoldenStandingsGame(),
       );
 
-      expect(find.byKey(VictoryScreenKeys.conditionsSectionKey), findsOneWidget);
+      expect(
+        find.byKey(VictoryScreenKeys.conditionsSectionKey),
+        findsOneWidget,
+      );
       expect(find.byKey(VictoryScreenKeys.standingsSectionKey), findsOneWidget);
-      expect(find.textContaining('31 or more Old World provinces'), findsOneWidget);
+      expect(
+        find.textContaining('31 or more Old World provinces'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('This year is 1582'), findsOneWidget);
+      expect(find.textContaining('last campaign year is 1800'), findsOneWidget);
+      expect(
+        find.textContaining('218 years remain (159 full turns)'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('near 1800 (turn 201)'), findsNothing);
       expect(find.textContaining('military victory'), findsNothing);
       expect(tester.takeException(), isNull);
       await expectLater(
@@ -54,59 +67,79 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: infinite-mode conditions variant (Refs #4165 AC-2)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('victoryPanelInfiniteGolden');
-      await pumpVictoryPanelBodyGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        game: victoryPanelGoldenStandingsGame().copyWith(infiniteMode: true),
-      );
+  testWidgets('golden: infinite-mode conditions variant (Refs #4165 AC-2)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('victoryPanelInfiniteGolden');
+    await pumpVictoryPanelBodyGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      game: victoryPanelGoldenStandingsGame().copyWith(infiniteMode: true),
+    );
 
-      expect(find.byKey(VictoryScreenKeys.conditionsSectionKey), findsOneWidget);
-      expect(find.textContaining('Infinite mode is on'), findsOneWidget);
-      expect(
-        find.textContaining('calendar halt is bypassed'),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/victory_panel_infinite_mode.png'),
-      );
-    },
-  );
+    expect(find.byKey(VictoryScreenKeys.conditionsSectionKey), findsOneWidget);
+    expect(find.textContaining('Infinite mode is on'), findsOneWidget);
+    expect(find.textContaining('calendar halt is bypassed'), findsOneWidget);
+    expect(find.textContaining('years remain'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/victory_panel_infinite_mode.png'),
+    );
+  });
 
-  testWidgets(
-    'golden: expanded power-score breakdown (Refs #4165 AC-4)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('victoryPanelExpandedGolden');
-      await pumpVictoryPanelBodyGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        game: victoryPanelGoldenStandingsGame(),
-      );
+  testWidgets('golden: last campaign year remaining 0 (Refs #4597)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('victoryPanelLastYearGolden');
+    await pumpVictoryPanelBodyGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      game: victoryPanelGoldenStandingsGame().copyWith(
+        worldState: victoryPanelGoldenStandingsGame().worldState.copyWith(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 201),
+        ),
+      ),
+    );
 
-      await tester.tap(find.byKey(VictoryScreenKeys.standingExpandKey('gp1')));
-      await pumpSyncFrames(tester);
+    expect(find.textContaining('last campaign year (1800)'), findsOneWidget);
+    expect(find.textContaining('No years remain'), findsOneWidget);
+    expect(find.textContaining('218 years remain'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/victory_panel_last_year.png'),
+    );
+  });
 
-      expect(
-        find.byKey(VictoryScreenKeys.powerBreakdownKey('gp1')),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('calendar end without a province-count winner'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('×'), findsNothing);
-      expect(tester.takeException(), isNull);
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/victory_panel_expanded_power.png'),
-      );
-    },
-  );
+  testWidgets('golden: expanded power-score breakdown (Refs #4165 AC-4)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('victoryPanelExpandedGolden');
+    await pumpVictoryPanelBodyGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      game: victoryPanelGoldenStandingsGame(),
+    );
+
+    await tester.tap(find.byKey(VictoryScreenKeys.standingExpandKey('gp1')));
+    await pumpSyncFrames(tester);
+
+    expect(
+      find.byKey(VictoryScreenKeys.powerBreakdownKey('gp1')),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('calendar end without a province-count winner'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('×'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/victory_panel_expanded_power.png'),
+    );
+  });
 
   testWidgets(
     'golden: province-count win end-state banner (Refs #4165 AC-7, #4198)',
@@ -133,6 +166,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('military victory'), findsNothing);
+      expect(find.textContaining('218 years remain'), findsNothing);
+      expect(
+        find.textContaining('Remaining years are not shown'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
@@ -144,8 +182,7 @@ void main() {
   testWidgets(
     'golden: calendar halt declared-winner banner (Refs #4165 AC-7)',
     (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('victoryPanelCalendarWinnerGolden');
+      const boundaryKey = ValueKey<String>('victoryPanelCalendarWinnerGolden');
       final game = buildPanelTestGame(
         players: [
           panelTestHumanPlayer(id: 'gp1', displayName: 'England'),
@@ -169,6 +206,7 @@ void main() {
         find.textContaining('strongest overall realm when play stopped'),
         findsOneWidget,
       );
+      expect(find.textContaining('218 years remain'), findsNothing);
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
@@ -177,35 +215,34 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: calendar halt tie banner (Refs #4165 AC-7)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('victoryPanelCalendarTieGolden');
-      final game = buildPanelTestGame(
-        players: [
-          panelTestHumanPlayer(id: 'gp1', displayName: 'England'),
-          const Player(id: 'gp2', displayName: 'France', isHuman: false),
-        ],
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-          Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
-        ],
-      ).copyWith(calendarCampaignHalted: true);
-      await pumpVictoryPanelBodyGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        game: game,
-      );
+  testWidgets('golden: calendar halt tie banner (Refs #4165 AC-7)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('victoryPanelCalendarTieGolden');
+    final game = buildPanelTestGame(
+      players: [
+        panelTestHumanPlayer(id: 'gp1', displayName: 'England'),
+        const Player(id: 'gp2', displayName: 'France', isHuman: false),
+      ],
+      oldWorldProvinces: const [
+        Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+        Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+      ],
+    ).copyWith(calendarCampaignHalted: true);
+    await pumpVictoryPanelBodyGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      game: game,
+    );
 
-      expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
-      expect(find.textContaining('tied overall strength'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/victory_panel_calendar_tie.png'),
-      );
-    },
-  );
+    expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
+    expect(find.textContaining('tied overall strength'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/victory_panel_calendar_tie.png'),
+    );
+  });
 
   testWidgets(
     'golden: wide side-by-side standings and minimap (Refs #4165 AC-12)',
@@ -236,8 +273,14 @@ void main() {
         ),
       );
 
-      expect(find.byKey(VictoryScreenKeys.standingsMinimapWideRowKey), findsOneWidget);
-      expect(find.byKey(VictoryScreenKeys.politicalMinimapSectionKey), findsOneWidget);
+      expect(
+        find.byKey(VictoryScreenKeys.standingsMinimapWideRowKey),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(VictoryScreenKeys.politicalMinimapSectionKey),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
@@ -299,8 +342,9 @@ void main() {
   testWidgets(
     'golden: political minimap capture inspect line (Refs #4165 AC-6)',
     (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('victoryPoliticalMinimapInspectGolden');
+      const boundaryKey = ValueKey<String>(
+        'victoryPoliticalMinimapInspectGolden',
+      );
       final game = buildPanelTestGame(
         players: [
           panelTestHumanPlayer(id: 'gp1', displayName: 'England'),

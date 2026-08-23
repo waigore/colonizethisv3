@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/features/game/campaign_calendar_clock.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kOldWorldRaceChipKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
@@ -114,6 +115,65 @@ void main() {
     await tester.pump();
     expect(find.byKey(kOldWorldRaceChipKey), findsOneWidget);
     expect(find.byType(PlayersBarToggleButton), findsOneWidget);
+  });
+
+  testWidgets('tooltip includes remaining years when clock is remaining', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        race: const OldWorldRaceSnapshot(
+          focusPlayerId: 'gp1',
+          focusCount: 18,
+          threshold: 31,
+          calendarClock: CampaignCalendarClock(
+            kind: CampaignCalendarClockKind.remaining,
+            currentYear: 1582,
+            lastCampaignYear: 1800,
+            remainingYears: 218,
+            remainingTurns: 159,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final tooltip = tester.widget<Tooltip>(
+      find.descendant(
+        of: find.byType(OldWorldRaceChip),
+        matching: find.byType(Tooltip),
+      ),
+    );
+    expect(tooltip.message, contains('218 years remain until 1800'));
+    expect(tooltip.message, contains('31-province win'));
+  });
+
+  testWidgets('tooltip omits remaining years in infinite mode clock', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        race: const OldWorldRaceSnapshot(
+          focusPlayerId: 'gp1',
+          focusCount: 18,
+          threshold: 31,
+          calendarClock: CampaignCalendarClock(
+            kind: CampaignCalendarClockKind.omitCountdown,
+            currentYear: 1582,
+            lastCampaignYear: 1800,
+            remainingYears: 0,
+            remainingTurns: 0,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final tooltip = tester.widget<Tooltip>(
+      find.descendant(
+        of: find.byType(OldWorldRaceChip),
+        matching: find.byType(Tooltip),
+      ),
+    );
+    expect(tooltip.message, isNot(contains('years remain')));
   });
 
   testWidgets('320 dp compact copy does not overflow', (tester) async {

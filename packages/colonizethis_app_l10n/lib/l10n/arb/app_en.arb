@@ -1899,7 +1899,35 @@
   },
   "victory_conditionsCalendarEnd": "If no one wins by province count, the campaign can halt near 1800 (turn 201 under the default calendar). The Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
   "@victory_conditionsCalendarEnd": {
-    "description": "Victory panel: calendar campaign end condition copy."
+    "description": "Victory panel: unused static calendar fallback (Refs #4597)."
+  },
+  "victory_conditionsCalendarRemaining": "This year is {currentYear}. The last campaign year is {lastYear}. {remainingYears} years remain ({remainingTurns} full turns). If no one wins by province count, the Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
+  "@victory_conditionsCalendarRemaining": {
+    "description": "Victory panel: live remaining years until the calendar halt.",
+    "placeholders": {
+      "currentYear": { "type": "int" },
+      "lastYear": { "type": "int" },
+      "remainingYears": { "type": "int" },
+      "remainingTurns": { "type": "int" }
+    }
+  },
+  "victory_conditionsCalendarLastYear": "This is the last campaign year ({lastYear}). No years remain. If no one wins by province count this turn, the Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
+  "@victory_conditionsCalendarLastYear": {
+    "description": "Victory panel: last campaign year remaining 0.",
+    "placeholders": {
+      "lastYear": { "type": "int" }
+    }
+  },
+  "victory_conditionsCalendarNoHalt": "This campaign calendar has no halt at year {stopYear}. Play continues until a province-count win or you leave the campaign.",
+  "@victory_conditionsCalendarNoHalt": {
+    "description": "Victory panel: mapping has no 1800 halt turn.",
+    "placeholders": {
+      "stopYear": { "type": "int" }
+    }
+  },
+  "victory_conditionsCalendarEnded": "The campaign has ended. Remaining years are not shown. If play stopped without a province-count winner, the Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
+  "@victory_conditionsCalendarEnded": {
+    "description": "Victory panel: calendar remaining omitted after halt or province win."
   },
   "victory_conditionsInfiniteMode": "Infinite mode is on: the calendar halt is bypassed. Only reaching the province win or leaving the campaign ends play.",
   "@victory_conditionsInfiniteMode": {
@@ -5033,7 +5061,37 @@
   },
   "mapControls_oldWorldRace_tooltip": "Old World provinces toward the 31-province win. Tap for full standings.",
   "@mapControls_oldWorldRace_tooltip": {
-    "description": "Hover tooltip for the tab-bar Old World race chip (Refs #4451)."
+    "description": "Hover tooltip for the tab-bar Old World race chip when remaining years do not apply."
+  },
+  "mapControls_oldWorldRace_tooltipRemaining": "Old World provinces toward the 31-province win. {remainingYears} years remain until {lastYear}. Tap for full standings.",
+  "@mapControls_oldWorldRace_tooltipRemaining": {
+    "description": "Race-chip tooltip with remaining campaign years (Refs #4597).",
+    "placeholders": {
+      "remainingYears": { "type": "int" },
+      "lastYear": { "type": "int" }
+    }
+  },
+  "mapControls_oldWorldRace_tooltipLastYear": "Old World provinces toward the 31-province win. This is the last campaign year ({lastYear}). Tap for full standings.",
+  "@mapControls_oldWorldRace_tooltipLastYear": {
+    "description": "Race-chip tooltip on the last campaign year.",
+    "placeholders": {
+      "lastYear": { "type": "int" }
+    }
+  },
+  "mapControls_oldWorldRace_yearsRemain": "{remainingYears} years remain until {lastYear}.",
+  "@mapControls_oldWorldRace_yearsRemain": {
+    "description": "Semantics clause for remaining campaign years on the race chip.",
+    "placeholders": {
+      "remainingYears": { "type": "int" },
+      "lastYear": { "type": "int" }
+    }
+  },
+  "mapControls_oldWorldRace_lastYearClause": "This is the last campaign year ({lastYear}).",
+  "@mapControls_oldWorldRace_lastYearClause": {
+    "description": "Semantics clause for last campaign year on the race chip.",
+    "placeholders": {
+      "lastYear": { "type": "int" }
+    }
   },
   "mapControls_oldWorldRace_semanticsLabel": "Old World province race: {count} of {threshold}. Tap to open Victory.",
   "@mapControls_oldWorldRace_semanticsLabel": {

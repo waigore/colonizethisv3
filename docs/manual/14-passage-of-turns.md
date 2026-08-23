@@ -58,7 +58,7 @@ The pulses wait until **Victory overlay** is gone; closing the newspaper while i
 
 ### The newspaper feed
 
-On `MAP10001` **Empire overview / map area**, the newspaper button sits on the map bar after treasury, cargo, the labour readout, and the Old World race chip. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide `OVL70001` **Player turn event feed** without leaving `GAME10001` **Game screen**. Land battles you fought appear with the province, the outcome in plain words, and both sides' regiment losses (including zero); tap a combat line to open that province on the map. Sea battles you fought appear the same way with the sea name, the outcome in plain words, both sides' ship losses (including zero), and a note when a court retreated; tap opens that sea when the map can find it.
+On `MAP10001` **Empire overview / map area**, the newspaper button sits on the map bar after treasury, cargo, the labour readout, and the Old World race chip. Rest on that Old World count to read remaining years until the last campaign year. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide `OVL70001` **Player turn event feed** without leaving `GAME10001` **Game screen**. Land battles you fought appear with the province, the outcome in plain words, and both sides' regiment losses (including zero); tap a combat line to open that province on the map. Sea battles you fought appear the same way with the sea name, the outcome in plain words, both sides' ship losses (including zero), and a note when a court retreated; tap opens that sea when the map can find it.
 
 Use the feed with turn news: the dialog is the formal summary; the feed keeps relevant lines on the map while you inspect. It replaces its entries each completed turn.
 
@@ -134,6 +134,7 @@ Their choices are not passive. A rival may strengthen its industry, seek an alli
 - `SPEC/ui/player-turn-event-feed.md`
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/empire-overview.md`
+- `SPEC/ui/components/old-world-race-chip.md`
 - `SPEC/ui/victory-overlay.md`
 - `SPEC/ui/intelligence-council.md`
 - `SPEC/program/intelligence-digest.md`

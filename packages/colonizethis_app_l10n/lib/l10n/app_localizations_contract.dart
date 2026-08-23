@@ -1013,6 +1013,23 @@ abstract class AppLocalizations {
   /// Victory panel: calendar campaign end condition copy.
   String get victory_conditionsCalendarEnd;
 
+  /// Victory panel: live remaining years until calendar halt.
+  String victory_conditionsCalendarRemaining(
+    int currentYear,
+    int lastYear,
+    int remainingYears,
+    int remainingTurns,
+  );
+
+  /// Victory panel: last campaign year (remaining 0).
+  String victory_conditionsCalendarLastYear(int lastYear);
+
+  /// Victory panel: mapping has no 1800 halt turn.
+  String victory_conditionsCalendarNoHalt(int stopYear);
+
+  /// Victory panel: remaining years omitted after halt or province win.
+  String get victory_conditionsCalendarEnded;
+
   /// Victory panel: infinite mode condition note.
   String get victory_conditionsInfiniteMode;
 
@@ -3068,6 +3085,21 @@ abstract class AppLocalizations {
 
   /// Hover tooltip for the tab-bar Old World race chip.
   String get mapControls_oldWorldRace_tooltip;
+
+  /// Race-chip tooltip with remaining campaign years.
+  String mapControls_oldWorldRace_tooltipRemaining(
+    int remainingYears,
+    int lastYear,
+  );
+
+  /// Race-chip tooltip on the last campaign year.
+  String mapControls_oldWorldRace_tooltipLastYear(int lastYear);
+
+  /// Semantics clause for remaining campaign years.
+  String mapControls_oldWorldRace_yearsRemain(int remainingYears, int lastYear);
+
+  /// Semantics clause for last campaign year.
+  String mapControls_oldWorldRace_lastYearClause(int lastYear);
 
   /// Semantics label for the race chip when the focus court is not behind.
   String mapControls_oldWorldRace_semanticsLabel(
