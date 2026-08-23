@@ -153,8 +153,14 @@ class ProductionScreenBody extends ConsumerWidget {
     final labourCallbacks = productionScreenLabourCallbacks(
       canEdit: canEdit,
       playerId: displayPlayer.id,
-      shellRef: shellRef,
-      displayGame: displayGame,
+      readCurrentOrders: () => shellRef.read(currentOrdersProvider),
+      replaceCurrentOrders: (next) {
+        shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+      },
+      readGame: () => shellRef.read(currentGameProvider) ?? displayGame,
+      writeGame: (nextGame) {
+        shellRef.read(currentGameProvider.notifier).setGame(nextGame);
+      },
       context: context,
     );
     final productionPanel = buildProductionScreenPanel(
@@ -168,7 +174,11 @@ class ProductionScreenBody extends ConsumerWidget {
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEdit: canEdit,
-      shellRef: shellRef,
+      replaceDesiredOutput: (next) {
+        shellRef
+            .read(productionDesiredOutputProvider.notifier)
+            .replaceAll(next);
+      },
       panelTopology: panelTopology,
       panelTileMaps: panelTileMaps,
       starredProduceRecommendationsByRecipeId:

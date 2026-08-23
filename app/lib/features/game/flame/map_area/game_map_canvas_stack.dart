@@ -131,7 +131,9 @@ class GameMapCanvasStack extends ConsumerWidget {
               region: region,
               onWorkTargetTileHovered: onWorkTargetTileHovered,
               mapBuilder: (onTileHovered) => gameMapCanvasStackRegionRow(
-                ref: ref,
+                onMapTileTapped: (tk) => ref
+                    .read(mapProvincePanelProvider.notifier)
+                    .reportMapTileTapped(tk),
                 isNarrow: isNarrow,
                 game: game,
                 region: region,

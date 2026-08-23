@@ -4,9 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show MapBaseLayerFlags;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 import '../overlays/game_map_province_detail_side_panel.dart';
 import '../caches/per_player_army_move_picker_cache.dart';
@@ -14,8 +12,10 @@ import '../caches/per_player_work_target_selection_cache.dart';
 import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
 import '../region_map/region_map_viewport_snapshot.dart';
 
+/// Callers read providers in `build` and pass [onMapTileTapped] — do not
+/// thread [WidgetRef] into this helper (`repo.app_widget_ref_parameter_smell`).
 Widget gameMapCanvasStackRegionRow({
-  required WidgetRef ref,
+  required void Function(String tileKey) onMapTileTapped,
   required bool isNarrow,
   required ct_models.Game game,
   required RegionMapViewData region,
@@ -76,9 +76,7 @@ Widget gameMapCanvasStackRegionRow({
               ? null
               : onLastTurnPlaybackMapTap != null
               ? (_) => onLastTurnPlaybackMapTap()
-              : (tk) => ref
-                    .read(mapProvincePanelProvider.notifier)
-                    .reportMapTileTapped(tk),
+              : onMapTileTapped,
           onMapTileSecondaryForRadial: onLastTurnPlaybackMapTap != null
               ? null
               : onSecondary,

@@ -5,40 +5,40 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/production_allocation_provider.dart';
 import '../../widgets/production/production_commodity_breakdown_dialog.dart';
 import '../../widgets/production/production_labour_disband_confirm.dart';
 import '../../widgets/production/production_labour_helpers.dart';
 import '../../widgets/production/production_panel.dart';
 
+/// Callers read providers in `build` and pass narrow order/game accessors —
+/// do not thread [WidgetRef] (`repo.app_widget_ref_parameter_smell`).
 ProductionLabourCallbacks productionScreenLabourCallbacks({
   required bool canEdit,
   required String playerId,
-  required WidgetRef shellRef,
-  required Game displayGame,
+  required Orders Function() readCurrentOrders,
+  required void Function(Orders next) replaceCurrentOrders,
+  required Game Function() readGame,
+  required void Function(Game nextGame) writeGame,
   required BuildContext context,
 }) {
   return ProductionLabourCallbacks(
     onAppendRecruitOrder: (tier) {
       if (!canEdit) return;
       final next = ordersWithAppendedRecruitWorkerOrder(
-        currentOrders: shellRef.read(currentOrdersProvider),
+        currentOrders: readCurrentOrders(),
         playerId: playerId,
         tier: tier,
       );
-      shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+      replaceCurrentOrders(next);
     },
     onPopLastRecruitOrder: (tier) {
       if (!canEdit) return;
       final next = ordersWithLastRecruitWorkerOrderRemoved(
-        currentOrders: shellRef.read(currentOrdersProvider),
+        currentOrders: readCurrentOrders(),
         playerId: playerId,
         tier: tier,
       );
-      shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+      replaceCurrentOrders(next);
     },
     onDisband: (tier) {
       unawaited(
@@ -46,10 +46,8 @@ ProductionLabourCallbacks productionScreenLabourCallbacks({
           context: context,
           tier: tier,
           canEdit: canEdit,
-          readGame: () => shellRef.read(currentGameProvider) ?? displayGame,
-          writeGame: (nextGame) {
-            shellRef.read(currentGameProvider.notifier).setGame(nextGame);
-          },
+          readGame: readGame,
+          writeGame: writeGame,
           playerId: playerId,
         ),
       );
@@ -68,7 +66,7 @@ ProductionPanel buildProductionScreenPanel({
   required Orders currentOrders,
   required ProductionLabourCallbacks labourCallbacks,
   required bool canEdit,
-  required WidgetRef shellRef,
+  required void Function(Map<String, int> next) replaceDesiredOutput,
   required MapTopology panelTopology,
   required Map<String, TileMapResult>? panelTileMaps,
   required Map<String, IndustryCounselRecommendation>
@@ -103,7 +101,7 @@ ProductionPanel buildProductionScreenPanel({
         : null,
     onDesiredOutputChanged: (next) {
       if (!canEdit) return;
-      shellRef.read(productionDesiredOutputProvider.notifier).replaceAll(next);
+      replaceDesiredOutput(next);
     },
     starredProduceRecommendationsByRecipeId:
         starredProduceRecommendationsByRecipeId,
