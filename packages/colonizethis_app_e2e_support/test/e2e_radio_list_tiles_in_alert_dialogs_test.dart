@@ -42,55 +42,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-Widget _wrap(Widget child) {
-  return MaterialApp(home: Scaffold(body: child));
-}
-
-Future<void> _pumpDialog(
-  WidgetTester tester, {
-  required List<Widget> dialogChildren,
-  List<Widget> outsideDialog = const <Widget>[],
-}) async {
-  await tester.pumpWidget(
-    _wrap(
-      Column(
-        children: [
-          ...outsideDialog,
-          Builder(
-            builder: (context) {
-              return ElevatedButton(
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) =>
-                        AlertDialog(content: Column(children: dialogChildren)),
-                  );
-                },
-                child: const Text('open'),
-              );
-            },
-          ),
-        ],
-      ),
-    ),
-  );
-  await tester.tap(find.text('open'));
-  await tester.pumpAndSettle();
-  expect(
-    find.byType(AlertDialog),
-    findsOneWidget,
-    reason:
-        'Test harness sanity: the AlertDialog must be mounted before '
-        'asserting against the dialog-scoped finder.',
-  );
-}
+import 'support/e2e_alert_dialog_pump_harness.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('e2eRadioListTilesInAlertDialogs — false / empty branches', () {
     testWidgets('no AlertDialog mounted -> findsNothing', (tester) async {
-      await tester.pumpWidget(_wrap(const SizedBox()));
+      await tester.pumpWidget(wrapE2eScaffold(const SizedBox()));
       expect(
         e2eRadioListTilesInAlertDialogs(),
         findsNothing,
@@ -107,7 +67,7 @@ void main() {
     testWidgets('AlertDialog with no RadioListTile -> findsNothing', (
       tester,
     ) async {
-      await _pumpDialog(
+      await pumpE2eAlertDialog(
         tester,
         dialogChildren: const [Text('Pick a destination')],
       );
@@ -127,7 +87,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(
+        wrapE2eScaffold(
           RadioListTile<String>(
             title: const Text('panel-side'),
             value: 'a',
@@ -151,7 +111,7 @@ void main() {
     testWidgets(
       'AlertDialog without RadioListTile + RadioListTile outside dialog -> findsNothing',
       (tester) async {
-        await _pumpDialog(
+        await pumpE2eAlertDialog(
           tester,
           dialogChildren: const [Text('Confirm warp?')],
           outsideDialog: [
@@ -181,7 +141,7 @@ void main() {
     testWidgets('single RadioListTile<String> inside AlertDialog -> 1 match', (
       tester,
     ) async {
-      await _pumpDialog(
+      await pumpE2eAlertDialog(
         tester,
         dialogChildren: [
           RadioListTile<String>(
@@ -208,7 +168,7 @@ void main() {
     testWidgets('multiple RadioListTile<String> inside AlertDialog -> N', (
       tester,
     ) async {
-      await _pumpDialog(
+      await pumpE2eAlertDialog(
         tester,
         dialogChildren: [
           for (final id in const ['sea1', 'sea2', 'sea3'])
@@ -235,7 +195,7 @@ void main() {
     testWidgets(
       'RadioListTile with non-String type argument is still matched',
       (tester) async {
-        await _pumpDialog(
+        await pumpE2eAlertDialog(
           tester,
           dialogChildren: [
             RadioListTile<int>(
@@ -266,7 +226,7 @@ void main() {
     testWidgets(
       'RadioListTiles inside AlertDialog co-exist with siblings outside',
       (tester) async {
-        await _pumpDialog(
+        await pumpE2eAlertDialog(
           tester,
           dialogChildren: [
             RadioListTile<String>(
@@ -306,7 +266,7 @@ void main() {
 
   group('e2eRadioListTilesInAlertDialogs — regression guards', () {
     testWidgets('plain ListTile (no Radio prefix) is rejected', (tester) async {
-      await _pumpDialog(
+      await pumpE2eAlertDialog(
         tester,
         dialogChildren: const [ListTile(title: Text('plain-list-tile'))],
       );
@@ -325,7 +285,7 @@ void main() {
     testWidgets('CheckboxListTile inside the dialog is rejected', (
       tester,
     ) async {
-      await _pumpDialog(
+      await pumpE2eAlertDialog(
         tester,
         dialogChildren: [
           CheckboxListTile(
@@ -350,7 +310,7 @@ void main() {
     testWidgets('successive calls return fresh, idle Finder objects', (
       tester,
     ) async {
-      await _pumpDialog(
+      await pumpE2eAlertDialog(
         tester,
         dialogChildren: [
           RadioListTile<String>(
@@ -389,7 +349,7 @@ void main() {
             'before pumping. A regression that resolved the Finder '
             'eagerly would throw outside an active tester binding.',
       );
-      await tester.pumpWidget(_wrap(const SizedBox()));
+      await tester.pumpWidget(wrapE2eScaffold(const SizedBox()));
       expect(finder.evaluate(), isEmpty);
     });
   });

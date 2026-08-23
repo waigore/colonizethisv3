@@ -46,6 +46,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+
+import 'support/expect_panel_texts_harness.dart' as panel_host;
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' as shared;
 
 const String _human = 'gp1';
@@ -82,32 +84,9 @@ CtE2eCivilianPanelSnapshot _civilianSnapshot({
 /// helper exits before attempting to open the empire rail / marker
 /// triggers, isolating the contract under test to the wait/sweep/close
 /// composition only.
-Widget _wrap({required List<Widget> children}) => MaterialApp(
-  home: Scaffold(
-    body: KeyedSubtree(
-      key: kCtE2ECivilianPanelRootKey,
-      child: ListView(children: children),
-    ),
-  ),
-);
-
 /// Captures every `debugPrint` line emitted while [body] runs and restores
 /// the original printer afterwards (defensive in `finally` so a thrown
 /// expectation does not leak the override into later tests).
-Future<List<String>> _captureDebugPrints(Future<void> Function() body) async {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -160,11 +139,13 @@ void main() {
         },
       );
       await tester.pumpWidget(
-        _wrap(children: const [ListTile(title: Text('Stub'))]),
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+          ListTile(title: Text('Stub')),
+        ]),
       );
       final perf = shared.E2ePerfLog('check_explore_pin');
       late bool result;
-      final lines = await _captureDebugPrints(() async {
+      final lines = await panel_host.captureDebugPrints(() async {
         result = await e2eCheckExploreEnabledFromCivilianPanel(
           tester,
           perf: perf,
@@ -205,11 +186,13 @@ void main() {
         },
       );
       await tester.pumpWidget(
-        _wrap(children: const [ListTile(title: Text('Stub'))]),
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+          ListTile(title: Text('Stub')),
+        ]),
       );
       final perf = shared.E2ePerfLog('check_explore_pin');
       late bool result;
-      final lines = await _captureDebugPrints(() async {
+      final lines = await panel_host.captureDebugPrints(() async {
         result = await e2eCheckExploreEnabledFromCivilianPanel(
           tester,
           perf: perf,
@@ -241,10 +224,12 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          _wrap(children: const [ListTile(title: Text('Stub'))]),
+          panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+            ListTile(title: Text('Stub')),
+          ]),
         );
         late bool result;
-        final lines = await _captureDebugPrints(() async {
+        final lines = await panel_host.captureDebugPrints(() async {
           result = await e2eCheckExploreEnabledFromCivilianPanel(tester);
         });
         expect(result, isTrue);
@@ -275,10 +260,12 @@ void main() {
             },
           );
           await tester.pumpWidget(
-            _wrap(children: const [ListTile(title: Text('Stub'))]),
+            panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+              ListTile(title: Text('Stub')),
+            ]),
           );
           final perf = shared.E2ePerfLog('check_explore_pin');
-          final lines = await _captureDebugPrints(() async {
+          final lines = await panel_host.captureDebugPrints(() async {
             await e2eCheckExploreEnabledFromCivilianPanel(
               tester,
               perf: perf,
@@ -319,7 +306,9 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          _wrap(children: const [ListTile(title: Text('Stub'))]),
+          panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+            ListTile(title: Text('Stub')),
+          ]),
         );
         final result = await checkExploreEnabledFromCivilianPanel(tester);
         expect(

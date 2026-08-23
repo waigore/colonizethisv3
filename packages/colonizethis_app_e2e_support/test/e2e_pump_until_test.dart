@@ -27,65 +27,13 @@
 /// itself.
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Host that flips an internal boolean after an optional fake-async delay
-/// so a polling helper can observe the change without the test calling
-/// `tester.pump` itself (which would deadlock against the helper's
-/// guarded pump loop).
-class _DelayedConditionHost extends StatefulWidget {
-  const _DelayedConditionHost({
-    required this.flipAfter,
-    required this.onState,
-  });
-
-  final Duration flipAfter;
-  final void Function(_DelayedConditionState state) onState;
-
-  @override
-  State<_DelayedConditionHost> createState() => _DelayedConditionState();
-}
-
-class _DelayedConditionState extends State<_DelayedConditionHost> {
-  bool ready = false;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.onState(this);
-    Timer(widget.flipAfter, () {
-      if (!mounted) return;
-      setState(() => ready = true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
-
-Future<_DelayedConditionState> _pumpHost(
-  WidgetTester tester, {
-  required Duration flipAfter,
-}) async {
-  late _DelayedConditionState captured;
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: _DelayedConditionHost(
-          flipAfter: flipAfter,
-          onState: (s) => captured = s,
-        ),
-      ),
-    ),
-  );
-  return captured;
-}
+import 'support/delayed_condition_host_harness.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -94,17 +42,13 @@ void main() {
     testWidgets(
       'short-circuits before any pump when condition is already true',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await pumpE2eEmptyApp(tester);
         var calls = 0;
         final sw = Stopwatch()..start();
-        await e2ePumpUntil(
-          tester,
-          () {
-            calls++;
-            return true;
-          },
-          timeout: const Duration(seconds: 5),
-        );
+        await e2ePumpUntil(tester, () {
+          calls++;
+          return true;
+        }, timeout: const Duration(seconds: 5));
         expect(
           calls,
           1,
@@ -127,7 +71,7 @@ void main() {
     testWidgets(
       'returns once a scheduled flip makes the condition true during pump',
       (WidgetTester tester) async {
-        final state = await _pumpHost(
+        final state = await pumpDelayedConditionHost(
           tester,
           flipAfter: const Duration(milliseconds: 80),
         );
@@ -154,7 +98,7 @@ void main() {
     testWidgets(
       'fails with TestFailure when condition never becomes true within timeout',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await pumpE2eEmptyApp(tester);
         Object? caught;
         try {
           await e2ePumpUntil(
@@ -203,7 +147,7 @@ void main() {
     testWidgets(
       'accepts a custom phaseName and E2ePerfLog on the success path',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await pumpE2eEmptyApp(tester);
         final perf = E2ePerfLog('e2e_pump_until_test');
         await e2ePumpUntil(
           tester,
@@ -221,7 +165,7 @@ void main() {
     testWidgets(
       'accepts a custom phaseName and E2ePerfLog on the timeout path',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await pumpE2eEmptyApp(tester);
         final perf = E2ePerfLog('e2e_pump_until_test');
         Object? caught;
         try {
@@ -250,7 +194,7 @@ void main() {
     testWidgets(
       'returns true once a scheduled flip makes the condition true during pump',
       (WidgetTester tester) async {
-        final state = await _pumpHost(
+        final state = await pumpDelayedConditionHost(
           tester,
           flipAfter: const Duration(milliseconds: 60),
         );
@@ -277,7 +221,7 @@ void main() {
     testWidgets(
       'returns false without throwing when predicate is persistently false',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await pumpE2eEmptyApp(tester);
         Object? caught;
         bool? met;
         try {
@@ -312,7 +256,7 @@ void main() {
     testWidgets(
       'accepts a custom phaseName and E2ePerfLog on the immediate path',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await pumpE2eEmptyApp(tester);
         final perf = E2ePerfLog('e2e_pump_until_test');
         final met = await e2ePumpUntilConditionOrIdle(
           tester,
@@ -336,7 +280,7 @@ void main() {
     testWidgets(
       'accepts a custom phaseName and E2ePerfLog on the timeout path',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await pumpE2eEmptyApp(tester);
         final perf = E2ePerfLog('e2e_pump_until_test');
         final met = await e2ePumpUntilConditionOrIdle(
           tester,

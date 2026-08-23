@@ -28,13 +28,14 @@ library;
 
 import 'dart:async';
 
-import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+
+import 'support/next_turn_advance_harness.dart';
 
 /// Initial next-turn label the host renders before any flip lands. The
 /// helper reads this via `e2eReadNextTurnButtonLabel` (single descendant
@@ -47,154 +48,6 @@ const String _labelBefore = 'Next turn (1 / 1492)';
 /// helper sees a strict `before != after` transition.
 const String _labelAfter = 'Next turn (2 / 1492)';
 
-/// Stateful host that mounts a key-tagged next-turn button (with whichever
-/// label [_NextTurnAdvanceController] currently reports) plus an optional
-/// `common_yes` confirm chip whose tap callback fires
-/// [_NextTurnAdvanceController.onConfirmTapped]. A fake-async `Timer`
-/// scheduled in [State.initState] can flip the label or the dialog
-/// visibility after a delay so the helper's pump loop observes the change
-/// without the test calling `tester.pump` itself (the same pattern as
-/// `e2e_wait_for_next_turn_label_advance_test.dart`).
-class _NextTurnAdvanceHost extends StatefulWidget {
-  const _NextTurnAdvanceHost({
-    required this.controller,
-    this.flipAfter,
-    this.flipToLabel,
-    this.flipToShowConfirm,
-  });
-
-  final _NextTurnAdvanceController controller;
-  final Duration? flipAfter;
-  final String? flipToLabel;
-  final bool? flipToShowConfirm;
-
-  @override
-  State<_NextTurnAdvanceHost> createState() => _NextTurnAdvanceHostState();
-}
-
-class _NextTurnAdvanceHostState extends State<_NextTurnAdvanceHost> {
-  Timer? _flipTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onControllerChanged);
-    final after = widget.flipAfter;
-    if (after != null) {
-      _flipTimer = Timer(after, _applyFlip);
-    }
-  }
-
-  void _applyFlip() {
-    final newLabel = widget.flipToLabel;
-    if (newLabel != null) {
-      widget.controller.label = newLabel;
-    }
-    final newShow = widget.flipToShowConfirm;
-    if (newShow != null) {
-      widget.controller.showConfirm = newShow;
-    }
-  }
-
-  @override
-  void dispose() {
-    _flipTimer?.cancel();
-    widget.controller.removeListener(_onControllerChanged);
-    super.dispose();
-  }
-
-  void _onControllerChanged() {
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Stack(
-      children: [
-        Center(
-          child: TextButton(
-            key: kGameMapNextTurnButtonKey,
-            onPressed: widget.controller.onNextTurnTapped,
-            child: Text(widget.controller.label),
-          ),
-        ),
-        if (widget.controller.showConfirm)
-          Positioned(
-            top: 32,
-            left: 32,
-            child: Material(
-              child: TextButton(
-                onPressed: widget.controller.onConfirmTapped,
-                child: Text(l10n.common_yes),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _NextTurnAdvanceController extends ChangeNotifier {
-  _NextTurnAdvanceController({
-    required String initialLabel,
-    bool initialShowConfirm = false,
-    this.onNextTurnTapped,
-    this.onConfirmTapped,
-  })  : _label = initialLabel,
-        _showConfirm = initialShowConfirm;
-
-  String _label;
-  bool _showConfirm;
-
-  /// Optional hook fired when the next-turn button is tapped. Used by the
-  /// `taps next-turn-button before checking for confirm` sanity assertion.
-  final VoidCallback? onNextTurnTapped;
-
-  /// Optional hook fired when the `common_yes` confirm chip is tapped. The
-  /// confirm-then-advance test uses this to hide the dialog and schedule
-  /// the label flip on the very tap that the helper performs.
-  final VoidCallback? onConfirmTapped;
-
-  String get label => _label;
-  set label(String value) {
-    if (_label == value) return;
-    _label = value;
-    notifyListeners();
-  }
-
-  bool get showConfirm => _showConfirm;
-  set showConfirm(bool value) {
-    if (_showConfirm == value) return;
-    _showConfirm = value;
-    notifyListeners();
-  }
-}
-
-Future<void> _pumpHost(
-  WidgetTester tester,
-  _NextTurnAdvanceController controller, {
-  Duration? flipAfter,
-  String? flipToLabel,
-  bool? flipToShowConfirm,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: _NextTurnAdvanceHost(
-          controller: controller,
-          flipAfter: flipAfter,
-          flipToLabel: flipToLabel,
-          flipToShowConfirm: flipToShowConfirm,
-        ),
-      ),
-    ),
-  );
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -203,7 +56,7 @@ void main() {
     (WidgetTester tester) async {
       var nextTurnTaps = 0;
       var confirmTaps = 0;
-      final controller = _NextTurnAdvanceController(
+      final controller = NextTurnAdvanceController(
         initialLabel: _labelBefore,
         onNextTurnTapped: () {
           nextTurnTaps += 1;
@@ -217,7 +70,7 @@ void main() {
       // deadline and observes the change before any confirm appears, so
       // the helper should short-circuit via the `earlyAfter` branch and
       // skip the inner `e2eWaitForNextTurnLabelAdvance` call entirely.
-      await _pumpHost(
+      await pumpNextTurnAdvanceHost(
         tester,
         controller,
         flipAfter: const Duration(milliseconds: 80),
@@ -274,9 +127,9 @@ void main() {
     (WidgetTester tester) async {
       var nextTurnTaps = 0;
       var confirmTaps = 0;
-      _NextTurnAdvanceController? controllerRef;
+      NextTurnAdvanceController? controllerRef;
       Timer? labelFlipTimer;
-      final controller = _NextTurnAdvanceController(
+      final controller = NextTurnAdvanceController(
         initialLabel: _labelBefore,
         initialShowConfirm: true,
         onNextTurnTapped: () {
@@ -297,7 +150,7 @@ void main() {
       controllerRef = controller;
       addTearDown(() => labelFlipTimer?.cancel());
 
-      await _pumpHost(tester, controller);
+      await pumpNextTurnAdvanceHost(tester, controller);
       expect(
         find.text('Yes').hitTestable(),
         findsOneWidget,
@@ -357,10 +210,8 @@ void main() {
   testWidgets(
     'fails with TestFailure when neither confirm nor label advance occurs',
     (WidgetTester tester) async {
-      final controller = _NextTurnAdvanceController(
-        initialLabel: _labelBefore,
-      );
-      await _pumpHost(tester, controller);
+      final controller = NextTurnAdvanceController(initialLabel: _labelBefore);
+      await pumpNextTurnAdvanceHost(tester, controller);
       final l10n = await AppLocalizationsBinding.delegate.load(
         const Locale('en'),
       );
