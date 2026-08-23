@@ -1,11 +1,11 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../../campaign_calendar_clock.dart';
 import '../../screens/game/game_screen_shared.dart' show kOldWorldRaceChipKey;
 import 'old_world_race_snapshot.dart';
 

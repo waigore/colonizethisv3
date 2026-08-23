@@ -3,8 +3,6 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import '../../campaign_calendar_clock.dart';
-
 /// Glanceable Old World province race for the `MAP10001` tab-bar chip.
 ///
 /// SPEC: `SPEC/ui/components/old-world-race-chip.md`. Refs #4451.

@@ -1,9 +1,10 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
+import 'game.dart';
+import 'turn_time_mapping.dart';
 
-/// Live campaign calendar remaining copy for `GAME70001` and the race chip.
+/// Live remaining calendar years/turns until the campaign cap.
 ///
-/// SPEC: `SPEC/ui/victory-panel.md`, `SPEC/ui/components/old-world-race-chip.md`,
-/// `SPEC/game/turn-time-mapping.md` § Campaign calendar cap. Refs #4597.
+/// SPEC: `SPEC/game/turn-time-mapping.md` § Campaign calendar cap,
+/// `SPEC/ui/victory-panel.md`. Refs #4597.
 enum CampaignCalendarClockKind {
   remaining,
   lastYear,
@@ -36,43 +37,40 @@ class CampaignCalendarClock {
     const lastYear = TurnTimeMapping.campaignCalendarStopStartYear;
     final capTurn = mapping.turnNumberForStartCalendarYear(lastYear);
 
+    CampaignCalendarClock clock(
+      CampaignCalendarClockKind kind, {
+      int year = 0,
+      int remainingTurns = 0,
+      int remainingYears = 0,
+    }) => CampaignCalendarClock(
+      kind: kind,
+      currentYear: year,
+      lastCampaignYear: lastYear,
+      remainingYears: remainingYears,
+      remainingTurns: remainingTurns,
+    );
+
     if (game.infiniteMode ||
         game.calendarCampaignHalted ||
         game.victory != null) {
-      return CampaignCalendarClock(
-        kind: CampaignCalendarClockKind.omitCountdown,
-        currentYear: currentYear,
-        lastCampaignYear: lastYear,
-        remainingYears: 0,
-        remainingTurns: 0,
-      );
+      return clock(CampaignCalendarClockKind.omitCountdown, year: currentYear);
     }
     if (capTurn == null) {
-      return CampaignCalendarClock(
-        kind: CampaignCalendarClockKind.noHaltOnMapping,
-        currentYear: currentYear,
-        lastCampaignYear: lastYear,
-        remainingYears: 0,
-        remainingTurns: 0,
+      return clock(
+        CampaignCalendarClockKind.noHaltOnMapping,
+        year: currentYear,
       );
     }
     final remainingTurns = capTurn - turn;
     if (remainingTurns <= 0) {
-      return const CampaignCalendarClock(
-        kind: CampaignCalendarClockKind.lastYear,
-        currentYear: lastYear,
-        lastCampaignYear: lastYear,
-        remainingYears: 0,
-        remainingTurns: 0,
-      );
+      return clock(CampaignCalendarClockKind.lastYear, year: lastYear);
     }
     final remainingYears = lastYear - currentYear;
-    return CampaignCalendarClock(
-      kind: CampaignCalendarClockKind.remaining,
-      currentYear: currentYear,
-      lastCampaignYear: lastYear,
-      remainingYears: remainingYears < 0 ? 0 : remainingYears,
+    return clock(
+      CampaignCalendarClockKind.remaining,
+      year: currentYear,
       remainingTurns: remainingTurns,
+      remainingYears: remainingYears < 0 ? 0 : remainingYears,
     );
   }
 }

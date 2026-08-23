@@ -3,7 +3,6 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../campaign_calendar_clock.dart';
 import 'victory_standings.dart';
 
 /// Victory conditions copy (military threshold, calendar remaining, infinite).
