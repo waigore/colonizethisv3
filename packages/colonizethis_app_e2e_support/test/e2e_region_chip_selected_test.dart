@@ -40,33 +40,14 @@ library;
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
-import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-CtChoiceChip _chipWithLabel(
-  Widget label, {
-  required bool selected,
-  Key? key,
-}) {
-  return CtChoiceChip(
-    key: key,
-    label: label,
-    selected: selected,
-    onSelected: (_) {},
-  );
-}
-
-Future<void> _pumpScaffold(WidgetTester tester, Widget body) {
-  return tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(body: body),
-    ),
-  );
-}
+import 'support/e2e_widget_pump_harness.dart';
+import 'support/region_chip_host_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -76,7 +57,7 @@ void main() {
       'returns false on an empty scaffold (no CtChoiceChip widgets)',
       (WidgetTester tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
-        await _pumpScaffold(tester, const SizedBox());
+        await pumpE2eScaffold(tester, const SizedBox());
         expect(
           e2eOldWorldRegionChipAppearsSelected(l10n),
           isFalse,
@@ -92,15 +73,12 @@ void main() {
       'returns false when chips exist but none carry the Old World label',
       (WidgetTester tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
           Column(
             children: <Widget>[
-              _chipWithLabel(
-                Text(l10n.region_newWorld),
-                selected: true,
-              ),
-              _chipWithLabel(
+              regionChipWithLabel(Text(l10n.region_newWorld), selected: true),
+              regionChipWithLabel(
                 const Text('Some Other Region'),
                 selected: true,
               ),
@@ -120,27 +98,23 @@ void main() {
       },
     );
 
-    testWidgets(
-      'returns false when matching chip exists but is not selected',
-      (WidgetTester tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await _pumpScaffold(
-          tester,
-          _chipWithLabel(
-            Text(l10n.region_oldWorld),
-            selected: false,
-          ),
-        );
-        expect(
-          e2eOldWorldRegionChipAppearsSelected(l10n),
-          isFalse,
-          reason:
-              'Helper must surface the chip selection state, not just '
-              'chip presence — otherwise the adaptive post-tap settle '
-              'would exit before the tab finishes flipping to selected.',
-        );
-      },
-    );
+    testWidgets('returns false when matching chip exists but is not selected', (
+      WidgetTester tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await pumpE2eScaffold(
+        tester,
+        regionChipWithLabel(Text(l10n.region_oldWorld), selected: false),
+      );
+      expect(
+        e2eOldWorldRegionChipAppearsSelected(l10n),
+        isFalse,
+        reason:
+            'Helper must surface the chip selection state, not just '
+            'chip presence — otherwise the adaptive post-tap settle '
+            'would exit before the tab finishes flipping to selected.',
+      );
+    });
 
     testWidgets(
       'returns false when matching chip uses a non-Text label widget',
@@ -148,12 +122,9 @@ void main() {
         final l10n = lookupAppLocalizations(const Locale('en'));
         // The helper guards on `lw is Text`; an Icon label (or any non-Text
         // widget) must not be treated as a label match even when selected.
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
-          _chipWithLabel(
-            const Icon(Icons.public),
-            selected: true,
-          ),
+          regionChipWithLabel(const Icon(Icons.public), selected: true),
         );
         expect(
           e2eOldWorldRegionChipAppearsSelected(l10n),
@@ -166,35 +137,28 @@ void main() {
       },
     );
 
-    testWidgets(
-      'returns true when the matching Old World chip is selected',
-      (WidgetTester tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await _pumpScaffold(
-          tester,
-          Row(
-            children: <Widget>[
-              _chipWithLabel(
-                Text(l10n.region_oldWorld),
-                selected: true,
-              ),
-              _chipWithLabel(
-                Text(l10n.region_newWorld),
-                selected: false,
-              ),
-            ],
-          ),
-        );
-        expect(
-          e2eOldWorldRegionChipAppearsSelected(l10n),
-          isTrue,
-          reason:
-              'Happy-path positive: a selected OW chip alongside an '
-              'unselected NW chip must satisfy the predicate so the '
-              'adaptive post-tap settle short-circuits.',
-        );
-      },
-    );
+    testWidgets('returns true when the matching Old World chip is selected', (
+      WidgetTester tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await pumpE2eScaffold(
+        tester,
+        Row(
+          children: <Widget>[
+            regionChipWithLabel(Text(l10n.region_oldWorld), selected: true),
+            regionChipWithLabel(Text(l10n.region_newWorld), selected: false),
+          ],
+        ),
+      );
+      expect(
+        e2eOldWorldRegionChipAppearsSelected(l10n),
+        isTrue,
+        reason:
+            'Happy-path positive: a selected OW chip alongside an '
+            'unselected NW chip must satisfy the predicate so the '
+            'adaptive post-tap settle short-circuits.',
+      );
+    });
 
     testWidgets(
       'returns the first matching chip\'s selected state when multiple OW labels are present',
@@ -203,18 +167,12 @@ void main() {
         // The helper iterates `find.byType(CtChoiceChip)` and returns on the
         // first label match — pin that order-sensitive behavior so future
         // changes (e.g., switching to `lastWhere`) are caught.
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
           Row(
             children: <Widget>[
-              _chipWithLabel(
-                Text(l10n.region_oldWorld),
-                selected: false,
-              ),
-              _chipWithLabel(
-                Text(l10n.region_oldWorld),
-                selected: true,
-              ),
+              regionChipWithLabel(Text(l10n.region_oldWorld), selected: false),
+              regionChipWithLabel(Text(l10n.region_oldWorld), selected: true),
             ],
           ),
         );
@@ -232,34 +190,30 @@ void main() {
   });
 
   group('e2eNewWorldRegionChipAppearsSelected', () {
-    testWidgets(
-      'returns false when the keyed New World subtree is absent',
-      (WidgetTester tester) async {
-        // No KeyedSubtree(key: kCtE2ERegionTabNewWorldKey) → must short-circuit.
-        await _pumpScaffold(
-          tester,
-          _chipWithLabel(
-            const Text('New World'),
-            selected: true,
-          ),
-        );
-        expect(
-          e2eNewWorldRegionChipAppearsSelected(),
-          isFalse,
-          reason:
-              'A selected chip outside the keyed subtree must NOT satisfy '
-              'the predicate — the helper must scope its match to the '
-              'kCtE2ERegionTabNewWorldKey subtree so the bottom-sheet '
-              'New-World chip rendered in another panel does not race '
-              'the region-tab settle.',
-        );
-      },
-    );
+    testWidgets('returns false when the keyed New World subtree is absent', (
+      WidgetTester tester,
+    ) async {
+      // No KeyedSubtree(key: kCtE2ERegionTabNewWorldKey) → must short-circuit.
+      await pumpE2eScaffold(
+        tester,
+        regionChipWithLabel(const Text('New World'), selected: true),
+      );
+      expect(
+        e2eNewWorldRegionChipAppearsSelected(),
+        isFalse,
+        reason:
+            'A selected chip outside the keyed subtree must NOT satisfy '
+            'the predicate — the helper must scope its match to the '
+            'kCtE2ERegionTabNewWorldKey subtree so the bottom-sheet '
+            'New-World chip rendered in another panel does not race '
+            'the region-tab settle.',
+      );
+    });
 
     testWidgets(
       'returns false when the keyed subtree has no CtChoiceChip descendants',
       (WidgetTester tester) async {
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
           const KeyedSubtree(
             key: kCtE2ERegionTabNewWorldKey,
@@ -282,20 +236,14 @@ void main() {
       (WidgetTester tester) async {
         // The helper requires exactly one chip in the subtree so duplicate
         // / mid-rebuild chips do not accidentally satisfy the predicate.
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
           KeyedSubtree(
             key: kCtE2ERegionTabNewWorldKey,
             child: Row(
               children: <Widget>[
-                _chipWithLabel(
-                  const Text('New World'),
-                  selected: true,
-                ),
-                _chipWithLabel(
-                  const Text('New World'),
-                  selected: true,
-                ),
+                regionChipWithLabel(const Text('New World'), selected: true),
+                regionChipWithLabel(const Text('New World'), selected: true),
               ],
             ),
           ),
@@ -315,11 +263,11 @@ void main() {
     testWidgets(
       'returns false when the keyed subtree has exactly one unselected chip',
       (WidgetTester tester) async {
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
           KeyedSubtree(
             key: kCtE2ERegionTabNewWorldKey,
-            child: _chipWithLabel(
+            child: regionChipWithLabel(
               const Text('New World'),
               selected: false,
             ),
@@ -341,14 +289,11 @@ void main() {
       (WidgetTester tester) async {
         // Happy path with explicit keyed-subtree scoping to mirror the
         // map controls' kCtE2ERegionTabNewWorldKey rendering.
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
           KeyedSubtree(
             key: kCtE2ERegionTabNewWorldKey,
-            child: _chipWithLabel(
-              const Text('New World'),
-              selected: true,
-            ),
+            child: regionChipWithLabel(const Text('New World'), selected: true),
           ),
         );
         expect(
@@ -367,14 +312,11 @@ void main() {
       (WidgetTester tester) async {
         // Mixed-render case: bottom-sheet chip selected outside the
         // map-controls keyed root must not be confused with a map-tab flip.
-        await _pumpScaffold(
+        await pumpE2eScaffold(
           tester,
           Column(
             children: <Widget>[
-              _chipWithLabel(
-                const Text('New World'),
-                selected: true,
-              ),
+              regionChipWithLabel(const Text('New World'), selected: true),
               const KeyedSubtree(
                 key: kCtE2ERegionTabNewWorldKey,
                 child: SizedBox.shrink(),

@@ -43,6 +43,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+
+import 'support/expect_panel_texts_harness.dart' as panel_host;
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' as shared;
 
 /// Mounts a hit-testable panel root with the given children so the
@@ -50,15 +52,6 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' as shared;
 /// the first poll. The wrapper exits before its timeout ever elapses,
 /// isolating the contract under test to the panel-specific keys / phase
 /// labels / snapshot global wiring composed by the wrapper.
-Widget _wrap(Key panelRootKey, List<Widget> children) => MaterialApp(
-  home: Scaffold(
-    body: KeyedSubtree(
-      key: panelRootKey,
-      child: ListView(children: children),
-    ),
-  ),
-);
-
 /// Drops the four per-panel snapshot globals back to `null` so each
 /// null-snapshot guard test starts from a clean slate; an earlier test
 /// leaving a real snapshot in place would short-circuit the guard and
@@ -143,7 +136,7 @@ void main() {
     ) async {
       _resetSnapshots();
       await tester.pumpWidget(
-        _wrap(kCtE2ECivilianPanelRootKey, const [Text('x')]),
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [Text('x')]),
       );
       final l10n = lookupAppLocalizations(const Locale('en'));
       try {
@@ -179,7 +172,7 @@ void main() {
       (tester) async {
         _resetSnapshots();
         await tester.pumpWidget(
-          _wrap(kCtE2ENavalPanelRootKey, const [Text('x')]),
+          panel_host.wrap(kCtE2ENavalPanelRootKey, const [Text('x')]),
         );
         final l10n = lookupAppLocalizations(const Locale('en'));
         try {
@@ -210,7 +203,7 @@ void main() {
       (tester) async {
         _resetSnapshots();
         await tester.pumpWidget(
-          _wrap(kCtE2ENavalPanelRootKey, const [Text('x')]),
+          panel_host.wrap(kCtE2ENavalPanelRootKey, const [Text('x')]),
         );
         final l10n = lookupAppLocalizations(const Locale('en'));
         try {
@@ -246,7 +239,7 @@ void main() {
     ) async {
       _resetSnapshots();
       await tester.pumpWidget(
-        _wrap(kCtE2EProductionPanelRootKey, const [Text('x')]),
+        panel_host.wrap(kCtE2EProductionPanelRootKey, const [Text('x')]),
       );
       final l10n = lookupAppLocalizations(const Locale('en'));
       try {
@@ -274,7 +267,7 @@ void main() {
     ) async {
       _resetSnapshots();
       await tester.pumpWidget(
-        _wrap(kCtE2EProvincePanelRootKey, const [Text('x')]),
+        panel_host.wrap(kCtE2EProvincePanelRootKey, const [Text('x')]),
       );
       final l10n = lookupAppLocalizations(const Locale('en'));
       try {

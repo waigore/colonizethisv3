@@ -39,6 +39,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+
+import 'support/e2e_widget_pump_harness.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' as shared;
 
 const String _human = 'gp1';
@@ -90,9 +92,6 @@ CtE2eNavalPanelSnapshot _homeOnlySnapshot() =>
 /// Pumps an effectively empty material app — no naval panel, no region
 /// tab, no rail buttons. Exercises the snapshot-only short-circuit
 /// branch where `e2eOpenNavalPanel` is skipped.
-Future<void> _pumpEmpty(WidgetTester tester) =>
-    tester.pumpWidget(const MaterialApp(home: Scaffold(body: SizedBox())));
-
 /// Pumps a tree with the naval panel root key already mounted so the
 /// helper's conditional `e2eOpenNavalPanel` call short-circuits via the
 /// hit-testable panel check without needing an empire-rail button.
@@ -142,13 +141,12 @@ void main() {
     });
   });
 
-  group('e2eEnsureNonHomeFleetInNwAfterLoop — snapshot reach short-circuit',
-      () {
+  group('e2eEnsureNonHomeFleetInNwAfterLoop — snapshot reach short-circuit', () {
     testWidgets(
       'returns successfully without calling failureMessageBuilder when '
       'snapshot precheck reports reach (open-naval-panel branch skipped)',
       (tester) async {
-        await _pumpEmpty(tester);
+        await pumpE2eEmptyScaffold(tester);
         ctE2eNavalPanelSnapshot = _reachedSnapshot();
         final perf = shared.E2ePerfLog('final_naval_reach_check_pin');
         var failureBuilderInvocations = 0;
@@ -197,140 +195,134 @@ void main() {
   });
 
   group('e2eEnsureNonHomeFleetInNwAfterLoop — failure branch', () {
-    testWidgets(
-      'calls failureMessageBuilder with tester.takeException() when '
-      'snapshot reports no NW fleet and widget tree has no fleet rows '
-      '(naval panel mounted so openNavalPanel short-circuits)',
-      (tester) async {
-        await _pumpWithNavalPanelMounted(tester);
-        // Snapshot is non-null so the harness probe consults snapshot only
-        // (does NOT fall back to the widget tree) — guarantees the
-        // failure path fires deterministically without needing a full
-        // naval panel widget tree.
-        ctE2eNavalPanelSnapshot = _homeOnlySnapshot();
-        final perf = shared.E2ePerfLog('final_naval_reach_check_pin');
-        var failureBuilderInvocations = 0;
-        Object? lastExceptionSeenByBuilder = 'not-yet-invoked';
-        await expectLater(
-          e2eEnsureNonHomeFleetInNwAfterLoop(
-            tester,
-            perf: perf,
-            failureMessageBuilder: (lastException) {
-              failureBuilderInvocations++;
-              lastExceptionSeenByBuilder = lastException;
-              return 'scenario-specific fail | lastException=$lastException';
-            },
-          ),
-          throwsA(
-            isA<TestFailure>().having(
-              (e) => e.message,
-              'message',
-              contains('scenario-specific fail | lastException='),
-            ),
-          ),
-          reason:
-              'When the snapshot reports no NW fleet, the harness probe '
-              'returns false and the helper MUST call '
-              '`fail(failureMessageBuilder(tester.takeException()))` so '
-              'the scenario-specific fail message preserves the legacy '
-              '"Last exception:" suffix the inline blocks appended. A '
-              'regression that swallowed the failure or used a hardcoded '
-              'message would surface here as either no throw or a wrong '
-              'message string.',
-        );
-        expect(
-          failureBuilderInvocations,
-          1,
-          reason:
-              '`failureMessageBuilder` must be invoked exactly once on '
-              'the failure path so the scenario-specific fail message '
-              'is the only one rendered. A regression that bypassed '
-              'the builder would leave the count at 0; one that called '
-              'it twice would double-render the message.',
-        );
-        // `tester.takeException()` returns `null` when no framework
-        // exception was raised inside the helper body; pin that the
-        // builder still receives the call with `null` so the legacy
-        // "Last exception: null" rendering is preserved byte-identically
-        // for log scrapers that consume the suffix.
-        expect(
-          lastExceptionSeenByBuilder,
-          isNull,
-          reason:
-              'The builder must be invoked with the value of '
-              '`tester.takeException()` even when that value is `null` '
-              '(no framework exception raised inside the helper body). '
-              'A regression that swapped to a sentinel "no exception" '
-              'string or a placeholder Object would break log scrapers '
-              'keyed on the literal "Last exception: null" suffix.',
-        );
-      },
-    );
-  });
-
-  group('e2eEnsureNonHomeFleetInNwAfterLoop — AC1 barrel forwarding', () {
-    testWidgets(
-      'ensureNonHomeFleetInNwAfterLoop (barrel alias) short-circuits '
-      'identically to the lifted form on the snapshot reach path',
-      (tester) async {
-        await _pumpEmpty(tester);
-        ctE2eNavalPanelSnapshot = _reachedSnapshot();
-        final perf = shared.E2ePerfLog('final_naval_reach_check_pin');
-        var failureBuilderInvocations = 0;
-        final result = await ensureNonHomeFleetInNwAfterLoop(
+    testWidgets('calls failureMessageBuilder with tester.takeException() when '
+        'snapshot reports no NW fleet and widget tree has no fleet rows '
+        '(naval panel mounted so openNavalPanel short-circuits)', (
+      tester,
+    ) async {
+      await _pumpWithNavalPanelMounted(tester);
+      // Snapshot is non-null so the harness probe consults snapshot only
+      // (does NOT fall back to the widget tree) — guarantees the
+      // failure path fires deterministically without needing a full
+      // naval panel widget tree.
+      ctE2eNavalPanelSnapshot = _homeOnlySnapshot();
+      final perf = shared.E2ePerfLog('final_naval_reach_check_pin');
+      var failureBuilderInvocations = 0;
+      Object? lastExceptionSeenByBuilder = 'not-yet-invoked';
+      await expectLater(
+        e2eEnsureNonHomeFleetInNwAfterLoop(
           tester,
           perf: perf,
           failureMessageBuilder: (lastException) {
             failureBuilderInvocations++;
-            return 'should not fire';
+            lastExceptionSeenByBuilder = lastException;
+            return 'scenario-specific fail | lastException=$lastException';
           },
-        );
-        expect(
-          failureBuilderInvocations,
-          0,
-          reason:
-              'The AC1 barrel wrapper must forward arguments in the '
-              'documented order — a regression that swapped '
-              '`failureMessageBuilder` with `maxUiResponseWait`, '
-              'dropped `perf`, or accidentally inserted a default '
-              'message would surface here as a spurious failure on the '
-              'happy reach path.',
-        );
-        expect(
-          result.lastKnownNavalSnapshot,
-          isNotNull,
-          reason:
-              'Barrel-aliased call must propagate the captured snapshot '
-              'identically to the lifted form so the post-loop tracker '
-              'in test 2 stays in sync between the two entrypoints.',
-        );
-      },
-    );
+        ),
+        throwsA(
+          isA<TestFailure>().having(
+            (e) => e.message,
+            'message',
+            contains('scenario-specific fail | lastException='),
+          ),
+        ),
+        reason:
+            'When the snapshot reports no NW fleet, the harness probe '
+            'returns false and the helper MUST call '
+            '`fail(failureMessageBuilder(tester.takeException()))` so '
+            'the scenario-specific fail message preserves the legacy '
+            '"Last exception:" suffix the inline blocks appended. A '
+            'regression that swallowed the failure or used a hardcoded '
+            'message would surface here as either no throw or a wrong '
+            'message string.',
+      );
+      expect(
+        failureBuilderInvocations,
+        1,
+        reason:
+            '`failureMessageBuilder` must be invoked exactly once on '
+            'the failure path so the scenario-specific fail message '
+            'is the only one rendered. A regression that bypassed '
+            'the builder would leave the count at 0; one that called '
+            'it twice would double-render the message.',
+      );
+      // `tester.takeException()` returns `null` when no framework
+      // exception was raised inside the helper body; pin that the
+      // builder still receives the call with `null` so the legacy
+      // "Last exception: null" rendering is preserved byte-identically
+      // for log scrapers that consume the suffix.
+      expect(
+        lastExceptionSeenByBuilder,
+        isNull,
+        reason:
+            'The builder must be invoked with the value of '
+            '`tester.takeException()` even when that value is `null` '
+            '(no framework exception raised inside the helper body). '
+            'A regression that swapped to a sentinel "no exception" '
+            'string or a placeholder Object would break log scrapers '
+            'keyed on the literal "Last exception: null" suffix.',
+      );
+    });
+  });
 
-    test(
-      'ensureNonHomeFleetInNwAfterLoop is re-exported as a tear-off '
-      '(compile-time signature pin)',
-      () {
-        final Future<E2eFinalNavalReachCheckResult> Function(
-          WidgetTester, {
-          required shared.E2ePerfLog perf,
-          required String Function(Object? lastException)
-              failureMessageBuilder,
-          Duration maxUiResponseWait,
-        })
-        ref = ensureNonHomeFleetInNwAfterLoop;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'The AC1 barrel must continue to export the helper with '
-              'the documented signature. A silent removal from the '
-              '`show` clause or an arg-order swap on the wrapper would '
-              'fail this assignment at compile time, surfacing a '
-              'breaking change before CI rather than after.',
-        );
-      },
-    );
+  group('e2eEnsureNonHomeFleetInNwAfterLoop — AC1 barrel forwarding', () {
+    testWidgets('ensureNonHomeFleetInNwAfterLoop (barrel alias) short-circuits '
+        'identically to the lifted form on the snapshot reach path', (
+      tester,
+    ) async {
+      await pumpE2eEmptyScaffold(tester);
+      ctE2eNavalPanelSnapshot = _reachedSnapshot();
+      final perf = shared.E2ePerfLog('final_naval_reach_check_pin');
+      var failureBuilderInvocations = 0;
+      final result = await ensureNonHomeFleetInNwAfterLoop(
+        tester,
+        perf: perf,
+        failureMessageBuilder: (lastException) {
+          failureBuilderInvocations++;
+          return 'should not fire';
+        },
+      );
+      expect(
+        failureBuilderInvocations,
+        0,
+        reason:
+            'The AC1 barrel wrapper must forward arguments in the '
+            'documented order — a regression that swapped '
+            '`failureMessageBuilder` with `maxUiResponseWait`, '
+            'dropped `perf`, or accidentally inserted a default '
+            'message would surface here as a spurious failure on the '
+            'happy reach path.',
+      );
+      expect(
+        result.lastKnownNavalSnapshot,
+        isNotNull,
+        reason:
+            'Barrel-aliased call must propagate the captured snapshot '
+            'identically to the lifted form so the post-loop tracker '
+            'in test 2 stays in sync between the two entrypoints.',
+      );
+    });
+
+    test('ensureNonHomeFleetInNwAfterLoop is re-exported as a tear-off '
+        '(compile-time signature pin)', () {
+      final Future<E2eFinalNavalReachCheckResult> Function(
+        WidgetTester, {
+        required shared.E2ePerfLog perf,
+        required String Function(Object? lastException) failureMessageBuilder,
+        Duration maxUiResponseWait,
+      })
+      ref = ensureNonHomeFleetInNwAfterLoop;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The AC1 barrel must continue to export the helper with '
+            'the documented signature. A silent removal from the '
+            '`show` clause or an arg-order swap on the wrapper would '
+            'fail this assignment at compile time, surfacing a '
+            'breaking change before CI rather than after.',
+      );
+    });
   });
 
   group('e2eEnsureNonHomeFleetInNwAfterLoop — fixture sanity', () {
@@ -349,21 +341,18 @@ void main() {
       },
     );
 
-    test(
-      '_homeOnlySnapshot reports NO reach via '
-      'e2eFleetReachDoneFromCtSnapshotOnly',
-      () {
-        expect(
-          shared.e2eFleetReachDoneFromCtSnapshotOnly(_homeOnlySnapshot()),
-          isFalse,
-          reason:
-              'Pin must depend on the same predicate the helper uses so '
-              'the "failure branch" assertion really sends the helper '
-              'down the openNavalPanel → harness-probe-fails path — '
-              'drift here would short-circuit the failure path and '
-              'leave the scenario-specific message untested.',
-        );
-      },
-    );
+    test('_homeOnlySnapshot reports NO reach via '
+        'e2eFleetReachDoneFromCtSnapshotOnly', () {
+      expect(
+        shared.e2eFleetReachDoneFromCtSnapshotOnly(_homeOnlySnapshot()),
+        isFalse,
+        reason:
+            'Pin must depend on the same predicate the helper uses so '
+            'the "failure branch" assertion really sends the helper '
+            'down the openNavalPanel → harness-probe-fails path — '
+            'drift here would short-circuit the failure path and '
+            'leave the scenario-specific message untested.',
+      );
+    });
   });
 }

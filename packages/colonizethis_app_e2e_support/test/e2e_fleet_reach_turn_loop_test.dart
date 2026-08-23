@@ -39,6 +39,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+
+import 'support/e2e_widget_pump_harness.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' as shared;
 
 const String _human = 'gp1';
@@ -84,9 +86,6 @@ CtE2eNavalPanelSnapshot _snapshot({required List<Fleet> fleets}) =>
 CtE2eNavalPanelSnapshot _reachedSnapshot() =>
     _snapshot(fleets: [_homeFleet(), _splitFleetInNw()]);
 
-Future<void> _pumpEmpty(WidgetTester tester) =>
-    tester.pumpWidget(const MaterialApp(home: Scaffold(body: SizedBox())));
-
 /// Captures every `debugPrint` line emitted while [body] runs and restores
 /// the original printer afterwards (defensive in `finally` so a thrown
 /// expectation does not leak the override into later tests).
@@ -116,19 +115,22 @@ void main() {
   });
 
   group('e2eFleetReachTurnLoop — default constants', () {
-    test('kE2eDefaultFleetReachLoopMaxTurns matches the legacy 35-turn cap', () {
-      expect(
-        kE2eDefaultFleetReachLoopMaxTurns,
-        35,
-        reason:
-            'Lifted-from default must equal the legacy private '
-            '`_kMaxNextTurnTapsForNwFleetReach = 35` literal in '
-            '`new_game_fleet_reaches_new_world_e2e_helpers.dart`. A silent '
-            'change would either burn additional turns past the documented '
-            'Bottleneck 4 ceiling (#2336) or short-circuit the fleet-reach '
-            'scenarios before they exercise the legacy reach window.',
-      );
-    });
+    test(
+      'kE2eDefaultFleetReachLoopMaxTurns matches the legacy 35-turn cap',
+      () {
+        expect(
+          kE2eDefaultFleetReachLoopMaxTurns,
+          35,
+          reason:
+              'Lifted-from default must equal the legacy private '
+              '`_kMaxNextTurnTapsForNwFleetReach = 35` literal in '
+              '`new_game_fleet_reaches_new_world_e2e_helpers.dart`. A silent '
+              'change would either burn additional turns past the documented '
+              'Bottleneck 4 ceiling (#2336) or short-circuit the fleet-reach '
+              'scenarios before they exercise the legacy reach window.',
+        );
+      },
+    );
   });
 
   group('e2eFleetReachTurnLoop — bounded loop', () {
@@ -136,7 +138,7 @@ void main() {
       'maxTurns: 0 is a complete no-op — ensureUnderWallClock never invoked '
       'and the loop returns loopExhausted with iterationsRun=0',
       (tester) async {
-        await _pumpEmpty(tester);
+        await pumpE2eEmptyScaffold(tester);
         final l10n = lookupAppLocalizations(const Locale('en'));
         final perf = shared.E2ePerfLog('fleet_reach_loop_pin');
         final steps = <String>[];
@@ -208,7 +210,7 @@ void main() {
       'reached snapshot at iteration 0 returns [reachedSnapshotPrecheck] '
       'with iterationsRun=0 and a single ensureUnderWallClock callback',
       (tester) async {
-        await _pumpEmpty(tester);
+        await pumpE2eEmptyScaffold(tester);
         final l10n = lookupAppLocalizations(const Locale('en'));
         ctE2eNavalPanelSnapshot = _reachedSnapshot();
         final perf = shared.E2ePerfLog('fleet_reach_loop_pin');
@@ -255,11 +257,13 @@ void main() {
               'snapshot mask a wall-clock breach.',
         );
         expect(
-          lines.where(
-            (line) => line.startsWith(
-              'E2E_COUNTER|test=fleet_reach_loop_pin|name=turn_loop_iterations|',
-            ),
-          ).toList(),
+          lines
+              .where(
+                (line) => line.startsWith(
+                  'E2E_COUNTER|test=fleet_reach_loop_pin|name=turn_loop_iterations|',
+                ),
+              )
+              .toList(),
           <String>[
             'E2E_COUNTER|test=fleet_reach_loop_pin|name=turn_loop_iterations|value=1',
           ],
@@ -278,7 +282,7 @@ void main() {
     testWidgets(
       'step label uses `turn loop start turnIdx=<idx>` form on iteration 0',
       (tester) async {
-        await _pumpEmpty(tester);
+        await pumpE2eEmptyScaffold(tester);
         final l10n = lookupAppLocalizations(const Locale('en'));
         ctE2eNavalPanelSnapshot = _reachedSnapshot();
         final perf = shared.E2ePerfLog('fleet_reach_loop_pin');
@@ -318,7 +322,7 @@ void main() {
       'fleetReachTurnLoop (barrel alias) short-circuits identically to '
       'the lifted form when the snapshot precheck satisfies',
       (tester) async {
-        await _pumpEmpty(tester);
+        await pumpE2eEmptyScaffold(tester);
         final l10n = lookupAppLocalizations(const Locale('en'));
         ctE2eNavalPanelSnapshot = _reachedSnapshot();
         final perf = shared.E2ePerfLog('fleet_reach_loop_pin');
@@ -361,30 +365,27 @@ void main() {
       },
     );
 
-    test(
-      'fleetReachTurnLoop is re-exported as a tear-off '
-      '(compile-time signature pin)',
-      () {
-        final Future<E2eFleetReachLoopResult> Function(
-          WidgetTester,
-          AppLocalizations, {
-          required shared.E2ePerfLog perf,
-          required void Function(String step) ensureUnderWallClock,
-          Duration maxUiResponseWait,
-          int maxTurns,
-        })
-        ref = fleetReachTurnLoop;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'The AC1 barrel must continue to export the helper with '
-              'the documented signature. A silent removal from the '
-              '`show` clause or an arg-order swap on the wrapper would '
-              'fail this assignment at compile time, surfacing a '
-              'breaking change before CI rather than after.',
-        );
-      },
-    );
+    test('fleetReachTurnLoop is re-exported as a tear-off '
+        '(compile-time signature pin)', () {
+      final Future<E2eFleetReachLoopResult> Function(
+        WidgetTester,
+        AppLocalizations, {
+        required shared.E2ePerfLog perf,
+        required void Function(String step) ensureUnderWallClock,
+        Duration maxUiResponseWait,
+        int maxTurns,
+      })
+      ref = fleetReachTurnLoop;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The AC1 barrel must continue to export the helper with '
+            'the documented signature. A silent removal from the '
+            '`show` clause or an arg-order swap on the wrapper would '
+            'fail this assignment at compile time, surfacing a '
+            'breaking change before CI rather than after.',
+      );
+    });
   });
 }
