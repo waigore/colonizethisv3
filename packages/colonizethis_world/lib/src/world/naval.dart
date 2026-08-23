@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../game_player_lookup.dart';
+import '../world_constants.dart';
 import 'topology_helpers.dart';
 import 'topology_identity.dart';
 
@@ -17,13 +19,7 @@ bool dockOrderTargetsPlayerCapital(
   String playerId,
   String dockFullProvinceId,
 ) {
-  String? cap;
-  for (final p in game.players) {
-    if (p.id == playerId) {
-      cap = p.capitalProvinceId;
-      break;
-    }
-  }
+  final cap = game.playerById(playerId)?.capitalProvinceId;
   if (cap == null || cap.isEmpty) return false;
   if (ProvinceId.isPrefixed(cap)) return cap == dockFullProvinceId;
   return ProvinceId.full(ProvinceId.regionIdFrom(dockFullProvinceId), cap) ==
@@ -151,8 +147,7 @@ NavalMoveTopologyPicks navalMoveTopologyPicksForFleet({
       topology,
       rl.localId,
       regionId: rl.regionId,
-    ).toList()
-      ..sort();
+    ).toList()..sort();
     return NavalMoveTopologyPicks(
       adjacentSeaZoneIds: undock,
       adjacentProvinceIdsForDock: [],
@@ -214,7 +209,7 @@ String? seaZoneIdForProvince(
 List<Fleet> fleetsInPortAtProvince(WorldState worldState, String provinceId) {
   final normalized = provinceId.contains('|')
       ? provinceId
-      : 'oldWorld|$provinceId';
+      : '$kRegionOldWorld|$provinceId';
   return worldState.fleets
       .where((f) => f.inPortAtProvinceId == normalized)
       .toList();
