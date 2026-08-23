@@ -23,7 +23,7 @@ during transition slices).
 
 - **Physical lines:** `LineSplitter` line count of the file's UTF-8 text (same
   as `const LineSplitter().convert(content).length` in the checker).
-- **Threshold:** each scanned file must have **260** physical lines or fewer
+- **Threshold:** each scanned file must have **250** physical lines or fewer
   (261 or more fails unless on the shrink-only grandfather allowlist).
   Wave-20 #4582 lowered the wave-15 **300** cap.
 
@@ -42,7 +42,7 @@ close (#4352).
   reports a line count strictly greater than 260.
 
 - Given a temporary workspace whose only matching file is
-  `app/lib/features/game/screens/ok.dart` with exactly **260** physical lines,
+  `app/lib/features/game/screens/ok.dart` with exactly **250** physical lines,
   when the System runs `runCheckAppFeaturesScreensLibPhysicalFileSize`, then the
   checker exits zero.
 
@@ -55,4 +55,4 @@ close (#4352).
   `dart run tool/ct_repo_lint.dart` and rule
   `repo.app_features_screens_lib_physical_file_size` is in scope, then every
   non-grandfathered file under `app/lib/features/game/screens/**` passes the
-  260 physical-line ceiling (Refs #4352, #4582).
+  250 physical-line ceiling (Refs #4352, #4582).
