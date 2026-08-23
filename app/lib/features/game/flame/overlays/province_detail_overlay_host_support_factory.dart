@@ -18,6 +18,7 @@ import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_factory_missions.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
+import 'province_detail_overlay_host_support_factory_overlay.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
@@ -180,7 +181,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     canMutateViaUi: canMutateViaUi,
   );
 
-  return ProvinceSeaZoneDetailOverlay(
+  return assembleProvinceSeaZoneDetailOverlay(
     game: game,
     region: region,
     displayId: displayId,
@@ -188,62 +189,25 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     humanPlayerId: humanPlayerId,
     playerView: playerView,
     draftOrders: draftOrders,
-    townProductionBonusByCommodity: townProductionBonus,
+    townProductionBonus: townProductionBonus,
     extractionSnapshot: extractionSnapshot,
     availableByCommodity: availableByCommodity,
     tileConnectivity: tileConnectivity,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
     onClose: onClose,
-    civilianInlineActions: gatedInlineActions,
-    inlineActionCallbacks: (
-      onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
-      onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
-      onBuildImprovementTap: shortcuts.onBuildImprovementTap,
-      onBuildRoadTap: shortcuts.onBuildRoadTap,
-      onBuildFortTap: shortcuts.onBuildFortTap,
-      onBuildPortTap: shortcuts.onBuildPortTap,
-      onBuildRailroadTap: shortcuts.onBuildRailroadTap,
-      onPurchaseLandTap: shortcuts.onPurchaseLandTap,
-    ),
+    gatedInlineActions: gatedInlineActions,
+    shortcuts: shortcuts,
     omniscientDetail: omniscientDetail,
-    showUpgradeTownControl: canMutateViaUi && upgradeTownState.showControl,
-    upgradeTownEnabled: canMutateViaUi && upgradeTownState.enabled,
-    upgradeTownHasBuilderUnits: upgradeTownState.hasBuilderUnits,
-    upgradeTownTargetTileKey: upgradeTownState.townTileKey,
-    onUpgradeTownTap: shortcuts.onUpgradeTownTap,
-    showMoveArmyControl: armyMove.showMove,
-    moveArmyEnabled: armyMove.moveEnabled,
-    moveArmyTooltip: armyMove.moveTooltip,
-    onMoveArmyTap: armyMove.onMoveTap,
-    showInvadeArmyControl: armyMove.showInvade,
-    invadeArmyEnabled: armyMove.invadeEnabled,
-    invadeArmyTooltip: armyMove.invadeTooltip,
-    onInvadeArmyTap: armyMove.onInvadeTap,
-    showCombineArmiesControl: armyCombine.show,
-    combineArmiesEnabled: armyCombine.enabled,
-    combineArmiesTooltip: armyCombine.tooltip,
-    onCombineArmiesTap: armyCombine.onTap,
+    canMutateViaUi: canMutateViaUi,
+    upgradeTownState: upgradeTownState,
+    armyMove: armyMove,
+    armyCombine: armyCombine,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
-    blockadeStatus: navalMission.blockadeStatus,
     stationSpy: stationSpy,
     counterEspionage: counterEspionage,
-    showEstablishConsulateControl:
-        canMutateViaUi && establishConsulateState.showControl,
-    establishConsulateEnabled:
-        canMutateViaUi && establishConsulateState.enabled,
-    establishConsulatePending: establishConsulateState.pending,
-    establishConsulateRejectionReason: establishConsulateState.rejectionReason,
-    onEstablishConsulateTap: shortcuts.onEstablishConsulateTap,
-    showOwnerStanding: offerPeaceState.showStanding,
-    ownerStandingAtWar: offerPeaceState.atWar,
-    showOwnerAllianceBadge: offerPeaceState.showAllianceBadge,
-    showOfferPeaceControl:
-        canMutateViaUi && offerPeaceState.showOfferPeaceControl,
-    offerPeaceEnabled: canMutateViaUi && offerPeaceState.offerPeaceEnabled,
-    offerPeacePending: offerPeaceState.offerPeacePending,
-    offerPeaceRejectionReason: offerPeaceState.rejectionReason,
-    onOfferPeaceTap: shortcuts.onOfferPeaceTap,
+    establishConsulateState: establishConsulateState,
+    offerPeaceState: offerPeaceState,
   );
 }

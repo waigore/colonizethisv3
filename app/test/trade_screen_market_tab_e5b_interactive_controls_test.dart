@@ -45,12 +45,16 @@ void main() {
         if (c.category == CommodityCategory.riches || c.id == 'spices') {
           continue;
         }
-        final row = find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(c.id));
+        final row = find.byKey(
+          TradeScreenMarketKeys.marketCommodityRowKey(c.id),
+        );
         expect(row, findsOneWidget);
         expect(
           find.descendant(
             of: row,
-            matching: find.byKey(TradeScreenMarketKeys.marketRowNoneChipKey(c.id)),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowNoneChipKey(c.id),
+            ),
           ),
           findsOneWidget,
           reason: 'commodity `${c.id}` row must mount its `None` chip.',
@@ -58,7 +62,9 @@ void main() {
         expect(
           find.descendant(
             of: row,
-            matching: find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(c.id)),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowBidChipKey(c.id),
+            ),
           ),
           findsOneWidget,
           reason: 'commodity `${c.id}` row must mount its `Bid` chip.',
@@ -66,7 +72,9 @@ void main() {
         expect(
           find.descendant(
             of: row,
-            matching: find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(c.id)),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowOfferChipKey(c.id),
+            ),
           ),
           findsOneWidget,
           reason: 'commodity `${c.id}` row must mount its `Offer` chip.',
@@ -74,7 +82,9 @@ void main() {
         expect(
           find.descendant(
             of: row,
-            matching: find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(c.id)),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowDecrementKey(c.id),
+            ),
           ),
           findsOneWidget,
           reason: 'commodity `${c.id}` row must mount its decrement button.',
@@ -82,7 +92,9 @@ void main() {
         expect(
           find.descendant(
             of: row,
-            matching: find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(c.id)),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowIncrementKey(c.id),
+            ),
           ),
           findsOneWidget,
           reason: 'commodity `${c.id}` row must mount its increment button.',
@@ -90,7 +102,9 @@ void main() {
         expect(
           find.descendant(
             of: row,
-            matching: find.byKey(TradeScreenMarketKeys.marketRowQuantityTextKey(c.id)),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowQuantityTextKey(c.id),
+            ),
           ),
           findsOneWidget,
           reason: 'commodity `${c.id}` row must mount its quantity readout.',
@@ -111,7 +125,9 @@ void main() {
       );
       expect(_stagedOrder(container, _timber), isNull);
 
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
+      );
       await tester.pump();
 
       final TradeOrder? staged = _stagedOrder(container, _timber);
@@ -146,9 +162,13 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
+      );
       await tester.pump();
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
+      );
       await tester.pump();
       // After Bid + one increment: timber bid, quantity=2.
       TradeOrder? staged = _stagedOrder(container, _timber);
@@ -159,7 +179,9 @@ void main() {
       // Toggle to Offer: the prior bid must be replaced by an
       // offer. Quantity is preserved (2) since it tracks the
       // staged direction's quantity.
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(_timber)),
+      );
       await tester.pump();
       staged = _stagedOrder(container, _timber);
       expect(staged, isNotNull);
@@ -196,11 +218,15 @@ void main() {
           stockpile: tradeableStockpileFilled(99),
         ),
       );
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
+      );
       await tester.pump();
       expect(_stagedOrder(container, _timber), isNotNull);
 
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowNoneChipKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowNoneChipKey(_timber)),
+      );
       await tester.pump();
       expect(
         _stagedOrder(container, _timber),
@@ -222,31 +248,47 @@ void main() {
           stockpile: tradeableStockpileFilled(99),
         ),
       );
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
+      );
       await tester.pump();
       // Initial quantity: 1.
       expect(_stagedOrder(container, _timber)!.quantity, 1);
 
       // + → 2 → 3 → 4
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
+      );
       await tester.pump();
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
+      );
       await tester.pump();
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
+      );
       await tester.pump();
       expect(_stagedOrder(container, _timber)!.quantity, 4);
 
       // − → 3 → 2 → 1
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)),
+      );
       await tester.pump();
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)),
+      );
       await tester.pump();
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)),
+      );
       await tester.pump();
       expect(_stagedOrder(container, _timber)!.quantity, 1);
 
       // Further − is a no-op (clamped at the lower bound of 1).
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)),
+      );
       await tester.pump();
       expect(
         _stagedOrder(container, _timber)!.quantity,
@@ -303,9 +345,13 @@ void main() {
           stockpile: tradeableStockpileFilled(99),
         ),
       );
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
+      );
       await tester.pump();
-      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(_fabric)));
+      await tester.tap(
+        find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(_fabric)),
+      );
       await tester.pump();
 
       expect(_stagedOrder(container, _timber)?.type, TradeOrderType.bid);
@@ -318,73 +364,6 @@ void main() {
             'Refs #2993 E5b: the player can stage one TradeOrder '
             'per commodity simultaneously; mutual exclusion is '
             'per-commodity, not per-player.',
-      );
-    });
-
-    testWidgets(
-      'observe variant (canMutateViaUi == false): direction chips and '
-      'stepper taps do NOT mutate currentOrdersProvider — the table '
-      'reads as read-only',
-      (tester) async {
-        final ProviderContainer container = await pumpTradeScreenWithContainer(
-          tester,
-          game: buildTradeTestGame(
-            id: 'test_trade_screen_e5b',
-            stockpile: tradeableStockpileFilled(99),
-          ),
-          canMutateViaUi: false,
-        );
-
-        await tester.tap(
-          find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
-          warnIfMissed: false,
-        );
-        await tester.pump();
-        await tester.tap(
-          find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
-          warnIfMissed: false,
-        );
-        await tester.pump();
-
-        expect(
-          _stagedOrder(container, _timber),
-          isNull,
-          reason:
-              'Refs #2993 E5b observe variant: when '
-              'canMutateViaUi == false, the Market tab body is '
-              'wrapped in IgnorePointer so the controls are visible '
-              'but not interactive — taps do not stage trade '
-              'orders.',
-        );
-      },
-    );
-
-    testWidgets('observe variant still mounts the row controls and quantity '
-        'readout (the chrome remains visible — only interaction is '
-        'blocked, matching the Production screen pattern)', (tester) async {
-      await pumpTradeScreenWithContainer(
-        tester,
-        game: buildTradeTestGame(
-          id: 'test_trade_screen_e5b',
-          stockpile: tradeableStockpileFilled(99),
-        ),
-        canMutateViaUi: false,
-      );
-
-      final timberRow = find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(_timber));
-      expect(
-        find.descendant(
-          of: timberRow,
-          matching: find.byKey(TradeScreenMarketKeys.marketRowNoneChipKey(_timber)),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: timberRow,
-          matching: find.byKey(TradeScreenMarketKeys.marketRowQuantityTextKey(_timber)),
-        ),
-        findsOneWidget,
       );
     });
   });

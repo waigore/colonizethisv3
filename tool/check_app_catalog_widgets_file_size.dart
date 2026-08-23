@@ -6,12 +6,12 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// Ratchet ceiling for hand-written catalog widgets under `app/lib/widgets/**`.
-const int appCatalogWidgetsFileSizeCeiling = 260;
+const int appCatalogWidgetsFileSizeCeiling = 250;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
 /// PR-blocking structural check: files under `app/lib/widgets/**` must stay
-/// at or below 260 physical lines (Refs #4352 AC4, #4582).
+/// at or below 250 physical lines (Refs #4352 AC4, #4582).
 int runCheckAppCatalogWidgetsFileSize(
   String repoRoot, {
   void Function(String line)? info,

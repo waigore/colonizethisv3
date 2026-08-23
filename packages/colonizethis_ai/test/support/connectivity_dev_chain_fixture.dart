@@ -5,6 +5,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
+import 'connectivity_dev_chain_fixture_reconquest.dart';
+
 const String kConnectivityDevChainOw = 'oldWorld';
 const String kConnectivityDevChainPlayerId = 'gp1';
 const String kConnectivityDevChainEngineerId = 'e1';
@@ -12,7 +14,7 @@ const String kConnectivityDevChainEngineerId = 'e1';
 /// Horizontal chain scenario: capital road at x=0, optional improved resources,
 /// idle Engineer, materials for repeated `build_road`.
 class ConnectivityDevChainFixture {
-  ConnectivityDevChainFixture._({
+  ConnectivityDevChainFixture({
     required this.game,
     required this.topology,
     required this.tileMapByRegion,
@@ -32,20 +34,12 @@ class ConnectivityDevChainFixture {
   static ConnectivityDevChainFixture threeTileGap() {
     const p1 = '$kConnectivityDevChainOw|p1';
     const width = 5;
-    final grid = [
-      List.generate(width, (_) => 'p1'),
-    ];
-    final tileMap = TileMapResult(
-      width: width,
-      height: 1,
-      grid: grid,
-    );
+    final grid = [List.generate(width, (_) => 'p1')];
+    final tileMap = TileMapResult(width: width, height: 1, grid: grid);
     final tiles = [for (var x = 0; x < width; x++) tileKey(p1, x)];
     final capTile = tileKey(p1, 0);
     final resourceTile = tileKey(p1, 4);
-    final visibility = {
-      for (final t in tiles) t: 'fullyVisible',
-    };
+    final visibility = {for (final t in tiles) t: 'fullyVisible'};
     final game = TestFixtures.minimalGame(
       players: [
         Player(
@@ -83,13 +77,9 @@ class ConnectivityDevChainFixture {
         ],
       ),
       tileKeysByRegionAndProvince: {
-        kConnectivityDevChainOw: {
-          p1: tiles,
-        },
+        kConnectivityDevChainOw: {p1: tiles},
       },
-      playerVisibilityByTile: {
-        kConnectivityDevChainPlayerId: visibility,
-      },
+      playerVisibilityByTile: {kConnectivityDevChainPlayerId: visibility},
       resourceByTileKey: {resourceTile: 'grain'},
       tileState: TileMapState(
         improvementByTile: {resourceTile: 1},
@@ -106,7 +96,7 @@ class ConnectivityDevChainFixture {
       ],
       edges: [],
     );
-    return ConnectivityDevChainFixture._(
+    return ConnectivityDevChainFixture(
       game: game,
       topology: topology,
       tileMapByRegion: {kConnectivityDevChainOw: tileMap},
@@ -123,21 +113,13 @@ class ConnectivityDevChainFixture {
   static ConnectivityDevChainFixture dualResourceSequencing() {
     const p1 = '$kConnectivityDevChainOw|p1';
     const width = 5;
-    final grid = [
-      List.generate(width, (_) => 'p1'),
-    ];
-    final tileMap = TileMapResult(
-      width: width,
-      height: 1,
-      grid: grid,
-    );
+    final grid = [List.generate(width, (_) => 'p1')];
+    final tileMap = TileMapResult(width: width, height: 1, grid: grid);
     final tiles = [for (var x = 0; x < width; x++) tileKey(p1, x)];
     final capTile = tileKey(p1, 0);
     final nearResource = tileKey(p1, 2);
     final farResource = tileKey(p1, 4);
-    final visibility = {
-      for (final t in tiles) t: 'fullyVisible',
-    };
+    final visibility = {for (final t in tiles) t: 'fullyVisible'};
     final game = TestFixtures.minimalGame(
       players: [
         Player(
@@ -175,22 +157,12 @@ class ConnectivityDevChainFixture {
         ],
       ),
       tileKeysByRegionAndProvince: {
-        kConnectivityDevChainOw: {
-          p1: tiles,
-        },
+        kConnectivityDevChainOw: {p1: tiles},
       },
-      playerVisibilityByTile: {
-        kConnectivityDevChainPlayerId: visibility,
-      },
-      resourceByTileKey: {
-        nearResource: 'grain',
-        farResource: 'timber',
-      },
+      playerVisibilityByTile: {kConnectivityDevChainPlayerId: visibility},
+      resourceByTileKey: {nearResource: 'grain', farResource: 'timber'},
       tileState: TileMapState(
-        improvementByTile: {
-          nearResource: 1,
-          farResource: 1,
-        },
+        improvementByTile: {nearResource: 1, farResource: 1},
         roadLevelByTile: {capTile: 1},
       ),
     );
@@ -204,7 +176,7 @@ class ConnectivityDevChainFixture {
       ],
       edges: [],
     );
-    return ConnectivityDevChainFixture._(
+    return ConnectivityDevChainFixture(
       game: game,
       topology: topology,
       tileMapByRegion: {kConnectivityDevChainOw: tileMap},
@@ -214,93 +186,6 @@ class ConnectivityDevChainFixture {
   }
 
   /// AC-F2: pre-built improvements outside the capital network on a distant tile.
-  static ConnectivityDevChainFixture reconquestImprovements() {
-    const p1 = '$kConnectivityDevChainOw|p1';
-    const width = 5;
-    final grid = [
-      List.generate(width, (_) => 'p1'),
-    ];
-    final tileMap = TileMapResult(
-      width: width,
-      height: 1,
-      grid: grid,
-    );
-    final tiles = [for (var x = 0; x < width; x++) tileKey(p1, x)];
-    final capTile = tileKey(p1, 0);
-    final resourceTile = tileKey(p1, 4);
-    final visibility = {
-      for (final t in tiles) t: 'fullyVisible',
-    };
-    final game = TestFixtures.minimalGame(
-      players: [
-        Player(
-          id: kConnectivityDevChainPlayerId,
-          displayName: 'GP',
-          isHuman: false,
-          capitalProvinceId: p1,
-          capitalTile: CapitalTile(
-            regionId: kConnectivityDevChainOw,
-            provinceId: p1,
-            x: 0,
-            y: 0,
-          ),
-          stockpile: const Stockpile(
-            quantities: {'lumber': 50, 'castIron': 50},
-          ),
-        ),
-      ],
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: p1,
-            regionId: kConnectivityDevChainOw,
-            ownerId: kConnectivityDevChainPlayerId,
-          ),
-        ],
-        units: [
-          Unit(
-            id: kConnectivityDevChainEngineerId,
-            type: kUnitTypeEngineer,
-            ownerId: kConnectivityDevChainPlayerId,
-            locationProvinceId: p1,
-            tileKey: capTile,
-          ),
-        ],
-      ),
-      tileKeysByRegionAndProvince: {
-        kConnectivityDevChainOw: {
-          p1: tiles,
-        },
-      },
-      playerVisibilityByTile: {
-        kConnectivityDevChainPlayerId: visibility,
-      },
-      resourceByTileKey: {resourceTile: 'grain'},
-      tileState: TileMapState(
-        improvementByTile: {resourceTile: 2},
-        roadLevelByTile: {capTile: 1},
-      ),
-    );
-    const topology = MapTopology(
-      nodes: [
-        TopologyNode(
-          id: p1,
-          regionId: kConnectivityDevChainOw,
-          type: TopologyNodeType.province,
-        ),
-      ],
-      edges: [],
-    );
-    return ConnectivityDevChainFixture._(
-      game: game,
-      topology: topology,
-      tileMapByRegion: {kConnectivityDevChainOw: tileMap},
-      resourceTiles: [resourceTile],
-      expectedFrontierRoadTiles: [
-        tileKey(p1, 1),
-        tileKey(p1, 2),
-        tileKey(p1, 3),
-      ],
-    );
-  }
+  static ConnectivityDevChainFixture reconquestImprovements() =>
+      reconquestImprovementsFixture();
 }

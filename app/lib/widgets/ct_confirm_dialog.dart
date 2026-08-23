@@ -84,19 +84,23 @@ class CtConfirmDialog extends StatelessWidget {
           const SizedBox(height: CtSpacing.m),
           Text(message, style: bodyStyle),
           const SizedBox(height: CtSpacing.l),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(cancelLabel),
-              ),
-              const SizedBox(width: CtSpacing.m),
-              CtNinePatchButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: Text(confirmLabel),
-              ),
-            ],
+          Align(
+            alignment: Alignment.centerRight,
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              spacing: CtSpacing.m,
+              runSpacing: CtSpacing.s,
+              children: <Widget>[
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(cancelLabel),
+                ),
+                CtNinePatchButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(confirmLabel),
+                ),
+              ],
+            ),
           ),
         ],
       ),

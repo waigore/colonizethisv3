@@ -86,6 +86,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/colonial_acquisition_test_support.dart';
+import 'colonial_phase_planner_acquisition_personality_tail_cases.dart';
 
 const String _gp1 = kColonialPhaseGp1;
 const String _tribe1 = kColonialPhaseTribe1;
@@ -228,147 +229,7 @@ void main() {
             'comparison is false -> Join Empire-first.',
       );
     });
-
-    test('napoleon with zero regiments -> declareWar outer gate fails -> '
-        'falls through to Join Empire', () {
-      // Militaristic personality does not bypass the structural
-      // outer gates. With no standing regiments the declareWar pass
-      // short-circuits at the outer guard and Join Empire still
-      // applies because nap + Friendly + treasury are intact.
-      final game = buildColonialAcquisitionBothValidGame(
-        armies: const <Army>[],
-      );
-      final snapshot = buildColonialAcquisitionSnapshot(
-        invadableNw: const [_nwProv1],
-      );
-      expect(
-        planColonialAcquisition(
-          game: game,
-          snapshot: snapshot,
-          personalityId: 'napoleon',
-        ),
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.joinEmpire,
-        ),
-        reason:
-            'declareWar outer gate (regiments >= 1) fails first; napoleon '
-            'is not exempt from outer gates and falls through to Join '
-            'Empire on the same fixture.',
-      );
-    });
-
-    test(
-      'napoleon already at war with the only Join-Empire tribe -> '
-      'declareWar skips it (validator parity), Join Empire also rejected '
-      '(Friendly+ gate) -> falls through to purchase_land/null per legacy',
-      () {
-        // At-war relation rejects both the declareWar candidate
-        // (`relation.atWar == true`) and the Join Empire candidate
-        // (`relation.score < Friendly`). With only one tribe and both
-        // arms gated out, the planner returns null. The purpose of
-        // this test is to confirm napoleon's militaristic ordering
-        // does not invent a target where the validator gates are
-        // failing.
-        final game = buildColonialAcquisitionBothValidGame(
-          diplomacyRelations: <DiplomacyRelation>[
-            colonialAcquisitionAtWar(_gp1, _tribe1),
-          ],
-        );
-        final snapshot = buildColonialAcquisitionSnapshot(
-          invadableNw: const [_nwProv1],
-        );
-        expect(
-          planColonialAcquisition(
-            game: game,
-            snapshot: snapshot,
-            personalityId: 'napoleon',
-          ),
-          isNull,
-          reason:
-              'Both Join Empire (relation < Friendly) and declareWar '
-              '(relation.atWar == true) reject the only candidate; '
-              'militaristic ordering cannot fabricate a target.',
-        );
-      },
-    );
-
-    test(
-      'determinism (Must-have #7) -> identical inputs, identical outputs',
-      () {
-        final game = buildColonialAcquisitionBothValidGame();
-        final snapshot = buildColonialAcquisitionSnapshot(
-          invadableNw: const [_nwProv1],
-        );
-        final first = planColonialAcquisition(
-          game: game,
-          snapshot: snapshot,
-          personalityId: 'napoleon',
-        );
-        final second = planColonialAcquisition(
-          game: game,
-          snapshot: snapshot,
-          personalityId: 'napoleon',
-        );
-        expect(
-          first,
-          isNotNull,
-          reason:
-              'Determinism test must run on a '
-              'satisfying input.',
-        );
-        expect(
-          second,
-          first,
-          reason:
-              'planColonialAcquisition is a pure function — identical '
-              '(game, snapshot, personalityId) inputs must yield identical '
-              'ColonialAcquisitionTargets across repeated calls.',
-        );
-      },
-    );
-
-    test('all militaristic personalities (warLikelihood > allianceTendency) '
-        'pick declareWar; alliance-leaning ones pick joinEmpire', () {
-      // Enumeration pin against personalityThresholds. Today
-      // napoleon / isabella / frederick / gustavus have
-      // warLikelihood > allianceTendency; victoria / henry /
-      // deruyter do not. The SPEC list in
-      // SPEC/ai/phase-planner-architecture.md § Personality bias
-      // tracks this enumeration. If a future rebalance inverts a
-      // threshold this test surfaces the drift before it silently
-      // changes acquisition behavior.
-      final game = buildColonialAcquisitionBothValidGame();
-      final snapshot = buildColonialAcquisitionSnapshot(
-        invadableNw: const [_nwProv1],
-      );
-      const expected = <String, AcquisitionMethod>{
-        'napoleon': AcquisitionMethod.declareWar,
-        'isabella': AcquisitionMethod.declareWar,
-        'frederick': AcquisitionMethod.declareWar,
-        'gustavus': AcquisitionMethod.declareWar,
-        'victoria': AcquisitionMethod.joinEmpire,
-        'henry': AcquisitionMethod.joinEmpire,
-        'deruyter': AcquisitionMethod.joinEmpire,
-      };
-      for (final entry in expected.entries) {
-        final result = planColonialAcquisition(
-          game: game,
-          snapshot: snapshot,
-          personalityId: entry.key,
-        );
-        expect(result, isNotNull, reason: 'No result for ${entry.key}.');
-        expect(
-          result!.method,
-          entry.value,
-          reason:
-              '${entry.key} should pick ${entry.value} '
-              '(personalityThresholds entry: warLikelihood vs '
-              'allianceTendency). If this fails after a threshold '
-              'rebalance, update SPEC/ai/phase-planner-architecture.md '
-              '§ Personality bias enumeration.',
-        );
-      }
-    });
   });
+
+  registerColonialPhasePlannerAcquisitionPersonalityTailCases();
 }

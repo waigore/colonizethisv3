@@ -1,7 +1,7 @@
 // Physical line ratchet for colonizethis_world lib source (repo rule:
 // `repo.colonizethis_world_lib_file_size`).
 //
-// Wave 7 (#4515 Slice B) lowers the general ceiling from wave-6's 320 to 300
+// Wave 8 (#4611) lowers the general ceiling from wave-7's 300 to 250
 // physical lines. Sealed `GameEvent` stays in one library
 // (`lib/src/game_events.dart`) with a dedicated 400-line ceiling — splits need
 // `part` (banned) or dropping `sealed` (see SPEC/program/game-events.md).
@@ -14,7 +14,7 @@ import 'package:path/path.dart' as p;
 import 'ct_repo_lint_scan_contract.dart';
 
 /// General ratchet ceiling for world lib files except [worldGameEventsRelativePath].
-const int worldLibFileSizeCeiling = 300;
+const int worldLibFileSizeCeiling = 250;
 
 /// Dedicated ceiling for sealed `GameEvent` (`lib/src/game_events.dart`).
 const int worldGameEventsFileSizeCeiling = 400;
@@ -109,7 +109,7 @@ int runCheckWorldLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_world_lib_file_size: no violations found '
-      '(ceiling $ceiling, game_events $gameEventsCeiling; Refs #4515).',
+      '(ceiling $ceiling, game_events $gameEventsCeiling; Refs #4611).',
     );
     return 0;
   }
@@ -118,7 +118,7 @@ int runCheckWorldLibFileSize(
   logE(
     'check_world_lib_file_size: found ${violations.length} violation(s) '
     'under $_worldLibRelativePath (wave-7 ceiling $ceiling / '
-    'game_events $gameEventsCeiling; Refs #4515):',
+    'game_events $gameEventsCeiling; Refs #4611):',
   );
   for (final violation in violations) {
     logE(' - $violation');

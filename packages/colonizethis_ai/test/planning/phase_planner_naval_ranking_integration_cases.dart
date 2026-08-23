@@ -11,6 +11,7 @@ import 'package:colonizethis_test/test.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/planner_test_helpers.dart';
 import 'phase_planner_naval_ranking_support.dart';
+import 'phase_planner_naval_ranking_integration_cases_tail_cases.dart';
 
 void registerPhasePlannerNavalRankingIntegrationCases() {
   group('runNavalPlanner phase-priority ranking integration', () {
@@ -237,106 +238,7 @@ void registerPhasePlannerNavalRankingIntegrationCases() {
         );
       },
     );
-
-    test('null phase plan preserves legacy two-tier ranking (no regression for '
-        'callers that have not adopted the phase-priority parameter)', () {
-      final ctx = buildTestPlannerContext(
-        game: buildGame(),
-        topology: topology,
-        nationId: 'gp1',
-        primaryGoal: StrategicGoal.expand,
-        config: const AIConfig(
-          leaderId: 'napoleon',
-          personalityId: 'napoleon',
-          hiddenAgendaId: 'warmonger',
-        ),
-        suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-          work: [],
-          build: [],
-          move: [],
-          research: [],
-          navalMove: navalMoveCandidates,
-          navalMission: [],
-        ),
-      );
-      final orders = runNavalPlanner(ctx: ctx, snapshot: snapshot);
-      final moves = orders.navalMoveOrdersByPlayerId['gp1'] ?? const [];
-      expect(moves, isNotEmpty);
-      // Legacy: both score 200 -> fleetId asc -> fA first.
-      expect(
-        moves.first.fleetId,
-        'fA',
-        reason:
-            'Without a phase plan, the legacy two-tier ranking must apply '
-            'unchanged (both invadable NW sea zones score 200 in the '
-            'general priority tier; fleetId asc tiebreak wins).',
-      );
-    });
-
-    test('deterministic naval ordering for identical phase-priority inputs '
-        '(Must-have #7)', () {
-      const phasePlan = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonial,
-        colonialNavalPlan: ColonialNavalPlan(
-          priorityInvasionTransportProvinceIdsSorted: <String>[
-            'newWorld|phaseColony',
-          ],
-          priorityTargetOwnerFactionIdsSorted: <String>['tribe1'],
-        ),
-      );
-      List<String> fingerprint(Orders o) => <String>[
-        for (final m in o.navalMoveOrdersByPlayerId['gp1'] ?? const [])
-          '${m.fleetId}|${m.destinationSeaZoneId ?? ''}',
-      ];
-      final ctx1 = buildTestPlannerContext(
-        game: buildGame(),
-        topology: topology,
-        nationId: 'gp1',
-        primaryGoal: StrategicGoal.expand,
-        config: const AIConfig(
-          leaderId: 'napoleon',
-          personalityId: 'napoleon',
-          hiddenAgendaId: 'warmonger',
-        ),
-        suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-          work: [],
-          build: [],
-          move: [],
-          research: [],
-          navalMove: navalMoveCandidates,
-          navalMission: [],
-        ),
-      );
-      final ctx2 = buildTestPlannerContext(
-        game: buildGame(),
-        topology: topology,
-        nationId: 'gp1',
-        primaryGoal: StrategicGoal.expand,
-        config: const AIConfig(
-          leaderId: 'napoleon',
-          personalityId: 'napoleon',
-          hiddenAgendaId: 'warmonger',
-        ),
-        suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-          work: [],
-          build: [],
-          move: [],
-          research: [],
-          navalMove: navalMoveCandidates,
-          navalMission: [],
-        ),
-      );
-      final a = runNavalPlanner(
-        ctx: ctx1,
-        snapshot: snapshot,
-        phasePlan: phasePlan,
-      );
-      final b = runNavalPlanner(
-        ctx: ctx2,
-        snapshot: snapshot,
-        phasePlan: phasePlan,
-      );
-      expect(fingerprint(b), fingerprint(a));
-    });
   });
+
+  registerPhasePlannerNavalRankingIntegrationCasesTail();
 }

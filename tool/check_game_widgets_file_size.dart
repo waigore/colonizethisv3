@@ -6,10 +6,10 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// Ratchet ceiling for game feature widgets (wave-20 #4582; was 300).
-const int gameWidgetsFileSizeCeiling = 260;
+const int gameWidgetsFileSizeCeiling = 250;
 
 /// PR-blocking structural check: files under
-/// `app/lib/features/game/widgets/**` must stay at or below 260 physical lines.
+/// `app/lib/features/game/widgets/**` must stay at or below 250 physical lines.
 int runCheckGameWidgetsFileSize(
   String repoRoot, {
   void Function(String line)? info,

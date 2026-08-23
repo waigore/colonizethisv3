@@ -2,11 +2,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'army_ids.dart';
-import 'army_lookup.dart';
+import 'army_membership.dart';
 import 'army_migration_region.dart';
 import 'game_world_mutations.dart';
 import 'unit_lookup.dart';
 
+export 'army_migration_reconcile.dart';
 export 'army_migration_relocation.dart';
 
 /// Ensures every military regiment is in exactly one army and every GP has a home army.
@@ -20,9 +21,7 @@ Game ensureMilitaryArmiesForGame(Game game) {
 
 bool _armiesMatchUnits(Game game) {
   final ws = game.worldState;
-  final militaryUnits = allUnitsFromWorld(
-    ws,
-  ).where((u) => isMilitaryUnit(u.type)).toList();
+  final militaryUnits = _militaryUnitsFromWorld(ws);
   final militaryUnitIds = {for (final unit in militaryUnits) unit.id};
   if (ws.armies.isEmpty) {
     return militaryUnits.isEmpty;
@@ -76,7 +75,7 @@ bool _ensureHomeArmyForPlayer(WorldState ws, List<Army> armies, Player player) {
 }
 
 Army _homeArmyForPlayerAtCapital(WorldState ws, Player player, String cap) =>
-    Army(
+    stationedMembershipArmy(
       id: homeArmyIdFor(player.id),
       ownerId: player.id,
       regionId: regionIdForProvinceInWorld(ws, cap),
@@ -88,7 +87,7 @@ Army _homeArmyForPlayerAtCapital(WorldState ws, Player player, String cap) =>
 Game _rebuildArmiesFromMilitaryUnits(Game game) {
   final ws = game.worldState;
   final militaryUnits = _militaryUnitsFromWorld(ws);
-  final capitals = _capitalByPlayer(game.players);
+  final capitals = capitalProvinceIdByPlayer(game.players);
   final byArmyKey = _armyMembershipByKey(militaryUnits, capitals);
   final armies = <Army>[];
   _appendHomeArmies(ws, game.players, byArmyKey, armies);
@@ -102,7 +101,7 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
 
 List<Unit> _militaryUnitsFromWorld(WorldState ws) {
   final out = <Unit>[];
-  for (final u in allUnitsFromWorld(ws)) {
+  for (final u in ws.allUnitsById.values) {
     if (isMilitaryUnit(u.type)) {
       out.add(u);
     }
@@ -110,29 +109,20 @@ List<Unit> _militaryUnitsFromWorld(WorldState ws) {
   return out;
 }
 
-Map<String, String> _capitalByPlayer(List<Player> players) => {
-  for (final p in players)
-    if (p.capitalProvinceId != null) p.id: p.capitalProvinceId!,
-};
-
 Map<String, List<String>> _armyMembershipByKey(
   List<Unit> militaryUnits,
   Map<String, String> capitals,
 ) {
   final byArmyKey = <String, List<String>>{};
   for (final u in militaryUnits) {
-    final key = _armyKeyForUnit(u, capitals);
+    final key = armyMembershipIdFor(
+      ownerId: u.ownerId,
+      locationProvinceId: u.locationProvinceId,
+      capitalProvinceId: capitals[u.ownerId],
+    );
     byArmyKey.putIfAbsent(key, () => []).add(u.id);
   }
   return byArmyKey;
-}
-
-String _armyKeyForUnit(Unit u, Map<String, String> capitals) {
-  final cap = capitals[u.ownerId];
-  final isGpHome = cap != null && u.locationProvinceId == cap;
-  return isGpHome
-      ? homeArmyIdFor(u.ownerId)
-      : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
 }
 
 void _appendHomeArmies(
@@ -159,7 +149,7 @@ void _appendHomeArmies(
   final hid = homeArmyIdFor(player.id);
   return (
     id: hid,
-    army: Army(
+    army: stationedMembershipArmy(
       id: hid,
       ownerId: player.id,
       regionId: regionIdForProvinceInWorld(ws, cap),
@@ -190,7 +180,7 @@ Army? _fieldArmyFromEntry(
 ) {
   if (e.value.isEmpty) return null;
   final sample = militaryUnits.firstWhere((u) => u.id == e.value.first);
-  return Army(
+  return stationedMembershipArmy(
     id: e.key,
     ownerId: sample.ownerId,
     regionId: regionIdForUnitInWorld(ws, sample),
@@ -206,60 +196,4 @@ int _nextArmySequence(List<Army> armies) {
     if (!a.isHomeArmy && a.id.startsWith('army_field_')) nextSeq++;
   }
   return nextSeq < 2 ? 2 : nextSeq;
-}
-
-/// Removes dead unit ids from armies, drops empty non-home armies, assigns orphan regiments.
-WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
-  final unitIds = <String>{for (final u in allUnitsFromWorld(worldState)) u.id};
-  var armies = worldState.armies
-      .map(
-        (a) => a.copyWith(
-          regimentUnitIds: a.regimentUnitIds
-              .where(unitIds.contains)
-              .toList(growable: false),
-        ),
-      )
-      .where((a) => a.isHomeArmy || a.regimentUnitIds.isNotEmpty)
-      .toList();
-
-  final claimed = <String>{for (final a in armies) ...a.regimentUnitIds};
-
-  final military = allUnitsFromWorld(
-    worldState,
-  ).where((u) => isMilitaryUnit(u.type)).toList();
-
-  final capitals = {
-    for (final p in game.players)
-      if (p.capitalProvinceId != null) p.id: p.capitalProvinceId!,
-  };
-
-  for (final u in military) {
-    if (claimed.contains(u.id)) continue;
-    final cap = capitals[u.ownerId];
-    final wantsHome = cap != null && u.locationProvinceId == cap;
-    final targetId = wantsHome
-        ? homeArmyIdFor(u.ownerId)
-        : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
-    var target = firstArmyById(armies, targetId);
-    if (target == null) {
-      final regionId = regionIdForUnitInWorld(worldState, u);
-      target = Army(
-        id: targetId,
-        ownerId: u.ownerId,
-        regionId: regionId,
-        stationedProvinceId: u.locationProvinceId,
-        regimentUnitIds: const [],
-        isHomeArmy: wantsHome,
-      );
-      armies = [...armies, target];
-    }
-    final updated = target.copyWith(
-      regimentUnitIds: [...target.regimentUnitIds, u.id],
-    );
-    armies = armies.map((a) => a.id == target!.id ? updated : a).toList();
-    claimed.add(u.id);
-  }
-
-  armies.sort((a, b) => a.id.compareTo(b.id));
-  return worldState.copyWith(armies: armies);
 }

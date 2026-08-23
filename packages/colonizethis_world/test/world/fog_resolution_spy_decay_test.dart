@@ -6,13 +6,15 @@ import 'package:colonizethis_world/src/world/fog_spy_reveal_decay.dart';
 
 import '../world_test_support/world_test_support.dart';
 
+import 'fog_resolution_spy_decay_cases.dart';
+
 void main() {
   _fog_resolution_spy_decay_testTests();
 }
 
 void _fog_resolution_spy_decay_testTests() {
   group('applySpyRevealTimerDecay', () {
-    for (final case_ in _spyRevealTimerDecayCases) {
+    for (final case_ in spyRevealTimerDecayCases) {
       test(case_.description, () {
         final game = spyRevealFogGame(
           spyPlayerId: case_.spyPlayerId,
@@ -26,10 +28,7 @@ void _fog_resolution_spy_decay_testTests() {
         final (visibility, timers) = applySpyRevealTimerDecay(game);
 
         expect(timers['p1'], isNull);
-        expect(
-          visibility['p1']?[case_.tileKey],
-          case_.visibilityAfter,
-        );
+        expect(visibility['p1']?[case_.tileKey], case_.visibilityAfter);
       });
     }
   });
@@ -40,7 +39,7 @@ void _fog_resolution_spy_decay_testTests() {
       Player(id: 'p2', displayName: 'P2', isHuman: false),
     ];
 
-    for (final case_ in _fogDecayCases) {
+    for (final case_ in fogDecayCases) {
       test(case_.description, () {
         final game = fogDecayVisibilityGame(
           oldWorldProvinces: case_.oldWorldProvinces,
@@ -52,10 +51,7 @@ void _fog_resolution_spy_decay_testTests() {
 
         final nextVisibility = applyFogDecay(game);
 
-        expect(
-          nextVisibility['p1']?[case_.tileKey],
-          case_.expectedVisibility,
-        );
+        expect(nextVisibility['p1']?[case_.tileKey], case_.expectedVisibility);
       });
     }
   });
@@ -138,114 +134,3 @@ void _fog_resolution_spy_decay_testTests() {
     });
   });
 }
-
-typedef _SpyRevealTimerDecayCase = ({
-  String description,
-  String spyPlayerId,
-  String targetOwnerId,
-  String provinceLocalId,
-  String tileKey,
-  String visibilityBefore,
-  String visibilityAfter,
-});
-
-final List<_SpyRevealTimerDecayCase> _spyRevealTimerDecayCases = [
-
-  (
-    description:
-        'decrements timers for other-faction provinces when timer expires',
-    spyPlayerId: 'p1',
-    targetOwnerId: 'p2',
-    provinceLocalId: 'P2',
-    tileKey: 'oldWorld|P2|0|0',
-    visibilityBefore: 'fullyVisible',
-    visibilityAfter: VisibilityLevel.fogged.name,
-  ),
-  (
-    description: 'never applies timers to own provinces',
-    spyPlayerId: 'p1',
-    targetOwnerId: 'p1',
-    provinceLocalId: 'P1',
-    tileKey: 'oldWorld|P1|0|0',
-    visibilityBefore: 'fullyVisible',
-    visibilityAfter: VisibilityLevel.fullyVisible.name,
-  ),
-  (
-    description: 'leaves unknown tiles unchanged when timer expires',
-    spyPlayerId: 'p1',
-    targetOwnerId: 'p2',
-    provinceLocalId: 'P2',
-    tileKey: 'oldWorld|P2|0|0',
-    visibilityBefore: 'unknown',
-    visibilityAfter: VisibilityLevel.unknown.name,
-  ),
-];
-
-typedef _FogDecayCase = ({
-  String description,
-  List<Province> oldWorldProvinces,
-  List<Province> newWorldProvinces,
-  List<Unit> oldWorldUnits,
-  Map<String, Map<String, String>> playerVisibilityByTile,
-  String tileKey,
-  String expectedVisibility,
-});
-
-const _owP2 = Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2');
-const _nwP2 = Province(id: 'newWorld|P2', regionId: 'newWorld', ownerId: 'p2');
-
-final List<_FogDecayCase> _fogDecayCases = [
-  (
-    description:
-        'fogs tiles in other-faction provinces when no Explorer or Spy timer',
-    oldWorldProvinces: const [_owP2],
-    newWorldProvinces: const [],
-    oldWorldUnits: const [],
-    playerVisibilityByTile: const {
-      'p1': {'oldWorld|P2|0|0': 'fullyVisible'},
-    },
-    tileKey: 'oldWorld|P2|0|0',
-    expectedVisibility: VisibilityLevel.fogged.name,
-  ),
-  (
-    description:
-        'preserves visibility when Explorer is present in other-faction province',
-    oldWorldProvinces: const [_owP2],
-    newWorldProvinces: const [],
-    oldWorldUnits: [
-      Unit(
-        id: 'explorer1',
-        type: kUnitTypeExplorer,
-        ownerId: 'p1',
-        locationProvinceId: 'oldWorld|P2',
-      ),
-    ],
-    playerVisibilityByTile: const {
-      'p1': {'oldWorld|P2|0|0': 'fullyVisible'},
-    },
-    tileKey: 'oldWorld|P2|0|0',
-    expectedVisibility: VisibilityLevel.fullyVisible.name,
-  ),
-  (
-    description: 'does not promote unknown tiles in other-faction province',
-    oldWorldProvinces: const [],
-    newWorldProvinces: const [_nwP2],
-    oldWorldUnits: const [],
-    playerVisibilityByTile: const {
-      'p1': {'newWorld|P2|0|0': 'unknown'},
-    },
-    tileKey: 'newWorld|P2|0|0',
-    expectedVisibility: VisibilityLevel.unknown.name,
-  ),
-  (
-    description: 'does not change fogged tiles in other-faction province',
-    oldWorldProvinces: const [_owP2],
-    newWorldProvinces: const [],
-    oldWorldUnits: const [],
-    playerVisibilityByTile: const {
-      'p1': {'oldWorld|P2|0|0': 'fogged'},
-    },
-    tileKey: 'oldWorld|P2|0|0',
-    expectedVisibility: VisibilityLevel.fogged.name,
-  ),
-];
