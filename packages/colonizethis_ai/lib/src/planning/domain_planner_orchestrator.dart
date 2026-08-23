@@ -1,13 +1,8 @@
 library;
 
-
-import 'package:colonizethis_logic/order_suggestion_api.dart';
-
 import 'domain_gate_data.dart';
 import 'phase_planner_dispatch.dart';
 import 'planning_imports.dart';
-import 'goal_manager.dart';
-import '../perception/perception_snapshot.dart';
 import '../util/orders_extensions.dart';
 import 'domain_planner_outcome.dart';
 import 'move_planner.dart';
@@ -19,40 +14,12 @@ import 'treasury_planner.dart';
 
 import 'domain_planner_orchestrator_diplomacy.dart';
 import 'domain_planner_orchestrator_economy.dart';
+import 'domain_planner_orchestrator_input.dart';
 import 'domain_planner_orchestrator_military.dart';
 
+export 'domain_planner_orchestrator_input.dart';
+
 // Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md, economy-planner.md.
-
-/// Bundles required + optional inputs for [runDomainPlanners] /
-/// [runDomainPlannersWithOutcome] (Refs #3977 AC5).
-final class DomainPlannerInput {
-  const DomainPlannerInput({
-    required this.game,
-    required this.topology,
-    required this.nationId,
-    required this.view,
-    required this.snapshot,
-    required this.config,
-    required this.primaryGoal,
-    required this.seeds,
-    required this.suggestionAPI,
-    required this.economyPlan,
-    this.options = OrchestratorOptions.defaults,
-  });
-
-  final Game game;
-  final MapTopology topology;
-  final String nationId;
-  final PlayerView view;
-  final AIWorldSnapshot snapshot;
-  final AIConfig config;
-  final StrategicGoal primaryGoal;
-  final AISeedBundle seeds;
-  final OrderSuggestionAPI suggestionAPI;
-  final EconomyPlan economyPlan;
-  final OrchestratorOptions options;
-}
-
 /// Runs economy, military, diplomacy, and research planners; returns combined
 /// orders for [DomainPlannerInput.nationId]. Uses the suggestion API and
 /// economy plan (cargo preference) to score build candidates. Deterministic

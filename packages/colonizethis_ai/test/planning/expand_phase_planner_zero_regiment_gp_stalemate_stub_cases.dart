@@ -1,9 +1,11 @@
-// Case-library barrel (Refs #4365 Slice B densify).
+// Case-library barrel (Refs #4602 Slice B).
 
-import 'expand_phase_planner_zero_regiment_gp_stalemate_stub_part_a_cases.dart';
-import 'expand_phase_planner_zero_regiment_gp_stalemate_stub_part_b_cases.dart';
+import 'expand_phase_planner_zero_regiment_gp_stalemate_stub_guard_cases.dart';
+import 'expand_phase_planner_zero_regiment_gp_stalemate_stub_mutual_stalemate_fire_cases.dart';
+import 'expand_phase_planner_zero_regiment_gp_stalemate_stub_delegation_stub_cases.dart';
 
 void registerExpandPhasePlannerZeroRegimentGpStalemateStubCases() {
-  registerExpandPhasePlannerZeroRegimentGpStalemateStubCasesPartA();
-  registerExpandPhasePlannerZeroRegimentGpStalemateStubCasesPartB();
+  registerExpandPhasePlannerZeroRegimentGpStalemateStubGuardCases();
+  registerExpandPhasePlannerZeroRegimentGpStalemateStubMutualStalemateFireCases();
+  registerExpandPhasePlannerZeroRegimentGpStalemateStubDelegationStubCases();
 }

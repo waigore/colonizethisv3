@@ -1,10 +1,11 @@
 // Physical line ratchet for colonizethis_ai lib/src
 // (`repo.ai_source_file_size`). Refs #4079 Slice C; headroom ratchet Refs #4104
-// Slice B / #4239 Slice A / #4310 Slice B / #4365 Slice A (optional 300).
+// Slice B / #4239 Slice A / #4310 Slice B / #4365 Slice A / #4602 Slice A
+// (250).
 //
 // Complements the repository-wide 1000 NCL gate and the AI no-part gate so
 // Phase-9/10 planning concern splits cannot silently re-merge into kitchen-sink
-// modules. Ceiling is **300** physical lines (stricter than
+// modules. Ceiling is **250** physical lines (stricter than
 // `repo.domain_package_source_file_size` 500). Shrink-only grandfather allowlist
 // fails when entries are missing or the named file is now under-cap (same
 // pattern as save/data).
@@ -15,14 +16,14 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int aiSourceFileSizeCeiling = 300;
+const int aiSourceFileSizeCeiling = 250;
 
 const String _aiSrcRelDir = 'packages/colonizethis_ai/lib/src';
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
-/// Empty allowlist after #4079 / #4104 / #4239 / #4310 / #4365 splits: every AI
-/// `lib/src` file must stay ≤300 physical lines. Override in tests via
+/// Empty allowlist after #4079 / #4104 / #4239 / #4310 / #4365 / #4602 splits:
+/// every AI `lib/src` file must stay ≤250 physical lines. Override in tests via
 /// [grandfatheredPaths].
 const List<String> aiSourceFileSizeGrandfatheredForTests = <String>[];
 
@@ -107,7 +108,7 @@ int runCheckAiSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_ai_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4365).',
+      '(ceiling $ceiling; Refs #4602).',
     );
     return 0;
   }
@@ -115,7 +116,7 @@ int runCheckAiSourceFileSize(
   violations.sort();
   logE(
     'check_ai_source_file_size: found ${violations.length} violation(s) '
-    'under $_aiSrcRelDir (ceiling $ceiling; Refs #4365):',
+    'under $_aiSrcRelDir (ceiling $ceiling; Refs #4602):',
   );
   for (final violation in violations) {
     logE(' - $violation');

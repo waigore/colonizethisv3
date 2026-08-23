@@ -28,8 +28,13 @@ void registerExpandGpBlockerFocusPeaceGuardsCases() {
             ownerId: gpBlockerFocusMinor1,
           ),
         ],
-        atWarFactionIds: const [gpBlockerFocusGpBlocker, gpBlockerFocusGpDistraction],
-        minorNations: const [MinorNation(id: gpBlockerFocusMinor1, displayName: 'M1')],
+        atWarFactionIds: const [
+          gpBlockerFocusGpBlocker,
+          gpBlockerFocusGpDistraction,
+        ],
+        minorNations: const [
+          MinorNation(id: gpBlockerFocusMinor1, displayName: 'M1'),
+        ],
       );
       final snapshot = ownSnapshot(
         playerId: gpBlockerFocusGpOwn,
@@ -103,7 +108,10 @@ void registerExpandGpBlockerFocusPeaceGuardsCases() {
             ownerId: gpBlockerFocusGpBlocker,
           ),
         ],
-        atWarFactionIds: const [gpBlockerFocusGpBlocker, gpBlockerFocusGpDistraction],
+        atWarFactionIds: const [
+          gpBlockerFocusGpBlocker,
+          gpBlockerFocusGpDistraction,
+        ],
         extraGpIds: const {gpBlockerFocusGpBlocker},
       );
       final snapshot = ownSnapshot(
@@ -161,5 +169,4 @@ void registerExpandGpBlockerFocusPeaceGuardsCases() {
       );
     });
   });
-
 }

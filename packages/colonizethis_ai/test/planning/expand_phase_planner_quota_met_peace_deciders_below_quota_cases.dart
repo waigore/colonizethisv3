@@ -86,7 +86,11 @@ void registerExpandPhasePlannerQuotaMetPeaceDecidersBelowQuotaCases() {
             quotaMetPeaceMinor1: 3,
           },
           players: const [
-            Player(id: quotaMetPeaceGpOwn, displayName: 'GP_OWN', isHuman: false),
+            Player(
+              id: quotaMetPeaceGpOwn,
+              displayName: 'GP_OWN',
+              isHuman: false,
+            ),
           ],
           minorNations: const [
             MinorNation(id: quotaMetPeaceMinor1, displayName: 'M'),
@@ -119,8 +123,16 @@ void registerExpandPhasePlannerQuotaMetPeaceDecidersBelowQuotaCases() {
             quotaMetPeaceGpThird: kObserverConquestMinOwProvincesPerGp - 1,
           },
           players: const [
-            Player(id: quotaMetPeaceGpOwn, displayName: 'GP_OWN', isHuman: false),
-            Player(id: quotaMetPeaceGpPartner, displayName: 'Q', isHuman: false),
+            Player(
+              id: quotaMetPeaceGpOwn,
+              displayName: 'GP_OWN',
+              isHuman: false,
+            ),
+            Player(
+              id: quotaMetPeaceGpPartner,
+              displayName: 'Q',
+              isHuman: false,
+            ),
             Player(id: quotaMetPeaceGpThird, displayName: 'L', isHuman: false),
           ],
         );
@@ -156,8 +168,16 @@ void registerExpandPhasePlannerQuotaMetPeaceDecidersBelowQuotaCases() {
             quotaMetPeaceGpThird: 5,
           },
           players: const [
-            Player(id: quotaMetPeaceGpOwn, displayName: 'GP_OWN', isHuman: false),
-            Player(id: quotaMetPeaceGpPartner, displayName: 'A', isHuman: false),
+            Player(
+              id: quotaMetPeaceGpOwn,
+              displayName: 'GP_OWN',
+              isHuman: false,
+            ),
+            Player(
+              id: quotaMetPeaceGpPartner,
+              displayName: 'A',
+              isHuman: false,
+            ),
             Player(id: quotaMetPeaceGpThird, displayName: 'B', isHuman: false),
           ],
         );

@@ -212,6 +212,5 @@ void registerExpandPhasePlannerPeerPeaceWarFocusCasesPartA() {
       );
       expect(greatPowerWarCountOnTarget(game: game, targetGpId: 'gp3'), 2);
     });
-
   });
 }

@@ -54,11 +54,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
 
-
 import 'expand_phase_planner_sole_gp_peace_deciders_support.dart';
 
 void registerExpandSoleGpPeaceDecidersConsolidateCases() {
-
   group('consolidateGainsSoleGpPeaceTarget — sole-GP-null branch', () {
     test('returns null when no Great Powers are at war (only a minor)', () {
       // Minor-only at-war state: soleAtWarGreatPowerId is null, the
@@ -86,7 +84,9 @@ void registerExpandSoleGpPeaceDecidersConsolidateCases() {
         players: const [
           Player(id: soleGpPeaceGpOwn, displayName: 'GP_OWN', isHuman: false),
         ],
-        minorNations: const [MinorNation(id: soleGpPeaceMinor1, displayName: 'M1')],
+        minorNations: const [
+          MinorNation(id: soleGpPeaceMinor1, displayName: 'M1'),
+        ],
         diplomacyRelations: const [
           DiplomacyRelation(
             factionId1: soleGpPeaceGpOwn,

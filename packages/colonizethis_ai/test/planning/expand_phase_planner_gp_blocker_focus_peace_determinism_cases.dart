@@ -32,7 +32,10 @@ void registerExpandGpBlockerFocusPeaceDeterminismCases() {
             ownerId: gpBlockerFocusGpBlocker,
           ),
         ],
-        atWarFactionIds: const [gpBlockerFocusGpBlocker, gpBlockerFocusGpDistraction],
+        atWarFactionIds: const [
+          gpBlockerFocusGpBlocker,
+          gpBlockerFocusGpDistraction,
+        ],
       );
       final snapshot = ownSnapshot(
         playerId: gpBlockerFocusGpOwn,
@@ -89,8 +92,13 @@ void registerExpandGpBlockerFocusPeaceDeterminismCases() {
             ownerId: gpBlockerFocusMinor1,
           ),
         ],
-        atWarFactionIds: const [gpBlockerFocusGpBlocker, gpBlockerFocusGpDistraction],
-        minorNations: const [MinorNation(id: gpBlockerFocusMinor1, displayName: 'M1')],
+        atWarFactionIds: const [
+          gpBlockerFocusGpBlocker,
+          gpBlockerFocusGpDistraction,
+        ],
+        minorNations: const [
+          MinorNation(id: gpBlockerFocusMinor1, displayName: 'M1'),
+        ],
       );
       final snapshot = ownSnapshot(
         playerId: gpBlockerFocusGpOwn,
@@ -136,7 +144,10 @@ void registerExpandGpBlockerFocusPeaceDeterminismCases() {
             ownerId: gpBlockerFocusGpBlocker,
           ),
         ],
-        atWarFactionIds: const [gpBlockerFocusGpBlocker, gpBlockerFocusGpDistraction],
+        atWarFactionIds: const [
+          gpBlockerFocusGpBlocker,
+          gpBlockerFocusGpDistraction,
+        ],
       );
       final snapshot = ownSnapshot(
         playerId: gpBlockerFocusGpOwn,
@@ -174,7 +185,9 @@ void registerExpandGpBlockerFocusPeaceDeterminismCases() {
           ),
         ],
         atWarFactionIds: const [gpBlockerFocusGpBlocker],
-        minorNations: const [MinorNation(id: gpBlockerFocusMinor1, displayName: 'M1')],
+        minorNations: const [
+          MinorNation(id: gpBlockerFocusMinor1, displayName: 'M1'),
+        ],
       );
       final snapshot = ownSnapshot(
         playerId: gpBlockerFocusGpOwn,

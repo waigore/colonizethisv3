@@ -9,6 +9,7 @@ import 'growth_stage.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 import 'scored_candidate.dart';
+import 'economy_planner_labour_counsel.dart';
 
 export 'economy_planner_labour_feedstock.dart'
     show multiInputImprovementOutputs;
@@ -17,36 +18,15 @@ export 'economy_planner_labour_input.dart'
 
 final _log = packageLogger('economy_planner_labour');
 
-bool _delegatesToIndustryCounselCore(LabourAllocationInput input) {
-  if (input.castIronLabourPeasantRecruitFabricBoost) return false;
-  if (input.feedstockReserveOutputIds.isNotEmpty) return false;
-  if (input.militaryRebuildCrisis) return false;
-  if (input.regimentBuildInputProductionBoost) return false;
-  if (input.missingRegimentBuildInputIds.isNotEmpty) return false;
-  if (input.supplierReleaseImprovementInputIds.isNotEmpty) return false;
-  if (input.growthStage != null && !kGrowthStagePlannerEnabled) return false;
-  return true;
-}
-
-IndustryCounselGrowthStage? _industryCounselGrowthStage(GrowthStage? stage) {
-  if (stage == null) return null;
-  return IndustryCounselGrowthStage(
-    workerGrowthPriority: stage.workerGrowthPriority,
-    infrastructurePriority: stage.infrastructurePriority,
-    resourceProductionPriority: stage.resourceProductionPriority,
-    militaryPriority: stage.militaryPriority,
-  );
-}
-
 List<AssignedRecipe> allocateLabour(LabourAllocationInput input) {
-  if (_delegatesToIndustryCounselCore(input)) {
+  if (delegatesToIndustryCounselCore(input)) {
     return industryCounselAllocateLabourCore(
       stockpile: input.stockpile,
       workers: input.workers,
       effectiveLabour: input.effectiveLabour,
       techUnlocked: input.techUnlocked,
       agendaId: input.config.hiddenAgendaId,
-      growthStage: _industryCounselGrowthStage(input.growthStage),
+      growthStage: industryCounselGrowthStage(input.growthStage),
       growthStagePlannerEnabled: kGrowthStagePlannerEnabled,
     );
   }
