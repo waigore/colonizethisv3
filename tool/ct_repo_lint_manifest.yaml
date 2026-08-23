@@ -718,6 +718,14 @@ rules:
     script: tool/check_app_features_screens_lib_physical_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.app_features_shell_lib_physical_file_size
+    group: structure
+    title: app/lib/features/shell files must stay at or below 250 physical lines (wave-21; empty grandfather; Refs #4606)
+    spec: SPEC/program/app-features-shell-file-size.md
+    runner: dart
+    script: tool/check_app_features_shell_lib_physical_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.app_event_bus_decoupling
     group: architecture
     title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
@@ -2568,7 +2576,7 @@ rules:
 
   - rule_id: repo.app_test_file_size
     group: testing
-    title: "app/test files must stay at or below 400 physical lines (shrink-only allowlist; Refs #4305, #4352)"
+    title: "app/test files must stay at or below 380 physical lines (shrink-only allowlist; Refs #4305, #4352, #4606)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_file_size.dart

@@ -24,7 +24,8 @@
 - **Physical lines:** `LineSplitter` line count of the file’s UTF-8 text (same
   as `const LineSplitter().convert(content).length` in the checker).
 - **Threshold:** each scanned file must have **250** physical lines or fewer
-  (261 or more fails). Wave-20 #4582 lowered the wave-16 **300** cap.
+  (251 or more fails). Wave-20 #4582 lowered the wave-16 **300** cap;
+  wave-21 #4606 pins 250.
 
 There is **no** YAML, keyed table, or per-file exemption that raises the
 effective cap for a specific path. The grandfather list stays empty.
@@ -32,7 +33,7 @@ effective cap for a specific path. The grandfather list stays empty.
 ## Acceptance criteria
 
 - Given a temporary workspace that contains
-  `app/lib/core/services/game_service/too_long.dart` with **261** physical lines
+  `app/lib/core/services/game_service/too_long.dart` with **251** physical lines
   and no other violating files, when the System runs
   `runCheckAppCoreServicesFileSize` with that workspace root, then the checker
   exits non-zero and the error output names `too_long.dart` and reports

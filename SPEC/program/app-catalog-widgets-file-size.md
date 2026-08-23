@@ -24,7 +24,8 @@ shared Ct-* catalog root `app/lib/widgets/**`. Umbrella policy:
 - **Physical lines:** `LineSplitter` line count of the file’s UTF-8 text (same
   as `const LineSplitter().convert(content).length` in the checker).
 - **Threshold:** each scanned file must have **250** physical lines or fewer
-  (261 or more fails). Wave-20 #4582 lowered the wave-15 **300** cap.
+  (251 or more fails). Wave-20 #4582 lowered the wave-15 **300** cap;
+  wave-21 #4606 pins 250.
 
 There is **no** YAML, keyed table, or per-file exemption that raises the
 effective cap for a specific path.
@@ -32,10 +33,10 @@ effective cap for a specific path.
 ## Acceptance criteria
 
 - Given a temporary workspace that contains
-  `app/lib/widgets/over.dart` with **261** physical lines and no other violating
+  `app/lib/widgets/over.dart` with **251** physical lines and no other violating
   files, when the System runs `runCheckAppCatalogWidgetsFileSize` with that
   workspace root, then the checker exits non-zero and the error output names
-  `over.dart` and reports a line count strictly greater than 260.
+  `over.dart` and reports a line count strictly greater than 250.
 
 - Given a temporary workspace whose only matching file is
   `app/lib/widgets/ok.dart` with exactly **250** physical lines, when the System

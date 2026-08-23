@@ -5,6 +5,11 @@ import 'package:test/test.dart';
 import '../tool/check_app_test_file_size.dart';
 
 void main() {
+  test('wave-21 app/test ceiling is 380', () {
+    expect(maxAppTestPhysicalLinesForTests(), 380);
+    expect(appTestFileSizeAllowlistForTests, isEmpty);
+  });
+
   test('passes for the real app/test tree with shrink-only allowlist', () {
     final logs = <String>[];
     final code = runCheckAppTestFileSize(
@@ -45,7 +50,7 @@ void main() {
     Directory('${temp.path}/app/test').createSync(recursive: true);
     File('${temp.path}/app/test/huge_test.dart')
       ..createSync()
-      ..writeAsStringSync(List.filled(401, '// line').join('\n'));
+      ..writeAsStringSync(List.filled(381, '// line').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppTestFileSize(
