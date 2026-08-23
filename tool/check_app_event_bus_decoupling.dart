@@ -196,6 +196,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/flame/controls/game_side_menu.dart',
   'app/lib/features/game/flame/controls/game_side_menu_panel.dart',
   'app/lib/features/game/screens/production/production_screen_body.dart',
+  // Production commodity breakdown `showDialog` extracted from
+  // `production_screen_body.dart` (`buildProductionScreenPanel`). Same
+  // local-by-design rationale as the parent body (Refs #2626, #4606).
+  'app/lib/features/game/screens/production/production_screen_body_panel.dart',
 };
 
 /// Files allowed to emit a non-[ClosePanelEvent] bus event from inside a
