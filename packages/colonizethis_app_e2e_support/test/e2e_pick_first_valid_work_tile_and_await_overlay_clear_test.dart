@@ -41,6 +41,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/work_tile_overlay_host_harness.dart';
+import 'support/e2e_pick_first_valid_work_tile_and_await_overlay_clear_constants_group.dart';
 import 'support/e2e_pick_first_valid_work_tile_and_await_overlay_clear_guard_group.dart';
 
 /// Mounts an [InkWell] keyed by [kCtE2ESelectFirstValidWorkTileKey] inside
@@ -238,35 +239,6 @@ void main() {
     );
   });
 
-  group('Default constants', () {
-    test(
-      'kE2eDefaultCivilianWorkTileAppearTimeout matches legacy 15 s budget',
-      () {
-        expect(
-          kE2eDefaultCivilianWorkTileAppearTimeout,
-          const Duration(seconds: 15),
-          reason:
-              'A silent budget bump would change wall-clock guarantees for '
-              'every call site that relies on the default; require an explicit '
-              'override at the call site instead. Refs GitHub #2336 / AC4.',
-        );
-      },
-    );
-
-    test(
-      'kE2eDefaultCivilianWorkTileClearTimeout matches legacy 5 s budget',
-      () {
-        expect(
-          kE2eDefaultCivilianWorkTileClearTimeout,
-          const Duration(seconds: 5),
-          reason:
-              'A silent budget bump would change wall-clock guarantees for '
-              'every call site that relies on the default; require an explicit '
-              'override at the call site instead. Refs GitHub #2336 / AC4.',
-        );
-      },
-    );
-  });
-
+  registerE2ePickFirstValidWorkTileAndAwaitOverlayClearConstantsGroup();
   registerE2ePickFirstValidWorkTileAndAwaitOverlayClearGuardGroup();
 }
