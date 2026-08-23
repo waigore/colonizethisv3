@@ -7,8 +7,8 @@ import '../tool/check_ai_planning_cases_suite_size.dart';
 
 void main() {
   group('runCheckAiPlanningCasesSuiteSize', () {
-    test('ceiling is 400 after #4365 Slice B', () {
-      expect(aiPlanningCasesSuitePhysicalLineCeiling, 400);
+    test('ceiling is 300 after #4602 Slice D', () {
+      expect(aiPlanningCasesSuitePhysicalLineCeiling, 300);
     });
 
     test('fails when an in-scope *_cases.dart exceeds the ceiling', () {
