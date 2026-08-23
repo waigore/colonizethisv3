@@ -168,6 +168,52 @@ void main() {
   );
 
   testWidgets(
+    'golden: Establish Favored partner confirm first-order Effect (Refs #4586)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_confirm_establish_favored_partner_golden',
+      );
+      final message = _previewMessage(
+        const DiplomaticOrder(
+          type: DiplomaticOrderType.establishFtp,
+          targetFactionId: _targetGp,
+        ),
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(360, 420),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(
+          title: 'Establish Favored partner',
+          message: message,
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.text('Establish Favored partner'), findsOneWidget);
+      expect(find.textContaining('No treasury charge'), findsOneWidget);
+      expect(find.textContaining('Favored Trading Partners'), findsOneWidget);
+      expect(find.textContaining('same bid rank'), findsOneWidget);
+      expect(find.textContaining('Prices do not change'), findsOneWidget);
+      expect(find.textContaining('First right of refusal'), findsOneWidget);
+      expect(find.textContaining('When:'), findsNothing);
+      expect(find.textContaining('65'), findsNothing);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile(
+          'goldens/diplomacy_confirm_establish_favored_partner.png',
+        ),
+      );
+    },
+  );
+
+  testWidgets(
     'golden: Boycott confirm full embargo copy with two colonies (Refs #4584)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('diplomacy_confirm_boycott_golden');

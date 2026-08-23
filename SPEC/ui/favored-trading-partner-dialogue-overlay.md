@@ -97,3 +97,4 @@ Folder `Favored Trading Partner Dialogue Overlay`. Use cases: **Default — one 
 - Given two pending offers, when Submit is tapped before both rows are decided, then `onDecisions` is not called.
 - Given two pending offers with Accept then Reject chosen, when Submit is tapped, then `onDecisions` receives two `FtpDecision`s in list order with `accepted` true then false.
 - Given `PendingDiplomacyFtp` with an empty offer list, when `GameScreenOverlayStack` builds, then no `FtpDialogueOverlay` is mounted.
+- Given `FtpDialogueOverlay` is mounted under `AppThemes.editorialMonocle` with one pending offer from Spain, when `app/test/ftp_dialogue_overlay_goldens_test.dart` captures the keyed `RepaintBoundary`, then the UI layer matches `app/test/goldens/ovl90001_ftp_dialogue_one_offer.png`.
