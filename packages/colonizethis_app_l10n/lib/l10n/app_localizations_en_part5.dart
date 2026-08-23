@@ -803,4 +803,28 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   String technologyPanel_rpBreakdownTurns(int turns) {
     return 'About $turns more turns at this funding';
   }
+
+  @override
+  String get production_workerSingularPeasant => 'Peasant';
+
+  @override
+  String get production_workerSingularApprentice => 'Apprentice';
+
+  @override
+  String get production_workerSingularJourneyman => 'Journeyman';
+
+  @override
+  String get production_workerSingularMaster => 'Master';
+
+  @override
+  String production_labourDisbandConfirmTitle(String tier) {
+    return 'Disband $tier?';
+  }
+
+  @override
+  String production_labourDisbandConfirmBody(String tier) {
+    return 'Effect: This $tier becomes a Peasant now.\n'
+        'Cost: Gold and paper spent to train them are not returned.\n'
+        'When: Immediately, not after Next turn.';
+  }
 }

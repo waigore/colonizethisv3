@@ -82,6 +82,7 @@ import 'package:colonizethis_app/features/shell/settings/settings_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_catalog_loader.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_disband_confirm.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel_support_allocation.dart';
