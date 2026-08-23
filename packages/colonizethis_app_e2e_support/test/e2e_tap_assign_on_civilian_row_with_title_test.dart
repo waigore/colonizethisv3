@@ -51,6 +51,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 /// One row spec for the synthetic civilian panel host (title + whether the
 /// row exposes an `Assign` button).
@@ -76,12 +77,8 @@ class _CivilianPanelHostState extends State<_CivilianPanelHost> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // CtNinePatchButton (the Assign control rendered inside
-      // CivilianUnitRowCard) resolves its palette from the editorial-monocle
-      // theme; the production civilian panel runs under the same theme.
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
+    return wrapE2eApp(
+      Scaffold(
         body: Container(
           key: kCtE2ECivilianPanelRootKey,
           child: Column(
@@ -128,6 +125,7 @@ class _CivilianPanelHostState extends State<_CivilianPanelHost> {
           ),
         ),
       ),
+      theme: AppThemes.editorialMonocle,
     );
   }
 }

@@ -52,7 +52,33 @@ Future<void> pumpE2eEmptyScaffold(WidgetTester tester) {
 
 /// Empty [MaterialApp] (no [Scaffold]) used by pump-until timeout pins.
 Future<void> pumpE2eEmptyApp(WidgetTester tester) {
-  return tester.pumpWidget(const MaterialApp(home: SizedBox()));
+  return tester.pumpWidget(wrapE2eApp(const SizedBox()));
+}
+
+/// [MaterialApp] whose [home] is already a full route widget (custom host).
+Widget wrapE2eApp(
+  Widget home, {
+  ThemeData? theme,
+  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+  Iterable<Locale>? supportedLocales,
+  Locale? locale,
+}) {
+  return MaterialApp(
+    theme: theme,
+    localizationsDelegates: localizationsDelegates,
+    supportedLocales: supportedLocales ?? const <Locale>[Locale('en')],
+    locale: locale,
+    home: home,
+  );
+}
+
+Future<void> pumpE2eApp(WidgetTester tester, Widget home) {
+  return tester.pumpWidget(wrapE2eApp(home));
+}
+
+/// Bare [Scaffold] (empty body) used when the helper should find no rail/panel.
+Future<void> pumpE2eBareScaffold(WidgetTester tester) {
+  return tester.pumpWidget(const MaterialApp(home: Scaffold()));
 }
 
 /// Panel-root [KeyedSubtree] + [ListView] inside the shared scaffold, matching

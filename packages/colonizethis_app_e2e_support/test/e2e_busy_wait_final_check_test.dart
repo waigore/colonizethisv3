@@ -35,6 +35,7 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/busy_wait_flip_finder_harness.dart';
 import 'support/e2e_busy_wait_final_check_guard_group.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -42,7 +43,7 @@ void main() {
   group('e2ePumpUntil (strict) — post-pump final check', () {
     testWidgets('invokes the predicate via the post-loop final check when the '
         'loop is skipped (Duration.zero)', (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(wrapE2eApp(SizedBox()));
 
       // With `timeout: Duration.zero` the `while (sw.elapsed < timeout)`
       // loop deterministically never enters because `sw.elapsed >= 0`
@@ -75,7 +76,7 @@ void main() {
     testWidgets('still fails with TestFailure when the predicate stays false', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(wrapE2eApp(SizedBox()));
 
       Object? caught;
       try {
@@ -115,14 +116,12 @@ void main() {
     ) async {
       const targetKey = Key('e2e_busy_wait_late_btn');
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: TextButton(
-                key: targetKey,
-                onPressed: () {},
-                child: const Text('btn'),
-              ),
+        wrapE2eScaffold(
+          Center(
+            child: TextButton(
+              key: targetKey,
+              onPressed: () {},
+              child: const Text('btn'),
             ),
           ),
         ),
@@ -159,7 +158,7 @@ void main() {
       WidgetTester tester,
     ) async {
       const missingKey = Key('e2e_busy_wait_missing_btn');
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(wrapE2eApp(SizedBox()));
 
       Object? caught;
       try {
@@ -194,14 +193,12 @@ void main() {
         'main loop and post-loop check both miss', (WidgetTester tester) async {
       const targetKey = Key('e2e_busy_wait_diagnose_btn');
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: TextButton(
-                key: targetKey,
-                onPressed: () {},
-                child: const Text('btn'),
-              ),
+        wrapE2eScaffold(
+          Center(
+            child: TextButton(
+              key: targetKey,
+              onPressed: () {},
+              child: const Text('btn'),
             ),
           ),
         ),

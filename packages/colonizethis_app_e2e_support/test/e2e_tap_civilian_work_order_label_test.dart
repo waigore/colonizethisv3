@@ -37,6 +37,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 import 'support/e2e_tap_counter.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 /// Synthetic civilian work-menu fixture. The fixture builds the labels
 /// inside a [GestureDetector] (mirrors the production [InkWell]/`onTap`
@@ -50,31 +51,29 @@ Widget _buildWorkMenuFixture({
   bool ignorePointer = false,
   double topSpacer = 0,
 }) {
-  return MaterialApp(
-    home: Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            if (topSpacer > 0) SizedBox(height: topSpacer),
-            for (final label in labels)
-              IgnorePointer(
-                ignoring: ignorePointer,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    if (counterTargetLabel == null ||
-                        label == counterTargetLabel) {
-                      taps.value += 1;
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Text(label),
-                  ),
+  return wrapE2eScaffold(
+    SingleChildScrollView(
+      child: Column(
+        children: <Widget>[
+          if (topSpacer > 0) SizedBox(height: topSpacer),
+          for (final label in labels)
+            IgnorePointer(
+              ignoring: ignorePointer,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (counterTargetLabel == null ||
+                      label == counterTargetLabel) {
+                    taps.value += 1;
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(label),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     ),
   );

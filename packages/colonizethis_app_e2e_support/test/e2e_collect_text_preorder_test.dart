@@ -38,6 +38,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared_bootstrap.dart';
 
 import 'support/e2e_collect_text_preorder_traversal_group.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -45,11 +46,7 @@ void main() {
   testWidgets('returns without appending when subtree has no Text', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: SizedBox(key: Key('root'))),
-      ),
-    );
+    await tester.pumpWidget(wrapE2eScaffold(SizedBox(key: Key('root'))));
     final out = <String>[];
     e2eCollectTextPreorder(tester.element(find.byKey(const Key('root'))), out);
     expect(
@@ -65,11 +62,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: KeyedSubtree(key: Key('root'), child: Text('hello')),
-        ),
-      ),
+      wrapE2eScaffold(KeyedSubtree(key: Key('root'), child: Text('hello'))),
     );
     final out = <String>[];
     e2eCollectTextPreorder(tester.element(find.byKey(const Key('root'))), out);
@@ -87,14 +80,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: KeyedSubtree(
-            key: Key('root'),
-            child: Column(
-              children: [Text(''), Text('keep'), Text('')],
-            ),
-          ),
+      wrapE2eScaffold(
+        KeyedSubtree(
+          key: Key('root'),
+          child: Column(children: [Text(''), Text('keep'), Text('')]),
         ),
       ),
     );
@@ -114,23 +103,21 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: KeyedSubtree(
-            key: const Key('root'),
-            child: Column(
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: const [
-                      TextSpan(text: 'rich-span-a'),
-                      TextSpan(text: 'rich-span-b'),
-                    ],
-                  ),
+      wrapE2eScaffold(
+        KeyedSubtree(
+          key: const Key('root'),
+          child: Column(
+            children: [
+              Text.rich(
+                TextSpan(
+                  children: const [
+                    TextSpan(text: 'rich-span-a'),
+                    TextSpan(text: 'rich-span-b'),
+                  ],
                 ),
-                const Text('plain'),
-              ],
-            ),
+              ),
+              const Text('plain'),
+            ],
           ),
         ),
       ),

@@ -29,6 +29,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/delayed_mount_harness.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 Future<void> _pumpHost(
   WidgetTester tester, {
@@ -37,17 +38,15 @@ Future<void> _pumpHost(
   bool startMounted = false,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: DelayedMountHost(
-            mountAfter: mountAfter,
-            startMounted: startMounted,
-            child: TextButton(
-              key: targetKey,
-              onPressed: () {},
-              child: const Text('btn'),
-            ),
+    wrapE2eScaffold(
+      Center(
+        child: DelayedMountHost(
+          mountAfter: mountAfter,
+          startMounted: startMounted,
+          child: TextButton(
+            key: targetKey,
+            onPressed: () {},
+            child: const Text('btn'),
           ),
         ),
       ),

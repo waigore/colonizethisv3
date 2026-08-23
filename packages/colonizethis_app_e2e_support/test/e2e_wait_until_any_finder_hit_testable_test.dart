@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/e2e_wait_until_any_finder_hit_testable_host.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -26,7 +27,7 @@ void main() {
   testWidgets(
     'returns immediately when the finder list is empty (no pump, no throw)',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(wrapE2eApp(SizedBox()));
       final sw = Stopwatch()..start();
       await e2eWaitUntilAnyFinderHitTestable(
         tester,
@@ -131,7 +132,7 @@ void main() {
     'fails with TestFailure when no finder ever becomes hit-testable within timeout',
     (WidgetTester tester) async {
       const missingKey = Key('e2e_missing_btn');
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(wrapE2eApp(SizedBox()));
       Object? caught;
       try {
         await e2eWaitUntilAnyFinderHitTestable(tester, <Finder>[

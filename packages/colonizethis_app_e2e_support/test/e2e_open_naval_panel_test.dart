@@ -42,6 +42,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/e2e_open_naval_panel_hosts.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -49,7 +50,7 @@ void main() {
   testWidgets(
     'e2eOpenNavalPanel taps the empire rail button and detects the panel',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: NavalRailHost()));
+      await tester.pumpWidget(wrapE2eApp(NavalRailHost()));
       expect(find.byKey(kEmpireNavalUnitsButtonKey), findsOneWidget);
       expect(find.byKey(kCtE2ENavalPanelRootKey), findsNothing);
       await e2eOpenNavalPanel(tester, timeout: const Duration(seconds: 5));
@@ -66,7 +67,7 @@ void main() {
 
   testWidgets('e2eOpenNavalPanel falls back to the first-fleet marker '
       'when the empire rail button is absent', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: NavalMarkerOnlyHost()));
+    await tester.pumpWidget(wrapE2eApp(NavalMarkerOnlyHost()));
     expect(find.byKey(kEmpireNavalUnitsButtonKey), findsNothing);
     expect(find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey), findsOneWidget);
     expect(find.byKey(kCtE2ENavalPanelRootKey), findsNothing);
@@ -86,8 +87,8 @@ void main() {
     'after the rail tap',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: DelayedNavalPanelHost(mountAfter: Duration(milliseconds: 120)),
+        wrapE2eApp(
+          DelayedNavalPanelHost(mountAfter: Duration(milliseconds: 120)),
         ),
       );
       expect(find.byKey(kCtE2ENavalPanelRootKey), findsNothing);
@@ -108,7 +109,7 @@ void main() {
   testWidgets(
     'e2eOpenNavalPanel times out with TestFailure when no opener surfaces',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await pumpE2eBareScaffold(tester);
       Object? caught;
       try {
         await e2eOpenNavalPanel(

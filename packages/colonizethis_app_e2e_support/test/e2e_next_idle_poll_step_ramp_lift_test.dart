@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 /// Contract pin for the Bottleneck 6 lift that replaced the three inline
 /// `math.min(500, stepMs * 2)` doubling-backoff recipes in
@@ -82,9 +83,7 @@ void main() {
     testWidgets('e2eWaitUntilFound returns immediately on an existing match', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: Text('present'))),
-      );
+      await tester.pumpWidget(wrapE2eScaffold(Text('present')));
       await e2eWaitUntilFound(
         tester,
         find.text('present'),
@@ -96,7 +95,7 @@ void main() {
     testWidgets(
       'e2ePumpUntil returns immediately when condition already holds',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+        await pumpE2eBareScaffold(tester);
         await e2ePumpUntil(
           tester,
           () => true,
@@ -109,9 +108,7 @@ void main() {
       'e2eWaitUntilAnyFinderHitTestable returns immediately on a hit-testable '
       'match',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: Text('hittable'))),
-        );
+        await tester.pumpWidget(wrapE2eScaffold(Text('hittable')));
         await e2eWaitUntilAnyFinderHitTestable(tester, <Finder>[
           find.text('hittable'),
         ], timeout: const Duration(seconds: 1));

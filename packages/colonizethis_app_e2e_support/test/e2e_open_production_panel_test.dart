@@ -31,6 +31,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 import 'support/open_production_panel_harness.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -39,12 +40,10 @@ void main() {
     'e2eOpenProductionPanel short-circuits when panel root already mounted',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: KeyedSubtree(
-              key: kCtE2EProductionPanelRootKey,
-              child: Container(width: 200, height: 200, color: Colors.green),
-            ),
+        wrapE2eScaffold(
+          KeyedSubtree(
+            key: kCtE2EProductionPanelRootKey,
+            child: Container(width: 200, height: 200, color: Colors.green),
           ),
         ),
       );
@@ -63,7 +62,7 @@ void main() {
   testWidgets(
     'e2eOpenProductionPanel taps the empire rail button and detects the panel',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: ProductionRailHarness()));
+      await tester.pumpWidget(wrapE2eApp(ProductionRailHarness()));
       expect(find.byKey(kEmpireProductionButtonKey), findsOneWidget);
       expect(find.byKey(kCtE2EProductionPanelRootKey), findsNothing);
       await e2eOpenProductionPanel(tester, timeout: const Duration(seconds: 5));
@@ -82,8 +81,8 @@ void main() {
     'e2eOpenProductionPanel returns once the panel root mounts asynchronously',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: DelayedProductionPanelHarness(
+        wrapE2eApp(
+          DelayedProductionPanelHarness(
             mountAfter: Duration(milliseconds: 120),
           ),
         ),
@@ -104,7 +103,7 @@ void main() {
   testWidgets(
     'e2eOpenProductionPanel times out with TestFailure when no entry surfaces',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await pumpE2eBareScaffold(tester);
       Object? caught;
       try {
         await e2eOpenProductionPanel(
@@ -134,9 +133,7 @@ void main() {
       // Once the outer timeout elapses, the failure must come from the outer
       // `Timed out opening production panel` path (PR #2555 contract for the
       // naval opener; this pins the same contract for production).
-      await tester.pumpWidget(
-        const MaterialApp(home: NoOpProductionRailHarness()),
-      );
+      await tester.pumpWidget(wrapE2eApp(NoOpProductionRailHarness()));
       expect(find.byKey(kEmpireProductionButtonKey), findsOneWidget);
       expect(find.byKey(kCtE2EProductionPanelRootKey), findsNothing);
       Object? caught;

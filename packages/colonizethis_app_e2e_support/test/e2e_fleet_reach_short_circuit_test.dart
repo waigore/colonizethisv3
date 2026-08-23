@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 const String _human = 'gp1';
 
@@ -106,9 +107,7 @@ void main() {
     testWidgets('snapshot true short-circuits without naval panel widget', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: Text('no panel'))),
-      );
+      await tester.pumpWidget(wrapE2eScaffold(Text('no panel')));
       final snap = _snapshot(fleets: [_homeFleet(), _splitFleetInNw()]);
       expect(e2eHarnessDetectsNonHomeFleetInNewWorld(tester, snap), isTrue);
     });
@@ -116,9 +115,7 @@ void main() {
     testWidgets('non-null snapshot false does not consult widget fallback', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: _navalPanelWithNwFleet())),
-      );
+      await tester.pumpWidget(wrapE2eScaffold(_navalPanelWithNwFleet()));
       final snap = _snapshot(fleets: [_homeFleet()]);
       expect(
         e2eHarnessDetectsNonHomeFleetInNewWorld(tester, snap),
@@ -133,16 +130,12 @@ void main() {
     testWidgets('null snapshot falls back to naval panel widget tree', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: _navalPanelWithNwFleet())),
-      );
+      await tester.pumpWidget(wrapE2eScaffold(_navalPanelWithNwFleet()));
       expect(e2eHarnessDetectsNonHomeFleetInNewWorld(tester, null), isTrue);
     });
 
     testWidgets('null snapshot and empty tree returns false', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: Text('empty'))),
-      );
+      await tester.pumpWidget(wrapE2eScaffold(Text('empty')));
       expect(e2eHarnessDetectsNonHomeFleetInNewWorld(tester, null), isFalse);
     });
   });

@@ -34,6 +34,35 @@ void main() {
       }
     });
 
+    test('fails when a pin suite constructs MaterialApp inline', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'e2e-support-no-dup-hosts-app-',
+      );
+      try {
+        final testDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_app_e2e_support', 'test'),
+        )..createSync(recursive: true);
+        File(p.join(testDir.path, 'clone_app_test.dart')).writeAsStringSync(
+          "import 'package:flutter/material.dart';\n"
+          "void main() {\n"
+          "  final _ = MaterialApp(home: const SizedBox());\n"
+          "}\n",
+        );
+
+        final errors = <String>[];
+        final code = runCheckAppE2eSupportNoDuplicateHosts(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(code, 1);
+        expect(errors.join('\n'), contains('clone_app_test.dart'));
+        expect(errors.join('\n'), contains('MaterialApp'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('allows wrap hosts under test/support/', () {
       final temp = Directory.systemTemp.createTempSync(
         'e2e-support-dup-hosts-ok-',
