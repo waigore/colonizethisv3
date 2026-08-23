@@ -12,123 +12,13 @@
 /// mounted finders without the test driving extra pumps itself.
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Host that mounts zero or more keyed `TextButton` finders on demand so the
-/// test can flip visibility while the helper polls.
-///
-/// `Timer` callbacks scheduled in [State.initState] fire when `tester.pump`
-/// advances fake-time past the registered duration, so the helper sees the
-/// newly mounted widget on a later iteration without the test calling
-/// `tester.pump` itself (which would deadlock against the helper's guarded
-/// pump loop).
-class _MountKeysHost extends StatefulWidget {
-  const _MountKeysHost({
-    required this.controller,
-    this.mountAfter,
-    this.mountKeys = const <Key>[],
-  });
-
-  final _MountKeysController controller;
-
-  /// Fake-async delay before the host mounts [mountKeys], or `null` to leave
-  /// the controller untouched.
-  final Duration? mountAfter;
-
-  /// Keys to mount as visible, hit-testable `TextButton`s when [mountAfter]
-  /// elapses.
-  final List<Key> mountKeys;
-
-  @override
-  State<_MountKeysHost> createState() => _MountKeysHostState();
-}
-
-class _MountKeysHostState extends State<_MountKeysHost> {
-  Timer? _mountTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onControllerChanged);
-    final after = widget.mountAfter;
-    if (after != null) {
-      _mountTimer = Timer(after, _applyMount);
-    }
-  }
-
-  void _applyMount() {
-    widget.controller.mountedKeys = widget.mountKeys;
-  }
-
-  @override
-  void dispose() {
-    _mountTimer?.cancel();
-    widget.controller.removeListener(_onControllerChanged);
-    super.dispose();
-  }
-
-  void _onControllerChanged() {
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final keys = widget.controller.mountedKeys;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        for (final k in keys)
-          TextButton(
-            key: k,
-            onPressed: () {},
-            child: const Text('btn'),
-          ),
-      ],
-    );
-  }
-}
-
-class _MountKeysController extends ChangeNotifier {
-  _MountKeysController({List<Key> initialKeys = const <Key>[]})
-      : _mountedKeys = List<Key>.of(initialKeys);
-
-  List<Key> _mountedKeys;
-
-  List<Key> get mountedKeys => _mountedKeys;
-
-  set mountedKeys(List<Key> value) {
-    _mountedKeys = List<Key>.of(value);
-    notifyListeners();
-  }
-}
-
-Future<void> _pumpHost(
-  WidgetTester tester,
-  _MountKeysController controller, {
-  Duration? mountAfter,
-  List<Key> mountKeys = const <Key>[],
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: _MountKeysHost(
-            controller: controller,
-            mountAfter: mountAfter,
-            mountKeys: mountKeys,
-          ),
-        ),
-      ),
-    ),
-  );
-}
+import 'support/e2e_wait_until_any_finder_hit_testable_host.dart';
 
 void main() {
   suppressLogsForTests();
@@ -158,15 +48,12 @@ void main() {
     'short-circuits before any pump when the first finder is already hit-testable',
     (WidgetTester tester) async {
       const onlyKey = Key('e2e_only_btn');
-      final controller =
-          _MountKeysController(initialKeys: const <Key>[onlyKey]);
-      await _pumpHost(tester, controller);
+      final controller = MountKeysController(initialKeys: const <Key>[onlyKey]);
+      await pumpMountKeysHost(tester, controller);
       final sw = Stopwatch()..start();
-      await e2eWaitUntilAnyFinderHitTestable(
-        tester,
-        <Finder>[find.byKey(onlyKey)],
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eWaitUntilAnyFinderHitTestable(tester, <Finder>[
+        find.byKey(onlyKey),
+      ], timeout: const Duration(seconds: 5));
       expect(
         sw.elapsed,
         lessThan(const Duration(milliseconds: 200)),
@@ -183,15 +70,15 @@ void main() {
       const firstKey = Key('e2e_first_btn');
       const secondKey = Key('e2e_second_btn');
       // Only the second key is mounted, so the first finder is empty.
-      final controller =
-          _MountKeysController(initialKeys: const <Key>[secondKey]);
-      await _pumpHost(tester, controller);
-      final sw = Stopwatch()..start();
-      await e2eWaitUntilAnyFinderHitTestable(
-        tester,
-        <Finder>[find.byKey(firstKey), find.byKey(secondKey)],
-        timeout: const Duration(seconds: 5),
+      final controller = MountKeysController(
+        initialKeys: const <Key>[secondKey],
       );
+      await pumpMountKeysHost(tester, controller);
+      final sw = Stopwatch()..start();
+      await e2eWaitUntilAnyFinderHitTestable(tester, <Finder>[
+        find.byKey(firstKey),
+        find.byKey(secondKey),
+      ], timeout: const Duration(seconds: 5));
       expect(
         sw.elapsed,
         lessThan(const Duration(milliseconds: 200)),
@@ -207,11 +94,11 @@ void main() {
     'returns once a scheduled mount makes one finder hit-testable during pump',
     (WidgetTester tester) async {
       const targetKey = Key('e2e_target_btn');
-      final controller = _MountKeysController();
+      final controller = MountKeysController();
       // The host starts with no widgets; schedule a mount after enough
       // fake-async time that the helper has already passed its pre-pump scan
       // and is inside the adaptive pump loop.
-      await _pumpHost(
+      await pumpMountKeysHost(
         tester,
         controller,
         mountAfter: const Duration(milliseconds: 80),
@@ -219,11 +106,9 @@ void main() {
       );
       expect(find.byKey(targetKey), findsNothing);
 
-      await e2eWaitUntilAnyFinderHitTestable(
-        tester,
-        <Finder>[find.byKey(targetKey)],
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eWaitUntilAnyFinderHitTestable(tester, <Finder>[
+        find.byKey(targetKey),
+      ], timeout: const Duration(seconds: 5));
 
       expect(
         controller.mountedKeys,
@@ -249,11 +134,9 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: SizedBox()));
       Object? caught;
       try {
-        await e2eWaitUntilAnyFinderHitTestable(
-          tester,
-          <Finder>[find.byKey(missingKey)],
-          timeout: const Duration(milliseconds: 200),
-        );
+        await e2eWaitUntilAnyFinderHitTestable(tester, <Finder>[
+          find.byKey(missingKey),
+        ], timeout: const Duration(milliseconds: 200));
       } catch (e) {
         caught = e;
       }

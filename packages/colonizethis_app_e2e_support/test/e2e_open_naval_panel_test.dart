@@ -33,8 +33,6 @@
 /// timeout regressions).
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -43,21 +41,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'support/e2e_open_naval_panel_hosts.dart';
+
 void main() {
   suppressLogsForTests();
 
   testWidgets(
     'e2eOpenNavalPanel taps the empire rail button and detects the panel',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: _NavalRailHarness()),
-      );
+      await tester.pumpWidget(const MaterialApp(home: NavalRailHost()));
       expect(find.byKey(kEmpireNavalUnitsButtonKey), findsOneWidget);
       expect(find.byKey(kCtE2ENavalPanelRootKey), findsNothing);
-      await e2eOpenNavalPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eOpenNavalPanel(tester, timeout: const Duration(seconds: 5));
       expect(
         find.byKey(kCtE2ENavalPanelRootKey),
         findsOneWidget,
@@ -69,33 +64,22 @@ void main() {
     },
   );
 
-  testWidgets(
-    'e2eOpenNavalPanel falls back to the first-fleet marker '
-    'when the empire rail button is absent',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: _NavalMarkerOnlyHarness()),
-      );
-      expect(find.byKey(kEmpireNavalUnitsButtonKey), findsNothing);
-      expect(
-        find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey),
-        findsOneWidget,
-      );
-      expect(find.byKey(kCtE2ENavalPanelRootKey), findsNothing);
-      await e2eOpenNavalPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
-      expect(
-        find.byKey(kCtE2ENavalPanelRootKey),
-        findsOneWidget,
-        reason:
-            'When the empire rail button is not in the tree, the helper must '
-            'tap the first-fleet map marker as the second canonical '
-            'trigger (Refs GitHub #2336 AC2 — single canonical opener).',
-      );
-    },
-  );
+  testWidgets('e2eOpenNavalPanel falls back to the first-fleet marker '
+      'when the empire rail button is absent', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: NavalMarkerOnlyHost()));
+    expect(find.byKey(kEmpireNavalUnitsButtonKey), findsNothing);
+    expect(find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey), findsOneWidget);
+    expect(find.byKey(kCtE2ENavalPanelRootKey), findsNothing);
+    await e2eOpenNavalPanel(tester, timeout: const Duration(seconds: 5));
+    expect(
+      find.byKey(kCtE2ENavalPanelRootKey),
+      findsOneWidget,
+      reason:
+          'When the empire rail button is not in the tree, the helper must '
+          'tap the first-fleet map marker as the second canonical '
+          'trigger (Refs GitHub #2336 AC2 — single canonical opener).',
+    );
+  });
 
   testWidgets(
     'e2eOpenNavalPanel returns once the panel root mounts asynchronously '
@@ -103,16 +87,11 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: _DelayedNavalPanelHarness(
-            mountAfter: Duration(milliseconds: 120),
-          ),
+          home: DelayedNavalPanelHost(mountAfter: Duration(milliseconds: 120)),
         ),
       );
       expect(find.byKey(kCtE2ENavalPanelRootKey), findsNothing);
-      await e2eOpenNavalPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eOpenNavalPanel(tester, timeout: const Duration(seconds: 5));
       expect(
         find.byKey(kCtE2ENavalPanelRootKey),
         findsOneWidget,
@@ -150,128 +129,4 @@ void main() {
       );
     },
   );
-}
-
-/// Test harness that mounts the naval panel root synchronously when the
-/// keyed empire rail button is tapped, so the helper detects the panel on
-/// the very next frame.
-class _NavalRailHarness extends StatefulWidget {
-  const _NavalRailHarness();
-
-  @override
-  State<_NavalRailHarness> createState() => _NavalRailHarnessState();
-}
-
-class _NavalRailHarnessState extends State<_NavalRailHarness> {
-  bool _panelOpen = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          TextButton(
-            key: kEmpireNavalUnitsButtonKey,
-            onPressed: () => setState(() => _panelOpen = true),
-            child: const Text('Naval'),
-          ),
-          if (_panelOpen)
-            const KeyedSubtree(
-              key: kCtE2ENavalPanelRootKey,
-              child: SizedBox(width: 100, height: 100),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Test harness that exposes the first-fleet marker but no empire rail
-/// button, so the helper must take the marker branch as the second canonical
-/// trigger.
-class _NavalMarkerOnlyHarness extends StatefulWidget {
-  const _NavalMarkerOnlyHarness();
-
-  @override
-  State<_NavalMarkerOnlyHarness> createState() =>
-      _NavalMarkerOnlyHarnessState();
-}
-
-class _NavalMarkerOnlyHarnessState extends State<_NavalMarkerOnlyHarness> {
-  bool _panelOpen = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          TextButton(
-            key: kCtE2EOpenFirstFleetMarkerPanelKey,
-            onPressed: () => setState(() => _panelOpen = true),
-            child: const Text('Marker'),
-          ),
-          if (_panelOpen)
-            const KeyedSubtree(
-              key: kCtE2ENavalPanelRootKey,
-              child: SizedBox(width: 100, height: 100),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Test harness that mounts the naval panel root only after an in-test
-/// timer fires so the helper exercises its adaptive post-tap waits before
-/// returning. The keyed empire rail button drives the schedule, mirroring
-/// the civilian async harness pattern in
-/// `app/test/e2e_open_civilian_panel_test.dart` and the production-panel
-/// async harness in `app/test/e2e_open_production_panel_test.dart`.
-class _DelayedNavalPanelHarness extends StatefulWidget {
-  const _DelayedNavalPanelHarness({required this.mountAfter});
-
-  final Duration mountAfter;
-
-  @override
-  State<_DelayedNavalPanelHarness> createState() =>
-      _DelayedNavalPanelHarnessState();
-}
-
-class _DelayedNavalPanelHarnessState
-    extends State<_DelayedNavalPanelHarness> {
-  bool _panelOpen = false;
-  bool _scheduled = false;
-
-  void _handleTap() {
-    if (_scheduled) {
-      return;
-    }
-    _scheduled = true;
-    Timer(widget.mountAfter, () {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _panelOpen = true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          TextButton(
-            key: kEmpireNavalUnitsButtonKey,
-            onPressed: _handleTap,
-            child: const Text('Naval'),
-          ),
-          if (_panelOpen)
-            const KeyedSubtree(
-              key: kCtE2ENavalPanelRootKey,
-              child: SizedBox(width: 100, height: 100),
-            ),
-        ],
-      ),
-    );
-  }
 }
