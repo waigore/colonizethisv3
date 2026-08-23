@@ -34,6 +34,68 @@ void main() {
       }
     });
 
+    test('fails when a pin suite re-declares _pumpHost', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'e2e-support-no-dup-hosts-pump-',
+      );
+      try {
+        final testDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_app_e2e_support', 'test'),
+        )..createSync(recursive: true);
+        File(
+          p.join(testDir.path, 'clone_pump_host_test.dart'),
+        ).writeAsStringSync(
+          "import 'package:flutter_test/flutter_test.dart';\n"
+          'Future<void> _pumpHost(WidgetTester tester) async {}\n',
+        );
+
+        final errors = <String>[];
+        final code = runCheckAppE2eSupportNoDuplicateHosts(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(code, 1);
+        expect(errors.join('\n'), contains('clone_pump_host_test.dart'));
+        expect(errors.join('\n'), contains('_pumpHost'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('fails when a pin suite re-declares _pumpAndResolveRoot', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'e2e-support-no-dup-hosts-resolve-',
+      );
+      try {
+        final testDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_app_e2e_support', 'test'),
+        )..createSync(recursive: true);
+        File(
+          p.join(testDir.path, 'clone_pump_resolve_test.dart'),
+        ).writeAsStringSync(
+          "import 'package:flutter/material.dart';\n"
+          "import 'package:flutter_test/flutter_test.dart';\n"
+          'Future<Element> _pumpAndResolveRoot(\n'
+          '  WidgetTester tester,\n'
+          '  Widget child,\n'
+          ') async => tester.element(find.byType(Center));\n',
+        );
+
+        final errors = <String>[];
+        final code = runCheckAppE2eSupportNoDuplicateHosts(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(code, 1);
+        expect(errors.join('\n'), contains('clone_pump_resolve_test.dart'));
+        expect(errors.join('\n'), contains('_pumpAndResolveRoot'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('fails when a pin suite constructs MaterialApp inline', () {
       final temp = Directory.systemTemp.createTempSync(
         'e2e-support-no-dup-hosts-app-',

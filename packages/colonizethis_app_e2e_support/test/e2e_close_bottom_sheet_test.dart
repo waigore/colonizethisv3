@@ -10,43 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/close_bottom_sheet_host.dart';
 import 'support/e2e_widget_pump_harness.dart';
-
-class _BottomSheetHost extends StatefulWidget {
-  const _BottomSheetHost();
-
-  @override
-  State<_BottomSheetHost> createState() => _BottomSheetHostState();
-}
-
-class _BottomSheetHostState extends State<_BottomSheetHost> {
-  bool _opened = false;
-
-  void _open(BuildContext context) {
-    if (_opened) return;
-    _opened = true;
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => const SizedBox(
-        height: 200,
-        child: Center(child: Text('panel-content')),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (innerCtx) {
-          // Open after first frame; tests pump before asserting.
-          WidgetsBinding.instance.addPostFrameCallback((_) => _open(innerCtx));
-          return const SizedBox.expand();
-        },
-      ),
-    );
-  }
-}
 
 void main() {
   suppressLogsForTests();
@@ -69,7 +34,7 @@ void main() {
   testWidgets(
     'e2eCloseBottomSheet dismisses a real BottomSheet within budget',
     (WidgetTester tester) async {
-      await tester.pumpWidget(wrapE2eApp(_BottomSheetHost()));
+      await tester.pumpWidget(wrapE2eApp(const CloseBottomSheetHost()));
       // The post-frame callback schedules the sheet; pump a couple of frames so
       // the modal bottom sheet route is fully mounted before the helper runs.
       await tester.pump();
@@ -92,7 +57,7 @@ void main() {
   testWidgets('e2eCloseBottomSheet respects a tight overallTimeout window', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(wrapE2eApp(_BottomSheetHost()));
+    await tester.pumpWidget(wrapE2eApp(const CloseBottomSheetHost()));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
     expect(find.byType(BottomSheet), findsOneWidget);

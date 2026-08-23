@@ -21,7 +21,6 @@ library;
 // ignore_for_file: deprecated_member_use
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -29,43 +28,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'support/dismissible_sea_dialog_host.dart';
 import 'support/naval_fleet_move_harness.dart';
 import 'support/e2e_try_naval_move_segment_guard_group.dart';
 import 'support/e2e_try_naval_move_segment_guard_group2.dart';
-
-const String _seaText = 'sea zone 1';
-
-class _DismissibleSeaDialog extends StatefulWidget {
-  const _DismissibleSeaDialog({required this.l10n});
-
-  final AppLocalizations l10n;
-
-  @override
-  State<_DismissibleSeaDialog> createState() => _DismissibleSeaDialogState();
-}
-
-class _DismissibleSeaDialogState extends State<_DismissibleSeaDialog> {
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      content: SingleChildScrollView(
-        key: kCtE2EMoveFleetDialogScrollRootKey,
-        child: RadioListTile<int>(
-          title: const Text(_seaText),
-          value: 0,
-          groupValue: 0,
-          onChanged: (_) {},
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.l10n.common_confirm),
-        ),
-      ],
-    );
-  }
-}
 
 void main() {
   suppressLogsForTests();
@@ -134,7 +100,7 @@ void main() {
               fleetMoveTile(
                 title: 'Fleet 2',
                 subtitle: 'New World — Outer Sea',
-                dialogBuilder: (_) => _DismissibleSeaDialog(l10n: l10n),
+                dialogBuilder: (_) => DismissibleSeaDialog(l10n: l10n),
               ),
             ],
           ),
@@ -168,7 +134,7 @@ void main() {
                             onChanged: (_) {},
                           ),
                           RadioListTile<int>(
-                            title: const Text(_seaText),
+                            title: const Text(kE2eDismissibleSeaDialogPinLabel),
                             value: 1,
                             groupValue: null,
                             onChanged: (_) {},

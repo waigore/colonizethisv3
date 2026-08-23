@@ -25,66 +25,13 @@
 /// no-op `app_e2e_linux` lane today.
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/delayed_removal_harness.dart';
 import 'support/e2e_widget_pump_harness.dart';
-
-/// Host that removes an internal child widget after an optional fake-async
-/// delay so a polling helper can observe the disappearance without the
-/// test calling `tester.pump` itself (which would deadlock against the
-/// helper's guarded pump loop).
-class _DelayedRemovalHost extends StatefulWidget {
-  const _DelayedRemovalHost({required this.removeAfter, required this.onState});
-
-  final Duration removeAfter;
-  final void Function(_DelayedRemovalState state) onState;
-
-  @override
-  State<_DelayedRemovalHost> createState() => _DelayedRemovalState();
-}
-
-class _DelayedRemovalState extends State<_DelayedRemovalHost> {
-  bool present = true;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.onState(this);
-    Timer(widget.removeAfter, () {
-      if (!mounted) return;
-      setState(() => present = false);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!present) {
-      return const SizedBox.shrink();
-    }
-    return const Text('pin-target', textDirection: TextDirection.ltr);
-  }
-}
-
-Future<_DelayedRemovalState> _pumpHost(
-  WidgetTester tester, {
-  required Duration removeAfter,
-}) async {
-  late _DelayedRemovalState captured;
-  await tester.pumpWidget(
-    wrapE2eScaffold(
-      _DelayedRemovalHost(
-        removeAfter: removeAfter,
-        onState: (s) => captured = s,
-      ),
-    ),
-  );
-  return captured;
-}
 
 void main() {
   suppressLogsForTests();
@@ -115,7 +62,7 @@ void main() {
     testWidgets(
       'returns once a scheduled removal makes the finder empty during pump',
       (WidgetTester tester) async {
-        final state = await _pumpHost(
+        final state = await pumpDelayedRemovalHost(
           tester,
           removeAfter: const Duration(milliseconds: 80),
         );

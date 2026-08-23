@@ -130,7 +130,6 @@ Future<E2eFinalNavalReachCheckResult> ensureNonHomeFleetInNwAfterLoop(
   maxUiResponseWait: maxUiResponseWait,
 );
 
-/// AC1 alias for [e2ePickFirstValidWorkTileAndAwaitOverlayClear] (Refs #2336 / #4075).
 /// AC1 alias for [e2eEnterStandardE2eScenario] (Refs #2336 / #4075).
 Future<E2eStandardScenarioOpener> enterStandardE2eScenario(
   WidgetTester tester, {
