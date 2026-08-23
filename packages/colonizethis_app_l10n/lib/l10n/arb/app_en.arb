@@ -4178,6 +4178,14 @@
   "@provinceOverlay_blockadeAction": {
     "description": "MAP20001 Naval Blockade control label (Refs #4413)."
   },
+  "provinceOverlay_patrolAction": "Patrol",
+  "@provinceOverlay_patrolAction": {
+    "description": "MAP20001 sea-zone Naval Patrol control label (Refs #4605)."
+  },
+  "provinceOverlay_defendAction": "Defend",
+  "@provinceOverlay_defendAction": {
+    "description": "MAP20001 sea-zone Naval Defend control label (Refs #4605)."
+  },
   "provinceOverlay_beachheadAction": "Beachhead",
   "@provinceOverlay_beachheadAction": {
     "description": "MAP20001 Naval Beachhead control label (Refs #4413). Does not imply capture this turn."

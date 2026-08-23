@@ -163,4 +163,62 @@ void main() {
     expect(find.byType(NavalMissionMenuDialog), findsOneWidget);
     expect(find.byType(NavalMissionTargetDialog), findsNothing);
   });
+
+  testWidgets('single fleet overlay Patrol skips menu and emits immediately', (
+    tester,
+  ) async {
+    final game = buildNavalPanelNamedSeaZoneGame(
+      humanId: navalMissionGoldenHumanId,
+    );
+    final bus = AppEventBus();
+    NavalMissionRequestedEvent? emitted;
+    bus.on<NavalMissionRequestedEvent>().listen((e) => emitted = e);
+
+    await openFlow(
+      tester,
+      game: game,
+      topology: const MapTopology(),
+      fleetIds: const ['sea_named'],
+      bus: bus,
+      initialMission: FleetMission.patrol,
+    );
+
+    expect(find.byType(NavalMissionMenuDialog), findsNothing);
+    expect(find.byType(NavalMissionTargetDialog), findsNothing);
+    expect(emitted, isNotNull);
+    expect(emitted!.missionOrder.fleetId, 'sea_named');
+    expect(emitted!.missionOrder.mission, FleetMission.patrol.name);
+    expect(emitted!.missionOrder.targetProvinceId, isNull);
+  });
+
+  testWidgets('several fleets overlay Patrol opens picker then emits', (
+    tester,
+  ) async {
+    final game = twoFleetWarGame();
+    final bus = AppEventBus();
+    NavalMissionRequestedEvent? emitted;
+    bus.on<NavalMissionRequestedEvent>().listen((e) => emitted = e);
+
+    await openFlow(
+      tester,
+      game: game,
+      topology: navalMissionWarTopology(),
+      fleetIds: const ['fleet_at_sea', 'fleet_second'],
+      bus: bus,
+      initialMission: FleetMission.defend,
+    );
+
+    expect(find.byType(NavalMissionFleetPickerDialog), findsOneWidget);
+    expect(find.byType(NavalMissionMenuDialog), findsNothing);
+
+    await tester.tap(
+      find.widgetWithText(CtNinePatchButton, l10n.common_confirm),
+    );
+    await tester.pumpAndSettle();
+
+    expect(emitted, isNotNull);
+    expect(emitted!.missionOrder.mission, FleetMission.defend.name);
+    expect(emitted!.missionOrder.targetProvinceId, isNull);
+    expect(find.byType(NavalMissionMenuDialog), findsNothing);
+  });
 }
