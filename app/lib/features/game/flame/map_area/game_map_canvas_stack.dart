@@ -10,14 +10,10 @@ import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
-import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
-
-import '../overlays/game_map_province_detail_side_panel.dart';
 import '../../widgets/map_radial/game_map_tile_radial_host.dart';
 import 'game_map_canvas_stack_hover.dart';
+import 'game_map_canvas_stack_region_row.dart';
 import 'game_map_canvas_stack_selection_prompt.dart';
-import '../caches/per_player_army_move_picker_cache.dart';
-import '../caches/per_player_work_target_selection_cache.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
@@ -134,72 +130,40 @@ class GameMapCanvasStack extends ConsumerWidget {
               game: game,
               region: region,
               onWorkTargetTileHovered: onWorkTargetTileHovered,
-              mapBuilder: (onTileHovered) => Row(
-                children: [
-                  Expanded(
-                    child: CtRegionMap(
-                      region: region,
-                      cellSizePx: region.cellSize.toDouble(),
-                      showProvinceOverlay: showProvinceOverlay,
-                      showProvinceOwnershipTint: showProvinceOwnershipTint,
-                      showProvinceNamesLayer: showProvinceNamesLayer,
-                      showCapitalLinkDisconnectedHighlight:
-                          showCapitalLinkDisconnectedHighlight,
-                      visibilityMode: visibilityMode,
-                      playerViewForResources:
-                          visibilityMode ==
-                              CtMapVisibilityMode.playerConstrained
-                          ? playerView
-                          : null,
-                      mapBaseLayerFlags: mapBaseLayerFlags,
-                      onProvinceSelected: null,
-                      onMapTileTappedForDetail: inWorkTargetSelectionMode
-                          ? null
-                          : onLastTurnPlaybackMapTap != null
-                          ? (_) => onLastTurnPlaybackMapTap!()
-                          : (tk) => ref
-                                .read(mapProvincePanelProvider.notifier)
-                                .reportMapTileTapped(tk),
-                      onMapTileSecondaryForRadial: onLastTurnPlaybackMapTap != null
-                          ? null
-                          : onSecondary,
-                      onProvinceHovered: (_) {},
-                      onTileHovered: onTileHovered,
-                      onCivilianTileStateChanged: inWorkTargetSelectionMode
-                          ? null
-                          : onCivilianTileStateChanged,
-                      onCivilianTileSelectionCleared: inWorkTargetSelectionMode
-                          ? null
-                          : onCivilianTileSelectionCleared,
-                      selectedTileKey: highlights.selectedTileKey,
-                      selectedCivilianTileKey: selectedCivilianTileKey,
-                      secondaryHighlightTileKey:
-                          highlights.secondaryHighlightTileKey,
-                      secondaryHighlightTileKeys:
-                          highlights.secondaryHighlightTileKeys,
-                      centerOnTileKey: centerOnTileKey,
-                      validTileKeys: validTileKeysForSelection,
-                      lastTurnPulseTileKey: lastTurnPulseTileKey,
-                      onTileSelected: onTileSelectedForWork,
-                      onWorkTargetSelectionCancelled:
-                          onWorkTargetSelectionCancelled,
-                      bus: inWorkTargetSelectionMode ? null : bus,
-                      onViewportSnapshotChanged: onRegionViewportSnapshot,
-                      zoomMultiplier: zoomMultiplier,
-                    ),
-                  ),
-                  if (!isNarrow)
-                    GameMapProvinceDetailSidePanel(
-                      game: game,
-                      region: region,
-                      humanPlayerId: humanPlayerId,
-                      playerView: playerView,
-                      omniscientDetail: omniscientDetail,
-                      canMutateViaUi: canMutateViaUi,
-                      workTargetSelectionCache: workTargetSelectionCache,
-                      armyMovePickerCache: armyMovePickerCache,
-                    ),
-                ],
+              mapBuilder: (onTileHovered) => gameMapCanvasStackRegionRow(
+                ref: ref,
+                isNarrow: isNarrow,
+                game: game,
+                region: region,
+                mapBaseLayerFlags: mapBaseLayerFlags,
+                showProvinceOverlay: showProvinceOverlay,
+                showProvinceOwnershipTint: showProvinceOwnershipTint,
+                showProvinceNamesLayer: showProvinceNamesLayer,
+                showCapitalLinkDisconnectedHighlight:
+                    showCapitalLinkDisconnectedHighlight,
+                humanPlayerId: humanPlayerId,
+                playerView: playerView,
+                workTargetSelectionCache: workTargetSelectionCache,
+                armyMovePickerCache: armyMovePickerCache,
+                centerOnTileKey: centerOnTileKey,
+                validTileKeysForSelection: validTileKeysForSelection,
+                lastTurnPulseTileKey: lastTurnPulseTileKey,
+                onLastTurnPlaybackMapTap: onLastTurnPlaybackMapTap,
+                onTileSelectedForWork: onTileSelectedForWork,
+                onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+                selectedCivilianTileKey: selectedCivilianTileKey,
+                onCivilianTileStateChanged: onCivilianTileStateChanged,
+                onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
+                onRegionViewportSnapshot: onRegionViewportSnapshot,
+                zoomMultiplier: zoomMultiplier,
+                visibilityMode: visibilityMode,
+                omniscientDetail: omniscientDetail,
+                canMutateViaUi: canMutateViaUi,
+                bus: bus,
+                highlights: highlights,
+                inWorkTargetSelectionMode: inWorkTargetSelectionMode,
+                onTileHovered: onTileHovered,
+                onSecondary: onSecondary,
               ),
             ),
           ),
