@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int aiTestSupportFileSizeCeiling = 400;
+const int aiTestSupportFileSizeCeiling = 300;
 
 const String _aiSupportRelDir = 'packages/colonizethis_ai/test/support';
 
@@ -15,7 +15,7 @@ const String _aiSupportRelDir = 'packages/colonizethis_ai/test/support';
 const String _s7dSupportPathPrefix =
     'packages/colonizethis_ai/test/support/s7d/';
 
-/// Empty allowlist: every in-scope support file must stay ≤400 physical lines.
+/// Empty allowlist: every in-scope support file must stay ≤300 physical lines.
 /// Override in tests via [grandfatheredPaths].
 const List<String> aiTestSupportFileSizeGrandfatheredForTests = <String>[];
 
