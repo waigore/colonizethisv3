@@ -46,6 +46,7 @@ import 'package:colonizethis_test/test.dart';
 
 import '../support/phase_planner_economy_build_pick_cargo_bonus_test_support.dart';
 import '../support/planner_test_helpers.dart';
+import 'phase_planner_economy_build_pick_cargo_bonus_tail_cases.dart';
 
 // Candidate fixture: one cargo-capable ship (galleon, cargoHold = 6)
 // and one regiment (grenadiers). Same `spawnProvinceId` so the
@@ -241,98 +242,7 @@ void main() {
         );
       },
     );
-
-    test(
-      'null colonialPressureWeight preserves the legacy colonialPressure = false '
-      'path (legacy-fallback / null-weight pin)',
-      () {
-        final nullWeightOff = _pick(
-          colonialPressure: false,
-          colonialPressureWeight: null,
-        );
-        final weightZero = _pick(
-          colonialPressure: true,
-          colonialPressureWeight: 0.0,
-        );
-        expect(
-          nullWeightOff?.unitType,
-          weightZero?.unitType,
-          reason:
-              'Null weight + colonialPressure = false must match weight = 0.0 '
-              '(both paths add no cargo bonus to cargo-capable ships).',
-        );
-      },
-    );
-
-    test(
-      'colonialPressureWeight clamps inputs strictly greater than 1.0 '
-      'to the full-weight selection',
-      () {
-        // Defensive clamp pin: out-of-range weights must not break the
-        // identity-equality contract at the upper boundary.
-        final weightTwo = _pick(
-          colonialPressure: false,
-          colonialPressureWeight: 2.0,
-        );
-        final weightOne = _pick(
-          colonialPressure: false,
-          colonialPressureWeight: 1.0,
-        );
-        expect(
-          weightTwo?.unitType,
-          weightOne?.unitType,
-          reason:
-              'colonialPressureWeight clamps to 1.0 so values above 1.0 must '
-              'produce the same selection as the full-weight anchor.',
-        );
-      },
-    );
-
-    test(
-      'colonialPressureWeight clamps inputs strictly less than 0.0 to the '
-      'zero-weight selection (negative weight regression guard)',
-      () {
-        final weightNeg = _pick(
-          colonialPressure: true,
-          colonialPressureWeight: -1.0,
-        );
-        final weightZero = _pick(
-          colonialPressure: true,
-          colonialPressureWeight: 0.0,
-        );
-        expect(
-          weightNeg?.unitType,
-          weightZero?.unitType,
-          reason:
-              'colonialPressureWeight clamps to 0.0 so negative values must '
-              'produce the same selection as the zero-weight anchor — the '
-              'legacy boolean must NOT override a clamped <= 0.0 weight.',
-        );
-      },
-    );
-
-    test(
-      'deterministic across repeated calls with identical inputs '
-      '(Must-have #7)',
-      () {
-        // Pure-function determinism on the soft-weight wiring path: a
-        // future change that introduces stochastic behaviour into the
-        // weight derivation must fail this pin.
-        final a = _pick(
-          colonialPressure: false,
-          colonialPressureWeight: 0.05,
-        );
-        final b = _pick(
-          colonialPressure: false,
-          colonialPressureWeight: 0.05,
-        );
-        final c = _pick(
-          colonialPressure: false,
-          colonialPressureWeight: 0.05,
-        );
-        expect(a?.unitType, b?.unitType, reason: 'two-call determinism');
-        expect(b?.unitType, c?.unitType, reason: 'three-call determinism');
-      },
-    );
   });
+
+  registerPhasePlannerEconomyBuildPickCargoBonusTailCases();
 }
