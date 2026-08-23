@@ -117,3 +117,16 @@ Widget wrapE2eLocalizedScaffold(Widget body) {
 Future<void> pumpE2eLocalizedScaffold(WidgetTester tester, Widget body) {
   return tester.pumpWidget(wrapE2eLocalizedScaffold(body));
 }
+
+/// Mounts [child] under a stable outer [Center] so pins can resolve a
+/// deterministic [Element] for subtree helpers such as
+/// `e2eExpansionTileIsExpanded`.
+Future<Element> pumpE2eScaffoldAndResolveFirstCenter(
+  WidgetTester tester,
+  Widget child,
+) async {
+  await tester.pumpWidget(wrapE2eScaffold(Center(child: child)));
+  // `MaterialApp` and `Scaffold` mount their own `Center` descendants, so
+  // take the first `Center` via pre-order traversal (the user-supplied wrap).
+  return find.byType(Center).evaluate().first;
+}

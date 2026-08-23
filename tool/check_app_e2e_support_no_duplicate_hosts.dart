@@ -19,6 +19,7 @@ const Set<String> _forbiddenFunctionNames = {
   '_pumpDialog',
   '_pumpEmpty',
   '_pumpHost',
+  '_pumpAndResolveRoot',
 };
 
 int runCheckAppE2eSupportNoDuplicateHosts(
