@@ -13,6 +13,7 @@ Future<Game> pumpGrantOrSubsidyDialog(
   WidgetTester tester, {
   required int humanTreasury,
   bool isSubsidy = false,
+  AppEventBus? bus,
 }) async {
   final base = buildDiplomacyScreenTestGame();
   final humanPlayerId = base.players.first.id;
@@ -27,7 +28,7 @@ Future<Game> pumpGrantOrSubsidyDialog(
     ],
   );
 
-  final bus = AppEventBus.create();
+  final dialogBus = bus ?? AppEventBus.create();
 
   await tester.pumpWidget(
     buildAppShell(
@@ -43,7 +44,7 @@ Future<Game> pumpGrantOrSubsidyDialog(
                   humanPlayerId: humanPlayerId,
                   targetFactionId: targetFactionId,
                   isSubsidy: isSubsidy,
-                  bus: bus,
+                  bus: dialogBus,
                 ),
               );
             },

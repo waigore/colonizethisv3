@@ -1,6 +1,5 @@
 // Case bodies for `colonial_phase_planner_colonial_lite_overtures_test.dart` (Refs #4291 Slice D).
 // Registered from the thin contract; pin coverage preserved 1:1.
-
 // Unit tests for `planColonialLiteOvertures` in
 // `packages/colonizethis_ai/lib/src/planning/colonial_phase_planner.dart`
 // (Refs #2509 S3 / S10).

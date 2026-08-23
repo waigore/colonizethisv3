@@ -57,6 +57,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
+import 'domain_planner_orchestrator_expand_nw_declare_war_suppression_tail_cases.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
@@ -266,58 +267,7 @@ void main() {
         );
       },
     );
-
-    test('emits identical diplomatic orders for identical EXPAND inputs', () {
-      final game = buildOrchestratorGp1TribeNwScenarioGame(
-        id: 'g-2509-expand-nw-declare-suppress',
-        gp1OwProvinces: kGp1OwProvincesBelowQuota,
-        diplomacyRelations: const <DiplomacyRelation>[
-          DiplomacyRelation(
-            factionId1: kOrchestratorGp1NationId,
-            factionId2: kOrchestratorTribeId,
-            state: RelationState.atPeace,
-            score: 0,
-          ),
-        ],
-      );
-      const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(tribePeaceRelationScore: 0);
-
-      Orders runOnce(int turnSeed) => runDomainPlanners(
-        DomainPlannerInput(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(turnSeed),
-          suggestionAPI: _nwTribeDeclareWarApi,
-          economyPlan: _economyPlan,
-          options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
-        ),
-      );
-
-      final firstRun = runOnce(2509242);
-      final secondRun = runOnce(2509242);
-
-      List<String> diplomaticFingerprint(Orders orders) => <String>[
-        for (final o
-            in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
-          '${o.type}|${o.targetFactionId}|${o.overtureStage}',
-      ];
-
-      expect(
-        diplomaticFingerprint(secondRun),
-        diplomaticFingerprint(firstRun),
-        reason:
-            'Determinism (must-have #7): identical EXPAND-phase inputs '
-            'must produce identical diplomatic orders across runs '
-            '(otherwise a flaky filter or random scoring path could '
-            'mask this contract under repeated runs).',
-      );
-    });
   });
+
+  registerDomainPlannerOrchestratorExpandNwDeclareWarSuppressionTailCases();
 }

@@ -14,11 +14,13 @@ import '../shared/base_units_panel.dart';
 import 'naval_units_panel.dart';
 import 'naval_units_panel_state_base.dart';
 import 'naval_units_panel_support_combine.dart';
+import 'naval_units_panel_support_combine_home.dart';
 
 mixin NavalUnitsPanelDialogs
     on
         BaseUnitsPanelState<NavalUnitsPanel>,
         NavalUnitsPanelStateBase,
+        NavalUnitsPanelCombineHome,
         NavalUnitsPanelCombine {
   void openTrainDialog() {
     widget.bus.closePanelThenEmit(OpenDialogEvent(trainNavalDialogId));

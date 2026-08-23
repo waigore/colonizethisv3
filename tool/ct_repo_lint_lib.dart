@@ -44,6 +44,7 @@ import 'check_app_catalog_widgets_file_size.dart';
 import 'check_app_core_services_file_size.dart';
 import 'check_app_turn_resolution_file_size.dart';
 import 'check_app_test_no_duplicate_shortcut_fixtures.dart';
+import 'check_app_test_no_duplicate_shortcut_golden_game_service.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
 import 'check_economy_dedup_credit_aggregation.dart';
@@ -992,6 +993,8 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppTurnResolutionFileSize(repoRoot);
     case 'repo.app_test_no_duplicate_shortcut_fixtures':
       return runCheckAppTestNoDuplicateShortcutFixtures(repoRoot);
+    case 'repo.app_test_no_duplicate_shortcut_golden_game_service':
+      return runCheckAppTestNoDuplicateShortcutGoldenGameService(repoRoot);
     default:
       return null;
   }

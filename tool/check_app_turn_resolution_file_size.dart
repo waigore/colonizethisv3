@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 /// Ratchet ceiling for hand-written Dart under
 /// `app/lib/features/game/turn_resolution/**`.
-const int appTurnResolutionFileSizeCeiling = 260;
+const int appTurnResolutionFileSizeCeiling = 250;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 

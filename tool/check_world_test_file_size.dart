@@ -1,8 +1,8 @@
 // Physical line limit for colonizethis_world non-support tests (repo rule:
 // `repo.colonizethis_world_test_file_size`).
 //
-// Wave 7 (#4515): peer-aligned 300 physical-line ceiling after densify (down
-// from wave-6's 320). `test/world_test_support/` is governed separately by
+// Wave 8 (#4611): peer-aligned 250 physical-line ceiling after densify (down
+// from wave-7's 300). `test/world_test_support/` is governed separately by
 // `repo.world_test_support_file_size`.
 import 'dart:convert';
 import 'dart:io';
@@ -10,7 +10,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// Ratchet ceiling for wave-7 post-densify root test files.
-const int worldTestFileSizeCeiling = 300;
+const int worldTestFileSizeCeiling = 250;
 
 const String _worldTestsRelativePath = 'packages/colonizethis_world/test';
 

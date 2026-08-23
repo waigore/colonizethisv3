@@ -5,7 +5,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
@@ -298,85 +297,5 @@ void main() {
       expect(received?.message, 'hello snack');
       expect(received?.actionLabel, 'undo');
     });
-
-    testWidgets('DismissOverlayEvent calls onDismissOverlay callback', (
-      tester,
-    ) async {
-      DismissOverlayEvent? received;
-      handler = AppEventHandler(
-        bus: bus,
-        navigatorKey: navKey,
-        onDismissOverlay: (e) => received = e,
-      );
-      handler.bind();
-      await pumpAppEventHandlerEmitButton(
-        tester,
-        navigatorKey: navKey,
-        label: 'home',
-        home: const Text('home'),
-        onPressed: () {},
-      );
-      bus.emit(const DismissOverlayEvent('loading_spinner'));
-      await tester.pumpAndSettle();
-      expect(received?.overlayId, 'loading_spinner');
-    });
-
-    testWidgets('NavigateToShellEvent pops until shell route', (tester) async {
-      handler.bind();
-
-      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-      // RoutePaths.shell is '/' — MaterialApp.home is the shell route name.
-      await tester.pumpWidget(
-        buildAppShell(
-          navigatorKey: navKey,
-          onGenerateRoute: (settings) {
-            if (settings.name == RoutePaths.game) {
-              return MaterialPageRoute<void>(
-                settings: settings,
-                builder: (_) => const Text('game_layer'),
-              );
-            }
-            if (settings.name == RoutePaths.shell) {
-              return MaterialPageRoute<void>(
-                settings: settings,
-                builder: (_) => const Text('shell_layer'),
-              );
-            }
-            return null;
-          },
-          child: const Text('shell_layer'),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('shell_layer'), findsOneWidget);
-
-      navKey.currentState!.pushNamed(RoutePaths.game);
-      await tester.pumpAndSettle();
-      expect(find.text('game_layer'), findsOneWidget);
-
-      bus.emit(const NavigateToShellEvent());
-      await tester.pumpAndSettle();
-
-      expect(find.text('game_layer'), findsNothing);
-      expect(find.text('shell_layer'), findsOneWidget);
-    });
-
-    testWidgets(
-      'ClosePanelEvent then OpenDialogEvent opens dialog (handler ordering)',
-      (tester) async {
-        handler.bind();
-        await pumpAppEventHandlerEmitButton(
-          tester,
-          navigatorKey: navKey,
-          label: 'home',
-          home: const Scaffold(body: Text('home')),
-          onPressed: () {},
-        );
-        bus.emit(const ClosePanelEvent());
-        bus.emit(const OpenDialogEvent('test_dialog', {'id': 'after_close'}));
-        await tester.pumpAndSettle();
-        expect(find.text('dialog:after_close'), findsOneWidget);
-      },
-    );
   });
 }

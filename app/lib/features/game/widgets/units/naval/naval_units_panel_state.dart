@@ -9,12 +9,14 @@ import 'naval_units_panel_build.dart';
 import 'naval_units_panel_list.dart';
 import 'naval_units_panel_state_base.dart';
 import 'naval_units_panel_support_combine.dart';
+import 'naval_units_panel_support_combine_home.dart';
 import 'naval_units_panel_support_dialogs.dart';
 
 /// Stateful implementation for [NavalUnitsPanel] (Refs #4117 de-part).
 class NavalUnitsPanelState extends BaseUnitsPanelState<NavalUnitsPanel>
     with
         NavalUnitsPanelStateBase,
+        NavalUnitsPanelCombineHome,
         NavalUnitsPanelCombine,
         NavalUnitsPanelDialogs,
         NavalUnitsPanelList,

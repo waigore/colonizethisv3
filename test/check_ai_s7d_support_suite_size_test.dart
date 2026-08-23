@@ -7,8 +7,8 @@ import '../tool/check_ai_s7d_support_suite_size.dart';
 
 void main() {
   group('runCheckAiS7dSupportSuiteSize', () {
-    test('ceiling is 400 after #4365 Slice B', () {
-      expect(aiS7dSupportSuitePhysicalLineCeiling, 400);
+    test('ceiling is 300 after #4602 Slice E', () {
+      expect(aiS7dSupportSuitePhysicalLineCeiling, 300);
     });
 
     test('fails when an S7D support module exceeds the soft ceiling', () {
