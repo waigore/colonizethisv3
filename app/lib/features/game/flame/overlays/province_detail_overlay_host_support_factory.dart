@@ -170,6 +170,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     cargo: homeFleetCargo,
   );
   final armyMove = missions.armyMove;
+  final armyCombine = missions.armyCombine;
   final navalMission = missions.navalMission;
   final detachAndSail = missions.detachAndSail;
   final stationSpy = missions.stationSpy;
@@ -201,6 +202,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     canMutateViaUi: canMutateViaUi,
     upgradeTownState: upgradeTownState,
     armyMove: armyMove,
+    armyCombine: armyCombine,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     stationSpy: stationSpy,

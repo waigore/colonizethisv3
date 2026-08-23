@@ -112,7 +112,9 @@ const _packageName = 'colonizethis_app';
 // raised for wave-21 host splits (Refs #4606; measured 89_731).
 // raised for MAP20001 sea-zone Patrol/Defend overlay after wave-21
 // merge (Refs #4605; measured 89_951).
-const _maxMainLines = 90000;
+// raised for MAP20001 overlay Combine same-province armies after
+// #4605 merge (Refs #4610; measured 90_293).
+const _maxMainLines = 90300;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

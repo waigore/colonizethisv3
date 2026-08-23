@@ -45,6 +45,10 @@ buildProvinceIntelGatedUnitSections({
   bool invadeArmyEnabled = false,
   String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
+  bool showCombineArmiesControl = false,
+  bool combineArmiesEnabled = false,
+  String combineArmiesTooltip = '',
+  VoidCallback? onCombineArmiesTap,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
   ProvinceDetachAndSailOverlayControls detachAndSail =
@@ -112,6 +116,10 @@ buildProvinceIntelGatedUnitSections({
           invadeArmyEnabled: invadeArmyEnabled,
           invadeArmyTooltip: invadeArmyTooltip,
           onInvadeArmyTap: onInvadeArmyTap,
+          showCombineArmiesControl: showCombineArmiesControl,
+          combineArmiesEnabled: combineArmiesEnabled,
+          combineArmiesTooltip: combineArmiesTooltip,
+          onCombineArmiesTap: onCombineArmiesTap,
           provinceDisplayName: provinceDisplayName,
         )
       : buildOverlaySection(

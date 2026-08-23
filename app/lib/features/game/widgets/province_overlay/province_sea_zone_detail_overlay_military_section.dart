@@ -34,6 +34,10 @@ Widget buildMilitarySectionByOwner({
   bool invadeArmyEnabled = false,
   String invadeArmyTooltip = '',
   VoidCallback? onInvadeArmyTap,
+  bool showCombineArmiesControl = false,
+  bool combineArmiesEnabled = false,
+  String combineArmiesTooltip = '',
+  VoidCallback? onCombineArmiesTap,
   String? provinceDisplayName,
 }) {
   final pending = provincePanelPendingMilitaryLines(
@@ -85,6 +89,16 @@ Widget buildMilitarySectionByOwner({
           tooltip: invadeArmyTooltip,
           enabled: invadeArmyEnabled,
           onPressed: invadeArmyEnabled ? onInvadeArmyTap : null,
+        ),
+      ),
+    if (showCombineArmiesControl)
+      Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: CtActionTextButton(
+          label: l10n.provinceOverlay_combineArmiesAction,
+          tooltip: combineArmiesTooltip,
+          enabled: combineArmiesEnabled,
+          onPressed: combineArmiesEnabled ? onCombineArmiesTap : null,
         ),
       ),
   ];
