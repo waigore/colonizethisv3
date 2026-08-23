@@ -31,6 +31,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 import 'support/e2e_tap_counter.dart';
+import 'support/e2e_widget_pump_harness.dart';
+import 'support/ensure_visible_tap_harness.dart';
 
 const _kTriggerKey = ValueKey<String>('e2e_evt_trigger');
 const _kSentinelKey = ValueKey<String>('e2e_evt_sentinel');
@@ -43,7 +45,7 @@ void main() {
       'when the trigger finder resolves to zero elements', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+    await pumpE2eEmptyScaffold(tester);
     final result = await e2eEnsureVisibleAndTapHitTestable(
       tester,
       find.byKey(_kTriggerKey),
@@ -63,7 +65,10 @@ void main() {
     'and reports true',
     (WidgetTester tester) async {
       final counter = E2eTapCounter();
-      await tester.pumpWidget(MaterialApp(home: _TapCountHarness(counter)));
+      await pumpE2eScaffold(
+        tester,
+        EnsureVisibleOnScreenTriggerHarness(counter, triggerKey: _kTriggerKey),
+      );
       expect(find.byKey(_kTriggerKey), findsOneWidget);
       final result = await e2eEnsureVisibleAndTapHitTestable(
         tester,
@@ -95,7 +100,14 @@ void main() {
     (WidgetTester tester) async {
       final counter = E2eTapCounter();
       await tester.pumpWidget(
-        MaterialApp(home: _OffScreenTriggerHarness(counter)),
+        wrapE2eScaffold(
+          EnsureVisibleOffScreenTriggerHarness(
+            counter,
+            triggerKey: _kTriggerKey,
+            scrollableKey: _kScrollableKey,
+            sentinelKey: _kSentinelKey,
+          ),
+        ),
       );
       expect(find.byKey(_kTriggerKey), findsOneWidget);
       // Pre-condition: the trigger exists in the widget tree but is not
@@ -145,7 +157,12 @@ void main() {
       // raw-trigger fallback so the tap still fires.
       final counter = E2eTapCounter();
       await tester.pumpWidget(
-        MaterialApp(home: _UnscrollableTriggerHarness(counter)),
+        wrapE2eScaffold(
+          EnsureVisibleUnscrollableTriggerHarness(
+            counter,
+            triggerKey: _kTriggerKey,
+          ),
+        ),
       );
       expect(find.byKey(_kTriggerKey), findsOneWidget);
       expect(
@@ -184,8 +201,10 @@ void main() {
       // the tap so the harness records zero taps, but the helper still
       // returns true to keep the opener tryOpen closure on the post-tap
       // probe path.
-      final harness = _OverlayCoveredTriggerHarness();
-      await tester.pumpWidget(MaterialApp(home: harness));
+      final harness = EnsureVisibleOverlayCoveredTriggerHarness(
+        triggerKey: _kTriggerKey,
+      );
+      await tester.pumpWidget(wrapE2eScaffold(harness));
       expect(find.byKey(_kTriggerKey), findsOneWidget);
       expect(
         find.byKey(_kTriggerKey).hitTestable(),
@@ -223,140 +242,13 @@ void main() {
       final Future<bool> Function(WidgetTester, Finder) tearOff =
           ensureVisibleAndTapHitTestable;
       final counter = E2eTapCounter();
-      await tester.pumpWidget(MaterialApp(home: _TapCountHarness(counter)));
+      await pumpE2eScaffold(
+        tester,
+        EnsureVisibleOnScreenTriggerHarness(counter, triggerKey: _kTriggerKey),
+      );
       final result = await tearOff(tester, find.byKey(_kTriggerKey));
       expect(result, isTrue);
       expect(counter.value, 1);
     },
   );
-}
-
-/// Test harness that mounts a single keyed [TextButton] inside the
-/// viewport and bumps [E2eTapCounter.value] on tap.
-class _TapCountHarness extends StatelessWidget {
-  const _TapCountHarness(this.counter);
-
-  final E2eTapCounter counter;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: TextButton(
-          key: _kTriggerKey,
-          onPressed: () => counter.value++,
-          child: const Text('Trigger'),
-        ),
-      ),
-    );
-  }
-}
-
-/// Test harness that mounts the trigger button below the viewport inside a
-/// scrollable list so it is not initially hit-testable.
-///
-/// The helper must call `ensureVisible` to scroll the trigger into view
-/// before tapping. A regression that skipped `ensureVisible` would either
-/// throw (`warnIfMissed: true`) or land the tap on empty viewport space.
-class _OffScreenTriggerHarness extends StatelessWidget {
-  const _OffScreenTriggerHarness(this.counter);
-
-  final E2eTapCounter counter;
-
-  @override
-  Widget build(BuildContext context) {
-    // SingleChildScrollView keeps every child built (unlike ListView's
-    // lazy viewport-only builder) so `find.byKey(_kTriggerKey)` resolves
-    // even when the trigger is past the viewport. The Scrollable is still
-    // present for `ensureVisible` to walk; the SizedBox height clip
-    // forces the trigger off-screen at mount.
-    return Scaffold(
-      body: SizedBox(
-        height: 200,
-        child: SingleChildScrollView(
-          key: _kScrollableKey,
-          child: Column(
-            children: <Widget>[
-              for (var i = 0; i < 6; i++)
-                SizedBox(height: 80, child: Center(child: Text('Filler $i'))),
-              TextButton(
-                key: _kTriggerKey,
-                onPressed: () => counter.value++,
-                child: const Text('Trigger'),
-              ),
-              const SizedBox(
-                height: 200,
-                key: _kSentinelKey,
-                child: Center(child: Text('Sentinel')),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Test harness that mounts the trigger button outside any [Scrollable] so
-/// `tester.ensureVisible` throws `StateError`. The helper must swallow the
-/// throw and still issue the tap via the hit-testable resolve fallback.
-class _UnscrollableTriggerHarness extends StatelessWidget {
-  const _UnscrollableTriggerHarness(this.counter);
-
-  final E2eTapCounter counter;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: TextButton(
-          key: _kTriggerKey,
-          onPressed: () => counter.value++,
-          child: const Text('Trigger'),
-        ),
-      ),
-    );
-  }
-}
-
-/// Test harness that mounts the trigger button under an opaque full-screen
-/// overlay so it is rendered (`find.byKey(_kTriggerKey)` resolves) but not
-/// hit-testable (`hitTestable()` resolves to nothing). Forces the helper
-/// to fall back to the raw trigger; the overlay absorbs the tap so the
-/// underlying button never fires its `onPressed`, but the helper must
-/// still report `true` to keep the opener tryOpen closure on the post-tap
-/// probe path rather than dropping into a hard retry.
-class _OverlayCoveredTriggerHarness extends StatefulWidget {
-  const _OverlayCoveredTriggerHarness();
-
-  @override
-  State<_OverlayCoveredTriggerHarness> createState() =>
-      _OverlayCoveredTriggerHarnessState();
-}
-
-class _OverlayCoveredTriggerHarnessState
-    extends State<_OverlayCoveredTriggerHarness> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          Center(
-            child: TextButton(
-              key: _kTriggerKey,
-              onPressed: () {},
-              child: const Text('Trigger'),
-            ),
-          ),
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {},
-              child: const ColoredBox(color: Color(0xFF000000)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

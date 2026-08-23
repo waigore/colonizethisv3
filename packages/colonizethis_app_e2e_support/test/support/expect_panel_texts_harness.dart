@@ -3,14 +3,10 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget wrap(Key panelRootKey, List<Widget> children) => MaterialApp(
-  home: Scaffold(
-    body: KeyedSubtree(
-      key: panelRootKey,
-      child: ListView(children: children),
-    ),
-  ),
-);
+import 'e2e_widget_pump_harness.dart';
+
+Widget wrap(Key panelRootKey, List<Widget> children) =>
+    wrapE2eKeyedPanel(panelRootKey: panelRootKey, children: children);
 
 /// Captures every `debugPrint` line emitted while [body] runs and restores
 /// the original printer afterwards (defensive in `finally` so a thrown
@@ -28,5 +24,3 @@ Future<List<String>> captureDebugPrints(Future<void> Function() body) async {
   }
   return captured;
 }
-
-
