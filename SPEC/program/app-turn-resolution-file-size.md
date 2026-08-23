@@ -24,8 +24,9 @@
 
 - **Physical lines:** `LineSplitter` line count of the file’s UTF-8 text (same
   as `const LineSplitter().convert(content).length` in the checker).
-- **Threshold:** each scanned file must have **260** physical lines or fewer
-  (261 or more fails). Wave-20 #4582 lowered the wave-17 **300** cap.
+- **Threshold:** each scanned file must have **250** physical lines or fewer
+  (251 or more fails). Wave-20 #4582 lowered the wave-17 **300** cap;
+  wave-21 #4606 pins 250.
 
 There is **no** YAML, keyed table, or per-file exemption that raises the
 effective cap for a specific path. The grandfather list stays empty.
@@ -33,14 +34,14 @@ effective cap for a specific path. The grandfather list stays empty.
 ## Acceptance criteria
 
 - Given a temporary workspace that contains
-  `app/lib/features/game/turn_resolution/too_long.dart` with **261** physical
+  `app/lib/features/game/turn_resolution/too_long.dart` with **251** physical
   lines and no other violating files, when the System runs
   `runCheckAppTurnResolutionFileSize` with that workspace root, then the
   checker exits non-zero and the error output names `too_long.dart` and
-  reports `261 physical lines > 260`.
+  reports `251 physical lines > 250`.
 
 - Given a temporary workspace whose only matching file is
-  `app/lib/features/game/turn_resolution/ok.dart` with exactly **260** physical
+  `app/lib/features/game/turn_resolution/ok.dart` with exactly **250** physical
   lines, when the System runs `runCheckAppTurnResolutionFileSize`, then the
   checker exits zero.
 

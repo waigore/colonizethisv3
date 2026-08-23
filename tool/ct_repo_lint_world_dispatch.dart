@@ -2,6 +2,7 @@
 // Extracted from `ct_repo_lint_lib.dart` so that library stays under the
 // `repo.dart_file_non_comment_line_size` 1000-NCL ceiling (Refs #4515).
 
+import 'check_world_lib_unit_lookup_sot.dart';
 import 'check_world_no_circular_imports.dart';
 import 'check_world_no_duplicate_extension_helper.dart';
 import 'check_world_no_logic_deps.dart';
@@ -25,6 +26,8 @@ int? tryRunWorldRuleInProcess({
       return runCheckWorldNoCircularImports(repoRoot);
     case 'repo.world_no_duplicate_extension_helper':
       return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
+    case 'repo.world_lib_unit_lookup_sot':
+      return runCheckWorldLibUnitLookupSot(repoRoot);
     default:
       return null;
   }

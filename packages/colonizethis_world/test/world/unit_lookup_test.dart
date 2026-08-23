@@ -3,7 +3,6 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-
 void main() {
   group('WorldStateUnitLookup.tryGetUnitById', () {
     final uOld = Unit(
@@ -69,6 +68,13 @@ void main() {
         newWorld: RegionData(units: [inNew]),
       );
       expect(ws.tryGetUnitById('dup')!.type, kUnitTypeExplorer);
+      final fromFacade = allUnitsFromWorld(ws);
+      expect(fromFacade.where((u) => u.id == 'dup'), hasLength(1));
+      expect(
+        fromFacade.singleWhere((u) => u.id == 'dup').type,
+        kUnitTypeExplorer,
+      );
+      expect(ws.allUnitsById['dup']!.type, kUnitTypeExplorer);
     });
 
     test('500+ units per region matches linear old-then-new scan (AC-3)', () {

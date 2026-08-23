@@ -5,11 +5,12 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../world_test_support/world_test_support.dart';
 import 'connectivity_resolver_gp_road_town_cases.dart';
+import 'connectivity_resolver_gp_road_town_cases_extra.dart';
 
 /// GP road/town resolveConnectivity cases ported from logic (Refs #4090).
 void main() {
   group('ConnectivityResolver road/town', () {
-    for (final case_ in gpRoadTownCases) {
+    for (final case_ in [...gpRoadTownCases, ...gpRoadTownCasesExtra]) {
       test(case_.description, () {
         case_.verify(
           resolveConnectivity(

@@ -673,6 +673,13 @@ rules:
     runner: dart
     script: tool/check_app_e2e_support_test_file_size.dart
 
+  - rule_id: repo.app_e2e_support_no_duplicate_hosts
+    group: testing
+    title: "colonizethis_app_e2e_support pin suites must not re-declare private wrap/pump hosts (Refs #4598)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_e2e_support_no_duplicate_hosts.dart
+
   - rule_id: repo.app_e2e_support_no_part_directives
     group: structure
     title: colonizethis_app_e2e_support lib and test must not use Dart part / part of directives (Refs #4344)
@@ -697,7 +704,7 @@ rules:
 
   - rule_id: repo.app_flame_lib_physical_file_size
     group: structure
-    title: app/lib/features/game/flame files must stay at or below 260 physical lines (wave-20; empty grandfather; Refs #4582)
+    title: app/lib/features/game/flame files must stay at or below 250 physical lines (wave-21; empty grandfather; Refs #4582, #4606)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_flame_lib_physical_file_size.dart
@@ -705,10 +712,18 @@ rules:
 
   - rule_id: repo.app_features_screens_lib_physical_file_size
     group: structure
-    title: app/lib/features/game/screens files must stay at or below 260 physical lines (wave-20; empty grandfather; Refs #4582)
+    title: app/lib/features/game/screens files must stay at or below 250 physical lines (wave-21; empty grandfather; Refs #4582, #4606)
     spec: SPEC/program/app-features-screens-file-size.md
     runner: dart
     script: tool/check_app_features_screens_lib_physical_file_size.dart
+    pr_incremental: true
+
+  - rule_id: repo.app_features_shell_lib_physical_file_size
+    group: structure
+    title: app/lib/features/shell files must stay at or below 250 physical lines (wave-21; empty grandfather; Refs #4606)
+    spec: SPEC/program/app-features-shell-file-size.md
+    runner: dart
+    script: tool/check_app_features_shell_lib_physical_file_size.dart
     pr_incremental: true
 
   - rule_id: repo.app_event_bus_decoupling
@@ -734,7 +749,7 @@ rules:
 
   - rule_id: repo.app_main_line_budget
     group: structure
-    title: colonizethis_app main role must stay at or below 89_400 lines
+    title: colonizethis_app main role must stay at or below 90_100 lines
     spec: SPEC/program/repo-and-packages.md
     runner: dart
     script: tool/check_app_main_line_budget.dart
@@ -958,21 +973,21 @@ rules:
 
   - rule_id: repo.colonizethis_world_lib_file_size
     group: structure
-    title: colonizethis_world lib files must stay at or below 300 physical lines except sealed GameEvent at 400 (Refs #4330, #4515)
+    title: colonizethis_world lib files must stay at or below 250 physical lines except sealed GameEvent at 400 (Refs #4330, #4515, #4611)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_lib_file_size.dart
 
   - rule_id: repo.colonizethis_world_test_file_size
     group: testing
-    title: colonizethis_world non-support test files must stay at or below the wave-7 300 physical-line ceiling (Refs #4515)
+    title: colonizethis_world non-support test files must stay at or below the wave-8 250 physical-line ceiling (Refs #4515, #4611)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_test_file_size.dart
 
   - rule_id: repo.world_test_support_file_size
     group: testing
-    title: colonizethis_world test/world_test_support files must stay at or below 280 physical lines (Refs #4515)
+    title: colonizethis_world test/world_test_support files must stay at or below 250 physical lines (Refs #4515, #4611)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_test_support_file_size.dart
@@ -1205,14 +1220,14 @@ rules:
 
   - rule_id: repo.game_widgets_file_size
     group: structure
-    title: app/lib/features/game/widgets files must stay at or below 260 physical lines (Refs #4582)
+    title: app/lib/features/game/widgets files must stay at or below 250 physical lines (Refs #4582, #4606)
     spec: SPEC/program/game-widgets-file-size.md
     runner: dart
     script: tool/check_game_widgets_file_size.dart
 
   - rule_id: repo.app_catalog_widgets_file_size
     group: structure
-    title: app/lib/widgets catalog files must stay at or below 260 physical lines (Refs #4352, #4582)
+    title: app/lib/widgets catalog files must stay at or below 250 physical lines (Refs #4352, #4582, #4606)
     spec: SPEC/program/app-catalog-widgets-file-size.md
     runner: dart
     script: tool/check_app_catalog_widgets_file_size.dart
@@ -1220,7 +1235,7 @@ rules:
 
   - rule_id: repo.app_core_services_file_size
     group: structure
-    title: app/lib/core/services files must stay at or below 260 physical lines (Refs #4450, #4582)
+    title: app/lib/core/services files must stay at or below 250 physical lines (Refs #4450, #4582, #4606)
     spec: SPEC/program/app-core-services-file-size.md
     runner: dart
     script: tool/check_app_core_services_file_size.dart
@@ -1228,7 +1243,7 @@ rules:
 
   - rule_id: repo.app_turn_resolution_file_size
     group: structure
-    title: app/lib/features/game/turn_resolution files must stay at or below 260 physical lines (Refs #4512, #4582)
+    title: app/lib/features/game/turn_resolution files must stay at or below 250 physical lines (Refs #4512, #4582, #4606)
     spec: SPEC/program/app-turn-resolution-file-size.md
     runner: dart
     script: tool/check_app_turn_resolution_file_size.dart
@@ -1780,7 +1795,7 @@ rules:
 
   - rule_id: repo.ai_expand_peace_pin_cases_required
     group: testing
-    title: "colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 400 physical lines must import a sibling *_cases.dart (Refs #3977, #4104 Slice C, #4310 Slice D, #4365 Slice B)"
+    title: "colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 300 physical lines must import a sibling *_cases.dart (Refs #3977, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_expand_peace_pin_suite_size.dart
@@ -2011,21 +2026,29 @@ rules:
 
   - rule_id: repo.ai_colonial_military_naval_pin_cases_required
     group: testing
-    title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 400 physical lines must import a sibling *_cases.dart (Refs #3977, #3997, #4365 Slice C)
+    title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 300 physical lines must import a sibling *_cases.dart (Refs #3977, #3997, #4365 Slice C, #4602 Slice D)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_colonial_military_naval_pin_suite_size.dart
 
   - rule_id: repo.ai_planning_cases_suite_size
     group: testing
-    title: "colonizethis_ai test/planning/*_cases.dart modules must stay at or under 400 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997, #4104 Slice C, #4310 Slice D, #4365 Slice B)"
+    title: "colonizethis_ai test/planning/*_cases.dart modules must stay at or under 300 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_planning_cases_suite_size.dart
 
+  - rule_id: repo.ai_test_file_size
+    group: testing
+    title: colonizethis_ai test/planning/** and test/support_test/** Dart files must stay at or under 300 physical lines (Refs #4602)
+    spec: SPEC/program/ai-test-file-size.md
+    runner: dart
+    script: tool/check_ai_test_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.ai_residual_fat_pin_cases_required
     group: testing
-    title: "colonizethis_ai residual fat-pin contracts (Phase-8/9/10 gated basenames) above 400 physical lines must import a sibling *_cases.dart (Refs #3997, #4079, #4104 Slice C, #4310 Slice D, #4365 Slice B)"
+    title: "colonizethis_ai residual fat-pin contracts (Phase-8/9/10 gated basenames) above 300 physical lines must import a sibling *_cases.dart (Refs #3997, #4079, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_residual_fat_pin_suite_size.dart
@@ -2513,6 +2536,13 @@ rules:
     runner: dart
     script: tool/check_logic_units_by_id_rebuild.dart
 
+  - rule_id: repo.world_lib_unit_lookup_sot
+    group: architecture
+    title: colonizethis_world lib/src must not call allUnitsFromWorld( except unit_lookup.dart (Refs #4611)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_lib_unit_lookup_sot.dart
+
   - rule_id: repo.logic_validator_units_params
     group: architecture
     title: colonizethis_logic orders/ helpers must thread OrderResolutionContext instead of Map<String, Unit> unitsById (Refs #2836)
@@ -2546,7 +2576,7 @@ rules:
 
   - rule_id: repo.app_test_file_size
     group: testing
-    title: "app/test files must stay at or below 500 physical lines (shrink-only allowlist; Refs #4305)"
+    title: "app/test files must stay at or below 380 physical lines (shrink-only allowlist; Refs #4305, #4352, #4606)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_file_size.dart
@@ -2585,6 +2615,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_no_duplicate_shortcut_fixtures.dart
+
+  - rule_id: repo.app_test_no_duplicate_shortcut_golden_game_service
+    group: testing
+    title: "six MAP20001 shortcut-host golden suites must not declare local GameService stubs (Refs #4606; consulate excluded)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_shortcut_golden_game_service.dart
 
   - rule_id: repo.app_test_no_duplicate_golden_host
     group: testing
