@@ -38,238 +38,17 @@
 // Refs #2870 S8 (dialogs scale at narrow widths) + S10 (no horizontal
 // overflow at 320 dp on every covered surface).
 
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'dialogs_320dp_min_viewport_support.dart';
+import 'move_dialogs_320dp_min_viewport_test_support.dart';
 
-/// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
-/// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
-/// existing dialog-level pin file `dialogs_320dp_min_viewport_test.dart`.
 const Size _kMinViewport = kDialogs320MinViewport;
-
-/// Wide regression sentinel — comfortably above every per-screen
-/// breakpoint so the same dialog renders its default layout. Mirrors
-/// the contract used by `dialogs_320dp_min_viewport_test.dart`.
 const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
-
-const String _humanPlayerId = 'gp_move_320_human';
-const String _rivalPlayerId = 'gp_move_320_rival';
-
-const String _ownedFrom = 'oldWorld|p_320_from';
-const String _ownedDest = 'oldWorld|p_320_owned_dest';
-const String _invasionDest = 'oldWorld|p_320_invasion_dest';
-
-const String _originSea = 'sea_320_origin';
-const String _adjacentSea = 'sea_320_adjacent';
-const String _capitalProvince = 'oldWorld|p_320_capital';
-
-MapTopology _buildArmyTopology() {
-  return const MapTopology(
-    nodes: [
-      TopologyNode(
-        id: _ownedFrom,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: _ownedDest,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: _invasionDest,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: [
-      TopologyEdge(id1: _ownedFrom, id2: _ownedDest),
-      TopologyEdge(id1: _ownedFrom, id2: _invasionDest),
-    ],
-  );
-}
-
-Game _buildArmyGame() {
-  return Game(
-    id: 'g_move_army_320',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _ownedFrom,
-            regionId: 'oldWorld',
-            ownerId: _humanPlayerId,
-            displayName: 'Origin',
-          ),
-          Province(
-            id: _ownedDest,
-            regionId: 'oldWorld',
-            ownerId: _humanPlayerId,
-            displayName: 'Owned Dest',
-          ),
-          Province(
-            id: _invasionDest,
-            regionId: 'oldWorld',
-            ownerId: _rivalPlayerId,
-            displayName: 'Invade Dest',
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'u_move_320',
-            type: 'musketeers',
-            ownerId: _humanPlayerId,
-            locationProvinceId: _ownedFrom,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: const [
-        Army(
-          id: 'a_move_320',
-          ownerId: _humanPlayerId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _ownedFrom,
-          regimentUnitIds: ['u_move_320'],
-          isHomeArmy: false,
-        ),
-      ],
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          _ownedFrom: ['oldWorld|p_320_from|0|0'],
-          _ownedDest: ['oldWorld|p_320_owned_dest|0|0'],
-          _invasionDest: ['oldWorld|p_320_invasion_dest|0|0'],
-        },
-      },
-      playerVisibilityByTile: const {
-        _humanPlayerId: {
-          'oldWorld|p_320_from|0|0': 'fullyVisible',
-          'oldWorld|p_320_owned_dest|0|0': 'fullyVisible',
-          'oldWorld|p_320_invasion_dest|0|0': 'fullyVisible',
-        },
-      },
-    ),
-    players: const [
-      Player(
-        id: _humanPlayerId,
-        displayName: 'Mobile Player',
-        isHuman: true,
-        capitalProvinceId: _ownedFrom,
-      ),
-      Player(
-        id: _rivalPlayerId,
-        displayName: 'Mobile Rival',
-        isHuman: false,
-        capitalProvinceId: _invasionDest,
-      ),
-    ],
-  );
-}
-
-MapTopology _buildFleetTopology() {
-  return const MapTopology(
-    nodes: [
-      TopologyNode(
-        id: _originSea,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: _adjacentSea,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [TopologyEdge(id1: _originSea, id2: _adjacentSea)],
-  );
-}
-
-Game _buildFleetGame() {
-  return Game(
-    id: 'g_move_fleet_320',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _capitalProvince,
-            regionId: 'oldWorld',
-            ownerId: _humanPlayerId,
-            displayName: 'Capital Port',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      portsByProvinceSeaboard: const {
-        'oldWorld|p_320_capital|sea_320_origin': 'oldWorld|p_320_capital|0|0',
-        'oldWorld|p_320_capital|sea_320_adjacent': 'oldWorld|p_320_capital|0|0',
-      },
-      seaZoneDisplayNameById: const {
-        'oldWorld|sea_320_origin': 'Origin Sea',
-        'oldWorld|sea_320_adjacent': 'Adjacent Sea',
-      },
-    ),
-    players: const [
-      Player(
-        id: _humanPlayerId,
-        displayName: 'Mobile Admiral',
-        isHuman: true,
-        capitalProvinceId: _capitalProvince,
-        capitalTile: CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: _capitalProvince,
-          x: 0,
-          y: 0,
-        ),
-      ),
-    ],
-  );
-}
-
-Fleet _buildFleet() {
-  return Fleet(
-    id: 'f_move_320',
-    ownerId: _humanPlayerId,
-    regionId: 'oldWorld',
-    seaZoneId: _originSea,
-    ships: const [ShipInstance(id: 'ship_move_320', typeId: 'carrack')],
-  );
-}
-
-MoveArmyDialog _buildMoveArmyDialog() {
-  final game = _buildArmyGame();
-  final topology = _buildArmyTopology();
-  final army = game.worldState.armies.first;
-  return MoveArmyDialog(
-    army: army,
-    game: game,
-    humanPlayerId: _humanPlayerId,
-    bus: AppEventBus.create(),
-    topology: topology,
-    draftOrders: const Orders(),
-  );
-}
-
-MoveFleetDialog _buildMoveFleetDialog() {
-  final game = _buildFleetGame();
-  final topology = _buildFleetTopology();
-  final fleet = _buildFleet();
-  return MoveFleetDialog(
-    game: game,
-    topology: topology,
-    humanPlayerId: _humanPlayerId,
-    fleet: fleet,
-    bus: AppEventBus.create(),
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -282,7 +61,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpDialogs320At(
           tester,
-          _buildMoveArmyDialog(),
+          buildMoveArmyDialog320(),
           size: _kMinViewport,
         );
 
@@ -314,7 +93,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpDialogs320At(
           tester,
-          _buildMoveArmyDialog(),
+          buildMoveArmyDialog320(),
           size: _kWideRegressionViewport,
         );
 
@@ -335,7 +114,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpDialogs320At(
           tester,
-          _buildMoveFleetDialog(),
+          buildMoveFleetDialog320(),
           size: _kMinViewport,
         );
 
@@ -368,7 +147,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpDialogs320At(
           tester,
-          _buildMoveFleetDialog(),
+          buildMoveFleetDialog320(),
           size: _kWideRegressionViewport,
         );
 
