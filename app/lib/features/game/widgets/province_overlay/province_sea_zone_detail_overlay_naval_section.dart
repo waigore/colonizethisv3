@@ -15,6 +15,7 @@ import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show homeFleetIdFor;
 
 Widget buildNavalSection({
@@ -24,6 +25,7 @@ Widget buildNavalSection({
   required String humanPlayerId,
   required Orders draftOrders,
   String? pendingNavalPortProvinceId,
+  String? pendingNavalSeaZoneId,
   bool rosterObfuscated = false,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
@@ -31,15 +33,14 @@ Widget buildNavalSection({
       ProvinceDetachAndSailOverlayControls.hidden,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
-  final pending = pendingNavalPortProvinceId == null
-      ? const <String>[]
-      : provincePanelPendingNavalLines(
-          game: game,
-          orders: draftOrders,
-          provinceId: pendingNavalPortProvinceId,
-          humanPlayerId: humanPlayerId,
-          l10n: l10n,
-        );
+  final pending = pendingNavalLines(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    draftOrders: draftOrders,
+    pendingNavalPortProvinceId: pendingNavalPortProvinceId,
+    pendingNavalSeaZoneId: pendingNavalSeaZoneId,
+  );
   final missionActions = _navalMissionActions(
     l10n,
     navalMission,
@@ -122,6 +123,8 @@ List<Widget> _navalMissionActions(
   final showDetach = detachAndSail.showDetachAndSail;
   if (!navalMission.showBlockade &&
       !navalMission.showBeachhead &&
+      !navalMission.showPatrol &&
+      !navalMission.showDefend &&
       !showDetach) {
     return const [];
   }
@@ -159,8 +162,64 @@ List<Widget> _navalMissionActions(
                   ? navalMission.onBeachheadTap
                   : null,
             ),
+          if (navalMission.showPatrol)
+            CtActionTextButton(
+              label: l10n.provinceOverlay_patrolAction,
+              tooltip: navalMission.patrolTooltip,
+              enabled: navalMission.patrolEnabled,
+              onPressed: navalMission.patrolEnabled
+                  ? navalMission.onPatrolTap
+                  : null,
+            ),
+          if (navalMission.showDefend)
+            CtActionTextButton(
+              label: l10n.provinceOverlay_defendAction,
+              tooltip: navalMission.defendTooltip,
+              enabled: navalMission.defendEnabled,
+              onPressed: navalMission.defendEnabled
+                  ? navalMission.onDefendTap
+                  : null,
+            ),
         ],
       ),
     ),
   ];
+}
+
+List<String> pendingNavalLines({
+  required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders draftOrders,
+  required String? pendingNavalPortProvinceId,
+  required String? pendingNavalSeaZoneId,
+}) {
+  if (pendingNavalPortProvinceId != null) {
+    return provincePanelPendingNavalLines(
+      game: game,
+      orders: draftOrders,
+      provinceId: pendingNavalPortProvinceId,
+      humanPlayerId: humanPlayerId,
+      l10n: l10n,
+    );
+  }
+  if (pendingNavalSeaZoneId == null) return const [];
+  final localSea = prefixedIdLocalSegment(pendingNavalSeaZoneId);
+  final regionId = prefixedIdRegionSegment(pendingNavalSeaZoneId);
+  final fleetIds = <String>{
+    for (final fleet in game.worldState.fleets)
+      if (fleet.ownerId == humanPlayerId &&
+          fleet.isAtSea &&
+          fleet.seaZoneId == localSea &&
+          (regionId == null || fleet.regionId == regionId))
+        fleet.id,
+  };
+  if (fleetIds.isEmpty) return const [];
+  return pendingNavalLinesForFleets(
+    game: game,
+    orders: draftOrders,
+    fleetIds: fleetIds,
+    humanPlayerId: humanPlayerId,
+    l10n: l10n,
+  );
 }

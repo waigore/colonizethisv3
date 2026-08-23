@@ -345,6 +345,12 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get provinceOverlay_blockadeAction => 'Blockade';
 
   @override
+  String get provinceOverlay_patrolAction => 'Patrol';
+
+  @override
+  String get provinceOverlay_defendAction => 'Defend';
+
+  @override
   String get provinceOverlay_beachheadAction => 'Beachhead';
 
   @override

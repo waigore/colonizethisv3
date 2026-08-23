@@ -110,9 +110,11 @@ const _packageName = 'colonizethis_app';
 // raised for #4581 + #4582 merge (Refs #4581; measured 88_833).
 // raised for GAME20001 trained-worker Disband confirm (Refs #4601; measured 88_978).
 // raised for wave-21 host splits (Refs #4606; measured 89_731).
+// raised for MAP20001 sea-zone Patrol/Defend overlay after wave-21
+// merge (Refs #4605; measured 89_951).
 // raised for MAP20001 overlay Combine same-province armies after
-// wave-21 merge (Refs #4610; measured 90_073).
-const _maxMainLines = 90200;
+// #4605 merge (Refs #4610; measured 90_293).
+const _maxMainLines = 90300;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

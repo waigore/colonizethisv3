@@ -160,6 +160,20 @@ Future<void> showNavalMissionFlow({
     );
     return;
   }
+  if (overlayMission != null &&
+      (overlayMission == FleetMission.patrol ||
+          overlayMission == FleetMission.defend)) {
+    bus.emit(
+      NavalMissionRequestedEvent(
+        humanPlayerId: humanPlayerId,
+        missionOrder: NavalMissionOrder(
+          fleetId: fleet.id,
+          mission: overlayMission.name,
+        ),
+      ),
+    );
+    return;
+  }
 
   final choice = await showDialog<NavalMissionMenuChoice>(
     context: context,

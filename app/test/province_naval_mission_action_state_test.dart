@@ -214,4 +214,90 @@ void main() {
       isFalse,
     );
   });
+
+  test('sea-zone stay missions enabled for one in-zone at-sea fleet', () {
+    final game = gameWith(fleets: [atSeaFleet()]);
+    final state = computeSeaZoneNavalStayMissionActionState(
+      game: game,
+      humanPlayerId: human,
+      seaZoneId: 'oldWorld|$sea',
+      topology: coastalTopology(),
+      draftOrders: const Orders(),
+    );
+    expect(state.showControls, isTrue);
+    expect(state.enabled, isTrue);
+    expect(state.eligibleFleetIds, ['f_sea']);
+  });
+
+  test('sea-zone stay missions hidden with no in-zone human at-sea fleet', () {
+    final inPort = Fleet(
+      id: 'f_port',
+      ownerId: human,
+      inPortAtProvinceId: owned,
+      regionId: 'oldWorld',
+      shipTypeIds: const ['carrack'],
+    );
+    final elsewhere = atSeaFleet(seaZoneId: 'sea_elsewhere');
+    expect(
+      computeSeaZoneNavalStayMissionActionState(
+        game: gameWith(fleets: [inPort, elsewhere]),
+        humanPlayerId: human,
+        seaZoneId: 'oldWorld|$sea',
+        topology: coastalTopology(),
+        draftOrders: const Orders(),
+      ).showControls,
+      isFalse,
+    );
+  });
+
+  test('sea-zone stay missions visible disabled when slot occupied', () {
+    final onMission = atSeaFleet().copyWith(mission: FleetMission.patrol);
+    final pendingMission = computeSeaZoneNavalStayMissionActionState(
+      game: gameWith(fleets: [atSeaFleet()]),
+      humanPlayerId: human,
+      seaZoneId: 'oldWorld|$sea',
+      topology: coastalTopology(),
+      draftOrders: Orders(
+        navalMissionOrdersByPlayerId: {
+          human: [
+            NavalMissionOrder(
+              fleetId: 'f_sea',
+              mission: FleetMission.defend.name,
+            ),
+          ],
+        },
+      ),
+    );
+    expect(pendingMission.showControls, isTrue);
+    expect(pendingMission.enabled, isFalse);
+
+    final pendingMove = computeSeaZoneNavalStayMissionActionState(
+      game: gameWith(fleets: [atSeaFleet()]),
+      humanPlayerId: human,
+      seaZoneId: 'oldWorld|$sea',
+      topology: coastalTopology(),
+      draftOrders: Orders(
+        navalMoveOrdersByPlayerId: {
+          human: [
+            const NavalMoveOrder(
+              fleetId: 'f_sea',
+              destinationSeaZoneId: 'sea2',
+            ),
+          ],
+        },
+      ),
+    );
+    expect(pendingMove.showControls, isTrue);
+    expect(pendingMove.enabled, isFalse);
+
+    final worldMission = computeSeaZoneNavalStayMissionActionState(
+      game: gameWith(fleets: [onMission]),
+      humanPlayerId: human,
+      seaZoneId: 'oldWorld|$sea',
+      topology: coastalTopology(),
+      draftOrders: const Orders(),
+    );
+    expect(worldMission.showControls, isTrue);
+    expect(worldMission.enabled, isFalse);
+  });
 }
