@@ -38,8 +38,13 @@ Map<String, Unit> unitsByIdFromWorld(WorldState world) {
 }
 
 /// Returns all units from both regions in [world]. For iteration over every unit.
+///
+/// Thin facade over the cached [WorldStateUnitLookup.allUnitsById] index
+/// (old-world-first insertion order). Duplicate ids keep the old-world row,
+/// matching [WorldStateUnitLookup.tryGetUnitById]. World `lib/src` other than
+/// this file must iterate `world.allUnitsById.values` (Refs #4611).
 List<Unit> allUnitsFromWorld(WorldState world) {
-  return [...world.oldWorld.units, ...world.newWorld.units];
+  return List<Unit>.from(world.allUnitsById.values);
 }
 
 /// Unit type id → count of land units owned by [playerId] (both regions).

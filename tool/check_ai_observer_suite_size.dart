@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 import 'ct_repo_lint_scan_contract.dart';
 
 /// Physical-line ceiling for AI observer/diagnostic suites (Refs #4530 Slice C).
-const int aiObserverSuitePhysicalLineCeiling = 400;
+const int aiObserverSuitePhysicalLineCeiling = 300;
 
 /// Repo-relative path prefix for observer campaign tests.
 const String _aiObserverPathPrefix = 'packages/colonizethis_ai/test/observer/';

@@ -71,6 +71,7 @@ void main() {
       expect(ids, contains('repo.dart_file_non_comment_line_size'));
       expect(ids, contains('repo.land_province_bucket_keys'));
       expect(ids, contains('repo.logic_dual_region_province_field_access'));
+      expect(ids, contains('repo.world_lib_unit_lookup_sot'));
       expect(ids, contains('repo.logic_work_target_switch'));
       expect(ids, contains('repo.app_lib_no_broad_suggest_work_orders'));
       expect(ids, contains('repo.app_lib_player_by_id_lookup'));
@@ -147,7 +148,7 @@ void main() {
   });
 
   group('manifest file', () {
-    test('AI suite-size titles advertise 400 after #4365 Slice B', () {
+    test('AI suite-size titles advertise 300 after #4602 Slice D', () {
       final rules = loadRepoLintManifest(
         repoRoot,
         'tool/ct_repo_lint_manifest.yaml',
@@ -156,14 +157,25 @@ void main() {
         'repo.ai_planning_cases_suite_size',
         'repo.ai_expand_peace_pin_cases_required',
         'repo.ai_residual_fat_pin_cases_required',
-        'repo.ai_s7d_support_suite_size',
       ];
       for (final id in ids) {
         final title = rules.firstWhere((r) => r.ruleId == id).title;
-        expect(title, contains('400 physical lines'), reason: id);
-        expect(title, isNot(contains('450 physical lines')), reason: id);
-        expect(title, contains('#4365 Slice B'), reason: id);
+        expect(title, contains('300 physical lines'), reason: id);
+        expect(title, isNot(contains('400 physical lines')), reason: id);
+        expect(title, contains('#4602 Slice D'), reason: id);
       }
+    });
+
+    test('AI s7d suite-size title still advertises 400 after #4365 Slice B', () {
+      final rules = loadRepoLintManifest(
+        repoRoot,
+        'tool/ct_repo_lint_manifest.yaml',
+      );
+      const id = 'repo.ai_s7d_support_suite_size';
+      final title = rules.firstWhere((r) => r.ruleId == id).title;
+      expect(title, contains('400 physical lines'), reason: id);
+      expect(title, isNot(contains('450 physical lines')), reason: id);
+      expect(title, contains('#4365 Slice B'), reason: id);
     });
 
     test('version and rules list are present', () {

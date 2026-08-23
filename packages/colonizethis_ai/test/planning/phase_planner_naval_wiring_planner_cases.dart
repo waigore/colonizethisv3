@@ -15,6 +15,7 @@ import 'package:colonizethis_test/test.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/planner_test_helpers.dart';
+import 'phase_planner_naval_wiring_planner_cases_tail_cases.dart';
 
 const ColonialNavalPlan _colonialNavalPriority = ColonialNavalPlan(
   priorityInvasionTransportProvinceIdsSorted: <String>['newWorld|tribe1_a'],
@@ -256,114 +257,7 @@ void registerPhasePlannerNavalWiringPlannerCases() {
         );
       },
     );
-
-    test(
-      'EXPAND phase plan with NW treasury-recovery override (0.60) engages '
-      'the boost (emits naval move) — Refs #2847 Phase 3 resource-need pin',
-      () {
-        // Refs #2847 Phase 3 resource-need override: under EXPAND-lock
-        // recovery (treasury == 0 && NW provinces == 0 && cargo
-        // recovery active) the soft-phase NW weight is lifted to
-        // `kPhasePriorityNwTreasuryRecoveryFloor = 0.60`. The floor
-        // helper scales to `round(85 × 0.60) = 51`, above
-        // `kNavalRunMinWeight` (25), so the naval planner engages
-        // under EXPAND without requiring the GP to reach COLONIAL
-        // first — the operative Phase 3 design intent for the
-        // first-naval-transport bootstrap in issue #2847.
-        const phasePlan = PhasePlanOutcome(
-          phase: ObserverGoalPhase.expand,
-          priorityWeights: PhasePriorityWeights(
-            oldWorldConquest: 0.95,
-            newWorldAcquisition: 0.60,
-            oldWorldCivilian: 0.90,
-            newWorldCivilian: 0.10,
-          ),
-        );
-        final orders = runNavalPlanner(
-          ctx: ctx,
-          snapshot: snapshot,
-          phasePlan: phasePlan,
-        );
-        final moves = orders.navalMoveOrdersByPlayerId['gp1'] ?? const [];
-        expect(
-          moves,
-          isNotEmpty,
-          reason:
-              'EXPAND phase plan with newWorldAcquisition = 0.60 '
-              '(resource-need override) must lift the naval-pass weight '
-              'above kNavalRunMinWeight via the colonial-pressure floor '
-              'so the naval planner engages under EXPAND-lock recovery '
-              'without the GP needing to reach COLONIAL first '
-              '(Phase 3 resource-need pin).',
-        );
-      },
-    );
-
-    test(
-      'DEVELOP phase plan suppresses colonial naval boost on the '
-      'early-sprint default curve (no naval move)',
-      () {
-        // Phase 3 soft-phase intent: DEVELOP suppression is no longer
-        // structural; the early-sprint default curve
-        // (`newWorldAcquisition = 0.05`) collapses bonus / floor below
-        // `kNavalRunMinWeight`, so henry stays below the skip floor.
-        const phasePlan = PhasePlanOutcome(phase: ObserverGoalPhase.develop);
-        final orders = runNavalPlanner(
-          ctx: ctx,
-          snapshot: snapshot,
-          phasePlan: phasePlan,
-        );
-        expect(
-          orders.navalMoveOrdersByPlayerId['gp1'],
-          isNull,
-          reason:
-              'DEVELOP phase plan with earlySprintDefault priorityWeights '
-              '(newWorldAcquisition = 0.05) collapses the colonial boost '
-              'below the < kNavalRunMinWeight skip floor; henry stays '
-              'below the floor.',
-        );
-      },
-    );
-
-    test('null phase plan preserves legacy colonial-pressure gate', () {
-      // Legacy fixture has visible NW invadable + adjacent tribe owner,
-      // which makes `hasColonialAcquisitionTargets` true and (with
-      // turn 80 routing to EXPAND in observerGoalPhaseFor) makes the
-      // legacy guard suppress the boost. Net effect: legacy fallback
-      // matches today's EXPAND suppression in the same fixture.
-      final orders = runNavalPlanner(ctx: ctx, snapshot: snapshot);
-      expect(
-        orders.navalMoveOrdersByPlayerId['gp1'],
-        isNull,
-        reason:
-            'Without a phase plan the planner must keep the legacy '
-            '`hasColonialAcquisitionTargets` + `shouldSuppressNewWorldColonialOrders` '
-            'gate; with the GP at OW=1 it stays in EXPAND and the boost '
-            'remains suppressed -- behavior unchanged vs origin/dev.',
-      );
-    });
-
-    test('deterministic naval orders for identical phase-plan inputs', () {
-      const phasePlan = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonial,
-        colonialNavalPlan: _colonialNavalPriority,
-      );
-      final first = runNavalPlanner(
-        ctx: ctx,
-        snapshot: snapshot,
-        phasePlan: phasePlan,
-      );
-      final second = runNavalPlanner(
-        ctx: ctx,
-        snapshot: snapshot,
-        phasePlan: phasePlan,
-      );
-      List<String> fingerprint(Orders orders) => <String>[
-        for (final m in orders.navalMoveOrdersByPlayerId['gp1'] ?? const [])
-          '${m.fleetId}|${m.destinationSeaZoneId ?? ''}|'
-              '${m.destinationPortProvinceId ?? ''}',
-      ];
-      expect(fingerprint(second), fingerprint(first));
-    });
   });
+
+  registerPhasePlannerNavalWiringPlannerCasesTail();
 }

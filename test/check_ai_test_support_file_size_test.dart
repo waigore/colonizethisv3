@@ -13,7 +13,7 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckAiTestSupportFileSize', () {
-    test('passes on current repo tree under 400 physical-line ceiling', () {
+    test('passes on current repo tree under 300 physical-line ceiling', () {
       expect(runCheckAiTestSupportFileSize('.'), 0);
     });
 
@@ -50,10 +50,7 @@ void main() {
         List.generate(12, (i) => '// line $i').join('\n'),
       );
 
-      final code = runCheckAiTestSupportFileSize(
-        root.path,
-        ceiling: 10,
-      );
+      final code = runCheckAiTestSupportFileSize(root.path, ceiling: 10);
       expect(code, 0);
     });
 

@@ -13,18 +13,21 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckWorldLibFileSize', () {
-    test('passes on current repo tree under wave-7 ceilings', () {
-      expect(worldLibFileSizeCeiling, 300);
+    test('passes on current repo tree under wave-8 ceilings', () {
+      expect(worldLibFileSizeCeiling, 250);
       expect(worldGameEventsFileSizeCeiling, 400);
       expect(runCheckWorldLibFileSize('.'), 0);
     });
 
-    test('movement_civilian_apply.dart has ≥30 lines of headroom under 300', () {
-      final file = File(
-        'packages/colonizethis_world/lib/src/world/movement_civilian_apply.dart',
-      );
-      final lines = file.readAsLinesSync().length;
-      expect(lines, lessThanOrEqualTo(270));
+    test('wave-8 split files have ≥20 lines of headroom under 250', () {
+      for (final relative in [
+        'packages/colonizethis_world/lib/src/world/army_migration.dart',
+        'packages/colonizethis_world/lib/src/utils/graph_traversal.dart',
+        'packages/colonizethis_world/lib/src/utils/graph_traversal_topology.dart',
+      ]) {
+        final lines = File(relative).readAsLinesSync().length;
+        expect(lines, lessThanOrEqualTo(230), reason: relative);
+      }
     });
 
     test('fails when a world lib file exceeds the general ceiling', () {

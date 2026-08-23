@@ -7,8 +7,8 @@ import '../tool/check_ai_observer_suite_size.dart';
 
 void main() {
   group('runCheckAiObserverSuiteSize', () {
-    test('ceiling is 400 after #4530 Slice C', () {
-      expect(aiObserverSuitePhysicalLineCeiling, 400);
+    test('ceiling is 300 after #4602 Slice E', () {
+      expect(aiObserverSuitePhysicalLineCeiling, 300);
     });
 
     test('passes on current repo tree', () {
