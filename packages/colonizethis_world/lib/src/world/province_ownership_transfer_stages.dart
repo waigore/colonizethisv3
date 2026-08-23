@@ -67,7 +67,7 @@ int countIllegalCivilianRelocationsBeforeOwnershipTransfer(
 ) {
   var count = 0;
   final factionMembership = DiplomacyFactionMembership.from(game);
-  for (final u in allUnitsFromWorld(game.worldState)) {
+  for (final u in game.worldState.allUnitsById.values) {
     if (!changedProvinceIds.contains(u.locationProvinceId)) continue;
     if (canUnitInitiateCombat(u.type) || isShipUnitType(u.type)) continue;
     final tileKey = u.tileKey;
