@@ -209,6 +209,7 @@ part 'catalog_panel_map_build_fort_stories.dart';
 part 'catalog_panel_map_purchase_land_stories.dart';
 part 'catalog_panel_map_upgrade_town_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';
+part 'catalog_panel_map_combine_armies_stories.dart';
 part 'catalog_panel_map_naval_mission_stories.dart';
 part 'catalog_panel_map_detach_sail_stories.dart';
 part 'catalog_panel_map_station_spy_stories.dart';

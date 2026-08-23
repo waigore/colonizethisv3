@@ -52,6 +52,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.invadeArmyEnabled = false,
     this.invadeArmyTooltip = '',
     this.onInvadeArmyTap,
+    this.showCombineArmiesControl = false,
+    this.combineArmiesEnabled = false,
+    this.combineArmiesTooltip = '',
+    this.onCombineArmiesTap,
     this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
     this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
     this.blockadeStatus = ProvinceBlockadeStatus.none,
@@ -103,6 +107,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool invadeArmyEnabled;
   final String invadeArmyTooltip;
   final VoidCallback? onInvadeArmyTap;
+  final bool showCombineArmiesControl;
+  final bool combineArmiesEnabled;
+  final String combineArmiesTooltip;
+  final VoidCallback? onCombineArmiesTap;
   final ProvinceNavalMissionOverlayControls navalMission;
   final ProvinceDetachAndSailOverlayControls detachAndSail;
   final ProvinceBlockadeStatus blockadeStatus;
@@ -151,6 +159,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
         humanPlayerId: humanPlayerId,
         draftOrders: draftOrders,
         selectedTileKey: selectedTileKey,
+        navalMission: navalMission,
       );
     }
     return provinceContent(
@@ -179,6 +188,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       invadeArmyEnabled: invadeArmyEnabled,
       invadeArmyTooltip: invadeArmyTooltip,
       onInvadeArmyTap: onInvadeArmyTap,
+      showCombineArmiesControl: showCombineArmiesControl,
+      combineArmiesEnabled: combineArmiesEnabled,
+      combineArmiesTooltip: combineArmiesTooltip,
+      onCombineArmiesTap: onCombineArmiesTap,
       navalMission: navalMission,
       detachAndSail: detachAndSail,
       blockadeStatus: blockadeStatus,

@@ -264,6 +264,37 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get provinceOverlay_moveArmyAction => 'Move';
 
   @override
+  String get provinceOverlay_combineArmiesAction => 'Combine';
+
+  @override
+  String get provinceOverlay_combineArmiesPendingMarchTooltip =>
+      'Cancel the pending march before combining these armies.';
+
+  @override
+  String get provinceOverlay_combineArmiesConfirmTitle => 'Combine armies?';
+
+  @override
+  String get provinceOverlay_combineArmiesConfirmEffect =>
+      'They become one army.';
+
+  @override
+  String get provinceOverlay_combineArmiesSurvivorHome =>
+      'Home Army keeps the combined regiments.';
+
+  @override
+  String provinceOverlay_combineArmiesSurvivorField(String armyName) {
+    return '$armyName keeps the combined regiments.';
+  }
+
+  @override
+  String provinceOverlay_combineArmiesArmyLine(String armyName, String mix) {
+    return '$armyName — $mix';
+  }
+
+  @override
+  String get provinceOverlay_combineArmiesEmptyMix => 'no regiments';
+
+  @override
   String get provinceOverlay_stationSpyAction => 'Station spy';
 
   @override
@@ -312,6 +343,12 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
 
   @override
   String get provinceOverlay_blockadeAction => 'Blockade';
+
+  @override
+  String get provinceOverlay_patrolAction => 'Patrol';
+
+  @override
+  String get provinceOverlay_defendAction => 'Defend';
 
   @override
   String get provinceOverlay_beachheadAction => 'Beachhead';

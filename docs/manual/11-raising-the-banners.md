@@ -42,7 +42,7 @@ In `UNIT20001` **Military units panel**:
 
 1. Expand an army to inspect its composition.
 2. Tap **Split Army** on a non-empty army to move some of its regiments into a new army in the same province.
-3. To combine armies already in one province: check the army rows you want to merge (they must all share that province), then tap **Combine** in the header. If **Home Army** is among the checked armies, it is always the merge target — other checked armies empty into it.
+3. To combine armies already in one province: check the army rows you want to merge (they must all share that province), then tap **Combine** in the header. If **Home Army** is among the checked armies, it is always the merge target — other checked armies empty into it. You can also open `MAP20001` **Province sea-zone overlay** on that province and tap **Combine** in Military when two or more of your armies stand there. That path merges every army of yours in the province after you confirm. To merge only some of them, keep using the checkboxes on `UNIT20001`. If any of those armies already has a march waiting this turn, **Combine** stays visible but you cannot use it until you cancel that march.
 
 Your capital always has a **Home Army**, even when it has no regiments. It receives every newly trained regiment. To create a force that can campaign, use **Split Army** on the Home Army (or the map detach path below) so some regiments become a field army at the capital.
 
@@ -107,7 +107,7 @@ Rival **Great Powers** (the other playable nations) choose among **Old World** c
 
 - Research determines the regiments available to train; a richer arsenal gives the realm more military options but still requires peasants, treasury, and goods (including horses for listed cavalry).
 - Leaving regiments in the Home Army protects the capital but cannot project force.
-- Splitting creates a field army able to relocate or invade, while combining armies (same province, checkboxes plus **Combine**) concentrates forces already in one province.
+- Splitting creates a field army able to relocate or invade, while combining armies (same province: checkboxes plus **Combine** on `UNIT20001`, or **Combine** on `MAP20001` Military for every army of yours in that province) concentrates forces already in one province.
 - Moving into an eligible foreign province can begin a war before movement finishes, making the diplomatic choice inseparable from the military one.
 - Successful battles can improve generals, while too many simultaneous attacks may exceed the number of generals available to command them.
 

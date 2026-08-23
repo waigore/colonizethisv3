@@ -2782,6 +2782,30 @@ abstract class AppLocalizations {
   /// MAP20001 Military Move control label. Refs #4350.
   String get provinceOverlay_moveArmyAction;
 
+  /// MAP20001 Military Combine control label. Refs #4610.
+  String get provinceOverlay_combineArmiesAction;
+
+  /// Disabled Combine — pending land march. Refs #4610.
+  String get provinceOverlay_combineArmiesPendingMarchTooltip;
+
+  /// MAP20001 Combine confirm title. Refs #4610.
+  String get provinceOverlay_combineArmiesConfirmTitle;
+
+  /// MAP20001 Combine confirm effect line. Refs #4610.
+  String get provinceOverlay_combineArmiesConfirmEffect;
+
+  /// Combine survivor is Home Army. Refs #4610.
+  String get provinceOverlay_combineArmiesSurvivorHome;
+
+  /// Combine survivor is a field army. Refs #4610.
+  String provinceOverlay_combineArmiesSurvivorField(String armyName);
+
+  /// Combine confirm army row. Refs #4610.
+  String provinceOverlay_combineArmiesArmyLine(String armyName, String mix);
+
+  /// Combine mix when army has no regiments. Refs #4610.
+  String get provinceOverlay_combineArmiesEmptyMix;
+
   /// MAP20001 Civilian Station spy control label. Refs #4439.
   String get provinceOverlay_stationSpyAction;
 
@@ -2820,6 +2844,12 @@ abstract class AppLocalizations {
 
   /// MAP20001 Naval Blockade control label. Refs #4413.
   String get provinceOverlay_blockadeAction;
+
+  /// MAP20001 sea-zone Naval Patrol control label. Refs #4605.
+  String get provinceOverlay_patrolAction;
+
+  /// MAP20001 sea-zone Naval Defend control label. Refs #4605.
+  String get provinceOverlay_defendAction;
 
   /// MAP20001 Naval Beachhead control label. Refs #4413.
   String get provinceOverlay_beachheadAction;

@@ -12,6 +12,7 @@ import '../map_state/province_detach_and_sail_overlay_controls.dart';
 import '../map_state/province_naval_mission_action_state.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
+import 'province_detail_overlay_host_support_army_combine.dart';
 import 'province_detail_overlay_host_support_army_move.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
@@ -43,6 +44,7 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
   })
   upgradeTownState,
   required ProvinceArmyMoveOverlayControls armyMove,
+  required ProvinceArmyCombineOverlayControls armyCombine,
   required ProvinceNavalMissionOverlayControls navalMission,
   required ProvinceDetachAndSailOverlayControls detachAndSail,
   required ProvinceOverlayStationSpyProps stationSpy,
@@ -90,6 +92,10 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
     invadeArmyEnabled: armyMove.invadeEnabled,
     invadeArmyTooltip: armyMove.invadeTooltip,
     onInvadeArmyTap: armyMove.onInvadeTap,
+    showCombineArmiesControl: armyCombine.show,
+    combineArmiesEnabled: armyCombine.enabled,
+    combineArmiesTooltip: armyCombine.tooltip,
+    onCombineArmiesTap: armyCombine.onTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     blockadeStatus: navalMission.blockadeStatus,

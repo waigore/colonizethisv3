@@ -31,6 +31,12 @@ void main() {
       'Standalone — Naval Blockade/Beachhead 320 dp',
       'Standalone — Naval Under blockade',
       'Standalone — Naval Under blockade capital',
+      'Standalone — Naval sea-zone Patrol/Defend enabled',
+      'Standalone — Naval sea-zone Patrol/Defend disabled',
+      'Standalone — Naval sea-zone Patrol/Defend hidden',
+      'Standalone — Naval sea-zone Patrol/Defend 320 dp',
+      'Standalone — Naval sea-zone pending mission preview',
+      'Standalone — Naval sea-zone pending move preview',
     ]) {
       testWidgets('$useCaseName is wired into provinceOverlayDirectories', (
         WidgetTester tester,
@@ -126,6 +132,30 @@ void main() {
         ),
         findsNothing,
       );
+    });
+
+    testWidgets('enabled sea-zone Patrol story shows enabled Patrol', (
+      tester,
+    ) async {
+      final useCase = findWidgetbookUseCase(
+        provinceOverlayDirectories,
+        folderName: folderName,
+        useCaseName: 'Standalone — Naval sea-zone Patrol/Defend enabled',
+      );
+      await pumpWidgetbookUseCaseAtSize(
+        tester,
+        useCase,
+        size: const Size(800, 640),
+      );
+      await tester.pumpAndSettle();
+      final action = tester.widget<CtActionTextButton>(
+        find.widgetWithText(
+          CtActionTextButton,
+          l10n.provinceOverlay_patrolAction,
+        ),
+      );
+      expect(action.enabled, isTrue);
+      expect(action.onPressed, isNotNull);
     });
   });
 }

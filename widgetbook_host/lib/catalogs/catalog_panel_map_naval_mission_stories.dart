@@ -69,6 +69,84 @@ List<WidgetbookUseCase> get provinceOverlayNavalMissionUseCases => [
       blockadeStatus: ProvinceBlockadeStatus.capitalBlockaded,
     ),
   ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval sea-zone Patrol/Defend enabled',
+    builder: (context) => _provinceOverlaySeaZoneStayMissionStory(
+      showPatrol: true,
+      patrolEnabled: true,
+      showDefend: true,
+      defendEnabled: true,
+      patrolTooltip: AppLocalizationsEn().naval_mission_effect_patrol,
+      defendTooltip: AppLocalizationsEn().naval_mission_effect_defend,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval sea-zone Patrol/Defend disabled',
+    builder: (context) => _provinceOverlaySeaZoneStayMissionStory(
+      showPatrol: true,
+      patrolEnabled: false,
+      showDefend: true,
+      defendEnabled: false,
+      patrolTooltip: AppLocalizationsEn().naval_mission_noMissionsAvailable,
+      defendTooltip: AppLocalizationsEn().naval_mission_noMissionsAvailable,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval sea-zone Patrol/Defend hidden',
+    builder: (context) => _provinceOverlaySeaZoneStayMissionStory(),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval sea-zone Patrol/Defend 320 dp',
+    builder: (context) => _provinceOverlaySeaZoneStayMissionStory(
+      showPatrol: true,
+      patrolEnabled: true,
+      showDefend: true,
+      defendEnabled: true,
+      patrolTooltip: AppLocalizationsEn().naval_mission_effect_patrol,
+      defendTooltip: AppLocalizationsEn().naval_mission_effect_defend,
+      width: 320,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval sea-zone pending mission preview',
+    builder: (context) => _provinceOverlaySeaZoneStayMissionStory(
+      showPatrol: true,
+      patrolEnabled: false,
+      showDefend: true,
+      defendEnabled: false,
+      includeAtSeaFleet: true,
+      draftOrders: Orders(
+        navalMissionOrdersByPlayerId: {
+          demoGameForOverlay.players.first.id: [
+            NavalMissionOrder(
+              fleetId: 'overlay_sea_fleet',
+              mission: FleetMission.patrol.name,
+            ),
+          ],
+        },
+      ),
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Naval sea-zone pending move preview',
+    builder: (context) => _provinceOverlaySeaZoneStayMissionStory(
+      showPatrol: true,
+      patrolEnabled: false,
+      showDefend: true,
+      defendEnabled: false,
+      includeAtSeaFleet: true,
+      draftOrders: Orders(
+        navalMoveOrdersByPlayerId: {
+          demoGameForOverlay.players.first.id: [
+            NavalMoveOrder(
+              fleetId: 'overlay_sea_fleet',
+              destinationSeaZoneId: 'elsewhere',
+            ),
+          ],
+        },
+      ),
+    ),
+  ),
 ];
 
 /// MAP20001 Naval **Blockade** / **Beachhead** variants. Refs #4413, #4516.
@@ -106,6 +184,76 @@ Widget _provinceOverlayNavalMissionStory({
         onBeachheadTap: () {},
       ),
       blockadeStatus: blockadeStatus,
+      onClose: () {},
+    ),
+  );
+}
+
+/// MAP20001 sea-zone Patrol/Defend variants. Refs #4605.
+Widget _provinceOverlaySeaZoneStayMissionStory({
+  bool showPatrol = false,
+  bool patrolEnabled = false,
+  bool showDefend = false,
+  bool defendEnabled = false,
+  String patrolTooltip = '',
+  String defendTooltip = '',
+  bool includeAtSeaFleet = false,
+  Orders draftOrders = const Orders(),
+  double width = 640,
+}) {
+  final region = demoRegionForOverlay;
+  final base = demoGameForOverlay;
+  final seaId = sampleSeaZoneIdForOverlay;
+  final localSea = prefixedIdLocalSegment(seaId);
+  final regionId = prefixedIdRegionSegment(seaId) ?? region.regionId;
+  CellViewData? seaCell;
+  for (final c in region.cells) {
+    if (c.isSea && c.regionCellId == localSea) {
+      seaCell = c;
+      break;
+    }
+  }
+  final tileKey = seaCell == null
+      ? null
+      : '$regionId|${seaCell.regionCellId}|${seaCell.x}|${seaCell.y}';
+  final game = includeAtSeaFleet
+      ? base.copyWith(
+          worldState: base.worldState.copyWith(
+            fleets: [
+              ...base.worldState.fleets,
+              Fleet(
+                id: 'overlay_sea_fleet',
+                ownerId: base.players.first.id,
+                regionId: regionId,
+                seaZoneId: localSea,
+                ships: const [ShipInstance(id: 'os1', typeId: 'carrack')],
+              ),
+            ],
+          ),
+        )
+      : base;
+  return SizedBox(
+    width: width,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: region,
+      displayId: seaId,
+      selectedTileKey: tileKey,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      draftOrders: draftOrders,
+      omniscientDetail: true,
+      navalMission: ProvinceNavalMissionOverlayControls(
+        showPatrol: showPatrol,
+        patrolEnabled: patrolEnabled,
+        patrolTooltip: patrolTooltip,
+        onPatrolTap: () {},
+        showDefend: showDefend,
+        defendEnabled: defendEnabled,
+        defendTooltip: defendTooltip,
+        onDefendTap: () {},
+      ),
       onClose: () {},
     ),
   );

@@ -4121,6 +4121,45 @@
   "@provinceOverlay_moveArmyAction": {
     "description": "MAP20001 Military Move control label (Refs #4350)."
   },
+  "provinceOverlay_combineArmiesAction": "Combine",
+  "@provinceOverlay_combineArmiesAction": {
+    "description": "MAP20001 Military Combine control label (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesPendingMarchTooltip": "Cancel the pending march before combining these armies.",
+  "@provinceOverlay_combineArmiesPendingMarchTooltip": {
+    "description": "Disabled Combine tooltip when a selected army has a pending land move (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesConfirmTitle": "Combine armies?",
+  "@provinceOverlay_combineArmiesConfirmTitle": {
+    "description": "MAP20001 Combine confirm title (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesConfirmEffect": "They become one army.",
+  "@provinceOverlay_combineArmiesConfirmEffect": {
+    "description": "MAP20001 Combine confirm effect line (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesSurvivorHome": "Home Army keeps the combined regiments.",
+  "@provinceOverlay_combineArmiesSurvivorHome": {
+    "description": "MAP20001 Combine confirm survivor when Home Army is in the set (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesSurvivorField": "{armyName} keeps the combined regiments.",
+  "@provinceOverlay_combineArmiesSurvivorField": {
+    "description": "MAP20001 Combine confirm survivor for a field army (Refs #4610).",
+    "placeholders": {
+      "armyName": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineArmiesArmyLine": "{armyName} — {mix}",
+  "@provinceOverlay_combineArmiesArmyLine": {
+    "description": "MAP20001 Combine confirm army row (Refs #4610).",
+    "placeholders": {
+      "armyName": {"type": "String"},
+      "mix": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineArmiesEmptyMix": "no regiments",
+  "@provinceOverlay_combineArmiesEmptyMix": {
+    "description": "MAP20001 Combine confirm mix when an army has no regiments (Refs #4610)."
+  },
   "provinceOverlay_stationSpyAction": "Station spy",
   "@provinceOverlay_stationSpyAction": {
     "description": "MAP20001 Civilian Station spy control label (Refs #4439)."
@@ -4177,6 +4216,14 @@
   "provinceOverlay_blockadeAction": "Blockade",
   "@provinceOverlay_blockadeAction": {
     "description": "MAP20001 Naval Blockade control label (Refs #4413)."
+  },
+  "provinceOverlay_patrolAction": "Patrol",
+  "@provinceOverlay_patrolAction": {
+    "description": "MAP20001 sea-zone Naval Patrol control label (Refs #4605)."
+  },
+  "provinceOverlay_defendAction": "Defend",
+  "@provinceOverlay_defendAction": {
+    "description": "MAP20001 sea-zone Naval Defend control label (Refs #4605)."
   },
   "provinceOverlay_beachheadAction": "Beachhead",
   "@provinceOverlay_beachheadAction": {

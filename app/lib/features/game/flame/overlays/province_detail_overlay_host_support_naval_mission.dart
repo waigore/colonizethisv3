@@ -35,12 +35,61 @@ ProvinceNavalMissionOverlayControls buildProvinceNavalMissionOverlayControls({
     return ProvinceNavalMissionOverlayControls(blockadeStatus: blockadeStatus);
   }
 
+  if (isSeaZone) {
+    final stay = computeSeaZoneNavalStayMissionActionState(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      seaZoneId: displayId,
+      topology: topology,
+      draftOrders: draftOrders,
+    );
+    if (!stay.showControls) {
+      return ProvinceNavalMissionOverlayControls(
+        blockadeStatus: blockadeStatus,
+      );
+    }
+    final l10n = appL10n(context);
+    final disabledTooltip = l10n.naval_mission_noMissionsAvailable;
+    VoidCallback? tapFor(ct_models.FleetMission mission) {
+      if (!stay.enabled) return null;
+      return () {
+        showNavalMissionFlow(
+          context: context,
+          game: game,
+          topology: topology,
+          humanPlayerId: humanPlayerId,
+          draftOrders: draftOrders,
+          bus: bus,
+          fleetIds: stay.eligibleFleetIds,
+          playerView: playerView,
+          initialMission: mission,
+        );
+      };
+    }
+
+    return ProvinceNavalMissionOverlayControls(
+      showPatrol: true,
+      patrolEnabled: stay.enabled,
+      patrolTooltip: stay.enabled
+          ? l10n.naval_mission_effect_patrol
+          : disabledTooltip,
+      onPatrolTap: tapFor(ct_models.FleetMission.patrol),
+      showDefend: true,
+      defendEnabled: stay.enabled,
+      defendTooltip: stay.enabled
+          ? l10n.naval_mission_effect_defend
+          : disabledTooltip,
+      onDefendTap: tapFor(ct_models.FleetMission.defend),
+      blockadeStatus: blockadeStatus,
+    );
+  }
+
   final state = computeProvinceNavalMissionActionState(
     game: game,
     humanPlayerId: humanPlayerId,
     provinceId: displayId,
     topology: topology,
-    isSeaZoneContext: isSeaZone,
+    isSeaZoneContext: false,
   );
   if (!state.showControls) {
     return ProvinceNavalMissionOverlayControls(blockadeStatus: blockadeStatus);

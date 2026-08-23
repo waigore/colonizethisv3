@@ -16,7 +16,7 @@ Players reorganize **regiments** between **armies** in the same province, analog
 - **Per-army checkbox:** Every **army** row (including **Home Army**) shows a checkbox at all times (collapsed or expanded).
 - **Combine enabled** when at least two armies are checked and every checked army shares the **same province** (same owner). Cross-province combine is disabled.
 - **Merge target:** If **Home Army** is checked, it is always the survivor; otherwise the target is the checked army **first in panel display order** ([military-units-panel.md](military-units-panel.md)).
-- **Data:** Concatenate regiment id lists; remove source armies; remove empty non-Home armies. **Implementation:** **colonizethis_logic** (or colonizethis_models + logic) applies state mutations; the **app** emits events and displays results only ([military-units-panel.md](military-units-panel.md) § UI vs logic).
+- **Data:** Concatenate regiment id lists; remove source armies; remove empty non-Home armies. **Implementation:** **colonizethis_logic** (or colonizethis_models + logic) applies state mutations; the **app** emits events and displays results only ([military-units-panel.md](military-units-panel.md) § UI vs logic). `MAP20001` Military **Combine** (when ≥2 human armies share the overlay province) confirms then emits the same `ArmyCombineRequestedEvent`; subset merges stay on this panel ([province-sea-zone-detail-overlay-army-combine.md](province-sea-zone-detail-overlay-army-combine.md), Refs #4610).
 
 ---
 
