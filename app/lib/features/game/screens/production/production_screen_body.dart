@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/industry_counsel_api.dart'
@@ -23,6 +25,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
 import '../../widgets/production/production_commodity_breakdown_dialog.dart';
+import '../../widgets/production/production_labour_disband_confirm.dart';
 import '../../widgets/production/production_labour_helpers.dart';
 import '../../widgets/production/production_panel.dart';
 import '../../widgets/shell/shell_player_context.dart';
@@ -173,14 +176,18 @@ class ProductionScreenBody extends ConsumerWidget {
         shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
       },
       onDisband: (tier) {
-        if (!canEdit) return;
-        final nextGame = gameWithImmediateDisband(
-          game: shellRef.read(currentGameProvider) ?? displayGame,
-          playerId: displayPlayer.id,
-          tier: tier,
+        unawaited(
+          confirmAndApplyImmediateLabourDisband(
+            context: context,
+            tier: tier,
+            canEdit: canEdit,
+            readGame: () => shellRef.read(currentGameProvider) ?? displayGame,
+            writeGame: (nextGame) {
+              shellRef.read(currentGameProvider.notifier).setGame(nextGame);
+            },
+            playerId: displayPlayer.id,
+          ),
         );
-        if (nextGame == null) return;
-        shellRef.read(currentGameProvider.notifier).setGame(nextGame);
       },
     );
     final productionPanel = ProductionPanel(

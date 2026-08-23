@@ -84,7 +84,7 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 | Riches or Workers Available cell | — | none | Not a Trade control. |
 | Allocation **Counsel** | Ranking available | `NavigateToRouteEvent(Routes.counsel, …)` without `highlightRecommendationId` | Opens [counsel-panel.md](counsel-panel.md) Industry tab. |
 | Recipe counsel star | Starred produce row | `NavigateToRouteEvent(Routes.counsel, …)` with `highlightRecommendationId` | Opens Counsel with that recommendation highlighted. |
-| Labour ± / disband | Human GP, editable | Updates recruit/train/disband draft orders | See **Labour Controls**. |
+| Labour ± / disband | Human GP, editable | Queue recruit/train; Disband opens `CtConfirmDialog` then mutates the live pool on confirm | See **Labour Controls**. |
 | Next turn (host) | Outside panel | Passes assignments to turn resolver | Per **Behaviour** closing bullets. |
 
 ### Behaviour (detailed rules)
@@ -146,6 +146,8 @@ Required use cases (each one builder closure under the `Production Panel` folder
 - `Labour cost gist` — apprentice unlocked, fabric/paper/treasury present; rows show cost + upkeep gists without `(unlocked)` (Refs #4432).
 - `Labour locked tier` — trained techs missing; rows show `Requires:` display names and disabled **+** (Refs #4432).
 - `Labour cost gist (mobile)` — cost-gist scenario in `mobileViewport` (320–360 dp wrap; Refs #4432).
+- `Labour disband confirm` — cost-gist player with trained rows; tapping **Disband** opens the no-refund confirm (Refs #4601).
+- `Labour disband confirm (mobile)` — same confirm path in `mobileViewport` (Refs #4601).
 - `Tap Available opens Trade` — full-availability player with `onOpenTradeMarket` wired so tradeable Available cells are tappable (Refs #4581).
 
 Every production use case MUST host the panel inside a `ProviderScope` (no overrides required for the default state) so the panel reads/writes `productionDesiredOutputProvider`, MUST wrap the resulting subtree in `widgetbookEditorialMonocleApp(child: …)` so the dark theme is applied and the Navigator pushes the live Breakdown dialog onto the same overlay the in-app `ProductionScreen` uses, and MUST pass a non-null `onOpenCommodityBreakdown` callback that calls `showDialog<void>(builder: (_) => ProductionCommodityBreakdownDialog(…))` so the Available **Breakdown** `CtNinePatchButton` is visible and tapping it opens the live dialog. The story's `netDeltasByCommodity` MUST come from `previewStockpileNetDeltaByCommodityForPlayer` (same preview helper as the running app) so signed deltas on Available cells track slider / stepper changes; passing `const {}` is a regression because it decouples the story from the SPEC § Net Changes pipeline. Refs #2862 S6.
@@ -310,9 +312,14 @@ For each tier `t` and the running peasant ledger `availablePeasants = pool.peasa
 
 ### Disband (immediate)
 
-- Tapping **Disband** for tier `t` immediately decrements `pool.t` by 1 and increments `pool.peasants` by 1 on the viewed player. The mutation does **not** enqueue any order; it is applied to the live `Game` state during the Orders phase exactly as specified in workers-and-population.md § Disband.
+- Tapping **Disband** for a trained tier `t` opens a `CtConfirmDialog` (same family as research-slot cancel when progress would be forfeited). The pool does **not** change until the player confirms.
+- Confirm body uses labelled **Effect** / **Cost** / **When** lines in player words: the trained rank (catalog display name, not a raw `WorkerTier` / catalog id) becomes a Peasant **now**; gold and paper spent to train them are not returned; the change is immediate (not after Next turn). Confirm label is **Disband**; cancel label is **Cancel**.
+- Dismiss (Cancel, outside tap, or Escape) leaves `WorkerPool`, queued recruit orders, treasury, paper, and fabric unchanged.
+- Confirm then decrements `pool.t` by 1 and increments `pool.peasants` by 1 on the viewed player. The mutation does **not** enqueue any order; it is applied to the live `Game` state during the Orders phase exactly as specified in workers-and-population.md § Disband.
 - Disband has **no** treasury, stockpile, or material refund — the cost row is forfeit.
-- After disband, the **+** stepper for the player's available trained tiers immediately reflects the new `availablePeasants` and may become enabled for tiers that were previously blocked by the peasant ledger.
+- After a confirmed disband, the **+** stepper for the player's available trained tiers immediately reflects the new `availablePeasants` and may become enabled for tiers that were previously blocked by the peasant ledger.
+- Peasant rows never mount a Disband control. Observe / `canEditLabour == false` never mounts Disband, so the confirm cannot open.
+- At 320–360 dp the confirm wraps without horizontal overflow; Confirm and Cancel stay tappable.
 
 ### Acceptance Criteria — Labour Controls
 
@@ -335,7 +342,11 @@ For each tier `t` and the running peasant ledger `availablePeasants = pool.peasa
 - Given a trained tier row's **Disband** control is enabled and not under pointer hover, when the control paints, then the wrapping `Opacity` ancestor's `opacity` equals `0.7`; given the control is enabled and the pointer enters its bounds, when the next paint runs, then the wrapping `Opacity` ancestor's `opacity` equals `1.0`; given the control is disabled, when the control paints, then the wrapping `Opacity` ancestor's `opacity` equals `CtNinePatchButton.disabledOpacity` (`0.4`) and pointer events on the control are ignored.
 - Given `pool.peasants = 0` and no pending peasant-producing recruit orders for the viewed player, when the Workers section renders, then the **+** stepper for every trained tier is disabled and the **+** for peasant remains enabled iff fabric ≥ 2.
 - Given `pool.peasants = 2` and the viewed player already has one queued `RecruitWorkerOrder(targetTier: apprentice)` plus one queued `BuildUnitOrder` whose unit type consumes one peasant, when the player attempts a second apprentice **+**, then the **+** stepper for every trained tier is disabled (peasant ledger exhausted by the two pending consumes).
-- Given the viewed player has `pool.journeymen ≥ 1`, when the player taps **Disband** on the journeyman row, then `pool.journeymen` decrements by 1, `pool.peasants` increments by 1, no entry is added to `currentOrders.recruitWorkerOrdersByPlayerId`, and treasury / paper / fabric remain unchanged.
+- Given the viewed player has `pool.journeymen ≥ 1` and Labour Controls are editable, when the player taps **Disband** on the journeyman row, then the UI layer shows a `CtConfirmDialog` and does **not** change `pool.journeymen` or `pool.peasants` until Confirm.
+- Given that Disband confirm is visible, when the player dismisses it (Cancel, outside tap, or Escape), then the worker pool, queued recruit orders, treasury, paper, and fabric are unchanged.
+- Given that Disband confirm is visible, when the player confirms, then `pool.journeymen` decrements by 1, `pool.peasants` increments by 1, no entry is added to `currentOrders.recruitWorkerOrdersByPlayerId`, and treasury / paper / fabric remain unchanged.
+- Given the Disband confirm renders, when the body is read, then it names the trained tier in player words, states that the worker becomes a Peasant now, and states that gold and paper spent to train them are not returned (no raw `WorkerTier` / catalog ids).
+- Given `GAME20001` at 320–360 dp with the Disband confirm open, when the dialog paints, then it does not overflow horizontally and Confirm / Cancel remain tappable.
 - **Disband enabled (positive pin, Refs #2862 S8e / C5):** Given a trained tier `t ∈ {apprentice, journeyman, master}` with `pool.t == 1` and the panel is editable (`canEdit == true`), when the Labour row for `t` renders, then the Disband control keyed `production_labour_disband_<tier>` is mounted, the wrapping `Opacity` reads `CtDangerTextButton.idleOpacity` (`0.7`), and tapping the control fires exactly one `onDisband(t)` callback.
 - **Disband disabled (negative pin, Refs #2862 S8e / C5):** Given a trained tier `t` with `pool.t == 0` and `canEdit == true`, when the Labour row for `t` renders, then the Disband control keyed `production_labour_disband_<tier>` is mounted, the wrapping `Opacity` reads `CtNinePatchButton.disabledOpacity` (`0.4`), and tapping the control fires **no** `onDisband` callback.
 - **Peasant has no keyed Disband (Refs #2862 S8e):** Given any pool composition for the peasant tier, when the Labour row for peasant renders, then no widget keyed `production_labour_disband_peasants` is mounted in the row subtree (the peasant row reserves Disband trailing space invisibly per Trailing alignment but exposes no tappable Disband control).

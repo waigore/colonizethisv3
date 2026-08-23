@@ -330,10 +330,10 @@ class ProductionPanelStoryBody extends ConsumerWidget {
         );
         ref.read(currentOrdersProvider.notifier).replaceAll(next);
       },
-      onDisband: (_) {
-        // Disband mutates the live Game; the Widgetbook story uses a
-        // shared demo game so we deliberately no-op here. Reviewers still
-        // see the danger text button at idle / disabled opacity.
+      onDisband: (tier) {
+        unawaited(
+          showImmediateLabourDisbandConfirm(context: context, tier: tier),
+        );
       },
     );
     final labourReadiness = labourReadinessForPlayer(

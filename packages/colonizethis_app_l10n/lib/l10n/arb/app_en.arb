@@ -5553,6 +5553,40 @@
   "@production_labourDisband": {
     "description": "Visible label for the Disband button on trained-tier rows."
   },
+  "production_workerSingularPeasant": "Peasant",
+  "@production_workerSingularPeasant": {
+    "description": "Singular Peasant rank name in Disband confirm copy."
+  },
+  "production_workerSingularApprentice": "Apprentice",
+  "@production_workerSingularApprentice": {
+    "description": "Singular Apprentice rank name in Disband confirm copy."
+  },
+  "production_workerSingularJourneyman": "Journeyman",
+  "@production_workerSingularJourneyman": {
+    "description": "Singular Journeyman rank name in Disband confirm copy."
+  },
+  "production_workerSingularMaster": "Master",
+  "@production_workerSingularMaster": {
+    "description": "Singular Master rank name in Disband confirm copy."
+  },
+  "production_labourDisbandConfirmTitle": "Disband {tier}?",
+  "@production_labourDisbandConfirmTitle": {
+    "description": "Title of the Labour Controls Disband confirm dialog.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDisbandConfirmBody": "Effect: This {tier} becomes a Peasant now.\nCost: Gold and paper spent to train them are not returned.\nWhen: Immediately, not after Next turn.",
+  "@production_labourDisbandConfirmBody": {
+    "description": "Disband confirm body: effect, no-refund cost, and immediate timing.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "production_labourTierUnlocked": "(unlocked)",
   "@production_labourTierUnlocked": {
     "description": "Parenthetical suffix on a Labour Controls tier label when every required tech is unlocked for the viewed player (peasant always renders this)."

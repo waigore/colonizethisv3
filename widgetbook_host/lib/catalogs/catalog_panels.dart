@@ -138,6 +138,21 @@ List<WidgetbookNode> get productionPanelDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Labour disband confirm',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: labourCostGistProductionPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Labour disband confirm (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          ProductionPanelStory(
+            playerOverride: labourCostGistProductionPlayer(),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Tap Available opens Trade',
         builder: (context) => ProductionPanelStory(onOpenTradeMarket: (_) {}),
       ),
