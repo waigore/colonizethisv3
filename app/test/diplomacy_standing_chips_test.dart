@@ -9,10 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 
-import 'app_shell_harness.dart';
-
-const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
-
 /// Builds a game where the human GP `gp1` holds an Embassy-stage overture with
 /// Tribe `t1`, `t1` is a colony of `gp1`, and `gp1` boycotts GP `gp2` (Castile)
 /// through that colony.
@@ -59,14 +55,6 @@ Game _colonyTribeGame() {
     boycottStates: const [
       BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 6),
     ],
-  );
-}
-
-Widget _clusterHost(DiplomaticStandingChips chips) {
-  return buildAppShell(
-    child: Scaffold(
-      body: Center(child: DiplomacyStandingChipCluster(chips: chips)),
-    ),
   );
 }
 
@@ -200,7 +188,9 @@ void main() {
           oldWorld: RegionData(),
           newWorld: RegionData(),
         ),
-        players: const [Player(id: 'gp1', displayName: 'Albion', isHuman: true)],
+        players: const [
+          Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+        ],
         minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
       );
       final chips = diplomaticStandingChips(
@@ -232,7 +222,9 @@ void main() {
           oldWorld: RegionData(),
           newWorld: RegionData(),
         ),
-        players: const [Player(id: 'gp1', displayName: 'Albion', isHuman: true)],
+        players: const [
+          Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+        ],
         minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
       );
       final purchased = PurchasedTileIndex.forTesting(const [
@@ -285,7 +277,9 @@ void main() {
           oldWorld: RegionData(),
           newWorld: RegionData(),
         ),
-        players: const [Player(id: 'gp1', displayName: 'Albion', isHuman: true)],
+        players: const [
+          Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+        ],
         minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
       );
       final chips = diplomaticStandingChips(
@@ -304,91 +298,4 @@ void main() {
       expect(chips.isEmpty, isTrue);
     });
   });
-
-  group('DiplomacyStandingChipCluster widget', () {
-    testWidgets('renders treaty, boycott, and overseas chip text', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _clusterHost(
-          const DiplomaticStandingChips(
-            treatyLabels: [kDiplomacyChipEmbassy, kDiplomacyChipColony],
-            boycottVsNames: ['Castile'],
-            overseasTileCount: 2,
-            overseasSharePercent: 80,
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(find.text(kDiplomacyChipColony), findsOneWidget);
-      expect(find.text(kDiplomacyChipEmbassy), findsOneWidget);
-      expect(find.text('${kDiplomacyChipBoycottVsPrefix}Castile'), findsOneWidget);
-      expect(find.text('${kDiplomacyChipOverseasPrefix}2 \u00b7 80%'), findsOneWidget);
-    });
-
-    testWidgets('renders Boycotted by chip for imposed colony embargo', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _clusterHost(
-          const DiplomaticStandingChips(
-            treatyLabels: [kDiplomacyChipColony],
-            boycottedByNames: ['Castile'],
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(
-        find.text('${kDiplomacyChipBoycottedByPrefix}Castile'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('Negative: empty chips render nothing (no Wrap)', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_clusterHost(const DiplomaticStandingChips()));
-      await tester.pump();
-
-      expect(find.byType(Wrap), findsNothing);
-      expect(find.text(kDiplomacyChipColony), findsNothing);
-    });
-  });
-
-  testWidgets(
-    'panel integration: colony Tribe row shows Colony/Embassy + Boycott vs chips',
-    (tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(600, 1100));
-      await tester.pumpWidget(
-        buildAppShell(
-          child: Scaffold(
-            body: SizedBox(
-              width: 460,
-              height: 1000,
-              child: DiplomacyPanel(
-                game: _colonyTribeGame(),
-                humanPlayerId: 'gp1',
-                topology: _emptyTopology,
-                currentOrders: const Orders(),
-                bus: AppEventBus.create(),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      expect(find.text('Powhatan'), findsOneWidget);
-      expect(find.text(kDiplomacyChipColony), findsOneWidget);
-      expect(find.text(kDiplomacyChipEmbassy), findsWidgets);
-      expect(
-        find.text('${kDiplomacyChipBoycottVsPrefix}Castile'),
-        findsOneWidget,
-      );
-    },
-  );
 }

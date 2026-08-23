@@ -6,7 +6,6 @@
 // shortcut enablement.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
@@ -30,37 +29,10 @@ import 'package:hive/hive.dart';
 
 import 'golden_capture_harness.dart';
 import 'province_shortcut_host_emit_fixtures.dart';
+import 'province_shortcut_host_golden_game_service.dart';
 
 final MapTopology _goldenCombinedTopology =
     provinceShortcutHostCombinedTopology(includeNewWorld: true);
-
-/// Map topology + tile maps aligned with [goldenBuildImprovementGame] (Refs #1990 goldens).
-class _GameServiceBuildImprovementGolden extends GameService {
-  _GameServiceBuildImprovementGolden(super.box, super.adapter);
-
-  static final Map<String, MapTopology> _topologyByRegion =
-      provinceShortcutHostTopologyByRegion(includeNewWorld: true);
-
-  static final Map<String, TileMapResult> _tileMapByRegion =
-      provinceShortcutHostGoldenCoastalTileMapByRegion(includeNewWorld: true);
-
-  @override
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
-    if (gameId != 'g_bi_golden') return null;
-    return (
-      combinedTopology: _goldenCombinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-      warpLinks: null,
-    );
-  }
-}
 
 Game goldenBuildImprovementGame() {
   const humanPlayerId = 'gp1';
@@ -157,7 +129,9 @@ PerPlayerWorkTargetSelectionCache _buildSelectionCache({
       playerView: playerView,
       topology: _goldenCombinedTopology,
       currentOrders: const Orders(),
-      tileMapByRegion: _GameServiceBuildImprovementGolden._tileMapByRegion,
+      tileMapByRegion: ProvinceShortcutHostGoldenGameService.tileMapByRegionFor(
+        includeNewWorld: true,
+      ),
     ),
   );
   return cache;
@@ -189,8 +163,12 @@ void main() {
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
-            (ref) =>
-                _GameServiceBuildImprovementGolden(gamesBox, GameSaveAdapter()),
+            (ref) => ProvinceShortcutHostGoldenGameService(
+              gamesBox,
+              GameSaveAdapter(),
+              gameId: 'g_bi_golden',
+              includeNewWorld: true,
+            ),
           ),
           appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -241,8 +219,12 @@ void main() {
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
-            (ref) =>
-                _GameServiceBuildImprovementGolden(gamesBox, GameSaveAdapter()),
+            (ref) => ProvinceShortcutHostGoldenGameService(
+              gamesBox,
+              GameSaveAdapter(),
+              gameId: 'g_bi_golden',
+              includeNewWorld: true,
+            ),
           ),
           appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),

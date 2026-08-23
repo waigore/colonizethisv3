@@ -12,12 +12,14 @@ import 'naval_units_panel.dart';
 import 'naval_units_panel_list.dart';
 import 'naval_units_panel_state_base.dart';
 import 'naval_units_panel_support_combine.dart';
+import 'naval_units_panel_support_combine_home.dart';
 import 'naval_units_panel_support_dialogs.dart';
 
 mixin NavalUnitsPanelBuild
     on
         BaseUnitsPanelState<NavalUnitsPanel>,
         NavalUnitsPanelStateBase,
+        NavalUnitsPanelCombineHome,
         NavalUnitsPanelCombine,
         NavalUnitsPanelDialogs,
         NavalUnitsPanelList {

@@ -5,9 +5,9 @@ import 'package:colonizethis_app/config/ux_settings_keys.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_catalog_loader.dart';
 import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_models.dart';
+import 'package:colonizethis_app/features/shell/settings/settings_dialog_theme.dart';
 import 'package:colonizethis_app/providers/settings_provider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_app/widgets/ct_gap.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
@@ -86,7 +86,10 @@ class SettingsDialog extends ConsumerWidget {
                 onChanged: (value) {
                   ref
                       .read(settingsProvider.notifier)
-                      .setValue(UxSettingsKeys.warnIdleCiviliansOnEndTurn, value);
+                      .setValue(
+                        UxSettingsKeys.warnIdleCiviliansOnEndTurn,
+                        value,
+                      );
                 },
               ),
               CtGap.m,
@@ -129,7 +132,7 @@ class SettingsDialog extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (final group in catalog.multiThemeGroups) ...[
-                    _ThemeGroupPicker(
+                    SettingsDialogThemeGroupPicker(
                       group: group,
                       themes: catalog.themesFor(group),
                       selectedId:
@@ -156,92 +159,5 @@ class SettingsDialog extends ConsumerWidget {
         ],
       ),
     );
-  }
-}
-
-class _ThemeGroupPicker extends StatelessWidget {
-  const _ThemeGroupPicker({
-    required this.group,
-    required this.themes,
-    required this.selectedId,
-    required this.onChanged,
-  });
-
-  final MapThemeGroupId group;
-  final List<MapThemeEntry> themes;
-  final String selectedId;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final theme = Theme.of(context);
-    final ids = themes.map((t) => t.id).toList(growable: false);
-    final value = ids.contains(selectedId)
-        ? selectedId
-        : MapThemeGroupId.defaultThemeId;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          _groupLabel(l10n, group),
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: EditorialMonoclePalette.fg,
-          ),
-        ),
-        CtGap.m,
-        CtDropdown<String>(
-          key: SettingsDialog.groupDropdownKey(group),
-          value: value,
-          items: ids,
-          itemLabel: (id) {
-            final entry = themes.firstWhere((t) => t.id == id);
-            return mapThemeDisplayName(l10n, entry.nameL10nKey);
-          },
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
-}
-
-String _groupLabel(AppLocalizations l10n, MapThemeGroupId group) {
-  switch (group) {
-    case MapThemeGroupId.terrain:
-      return l10n.settingsDialog_group_terrain;
-    case MapThemeGroupId.civilianIcons:
-      return l10n.settingsDialog_group_civilianIcons;
-    case MapThemeGroupId.townIcons:
-      return l10n.settingsDialog_group_townIcons;
-    case MapThemeGroupId.resourceIcons:
-      return l10n.settingsDialog_group_resourceIcons;
-    case MapThemeGroupId.fleetIcons:
-      return l10n.settingsDialog_group_fleetIcons;
-    case MapThemeGroupId.provinceLabelIcons:
-      return l10n.settingsDialog_group_provinceLabelIcons;
-  }
-}
-
-/// Resolves a catalog `name_l10n_key` to a localized display string.
-String mapThemeDisplayName(AppLocalizations l10n, String nameL10nKey) {
-  switch (nameL10nKey) {
-    case 'mapTheme_terrain_default':
-      return l10n.mapTheme_terrain_default;
-    case 'mapTheme_terrain_sepia':
-      return l10n.mapTheme_terrain_sepia;
-    case 'mapTheme_civilian_default':
-      return l10n.mapTheme_civilian_default;
-    case 'mapTheme_civilian_sepia':
-      return l10n.mapTheme_civilian_sepia;
-    case 'mapTheme_town_default':
-      return l10n.mapTheme_town_default;
-    case 'mapTheme_resource_default':
-      return l10n.mapTheme_resource_default;
-    case 'mapTheme_fleet_default':
-      return l10n.mapTheme_fleet_default;
-    case 'mapTheme_provinceLabel_default':
-      return l10n.mapTheme_provinceLabel_default;
-    default:
-      return nameL10nKey;
   }
 }
