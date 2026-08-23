@@ -7,4 +7,5 @@ export 'fog_builders.dart';
 export 'military_builders.dart';
 export 'naval_coastal_visibility_test_support.dart';
 export 'sea_reachable_test_support.dart';
+export 'sea_reachable_test_support_distances.dart';
 export 'topology_builders.dart';

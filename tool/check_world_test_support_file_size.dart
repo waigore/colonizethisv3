@@ -9,8 +9,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Wave-7 support ceiling after the connectivity builders split (Refs #4515).
-const int worldTestSupportFileSizeCeiling = 280;
+/// Wave-8 support ceiling after leftover densify (Refs #4611).
+const int worldTestSupportFileSizeCeiling = 250;
 
 const String _worldTestSupportRelativePath =
     'packages/colonizethis_world/test/world_test_support';
