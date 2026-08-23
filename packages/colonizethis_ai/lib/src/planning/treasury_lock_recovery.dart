@@ -1,10 +1,12 @@
-import '../perception/perception_snapshot.dart';
-import 'expand_phase_planner_economy.dart' show cheapestRegimentBuildTreasuryCost;
+import 'expand_phase_planner_economy.dart'
+    show cheapestRegimentBuildTreasuryCost;
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'treasury_lock_recovery_seller.dart';
+import 'treasury_lock_recovery_scan.dart';
 import 'treasury_market_pricing.dart';
 import 'treasury_planner_constants.dart';
 
+export 'treasury_lock_recovery_scan.dart' show LockRecoveryGameScan;
 export 'treasury_lock_recovery_seller.dart'
     show
         isBelowQuotaZeroNwLockRecoverySeller,
@@ -15,100 +17,6 @@ export 'treasury_lock_recovery_seller.dart'
 // the treasury planner (Refs #2924 F11–F17 + #2847 H8), extracted from
 // `treasury_planner.dart` for maintainability (Refs #3288 file-split).
 // Seller predicates live in `treasury_lock_recovery_seller.dart` (Refs #4239).
-
-/// Per-turn lock-recovery aggregates computed in one `game.players` pass (Refs
-/// #3288). Replaces repeated O(players) scans inside the treasury hot path.
-final class LockRecoveryGameScan {
-  LockRecoveryGameScan._({
-    required this.sortedGpIds,
-    required this.anyBrokeGreatPower,
-    required this.anySellerNeedsRegimentBuildInput,
-    required this.anySellerNeedsCastIronLabourPeasantRecruitFabric,
-    required this.anySellerNeedsCastIronImprovementInput,
-    required this.isLockRecoverySellerByPlayerId,
-    required this.designatedBuyerId,
-  });
-
-  final List<String> sortedGpIds;
-  final bool anyBrokeGreatPower;
-  final bool anySellerNeedsRegimentBuildInput;
-  final bool anySellerNeedsCastIronLabourPeasantRecruitFabric;
-  final bool anySellerNeedsCastIronImprovementInput;
-  final Map<String, bool> isLockRecoverySellerByPlayerId;
-  final String designatedBuyerId;
-
-  factory LockRecoveryGameScan.fromGame(
-    Game game, {
-    AIWorldSnapshot? snapshot,
-  }) {
-    final regimentThreshold = cheapestRegimentBuildTreasuryCost();
-    final affluenceThreshold = treasuryAffluenceThreshold();
-    final sortedGpIds = <String>[];
-    var anyBrokeGreatPower = false;
-    var anySellerNeedsRegimentBuildInput = false;
-    var anySellerNeedsCastIronLabourPeasantRecruitFabric = false;
-    var anySellerNeedsCastIronImprovementInput = false;
-    final isLockRecoverySellerByPlayerId = <String, bool>{};
-    final affluentNonSellerIds = <String>[];
-
-    for (final player in game.players) {
-      sortedGpIds.add(player.id);
-      if (player.treasury < regimentThreshold) {
-        anyBrokeGreatPower = true;
-      }
-      final isSeller = isBelowQuotaZeroNwLockRecoverySellerInternal(
-        game: game,
-        playerId: player.id,
-        snapshot: snapshot?.playerId == player.id ? snapshot : null,
-      );
-      isLockRecoverySellerByPlayerId[player.id] = isSeller;
-      if (isSeller) {
-        if (lockRecoverySellerNeedsRegimentBuildInput(
-          game,
-          player,
-          regimentThreshold: regimentThreshold,
-        )) {
-          anySellerNeedsRegimentBuildInput = true;
-        }
-        if (lockRecoverySellerNeedsCastIronLabourPeasantRecruitFabric(
-          game,
-          player,
-        )) {
-          anySellerNeedsCastIronLabourPeasantRecruitFabric = true;
-        }
-        if (lockRecoverySellerNeedsCastIronImprovementInput(game, player)) {
-          anySellerNeedsCastIronImprovementInput = true;
-        }
-      }
-      if (player.treasury >= affluenceThreshold && !isSeller) {
-        affluentNonSellerIds.add(player.id);
-      }
-    }
-    sortedGpIds.sort();
-    affluentNonSellerIds.sort();
-
-    final designatedBuyerId =
-        !anyBrokeGreatPower || affluentNonSellerIds.isEmpty
-        ? ''
-        : affluentNonSellerIds[game.worldState.turnState.turnNumber %
-              affluentNonSellerIds.length];
-
-    return LockRecoveryGameScan._(
-      sortedGpIds: sortedGpIds,
-      anyBrokeGreatPower: anyBrokeGreatPower,
-      anySellerNeedsRegimentBuildInput: anySellerNeedsRegimentBuildInput,
-      anySellerNeedsCastIronLabourPeasantRecruitFabric:
-          anySellerNeedsCastIronLabourPeasantRecruitFabric,
-      anySellerNeedsCastIronImprovementInput:
-          anySellerNeedsCastIronImprovementInput,
-      isLockRecoverySellerByPlayerId: isLockRecoverySellerByPlayerId,
-      designatedBuyerId: designatedBuyerId,
-    );
-  }
-
-  bool isLockRecoverySeller(String playerId) =>
-      isLockRecoverySellerByPlayerId[playerId] ?? false;
-}
 
 bool anyLockRecoverySellerNeedsCastIronImprovementInput(
   Game game, {
@@ -201,10 +109,8 @@ List<String> twoRichestGreatPowerIdsByTreasury(
 
 /// One GP per turn acts as the market buyer for the lock-recovery food
 /// commodity so other GPs' urgent offers can clear. Refs #2924 F11.
-String lockRecoveryDesignatedBuyerId(
-  Game game, {
-  LockRecoveryGameScan? scan,
-}) => (scan ?? LockRecoveryGameScan.fromGame(game)).designatedBuyerId;
+String lockRecoveryDesignatedBuyerId(Game game, {LockRecoveryGameScan? scan}) =>
+    (scan ?? LockRecoveryGameScan.fromGame(game)).designatedBuyerId;
 
 /// Parameter bag for [applyLockRecoveryLiquidityBid] (Refs #3997).
 final class LockRecoveryLiquidityBidInput {
@@ -225,13 +131,16 @@ final class LockRecoveryLiquidityBidInput {
 
 /// Designated buyer bids [commodityId] and does not offer it this turn.
 void applyLockRecoveryLiquidityBid(LockRecoveryLiquidityBidInput input) {
-  final commodityId = lockRecoveryLiquidityCommodity(input.game.worldMarketState);
+  final commodityId = lockRecoveryLiquidityCommodity(
+    input.game.worldMarketState,
+  );
   input.available.remove(commodityId);
   if (!input.addSyntheticBid) return;
   final pricePerUnit = input.game.worldMarketState.prices[commodityId] ?? 0;
   if (pricePerUnit <= 0) return;
-  final budget =
-      input.treasuryBudgetForBids < 0 ? 0 : input.treasuryBudgetForBids;
+  final budget = input.treasuryBudgetForBids < 0
+      ? 0
+      : input.treasuryBudgetForBids;
   final affordableQty = budget ~/ pricePerUnit;
   final liquidityQty = affordableQty;
   if (liquidityQty <= 0) return;

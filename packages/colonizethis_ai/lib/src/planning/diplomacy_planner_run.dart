@@ -1,7 +1,6 @@
 import '../perception/perception_snapshot.dart';
 import 'planning_imports.dart';
 import 'expand_phase_planner.dart';
-import 'observer_goal_phase.dart';
 import 'planner_context.dart';
 import '../util/orders_extensions.dart';
 import 'diplomacy_planner_pass_helpers.dart';
@@ -9,6 +8,7 @@ import 'diplomatic_candidate_scoring.dart';
 import 'diplomacy_planner_result.dart';
 import 'phase_planner_dispatch.dart';
 import 'diplomacy_planner_pass_filter.dart';
+import 'diplomacy_planner_run_weight.dart';
 
 final _log = packageLogger('diplomacy_planner');
 
@@ -21,60 +21,6 @@ Orders runDiplomacyPlanner({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
 }) => runDiplomacyPlannerWithResult(ctx: ctx, snapshot: snapshot).orders;
-
-int _resolveDiplomacyPlannerWeight({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-}) {
-  var weight = ctx.resolveDiplomacyBaseWeight();
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      snapshot.conquest.provincesToVictory >
-          kConquerScoreFloorProvincesToVictoryThreshold &&
-      weight < 25) {
-    weight = 25;
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-      weight < kDiplomacyDeclareWarMinWeightWhenStalled) {
-    weight = kDiplomacyDeclareWarMinWeightWhenStalled;
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold &&
-      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      weight < kDiplomacyDeclareWarMinWeightWhenStalled + 20) {
-    weight = kDiplomacyDeclareWarMinWeightWhenStalled + 20;
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      snapshot.conquest.oldWorldProvincesOwned <=
-          kStalledOldWorldProvinceThreshold &&
-      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      weight < kDiplomacyDeclareWarMinWeightWhenStalled + 15) {
-    weight = kDiplomacyDeclareWarMinWeightWhenStalled + 15;
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      weight < kDiplomacyDeclareWarMinWeightWhenStalled + 20) {
-    weight = kDiplomacyDeclareWarMinWeightWhenStalled + 20;
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      hasColonialAcquisitionTargets(snapshot.colonial) &&
-      weight < kDiplomacyDeclareWarMinWeightWhenColonialPressure) {
-    weight = kDiplomacyDeclareWarMinWeightWhenColonialPressure;
-  }
-  if (pass != DiplomacyPlannerPass.declareWarOnly &&
-      (stalledOwExpansionNeedsPeacePass(game: ctx.game, snapshot: snapshot) ||
-          multiFrontNonBlockerGpPeaceTargets(
-            game: ctx.game,
-            snapshot: snapshot,
-          ).isNotEmpty) &&
-      weight < 25) {
-    weight = 25;
-  }
-  return weight;
-}
 
 List<DiplomaticOrder> _suggestDiplomacyCandidates({
   required PlannerContext ctx,
@@ -161,7 +107,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       return stalledGpDeclareResult;
     }
   }
-  final weight = _resolveDiplomacyPlannerWeight(
+  final weight = resolveDiplomacyPlannerWeight(
     ctx: ctx,
     snapshot: snapshot,
     pass: pass,
