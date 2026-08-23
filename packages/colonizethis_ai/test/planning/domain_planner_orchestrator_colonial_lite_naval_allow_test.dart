@@ -77,6 +77,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
+import 'domain_planner_orchestrator_colonial_lite_naval_allow_tail_cases.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
@@ -291,51 +292,7 @@ void main() {
         );
       },
     );
-
-    test(
-      'emits identical naval move orders for identical COLONIAL-lite inputs',
-      () {
-        final game = buildOrchestratorColonialLiteNavalAllowScenarioGame(
-          id: 'g-2509-colonial-lite-naval-allow',
-          turnNumber: kObserverColonialLiteMinTurn,
-        );
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _nearQuotaSnapshotWithColonialTarget();
-
-        Orders runOnce(int turnSeed) => runDomainPlanners(
-          DomainPlannerInput(
-            game: game,
-            topology: topology,
-            nationId: _nationId,
-            view: view,
-            snapshot: snapshot,
-            config: _aiConfig,
-            primaryGoal: StrategicGoal.expand,
-            seeds: AISeedBundle.fromTurnSeed(turnSeed),
-            suggestionAPI: _navalCandidateApi,
-            economyPlan: _economyPlan,
-          ),
-        );
-
-        final first = runOnce(2509202);
-        final second = runOnce(2509202);
-
-        List<String> navalMoveFingerprint(Orders orders) => <String>[
-          for (final m in _navalMoves(orders))
-            '${m.fleetId}|${m.destinationSeaZoneId ?? ''}|'
-                '${m.destinationPortProvinceId ?? ''}',
-        ];
-
-        expect(
-          navalMoveFingerprint(second),
-          navalMoveFingerprint(first),
-          reason:
-              'Determinism (must-have #7): identical COLONIAL-lite inputs '
-              'must produce identical naval move orders so a flaky '
-              'colonial naval boost path cannot mask the ALLOW contract.',
-        );
-      },
-    );
   });
+
+  registerDomainPlannerOrchestratorColonialLiteNavalAllowTailCases();
 }

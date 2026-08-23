@@ -94,6 +94,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/colonial_phase_planner_test_support.dart';
+import 'colonial_phase_planner_peace_core_cases_tail_cases.dart';
 
 
 void registerColonialPhasePlannerPeaceCoreCases() {
@@ -198,135 +199,7 @@ void registerColonialPhasePlannerPeaceCoreCases() {
             'forces fall-through to the "peace all" arm).',
       );
     });
-
-    test('multi-GP, blocker among gpWars -> peace all except blocker', () {
-      // Canonical COLONIAL happy path: gp2 owns the invadable NW
-      // (blocker), gp3 + gp4 are non-blocker fronts -> peace gp3 and
-      // gp4 sorted ascending; keep fighting gp2.
-      final game = buildColonialPeaceGame(
-        newWorldProvinces: const [
-          Province(
-            id: 'newWorld|gp2_a',
-            regionId: 'newWorld',
-            ownerId: kColonialPhaseGp2,
-          ),
-          Province(
-            id: 'newWorld|gp2_b',
-            regionId: 'newWorld',
-            ownerId: kColonialPhaseGp2,
-          ),
-        ],
-      );
-      final snapshot = buildColonialPeaceSnapshot(
-        atWarWith: const [
-          kColonialPhaseGp2,
-          kColonialPhaseGp3,
-          kColonialPhaseGp4,
-        ],
-        invadableNw: const ['newWorld|gp2_a', 'newWorld|gp2_b'],
-      );
-      expect(
-        planColonialPeace(game: game, snapshot: snapshot),
-        const [kColonialPhaseGp3, kColonialPhaseGp4],
-        reason:
-            'Blocker gp2 is preserved (keep fighting the colonial NW '
-            'blocker); non-blocker GPs gp3 + gp4 are peaced in '
-            'ascending sort (canonical COLONIAL-peace happy path).',
-      );
-    });
-
-    test('sole GP at war IS the blocker -> empty (keep fighting)', () {
-      // Exactly one GP at war (gp2) and that GP IS the colonial
-      // blocker. The function falls through to the
-      // "exclude blocker" comprehension which yields an empty list
-      // because the only candidate equals the blocker. A regression
-      // that emitted `[gp2]` here would prematurely peace the
-      // colonial blocker and stall NW acquisition.
-      final game = buildColonialPeaceGame(
-        newWorldProvinces: const [
-          Province(
-            id: 'newWorld|gp2_a',
-            regionId: 'newWorld',
-            ownerId: kColonialPhaseGp2,
-          ),
-        ],
-      );
-      final snapshot = buildColonialPeaceSnapshot(
-        atWarWith: const [kColonialPhaseGp2],
-        invadableNw: const ['newWorld|gp2_a'],
-      );
-      expect(
-        planColonialPeace(game: game, snapshot: snapshot),
-        isEmpty,
-        reason:
-            'Sole GP front IS the colonial NW blocker -- keep fighting; '
-            'the planner returns empty so the orchestrator emits no '
-            '`offerPeace` toward gp2 this turn.',
-      );
-    });
-
-    test('sole GP at war is NOT the blocker -> peace that single GP', () {
-      // Exactly one GP at war (gp3) and the colonial blocker is a
-      // different GP (gp4) NOT in `atWarWith`. The membership guard
-      // fires (`!gpWars.contains(gp4)`) -> peace all `gpWars`
-      // sorted. Result: `[gp3]`. This is the explicit divergence
-      // from the legacy `colonialPhaseGpPeaceTargets` short-circuit
-      // `gpWars.length <= 1 → const []`: the new spec says "Peace
-      // all at-war Great Powers" without a length guard, so a lone
-      // non-blocker war must still be peaced.
-      final game = buildColonialPeaceGame(
-        newWorldProvinces: const [
-          Province(
-            id: 'newWorld|gp4_a',
-            regionId: 'newWorld',
-            ownerId: kColonialPhaseGp4,
-          ),
-        ],
-      );
-      final snapshot = buildColonialPeaceSnapshot(
-        atWarWith: const [kColonialPhaseGp3],
-        invadableNw: const ['newWorld|gp4_a'],
-      );
-      expect(
-        planColonialPeace(game: game, snapshot: snapshot),
-        const [kColonialPhaseGp3],
-        reason:
-            'Sole non-blocker GP front -- new spec "Peace all" arm '
-            'fires regardless of `gpWars.length`. The single GP is '
-            'returned (divergence from legacy `gpWars.length <= 1` '
-            'short-circuit).',
-      );
-    });
-
-    test('3 GPs at war (input order shuffled) -> ascending sort', () {
-      // Determinism pin (Must-have #7). Three GP fronts (gp4, gp3, gp2)
-      // with gp2 as blocker -> peace gp3 + gp4 in ascending order
-      // regardless of input order. A regression that returned the
-      // input order would surface here as `[gp4, gp3]`.
-      final game = buildColonialPeaceGame(
-        newWorldProvinces: const [
-          Province(
-            id: 'newWorld|gp2_a',
-            regionId: 'newWorld',
-            ownerId: kColonialPhaseGp2,
-          ),
-        ],
-      );
-      final snapshot = buildColonialPeaceSnapshot(
-        atWarWith: const [
-          kColonialPhaseGp4,
-          kColonialPhaseGp3,
-          kColonialPhaseGp2,
-        ],
-        invadableNw: const ['newWorld|gp2_a'],
-      );
-      expect(
-        planColonialPeace(game: game, snapshot: snapshot),
-        const [kColonialPhaseGp3, kColonialPhaseGp4],
-        reason:
-            'Trailing `..sort()` restores ascending order regardless of '
-            'input order (Refs #2509 Must-have #7).',
-      );
-    });
   });
+
+  registerColonialPhasePlannerPeaceCoreCasesTail();
 }
