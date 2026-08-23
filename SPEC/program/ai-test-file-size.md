@@ -14,8 +14,8 @@ hosts such as `goal_manager_test.dart`.
   `packages/colonizethis_ai/test/support_test/`.
 - **Out of scope:** `test/support/**` (`repo.ai_test_support_file_size` /
   `repo.ai_s7d_support_suite_size`), `test/observer/**`
-  (`repo.ai_observer_suite_size`). Those trees still use a 400 ceiling until
-  Slice E densify.
+  (`repo.ai_observer_suite_size`). Those trees use a **300** ceiling after
+  Phase 16 Slice E (Refs #4602).
 - **Ceiling:** **300 physical lines** per file.
 - **Allowlist:** none; split with topic-named `*_cases.dart` / named hosts. Do
   not add `*_partN_test.dart`.
