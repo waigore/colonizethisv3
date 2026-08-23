@@ -3317,6 +3317,24 @@ abstract class AppLocalizations {
   /// Visible label for the Disband button on trained-tier rows.
   String get production_labourDisband;
 
+  /// Singular Peasant rank name in Disband confirm copy.
+  String get production_workerSingularPeasant;
+
+  /// Singular Apprentice rank name in Disband confirm copy.
+  String get production_workerSingularApprentice;
+
+  /// Singular Journeyman rank name in Disband confirm copy.
+  String get production_workerSingularJourneyman;
+
+  /// Singular Master rank name in Disband confirm copy.
+  String get production_workerSingularMaster;
+
+  /// Title of the Labour Controls Disband confirm dialog.
+  String production_labourDisbandConfirmTitle(String tier);
+
+  /// Disband confirm body: effect, no-refund cost, and immediate timing.
+  String production_labourDisbandConfirmBody(String tier);
+
   /// Parenthetical suffix on a Labour Controls tier label when every
   /// required tech is unlocked for the viewed player (peasant always
   /// renders this).

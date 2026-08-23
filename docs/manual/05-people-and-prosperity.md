@@ -40,7 +40,7 @@ On `GAME20001`, use **Labour Controls** under that labour line. Each row shows t
 
 3. Locked trained rows need both technologies: Apprentice needs Apprentice Workers and Sugar Refining; Journeyman needs Trained Journeymen and Cigar Production; Master needs Master Artisans and Hat Production. Locked rows print **Requires:** with those names until you research them.
 4. Peasants already promised to queued worker training or to army/navy training are not free to spend again. Training a civilian (Explorer, Builder, and the rest) does **not** spend a peasant.
-5. **Disband** on a trained row happens as soon as you tap it: that tier −1, peasants +1, **no refund**. It is not queued for later. Peasant rows have no **Disband**.
+5. Tap **Disband** on a trained row. A confirm names that rank, says the worker becomes a Peasant **now**, and says gold and paper spent to train them are not returned. Tap **Cancel** (or tap outside, or press Escape) to leave the pool unchanged. Tap **Disband** on the confirm to apply it at once: that rank −1, peasants +1. It is not queued for later. Peasant rows have no **Disband**.
 
 Reject reasons you may see: **Insufficient workers**, **Insufficient materials**, **Insufficient treasury**, **Required technology not unlocked**.
 
