@@ -39,6 +39,7 @@ export 'src/turn_state.dart';
 export 'src/turn_news_digest.dart';
 export 'src/last_turn_intelligence_digest.dart';
 export 'src/turn_time_mapping.dart';
+export 'src/campaign_calendar_clock.dart';
 export 'src/unit.dart';
 export 'src/world_market.dart';
 export 'src/world_state.dart';

@@ -13,6 +13,7 @@ class OldWorldRaceSnapshot {
     required this.threshold,
     this.rivalLeaderName,
     this.rivalLeaderCount,
+    this.calendarClock,
   });
 
   final String focusPlayerId;
@@ -20,6 +21,7 @@ class OldWorldRaceSnapshot {
   final int threshold;
   final String? rivalLeaderName;
   final int? rivalLeaderCount;
+  final CampaignCalendarClock? calendarClock;
 
   bool get rivalIsAhead =>
       rivalLeaderName != null &&
@@ -84,6 +86,7 @@ class OldWorldRaceSnapshot {
       threshold: threshold,
       rivalLeaderName: showRival ? rival.displayName : null,
       rivalLeaderCount: showRival ? rivalCount : null,
+      calendarClock: CampaignCalendarClock.fromGame(game),
     );
   }
 }

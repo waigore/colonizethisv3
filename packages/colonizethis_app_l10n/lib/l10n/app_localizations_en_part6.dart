@@ -495,4 +495,65 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
     return ' (incl. +$bonus capital grain bonus)';
   }
+
+  @override
+  String victory_conditionsCalendarRemaining(
+    int currentYear,
+    int lastYear,
+    int remainingYears,
+    int remainingTurns,
+  ) {
+    return 'This year is $currentYear. The last campaign year is $lastYear. '
+        '$remainingYears years remain ($remainingTurns full turns). If no one '
+        'wins by province count, the Great Power with the strongest overall '
+        'realm may be named the declared winner; a tie names no one.';
+  }
+
+  @override
+  String victory_conditionsCalendarLastYear(int lastYear) {
+    return 'This is the last campaign year ($lastYear). No years remain. If '
+        'no one wins by province count this turn, the Great Power with the '
+        'strongest overall realm may be named the declared winner; a tie '
+        'names no one.';
+  }
+
+  @override
+  String victory_conditionsCalendarNoHalt(int stopYear) {
+    return 'This campaign calendar has no halt at year $stopYear. Play '
+        'continues until a province-count win or you leave the campaign.';
+  }
+
+  @override
+  String get victory_conditionsCalendarEnded =>
+      'The campaign has ended. Remaining years are not shown. If play stopped '
+      'without a province-count winner, the Great Power with the strongest '
+      'overall realm may be named the declared winner; a tie names no one.';
+
+  @override
+  String mapControls_oldWorldRace_tooltipRemaining(
+    int remainingYears,
+    int lastYear,
+  ) {
+    return 'Old World provinces toward the 31-province win. $remainingYears '
+        'years remain until $lastYear. Tap for full standings.';
+  }
+
+  @override
+  String mapControls_oldWorldRace_tooltipLastYear(int lastYear) {
+    return 'Old World provinces toward the 31-province win. This is the last '
+        'campaign year ($lastYear). Tap for full standings.';
+  }
+
+  @override
+  String mapControls_oldWorldRace_yearsRemain(
+    int remainingYears,
+    int lastYear,
+  ) {
+    return '$remainingYears years remain until $lastYear.';
+  }
+
+  @override
+  String mapControls_oldWorldRace_lastYearClause(int lastYear) {
+    return 'This is the last campaign year ($lastYear).';
+  }
 }

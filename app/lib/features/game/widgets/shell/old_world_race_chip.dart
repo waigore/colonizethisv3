@@ -1,5 +1,6 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
@@ -60,7 +61,7 @@ class OldWorldRaceChip extends StatelessWidget {
       button: onTap != null,
       label: copy.semanticsLabel,
       child: Tooltip(
-        message: l10n.mapControls_oldWorldRace_tooltip,
+        message: _raceChipTooltip(l10n, snapshot.calendarClock),
         child: chip,
       ),
     );
@@ -88,12 +89,21 @@ class _OldWorldRaceChipCopy {
     final String fraction = narrow
         ? l10n.mapControls_oldWorldRace_compact(count, threshold)
         : l10n.mapControls_oldWorldRace(count, threshold);
+    final String raceSemantics = snapshot.rivalIsAhead
+        ? l10n.mapControls_oldWorldRace_semanticsWithRival(
+            count,
+            threshold,
+            snapshot.rivalLeaderName!,
+            '${snapshot.rivalLeaderCount}',
+          )
+        : l10n.mapControls_oldWorldRace_semanticsLabel(count, threshold);
     if (!snapshot.rivalIsAhead) {
       return _OldWorldRaceChipCopy(
         fraction: fraction,
-        semanticsLabel: l10n.mapControls_oldWorldRace_semanticsLabel(
-          count,
-          threshold,
+        semanticsLabel: _withCalendarSemantics(
+          l10n,
+          snapshot.calendarClock,
+          raceSemantics,
         ),
       );
     }
@@ -108,14 +118,48 @@ class _OldWorldRaceChipCopy {
               rivalCount,
               threshold,
             ),
-      semanticsLabel: l10n.mapControls_oldWorldRace_semanticsWithRival(
-        count,
-        threshold,
-        rivalName,
-        rivalCount,
+      semanticsLabel: _withCalendarSemantics(
+        l10n,
+        snapshot.calendarClock,
+        raceSemantics,
       ),
     );
   }
+}
+
+String _raceChipTooltip(AppLocalizations l10n, CampaignCalendarClock? clock) {
+  if (clock == null) {
+    return l10n.mapControls_oldWorldRace_tooltip;
+  }
+  if (clock.kind == CampaignCalendarClockKind.remaining) {
+    return l10n.mapControls_oldWorldRace_tooltipRemaining(
+      clock.remainingYears,
+      clock.lastCampaignYear,
+    );
+  }
+  if (clock.kind == CampaignCalendarClockKind.lastYear) {
+    return l10n.mapControls_oldWorldRace_tooltipLastYear(
+      clock.lastCampaignYear,
+    );
+  }
+  return l10n.mapControls_oldWorldRace_tooltip;
+}
+
+String _withCalendarSemantics(
+  AppLocalizations l10n,
+  CampaignCalendarClock? clock,
+  String raceSemantics,
+) {
+  if (clock == null) {
+    return raceSemantics;
+  }
+  if (clock.kind == CampaignCalendarClockKind.remaining) {
+    return '$raceSemantics ${l10n.mapControls_oldWorldRace_yearsRemain(clock.remainingYears, clock.lastCampaignYear)}';
+  }
+  if (clock.kind == CampaignCalendarClockKind.lastYear) {
+    return '$raceSemantics ${l10n.mapControls_oldWorldRace_lastYearClause(clock.lastCampaignYear)}';
+  }
+  return raceSemantics;
 }
 
 class _OldWorldRaceChipVisual extends StatelessWidget {

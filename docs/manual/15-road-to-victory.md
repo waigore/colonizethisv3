@@ -14,13 +14,13 @@ The campaign may also reach its last year with no province-count winner. Then yo
 
 1. On `MAP10001` **Empire overview / map area**, look at the count beside treasury and cargo. It shows how many Old World provinces you hold out of 31.
 2. If another Great Power holds **more** Old World provinces than you, that court’s name and count appear beside yours. If you lead or the counts are equal, no rival name appears.
-3. Tap that count to open `GAME70001` **Victory screen**. Use this glance during the campaign.
+3. Rest on that count, or press and hold on a touch screen, to read how many years remain until the last campaign year. Tap that count to open `GAME70001` **Victory screen**. Use this glance during the campaign.
 4. After a court already owns 31 Old World provinces, that count is gone. Tap the last left-side **Victory** icon instead. That icon stays available.
 
 ### Opening the Victory screen
 
 5. You can also tap the last of the left-side icons (after Technology) at any time. The top bar may print **Victory**; the screen’s title is **Victory screen**.
-6. Read the conditions. They state that you win by controlling **31 or more Old World provinces**. Calendar-end notes appear when they apply. If you chose infinite mode at new game, a note on those conditions says the calendar stop is off.
+6. Read the conditions. They state that you win by controlling **31 or more Old World provinces**. They also name this year, the last campaign year, how many years remain, and how many full turns remain. If you chose infinite mode at new game, a note says the calendar stop is off and no remaining-year count is shown.
 7. While the campaign is still running, there is no extra banner at the top. After a 31-province win, a banner names who won by owning 31 Old World provinces. After the calendar stop, a banner names the strongest overall realm or a tie.
 
 ### Reading each court
@@ -47,7 +47,7 @@ The campaign may also reach its last year with no province-count winner. Then yo
 
 ### The calendar stop
 
-21. In a standard campaign, the last full year is **1800** — turn **201** on the usual calendar.
+21. In a standard campaign, the last full year is **1800** — turn **201** on the usual calendar. `GAME70001` **Victory screen** and the Old World count’s rest text show how many years remain while the campaign is still running.
 22. After that last year finishes with no province-count winner, **Next turn** stays unavailable.
 23. At that calendar end, a declared winner is the Great Power with the strongest overall realm: owned provinces in both worlds, army strength, and ships all contribute. A tie produces no declared winner.
 
@@ -96,7 +96,7 @@ Rival courts do not get a secret victory rule. They do not get an extra rule tha
 ## Acceptance criteria for this chapter
 
 - [ ] States that winning by province count requires a Great Power to control 31 or more Old World provinces, including Minor Nation provinces.
-- [ ] Documents `GAME70001` **Victory screen** (map-row Old World count entry and left-side icon, Old World standings with progress bars and tap-to-highlight lands, expandable calendar-end totals, small Old World map with hover or tap a province to see founding owner or captured, conditions including infinite mode) in plain province-count language.
+- [ ] Documents `GAME70001` **Victory screen** (map-row Old World count entry and left-side icon, remaining years on conditions and on the count’s rest text, Old World standings with progress bars and tap-to-highlight lands, expandable calendar-end totals, small Old World map with hover or tap a province to see founding owner or captured, conditions including infinite mode) in plain province-count language.
 - [ ] States that New World and Tribe provinces do not count toward the military threshold.
 - [ ] Explains the default 1800 calendar cap, its turn-201 default mapping, and the declared-winner overall-strength outcome, including ties.
 - [ ] Explains infinite mode as a new-campaign choice on `DLG10001` **New game leader selection** that removes the calendar stop while retaining the province-count win.

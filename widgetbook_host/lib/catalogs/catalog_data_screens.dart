@@ -76,7 +76,7 @@ Game _victoryScreenStoryGame() {
   return Game(
     id: 'wb_victory_screen',
     worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 12),
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 42),
       oldWorld: RegionData(
         provinces: [
           const Province(
@@ -106,7 +106,10 @@ Game _victoryScreenStoryGame() {
 }
 
 Widget _victoryScreenDefaultStory() {
-  final game = _victoryScreenStoryGame();
+  return _victoryScreenStory(_victoryScreenStoryGame());
+}
+
+Widget _victoryScreenStory(Game game) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -747,6 +750,25 @@ List<WidgetbookNode> get victoryScreenDirectories => [
         name: 'Scaffold (wide side-by-side)',
         builder: (context) =>
             wideViewport(context, _victoryScreenDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (infinite mode)',
+        builder: (context) => _victoryScreenStory(
+          _victoryScreenStoryGame().copyWith(infiniteMode: true),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (last campaign year)',
+        builder: (context) => _victoryScreenStory(
+          _victoryScreenStoryGame().copyWith(
+            worldState: _victoryScreenStoryGame().worldState.copyWith(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 201,
+              ),
+            ),
+          ),
+        ),
       ),
       WidgetbookUseCase(
         name: 'Scaffold (rival GP selected)',

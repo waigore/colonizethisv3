@@ -8,6 +8,13 @@ const OldWorldRaceSnapshot _kHumanAheadRace = OldWorldRaceSnapshot(
   focusPlayerId: 'gp1',
   focusCount: 18,
   threshold: 31,
+  calendarClock: CampaignCalendarClock(
+    kind: CampaignCalendarClockKind.remaining,
+    currentYear: 1582,
+    lastCampaignYear: 1800,
+    remainingYears: 218,
+    remainingTurns: 159,
+  ),
 );
 
 const OldWorldRaceSnapshot _kRivalAheadRace = OldWorldRaceSnapshot(
@@ -45,5 +52,10 @@ List<WidgetbookUseCase> get _oldWorldRaceTabBarStories => [
         showPlayersBar: false,
       ),
     ),
+  ),
+  WidgetbookUseCase(
+    name: 'Old World race — remaining years tooltip',
+    builder: (context) =>
+        _gameTabBarStoryFrame(oldWorldRace: _kHumanAheadRace),
   ),
 ];

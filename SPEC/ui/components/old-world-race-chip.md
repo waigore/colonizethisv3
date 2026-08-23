@@ -31,7 +31,7 @@ Tab-bar order: `treasury → cargo → labour/feeding → race chip → players-
 | Control | When enabled | Emits / calls |
 |---------|--------------|---------------|
 | Tap / activate | `Game.victory == null` | `NavigateToRouteEvent(Routes.victory, {game, humanPlayerId})` — same args as left-rail Victory |
-| Tooltip / semantics | chip visible | Plain-language Old World race; tap opens Victory |
+| Tooltip / semantics | chip visible | Old World race; tap opens Victory; remaining years until last campaign year when a halt countdown applies (omitted in infinite mode, after halt/win, or when the mapping has no 1800 turn) |
 
 Does not emit overlay bus events. Does not auto-open, nag at end of turn, or float a second standings panel.
 
@@ -50,6 +50,7 @@ Folder: **Game Tab Bar** — `widgetbook_host/lib/catalogs/catalog_game_chrome.d
 | Old World race — rival ahead | Rival name + `N / 31` |
 | Old World race — players bar hidden | Chip visible while players-bar toggle is off |
 | Old World race — 320 dp rival ahead | Compact copy; no overflow |
+| Old World race — remaining years tooltip | Tooltip/semantics include remaining years until 1800 |
 
 Folder: **Players Bar** — `Human GP highlighted — Old World N / 31` shows default chip numbers as `N / 31`.
 
@@ -62,6 +63,8 @@ Folder: **Players Bar** — `Human GP highlighted — Old World N / 31` shows de
 - **Given** `showPlayersBar == false`, **when** the map loads, **then** the race chip remains visible.
 - **Given** `Game.victory != null`, **when** the map renders, **then** the race chip is not mounted.
 - **Given** a 320–360 dp viewport, **when** the tab bar renders, **then** the race chip does not overflow or collide with treasury, cargo, or news. Golden: `app/test/goldens/old_world_race_chip_320dp.png`.
+- **Given** a standard `gdd01` campaign with a remaining halt countdown, **when** the Old World race chip is shown, **then** tooltip / long-press / semantics include remaining years until the last campaign year and still state the 31-province race and that tap opens Victory. Tests: `app/test/old_world_race_chip_test.dart`.
+- **Given** `Game.infiniteMode == true`, **when** the race-chip tooltip renders, **then** no remaining-years countdown appears.
 
 ## Tests
 

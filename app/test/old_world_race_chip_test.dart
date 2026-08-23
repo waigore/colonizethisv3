@@ -5,6 +5,7 @@ import 'package:colonizethis_app/features/game/widgets/shell/old_world_race_chip
 import 'package:colonizethis_app/features/game/widgets/shell/old_world_race_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -114,6 +115,65 @@ void main() {
     await tester.pump();
     expect(find.byKey(kOldWorldRaceChipKey), findsOneWidget);
     expect(find.byType(PlayersBarToggleButton), findsOneWidget);
+  });
+
+  testWidgets('tooltip includes remaining years when clock is remaining', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        race: const OldWorldRaceSnapshot(
+          focusPlayerId: 'gp1',
+          focusCount: 18,
+          threshold: 31,
+          calendarClock: CampaignCalendarClock(
+            kind: CampaignCalendarClockKind.remaining,
+            currentYear: 1582,
+            lastCampaignYear: 1800,
+            remainingYears: 218,
+            remainingTurns: 159,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final tooltip = tester.widget<Tooltip>(
+      find.descendant(
+        of: find.byType(OldWorldRaceChip),
+        matching: find.byType(Tooltip),
+      ),
+    );
+    expect(tooltip.message, contains('218 years remain until 1800'));
+    expect(tooltip.message, contains('31-province win'));
+  });
+
+  testWidgets('tooltip omits remaining years in infinite mode clock', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        race: const OldWorldRaceSnapshot(
+          focusPlayerId: 'gp1',
+          focusCount: 18,
+          threshold: 31,
+          calendarClock: CampaignCalendarClock(
+            kind: CampaignCalendarClockKind.omitCountdown,
+            currentYear: 1582,
+            lastCampaignYear: 1800,
+            remainingYears: 0,
+            remainingTurns: 0,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final tooltip = tester.widget<Tooltip>(
+      find.descendant(
+        of: find.byType(OldWorldRaceChip),
+        matching: find.byType(Tooltip),
+      ),
+    );
+    expect(tooltip.message, isNot(contains('years remain')));
   });
 
   testWidgets('320 dp compact copy does not overflow', (tester) async {
