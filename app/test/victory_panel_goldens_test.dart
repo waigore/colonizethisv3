@@ -1,5 +1,4 @@
-// Widget goldens for the Victory panel (GAME70001) visual acceptance criteria
-// (Refs #4165). Pixel baselines live under `app/test/goldens/` and are asserted
+// Widget goldens for GAME70001 (Refs #4165). Baselines: `app/test/goldens/`.
 // SPEC: SPEC/ui/victory-panel.md § Acceptance criteria.
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_political_minimap.dart';
