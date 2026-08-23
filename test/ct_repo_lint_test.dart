@@ -65,6 +65,10 @@ void main() {
       expect(ids, contains('repo.app_core_services_file_size'));
       expect(ids, contains('repo.app_turn_resolution_file_size'));
       expect(ids, contains('repo.app_test_no_duplicate_shortcut_fixtures'));
+      expect(
+        ids,
+        contains('repo.app_test_no_duplicate_shortcut_golden_game_service'),
+      );
       expect(ids, contains('repo.logic_test_file_size'));
       expect(ids, contains('repo.logic_domain_import_dag'));
       expect(ids, contains('repo.logic_source_file_size'));

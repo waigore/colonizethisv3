@@ -2586,6 +2586,13 @@ rules:
     runner: dart
     script: tool/check_app_test_no_duplicate_shortcut_fixtures.dart
 
+  - rule_id: repo.app_test_no_duplicate_shortcut_golden_game_service
+    group: testing
+    title: "six MAP20001 shortcut-host golden suites must not declare local GameService stubs (Refs #4606; consulate excluded)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_shortcut_golden_game_service.dart
+
   - rule_id: repo.app_test_no_duplicate_golden_host
     group: testing
     title: "app/test must not reintroduce duplicated golden-host scaffolding (Refs #3847, #4035)"
