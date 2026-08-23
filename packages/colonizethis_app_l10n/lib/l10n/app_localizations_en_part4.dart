@@ -207,34 +207,6 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
       'Old World provinces toward the 31-province win. Tap for full standings.';
 
   @override
-  String mapControls_oldWorldRace_tooltipRemaining(
-    int remainingYears,
-    int lastYear,
-  ) {
-    return 'Old World provinces toward the 31-province win. $remainingYears '
-        'years remain until $lastYear. Tap for full standings.';
-  }
-
-  @override
-  String mapControls_oldWorldRace_tooltipLastYear(int lastYear) {
-    return 'Old World provinces toward the 31-province win. This is the last '
-        'campaign year ($lastYear). Tap for full standings.';
-  }
-
-  @override
-  String mapControls_oldWorldRace_yearsRemain(
-    int remainingYears,
-    int lastYear,
-  ) {
-    return '$remainingYears years remain until $lastYear.';
-  }
-
-  @override
-  String mapControls_oldWorldRace_lastYearClause(int lastYear) {
-    return 'This is the last campaign year ($lastYear).';
-  }
-
-  @override
   String mapControls_oldWorldRace_semanticsLabel(
     String count,
     String threshold,

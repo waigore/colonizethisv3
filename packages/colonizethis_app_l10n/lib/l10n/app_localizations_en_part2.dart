@@ -265,39 +265,6 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
       'no one.';
 
   @override
-  String victory_conditionsCalendarRemaining(
-    int currentYear,
-    int lastYear,
-    int remainingYears,
-    int remainingTurns,
-  ) {
-    return 'This year is $currentYear. The last campaign year is $lastYear. '
-        '$remainingYears years remain ($remainingTurns full turns). If no one '
-        'wins by province count, the Great Power with the strongest overall '
-        'realm may be named the declared winner; a tie names no one.';
-  }
-
-  @override
-  String victory_conditionsCalendarLastYear(int lastYear) {
-    return 'This is the last campaign year ($lastYear). No years remain. If '
-        'no one wins by province count this turn, the Great Power with the '
-        'strongest overall realm may be named the declared winner; a tie '
-        'names no one.';
-  }
-
-  @override
-  String victory_conditionsCalendarNoHalt(int stopYear) {
-    return 'This campaign calendar has no halt at year $stopYear. Play '
-        'continues until a province-count win or you leave the campaign.';
-  }
-
-  @override
-  String get victory_conditionsCalendarEnded =>
-      'The campaign has ended. Remaining years are not shown. If play stopped '
-      'without a province-count winner, the Great Power with the strongest '
-      'overall realm may be named the declared winner; a tie names no one.';
-
-  @override
   String get victory_conditionsInfiniteMode =>
       'Infinite mode is on: the calendar halt is bypassed. Only reaching the '
       'province win or leaving the campaign ends play.';
