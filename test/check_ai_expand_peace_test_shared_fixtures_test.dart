@@ -195,7 +195,7 @@ void main() {
           File(
             p.join(
               planning.path,
-              'expand_phase_peace_matrix_sole_gp_blocker_cases.dart',
+              'expand_phase_peace_matrix_sole_gp_blocker_guard_cases.dart',
             ),
           ).writeAsStringSync(
             "import 'package:test/test.dart';\n\n"
@@ -250,81 +250,69 @@ void main() {
         temp.deleteSync(recursive: true);
       }
     });
-    test(
-      'fails when a Phase-11 matrix cases file redeclares _buildGame',
-      () {
-        final temp = Directory.systemTemp.createTempSync('ai-peace-matrix-');
-        try {
-          _writeSupportStub(temp);
-          final planning = Directory(
-            p.join(
-              temp.path,
-              'packages',
-              'colonizethis_ai',
-              'test',
-              'planning',
-            ),
-          )..createSync(recursive: true);
-          File(
-            p.join(
-              planning.path,
-              'expand_phase_peace_matrix_game_predicate_truth_cases.dart',
-            ),
-          ).writeAsStringSync(
-            "import 'package:test/test.dart';\n\n"
-            'Game _buildGame(Object c) => throw UnimplementedError();\n\n'
-            'void main() {}\n',
-          );
+    test('fails when a Phase-11 matrix cases file redeclares _buildGame', () {
+      final temp = Directory.systemTemp.createTempSync('ai-peace-matrix-');
+      try {
+        _writeSupportStub(temp);
+        final planning = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_ai', 'test', 'planning'),
+        )..createSync(recursive: true);
+        File(
+          p.join(
+            planning.path,
+            'expand_phase_peace_matrix_game_predicate_truth_cases.dart',
+          ),
+        ).writeAsStringSync(
+          "import 'package:test/test.dart';\n\n"
+          'Game _buildGame(Object c) => throw UnimplementedError();\n\n'
+          'void main() {}\n',
+        );
 
-          final errors = <String>[];
-          final exitCode = runCheckAiExpandPeaceTestSharedFixtures(
-            temp.path,
-            info: (_) {},
-            err: errors.add,
-          );
-          expect(exitCode, 1);
-          expect(errors.join('\n'), contains('_buildGame'));
-          expect(errors.join('\n'), contains('buildExpandPeaceMatrixGame'));
-        } finally {
-          temp.deleteSync(recursive: true);
-        }
-      },
-    );
+        final errors = <String>[];
+        final exitCode = runCheckAiExpandPeaceTestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('_buildGame'));
+        expect(errors.join('\n'), contains('buildExpandPeaceMatrixGame'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
 
-    test(
-      'fails when a default-start peace pin redeclares _gameOf',
-      () {
-        final temp = Directory.systemTemp.createTempSync('ai-peace-gameof-');
-        try {
-          _writeSupportStub(temp);
-          _writeExpandPeaceTest(
-            temp,
-            'default_start_and_near_quota_peace_test.dart',
-            "import 'package:test/test.dart';\n\n"
-                'Game _gameOf({required Map<String, int> owOwners, '
-                'required List<String> atWarPartners}) {\n'
-                '  throw UnimplementedError();\n'
-                '}\n\n'
-                'void main() {}\n',
-          );
+    test('fails when a default-start peace pin redeclares _gameOf', () {
+      final temp = Directory.systemTemp.createTempSync('ai-peace-gameof-');
+      try {
+        _writeSupportStub(temp);
+        _writeExpandPeaceTest(
+          temp,
+          'default_start_and_near_quota_peace_test.dart',
+          "import 'package:test/test.dart';\n\n"
+              'Game _gameOf({required Map<String, int> owOwners, '
+              'required List<String> atWarPartners}) {\n'
+              '  throw UnimplementedError();\n'
+              '}\n\n'
+              'void main() {}\n',
+        );
 
-          final errors = <String>[];
-          final exitCode = runCheckAiExpandPeaceTestSharedFixtures(
-            temp.path,
-            info: (_) {},
-            err: errors.add,
-          );
-          expect(exitCode, 1);
-          expect(errors.join('\n'), contains('_gameOf'));
-          expect(
-            errors.join('\n'),
-            contains('buildDefaultStartNearQuotaExpandPeaceGame'),
-          );
-        } finally {
-          temp.deleteSync(recursive: true);
-        }
-      },
-    );
+        final errors = <String>[];
+        final exitCode = runCheckAiExpandPeaceTestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('_gameOf'));
+        expect(
+          errors.join('\n'),
+          contains('buildDefaultStartNearQuotaExpandPeaceGame'),
+        );
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
   });
 }
 

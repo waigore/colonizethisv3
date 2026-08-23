@@ -13,12 +13,12 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckAiSourceFileSize', () {
-    test('passes on current repo tree under 300 physical-line ceiling', () {
+    test('passes on current repo tree under 250 physical-line ceiling', () {
       expect(runCheckAiSourceFileSize('.'), 0);
     });
 
-    test('ceiling is 300 after #4365 Slice A headroom ratchet', () {
-      expect(aiSourceFileSizeCeiling, 300);
+    test('ceiling is 250 after #4602 Slice A headroom ratchet', () {
+      expect(aiSourceFileSizeCeiling, 250);
     });
 
     test(
@@ -119,6 +119,43 @@ void main() {
 
       final code = runCheckAiSourceFileSize(root.path, ceiling: 10);
       expect(code, 0);
+    });
+
+    test('Slice A near-cap hosts stay ≤230 physical lines (Refs #4602)', () {
+      const hosts = <String>[
+        'packages/colonizethis_ai/lib/src/planning/diplomatic_candidate_scoring_declare_war.dart',
+        'packages/colonizethis_ai/lib/src/planning/diplomatic_candidate_scoring_declare_war_suppression.dart',
+        'packages/colonizethis_ai/lib/src/planning/domain_planner_orchestrator.dart',
+        'packages/colonizethis_ai/lib/src/planning/domain_planner_orchestrator_input.dart',
+        'packages/colonizethis_ai/lib/src/planning/treasury_lock_recovery.dart',
+        'packages/colonizethis_ai/lib/src/planning/treasury_lock_recovery_scan.dart',
+        'packages/colonizethis_ai/lib/src/planning/conquest_planner_stalled_scoring.dart',
+        'packages/colonizethis_ai/lib/src/planning/conquest_planner_stalled_scoring_geo.dart',
+        'packages/colonizethis_ai/lib/src/planning/diplomacy_planner_run.dart',
+        'packages/colonizethis_ai/lib/src/planning/diplomacy_planner_run_weight.dart',
+        'packages/colonizethis_ai/lib/src/planning/economy_planner_labour.dart',
+        'packages/colonizethis_ai/lib/src/planning/economy_planner_labour_counsel.dart',
+        'packages/colonizethis_ai/lib/src/planning/colonial_naval_scoring.dart',
+        'packages/colonizethis_ai/lib/src/planning/phase_planner_naval_filter.dart',
+        'packages/colonizethis_ai/lib/src/planning/growth_stage.dart',
+        'packages/colonizethis_ai/lib/src/planning/phase_planner_dispatch_phases.dart',
+        'packages/colonizethis_ai/lib/src/planning/expand_phase_planner.dart',
+        'packages/colonizethis_ai/lib/src/planning/treasury_planner_emit_input_lock_recovery.dart',
+        'packages/colonizethis_ai/lib/src/planning/phase_planner_economy_filter.dart',
+        'packages/colonizethis_ai/lib/src/planning/diplomatic_candidate_scoring_declare_war_bonuses_stalled.dart',
+        'packages/colonizethis_ai/lib/src/planning/colonial_phase_planner_lite_naval.dart',
+        'packages/colonizethis_ai/lib/src/planning/expand_phase_planner_peer_peace_stalled.dart',
+        'packages/colonizethis_ai/lib/src/planning/domain_planner_orchestrator_economy_build_gate.dart',
+        'packages/colonizethis_ai/lib/src/planning/phase_planner_diplomacy_filter.dart',
+      ];
+      for (final relative in hosts) {
+        final lines = File(relative).readAsLinesSync().length;
+        expect(
+          lines,
+          lessThanOrEqualTo(230),
+          reason: '$relative is $lines lines (Slice A headroom target ≤230)',
+        );
+      }
     });
 
     test('Slice B essay hosts stay ≤260 physical lines (Refs #4530)', () {

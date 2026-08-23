@@ -59,86 +59,77 @@ void main() {
     'expandSellerFeedstockTileAcquisitionTarget '
     '(Refs #2847 H8-extraction EXPAND feedstock-tile acquisition target wiring)',
     () {
-      test(
-        'returns the conquest-reachable feedstock province when the flagged '
-        'seller can invade it',
-        () {
-          final game = buildExpandFeedstockAcquisitionTargetGame(
-            resourceByTileKey: const {
-              _grainTile: 'grain',
-              _woolTile: 'wool',
-              'oldWorld|t1|0|0': 'timber',
-            },
-            extraOldWorld: [_tribeProvince('oldWorld|t1')],
-          );
-          // Precondition: the acquisition residual is active for the seller.
-          expect(
-            sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
-            isTrue,
-          );
-          final snapshot = _snapshot(invadableOw: const ['oldWorld|t1']);
-          expect(
-            expandSellerFeedstockTileAcquisitionTarget(
-              game: game,
-              snapshot: snapshot,
-            ),
-            equals('oldWorld|t1'),
-          );
-        },
-      );
+      test('returns the conquest-reachable feedstock province when the flagged '
+          'seller can invade it', () {
+        final game = buildExpandFeedstockAcquisitionTargetGame(
+          resourceByTileKey: const {
+            _grainTile: 'grain',
+            _woolTile: 'wool',
+            'oldWorld|t1|0|0': 'timber',
+          },
+          extraOldWorld: [_tribeProvince('oldWorld|t1')],
+        );
+        // Precondition: the acquisition residual is active for the seller.
+        expect(
+          sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
+          isTrue,
+        );
+        final snapshot = _snapshot(invadableOw: const ['oldWorld|t1']);
+        expect(
+          expandSellerFeedstockTileAcquisitionTarget(
+            game: game,
+            snapshot: snapshot,
+          ),
+          equals('oldWorld|t1'),
+        );
+      });
 
-      test(
-        'returns the lowest conquest-reachable feedstock province id when '
-        'several are invadable',
-        () {
-          final game = buildExpandFeedstockAcquisitionTargetGame(
-            resourceByTileKey: const {
-              _grainTile: 'grain',
-              _woolTile: 'wool',
-              'oldWorld|t2|0|0': 'timber',
-              'oldWorld|t1|0|0': 'iron',
-            },
-            extraOldWorld: [
-              _tribeProvince('oldWorld|t2'),
-              _tribeProvince('oldWorld|t1'),
-            ],
-          );
-          final snapshot = _snapshot(
-            invadableOw: const ['oldWorld|t2', 'oldWorld|t1'],
-          );
-          expect(
-            expandSellerFeedstockTileAcquisitionTarget(
-              game: game,
-              snapshot: snapshot,
-            ),
-            equals('oldWorld|t1'),
-          );
-        },
-      );
+      test('returns the lowest conquest-reachable feedstock province id when '
+          'several are invadable', () {
+        final game = buildExpandFeedstockAcquisitionTargetGame(
+          resourceByTileKey: const {
+            _grainTile: 'grain',
+            _woolTile: 'wool',
+            'oldWorld|t2|0|0': 'timber',
+            'oldWorld|t1|0|0': 'iron',
+          },
+          extraOldWorld: [
+            _tribeProvince('oldWorld|t2'),
+            _tribeProvince('oldWorld|t1'),
+          ],
+        );
+        final snapshot = _snapshot(
+          invadableOw: const ['oldWorld|t2', 'oldWorld|t1'],
+        );
+        expect(
+          expandSellerFeedstockTileAcquisitionTarget(
+            game: game,
+            snapshot: snapshot,
+          ),
+          equals('oldWorld|t1'),
+        );
+      });
 
-      test(
-        'returns null when the feedstock province is not on the conquest '
-        'frontier (cannot be reached this turn)',
-        () {
-          final game = buildExpandFeedstockAcquisitionTargetGame(
-            resourceByTileKey: const {
-              _grainTile: 'grain',
-              _woolTile: 'wool',
-              'oldWorld|t1|0|0': 'timber',
-            },
-            extraOldWorld: [_tribeProvince('oldWorld|t1')],
-          );
-          // Disjoint conquest frontier: the feedstock province is not invadable.
-          final snapshot = _snapshot(invadableOw: const ['oldWorld|t9']);
-          expect(
-            expandSellerFeedstockTileAcquisitionTarget(
-              game: game,
-              snapshot: snapshot,
-            ),
-            isNull,
-          );
-        },
-      );
+      test('returns null when the feedstock province is not on the conquest '
+          'frontier (cannot be reached this turn)', () {
+        final game = buildExpandFeedstockAcquisitionTargetGame(
+          resourceByTileKey: const {
+            _grainTile: 'grain',
+            _woolTile: 'wool',
+            'oldWorld|t1|0|0': 'timber',
+          },
+          extraOldWorld: [_tribeProvince('oldWorld|t1')],
+        );
+        // Disjoint conquest frontier: the feedstock province is not invadable.
+        final snapshot = _snapshot(invadableOw: const ['oldWorld|t9']);
+        expect(
+          expandSellerFeedstockTileAcquisitionTarget(
+            game: game,
+            snapshot: snapshot,
+          ),
+          isNull,
+        );
+      });
 
       test('returns null when the conquest frontier is empty', () {
         final game = buildExpandFeedstockAcquisitionTargetGame(
@@ -175,7 +166,10 @@ void main() {
             extraOldWorld: [_tribeProvince('oldWorld|t1')],
           );
           expect(
-            sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
+            sellerNeedsImprovementInputFeedstockTileAcquisition(
+              game,
+              _sellerId,
+            ),
             isFalse,
           );
           final snapshot = _snapshot(invadableOw: const ['oldWorld|t1']);
@@ -229,9 +223,7 @@ void main() {
               _woolTile: 'wool',
               'newWorld|n1|0|0': 'timber',
             },
-            extraNewWorld: [
-              _tribeProvince('newWorld|n1', region: _newWorld),
-            ],
+            extraNewWorld: [_tribeProvince('newWorld|n1', region: _newWorld)],
           );
           final snapshot = _snapshot(invadableOw: const ['newWorld|n1']);
           expect(

@@ -97,7 +97,10 @@ void main() {
             ],
           );
           expect(
-            sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
+            sellerNeedsImprovementInputFeedstockTileAcquisition(
+              game,
+              _sellerId,
+            ),
             isTrue,
             reason: 'Precondition: the acquisition residual is active.',
           );
@@ -139,7 +142,10 @@ void main() {
             sellerTreasury: 9999,
           );
           expect(
-            sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
+            sellerNeedsImprovementInputFeedstockTileAcquisition(
+              game,
+              _sellerId,
+            ),
             isTrue,
             reason:
                 'Precondition: the acquisition residual is active even with a '
@@ -161,50 +167,47 @@ void main() {
         },
       );
 
-      test(
-        'acquisition residual inactive (baseline GP) -> no bias, '
-        'lexicographic pick returned',
-        () {
-          // gp1 owns its own unimproved `timber` tile, so the routing gate
-          // covers it and the acquisition residual is inactive. The bias must
-          // not fire and arm 2 returns the lexicographically lowest candidate.
-          final game = buildExpandFeedstockDeclareWarBiasGame(
-            resourceByTileKey: const {
-              _grainTile: 'grain',
-              _woolTile: 'wool',
-              'oldWorld|p0|1|0': 'timber',
-              'oldWorld|m1|0|0': 'grain',
-              'oldWorld|m2|0|0': 'timber',
-            },
-            minorProvinces: [
-              _minorProvince('oldWorld|m1', _minor1),
-              _minorProvince('oldWorld|m2', _minor2),
-            ],
-            minorNations: const [
-              MinorNation(id: _minor1, displayName: 'M1'),
-              MinorNation(id: _minor2, displayName: 'M2'),
-            ],
-          );
-          expect(
-            sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
-            isFalse,
-            reason: 'Precondition: the acquisition residual is inactive.',
-          );
-          final snapshot = _snapshot(
-            atWarWith: const [_minor1, _minor2],
-            invadableOw: const ['oldWorld|m1', 'oldWorld|m2'],
-          );
-          expect(
-            planExpandDeclareWar(game: game, snapshot: snapshot),
-            _minor1,
-            reason:
-                'With the residual inactive, '
-                'expandSellerFeedstockTileAcquisitionTarget returns null, so '
-                'the unbiased lexicographic pick (minor1) is returned. The +6 '
-                'OW conquest baseline GPs are never redirected.',
-          );
-        },
-      );
+      test('acquisition residual inactive (baseline GP) -> no bias, '
+          'lexicographic pick returned', () {
+        // gp1 owns its own unimproved `timber` tile, so the routing gate
+        // covers it and the acquisition residual is inactive. The bias must
+        // not fire and arm 2 returns the lexicographically lowest candidate.
+        final game = buildExpandFeedstockDeclareWarBiasGame(
+          resourceByTileKey: const {
+            _grainTile: 'grain',
+            _woolTile: 'wool',
+            'oldWorld|p0|1|0': 'timber',
+            'oldWorld|m1|0|0': 'grain',
+            'oldWorld|m2|0|0': 'timber',
+          },
+          minorProvinces: [
+            _minorProvince('oldWorld|m1', _minor1),
+            _minorProvince('oldWorld|m2', _minor2),
+          ],
+          minorNations: const [
+            MinorNation(id: _minor1, displayName: 'M1'),
+            MinorNation(id: _minor2, displayName: 'M2'),
+          ],
+        );
+        expect(
+          sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
+          isFalse,
+          reason: 'Precondition: the acquisition residual is inactive.',
+        );
+        final snapshot = _snapshot(
+          atWarWith: const [_minor1, _minor2],
+          invadableOw: const ['oldWorld|m1', 'oldWorld|m2'],
+        );
+        expect(
+          planExpandDeclareWar(game: game, snapshot: snapshot),
+          _minor1,
+          reason:
+              'With the residual inactive, '
+              'expandSellerFeedstockTileAcquisitionTarget returns null, so '
+              'the unbiased lexicographic pick (minor1) is returned. The +6 '
+              'OW conquest baseline GPs are never redirected.',
+        );
+      });
 
       test(
         'feedstock owner sits in a lower-priority arm -> bias does not cross '
@@ -235,7 +238,10 @@ void main() {
             sellerTreasury: 9999,
           );
           expect(
-            sellerNeedsImprovementInputFeedstockTileAcquisition(game, _sellerId),
+            sellerNeedsImprovementInputFeedstockTileAcquisition(
+              game,
+              _sellerId,
+            ),
             isTrue,
           );
           final snapshot = _snapshot(

@@ -68,7 +68,9 @@ void main() {
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
           atWarWith: const [kStalledOwMinorZeta],
-          invadableProvinceIdsSorted: const ['oldWorld|${kStalledOwMinorZeta}_1'],
+          invadableProvinceIdsSorted: const [
+            'oldWorld|${kStalledOwMinorZeta}_1',
+          ],
         );
         expect(
           stalledOwExpansionNeedsPeacePass(game: game, snapshot: snapshot),
@@ -82,11 +84,11 @@ void main() {
     );
 
     test('Determinism (Must-have #7) — identical result on repeat', () {
-        final game = buildStalledOwZeroRegimentAtWarGame();
-        final snapshot = ownSnapshot(
-          oldWorldProvincesOwned: 6,
-          atWarWith: const [kStalledOwMinorZeta],
-          invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
+      final game = buildStalledOwZeroRegimentAtWarGame();
+      final snapshot = ownSnapshot(
+        oldWorldProvincesOwned: 6,
+        atWarWith: const [kStalledOwMinorZeta],
+        invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
       );
       final first = stalledOwExpansionNeedsPeacePass(
         game: game,
@@ -106,11 +108,11 @@ void main() {
     });
 
     test('Stub delegation parity', () {
-        final game = buildStalledOwZeroRegimentAtWarGame();
-        final snapshot = ownSnapshot(
-          oldWorldProvincesOwned: 6,
-          atWarWith: const [kStalledOwMinorZeta],
-          invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
+      final game = buildStalledOwZeroRegimentAtWarGame();
+      final snapshot = ownSnapshot(
+        oldWorldProvincesOwned: 6,
+        atWarWith: const [kStalledOwMinorZeta],
+        invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
       );
       final canonical = stalledOwExpansionNeedsPeacePass(
         game: game,

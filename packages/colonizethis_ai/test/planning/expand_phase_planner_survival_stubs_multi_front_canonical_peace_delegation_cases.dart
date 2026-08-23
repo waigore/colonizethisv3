@@ -1,11 +1,19 @@
+// Topic-split case module (Refs #4602 Slice B).
+
 // Topic-split case module (Refs #3997 Phase 8).
 // Pin/row coverage preserved 1:1 from the former combined cases file.
 
-// Case bodies for `expand_phase_planner_zero_regiment_gp_peace_test.dart` (Refs #3977 Phase 6).
+// Case bodies for `expand_phase_planner_survival_multi_front_peace_test.dart` (Refs #3977 Phase 6).
 // Registered from the thin contract file of the same stem.
 // Pin/row coverage is preserved 1:1 from the former inline suite.
 
-// Pins the canonical `stalledZeroRegimentGpPeaceTargets` and
+// Pins canonical homes in `expand_phase_planner.dart` for
+// `stalledZeroRegimentAllFactionPeaceTargets`,
+// `stalledZeroRegimentGpPeaceTargets`,
+// `mutualZeroRegimentGpStalematePeaceTargets`,
+// `mutualExhaustedBelowQuotaGpStalematePeaceTargets`, and
+// `multiFrontNonBlockerGpPeaceTargets` (Refs #2509 S1). Also covers
+// `stalledZeroRegimentGpPeaceTargets` and
 // `mutualZeroRegimentGpStalematePeaceTargets` EXPAND-phase zero-regiment
 // survival peace deciders at their new home in `expand_phase_planner.dart`
 // (Refs #2509 S1).
@@ -98,100 +106,91 @@ const String _gpThird = 'gp_third';
 const String _minor1 = 'minor1';
 const String _tribe1 = 'tribe1';
 
-void registerExpandPhasePlannerZeroRegimentGpStalemateStubCasesPartA() {
+void registerExpandSurvivalStubsMultiFrontPeaceDelegationCases() {
   group(
-    'mutualZeroRegimentGpStalematePeaceTargets — canonical firing path',
+    'mutualExhaustedBelowQuotaGpStalematePeaceTargets — stub delegation',
     () {
-      test('peaces the sole GP enemy when both sides are exhausted', () {
-        final game = buildZeroRegimentExpandPeaceGame(
-          ownProvinces: kStalledOldWorldProvinceThreshold,
-          ownRegimentCount: 0,
-          enemyGpIds: const [_gpEnemy],
-          enemyRegimentCount: 0,
-        );
-        final snapshot = ownSnapshot(
-          oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
-          atWarWith: const [_gpEnemy],
-        );
-        expect(
-          mutualZeroRegimentGpStalematePeaceTargets(
-            game: game,
-            snapshot: snapshot,
-          ),
-          [_gpEnemy],
-          reason:
-              'Both guards (own and enemy regiments == 0) + stalled '
-              'band + exactly one GP war must peace the lone enemy. '
-              'Pins the firing path so the carve-out can never be '
-              'silently retired by an outer-guard refactor on the '
-              'broader stalledZeroRegimentGpPeaceTargets arm.',
-        );
-      });
-
-      test('still peaces when minors are also at war (GP-only filter keeps '
-          'the carve-out tight on the lone GP enemy)', () {
-        final game = buildZeroRegimentExpandPeaceGame(
-          ownProvinces: kStalledOldWorldProvinceThreshold,
-          ownRegimentCount: 0,
-          enemyGpIds: const [_gpEnemy],
-          enemyRegimentCount: 0,
-          minorIds: const [_minor1],
-          atWarMinorIds: const [_minor1],
-        );
-        final snapshot = ownSnapshot(
-          oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
-          atWarWith: const [_minor1, _gpEnemy],
-        );
-        expect(
-          mutualZeroRegimentGpStalematePeaceTargets(
-            game: game,
-            snapshot: snapshot,
-          ),
-          [_gpEnemy],
-          reason:
-              'The mutual-stalemate carve-out filters minors out of the '
-              'GP-war set, so a co-belligerent minor at war does not '
-              'switch the helper to the multi-front guard. A regression '
-              'that counted minors in `gpWars.length` would silently '
-              'abandon zero-regiment GPs trapped on mixed-frontier wars.',
-        );
-      });
+      test(
+        'delegating stub matches canonical on exhausted-plateau fixture',
+        () {
+          final game = Game(
+            id: 'g-mutual-exhausted-delegation',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 100,
+              ),
+              oldWorld: RegionData(
+                provinces: [
+                  for (var i = 1; i <= 8; i++)
+                    Province(
+                      id: 'oldWorld|gp4_$i',
+                      regionId: 'oldWorld',
+                      ownerId: 'gp4',
+                    ),
+                  for (var i = 1; i <= 9; i++)
+                    Province(
+                      id: 'oldWorld|gp3_$i',
+                      regionId: 'oldWorld',
+                      ownerId: 'gp3',
+                    ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              armies: const [],
+            ),
+            players: const [
+              Player(
+                id: 'gp4',
+                displayName: 'GP4',
+                isHuman: false,
+                treasury: 0,
+              ),
+              Player(
+                id: 'gp3',
+                displayName: 'GP3',
+                isHuman: false,
+                treasury: 0,
+              ),
+            ],
+            diplomacyRelations: const [
+              DiplomacyRelation(
+                factionId1: 'gp4',
+                factionId2: 'gp3',
+                state: RelationState.atWar,
+                score: 30,
+              ),
+            ],
+          );
+          const snapshot = AIWorldSnapshot(
+            playerId: 'gp4',
+            threats: ThreatSummary(atWarWith: ['gp3']),
+            opportunities: const OpportunitySummary(),
+            conquest: ConquestSummary(oldWorldProvincesOwned: 8),
+            colonial: const ColonialSummary(),
+            economy: const EconomySummary(),
+            relations: const {},
+          );
+          expect(
+            diplomacy_planner_peace_targets
+                .mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+                  game: game,
+                  snapshot: snapshot,
+                ),
+            mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+              game: game,
+              snapshot: snapshot,
+            ),
+          );
+          expect(
+            mutualExhaustedBelowQuotaGpStalematePeaceTargets(
+              game: game,
+              snapshot: snapshot,
+            ),
+            ['gp3'],
+          );
+        },
+      );
     },
   );
-
-  group('Determinism (Must-have #7)', () {
-    test('stalledZeroRegimentGpPeaceTargets is byte-equivalent across '
-        'two consecutive invocations on the same inputs', () {
-      final game = buildZeroRegimentExpandPeaceGame(
-        ownProvinces: 7,
-        ownRegimentCount: 0,
-        enemyGpIds: const [_gpThird, _gpEnemy],
-        enemyRegimentCount: 0,
-      );
-      final snapshot = ownSnapshot(
-        oldWorldProvincesOwned: 7,
-        atWarWith: const [_gpThird, _gpEnemy],
-      );
-      final first = stalledZeroRegimentGpPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      final second = stalledZeroRegimentGpPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      expect(
-        second,
-        first,
-        reason:
-            'Pure-function determinism is Refs #2509 Must-have #7. '
-            'Identical (Game, AIWorldSnapshot) inputs must return '
-            'identical (and ascending-sorted) lists on every '
-            'invocation; pinned independently of the firing-path '
-            'expectations so a future regression that introduced a '
-            'set-iteration leak would surface here.',
-      );
-    });
-
-  });
 }

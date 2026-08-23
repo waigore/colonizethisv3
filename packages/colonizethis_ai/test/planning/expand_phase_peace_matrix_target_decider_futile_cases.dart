@@ -32,10 +32,11 @@ const List<Player> _defaultGpRoster = <Player>[
   Player(id: _gp4, displayName: 'GP4', isHuman: false),
 ];
 
-typedef _PeaceTargetsFn = List<String> Function({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-});
+typedef _PeaceTargetsFn =
+    List<String> Function({
+      required Game game,
+      required AIWorldSnapshot snapshot,
+    });
 
 /// One byte-equivalent branch row transcribed from a source `*_branches_test`.
 class _Case {
@@ -98,7 +99,6 @@ void _runDecider(String label, _PeaceTargetsFn fn, List<_Case> cases) {
   });
 }
 
-
 void registerExpandPeaceTargetDeciderFutileCases() {
   group('peace-target decider determinism / blocker-identity guards', () {
     test('defaultStartGpPeaceTargets is bit-identical on repeated calls', () {
@@ -137,11 +137,22 @@ void registerExpandPeaceTargetDeciderFutileCases() {
       final c = _Case(
         name: 'blocker sanity',
         owProvinces: [
-          ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+          ...oldWorldProvincesForExpandPeaceMatrix(
+            _gp1,
+            kObserverConquestMinOwProvincesPerGp + 2,
+          ),
           ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 6),
           ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
-          const Province(id: 'oldWorld|gp2_inv_a', regionId: 'oldWorld', ownerId: _gp2),
-          const Province(id: 'oldWorld|gp2_inv_b', regionId: 'oldWorld', ownerId: _gp2),
+          const Province(
+            id: 'oldWorld|gp2_inv_a',
+            regionId: 'oldWorld',
+            ownerId: _gp2,
+          ),
+          const Province(
+            id: 'oldWorld|gp2_inv_b',
+            regionId: 'oldWorld',
+            ownerId: _gp2,
+          ),
         ],
         players: _defaultGpRoster,
         minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],

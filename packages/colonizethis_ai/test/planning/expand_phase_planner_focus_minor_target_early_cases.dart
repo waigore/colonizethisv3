@@ -184,7 +184,11 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       );
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
-        atWarWith: const [kFocusMinorMinorAlpha, kFocusMinorTribeOne, kFocusMinorGpRival],
+        atWarWith: const [
+          kFocusMinorMinorAlpha,
+          kFocusMinorTribeOne,
+          kFocusMinorGpRival,
+        ],
         invadableProvinceIdsSorted: const [
           'oldWorld|alpha_1',
           'oldWorld|tribe_invadable_1',
@@ -253,5 +257,4 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       },
     );
   });
-
 }

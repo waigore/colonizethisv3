@@ -68,43 +68,19 @@ const String _gpPartner = 'gp_partner';
 const String _gpThird = 'gp_third';
 const String _minor1 = 'minor1';
 
-
 void registerExpandPhasePlannerCriticalOwHoldAndStalledLeadPeaceCasesPartB() {
-group('criticalOwHoldPeaceTargets — canonical at-war GP filter', () {
-      test(
-        'default-start row requires lead `kUnwinnableSoleGpMinProvinceDeficit`',
-        () {
-          // own == kObserverDefaultStartOldWorldProvincesPerGp (7) so the
-          // minLeadDeficit table selects kUnwinnableSoleGpMinProvinceDeficit
-          // (2). lead exactly 2 peaces.
-          final game = buildOwnVsPartnerExpandPeaceGame(
-            ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-            partnerProvinces:
-                kObserverDefaultStartOldWorldProvincesPerGp +
-                kUnwinnableSoleGpMinProvinceDeficit,
-          );
-          final snapshot = ownSnapshot(
-            oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-            atWarWith: const [_gpPartner],
-          );
-          expect(
-            stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
-            [_gpPartner],
-            reason:
-                'Default-start row (own <= '
-                'kObserverDefaultStartOldWorldProvincesPerGp) requires lead '
-                '== kUnwinnableSoleGpMinProvinceDeficit. A regression that '
-                'collapsed both rows to `1` would peace one-province '
-                'leaders at default start and trade away early-game '
-                'pressure.',
-          );
-        },
-      );
-
-      test('default-start row skips one-province lead (below band)', () {
+  group('criticalOwHoldPeaceTargets — canonical at-war GP filter', () {
+    test(
+      'default-start row requires lead `kUnwinnableSoleGpMinProvinceDeficit`',
+      () {
+        // own == kObserverDefaultStartOldWorldProvincesPerGp (7) so the
+        // minLeadDeficit table selects kUnwinnableSoleGpMinProvinceDeficit
+        // (2). lead exactly 2 peaces.
         final game = buildOwnVsPartnerExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
-          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+          partnerProvinces:
+              kObserverDefaultStartOldWorldProvincesPerGp +
+              kUnwinnableSoleGpMinProvinceDeficit,
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
@@ -112,58 +88,78 @@ group('criticalOwHoldPeaceTargets — canonical at-war GP filter', () {
         );
         expect(
           stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'Default-start row must skip lead 1 — only '
-              'kUnwinnableSoleGpMinProvinceDeficit (2) qualifies. Pins the '
-              'negative boundary of the band selector against a regression '
-              'that broadened the row to `>= own + 1`.',
-        );
-      });
-
-      test('post-default row peaces a one-province lead (8 OW + 1)', () {
-        final game = buildOwnVsPartnerExpandPeaceGame(
-          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
-          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 2,
-        );
-        final snapshot = ownSnapshot(
-          oldWorldProvincesOwned:
-              kObserverDefaultStartOldWorldProvincesPerGp + 1,
-          atWarWith: const [_gpPartner],
-        );
-        expect(
-          stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
           [_gpPartner],
           reason:
-              'Post-default row (own > kObserverDefaultStartOldWorldProvincesPerGp) '
-              'requires lead 1 only. A regression that kept '
-              'kUnwinnableSoleGpMinProvinceDeficit on the post-default row '
-              'would refuse to peace near-quota leaders and starve the '
-              'pivot-to-minors arm of throughput.',
+              'Default-start row (own <= '
+              'kObserverDefaultStartOldWorldProvincesPerGp) requires lead '
+              '== kUnwinnableSoleGpMinProvinceDeficit. A regression that '
+              'collapsed both rows to `1` would peace one-province '
+              'leaders at default start and trade away early-game '
+              'pressure.',
         );
-      });
+      },
+    );
 
-      test('post-default row skips a tied enemy (lead == 0)', () {
-        final game = buildOwnVsPartnerExpandPeaceGame(
-          ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
-          partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
-        );
-        final snapshot = ownSnapshot(
-          oldWorldProvincesOwned:
-              kObserverDefaultStartOldWorldProvincesPerGp + 1,
-          atWarWith: const [_gpPartner],
-        );
-        expect(
-          stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'Tied enemy on the post-default row fails the `>= own + 1` '
-              'gate. Pins the negative boundary against a regression that '
-              'used `>= own` instead.',
-        );
-      });
-    },
-  );
+    test('default-start row skips one-province lead (below band)', () {
+      final game = buildOwnVsPartnerExpandPeaceGame(
+        ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
+        partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+      );
+      final snapshot = ownSnapshot(
+        oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
+        atWarWith: const [_gpPartner],
+      );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'Default-start row must skip lead 1 — only '
+            'kUnwinnableSoleGpMinProvinceDeficit (2) qualifies. Pins the '
+            'negative boundary of the band selector against a regression '
+            'that broadened the row to `>= own + 1`.',
+      );
+    });
+
+    test('post-default row peaces a one-province lead (8 OW + 1)', () {
+      final game = buildOwnVsPartnerExpandPeaceGame(
+        ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+        partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 2,
+      );
+      final snapshot = ownSnapshot(
+        oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+        atWarWith: const [_gpPartner],
+      );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        [_gpPartner],
+        reason:
+            'Post-default row (own > kObserverDefaultStartOldWorldProvincesPerGp) '
+            'requires lead 1 only. A regression that kept '
+            'kUnwinnableSoleGpMinProvinceDeficit on the post-default row '
+            'would refuse to peace near-quota leaders and starve the '
+            'pivot-to-minors arm of throughput.',
+      );
+    });
+
+    test('post-default row skips a tied enemy (lead == 0)', () {
+      final game = buildOwnVsPartnerExpandPeaceGame(
+        ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+        partnerProvinces: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+      );
+      final snapshot = ownSnapshot(
+        oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp + 1,
+        atWarWith: const [_gpPartner],
+      );
+      expect(
+        stalledBelowQuotaGpLeadPeaceTargets(game: game, snapshot: snapshot),
+        isEmpty,
+        reason:
+            'Tied enemy on the post-default row fails the `>= own + 1` '
+            'gate. Pins the negative boundary against a regression that '
+            'used `>= own` instead.',
+      );
+    });
+  });
 
   group('stalledBelowQuotaGpLeadPeaceTargets — canonical GP-only blocker', () {
     test('skips the primary invadable OW GP blocker on a GP-only frontier', () {

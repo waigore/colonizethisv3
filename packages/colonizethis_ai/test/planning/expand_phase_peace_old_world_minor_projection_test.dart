@@ -30,10 +30,9 @@ bool _manualAnyMinorOwnsOldWorld(Game game) =>
 /// New (slice 8) projection-backed predicate: equivalent to the production
 /// `_anyMinorOwnsOldWorldProvince` helper.
 bool _projectionAnyMinorOwnsOldWorld(Game game) => game.minorNations.any(
-  (m) => ProvinceOwnerCache.of(game.worldState).ownsAnyInRegion(
-    m.id,
-    kRegionOldWorld,
-  ),
+  (m) => ProvinceOwnerCache.of(
+    game.worldState,
+  ).ownsAnyInRegion(m.id, kRegionOldWorld),
 );
 
 void main() {
@@ -77,20 +76,23 @@ void main() {
       ],
     );
 
-    test('true when a minor owns an old-world province (non-minor also owns)', () {
-      // minor1 owns oldWorld|p2 (in addition to the non-minor gp1 holding
-      // oldWorld|p1); minor2 owns only a new-world province.
-      final game = gameWith(
-        oldWorldExtraOwner: 'minor1',
-        newWorldMinorOwner: 'minor2',
-      );
+    test(
+      'true when a minor owns an old-world province (non-minor also owns)',
+      () {
+        // minor1 owns oldWorld|p2 (in addition to the non-minor gp1 holding
+        // oldWorld|p1); minor2 owns only a new-world province.
+        final game = gameWith(
+          oldWorldExtraOwner: 'minor1',
+          newWorldMinorOwner: 'minor2',
+        );
 
-      expect(_projectionAnyMinorOwnsOldWorld(game), isTrue);
-      expect(
-        _projectionAnyMinorOwnsOldWorld(game),
-        _manualAnyMinorOwnsOldWorld(game),
-      );
-    });
+        expect(_projectionAnyMinorOwnsOldWorld(game), isTrue);
+        expect(
+          _projectionAnyMinorOwnsOldWorld(game),
+          _manualAnyMinorOwnsOldWorld(game),
+        );
+      },
+    );
 
     test('false when only a non-minor owns old-world provinces', () {
       // Both old-world provinces are owned by the non-minor gp1; minor1 and

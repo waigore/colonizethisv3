@@ -238,7 +238,10 @@ void registerExpandPhasePlannerFocusMinorTargetLaterCases() {
                 game: expandPhasePlannerFocusMinorTargetGame(
                   ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
                   minorOwnedInvadables: const {
-                    kFocusMinorMinorAlpha: ['oldWorld|alpha_1', 'oldWorld|alpha_2'],
+                    kFocusMinorMinorAlpha: [
+                      'oldWorld|alpha_1',
+                      'oldWorld|alpha_2',
+                    ],
                   },
                   atWarMinors: const [kFocusMinorMinorAlpha],
                 ),

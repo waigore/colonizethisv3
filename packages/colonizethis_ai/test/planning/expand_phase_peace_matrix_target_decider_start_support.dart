@@ -30,10 +30,11 @@ const List<Player> kExpandPeaceMatrixDefaultGpRoster = <Player>[
   Player(id: kExpandPeaceMatrixGp4, displayName: 'GP4', isHuman: false),
 ];
 
-typedef ExpandPeaceTargetDeciderFn = List<String> Function({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-});
+typedef ExpandPeaceTargetDeciderFn =
+    List<String> Function({
+      required Game game,
+      required AIWorldSnapshot snapshot,
+    });
 
 /// One byte-equivalent branch row transcribed from a source `*_branches_test`.
 class ExpandPeaceTargetDeciderMatrixCase {
@@ -67,7 +68,11 @@ class ExpandPeaceTargetDeciderMatrixCase {
   final String? reason;
 }
 
-void runExpandPeaceTargetDeciderMatrixCases(String label, ExpandPeaceTargetDeciderFn fn, List<ExpandPeaceTargetDeciderMatrixCase> cases) {
+void runExpandPeaceTargetDeciderMatrixCases(
+  String label,
+  ExpandPeaceTargetDeciderFn fn,
+  List<ExpandPeaceTargetDeciderMatrixCase> cases,
+) {
   group(label, () {
     for (final c in cases) {
       test(c.name, () {

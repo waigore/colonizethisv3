@@ -293,6 +293,5 @@ void registerExpandPhasePlannerSurvivalZeroRegimentPeaceTailCases() {
     },
   );
 
-  group('Determinism (Must-have #7)', () {
-  });
+  group('Determinism (Must-have #7)', () {});
 }
