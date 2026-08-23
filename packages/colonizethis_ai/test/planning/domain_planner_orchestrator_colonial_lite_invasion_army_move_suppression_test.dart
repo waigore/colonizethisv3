@@ -1,61 +1,5 @@
-// Pins the COLONIAL-lite phase **NW invasion army move suppression** at the
-// `runDomainPlanners` integration boundary (Refs #2509 S10).
-//
-//   SPEC/ai/ai-architecture.md § Observer goal phases (Full AI), COLONIAL-lite:
-//     "turn >= kObserverColonialLiteMinTurn (120), OW
-//      >= kObserverColonialLiteNearQuotaOw (9) and below quota, global
-//      newWorld| not all GP-owned: allows establishOverture, colonial
-//      naval/cargo; suppresses NW declareWar, **invasion army moves**, and
-//      purchase_land only."
-//
-// Coverage map for the COLONIAL-lite three-part suppression contract at the
-// orchestrator boundary:
-//
-// | Suppression                       | Existing orchestrator pin                                                |
-// |-----------------------------------|--------------------------------------------------------------------------|
-// | NW `purchase_land` (work)         | `domain_planner_orchestrator_colonial_lite_test.dart`                    |
-// | NW `declareWar` (diplomacy)       | `domain_planner_orchestrator_colonial_lite_declare_war_suppression_test` |
-// | NW invasion `ArmyMoveOrder`       | **this file**                                                            |
-//
-// The underlying predicate
-// (`shouldSuppressNewWorldDeclareWarInvasionAndPurchase` returning `true` in
-// COLONIAL-lite) is pinned at the unit level in
-// `observer_goal_phase_test.dart` group `observerGoalPhaseFor`. The
-// **conquest-planner integration** that consumes that predicate — building
-// the `invadable` set (`conquest_planner.dart:162-169`) and short-circuiting
-// `_scoreArmyMoveDestination` to `0` for NW invadable destinations
-// (`conquest_planner.dart:457-464`) under
-// `shouldSuppressNewWorldDeclareWarInvasionAndPurchase` — is not currently
-// asserted at the `runDomainPlanners` boundary for the COLONIAL-lite branch.
-// A tuning slice that left the predicate intact but rewired the conquest
-// planner (for example by using `shouldSuppressNewWorldColonialOrders`
-// (EXPAND-only) instead, or by dropping the NW short-circuit in
-// `_scoreArmyMoveDestination`) could silently emit NW invasion army moves
-// from near-quota GPs at turn 120, eroding OW expansion pressure exactly
-// when the COLONIAL-lite safeguard is supposed to keep both OW and NW
-// progress in motion without trading the turn-100 OW gate for NW work.
-//
-// The mixed-candidate fixture mirrors
-// `domain_planner_orchestrator_expand_nw_work_suppression_test.dart`'s sibling
-// pin "EXPAND conquest army move prefers OW invadable minor over NW tribe":
-// one OW invadable minor + one NW tribe province as the two army-move
-// candidates for a single field army. In COLONIAL-lite the OW path stays
-// invadable (the GP is below quota and at war with the minor), while the NW
-// path must be scored to `0` by
-// `shouldSuppressNewWorldDeclareWarInvasionAndPurchase` and dropped by the
-// conquest planner's stalled multi-army selection. The negative control
-// re-runs the same fixture at OW=10 (COLONIAL) where the NW invasion
-// suppression must not fire — proving the orchestrator does not over-suppress
-// NW army moves once the OW quota is met.
-//
-// Coverage layers:
-//   - Positive (COLONIAL-lite): NW invasion army move dropped, OW invadable
-//     army move kept (chosen by the stalled multi-army fallback).
-//   - Negative control (COLONIAL): same fixture at OW=10; NW invasion army
-//     move survives because COLONIAL is the only phase where
-//     `shouldSuppressNewWorldDeclareWarInvasionAndPurchase` returns `false`.
-//   - Determinism guard (must-have #7): identical COLONIAL-lite inputs
-//     produce identical army move order fingerprints across runs.
+// COLONIAL-lite NW invasion army-move pins: SPEC/ai/ai-architecture.md
+// § Observer goal phases (Full AI) (Refs #2509 S10, #4602).
 
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
@@ -70,8 +14,8 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
 const String _minorId = kOrchestratorMinorId;
-const String _owMinorProvince = kOrchestratorColonialLiteInvasionOwMinorProvince;
-const String _owFieldArmyHome = kOrchestratorOwHomeProvince;
+const String _owMinorProvince =
+    kOrchestratorColonialLiteInvasionOwMinorProvince;
 const String _nwTribeProvince = kOrchestratorTribeNwProvince;
 const String _fieldArmyId = kOrchestratorColonialLiteInvasionFieldArmyId;
 
@@ -85,23 +29,23 @@ const String _fieldArmyId = kOrchestratorColonialLiteInvasionFieldArmyId;
 /// candidate shape.
 const FakeOrderSuggestionAPIForDomainPlannerTests _mixedOwNwArmyMoveApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  armyMove: [
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _nwTribeProvince,
-    ),
-    ArmyMoveOrder(
-      armyId: _fieldArmyId,
-      destinationProvinceId: _owMinorProvince,
-    ),
-  ],
-);
+      work: [],
+      build: [],
+      move: [],
+      research: [],
+      navalMove: [],
+      navalMission: [],
+      armyMove: [
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _nwTribeProvince,
+        ),
+        ArmyMoveOrder(
+          armyId: _fieldArmyId,
+          destinationProvinceId: _owMinorProvince,
+        ),
+      ],
+    );
 
 const EconomyPlan _economyPlan = EconomyPlan(
   productionAssignments: [],
@@ -209,9 +153,7 @@ void main() {
               'phase choice rather than a "no orders" side effect.',
         );
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _nwTribeProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _nwTribeProvince),
           isFalse,
           reason:
               'COLONIAL-lite must drop NW invasion army moves (SPEC § '
@@ -226,9 +168,7 @@ void main() {
               'burn turns invading tribes instead of pushing to OW=10.',
         );
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _owMinorProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _owMinorProvince),
           isTrue,
           reason:
               'COLONIAL-lite must keep the OW invadable minor army move so '
@@ -285,9 +225,7 @@ void main() {
 
         final armyMoves = _armyMoves(orders);
         expect(
-          armyMoves.any(
-            (m) => m.destinationProvinceId == _nwTribeProvince,
-          ),
+          armyMoves.any((m) => m.destinationProvinceId == _nwTribeProvince),
           isTrue,
           reason:
               'COLONIAL must allow NW invasion army moves toward visible '
