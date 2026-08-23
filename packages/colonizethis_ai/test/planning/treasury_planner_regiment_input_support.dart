@@ -7,6 +7,9 @@
 // without changing deterministic outcomes.
 
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../support/cheapest_regiment_build_treasury_cost.dart';
+
 export 'treasury_planner_regiment_input_games.dart';
 
 const String kRegimentInputFabricId = 'fabric';
