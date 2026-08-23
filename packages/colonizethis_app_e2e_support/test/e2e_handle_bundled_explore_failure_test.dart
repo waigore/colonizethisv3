@@ -34,10 +34,11 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetExplore;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+
+import 'support/e2e_widget_pump_harness.dart';
 
 const String _human = 'gp1';
 
@@ -101,38 +102,32 @@ void main() {
   suppressLogsForTests();
 
   group('e2eHandleBundledExploreFailure — topology skip arm', () {
-    testWidgets(
-      'returns normally without raising when navalSnapshot has no NW '
-      'fogged-or-better tiles',
-      (tester) async {
-        // Empty NW region → e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot
-        // returns false → helper takes the skip arm. The surrounding
-        // testWidgets body must continue without seeing a TestFailure so the
-        // CI seed/topology bypass behaves as documented.
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+    testWidgets('returns normally without raising when navalSnapshot has no NW '
+        'fogged-or-better tiles', (tester) async {
+      // Empty NW region → e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot
+      // returns false → helper takes the skip arm. The surrounding
+      // testWidgets body must continue without seeing a TestFailure so the
+      // CI seed/topology bypass behaves as documented.
+      await pumpE2eEmptyScaffold(tester);
+      Object? caught;
+      try {
+        await e2eHandleBundledExploreFailure(
+          tester,
+          navalSnapshot: _navalSnapshot(),
+          civilianSnapshot: null,
+          maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
         );
-        Object? caught;
-        try {
-          await e2eHandleBundledExploreFailure(
-            tester,
-            navalSnapshot: _navalSnapshot(),
-            civilianSnapshot: null,
-            maxBoundedTurnRetries:
-                kE2eDefaultBundledExploreMaxTurnRetries,
-          );
-        } catch (e) {
-          caught = e;
-        }
-        expect(
-          caught,
-          isNull,
-          reason:
-              'Skip arm must not raise — a TestFailure here would convert an '
-              'environmental CI bypass into a flaky failure (#2336 AC10).',
-        );
-      },
-    );
+      } catch (e) {
+        caught = e;
+      }
+      expect(
+        caught,
+        isNull,
+        reason:
+            'Skip arm must not raise — a TestFailure here would convert an '
+            'environmental CI bypass into a flaky failure (#2336 AC10).',
+      );
+    });
 
     testWidgets(
       'returns normally without raising when navalSnapshot is null '
@@ -145,17 +140,14 @@ void main() {
         // which reports false. Pin the contract so a future regression
         // that flipped the null-skip arm to a null-fail arm cannot land
         // silently.
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
+        await pumpE2eEmptyScaffold(tester);
         Object? caught;
         try {
           await e2eHandleBundledExploreFailure(
             tester,
             navalSnapshot: null,
             civilianSnapshot: null,
-            maxBoundedTurnRetries:
-                kE2eDefaultBundledExploreMaxTurnRetries,
+            maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
           );
         } catch (e) {
           caught = e;
@@ -178,17 +170,14 @@ void main() {
       'raises TestFailure with canonical message when NW land is fogged '
       'or better but Explore is still not enabled',
       (tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
+        await pumpE2eEmptyScaffold(tester);
         Object? caught;
         try {
           await e2eHandleBundledExploreFailure(
             tester,
             navalSnapshot: _navalWithFoggedNwTile(),
             civilianSnapshot: null,
-            maxBoundedTurnRetries:
-                kE2eDefaultBundledExploreMaxTurnRetries,
+            maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
           );
         } catch (e) {
           caught = e;
@@ -231,9 +220,7 @@ void main() {
         // kE2eDefaultBundledExploreMaxTurnRetries inside the helper would
         // break this test. A future scenario tuning the budget needs the
         // failure message to reflect the actual count enforced.
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
+        await pumpE2eEmptyScaffold(tester);
         Object? caught;
         try {
           await e2eHandleBundledExploreFailure(
@@ -265,9 +252,7 @@ void main() {
         // regression that swapped the diagnostic source or dropped the
         // multi-line payload would surface here rather than at CI failure
         // triage time.
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
+        await pumpE2eEmptyScaffold(tester);
         Object? caught;
         try {
           await e2eHandleBundledExploreFailure(
@@ -278,8 +263,7 @@ void main() {
                 'unit-a': <String>[kWorkTargetExplore],
               },
             ),
-            maxBoundedTurnRetries:
-                kE2eDefaultBundledExploreMaxTurnRetries,
+            maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
           );
         } catch (e) {
           caught = e;
@@ -315,9 +299,7 @@ void main() {
             ],
           ),
         );
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
+        await pumpE2eEmptyScaffold(tester);
         Object? caught;
         try {
           await e2eHandleBundledExploreFailure(
@@ -325,8 +307,7 @@ void main() {
             navalSnapshot: _navalWithFoggedNwTile(),
             civilianSnapshot: null,
             lastKnownNavalSnapshot: lastKnown,
-            maxBoundedTurnRetries:
-                kE2eDefaultBundledExploreMaxTurnRetries,
+            maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
           );
         } catch (e) {
           caught = e;
@@ -351,37 +332,31 @@ void main() {
   });
 
   group('e2eHandleBundledExploreFailure — determinism', () {
-    testWidgets(
-      'identical inputs always yield identical failure messages '
-      '(Refs #2336 AC2)',
-      (tester) async {
-        // Determinism pin: two calls with the same inputs must raise the
-        // same TestFailure message. A regression that introduced
-        // non-determinism (e.g. `DateTime.now()` in the message) would
-        // diverge the two captures and trip this test.
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
-        Future<String?> capture() async {
-          try {
-            await e2eHandleBundledExploreFailure(
-              tester,
-              navalSnapshot: _navalWithFoggedNwTile(),
-              civilianSnapshot: null,
-              maxBoundedTurnRetries:
-                  kE2eDefaultBundledExploreMaxTurnRetries,
-            );
-          } catch (e) {
-            return e.toString();
-          }
-          return null;
+    testWidgets('identical inputs always yield identical failure messages '
+        '(Refs #2336 AC2)', (tester) async {
+      // Determinism pin: two calls with the same inputs must raise the
+      // same TestFailure message. A regression that introduced
+      // non-determinism (e.g. `DateTime.now()` in the message) would
+      // diverge the two captures and trip this test.
+      await pumpE2eEmptyScaffold(tester);
+      Future<String?> capture() async {
+        try {
+          await e2eHandleBundledExploreFailure(
+            tester,
+            navalSnapshot: _navalWithFoggedNwTile(),
+            civilianSnapshot: null,
+            maxBoundedTurnRetries: kE2eDefaultBundledExploreMaxTurnRetries,
+          );
+        } catch (e) {
+          return e.toString();
         }
+        return null;
+      }
 
-        final first = await capture();
-        final second = await capture();
-        expect(first, isNotNull);
-        expect(second, first);
-      },
-    );
+      final first = await capture();
+      final second = await capture();
+      expect(first, isNotNull);
+      expect(second, first);
+    });
   });
 }

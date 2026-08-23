@@ -35,6 +35,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
+import 'support/e2e_widget_pump_harness.dart';
+
 const String _human = 'gp1';
 
 const TurnState _orderingTurn = TurnState(
@@ -133,9 +135,6 @@ CtE2eNavalPanelSnapshot _foggedNwSnapshot() => _snapshot(
   },
 );
 
-Future<void> _pumpEmpty(WidgetTester tester) =>
-    tester.pumpWidget(const MaterialApp(home: Scaffold(body: SizedBox())));
-
 void main() {
   suppressLogsForTests();
 
@@ -168,65 +167,62 @@ void main() {
     );
   });
 
-  group(
-    'e2eAwaitNwCoastalOrVisibleLandForBundledExplore — bounded loop',
-    () {
-      testWidgets(
-        'maxTurns: 0 is a complete no-op — ensureUnderWallClock never invoked',
-        (tester) async {
-          await _pumpEmpty(tester);
-          final l10n = lookupAppLocalizations(const Locale('en'));
-          final steps = <String>[];
-          await e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
-            tester,
-            l10n,
-            ensureUnderWallClock: steps.add,
-            maxTurns: 0,
-          );
-          expect(
-            steps,
-            isEmpty,
-            reason:
-                'A zero-iteration call must not enter the for-body, '
-                'must not invoke the wall-clock guard, and must not '
-                'attempt to open the naval panel — otherwise callers '
-                'cannot pass `maxTurns: 0` as a safe disarm during '
-                'tests or stub scenarios.',
-          );
-        },
-      );
+  group('e2eAwaitNwCoastalOrVisibleLandForBundledExplore — bounded loop', () {
+    testWidgets(
+      'maxTurns: 0 is a complete no-op — ensureUnderWallClock never invoked',
+      (tester) async {
+        await pumpE2eEmptyScaffold(tester);
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        final steps = <String>[];
+        await e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
+          tester,
+          l10n,
+          ensureUnderWallClock: steps.add,
+          maxTurns: 0,
+        );
+        expect(
+          steps,
+          isEmpty,
+          reason:
+              'A zero-iteration call must not enter the for-body, '
+              'must not invoke the wall-clock guard, and must not '
+              'attempt to open the naval panel — otherwise callers '
+              'cannot pass `maxTurns: 0` as a safe disarm during '
+              'tests or stub scenarios.',
+        );
+      },
+    );
 
-      testWidgets(
-        'maxTurns honours the caller override (uses the parameter, not the default)',
-        (tester) async {
-          await _pumpEmpty(tester);
-          final l10n = lookupAppLocalizations(const Locale('en'));
-          final steps = <String>[];
-          // Snapshot satisfies neither predicate; the helper would normally
-          // attempt naval-panel work, but with maxTurns: 0 the loop must
-          // not enter even when the snapshot is non-null.
-          ctE2eNavalPanelSnapshot = _snapshot();
-          await e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
-            tester,
-            l10n,
-            ensureUnderWallClock: steps.add,
-            maxTurns: 0,
-          );
-          expect(
-            steps,
-            isEmpty,
-            reason:
-                'maxTurns: 0 must short-circuit before the first '
-                'iteration even when the snapshot is non-null but '
-                'fails both readiness predicates — a regression that '
-                'silently used the default 35 here would burn the '
-                'full Bottleneck 4 budget in any test that disabled '
-                'the loop.',
-          );
-        },
-      );
-    },
-  );
+    testWidgets(
+      'maxTurns honours the caller override (uses the parameter, not the default)',
+      (tester) async {
+        await pumpE2eEmptyScaffold(tester);
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        final steps = <String>[];
+        // Snapshot satisfies neither predicate; the helper would normally
+        // attempt naval-panel work, but with maxTurns: 0 the loop must
+        // not enter even when the snapshot is non-null.
+        ctE2eNavalPanelSnapshot = _snapshot();
+        await e2eAwaitNwCoastalOrVisibleLandForBundledExplore(
+          tester,
+          l10n,
+          ensureUnderWallClock: steps.add,
+          maxTurns: 0,
+        );
+        expect(
+          steps,
+          isEmpty,
+          reason:
+              'maxTurns: 0 must short-circuit before the first '
+              'iteration even when the snapshot is non-null but '
+              'fails both readiness predicates — a regression that '
+              'silently used the default 35 here would burn the '
+              'full Bottleneck 4 budget in any test that disabled '
+              'the loop.',
+        );
+      },
+    );
+  });
 
   group(
     'e2eAwaitNwCoastalOrVisibleLandForBundledExplore — coastal short-circuit',
@@ -234,7 +230,7 @@ void main() {
       testWidgets(
         'coastal-NW snapshot exits on iteration 0 — single step recorded',
         (tester) async {
-          await _pumpEmpty(tester);
+          await pumpE2eEmptyScaffold(tester);
           final l10n = lookupAppLocalizations(const Locale('en'));
           ctE2eNavalPanelSnapshot = _coastalArrivalSnapshot();
           final steps = <String>[];
@@ -267,7 +263,7 @@ void main() {
       testWidgets(
         'NW-fogged snapshot exits on iteration 0 — single step recorded',
         (tester) async {
-          await _pumpEmpty(tester);
+          await pumpE2eEmptyScaffold(tester);
           final l10n = lookupAppLocalizations(const Locale('en'));
           ctE2eNavalPanelSnapshot = _foggedNwSnapshot();
           final steps = <String>[];
@@ -301,7 +297,7 @@ void main() {
       testWidgets(
         'step label uses `NW bundled-explore readiness i=<idx>` form',
         (tester) async {
-          await _pumpEmpty(tester);
+          await pumpE2eEmptyScaffold(tester);
           final l10n = lookupAppLocalizations(const Locale('en'));
           ctE2eNavalPanelSnapshot = _coastalArrivalSnapshot();
           final steps = <String>[];
@@ -338,56 +334,50 @@ void main() {
   group(
     'e2eAwaitNwCoastalOrVisibleLandForBundledExplore — AC1 barrel forwarding',
     () {
-      testWidgets(
-        'awaitNwCoastalOrVisibleLandForBundledExplore (barrel alias) '
-        'short-circuits identically to the lifted form',
-        (tester) async {
-          await _pumpEmpty(tester);
-          final l10n = lookupAppLocalizations(const Locale('en'));
-          ctE2eNavalPanelSnapshot = _coastalArrivalSnapshot();
-          final steps = <String>[];
-          await awaitNwCoastalOrVisibleLandForBundledExplore(
-            tester,
-            l10n,
-            ensureUnderWallClock: steps.add,
-            maxTurns: kE2eDefaultBundledExploreReadinessMaxTurns,
-          );
-          expect(
-            steps,
-            equals(<String>['NW bundled-explore readiness i=0']),
-            reason:
-                'The AC1 barrel wrapper must forward arguments in the '
-                'documented order — a regression that swapped '
-                '`ensureUnderWallClock` with `maxTurns`, dropped '
-                '`l10n`, or accidentally captured a fresh `maxTurns` '
-                'default would surface here, not in the slow CI lane.',
-          );
-        },
-      );
+      testWidgets('awaitNwCoastalOrVisibleLandForBundledExplore (barrel alias) '
+          'short-circuits identically to the lifted form', (tester) async {
+        await pumpE2eEmptyScaffold(tester);
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        ctE2eNavalPanelSnapshot = _coastalArrivalSnapshot();
+        final steps = <String>[];
+        await awaitNwCoastalOrVisibleLandForBundledExplore(
+          tester,
+          l10n,
+          ensureUnderWallClock: steps.add,
+          maxTurns: kE2eDefaultBundledExploreReadinessMaxTurns,
+        );
+        expect(
+          steps,
+          equals(<String>['NW bundled-explore readiness i=0']),
+          reason:
+              'The AC1 barrel wrapper must forward arguments in the '
+              'documented order — a regression that swapped '
+              '`ensureUnderWallClock` with `maxTurns`, dropped '
+              '`l10n`, or accidentally captured a fresh `maxTurns` '
+              'default would surface here, not in the slow CI lane.',
+        );
+      });
 
-      test(
-        'awaitNwCoastalOrVisibleLandForBundledExplore is re-exported as a '
-        'tear-off (compile-time signature pin)',
-        () {
-          final Future<void> Function(
-            WidgetTester,
-            AppLocalizations, {
-            required void Function(String step) ensureUnderWallClock,
-            int maxTurns,
-            Duration maxUiResponseWait,
-          })
-          ref = awaitNwCoastalOrVisibleLandForBundledExplore;
-          expect(
-            ref,
-            isNotNull,
-            reason:
-                'The AC1 barrel must continue to export the helper with '
-                'the documented signature. A silent removal from the '
-                '`show` clause or an arg-order swap on the wrapper '
-                'would fail this assignment at compile time.',
-          );
-        },
-      );
+      test('awaitNwCoastalOrVisibleLandForBundledExplore is re-exported as a '
+          'tear-off (compile-time signature pin)', () {
+        final Future<void> Function(
+          WidgetTester,
+          AppLocalizations, {
+          required void Function(String step) ensureUnderWallClock,
+          int maxTurns,
+          Duration maxUiResponseWait,
+        })
+        ref = awaitNwCoastalOrVisibleLandForBundledExplore;
+        expect(
+          ref,
+          isNotNull,
+          reason:
+              'The AC1 barrel must continue to export the helper with '
+              'the documented signature. A silent removal from the '
+              '`show` clause or an arg-order swap on the wrapper '
+              'would fail this assignment at compile time.',
+        );
+      });
     },
   );
 }

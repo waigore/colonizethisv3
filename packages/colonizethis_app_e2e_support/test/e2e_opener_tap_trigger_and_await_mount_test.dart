@@ -20,8 +20,6 @@
 /// implementation; AC10 — no silent flakiness from timeout regressions).
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,6 +27,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 import 'support/e2e_tap_counter.dart';
+import 'support/e2e_widget_pump_harness.dart';
+import 'support/opener_tap_trigger_harness.dart';
 
 const _kTriggerKey = ValueKey<String>('e2e_ottam_trigger');
 const _kPanelKey = ValueKey<String>('e2e_ottam_panel');
@@ -48,7 +48,12 @@ void main() {
       // reaches its rail-tap arm.
       final counter = E2eTapCounter();
       await tester.pumpWidget(
-        _TriggerAndPanelHarness(counter, panelMounted: true),
+        OpenerTriggerAndPanelHarness(
+          counter,
+          panelMounted: true,
+          triggerKey: _kTriggerKey,
+          panelKey: _kPanelKey,
+        ),
       );
       final result = await e2eOpenerTapTriggerAndAwaitMount(
         tester,
@@ -89,7 +94,7 @@ void main() {
       // that promoted the empty-trigger branch into a `fail()` call would
       // hard-stop every panel opener whose rail/marker is briefly absent
       // (typical during route transitions).
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await pumpE2eEmptyScaffold(tester);
       final result = await e2eOpenerTapTriggerAndAwaitMount(
         tester,
         trigger: find.byKey(_kTriggerKey),
@@ -119,9 +124,11 @@ void main() {
       // misses → bounded poll observes the mount → helper returns true.
       final counter = E2eTapCounter();
       await tester.pumpWidget(
-        _TriggerThenPanelHarness(
+        OpenerTriggerThenPanelHarness(
           counter,
           mountAfter: const Duration(milliseconds: 60),
+          triggerKey: _kTriggerKey,
+          panelKey: _kPanelKey,
         ),
       );
       expect(find.byKey(_kPanelKey), findsNothing);
@@ -165,7 +172,9 @@ void main() {
       // `tryOpen`, regressing every opener whose rail tap races with a
       // closing sheet).
       final counter = E2eTapCounter();
-      await tester.pumpWidget(_TriggerOnlyHarness(counter));
+      await tester.pumpWidget(
+        OpenerTriggerOnlyHarness(counter, triggerKey: _kTriggerKey),
+      );
       Object? caught;
       bool? result;
       try {
@@ -228,7 +237,12 @@ void main() {
       tearOff = openerTapTriggerAndAwaitMount;
       final counter = E2eTapCounter();
       await tester.pumpWidget(
-        _TriggerAndPanelHarness(counter, panelMounted: true),
+        OpenerTriggerAndPanelHarness(
+          counter,
+          panelMounted: true,
+          triggerKey: _kTriggerKey,
+          panelKey: _kPanelKey,
+        ),
       );
       final result = await tearOff(
         tester,
@@ -241,117 +255,4 @@ void main() {
       expect(counter.value, 0);
     },
   );
-}
-
-/// Hit-testable panel root used by the test fixtures. The shared
-/// [e2eOpenerTapTriggerAndAwaitMount] helper queries
-/// `panelRoot.hitTestable()` for its already-mounted short-circuit, so the
-/// fixture mounts a [ColoredBox] (paints opaque pixels and participates
-/// in hit-testing) rather than a bare [SizedBox] (no paint, not
-/// hit-testable in the test render pipeline). Sized to match the
-/// integration-test `kCtE2ECivilianPanelRootKey` / `kCtE2ENavalPanelRootKey`
-/// bottom-sheet root so the visual area is realistic.
-class _PanelRoot extends StatelessWidget {
-  const _PanelRoot();
-
-  @override
-  Widget build(BuildContext context) {
-    return const ColoredBox(
-      key: _kPanelKey,
-      color: Color(0xFFEEEEEE),
-      child: SizedBox(width: 200, height: 120),
-    );
-  }
-}
-
-/// Harness that mounts a single keyed [TextButton] trigger and, optionally,
-/// a hit-testable keyed panel root. Used to exercise the
-/// already-hit-testable short-circuit branch and the AC1 barrel alias
-/// signature pin.
-class _TriggerAndPanelHarness extends StatelessWidget {
-  const _TriggerAndPanelHarness(this.counter, {required this.panelMounted});
-
-  final E2eTapCounter counter;
-  final bool panelMounted;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Column(
-          children: <Widget>[
-            TextButton(
-              key: _kTriggerKey,
-              onPressed: () => counter.value++,
-              child: const Text('Trigger'),
-            ),
-            if (panelMounted) const _PanelRoot(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Harness that mounts the trigger immediately and arranges for the panel
-/// root to mount after [mountAfter] elapsed fake-async time, simulating
-/// the post-tap rebuild that opens the bottom sheet.
-class _TriggerThenPanelHarness extends StatefulWidget {
-  const _TriggerThenPanelHarness(this.counter, {required this.mountAfter});
-
-  final E2eTapCounter counter;
-  final Duration mountAfter;
-
-  @override
-  State<_TriggerThenPanelHarness> createState() =>
-      _TriggerThenPanelHarnessState();
-}
-
-class _TriggerThenPanelHarnessState extends State<_TriggerThenPanelHarness> {
-  bool _panelMounted = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Column(
-          children: <Widget>[
-            TextButton(
-              key: _kTriggerKey,
-              onPressed: () {
-                widget.counter.value++;
-                Timer(widget.mountAfter, () {
-                  if (!mounted) return;
-                  setState(() => _panelMounted = true);
-                });
-              },
-              child: const Text('Trigger'),
-            ),
-            if (_panelMounted) const _PanelRoot(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Harness that mounts only the trigger, never the panel — used to pin
-/// the timeout branch of [e2eOpenerTapTriggerAndAwaitMount].
-class _TriggerOnlyHarness extends StatelessWidget {
-  const _TriggerOnlyHarness(this.counter);
-
-  final E2eTapCounter counter;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: TextButton(
-          key: _kTriggerKey,
-          onPressed: () => counter.value++,
-          child: const Text('Trigger'),
-        ),
-      ),
-    );
-  }
 }
