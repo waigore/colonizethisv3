@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'e2e_widget_pump_harness.dart';
+
 const String _human = 'gp1';
 
 const TurnState _orderingTurn = TurnState(
@@ -46,11 +48,7 @@ CtE2eCivilianPanelSnapshot snapshot({
 /// likewise sits behind a modal-style assign sheet, not a full-screen push
 /// route, so this mock is more faithful to the live surface as well.
 class AssignRow extends StatelessWidget {
-  const AssignRow({
-    required this.label,
-    this.exploreTileEnabled,
-    this.onTap,
-  });
+  const AssignRow({required this.label, this.exploreTileEnabled, this.onTap});
 
   /// Visible label to disambiguate rows in failure messages.
   final String label;
@@ -113,6 +111,4 @@ Widget civilianPanel({required List<Widget> children}) => KeyedSubtree(
   child: ListView(children: children),
 );
 
-Widget wrap(Widget body) => MaterialApp(home: Scaffold(body: body));
-
-
+Widget wrap(Widget body) => wrapE2eScaffold(body);

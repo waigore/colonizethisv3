@@ -47,6 +47,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+
+import 'support/expect_panel_texts_harness.dart' as panel_host;
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' as shared;
 
 const String _human = 'gp1';
@@ -83,32 +85,9 @@ CtE2eCivilianPanelSnapshot _civilianSnapshot({
 /// Combined with the snapshot short-circuit in
 /// [e2eAnyExplorerHasEnabledExploreAssignFleet], this isolates the
 /// retry-loop contract under test from the full game UI.
-Widget _wrap() => MaterialApp(
-  home: Scaffold(
-    body: KeyedSubtree(
-      key: kCtE2ECivilianPanelRootKey,
-      child: ListView(children: const [ListTile(title: Text('Stub'))]),
-    ),
-  ),
-);
-
 /// Captures every `debugPrint` line emitted while [body] runs and restores
 /// the original printer afterwards (defensive in `finally` so a thrown
 /// expectation does not leak the override into later tests).
-Future<List<String>> _captureDebugPrints(Future<void> Function() body) async {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -163,10 +142,14 @@ void main() {
           'explorer-1': [kWorkTargetExplore],
         },
       );
-      await tester.pumpWidget(_wrap());
+      await tester.pumpWidget(
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+          ListTile(title: Text('Stub')),
+        ]),
+      );
       final perf = shared.E2ePerfLog('await_explore_pin');
       late bool result;
-      final lines = await _captureDebugPrints(() async {
+      final lines = await panel_host.captureDebugPrints(() async {
         result = await e2eAwaitExploreEnabledFromCivilianPanel(
           tester,
           l10n,
@@ -203,9 +186,13 @@ void main() {
           'explorer-1': [kWorkTargetExplore],
         },
       );
-      await tester.pumpWidget(_wrap());
+      await tester.pumpWidget(
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+          ListTile(title: Text('Stub')),
+        ]),
+      );
       late bool result;
-      final lines = await _captureDebugPrints(() async {
+      final lines = await panel_host.captureDebugPrints(() async {
         result = await e2eAwaitExploreEnabledFromCivilianPanel(
           tester,
           l10n,
@@ -240,10 +227,14 @@ void main() {
           'unit-1': [kWorkTargetBuildRoad],
         },
       );
-      await tester.pumpWidget(_wrap());
+      await tester.pumpWidget(
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+          ListTile(title: Text('Stub')),
+        ]),
+      );
       final perf = shared.E2ePerfLog('await_explore_pin');
       late bool result;
-      final lines = await _captureDebugPrints(() async {
+      final lines = await panel_host.captureDebugPrints(() async {
         result = await e2eAwaitExploreEnabledFromCivilianPanel(
           tester,
           l10n,
@@ -281,7 +272,11 @@ void main() {
           'explorer-1': [kWorkTargetExplore],
         },
       );
-      await tester.pumpWidget(_wrap());
+      await tester.pumpWidget(
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+          ListTile(title: Text('Stub')),
+        ]),
+      );
       final perf = shared.E2ePerfLog('await_explore_pin');
       final result = await e2eAwaitExploreEnabledFromCivilianPanel(
         tester,
@@ -301,12 +296,9 @@ void main() {
     });
   });
 
-  group('e2eAwaitExploreEnabledFromCivilianPanel — retry counter override',
-      () {
+  group('e2eAwaitExploreEnabledFromCivilianPanel — retry counter override', () {
     testWidgets('retryIterationCounter override propagates into the bumped '
-        'counter name (zero-budget pin guards the no-op path)', (
-      tester,
-    ) async {
+        'counter name (zero-budget pin guards the no-op path)', (tester) async {
       // With maxBoundedTurnRetries: 0 the override never bumps in this
       // fixture, but the parameter must still be accepted at the call
       // site. A regression that hard-coded the default would surface in
@@ -317,7 +309,11 @@ void main() {
           'unit-1': [kWorkTargetBuildRoad],
         },
       );
-      await tester.pumpWidget(_wrap());
+      await tester.pumpWidget(
+        panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+          ListTile(title: Text('Stub')),
+        ]),
+      );
       final perf = shared.E2ePerfLog('await_explore_pin');
       final result = await e2eAwaitExploreEnabledFromCivilianPanel(
         tester,
@@ -330,8 +326,7 @@ void main() {
     });
   });
 
-  group('e2eAwaitExploreEnabledFromCivilianPanel — AC1 barrel forwarding',
-      () {
+  group('e2eAwaitExploreEnabledFromCivilianPanel — AC1 barrel forwarding', () {
     testWidgets(
       'awaitExploreEnabledFromCivilianPanel (barrel alias) returns the '
       'same boolean as the lifted form',
@@ -341,11 +336,12 @@ void main() {
             'explorer-1': [kWorkTargetExplore],
           },
         );
-        await tester.pumpWidget(_wrap());
-        final result = await awaitExploreEnabledFromCivilianPanel(
-          tester,
-          l10n,
+        await tester.pumpWidget(
+          panel_host.wrap(kCtE2ECivilianPanelRootKey, const [
+            ListTile(title: Text('Stub')),
+          ]),
         );
+        final result = await awaitExploreEnabledFromCivilianPanel(tester, l10n);
         expect(
           result,
           isTrue,
