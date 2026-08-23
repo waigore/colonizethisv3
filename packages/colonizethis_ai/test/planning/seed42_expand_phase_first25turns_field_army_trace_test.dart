@@ -93,177 +93,35 @@
 // its per-turn pre-resolution trace capture and invariant assertions.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/army_conquest_prep.dart'
-    show regimentCountForPlayer;
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show planExpandDeclareWar;
-import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart'
-    show observerGoalPhaseFor;
 import 'package:colonizethis_data/colonizethis_data.dart'
     show
         MapTopology,
         kObserverColonialLiteMinTurn,
         kObserverConquestMinOwProvincesPerGp;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
 import '../support/seed42_observer_campaign.dart';
-
-/// Stationed province + regiment count for one army.
-class _ArmyTrace {
-  const _ArmyTrace({
-    required this.armyId,
-    required this.stationedProvinceId,
-    required this.regimentCount,
-  });
-
-  final String armyId;
-  final String stationedProvinceId;
-  final int regimentCount;
-
-  @override
-  String toString() => '$armyId@$stationedProvinceId(${regimentCount}r)';
-}
-
-class _GpTurnTrace {
-  const _GpTurnTrace({
-    required this.turn,
-    required this.gpId,
-    required this.phase,
-    required this.declareWarTarget,
-    required this.ownOw,
-    required this.invadableCount,
-    required this.regimentCount,
-    required this.treasury,
-    required this.atWarGp,
-    required this.atWarMinorTribe,
-    required this.adjacentOwners,
-    required this.homeArmies,
-    required this.fieldArmies,
-  });
-
-  final int turn;
-  final String gpId;
-  final ObserverGoalPhase phase;
-  final String? declareWarTarget;
-  final int ownOw;
-  final int invadableCount;
-  final int regimentCount;
-  final int treasury;
-
-  /// At-war partners filtered to Great Powers (sorted ascending).
-  final List<String> atWarGp;
-
-  /// At-war partners filtered to minors / tribes (sorted ascending).
-  final List<String> atWarMinorTribe;
-
-  final List<String> adjacentOwners;
-  final List<_ArmyTrace> homeArmies;
-  final List<_ArmyTrace> fieldArmies;
-
-  String formatRow() =>
-      'turn=$turn $gpId  phase=$phase  ow=$ownOw  '
-      'invadable=$invadableCount  regiments=$regimentCount  '
-      'treasury=$treasury  declareWarTarget=$declareWarTarget  '
-      'atWarGp=$atWarGp  atWarMinorTribe=$atWarMinorTribe  '
-      'adjacentOwners=$adjacentOwners  '
-      'home=$homeArmies  field=$fieldArmies';
-}
-
-/// Captures pre-resolution per-GP traces for one 1-based campaign turn.
-List<_GpTurnTrace> _captureGpTurnTraces({
-  required int turn,
-  required Game game,
-  required MapTopology topo,
-}) {
-  final perGp = <_GpTurnTrace>[];
-  for (var i = 1; i <= 6; i++) {
-    final gpId = 'gp$i';
-    final view = buildPlayerView(game, topo, gpId);
-    final snapshot = AIWorldSnapshot.fromPlayerView(view, topology: topo);
-    final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
-    final declareWarTarget = planExpandDeclareWar(
-      game: game,
-      snapshot: snapshot,
-    );
-    final player = game.playerById(gpId)!;
-    final atWarGp = <String>[
-      for (final factionId in snapshot.threats.atWarWith)
-        if (game.playerById(factionId) != null) factionId,
-    ]..sort();
-    final atWarMinorTribe = <String>[
-      for (final factionId in snapshot.threats.atWarWith)
-        if (game.playerById(factionId) == null) factionId,
-    ]..sort();
-    final ownerArmies = game.worldState.armies.where(
-      (a) => a.ownerId == gpId,
-    );
-    final homeArmies = <_ArmyTrace>[
-      for (final a in ownerArmies)
-        if (a.isHomeArmy)
-          _ArmyTrace(
-            armyId: a.id,
-            stationedProvinceId: a.stationedProvinceId,
-            regimentCount: a.regimentUnitIds.length,
-          ),
-    ]..sort((a, b) => a.armyId.compareTo(b.armyId));
-    final fieldArmies = <_ArmyTrace>[
-      for (final a in ownerArmies)
-        if (!a.isHomeArmy)
-          _ArmyTrace(
-            armyId: a.id,
-            stationedProvinceId: a.stationedProvinceId,
-            regimentCount: a.regimentUnitIds.length,
-          ),
-    ]..sort((a, b) => a.armyId.compareTo(b.armyId));
-    perGp.add(
-      _GpTurnTrace(
-        turn: turn,
-        gpId: gpId,
-        phase: phase,
-        declareWarTarget: declareWarTarget,
-        ownOw: snapshot.conquest.oldWorldProvincesOwned,
-        invadableCount: snapshot.conquest.invadableProvinceIdsSorted.length,
-        regimentCount: regimentCountForPlayer(game, gpId),
-        treasury: player.treasury,
-        atWarGp: atWarGp,
-        atWarMinorTribe: atWarMinorTribe,
-        adjacentOwners: List.of(
-          snapshot.conquest.adjacentOwnerFactionIdsSorted,
-        )..sort(),
-        homeArmies: homeArmies,
-        fieldArmies: fieldArmies,
-      ),
-    );
-  }
-  return perGp;
-}
-
-/// Number of full-AI turn resolutions to run.
-///
-/// Captures pre-resolution per-GP traces at turns 1 .. [_kTurnsToResolve] + 1
-/// (so traces include the post-resolution state at the start of turn 26).
-const int _kTurnsToResolve = 25;
+import 'seed42_expand_phase_first25turns_field_army_trace_support.dart';
 
 void main() {
   setUpAll(() {
     CtLogger.level = Level.off;
   });
 
-  test('seed 42 first $_kTurnsToResolve resolved turns: every below-quota '
+  test('seed 42 first $kSeed42ExpandFirst25TurnsToResolve resolved turns: every below-quota '
       'pre-COLONIAL-lite Great Power stays in EXPAND with field-army '
       'positions captured (S7 multi-turn diagnostic)', () {
-    final tracesByTurn = <int, List<_GpTurnTrace>>{};
+    final tracesByTurn = <int, List<Seed42ExpandGpTurnTrace>>{};
     MapTopology? topo;
 
     final result = runSeed42ObserverCampaign(
-      turns: _kTurnsToResolve,
+      turns: kSeed42ExpandFirst25TurnsToResolve,
       onBeforeResolve: (harnessTurn, fullAi, game, topology, tileMap) {
         topo = topology;
         final turn = harnessTurn + 1;
-        tracesByTurn[turn] = _captureGpTurnTraces(
+        tracesByTurn[turn] = captureSeed42ExpandGpTurnTraces(
           turn: turn,
           game: game,
           topo: topology,
@@ -271,32 +129,33 @@ void main() {
       },
     );
 
-    tracesByTurn[_kTurnsToResolve + 1] = _captureGpTurnTraces(
-      turn: _kTurnsToResolve + 1,
+    tracesByTurn[kSeed42ExpandFirst25TurnsToResolve +
+        1] = captureSeed42ExpandGpTurnTraces(
+      turn: kSeed42ExpandFirst25TurnsToResolve + 1,
       game: result.finalGame,
       topo: topo!,
     );
 
     final traceTable = StringBuffer();
-    for (var turn = 1; turn <= _kTurnsToResolve + 1; turn++) {
+    for (var turn = 1; turn <= kSeed42ExpandFirst25TurnsToResolve + 1; turn++) {
       traceTable.writeln('=== Turn $turn ===');
       for (final t in tracesByTurn[turn]!) {
         traceTable.writeln('  ${t.formatRow()}');
       }
     }
     final reason =
-        'seed-42 first ${_kTurnsToResolve + 1} turn EXPAND-phase trace '
+        'seed-42 first ${kSeed42ExpandFirst25TurnsToResolve + 1} turn EXPAND-phase trace '
         'with field-army positions:\n$traceTable';
 
     // Universal-truth invariant: while ownOw < quota (10) and turn <
     // COLONIAL-lite floor (120), `observerGoalPhaseFor` must return
     // EXPAND. Below-quota routing into COLONIAL / COLONIAL-lite /
     // DEVELOP under these conditions would be a phase-transition
-    // regression. The first ${_kTurnsToResolve + 1} captured turns
+    // regression. The first ${kSeed42ExpandFirst25TurnsToResolve + 1} captured turns
     // are well below the turn-120 COLONIAL-lite floor, so the
     // invariant collapses to: any below-quota GP at any captured
     // turn must be in EXPAND.
-    for (var turn = 1; turn <= _kTurnsToResolve + 1; turn++) {
+    for (var turn = 1; turn <= kSeed42ExpandFirst25TurnsToResolve + 1; turn++) {
       for (final t in tracesByTurn[turn]!) {
         if (t.ownOw >= kObserverConquestMinOwProvincesPerGp) {
           // At-or-above-quota GPs are allowed to leave EXPAND
@@ -308,7 +167,7 @@ void main() {
         }
         if (t.turn >= kObserverColonialLiteMinTurn) {
           // Pre-COLONIAL-lite floor never fires under
-          // ${_kTurnsToResolve + 1} resolved turns, but check
+          // ${kSeed42ExpandFirst25TurnsToResolve + 1} resolved turns, but check
           // explicitly so the universal-truth assertion stays
           // honest if the constant ever changes.
           continue;
