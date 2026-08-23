@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -19,7 +20,7 @@ void main() {
     testWidgets('returns immediately when finder matches nothing', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await pumpE2eBareScaffold(tester);
       await e2ePumpUntilFinderEmpty(
         tester,
         find.text('no_such_widget'),
@@ -30,7 +31,7 @@ void main() {
     testWidgets('pumps until finder clears then returns', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const MaterialApp(home: _DisappearingLabel()));
+      await tester.pumpWidget(wrapE2eApp(_DisappearingLabel()));
       expect(find.text('gone'), findsOneWidget);
       await tester.tap(find.text('hide'));
       await e2ePumpUntilFinderEmpty(

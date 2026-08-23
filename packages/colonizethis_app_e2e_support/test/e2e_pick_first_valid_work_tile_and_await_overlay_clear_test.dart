@@ -41,6 +41,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/work_tile_overlay_host_harness.dart';
+import 'support/e2e_pick_first_valid_work_tile_and_await_overlay_clear_constants_group.dart';
+import 'support/e2e_pick_first_valid_work_tile_and_await_overlay_clear_guard_group.dart';
 
 /// Mounts an [InkWell] keyed by [kCtE2ESelectFirstValidWorkTileKey] inside
 /// a [Material] ancestor so [WidgetTester.tap] resolves the same gesture
@@ -237,83 +239,6 @@ void main() {
     );
   });
 
-  group('Default constants', () {
-    test(
-      'kE2eDefaultCivilianWorkTileAppearTimeout matches legacy 15 s budget',
-      () {
-        expect(
-          kE2eDefaultCivilianWorkTileAppearTimeout,
-          const Duration(seconds: 15),
-          reason:
-              'A silent budget bump would change wall-clock guarantees for '
-              'every call site that relies on the default; require an explicit '
-              'override at the call site instead. Refs GitHub #2336 / AC4.',
-        );
-      },
-    );
-
-    test(
-      'kE2eDefaultCivilianWorkTileClearTimeout matches legacy 5 s budget',
-      () {
-        expect(
-          kE2eDefaultCivilianWorkTileClearTimeout,
-          const Duration(seconds: 5),
-          reason:
-              'A silent budget bump would change wall-clock guarantees for '
-              'every call site that relies on the default; require an explicit '
-              'override at the call site instead. Refs GitHub #2336 / AC4.',
-        );
-      },
-    );
-  });
-
-  group('Perf wiring', () {
-    testWidgets(
-      'strict variant forwards appearPhase and clearPhase verbatim through '
-      'e2eWaitUntilFound and e2ePumpUntil',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const WorkTileOverlayHost());
-        final perf = E2ePerfLog('work_tile_strict_phase');
-
-        final lines = <String>[];
-        final original = debugPrint;
-        debugPrint = (String? message, {int? wrapWidth}) {
-          lines.add(message ?? '');
-        };
-        try {
-          await e2ePickFirstValidWorkTileAndAwaitOverlayClear(
-            tester,
-            appearPhase: 'custom_appear_phase',
-            clearPhase: 'custom_clear_phase',
-            perf: perf,
-          );
-        } finally {
-          debugPrint = original;
-        }
-
-        expect(
-          lines.any(
-            (l) =>
-                l.startsWith('E2E_TIMING') &&
-                l.contains('phase=custom_appear_phase'),
-          ),
-          isTrue,
-          reason:
-              'appearPhase must be forwarded verbatim to e2eWaitUntilFound — '
-              'log scrapers and dashboards key on the exact phase literal.',
-        );
-        expect(
-          lines.any(
-            (l) =>
-                l.startsWith('E2E_TIMING') &&
-                l.contains('phase=custom_clear_phase'),
-          ),
-          isTrue,
-          reason:
-              'clearPhase must be forwarded verbatim to e2ePumpUntil — log '
-              'scrapers and dashboards key on the exact phase literal.',
-        );
-      },
-    );
-  });
+  registerE2ePickFirstValidWorkTileAndAwaitOverlayClearConstantsGroup();
+  registerE2ePickFirstValidWorkTileAndAwaitOverlayClearGuardGroup();
 }

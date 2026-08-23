@@ -32,6 +32,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 import 'support/panel_opener_rail_harness.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 const _kPrimaryKey = ValueKey<String>('e2e_apohh_primary');
 const _kSecondaryKey = ValueKey<String>('e2e_apohh_secondary');
@@ -44,9 +45,7 @@ void main() {
     'already hit-testable (no pump, no perf event)',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
-        ),
+        wrapE2eApp(PrimaryHitTestableHarness(primaryKey: _kPrimaryKey)),
       );
       expect(find.byKey(_kPrimaryKey), findsOneWidget);
       expect(find.byKey(_kPrimaryKey).hitTestable(), findsOneWidget);
@@ -74,9 +73,7 @@ void main() {
     'hit-testable but primary is not yet rendered',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: SecondaryOnlyHarness(secondaryKey: _kSecondaryKey),
-        ),
+        wrapE2eApp(SecondaryOnlyHarness(secondaryKey: _kSecondaryKey)),
       );
       expect(find.byKey(_kPrimaryKey), findsNothing);
       expect(find.byKey(_kSecondaryKey).hitTestable(), findsOneWidget);
@@ -104,8 +101,8 @@ void main() {
   testWidgets('e2eAwaitPanelOpenerRailHitTestable waits until primary becomes '
       'hit-testable when initially obscured', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: DelayedPrimaryHitTestableHarness(
+      wrapE2eApp(
+        DelayedPrimaryHitTestableHarness(
           primaryKey: _kPrimaryKey,
           uncoverAfter: Duration(milliseconds: 120),
         ),
@@ -141,7 +138,7 @@ void main() {
     'e2eAwaitPanelOpenerRailHitTestable surfaces TestFailure when neither '
     'primary nor secondary becomes hit-testable within timeout',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await pumpE2eBareScaffold(tester);
       Object? caught;
       try {
         await e2eAwaitPanelOpenerRailHitTestable(
@@ -173,9 +170,7 @@ void main() {
     'opener path)',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
-        ),
+        wrapE2eApp(PrimaryHitTestableHarness(primaryKey: _kPrimaryKey)),
       );
       await e2eAwaitPanelOpenerRailHitTestable(
         tester,

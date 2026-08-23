@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 Widget _navalPanel({required List<Widget> fleetTiles}) => KeyedSubtree(
   key: kCtE2ENavalPanelRootKey,
@@ -31,35 +32,27 @@ void main() {
 
   group('e2eNavalPanelShowsNonHomeFleetInNewWorld — false branches', () {
     testWidgets('no naval panel root key', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: Text('empty'))),
-      );
+      await tester.pumpWidget(wrapE2eScaffold(Text('empty')));
       expect(e2eNavalPanelShowsNonHomeFleetInNewWorld(tester), isFalse);
     });
 
     testWidgets('naval panel with no ExpansionTile children', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(fleetTiles: const [Text('loading')]),
-          ),
-        ),
+        wrapE2eScaffold(_navalPanel(fleetTiles: const [Text('loading')])),
       );
       expect(e2eNavalPanelShowsNonHomeFleetInNewWorld(tester), isFalse);
     });
 
     testWidgets('home fleet only (no Fleet prefix title)', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(
-              fleetTiles: [
-                ExpansionTile(
-                  title: const Text('Home Fleet'),
-                  subtitle: const Text('New World — Outer Sea'),
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          _navalPanel(
+            fleetTiles: [
+              ExpansionTile(
+                title: const Text('Home Fleet'),
+                subtitle: const Text('New World — Outer Sea'),
+              ),
+            ],
           ),
         ),
       );
@@ -70,16 +63,14 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(
-              fleetTiles: [
-                _fleetTile(
-                  fleetTitle: 'Fleet 2',
-                  locationLine: 'Old World — Coastal Sea',
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          _navalPanel(
+            fleetTiles: [
+              _fleetTile(
+                fleetTitle: 'Fleet 2',
+                locationLine: 'Old World — Coastal Sea',
+              ),
+            ],
           ),
         ),
       );
@@ -88,10 +79,8 @@ void main() {
 
     testWidgets('non-home fleet with no subtitle location', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(fleetTiles: [_fleetTile(fleetTitle: 'Fleet 2')]),
-          ),
+        wrapE2eScaffold(
+          _navalPanel(fleetTiles: [_fleetTile(fleetTitle: 'Fleet 2')]),
         ),
       );
       expect(e2eNavalPanelShowsNonHomeFleetInNewWorld(tester), isFalse);
@@ -101,16 +90,14 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(
-              fleetTiles: [
-                _fleetTile(
-                  fleetTitle: 'Flotilla 2',
-                  locationLine: 'New World — Outer Sea',
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          _navalPanel(
+            fleetTiles: [
+              _fleetTile(
+                fleetTitle: 'Flotilla 2',
+                locationLine: 'New World — Outer Sea',
+              ),
+            ],
           ),
         ),
       );
@@ -123,16 +110,14 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(
-              fleetTiles: [
-                _fleetTile(
-                  fleetTitle: 'Fleet 2',
-                  locationLine: 'New World — Outer Sea',
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          _navalPanel(
+            fleetTiles: [
+              _fleetTile(
+                fleetTitle: 'Fleet 2',
+                locationLine: 'New World — Outer Sea',
+              ),
+            ],
           ),
         ),
       );
@@ -143,17 +128,15 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(
-              fleetTiles: [
-                const ExpansionTile(title: Text('Home Fleet')),
-                _fleetTile(
-                  fleetTitle: 'Fleet 3',
-                  locationLine: 'New World - Outer Sea',
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          _navalPanel(
+            fleetTiles: [
+              const ExpansionTile(title: Text('Home Fleet')),
+              _fleetTile(
+                fleetTitle: 'Fleet 3',
+                locationLine: 'New World - Outer Sea',
+              ),
+            ],
           ),
         ),
       );
@@ -164,20 +147,18 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _navalPanel(
-              fleetTiles: [
-                _fleetTile(
-                  fleetTitle: 'Fleet 1',
-                  locationLine: 'New World — Sea A',
-                ),
-                _fleetTile(
-                  fleetTitle: 'Fleet 2',
-                  locationLine: 'Old World — Coastal Sea',
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          _navalPanel(
+            fleetTiles: [
+              _fleetTile(
+                fleetTitle: 'Fleet 1',
+                locationLine: 'New World — Sea A',
+              ),
+              _fleetTile(
+                fleetTitle: 'Fleet 2',
+                locationLine: 'Old World — Coastal Sea',
+              ),
+            ],
           ),
         ),
       );

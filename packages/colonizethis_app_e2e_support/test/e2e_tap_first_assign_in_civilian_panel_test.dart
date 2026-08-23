@@ -39,165 +39,101 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/custom_civilian_panel_host.dart';
+import 'support/e2e_tap_first_assign_in_civilian_panel_tail_group.dart';
 
 /// Synthetic civilian-panel host whose body is provided by the test. Lets
 /// each test choose whether to mount the root key, the ListView, the
 /// Assign button(s), and the post-tap work-menu text independently.
-class _CustomCivilianPanelHost extends StatefulWidget {
-  const _CustomCivilianPanelHost({
-    required this.bodyBuilder,
-    this.includeRootKey = true,
-    this.showWorkMenuOnTap = true,
-  });
-
-  final Widget Function(VoidCallback onAssignTapped) bodyBuilder;
-  final bool includeRootKey;
-  final bool showWorkMenuOnTap;
-
-  @override
-  State<_CustomCivilianPanelHost> createState() =>
-      _CustomCivilianPanelHostState();
-}
-
-class _CustomCivilianPanelHostState extends State<_CustomCivilianPanelHost> {
-  bool _tapped = false;
-
-  void _markTapped() {
-    if (!widget.showWorkMenuOnTap) {
-      return;
-    }
-    setState(() {
-      _tapped = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final body = widget.bodyBuilder(_markTapped);
-    final rootChild = Column(
-      children: <Widget>[
-        Expanded(child: body),
-        if (_tapped)
-          // The helper polls for any of {Build improvement, Prospect,
-          // Explore} after tapping Assign. Showing one of those labels here
-          // is the synthetic equivalent of the work-menu surfacing in the
-          // production scaffold.
-          const Text('Build improvement'),
-      ],
-    );
-    return MaterialApp(
-      home: Scaffold(
-        body: widget.includeRootKey
-            ? Container(key: kCtE2ECivilianPanelRootKey, child: rootChild)
-            : rootChild,
-      ),
-    );
-  }
-}
-
-bool _hostWasTapped(WidgetTester tester) {
-  final stateFinder = find.byType(_CustomCivilianPanelHost);
-  if (stateFinder.evaluate().isEmpty) {
-    return false;
-  }
-  final state = tester.state<_CustomCivilianPanelHostState>(stateFinder);
-  return state._tapped;
-}
-
 void main() {
   suppressLogsForTests();
 
-  testWidgets(
-    'fails fast when kCtE2ECivilianPanelRootKey is absent',
-    (WidgetTester tester) async {
-      // No root key wrapping the ListView; the helper's first
-      // `expect(listView, findsOneWidget)` must surface this as a
-      // TestFailure rather than hanging while the missing root key would
-      // otherwise make the descendant ListView search return zero matches
-      // forever.
-      await tester.pumpWidget(
-        _CustomCivilianPanelHost(
-          includeRootKey: false,
-          bodyBuilder: (onAssign) => ListView(
-            children: <Widget>[
-              ListTile(
-                title: const Text(kUnitTypeBuilder),
-                trailing: TextButton(
-                  onPressed: onAssign,
-                  child: const Text('Assign'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      Object? caught;
-      try {
-        await e2eTapFirstAssignInCivilianPanel(tester);
-      } catch (e) {
-        caught = e;
-      }
-
-      expect(
-        caught,
-        isA<TestFailure>(),
-        reason:
-            'Missing civilian panel root key must surface a TestFailure '
-            'so the fleet-reach loop fails fast at the offending turn '
-            'instead of burning the 5s post-tap timeout silently '
-            '(#2336 H9 sibling fail-fast contract).',
-      );
-      expect(
-        _hostWasTapped(tester),
-        isFalse,
-        reason:
-            'Helper must not have tapped an off-tree Assign before its '
-            'fail-fast guard fires; a tap that lands without the root key '
-            'mounted would mutate panel state on the wrong host.',
-      );
-    },
-  );
-
-  testWidgets(
-    'fails fast when root key is present but contains no ListView',
-    (WidgetTester tester) async {
-      // kCtE2ECivilianPanelRootKey is mounted but its subtree has no
-      // ListView descendant; the helper's `expect(listView, findsOneWidget)`
-      // guard must reject this before scrollUntilVisible is reached.
-      await tester.pumpWidget(
-        _CustomCivilianPanelHost(
-          bodyBuilder: (onAssign) => Column(
-            children: <Widget>[
-              const Text('Civilian panel placeholder'),
-              TextButton(
+  testWidgets('fails fast when kCtE2ECivilianPanelRootKey is absent', (
+    WidgetTester tester,
+  ) async {
+    // No root key wrapping the ListView; the helper's first
+    // `expect(listView, findsOneWidget)` must surface this as a
+    // TestFailure rather than hanging while the missing root key would
+    // otherwise make the descendant ListView search return zero matches
+    // forever.
+    await tester.pumpWidget(
+      CustomCivilianPanelHost(
+        includeRootKey: false,
+        bodyBuilder: (onAssign) => ListView(
+          children: <Widget>[
+            ListTile(
+              title: const Text(kUnitTypeBuilder),
+              trailing: TextButton(
                 onPressed: onAssign,
                 child: const Text('Assign'),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
 
-      Object? caught;
-      try {
-        await e2eTapFirstAssignInCivilianPanel(tester);
-      } catch (e) {
-        caught = e;
-      }
+    Object? caught;
+    try {
+      await e2eTapFirstAssignInCivilianPanel(tester);
+    } catch (e) {
+      caught = e;
+    }
 
-      expect(
-        caught,
-        isA<TestFailure>(),
-        reason:
-            'A root-keyed subtree without a ListView descendant must fail '
-            '`findsOneWidget` immediately so the helper cannot fall '
-            'through to scrollUntilVisible on a non-scrollable host '
-            '(scrollUntilVisible would throw an opaque assertion deep in '
-            'the framework, masking the real shape mismatch).',
-      );
-    },
-  );
+    expect(
+      caught,
+      isA<TestFailure>(),
+      reason:
+          'Missing civilian panel root key must surface a TestFailure '
+          'so the fleet-reach loop fails fast at the offending turn '
+          'instead of burning the 5s post-tap timeout silently '
+          '(#2336 H9 sibling fail-fast contract).',
+    );
+    expect(
+      customCivilianPanelHostWasTapped(tester),
+      isFalse,
+      reason:
+          'Helper must not have tapped an off-tree Assign before its '
+          'fail-fast guard fires; a tap that lands without the root key '
+          'mounted would mutate panel state on the wrong host.',
+    );
+  });
+
+  testWidgets('fails fast when root key is present but contains no ListView', (
+    WidgetTester tester,
+  ) async {
+    // kCtE2ECivilianPanelRootKey is mounted but its subtree has no
+    // ListView descendant; the helper's `expect(listView, findsOneWidget)`
+    // guard must reject this before scrollUntilVisible is reached.
+    await tester.pumpWidget(
+      CustomCivilianPanelHost(
+        bodyBuilder: (onAssign) => Column(
+          children: <Widget>[
+            const Text('Civilian panel placeholder'),
+            TextButton(onPressed: onAssign, child: const Text('Assign')),
+          ],
+        ),
+      ),
+    );
+
+    Object? caught;
+    try {
+      await e2eTapFirstAssignInCivilianPanel(tester);
+    } catch (e) {
+      caught = e;
+    }
+
+    expect(
+      caught,
+      isA<TestFailure>(),
+      reason:
+          'A root-keyed subtree without a ListView descendant must fail '
+          '`findsOneWidget` immediately so the helper cannot fall '
+          'through to scrollUntilVisible on a non-scrollable host '
+          '(scrollUntilVisible would throw an opaque assertion deep in '
+          'the framework, masking the real shape mismatch).',
+    );
+  });
 
   testWidgets(
     'fails fast when no Assign text descendant is present in the panel',
@@ -207,7 +143,7 @@ void main() {
       // helper's `expect(assign, findsWidgets)` guard must surface this
       // before scrollUntilVisible or tap is attempted.
       await tester.pumpWidget(
-        _CustomCivilianPanelHost(
+        CustomCivilianPanelHost(
           bodyBuilder: (_) => ListView(
             children: const <Widget>[
               ListTile(title: Text(kUnitTypeBuilder), trailing: Text('Busy')),
@@ -234,7 +170,7 @@ void main() {
             'by silently-burned 5s timeouts on broken panel states.',
       );
       expect(
-        _hostWasTapped(tester),
+        customCivilianPanelHostWasTapped(tester),
         isFalse,
         reason:
             'Helper must not tap any non-Assign widget when the assertion '
@@ -252,7 +188,7 @@ void main() {
       // the helper still works when only one Assign is present (no
       // first-of-many ambiguity to resolve).
       await tester.pumpWidget(
-        _CustomCivilianPanelHost(
+        CustomCivilianPanelHost(
           bodyBuilder: (onAssign) => ListView(
             children: <Widget>[
               ListTile(
@@ -270,7 +206,7 @@ void main() {
       await e2eTapFirstAssignInCivilianPanel(tester);
 
       expect(
-        _hostWasTapped(tester),
+        customCivilianPanelHostWasTapped(tester),
         isTrue,
         reason:
             'Single-Assign happy path: the lone Assign button must be '
@@ -289,47 +225,5 @@ void main() {
     },
   );
 
-  testWidgets(
-    'fails with TestFailure when the post-tap work menu never surfaces',
-    (WidgetTester tester) async {
-      // The Assign tap fires (host sees the press) but the synthetic
-      // host is configured NOT to emit `Build improvement` / `Prospect` /
-      // `Explore`. The helper's downstream `e2eWaitUntilAnyFinderHitTestable`
-      // must run to its 5s timeout and surface a TestFailure rather than
-      // returning silently.
-      await tester.pumpWidget(
-        _CustomCivilianPanelHost(
-          showWorkMenuOnTap: false,
-          bodyBuilder: (onAssign) => ListView(
-            children: <Widget>[
-              ListTile(
-                title: const Text(kUnitTypeBuilder),
-                trailing: TextButton(
-                  onPressed: onAssign,
-                  child: const Text('Assign'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      Object? caught;
-      try {
-        await e2eTapFirstAssignInCivilianPanel(tester);
-      } catch (e) {
-        caught = e;
-      }
-
-      expect(
-        caught,
-        isA<TestFailure>(),
-        reason:
-            'When the work menu never surfaces, the helper must throw '
-            'TestFailure (via e2eWaitUntilAnyFinderHitTestable) so the '
-            'caller fails the scenario at the offending turn rather than '
-            'continuing with a stale civilian panel state.',
-      );
-    },
-  );
+  registerE2eTapFirstAssignInCivilianPanelTailGroup();
 }

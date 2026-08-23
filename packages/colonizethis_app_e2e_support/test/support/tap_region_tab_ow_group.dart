@@ -22,26 +22,25 @@ void registerTapRegionTabOwGroup() {
       },
     );
 
-    testWidgets(
-      'no-op when matching chip exists but is not hit-testable',
-      (WidgetTester tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await pumpScaffold(
-          tester,
-          IgnorePointer(
-            child: CtChoiceChip(
-              label: Text(l10n.region_oldWorld),
-              selected: false,
-              onSelected: (_) {},
-            ),
+    testWidgets('no-op when matching chip exists but is not hit-testable', (
+      WidgetTester tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await pumpScaffold(
+        tester,
+        IgnorePointer(
+          child: CtChoiceChip(
+            label: Text(l10n.region_oldWorld),
+            selected: false,
+            onSelected: (_) {},
           ),
-        );
-        await e2eTapOldWorldRegionTab(tester, l10n);
-        // Helper must rely on the `.hitTestable()` filter — otherwise a
-        // chip behind IgnorePointer (during a bottom-sheet route push, for
-        // example) would absorb a no-op tap and trip warnIfMissed on CI.
-      },
-    );
+        ),
+      );
+      await e2eTapOldWorldRegionTab(tester, l10n);
+      // Helper must rely on the `.hitTestable()` filter — otherwise a
+      // chip behind IgnorePointer (during a bottom-sheet route push, for
+      // example) would absorb a no-op tap and trip warnIfMissed on CI.
+    });
 
     testWidgets(
       'taps the matching chip and short-circuits once selection flips',
@@ -140,43 +139,42 @@ void registerTapRegionTabOwGroup() {
       },
     );
 
-    testWidgets(
-      'returns without throwing when the chip never flips selected',
-      (WidgetTester tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await pumpScaffold(
-          tester,
-          CtChoiceChip(
-            label: Text(l10n.region_oldWorld),
-            selected: false,
-            onSelected: (_) {},
-          ),
-        );
+    testWidgets('returns without throwing when the chip never flips selected', (
+      WidgetTester tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await pumpScaffold(
+        tester,
+        CtChoiceChip(
+          label: Text(l10n.region_oldWorld),
+          selected: false,
+          onSelected: (_) {},
+        ),
+      );
 
-        Object? caught;
-        try {
-          await e2eTapOldWorldRegionTab(tester, l10n);
-        } catch (e) {
-          caught = e;
-        }
-        expect(
-          caught,
-          isNull,
-          reason:
-              'Helper composes the best-effort '
-              'e2ePumpUntilConditionOrIdle and MUST NOT throw on timeout — '
-              'callers treat the wait as an optional post-tap settle '
-              '(#2336 AC5).',
-        );
-        expect(
-          e2eOldWorldRegionChipAppearsSelected(l10n),
-          isFalse,
-          reason:
-              'Sanity: stubbed onSelected keeps the chip unselected so the '
-              'timeout branch is exercised end-to-end.',
-        );
-      },
-    );
+      Object? caught;
+      try {
+        await e2eTapOldWorldRegionTab(tester, l10n);
+      } catch (e) {
+        caught = e;
+      }
+      expect(
+        caught,
+        isNull,
+        reason:
+            'Helper composes the best-effort '
+            'e2ePumpUntilConditionOrIdle and MUST NOT throw on timeout — '
+            'callers treat the wait as an optional post-tap settle '
+            '(#2336 AC5).',
+      );
+      expect(
+        e2eOldWorldRegionChipAppearsSelected(l10n),
+        isFalse,
+        reason:
+            'Sanity: stubbed onSelected keeps the chip unselected so the '
+            'timeout branch is exercised end-to-end.',
+      );
+    });
 
     testWidgets(
       'short-circuits without tapping when the chip is already selected',
@@ -235,51 +233,6 @@ void registerTapRegionTabOwGroup() {
               '500ms settle cap; a regression that fell through to the tap '
               '+ settle path would directly inflate fleet-reach OW wall '
               'clock.',
-        );
-      },
-    );
-
-    testWidgets(
-      'short-circuits even when the matching chip is non-hit-testable but '
-      'already appears selected',
-      (WidgetTester tester) async {
-        // Mirrors the NW counterpart: a non-hit-testable but visually
-        // selected OW chip (e.g. behind an IgnorePointer during a sheet
-        // push) must short-circuit via the already-selected branch before
-        // the helper even queries hit-testability. No tap fires, no
-        // exception leaks.
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await pumpScaffold(
-          tester,
-          IgnorePointer(
-            child: CtChoiceChip(
-              label: Text(l10n.region_oldWorld),
-              selected: true,
-              onSelected: (_) {},
-            ),
-          ),
-        );
-        expect(
-          e2eOldWorldRegionChipAppearsSelected(l10n),
-          isTrue,
-          reason:
-              'Sanity: IgnorePointer does not strip the chip`s `selected` '
-              'flag from the OW predicate.',
-        );
-
-        Object? caught;
-        try {
-          await e2eTapOldWorldRegionTab(tester, l10n);
-        } catch (e) {
-          caught = e;
-        }
-        expect(
-          caught,
-          isNull,
-          reason:
-              'Already-selected + non-hit-testable OW chip must remain a '
-              'silent no-op so callers can compose the helper '
-              'unconditionally without paying an exception or a tap.',
         );
       },
     );

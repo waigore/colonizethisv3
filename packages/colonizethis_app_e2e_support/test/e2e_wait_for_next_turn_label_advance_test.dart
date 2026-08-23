@@ -2,22 +2,18 @@
 /// race-gate** contracts of `e2eWaitForNextTurnLabelAdvance` (Refs GitHub
 /// #2336 AC2 / AC5).
 ///
-/// The helper is the source of truth for "the next-turn map chip label
-/// changed" in every E2E scenario (`e2eAdvanceOneHumanTurn`, fleet reach
-/// turn loops, bundled explore retries). The integration test suite cannot
-/// validate this in CI (`integration_test/` runs are gated behind a
-/// no-op `app_e2e_linux` lane today, per `SPEC/program/e2e-integration-tests.md`
-/// § CI), so the widget-test layer carries the behavioral pins.
+/// Remaining pins live in
+/// `support/e2e_wait_for_next_turn_label_advance_guard_group.dart`
+/// (#4598 Slice C).
 library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/turn_resolution_processing_dialog.dart';
-import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'support/e2e_wait_for_next_turn_label_advance_guard_group.dart';
 import 'support/next_turn_label_harness.dart';
 
 Future<void> _pumpHost(
@@ -74,10 +70,6 @@ void main() {
     final controller = NextTurnLabelController(
       initialLabel: 'Next turn (1 / 1492)',
     );
-    // Schedule the host to flip the label after 80ms of fake-async time so
-    // the helper's adaptive pump loop advances clock past the Timer
-    // deadline and observes the change on a later iteration (no guarded
-    // `tester.pump` from the test itself; #2336 AC5).
     await _pumpHost(
       tester,
       controller,
@@ -143,10 +135,6 @@ void main() {
         initialLabel: 'Next turn (2 / 1492)',
         initialShowProcessingDialog: true,
       );
-      // Schedule dialog dismissal after a fake-async delay; the helper must
-      // observe `sawProcessingDialog=true` on early iterations and refuse to
-      // return until the dialog leaves the tree, even though the label
-      // already differs from `turnLabelBefore`.
       await _pumpHost(
         tester,
         controller,
@@ -186,156 +174,5 @@ void main() {
     },
   );
 
-  group('post-pump final check (timeout-edge correctness)', () {
-    testWidgets(
-      'returns elapsed via post-loop final check when the while loop is '
-      'skipped (Duration.zero) and the label already differs',
-      (WidgetTester tester) async {
-        final controller = NextTurnLabelController(
-          initialLabel: 'Next turn (2 / 1492)',
-        );
-        await _pumpHost(tester, controller);
-
-        // With `timeout: Duration.zero` the `while (sw.elapsed < timeout)`
-        // loop deterministically never enters because `sw.elapsed >= 0`
-        // from the moment the Stopwatch starts. The only opportunity to
-        // observe the already-different label is the post-loop final
-        // check. Without the fix the helper falls straight through to
-        // `fail()`, mirroring the regression class covered for
-        // `e2eWaitUntilFound` / `e2ePumpUntil` /
-        // `e2eWaitUntilAnyFinderHitTestable` in `a4c07ebf4` (Refs GitHub
-        // #2336 AC5 busy-wait final check).
-        final returned = await e2eWaitForNextTurnLabelAdvance(
-          tester,
-          turnLabelBefore: 'Next turn (1 / 1492)',
-          timeout: Duration.zero,
-        );
-
-        expect(
-          returned,
-          lessThan(const Duration(milliseconds: 100)),
-          reason:
-              'Post-loop final check must report ~Duration.zero — only the '
-              'final check ran, the pump loop was skipped.',
-        );
-      },
-    );
-
-    testWidgets(
-      'still fails with TestFailure when the label never advances and '
-      'the loop is skipped (Duration.zero, additive contract)',
-      (WidgetTester tester) async {
-        final controller = NextTurnLabelController(
-          initialLabel: 'Next turn (1 / 1492)',
-        );
-        await _pumpHost(tester, controller);
-
-        Object? caught;
-        try {
-          await e2eWaitForNextTurnLabelAdvance(
-            tester,
-            turnLabelBefore: 'Next turn (1 / 1492)',
-            timeout: Duration.zero,
-          );
-        } catch (e) {
-          caught = e;
-        }
-        expect(
-          caught,
-          isA<TestFailure>(),
-          reason:
-              'The post-loop final check is additive — when the label '
-              'stays equal through both the (skipped) loop and the '
-              'post-loop check, the helper must still hit the timeout '
-              '`fail()` path so the absence is attributable in CI logs '
-              '(Refs GitHub #2336 AC10).',
-        );
-        expect(
-          caught.toString(),
-          contains('did not advance'),
-          reason:
-              'Failure message must call out the missed label advance so '
-              'the helper failure is attributable in CI logs.',
-        );
-      },
-    );
-
-    testWidgets('post-loop final check refuses to return while the '
-        'TurnResolutionProcessingDialog is still mounted', (
-      WidgetTester tester,
-    ) async {
-      final controller = NextTurnLabelController(
-        initialLabel: 'Next turn (2 / 1492)',
-        initialShowProcessingDialog: true,
-      );
-      await _pumpHost(tester, controller);
-      expect(find.byType(TurnResolutionProcessingDialog), findsOneWidget);
-
-      Object? caught;
-      try {
-        await e2eWaitForNextTurnLabelAdvance(
-          tester,
-          turnLabelBefore: 'Next turn (1 / 1492)',
-          timeout: Duration.zero,
-        );
-      } catch (e) {
-        caught = e;
-      }
-      expect(
-        caught,
-        isA<TestFailure>(),
-        reason:
-            'Even though the post-loop final check sees a different '
-            'label, it must observe `sawProcessingDialog=true` AND a '
-            'still-mounted dialog and therefore refuse to return — '
-            'matching the in-loop dialog gate so the post-loop fix '
-            'does not weaken the race contract pinned by the '
-            'sibling "holds return until …" test (#2336 AC5).',
-      );
-    });
-  });
-
-  testWidgets(
-    'e2eReadNextTurnButtonLabel returns null when no next-turn button is mounted',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox.shrink())),
-      );
-      expect(e2eReadNextTurnButtonLabel(tester), isNull);
-    },
-  );
-
-  testWidgets(
-    'e2eReadNextTurnButtonLabel returns null when subtree has more than one Text',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: TextButton(
-                key: kGameMapNextTurnButtonKey,
-                onPressed: () {},
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Next turn'),
-                    SizedBox(width: 4),
-                    Text('(1 / 1492)'),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      expect(
-        e2eReadNextTurnButtonLabel(tester),
-        isNull,
-        reason:
-            'Two-text layout breaks the single-Text contract; helper must '
-            'return null so callers fall back to other readiness signals '
-            '(`SPEC/program/e2e-integration-tests.md`).',
-      );
-    },
-  );
+  registerWaitForNextTurnLabelAdvanceGuardGroup();
 }

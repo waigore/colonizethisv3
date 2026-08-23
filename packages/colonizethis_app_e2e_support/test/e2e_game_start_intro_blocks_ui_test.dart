@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 /// Asset bundle whose `load` always throws, forcing
 /// [GameStartIntroOverlay] into its `_loadError` rendering branch (which
@@ -48,9 +49,7 @@ void main() {
     'Branch 1 (spinner-precedence): returns true when the loading indicator is mounted '
     'even without a wrapping overlay',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: GameStartIntroLoadingIndicator()),
-      );
+      await tester.pumpWidget(wrapE2eApp(GameStartIntroLoadingIndicator()));
       expect(
         find.byType(GameStartIntroLoadingIndicator),
         findsOneWidget,
@@ -76,41 +75,36 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Branch 2 (fail-fast no-overlay): returns false when no overlay '
-    'and no loading indicator is mounted',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: SizedBox(key: Key('non_intro_tree'))),
-      );
-      expect(
-        find.byType(GameStartIntroLoadingIndicator),
-        findsNothing,
-        reason: 'precondition: no loading indicator should be mounted',
-      );
-      expect(
-        find.byType(GameStartIntroOverlay),
-        findsNothing,
-        reason: 'precondition: no overlay should be mounted',
-      );
-      expect(
-        e2eGameStartIntroBlocksUi(tester),
-        isFalse,
-        reason:
-            'Branch 2: when neither the spinner nor the overlay is mounted, '
-            'the helper must return false so callers do not pay a pump '
-            '(#2336 AC5 short-circuit).',
-      );
-    },
-  );
+  testWidgets('Branch 2 (fail-fast no-overlay): returns false when no overlay '
+      'and no loading indicator is mounted', (WidgetTester tester) async {
+    await tester.pumpWidget(wrapE2eApp(SizedBox(key: Key('non_intro_tree'))));
+    expect(
+      find.byType(GameStartIntroLoadingIndicator),
+      findsNothing,
+      reason: 'precondition: no loading indicator should be mounted',
+    );
+    expect(
+      find.byType(GameStartIntroOverlay),
+      findsNothing,
+      reason: 'precondition: no overlay should be mounted',
+    );
+    expect(
+      e2eGameStartIntroBlocksUi(tester),
+      isFalse,
+      reason:
+          'Branch 2: when neither the spinner nor the overlay is mounted, '
+          'the helper must return false so callers do not pay a pump '
+          '(#2336 AC5 short-circuit).',
+    );
+  });
 
   testWidgets(
     'Branch 3 (overlay-with-shell): returns true when the overlay mounts a '
     'CtDialogShell descendant via the asset-load error path',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: GameStartIntroOverlay(
+        wrapE2eApp(
+          GameStartIntroOverlay(
             onDismissed: () {},
             assetBundle: _ThrowingAssetBundle(),
             child: const SizedBox(key: Key('error_branch_child')),
@@ -161,8 +155,8 @@ void main() {
     'renders the loading shell before Yarn finishes loading',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: GameStartIntroOverlay(
+        wrapE2eApp(
+          GameStartIntroOverlay(
             onDismissed: () {},
             child: const SizedBox(key: Key('pre_load_child')),
           ),
@@ -205,10 +199,8 @@ void main() {
     'GameStartIntroOverlay does not block (the descendant scope matters)',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: CtDialogShell(child: SizedBox(key: Key('standalone_shell'))),
-          ),
+        wrapE2eScaffold(
+          CtDialogShell(child: SizedBox(key: Key('standalone_shell'))),
         ),
       );
       expect(

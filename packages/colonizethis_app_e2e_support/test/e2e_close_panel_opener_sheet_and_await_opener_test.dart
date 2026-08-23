@@ -34,6 +34,7 @@ import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/panel_opener_rail_harness.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 const _kPrimaryKey = ValueKey<String>('e2e_cpos_primary');
 const _kSecondaryKey = ValueKey<String>('e2e_cpos_secondary');
@@ -46,9 +47,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
-      ),
+      wrapE2eApp(PrimaryHitTestableHarness(primaryKey: _kPrimaryKey)),
     );
     expect(find.byType(BottomSheet), findsNothing);
     expect(find.byKey(_kPrimaryKey).hitTestable(), findsOneWidget);
@@ -77,9 +76,7 @@ void main() {
     'and returns once the sheet leaves the tree',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: PrimaryWithSheetTriggerHarness(primaryKey: _kPrimaryKey),
-        ),
+        wrapE2eApp(PrimaryWithSheetTriggerHarness(primaryKey: _kPrimaryKey)),
       );
       expect(find.byKey(_kPrimaryKey).hitTestable(), findsOneWidget);
       expect(find.byType(BottomSheet), findsNothing);
@@ -126,7 +123,7 @@ void main() {
     'e2eClosePanelOpenerSheetAndAwaitOpener does not throw when the rail '
     'remains hidden past the awaitOpenerTimeout (best-effort settle)',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await pumpE2eBareScaffold(tester);
       expect(find.byKey(_kPrimaryKey), findsNothing);
       expect(find.byKey(_kSecondaryKey), findsNothing);
       Object? caught;
@@ -162,9 +159,7 @@ void main() {
     'when only the secondary marker is hit-testable',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: SecondaryOnlyHarness(secondaryKey: _kSecondaryKey),
-        ),
+        wrapE2eApp(SecondaryOnlyHarness(secondaryKey: _kSecondaryKey)),
       );
       expect(find.byKey(_kPrimaryKey), findsNothing);
       expect(find.byKey(_kSecondaryKey).hitTestable(), findsOneWidget);
@@ -192,9 +187,7 @@ void main() {
   testWidgets('e2eClosePanelOpenerSheetAndAwaitOpener accepts a null secondary '
       '(future opener path)', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
-      ),
+      wrapE2eApp(PrimaryHitTestableHarness(primaryKey: _kPrimaryKey)),
     );
     await e2eClosePanelOpenerSheetAndAwaitOpener(
       tester,
@@ -219,9 +212,7 @@ void main() {
     'the shared implementation with the documented signature',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
-        ),
+        wrapE2eApp(PrimaryHitTestableHarness(primaryKey: _kPrimaryKey)),
       );
       final Future<void> Function(
         WidgetTester, {

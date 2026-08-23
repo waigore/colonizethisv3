@@ -88,6 +88,31 @@ class _HostCloneVisitor extends RecursiveAstVisitor<void> {
     }
     super.visitFunctionDeclaration(node);
   }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    _flagAppConstructor(node.constructorName.type.name.lexeme);
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target == null) {
+      _flagAppConstructor(node.methodName.name);
+    }
+    super.visitMethodInvocation(node);
+  }
+
+  void _flagAppConstructor(String typeName) {
+    if (typeName == 'MaterialApp' ||
+        typeName == 'WidgetsApp' ||
+        typeName == 'CupertinoApp') {
+      violations.add(
+        '$relativePath: inline `$typeName(` — import '
+        'test/support/e2e_widget_pump_harness.dart wrap/pump helpers',
+      );
+    }
+  }
 }
 
 void main() {

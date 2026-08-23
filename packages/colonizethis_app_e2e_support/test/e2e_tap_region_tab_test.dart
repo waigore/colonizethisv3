@@ -30,9 +30,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'support/tap_region_tab_harness.dart';
 import 'support/tap_region_tab_nw_group.dart';
 import 'support/tap_region_tab_ow_group.dart';
+import 'support/tap_region_tab_ow_ignore_pointer_group.dart';
 
 void main() {
   suppressLogsForTests();
   registerTapRegionTabNwGroup();
   registerTapRegionTabOwGroup();
+  registerTapRegionTabOwIgnorePointerGroup();
 }

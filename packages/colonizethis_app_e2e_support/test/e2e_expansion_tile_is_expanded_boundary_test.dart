@@ -23,15 +23,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 /// Mounts a single child rooted under a stable `Center` so the test can
 /// resolve a deterministic `Element` to hand to `e2eExpansionTileIsExpanded`.
 Future<Element> _pumpAndResolveRoot(WidgetTester tester, Widget child) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(body: Center(child: child)),
-    ),
-  );
+  await tester.pumpWidget(wrapE2eScaffold(Center(child: child)));
   final centerFinder = find.byType(Center);
   // `MaterialApp` and `Scaffold` mount their own `Center` descendants, so
   // anchor on the outermost user-supplied `Center` deterministically by

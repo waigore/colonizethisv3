@@ -37,6 +37,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -44,15 +45,10 @@ void main() {
   testWidgets(
     'e2eOpenCivilianPanel taps the empire rail button and detects the panel',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: _CivilianRailHarness()),
-      );
+      await tester.pumpWidget(wrapE2eApp(_CivilianRailHarness()));
       expect(find.byKey(kEmpireCivilianUnitsButtonKey), findsOneWidget);
       expect(find.byKey(kCtE2ECivilianPanelRootKey), findsNothing);
-      await e2eOpenCivilianPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eOpenCivilianPanel(tester, timeout: const Duration(seconds: 5));
       expect(
         find.byKey(kCtE2ECivilianPanelRootKey),
         findsOneWidget,
@@ -64,50 +60,34 @@ void main() {
     },
   );
 
-  testWidgets(
-    'e2eOpenCivilianPanel falls back to the first-civilian marker '
-    'when the empire rail button is absent',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: _CivilianMarkerOnlyHarness()),
-      );
-      expect(find.byKey(kEmpireCivilianUnitsButtonKey), findsNothing);
-      expect(
-        find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey),
-        findsOneWidget,
-      );
-      expect(find.byKey(kCtE2ECivilianPanelRootKey), findsNothing);
-      await e2eOpenCivilianPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
-      expect(
-        find.byKey(kCtE2ECivilianPanelRootKey),
-        findsOneWidget,
-        reason:
-            'When the empire rail button is not in the tree, the helper must '
-            'tap the first-civilian map marker as the second canonical '
-            'trigger (Refs GitHub #2336 AC2 — single canonical opener).',
-      );
-    },
-  );
+  testWidgets('e2eOpenCivilianPanel falls back to the first-civilian marker '
+      'when the empire rail button is absent', (WidgetTester tester) async {
+    await tester.pumpWidget(wrapE2eApp(_CivilianMarkerOnlyHarness()));
+    expect(find.byKey(kEmpireCivilianUnitsButtonKey), findsNothing);
+    expect(find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey), findsOneWidget);
+    expect(find.byKey(kCtE2ECivilianPanelRootKey), findsNothing);
+    await e2eOpenCivilianPanel(tester, timeout: const Duration(seconds: 5));
+    expect(
+      find.byKey(kCtE2ECivilianPanelRootKey),
+      findsOneWidget,
+      reason:
+          'When the empire rail button is not in the tree, the helper must '
+          'tap the first-civilian map marker as the second canonical '
+          'trigger (Refs GitHub #2336 AC2 — single canonical opener).',
+    );
+  });
 
   testWidgets(
     'e2eOpenCivilianPanel returns once the panel root mounts asynchronously '
     'after the rail tap',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: _DelayedCivilianPanelHarness(
-            mountAfter: Duration(milliseconds: 120),
-          ),
+        wrapE2eApp(
+          _DelayedCivilianPanelHarness(mountAfter: Duration(milliseconds: 120)),
         ),
       );
       expect(find.byKey(kCtE2ECivilianPanelRootKey), findsNothing);
-      await e2eOpenCivilianPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eOpenCivilianPanel(tester, timeout: const Duration(seconds: 5));
       expect(
         find.byKey(kCtE2ECivilianPanelRootKey),
         findsOneWidget,
@@ -122,7 +102,7 @@ void main() {
   testWidgets(
     'e2eOpenCivilianPanel times out with TestFailure when no opener surfaces',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+      await pumpE2eBareScaffold(tester);
       Object? caught;
       try {
         await e2eOpenCivilianPanel(
@@ -190,7 +170,8 @@ class _CivilianMarkerOnlyHarness extends StatefulWidget {
       _CivilianMarkerOnlyHarnessState();
 }
 
-class _CivilianMarkerOnlyHarnessState extends State<_CivilianMarkerOnlyHarness> {
+class _CivilianMarkerOnlyHarnessState
+    extends State<_CivilianMarkerOnlyHarness> {
   bool _panelOpen = false;
 
   @override
