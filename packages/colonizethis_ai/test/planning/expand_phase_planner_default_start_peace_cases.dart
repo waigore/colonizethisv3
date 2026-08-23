@@ -64,8 +64,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
 
-
-
 import 'expand_phase_planner_default_start_near_quota_peace_support.dart';
 
 void registerExpandDefaultStartPeaceCases() {
@@ -126,7 +124,10 @@ void registerExpandDefaultStartPeaceCases() {
         // frontier is not GP-only → invadableBlocker = null →
         // every at-war GP is peaced (gp_a alone here).
         final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 9, defaultStartPeaceMinorM1: 1},
+          owOwners: const {
+            defaultStartPeaceGpOwn: 9,
+            defaultStartPeaceMinorM1: 1,
+          },
           atWarPartners: const [defaultStartPeaceGpA],
           atWarWithExtraGp: false,
         );
@@ -155,7 +156,12 @@ void registerExpandDefaultStartPeaceCases() {
       // owner makes the frontier non-GP-only → invadableBlocker null
       // → every at-war GP is peaced ascending.
       final game = buildDefaultStartNearQuotaExpandPeaceGame(
-        owOwners: const {defaultStartPeaceGpOwn: 8, defaultStartPeaceGpA: 1, defaultStartPeaceGpB: 0, defaultStartPeaceMinorM1: 1},
+        owOwners: const {
+          defaultStartPeaceGpOwn: 8,
+          defaultStartPeaceGpA: 1,
+          defaultStartPeaceGpB: 0,
+          defaultStartPeaceMinorM1: 1,
+        },
         atWarPartners: const [defaultStartPeaceGpA, defaultStartPeaceGpB],
       );
       final snapshot = defaultStartPeaceSnapshot(
@@ -183,7 +189,11 @@ void registerExpandDefaultStartPeaceCases() {
         // also at war but owns nothing on the frontier. The canonical
         // helper must drop gp_a (blocker) and return [gp_b] sorted.
         final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 8, defaultStartPeaceGpA: 1, defaultStartPeaceGpB: 0},
+          owOwners: const {
+            defaultStartPeaceGpOwn: 8,
+            defaultStartPeaceGpA: 1,
+            defaultStartPeaceGpB: 0,
+          },
           atWarPartners: const [defaultStartPeaceGpA, defaultStartPeaceGpB],
         );
         final snapshot = defaultStartPeaceSnapshot(
@@ -213,7 +223,11 @@ void registerExpandDefaultStartPeaceCases() {
         // GP-only frontier is true (gp_a owns the only invadable OW)
         // so blocker exclusion drops gp_a as well → empty.
         final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 7, defaultStartPeaceGpA: 1, defaultStartPeaceTribeT1: 0},
+          owOwners: const {
+            defaultStartPeaceGpOwn: 7,
+            defaultStartPeaceGpA: 1,
+            defaultStartPeaceTribeT1: 0,
+          },
           atWarPartners: const [defaultStartPeaceGpA],
           atWarWithExtraGp: false,
         );
@@ -238,12 +252,25 @@ void registerExpandDefaultStartPeaceCases() {
         // return [gp_b, gp_c] ascending across two consecutive calls
         // (Refs #2509 Must-have #7).
         final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 7, defaultStartPeaceGpA: 1, defaultStartPeaceGpB: 0, defaultStartPeaceGpC: 0},
-          atWarPartners: const [defaultStartPeaceGpC, defaultStartPeaceGpA, defaultStartPeaceGpB],
+          owOwners: const {
+            defaultStartPeaceGpOwn: 7,
+            defaultStartPeaceGpA: 1,
+            defaultStartPeaceGpB: 0,
+            defaultStartPeaceGpC: 0,
+          },
+          atWarPartners: const [
+            defaultStartPeaceGpC,
+            defaultStartPeaceGpA,
+            defaultStartPeaceGpB,
+          ],
         );
         final snapshot = defaultStartPeaceSnapshot(
           oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-          atWarWith: const [defaultStartPeaceGpC, defaultStartPeaceGpA, defaultStartPeaceGpB],
+          atWarWith: const [
+            defaultStartPeaceGpC,
+            defaultStartPeaceGpA,
+            defaultStartPeaceGpB,
+          ],
           invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
         );
         final first = defaultStartGpPeaceTargets(

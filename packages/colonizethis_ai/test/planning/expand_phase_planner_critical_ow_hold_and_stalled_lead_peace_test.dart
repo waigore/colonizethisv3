@@ -64,12 +64,10 @@ import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
 import 'expand_phase_planner_critical_ow_hold_and_stalled_lead_peace_cases.dart';
 
-
 const String _gpOwn = 'gp_own';
 const String _gpPartner = 'gp_partner';
 const String _gpThird = 'gp_third';
 const String _minor1 = 'minor1';
-
 
 void main() {
   registerExpandPhasePlannerCriticalOwHoldAndStalledLeadPeaceCases();

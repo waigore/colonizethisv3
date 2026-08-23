@@ -22,8 +22,9 @@ void registerExpandPhasePlannerSoleGpWarHelpersSoleAtWarCases() {
 
     test('returns null when at-war list contains only a minor', () {
       final game = soleGpWarHelpersGameWithGpsAndMinors();
-      final snapshot =
-          soleGpWarHelpersSnapshotAtWarWith(const [soleGpWarHelpersMinor1]);
+      final snapshot = soleGpWarHelpersSnapshotAtWarWith(const [
+        soleGpWarHelpersMinor1,
+      ]);
       expect(
         soleAtWarGreatPowerId(game: game, snapshot: snapshot),
         isNull,
@@ -36,8 +37,9 @@ void registerExpandPhasePlannerSoleGpWarHelpersSoleAtWarCases() {
 
     test('returns null when at-war list contains only an unknown tribe id', () {
       final game = soleGpWarHelpersGameWithGpsAndMinors(minorIds: const []);
-      final snapshot =
-          soleGpWarHelpersSnapshotAtWarWith(const [soleGpWarHelpersTribe1]);
+      final snapshot = soleGpWarHelpersSnapshotAtWarWith(const [
+        soleGpWarHelpersTribe1,
+      ]);
       expect(
         soleAtWarGreatPowerId(game: game, snapshot: snapshot),
         isNull,
@@ -51,8 +53,9 @@ void registerExpandPhasePlannerSoleGpWarHelpersSoleAtWarCases() {
 
     test('returns the lone GP id when exactly one GP is at war', () {
       final game = soleGpWarHelpersGameWithGpsAndMinors();
-      final snapshot =
-          soleGpWarHelpersSnapshotAtWarWith(const [soleGpWarHelpersGp2]);
+      final snapshot = soleGpWarHelpersSnapshotAtWarWith(const [
+        soleGpWarHelpersGp2,
+      ]);
       expect(
         soleAtWarGreatPowerId(game: game, snapshot: snapshot),
         soleGpWarHelpersGp2,
@@ -67,9 +70,10 @@ void registerExpandPhasePlannerSoleGpWarHelpersSoleAtWarCases() {
       'returns the lone GP id when the at-war list mixes one GP and a minor',
       () {
         final game = soleGpWarHelpersGameWithGpsAndMinors();
-        final snapshot = soleGpWarHelpersSnapshotAtWarWith(
-          const [soleGpWarHelpersGp2, soleGpWarHelpersMinor1],
-        );
+        final snapshot = soleGpWarHelpersSnapshotAtWarWith(const [
+          soleGpWarHelpersGp2,
+          soleGpWarHelpersMinor1,
+        ]);
         expect(
           soleAtWarGreatPowerId(game: game, snapshot: snapshot),
           soleGpWarHelpersGp2,
@@ -85,9 +89,10 @@ void registerExpandPhasePlannerSoleGpWarHelpersSoleAtWarCases() {
 
     test('returns null when two Great Powers are at war (length guard)', () {
       final game = soleGpWarHelpersGameWithGpsAndMinors();
-      final snapshot = soleGpWarHelpersSnapshotAtWarWith(
-        const [soleGpWarHelpersGp2, soleGpWarHelpersGp3],
-      );
+      final snapshot = soleGpWarHelpersSnapshotAtWarWith(const [
+        soleGpWarHelpersGp2,
+        soleGpWarHelpersGp3,
+      ]);
       expect(
         soleAtWarGreatPowerId(game: game, snapshot: snapshot),
         isNull,
@@ -104,13 +109,11 @@ void registerExpandPhasePlannerSoleGpWarHelpersSoleAtWarCases() {
       'returns null when two GPs and a minor are at war (length guard + filter)',
       () {
         final game = soleGpWarHelpersGameWithGpsAndMinors();
-        final snapshot = soleGpWarHelpersSnapshotAtWarWith(
-          const [
-            soleGpWarHelpersGp2,
-            soleGpWarHelpersGp3,
-            soleGpWarHelpersMinor1,
-          ],
-        );
+        final snapshot = soleGpWarHelpersSnapshotAtWarWith(const [
+          soleGpWarHelpersGp2,
+          soleGpWarHelpersGp3,
+          soleGpWarHelpersMinor1,
+        ]);
         expect(
           soleAtWarGreatPowerId(game: game, snapshot: snapshot),
           isNull,
@@ -124,9 +127,10 @@ void registerExpandPhasePlannerSoleGpWarHelpersSoleAtWarCases() {
 
     test('is deterministic across repeated calls (Must-have #7)', () {
       final game = soleGpWarHelpersGameWithGpsAndMinors();
-      final snapshot = soleGpWarHelpersSnapshotAtWarWith(
-        const [soleGpWarHelpersGp2, soleGpWarHelpersMinor1],
-      );
+      final snapshot = soleGpWarHelpersSnapshotAtWarWith(const [
+        soleGpWarHelpersGp2,
+        soleGpWarHelpersMinor1,
+      ]);
       final first = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
       final second = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
       final third = soleAtWarGreatPowerId(game: game, snapshot: snapshot);

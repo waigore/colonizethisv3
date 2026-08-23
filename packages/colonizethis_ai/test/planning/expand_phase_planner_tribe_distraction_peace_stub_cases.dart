@@ -93,7 +93,6 @@ const String _minor1 = 'minor1';
 const String _tribeA = 'tribe_a';
 const String _tribeB = 'tribe_b';
 
-
 void registerExpandTribeDistractionPeaceStubCases() {
   group('diplomacy_planner_peace_targets stub delegation equality scan', () {
     test(

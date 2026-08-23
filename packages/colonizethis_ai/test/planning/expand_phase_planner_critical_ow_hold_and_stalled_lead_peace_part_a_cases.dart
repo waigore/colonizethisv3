@@ -68,9 +68,8 @@ const String _gpPartner = 'gp_partner';
 const String _gpThird = 'gp_third';
 const String _minor1 = 'minor1';
 
-
 void registerExpandPhasePlannerCriticalOwHoldAndStalledLeadPeaceCasesPartA() {
-group('criticalOwHoldPeaceTargets — canonical at-war GP filter', () {
+  group('criticalOwHoldPeaceTargets — canonical at-war GP filter', () {
     test('returns const [] when atWarWith collapses to no Great Powers', () {
       // Only a minor is at-war; `game.playerById(...)` filters it out so
       // the helper must short-circuit before checking the critical band.
@@ -250,6 +249,6 @@ group('criticalOwHoldPeaceTargets — canonical at-war GP filter', () {
 
   group(
     'stalledBelowQuotaGpLeadPeaceTargets — canonical minLeadDeficit band',
-    () {
-  });
+    () {},
+  );
 }

@@ -6,6 +6,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
+
 const String gpBlockerFocusGpOwn = 'gp4';
 const String gpBlockerFocusGpBlocker = 'gp3';
 const String gpBlockerFocusGpDistraction = 'gp5';

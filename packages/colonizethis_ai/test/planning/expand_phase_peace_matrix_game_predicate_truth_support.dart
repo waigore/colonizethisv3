@@ -66,29 +66,34 @@ class ExpandPeaceMatrixPredicateCase {
   final String? reason;
 }
 
-typedef ExpandPeaceMatrixPredicateFn = bool Function({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-});
+typedef ExpandPeaceMatrixPredicateFn =
+    bool Function({required Game game, required AIWorldSnapshot snapshot});
 
-void runExpandPeaceMatrixPredicateCases(String label, ExpandPeaceMatrixPredicateFn fn, List<ExpandPeaceMatrixPredicateCase> cases) {
+void runExpandPeaceMatrixPredicateCases(
+  String label,
+  ExpandPeaceMatrixPredicateFn fn,
+  List<ExpandPeaceMatrixPredicateCase> cases,
+) {
   group(label, () {
     for (final c in cases) {
       test(c.name, () {
         expect(
-          fn(game: buildExpandPeaceMatrixGame(
-            owProvinces: c.owProvinces,
-            players: c.players,
-            minorNations: c.minorNations,
-            tribes: c.tribes,
-            nwProvinces: c.nwProvinces,
-            turnNumber: c.turnNumber,
-          ), snapshot: buildExpandPeaceMatrixSnapshot(
-            playerId: c.playerId,
-            atWarWith: c.atWarWith,
-            oldWorldProvincesOwned: c.ow,
-            invadableProvinceIdsSorted: c.invadable,
-          )),
+          fn(
+            game: buildExpandPeaceMatrixGame(
+              owProvinces: c.owProvinces,
+              players: c.players,
+              minorNations: c.minorNations,
+              tribes: c.tribes,
+              nwProvinces: c.nwProvinces,
+              turnNumber: c.turnNumber,
+            ),
+            snapshot: buildExpandPeaceMatrixSnapshot(
+              playerId: c.playerId,
+              atWarWith: c.atWarWith,
+              oldWorldProvincesOwned: c.ow,
+              invadableProvinceIdsSorted: c.invadable,
+            ),
+          ),
           c.expected ? isTrue : isFalse,
           reason: c.reason,
         );
