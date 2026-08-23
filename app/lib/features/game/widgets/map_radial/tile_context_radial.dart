@@ -1,17 +1,13 @@
 /// MAP30001 presentational radial. SPEC/ui/tile-context-radial.md (Refs #4440).
 library;
 
-import 'dart:math' as math;
-
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'tile_context_radial_chrome.dart';
 import 'tile_radial_catalog.dart';
-import 'tile_radial_keys.dart';
 import 'tile_radial_layout.dart';
 import 'tile_radial_spoke_view.dart';
 
@@ -54,13 +50,19 @@ class TileContextRadial extends StatelessWidget {
         autofocus: true,
         child: Stack(
           children: [
-            _TileRadialDismissScrim(onDismiss: onDismiss),
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onDismiss,
+                onPanStart: (_) => onDismiss(),
+              ),
+            ),
             Positioned(
               left: topLeft.dx,
               top: topLeft.dy,
               width: needed.width,
               height: needed.height,
-              child: _TileRadialMenu(
+              child: TileRadialMenu(
                 placeLine: placeLine,
                 wedges: wedges,
                 moreLabel: l10n.tileRadial_more,
@@ -70,184 +72,6 @@ class TileContextRadial extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TileRadialDismissScrim extends StatelessWidget {
-  const _TileRadialDismissScrim({required this.onDismiss});
-
-  final VoidCallback onDismiss;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onDismiss,
-        onPanStart: (_) => onDismiss(),
-      ),
-    );
-  }
-}
-
-class _TileRadialMenu extends StatelessWidget {
-  const _TileRadialMenu({
-    required this.placeLine,
-    required this.wedges,
-    required this.moreLabel,
-    required this.size,
-    required this.onWedge,
-    required this.onMore,
-  });
-
-  final String placeLine;
-  final List<TileRadialSpokeView> wedges;
-  final String moreLabel;
-  final Size size;
-  final ValueChanged<TileRadialCatalogAction> onWedge;
-  final VoidCallback onMore;
-
-  @override
-  Widget build(BuildContext context) {
-    final spokeCount = wedges.length + 1;
-    return KeyedSubtree(
-      key: kTileContextRadialKey,
-      child: Stack(
-        children: [
-          _TileRadialHub(placeLine: placeLine),
-          for (var i = 0; i < wedges.length; i++)
-            _spokeAt(
-              index: i,
-              spokeCount: spokeCount,
-              size: size,
-              child: _TileRadialWedgeButton(
-                view: wedges[i],
-                onPressed: wedges[i].enabled
-                    ? () => onWedge(wedges[i].action)
-                    : null,
-              ),
-            ),
-          _spokeAt(
-            index: wedges.length,
-            spokeCount: spokeCount,
-            size: size,
-            child: _TileRadialWedgeButton(
-              label: moreLabel,
-              tooltip: moreLabel,
-              enabled: true,
-              buttonKey: kTileRadialMoreKey,
-              onPressed: onMore,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TileRadialHub extends StatelessWidget {
-  const _TileRadialHub({required this.placeLine});
-
-  final String placeLine;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: kTileRadialHubSize,
-        height: kTileRadialHubSize,
-        child: Padding(
-          padding: const EdgeInsets.all(CtSpacing.s),
-          child: Center(
-            child: Text(
-              placeLine,
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: EditorialMonoclePalette.fg,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-Widget _spokeAt({
-  required int index,
-  required int spokeCount,
-  required Size size,
-  required Widget child,
-}) {
-  final angle = -math.pi / 2 + (2 * math.pi * index / spokeCount);
-  final cx = size.width / 2 + kTileRadialSpokeRadius * math.cos(angle);
-  final cy = size.height / 2 + kTileRadialSpokeRadius * math.sin(angle);
-  return Positioned(
-    left: cx - kTileRadialWedgeMinSize / 2,
-    top: cy - kTileRadialWedgeMinSize / 2,
-    width: kTileRadialWedgeMinSize * 2.2,
-    height: kTileRadialWedgeMinSize,
-    child: child,
-  );
-}
-
-class _TileRadialWedgeButton extends StatelessWidget {
-  const _TileRadialWedgeButton({
-    this.view,
-    this.label,
-    this.tooltip,
-    this.enabled,
-    this.buttonKey,
-    required this.onPressed,
-  });
-
-  final TileRadialSpokeView? view;
-  final String? label;
-  final String? tooltip;
-  final bool? enabled;
-  final Key? buttonKey;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final resolvedLabel = view?.label ?? label ?? '';
-    final resolvedTooltip = view?.tooltip ?? tooltip ?? resolvedLabel;
-    final isEnabled = view?.enabled ?? enabled ?? true;
-    final Key? resolvedKey =
-        buttonKey ?? (view == null ? null : tileRadialSpokeKey(view!.action));
-    return Tooltip(
-      message: resolvedTooltip,
-      triggerMode: isEnabled
-          ? TooltipTriggerMode.longPress
-          : TooltipTriggerMode.tap,
-      child: Material(
-        color: isEnabled
-            ? EditorialMonoclePalette.surfaceLite
-            : EditorialMonoclePalette.surfaceLite.withValues(alpha: 0.55),
-        child: InkWell(
-          key: resolvedKey,
-          onTap: isEnabled ? onPressed : null,
-          child: SizedBox(
-            height: kTileRadialWedgeMinSize,
-            child: Center(
-              child: Text(
-                resolvedLabel,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: isEnabled
-                      ? EditorialMonoclePalette.fg
-                      : EditorialMonoclePalette.muted,
-                ),
-              ),
-            ),
-          ),
         ),
       ),
     );

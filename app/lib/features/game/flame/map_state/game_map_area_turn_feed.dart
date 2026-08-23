@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -9,6 +8,7 @@ import '../../widgets/shell/player_turn_event_feed.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed_labels.dart';
+import 'game_map_area_turn_feed_locate.dart';
 import 'game_map_area_turn_feed_taps.dart';
 
 /// Player turn-event feed for [GameMapArea]: turning resolved `GameToUIEvent`s
@@ -18,53 +18,56 @@ mixin GameMapAreaTurnFeed
         ConsumerState<GameMapArea>,
         GameMapAreaStateBase,
         GameMapAreaTurnFeedLabels,
+        GameMapAreaTurnFeedLocate,
         GameMapAreaTurnFeedTaps {
   List<PlayerTurnEventFeedEntry> buildFeedEntries() {
-    final mapped = buildCtTurnFeedEntries(
-      events: resolvedPlayerTurnEvents,
-      context: CtTurnFeedEntryContext(
-        labels: CtTurnFeedEntryLabels(
-          mapPlayerId: mapPlayerId,
-          factionLabel: factionLabel,
-          provinceLabel: provinceLabel,
-          seaZoneLabel: seaZoneLabel,
-          diplomacyOutcomeLine: diplomacyOutcomeLine,
-          isCatalogTech: isCatalogTech,
-          researchCompleteLine: researchCompleteLine,
-          workTargetLabel: workTargetLabel,
-          overtureStageLabel: overtureStageLabel,
-          commodityDisplayName: (commodityId) =>
-              commodityDisplayName(appL10n(context), commodityId),
-        ),
-        navigation: CtTurnFeedEntryNavigation(
-          navigateToTechnologyScreen: navigateToTechnologyScreen,
-          locateProvinceById: locateProvinceById,
-          locateSeaZoneTile: locateSeaZoneTile,
-        ),
-        taps: CtTurnFeedEntryTaps(
-          counterpartFactionId: counterpartFactionId,
-          overtureCounterpartFactionId: overtureCounterpartFactionId,
-          spyCounterpartFactionId: spyCounterpartFactionId,
-          diplomacyDetailTapForFaction: diplomacyDetailTapForFaction,
-          provinceOverlayTapForProvince: provinceOverlayTapForProvince,
-          navalCombatTapForSeaZone: navalCombatTapForSeaZone,
-          workOrderCompletedTap: workOrderCompletedTap,
-          overseasProfitCreditedTap: overseasProfitCreditedTap(),
-          economyTurnSummaryTap: productionPanelTap(),
-          orderRejectedTapForKind: orderRejectedTapForKind,
-        ),
-      ),
-    )
-        .map(
-          (CtEventFeedEntry entry) => PlayerTurnEventFeedEntry(
-            text: entry.text,
-            onTap: entry.onTap,
-            linkAffordance: entry.linkAffordance,
-          ),
-        )
-        .toList();
+    final mapped =
+        buildCtTurnFeedEntries(
+              events: resolvedPlayerTurnEvents,
+              context: CtTurnFeedEntryContext(
+                labels: CtTurnFeedEntryLabels(
+                  mapPlayerId: mapPlayerId,
+                  factionLabel: factionLabel,
+                  provinceLabel: provinceLabel,
+                  seaZoneLabel: seaZoneLabel,
+                  diplomacyOutcomeLine: diplomacyOutcomeLine,
+                  isCatalogTech: isCatalogTech,
+                  researchCompleteLine: researchCompleteLine,
+                  workTargetLabel: workTargetLabel,
+                  overtureStageLabel: overtureStageLabel,
+                  commodityDisplayName: (commodityId) =>
+                      commodityDisplayName(appL10n(context), commodityId),
+                ),
+                navigation: CtTurnFeedEntryNavigation(
+                  navigateToTechnologyScreen: navigateToTechnologyScreen,
+                  locateProvinceById: locateProvinceById,
+                  locateSeaZoneTile: locateSeaZoneTile,
+                ),
+                taps: CtTurnFeedEntryTaps(
+                  counterpartFactionId: counterpartFactionId,
+                  overtureCounterpartFactionId: overtureCounterpartFactionId,
+                  spyCounterpartFactionId: spyCounterpartFactionId,
+                  diplomacyDetailTapForFaction: diplomacyDetailTapForFaction,
+                  provinceOverlayTapForProvince: provinceOverlayTapForProvince,
+                  navalCombatTapForSeaZone: navalCombatTapForSeaZone,
+                  workOrderCompletedTap: workOrderCompletedTap,
+                  overseasProfitCreditedTap: overseasProfitCreditedTap(),
+                  economyTurnSummaryTap: productionPanelTap(),
+                  orderRejectedTapForKind: orderRejectedTapForKind,
+                ),
+              ),
+            )
+            .map(
+              (CtEventFeedEntry entry) => PlayerTurnEventFeedEntry(
+                text: entry.text,
+                onTap: entry.onTap,
+                linkAffordance: entry.linkAffordance,
+              ),
+            )
+            .toList();
     final digest = widget.game.lastTurnIntelligenceDigest;
-    if (digest == null) return List<PlayerTurnEventFeedEntry>.unmodifiable(mapped);
+    if (digest == null)
+      return List<PlayerTurnEventFeedEntry>.unmodifiable(mapped);
     final l10n = appL10n(context);
     for (final block in digest.spyReportsFor(mapPlayerId)) {
       for (final line in block.lines) {
