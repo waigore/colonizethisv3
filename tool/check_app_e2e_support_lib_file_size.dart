@@ -2,9 +2,9 @@
 // (`repo.app_e2e_support_lib_file_size`).
 //
 // SPEC: SPEC/program/repo-lint.md (§ app e2e support lib file size).
-// Refs #4075, #4195, #4344.
+// Refs #4075, #4195, #4344, #4598.
 //
-// Cap is 300 physical lines. Files currently over the cap are listed in
+// Cap is 250 physical lines. Files currently over the cap are listed in
 // [appE2eSupportLibFileSizeAllowlistForTests] (shrink-only). A stale
 // allowlist entry (missing file, or file now ≤ cap) fails so the backlog
 // cannot retain slack.
@@ -13,7 +13,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 300;
+const _maxPhysicalLines = 250;
 
 const String _libRelativePath = 'packages/colonizethis_app_e2e_support/lib';
 
@@ -37,9 +37,10 @@ int runCheckAppE2eSupportLibFileSize(
     return 1;
   }
 
-  final allowlist = (allowlistPaths ?? appE2eSupportLibFileSizeAllowlistForTests)
-      .map((path) => path.replaceAll('\\', '/'))
-      .toSet();
+  final allowlist =
+      (allowlistPaths ?? appE2eSupportLibFileSizeAllowlistForTests)
+          .map((path) => path.replaceAll('\\', '/'))
+          .toSet();
 
   final stale = <String>[];
   for (final relativePath in allowlist) {
@@ -70,11 +71,7 @@ int runCheckAppE2eSupportLibFileSize(
   }
 
   final violations = <String>[];
-  for (final filePath in _collectFilesToCheck(
-    repoRoot,
-    libDir,
-    targetFiles,
-  )) {
+  for (final filePath in _collectFilesToCheck(repoRoot, libDir, targetFiles)) {
     final file = File(filePath);
     final relativePath = p
         .relative(file.path, from: repoRoot)
