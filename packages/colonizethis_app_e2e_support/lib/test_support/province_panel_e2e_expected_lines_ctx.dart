@@ -8,7 +8,6 @@
 // Mirrors app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart for e2e.
 // If drift fails tests, align this file with the overlay widget.
 
-
 import 'package:colonizethis_data/colonizethis_data.dart'
     show
         CommodityCatalog,
@@ -26,23 +25,9 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_pending_orders.dart';
 import 'package:colonizethis_app/widgets/commodity_display_name.dart';
 import 'province_panel_e2e_expected_lines_labels.dart';
+import 'province_panel_e2e_expected_lines_road.dart';
 
-const String kRoadRailPrimitiveVersusRailGloss =
-    'Basic land link for connectivity and yield caps. Railroads are transport level 4.';
-
-String roadRailSupplementaryLabel(int roadLevel) {
-  return switch (roadLevel) {
-    0 => 'none',
-    1 => 'primitive road',
-    2 => 'improved road',
-    4 => 'port or railroad',
-    _ => 'non-standard transport level',
-  };
-}
-
-String roadRailTransportLevelPrimaryLine(int transportLevel) {
-  return 'Road / railroad: transport level $transportLevel';
-}
+export 'province_panel_e2e_expected_lines_road.dart';
 
 class ProvincePanelWideExpectedCtx {
   ProvincePanelWideExpectedCtx({
