@@ -29,30 +29,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/delayed_mount_harness.dart';
-import 'support/e2e_widget_pump_harness.dart';
-
-Future<void> _pumpHost(
-  WidgetTester tester, {
-  required Key targetKey,
-  Duration? mountAfter,
-  bool startMounted = false,
-}) async {
-  await tester.pumpWidget(
-    wrapE2eScaffold(
-      Center(
-        child: DelayedMountHost(
-          mountAfter: mountAfter,
-          startMounted: startMounted,
-          child: TextButton(
-            key: targetKey,
-            onPressed: () {},
-            child: const Text('btn'),
-          ),
-        ),
-      ),
-    ),
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -61,7 +37,11 @@ void main() {
     'short-circuits before any pump when finder is already non-empty',
     (WidgetTester tester) async {
       const targetKey = Key('e2e_present_btn');
-      await _pumpHost(tester, targetKey: targetKey, startMounted: true);
+      await pumpDelayedMountKeyedButton(
+        tester,
+        targetKey: targetKey,
+        startMounted: true,
+      );
       expect(find.byKey(targetKey), findsOneWidget);
 
       final sw = Stopwatch()..start();
@@ -85,7 +65,7 @@ void main() {
     'returns once a scheduled mount makes the finder non-empty during pump',
     (WidgetTester tester) async {
       const targetKey = Key('e2e_late_btn');
-      await _pumpHost(
+      await pumpDelayedMountKeyedButton(
         tester,
         targetKey: targetKey,
         mountAfter: const Duration(milliseconds: 80),
@@ -112,7 +92,7 @@ void main() {
     'fails with TestFailure when finder never becomes non-empty within timeout',
     (WidgetTester tester) async {
       const missingKey = Key('e2e_missing_btn');
-      await _pumpHost(tester, targetKey: missingKey);
+      await pumpDelayedMountKeyedButton(tester, targetKey: missingKey);
       Object? caught;
       try {
         await e2eWaitUntilFound(
@@ -152,7 +132,7 @@ void main() {
     'diagnoseAfter parameter still fails on persistent absence without crashing',
     (WidgetTester tester) async {
       const missingKey = Key('e2e_diagnose_btn');
-      await _pumpHost(tester, targetKey: missingKey);
+      await pumpDelayedMountKeyedButton(tester, targetKey: missingKey);
 
       Object? caught;
       try {
@@ -188,7 +168,11 @@ void main() {
     'accepts a custom phaseName and E2ePerfLog on the short-circuit path',
     (WidgetTester tester) async {
       const targetKey = Key('e2e_perf_btn');
-      await _pumpHost(tester, targetKey: targetKey, startMounted: true);
+      await pumpDelayedMountKeyedButton(
+        tester,
+        targetKey: targetKey,
+        startMounted: true,
+      );
       final perf = E2ePerfLog('e2e_wait_until_found_test');
       await e2eWaitUntilFound(
         tester,
@@ -207,7 +191,7 @@ void main() {
     WidgetTester tester,
   ) async {
     const missingKey = Key('e2e_perf_timeout_btn');
-    await _pumpHost(tester, targetKey: missingKey);
+    await pumpDelayedMountKeyedButton(tester, targetKey: missingKey);
     final perf = E2ePerfLog('e2e_wait_until_found_test');
     Object? caught;
     try {

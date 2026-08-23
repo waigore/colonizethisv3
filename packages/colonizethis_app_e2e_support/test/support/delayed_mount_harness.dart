@@ -10,6 +10,9 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'e2e_widget_pump_harness.dart';
 
 /// Host that mounts [child] after an optional fake-async delay so tests can
 /// flip visibility while a helper polls (adaptive `tester.pump` loops).
@@ -83,4 +86,29 @@ class DelayedMountHostState extends State<DelayedMountHost> {
     }
     return widget.child;
   }
+}
+
+/// Pumps [DelayedMountHost] wrapping a keyed [TextButton] inside
+/// [wrapE2eScaffold] so pin suites do not re-declare `_pumpHost`.
+Future<void> pumpDelayedMountKeyedButton(
+  WidgetTester tester, {
+  required Key targetKey,
+  Duration? mountAfter,
+  bool startMounted = false,
+}) {
+  return tester.pumpWidget(
+    wrapE2eScaffold(
+      Center(
+        child: DelayedMountHost(
+          mountAfter: mountAfter,
+          startMounted: startMounted,
+          child: TextButton(
+            key: targetKey,
+            onPressed: () {},
+            child: const Text('btn'),
+          ),
+        ),
+      ),
+    ),
+  );
 }

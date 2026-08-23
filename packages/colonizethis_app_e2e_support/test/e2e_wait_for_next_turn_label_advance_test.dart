@@ -16,20 +16,6 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 import 'support/e2e_wait_for_next_turn_label_advance_guard_group.dart';
 import 'support/next_turn_label_harness.dart';
 
-Future<void> _pumpHost(
-  WidgetTester tester,
-  NextTurnLabelController controller, {
-  Duration? flipAfter,
-  String? flipToLabel,
-  bool? flipToShowDialog,
-}) => pumpNextTurnLabelHost(
-  tester,
-  controller,
-  flipAfter: flipAfter,
-  flipToLabel: flipToLabel,
-  flipToShowDialog: flipToShowDialog,
-);
-
 void main() {
   suppressLogsForTests();
 
@@ -39,7 +25,7 @@ void main() {
       final controller = NextTurnLabelController(
         initialLabel: 'Next turn (2 / 1492)',
       );
-      await _pumpHost(tester, controller);
+      await pumpNextTurnLabelHost(tester, controller);
       final sw = Stopwatch()..start();
       final elapsed = await e2eWaitForNextTurnLabelAdvance(
         tester,
@@ -70,7 +56,7 @@ void main() {
     final controller = NextTurnLabelController(
       initialLabel: 'Next turn (1 / 1492)',
     );
-    await _pumpHost(
+    await pumpNextTurnLabelHost(
       tester,
       controller,
       flipAfter: const Duration(milliseconds: 80),
@@ -107,7 +93,7 @@ void main() {
       final controller = NextTurnLabelController(
         initialLabel: 'Next turn (1 / 1492)',
       );
-      await _pumpHost(tester, controller);
+      await pumpNextTurnLabelHost(tester, controller);
       Object? caught;
       try {
         await e2eWaitForNextTurnLabelAdvance(
@@ -135,7 +121,7 @@ void main() {
         initialLabel: 'Next turn (2 / 1492)',
         initialShowProcessingDialog: true,
       );
-      await _pumpHost(
+      await pumpNextTurnLabelHost(
         tester,
         controller,
         flipAfter: const Duration(milliseconds: 250),
