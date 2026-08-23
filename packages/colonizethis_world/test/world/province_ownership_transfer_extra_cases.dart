@@ -1,0 +1,145 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+void registerProvinceOwnershipTransferExtraCases() {
+  group('extra', () {
+    test('clears spy timers for old and new owner on province', () {
+      const ow = kRegionOldWorld;
+      const pid = '$ow|P1';
+      const tileKey = '$ow|P1|0|0';
+
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [Province(id: pid, regionId: ow, ownerId: 'a')],
+        ),
+        spyRevealTurnsByPlayer: const {
+          'a': {pid: 3},
+          'b': {pid: 2},
+          'c': {'oldWorld|OTHER': 1},
+        },
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            pid: [tileKey],
+          },
+        },
+        players: const [
+          Player(id: 'a', displayName: 'A', isHuman: true),
+          Player(id: 'b', displayName: 'B', isHuman: true),
+          Player(id: 'c', displayName: 'C', isHuman: true),
+        ],
+      );
+
+      final after = applyCanonicalSingleProvinceOwnershipTransfer(
+        game,
+        targetProvinceId: pid,
+        oldOwnerId: 'a',
+        newOwnerId: 'b',
+      );
+
+      expect(after.worldState.spyRevealTurnsByPlayer['a']?[pid], isNull);
+      expect(after.worldState.spyRevealTurnsByPlayer['b']?[pid], isNull);
+      expect(
+        after.worldState.spyRevealTurnsByPlayer['c']?['oldWorld|OTHER'],
+        1,
+      );
+    });
+
+    test('throws when province owner does not match oldOwnerId', () {
+      const ow = kRegionOldWorld;
+      const pid = '$ow|P1';
+
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [Province(id: pid, regionId: ow, ownerId: 'x')],
+        ),
+        players: const [
+          Player(id: 'a', displayName: 'A', isHuman: true),
+          Player(id: 'b', displayName: 'B', isHuman: true),
+        ],
+      );
+
+      expect(
+        () => applyCanonicalSingleProvinceOwnershipTransfer(
+          game,
+          targetProvinceId: pid,
+          oldOwnerId: 'a',
+          newOwnerId: 'b',
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('bulk wrapper applies provinces in order and aggregates', () {
+      const ow = kRegionOldWorld;
+      const p1 = '$ow|P1';
+      const p2 = '$ow|P2';
+
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: p1, regionId: ow, ownerId: 'm'),
+            Province(id: p2, regionId: ow, ownerId: 'm'),
+          ],
+        ),
+        tileKeysByRegionAndProvince: const {
+          ow: {
+            p1: ['$ow|P1|0|0'],
+            p2: ['$ow|P2|0|0'],
+          },
+        },
+        players: const [
+          Player(id: 'm', displayName: 'M', isHuman: true),
+          Player(id: 'gp', displayName: 'GP', isHuman: true),
+        ],
+      );
+
+      final bulk = applyBulkCanonicalProvinceOwnershipTransfers(
+        game,
+        provinceIdsInOrder: [p1, p2],
+        oldOwnerId: 'm',
+        newOwnerId: 'gp',
+      );
+
+      expect(bulk.perProvince.length, 2);
+      expect(
+        bulk.game.worldState.oldWorld.provinces.every((p) => p.ownerId == 'gp'),
+        isTrue,
+      );
+    });
+
+    test(
+      'bulk propagates error on first failing province and skips later ids',
+      () {
+        const ow = kRegionOldWorld;
+        const p1 = '$ow|P1';
+        const p2 = '$ow|P2';
+
+        final game = TestFixtures.minimalGame(
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: p1, regionId: ow, ownerId: 'x'),
+              Province(id: p2, regionId: ow, ownerId: 'm'),
+            ],
+          ),
+          players: const [
+            Player(id: 'm', displayName: 'M', isHuman: true),
+            Player(id: 'gp', displayName: 'GP', isHuman: true),
+          ],
+        );
+
+        expect(
+          () => applyBulkCanonicalProvinceOwnershipTransfers(
+            game,
+            provinceIdsInOrder: [p1, p2],
+            oldOwnerId: 'm',
+            newOwnerId: 'gp',
+          ),
+          throwsStateError,
+        );
+      },
+    );
+  });
+}
