@@ -11,7 +11,6 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
@@ -309,83 +308,5 @@ void main() {
       // rows in the allocation subpanel).
       expect(totalDividers, greaterThanOrEqualTo(recipeCount - 1));
     });
-
-    // S7 — Labour Controls subsection placement (Refs #2862 S7a).
-
-    testWidgets(
-      'Labour Controls CtSectionLabel appears below Effective Labour (Refs #2862 S7a)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanelWithLabourCallbacks(player: fullPlayer),
-        );
-        await pumpSettleCapped(tester);
-
-        final labourControlsLabel = find.descendant(
-          of: find.byType(CtSectionLabel),
-          matching: find.text('LABOUR CONTROLS'),
-        );
-        expect(labourControlsLabel, findsOneWidget);
-
-        final effectiveLabour = find.textContaining('Labour this turn:');
-        expect(effectiveLabour, findsOneWidget);
-
-        final effectiveY = tester.getTopLeft(effectiveLabour).dy;
-        final labourY = tester.getTopLeft(labourControlsLabel).dy;
-        expect(
-          labourY,
-          greaterThan(effectiveY),
-          reason:
-              'Labour Controls section label must render below the '
-              'Effective Labour line per SPEC § Labour Controls (12-A).',
-        );
-      },
-    );
-
-    testWidgets(
-      'Labour Controls subsection is omitted when callbacks are not provided '
-      '(no orphan section label; Refs #2862 S7a)',
-      (WidgetTester tester) async {
-        // `buildPanel` does not pass currentOrders / labourCallbacks.
-        await pumpProductionPanelSettled(tester, player: fullPlayer);
-
-        expect(
-          find.descendant(
-            of: find.byType(CtSectionLabel),
-            matching: find.text('LABOUR CONTROLS'),
-          ),
-          findsNothing,
-        );
-      },
-    );
-
-    testWidgets(
-      'Workers section uses Effective Labour line then Labour Controls label '
-      '(no action buttons above Effective Labour; Refs #2862 S7a)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanelWithLabourCallbacks(player: fullPlayer),
-        );
-        await pumpSettleCapped(tester);
-
-        final effectiveLabour = find.textContaining('Labour this turn:');
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        // The disband button for the apprentice row (if rendered) must
-        // appear below the Effective Labour line.
-        final apprenticeDisband = find.byKey(
-          const ValueKey<String>('production_labour_disband_apprentices'),
-        );
-        if (apprenticeDisband.evaluate().isNotEmpty) {
-          final effectiveY = tester.getTopLeft(effectiveLabour).dy;
-          final disbandY = tester.getTopLeft(apprenticeDisband).dy;
-          expect(
-            disbandY,
-            greaterThan(effectiveY),
-            reason: 'Disband control must render below Effective Labour.',
-          );
-        }
-        // The peasant tier label parenthetical must also appear.
-        expect(find.text(l10n.production_workers_peasants), findsWidgets);
-      },
-    );
   });
 }

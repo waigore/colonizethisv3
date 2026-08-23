@@ -437,6 +437,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   }
   return name == 'production_panel_available_and_allocation_test.dart' ||
       name == 'production_panel_labour_and_chrome_test.dart' ||
+      name == 'production_panel_labour_controls_placement_test.dart' ||
       name == 'production_panel_cotton_weaving_lock_test.dart' ||
       name == 'production_panel_available_grid_test.dart' ||
       name == 'production_labour_section_test.dart' ||
@@ -491,6 +492,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'intervention_dialogue_overlay_test.dart' ||
       name == 'dialogue_overlays_specs_view_and_intro_test.dart' ||
       name == 'dialogue_overlays_specs_overture_and_call_to_arms_test.dart' ||
+      name == 'dialogue_overlays_specs_call_to_arms_test.dart' ||
       name == 'victory_overlay_test.dart' ||
       name == 'victory_overlay_narrow_test.dart' ||
       name == 'debug_console_overlay_panel_test.dart' ||
@@ -566,6 +568,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'quick_battle_deployment_view_dark_tokens_test.dart' ||
       name == 'quick_battle_action_selector_dark_tokens_test.dart' ||
       name == 'tech_tree_widget_core_test.dart' ||
+      name == 'tech_tree_widget_core_layout_test.dart' ||
       name == 'tech_tree_widget_palette_test.dart' ||
       name == 'tech_tree_widget_description_batches_test.dart' ||
       name == 'player_turn_event_feed_narrow_width_test.dart' ||
@@ -590,6 +593,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'app_event_handler_scope_civilian_work_test.dart' ||
       name == 'turn_resolution_event_blocking_test.dart' ||
       name == 'app_event_handler_test.dart' ||
+      name == 'app_event_handler_overlay_and_shell_test.dart' ||
       name == 'game_session_clear_ui_path_test.dart' ||
       name == 'new_game_setup_flow_test.dart' ||
       name == 'app_wave5_shared_helpers_test.dart' ||

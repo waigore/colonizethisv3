@@ -7,89 +7,20 @@
 // Power `gp2` so the row renders the full GP action matrix (multiple
 // buttons), which is the case the issue targets for the trailing cluster.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_constants.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'app_shell_harness.dart';
-
-const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
-
-/// Human GP `gp1` holds an at-peace relation with GP `gp2`, so the GP row
-/// renders the full overture + action matrix (several action buttons).
-Game _greatPowerRowGame() {
-  const ow = 'oldWorld';
-  final home = Province(
-    id: '$ow|p1',
-    regionId: ow,
-    displayName: 'Home',
-    ownerId: 'gp1',
-  );
-  final rival = Province(
-    id: '$ow|p2',
-    regionId: ow,
-    displayName: 'Rival',
-    ownerId: 'gp2',
-  );
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
-    oldWorld: RegionData(provinces: [home, rival], units: const []),
-    newWorld: const RegionData(),
-    playerVisibilityByTile: const {},
-    playerProspectedTiles: const {},
-  );
-  return Game(
-    id: 'diplo-action-cluster',
-    worldState: world,
-    players: const [
-      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
-      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
-    ],
-  );
-}
-
-Widget _panelHost({required Size viewportSize}) {
-  return buildAppShell(
-    viewport: viewportSize,
-    child: Scaffold(
-      body: DiplomacyPanel(
-        game: _greatPowerRowGame(),
-        humanPlayerId: 'gp1',
-        topology: _emptyTopology,
-        currentOrders: const Orders(),
-        bus: AppEventBus.create(),
-      ),
-    ),
-  );
-}
+import 'diplomacy_panel_action_cluster_test_support.dart';
 
 Future<void> _pumpBuilt(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 16));
-}
-
-/// Groups the rendered action-button rects into runs keyed by a quantized
-/// top y-offset (within [tol] dp). Each run's lefts are returned sorted.
-Map<double, List<Rect>> _runsByTop(List<Rect> rects, {double tol = 0.5}) {
-  double quantize(double v) => (v / tol).roundToDouble() * tol;
-  final Map<double, List<Rect>> byTop = <double, List<Rect>>{};
-  for (final Rect r in rects) {
-    byTop.putIfAbsent(quantize(r.top), () => <Rect>[]).add(r);
-  }
-  for (final List<Rect> run in byTop.values) {
-    run.sort((Rect a, Rect b) => a.left.compareTo(b.left));
-  }
-  return byTop;
 }
 
 void main() {
@@ -108,7 +39,9 @@ void main() {
       matching: find.byType(CtNinePatchButton),
     );
     final int count = buttons.evaluate().length;
-    return <Rect>[for (int i = 0; i < count; i++) tester.getRect(buttons.at(i))];
+    return <Rect>[
+      for (int i = 0; i < count; i++) tester.getRect(buttons.at(i)),
+    ];
   }
 
   group('Diplomacy wide action cluster (Refs #3621)', () {
@@ -124,7 +57,7 @@ void main() {
       (WidgetTester tester) async {
         await bindSurface(tester);
         await tester.pumpWidget(
-          _panelHost(viewportSize: const Size(800, 1200)),
+          diplomacyActionClusterPanelHost(viewportSize: const Size(800, 1200)),
         );
         await _pumpBuilt(tester);
 
@@ -188,51 +121,49 @@ void main() {
       },
     );
 
-    testWidgets(
-      'action buttons use the compact display-font label '
-      '(Cinzel, kDiplomacyActionButtonFontSize)',
-      (WidgetTester tester) async {
-        await bindSurface(tester);
-        await tester.pumpWidget(
-          _panelHost(viewportSize: const Size(800, 1200)),
-        );
-        await _pumpBuilt(tester);
+    testWidgets('action buttons use the compact display-font label '
+        '(Cinzel, kDiplomacyActionButtonFontSize)', (
+      WidgetTester tester,
+    ) async {
+      await bindSurface(tester);
+      await tester.pumpWidget(
+        diplomacyActionClusterPanelHost(viewportSize: const Size(800, 1200)),
+      );
+      await _pumpBuilt(tester);
 
-        final Finder declareWar = find.text('Declare War');
-        expect(declareWar, findsOneWidget);
-        final Text label = tester.widget<Text>(declareWar);
-        expect(label.style?.fontFamily, editorialMonocleDisplayFontFamily);
-        expect(label.style?.fontSize, kDiplomacyActionButtonFontSize);
-      },
-    );
+      final Finder declareWar = find.text('Declare War');
+      expect(declareWar, findsOneWidget);
+      final Text label = tester.widget<Text>(declareWar);
+      expect(label.style?.fontFamily, editorialMonocleDisplayFontFamily);
+      expect(label.style?.fontSize, kDiplomacyActionButtonFontSize);
+    });
 
-    testWidgets(
-      'action buttons use the compact CtNinePatchButton variant '
-      '(24 dp min height, 7 x 3 dp padding, shrink-wrap)',
-      (WidgetTester tester) async {
-        await bindSurface(tester);
-        await tester.pumpWidget(
-          _panelHost(viewportSize: const Size(800, 1200)),
-        );
-        await _pumpBuilt(tester);
+    testWidgets('action buttons use the compact CtNinePatchButton variant '
+        '(24 dp min height, 7 x 3 dp padding, shrink-wrap)', (
+      WidgetTester tester,
+    ) async {
+      await bindSurface(tester);
+      await tester.pumpWidget(
+        diplomacyActionClusterPanelHost(viewportSize: const Size(800, 1200)),
+      );
+      await _pumpBuilt(tester);
 
-        final Finder compactButtons = find.byWidgetPredicate(
-          (Widget w) =>
-              w is CtNinePatchButton &&
-              w.minHeight == kDiplomacyActionButtonMinHeight &&
-              w.padding == kDiplomacyActionButtonPadding &&
-              w.shrinkWrap,
-        );
-        expect(compactButtons, findsWidgets);
+      final Finder compactButtons = find.byWidgetPredicate(
+        (Widget w) =>
+            w is CtNinePatchButton &&
+            w.minHeight == kDiplomacyActionButtonMinHeight &&
+            w.padding == kDiplomacyActionButtonPadding &&
+            w.shrinkWrap,
+      );
+      expect(compactButtons, findsWidgets);
 
-        // Negative guard: no diplomacy action button retains the default
-        // 48 dp panel-button min height.
-        final Finder defaultHeightButtons = find.byWidgetPredicate(
-          (Widget w) => w is CtNinePatchButton && w.minHeight == 48,
-        );
-        expect(defaultHeightButtons, findsNothing);
-      },
-    );
+      // Negative guard: no diplomacy action button retains the default
+      // 48 dp panel-button min height.
+      final Finder defaultHeightButtons = find.byWidgetPredicate(
+        (Widget w) => w is CtNinePatchButton && w.minHeight == 48,
+      );
+      expect(defaultHeightButtons, findsNothing);
+    });
 
     testWidgets(
       'wide but width-constrained: cluster fills runs left-to-right and '
@@ -242,7 +173,7 @@ void main() {
         // enough that the full GP matrix cannot fit on one run.
         await bindSurface(tester, size: const Size(600, 1600));
         await tester.pumpWidget(
-          _panelHost(viewportSize: const Size(600, 1200)),
+          diplomacyActionClusterPanelHost(viewportSize: const Size(600, 1200)),
         );
         await _pumpBuilt(tester);
 
@@ -250,7 +181,9 @@ void main() {
         final List<Rect> rects = actionRects(tester, bodyKey);
         expect(rects.length, greaterThanOrEqualTo(3));
 
-        final Map<double, List<Rect>> runs = _runsByTop(rects);
+        final Map<double, List<Rect>> runs = diplomacyActionClusterRunsByTop(
+          rects,
+        );
 
         // Wrapping occurred: more than one run is present.
         expect(
@@ -263,8 +196,9 @@ void main() {
 
         // Not a vertical column: the buttons do not all share one x-offset,
         // and at least one run packs two buttons side by side.
-        final Set<double> allLefts =
-            rects.map((Rect r) => (r.left * 2).roundToDouble() / 2).toSet();
+        final Set<double> allLefts = rects
+            .map((Rect r) => (r.left * 2).roundToDouble() / 2)
+            .toSet();
         expect(allLefts.length, greaterThanOrEqualTo(2));
         final int largestRun = runs.values
             .map((List<Rect> run) => run.length)
@@ -334,7 +268,7 @@ void main() {
         // A surface far wider than the matrix lets every button share one run.
         await bindSurface(tester, size: const Size(4000, 1600));
         await tester.pumpWidget(
-          _panelHost(viewportSize: const Size(4000, 1200)),
+          diplomacyActionClusterPanelHost(viewportSize: const Size(4000, 1200)),
         );
         await _pumpBuilt(tester);
 
@@ -342,7 +276,9 @@ void main() {
         final List<Rect> rects = actionRects(tester, bodyKey);
         expect(rects.length, greaterThanOrEqualTo(3));
 
-        final Map<double, List<Rect>> runs = _runsByTop(rects);
+        final Map<double, List<Rect>> runs = diplomacyActionClusterRunsByTop(
+          rects,
+        );
         expect(
           runs.length,
           1,
@@ -359,7 +295,7 @@ void main() {
       (WidgetTester tester) async {
         await bindSurface(tester);
         await tester.pumpWidget(
-          _panelHost(viewportSize: const Size(480, 1200)),
+          diplomacyActionClusterPanelHost(viewportSize: const Size(480, 1200)),
         );
         await _pumpBuilt(tester);
 

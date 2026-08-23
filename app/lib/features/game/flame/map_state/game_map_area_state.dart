@@ -8,12 +8,14 @@ import 'game_map_area_build_overlays.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_events.dart';
 import 'game_map_area_last_turn_playback.dart';
+import 'game_map_area_last_turn_playback_anchors.dart';
 import 'game_map_area_lifecycle.dart';
 import 'game_map_area_relocate_selection.dart';
 import 'game_map_area_selection.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed.dart';
 import 'game_map_area_turn_feed_labels.dart';
+import 'game_map_area_turn_feed_locate.dart';
 import 'game_map_area_turn_feed_taps.dart';
 import 'game_map_area_turn_resolution.dart';
 import 'game_map_area_view.dart';
@@ -27,8 +29,10 @@ class GameMapAreaState extends ConsumerState<GameMapArea>
         GameMapAreaView,
         GameMapAreaTurnResolution,
         GameMapAreaTurnFeedLabels,
+        GameMapAreaTurnFeedLocate,
         GameMapAreaTurnFeedTaps,
         GameMapAreaTurnFeed,
+        GameMapAreaLastTurnPlaybackAnchors,
         GameMapAreaLastTurnPlayback,
         GameMapAreaEvents,
         GameMapAreaE2e,

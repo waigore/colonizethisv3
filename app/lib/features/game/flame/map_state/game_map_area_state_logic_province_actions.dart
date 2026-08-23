@@ -9,9 +9,12 @@ import 'game_map_area_province_action_states_assignable.dart'
 import 'game_map_area_province_action_states_establish_consulate.dart';
 import 'game_map_area_province_action_states_offer_peace.dart';
 import 'game_map_area_province_action_states_upgrade_town.dart';
+import 'game_map_area_state_logic_province_actions_build.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
+
+export 'game_map_area_state_logic_province_actions_build.dart';
 
 /// Province-overlay inline action state helpers for [GameMapAreaStateLogic].
 abstract final class GameMapAreaStateLogicProvinceActions {
@@ -71,125 +74,24 @@ abstract final class GameMapAreaStateLogicProvinceActions {
   /// SPEC anchor: `SPEC/program/order-suggestions.md` § Authoritative pipeline
   /// references this method by name; the forwarder keeps that reference valid
   /// after the #2575 module split.
-  static ProvinceInlineActionState provinceBuildImprovementActionState({
-    required ct_models.Game game,
-    required String humanPlayerId,
-    required String selectedTileKey,
-    required PlayerView playerView,
-    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
-    MapTopology? topology,
-    ct_models.Orders currentOrders = const ct_models.Orders(),
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => GameMapAreaProvinceActionStates.buildImprovement(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    selectedTileKey: selectedTileKey,
-    playerView: playerView,
-    workTargetSelectionCache: workTargetSelectionCache,
-    topology: topology,
-    currentOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
+  static const provinceBuildImprovementActionState =
+      GameMapAreaStateLogicProvinceBuildActions
+          .provinceBuildImprovementActionState;
 
-  static ProvinceInlineActionState provinceBuildRoadActionState({
-    required ct_models.Game game,
-    required String humanPlayerId,
-    required String selectedTileKey,
-    required PlayerView playerView,
-    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
-    MapTopology? topology,
-    ct_models.Orders currentOrders = const ct_models.Orders(),
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => GameMapAreaProvinceActionStates.buildRoad(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    selectedTileKey: selectedTileKey,
-    playerView: playerView,
-    workTargetSelectionCache: workTargetSelectionCache,
-    topology: topology,
-    currentOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
+  static const provinceBuildRoadActionState =
+      GameMapAreaStateLogicProvinceBuildActions.provinceBuildRoadActionState;
 
-  static ProvinceInlineActionState provinceBuildFortActionState({
-    required ct_models.Game game,
-    required String humanPlayerId,
-    required String selectedTileKey,
-    required PlayerView playerView,
-    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
-    MapTopology? topology,
-    ct_models.Orders currentOrders = const ct_models.Orders(),
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => GameMapAreaProvinceActionStates.buildFort(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    selectedTileKey: selectedTileKey,
-    playerView: playerView,
-    workTargetSelectionCache: workTargetSelectionCache,
-    topology: topology,
-    currentOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
+  static const provinceBuildFortActionState =
+      GameMapAreaStateLogicProvinceBuildActions.provinceBuildFortActionState;
 
-  static ProvinceInlineActionState provinceBuildPortActionState({
-    required ct_models.Game game,
-    required String humanPlayerId,
-    required String selectedTileKey,
-    required PlayerView playerView,
-    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
-    MapTopology? topology,
-    ct_models.Orders currentOrders = const ct_models.Orders(),
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => GameMapAreaProvinceActionStates.buildPort(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    selectedTileKey: selectedTileKey,
-    playerView: playerView,
-    workTargetSelectionCache: workTargetSelectionCache,
-    topology: topology,
-    currentOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
+  static const provinceBuildPortActionState =
+      GameMapAreaStateLogicProvinceBuildActions.provinceBuildPortActionState;
 
-  static ProvinceInlineActionState provinceBuildRailActionState({
-    required ct_models.Game game,
-    required String humanPlayerId,
-    required String selectedTileKey,
-    required PlayerView playerView,
-    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
-    MapTopology? topology,
-    ct_models.Orders currentOrders = const ct_models.Orders(),
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => GameMapAreaProvinceActionStates.buildRail(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    selectedTileKey: selectedTileKey,
-    playerView: playerView,
-    workTargetSelectionCache: workTargetSelectionCache,
-    topology: topology,
-    currentOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
+  static const provinceBuildRailActionState =
+      GameMapAreaStateLogicProvinceBuildActions.provinceBuildRailActionState;
 
-  static ProvinceInlineActionState provincePurchaseLandActionState({
-    required ct_models.Game game,
-    required String humanPlayerId,
-    required String selectedTileKey,
-    required PlayerView playerView,
-    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
-    MapTopology? topology,
-    ct_models.Orders currentOrders = const ct_models.Orders(),
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => GameMapAreaProvinceActionStates.purchaseLand(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    selectedTileKey: selectedTileKey,
-    playerView: playerView,
-    workTargetSelectionCache: workTargetSelectionCache,
-    topology: topology,
-    currentOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
+  static const provincePurchaseLandActionState =
+      GameMapAreaStateLogicProvinceBuildActions.provincePurchaseLandActionState;
 
   static ({
     bool showControl,

@@ -9,8 +9,8 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for app flame wave-20 post-split target (≤260 physical lines).
-const int appFlameLibPhysicalFileSizeCeiling = 260;
+/// Ratchet ceiling for app flame wave-20 post-split target (≤250 physical lines).
+const int appFlameLibPhysicalFileSizeCeiling = 250;
 
 const String _flameLibRelativePath = 'app/lib/features/game/flame';
 
