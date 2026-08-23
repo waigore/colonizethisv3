@@ -151,6 +151,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
         humanPlayerId: humanPlayerId,
         draftOrders: draftOrders,
         selectedTileKey: selectedTileKey,
+        navalMission: navalMission,
       );
     }
     return provinceContent(

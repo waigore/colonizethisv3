@@ -2821,6 +2821,12 @@ abstract class AppLocalizations {
   /// MAP20001 Naval Blockade control label. Refs #4413.
   String get provinceOverlay_blockadeAction;
 
+  /// MAP20001 sea-zone Naval Patrol control label. Refs #4605.
+  String get provinceOverlay_patrolAction;
+
+  /// MAP20001 sea-zone Naval Defend control label. Refs #4605.
+  String get provinceOverlay_defendAction;
+
   /// MAP20001 Naval Beachhead control label. Refs #4413.
   String get provinceOverlay_beachheadAction;
 

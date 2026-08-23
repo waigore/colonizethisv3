@@ -1,9 +1,9 @@
-
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'province_panel_labels.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show WorldStateProvinceLookup, WorldStateUnitLookup, fleetsInPortAtProvince;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show WorldStateProvinceLookup, WorldStateUnitLookup, fleetsInPortAtProvince;
 
 String _destinationProvinceLabel(Game game, String provinceId) =>
     game.worldState.allProvincesById[provinceId]?.displayName ?? provinceId;
@@ -84,16 +84,33 @@ List<String> provincePanelPendingNavalLines({
   required String humanPlayerId,
   required AppLocalizations l10n,
 }) {
-  final out = <String>[];
-  final ws = game.worldState;
   final fleetsHere = fleetsInPortAtProvince(
-    ws,
+    game.worldState,
     provinceId,
   ).where((f) => f.ownerId == humanPlayerId).map((f) => f.id).toSet();
+  return pendingNavalLinesForFleets(
+    game: game,
+    orders: orders,
+    fleetIds: fleetsHere,
+    humanPlayerId: humanPlayerId,
+    l10n: l10n,
+  );
+}
+
+/// Pending naval move/mission lines for human-owned [fleetIds] (in-port or at sea).
+List<String> pendingNavalLinesForFleets({
+  required Game game,
+  required Orders orders,
+  required Set<String> fleetIds,
+  required String humanPlayerId,
+  required AppLocalizations l10n,
+}) {
+  final out = <String>[];
+  final ws = game.worldState;
 
   final navalMoves = orders.navalMoveOrdersByPlayerId[humanPlayerId] ?? [];
   for (final o in navalMoves) {
-    if (!fleetsHere.contains(o.fleetId)) continue;
+    if (!fleetIds.contains(o.fleetId)) continue;
     if (o.isDock) {
       final pid = o.destinationPortProvinceId!;
       out.add(
@@ -111,7 +128,7 @@ List<String> provincePanelPendingNavalLines({
   final navalMissions =
       orders.navalMissionOrdersByPlayerId[humanPlayerId] ?? [];
   for (final o in navalMissions) {
-    if (!fleetsHere.contains(o.fleetId)) continue;
+    if (!fleetIds.contains(o.fleetId)) continue;
     if (o.mission == 'none') continue;
     final mLabel = navalMissionDisplayLabel(l10n, o.mission);
     out.add(l10n.province_pending_fleetMission(mLabel));
