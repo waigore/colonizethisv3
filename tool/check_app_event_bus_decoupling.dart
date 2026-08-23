@@ -130,9 +130,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_dialogs.dart',
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
   // Home-transfer dialog opener split into `naval_units_panel_support_combine.dart`
-  // during wave-9 de-part (Refs #4117). Same local-by-design rationale as
+  // during wave-9 de-part (Refs #4117), then `naval_units_panel_support_combine_home.dart`
+  // (Refs #4606). Same local-by-design rationale as
   // `naval_units_panel_support_home_transfer.dart`.
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_combine.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_combine_home.dart',
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
   // Dialog openers extracted from `military_units_panel.dart` to keep panel
