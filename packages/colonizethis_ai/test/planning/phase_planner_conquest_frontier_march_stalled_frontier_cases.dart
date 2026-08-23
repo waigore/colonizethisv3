@@ -11,6 +11,7 @@ import 'package:colonizethis_test/test.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/planner_test_helpers.dart';
 import 'phase_planner_conquest_frontier_march_support.dart';
+import 'phase_planner_conquest_frontier_march_stalled_frontier_cases_tail_cases.dart';
 
 void registerPhasePlannerConquestFrontierMarchStalledFrontierCases() {
   group('runConquestArmyMovePlanner stalled-expansion own-territory '
@@ -196,143 +197,7 @@ void registerPhasePlannerConquestFrontierMarchStalledFrontierCases() {
       },
     );
 
-    test(
-      'EXPAND ow<10 keeps own-territory frontier-march even when no direct '
-      'invadable neighbour exists for any field army',
-      () {
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|gp1_capital',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'oldWorld|gp1_frontier',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'oldWorld|minor1_a',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [
-            TopologyEdge(
-              id1: 'oldWorld|gp1_capital',
-              id2: 'oldWorld|gp1_frontier',
-            ),
-            TopologyEdge(
-              id1: 'oldWorld|gp1_frontier',
-              id2: 'oldWorld|minor1_a',
-            ),
-          ],
-        );
-        final game = Game(
-          id: 'g-stalled-frontier-no-direct',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.orders,
-              turnNumber: 40,
-            ),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|gp1_capital',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp1',
-                ),
-                Province(
-                  id: 'oldWorld|gp1_frontier',
-                  regionId: 'oldWorld',
-                  ownerId: 'gp1',
-                ),
-                Province(
-                  id: 'oldWorld|minor1_a',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            armies: const [
-              Army(
-                id: 'army_cap',
-                ownerId: 'gp1',
-                regionId: 'oldWorld',
-                stationedProvinceId: 'oldWorld|gp1_capital',
-                isHomeArmy: false,
-                regimentUnitIds: ['reg1'],
-              ),
-            ],
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'P1', isHuman: false),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Minor 1'),
-          ],
-          aiControlByGpId: const {'gp1': true},
-          diplomacyRelations: const [
-            DiplomacyRelation(
-              factionId1: 'gp1',
-              factionId2: 'minor1',
-              state: RelationState.atWar,
-            ),
-          ],
-        );
-        final ctx = buildTestPlannerContext(
-          game: game,
-          topology: topology,
-          nationId: 'gp1',
-          primaryGoal: StrategicGoal.conquer,
-          suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-            work: [],
-            build: [],
-            move: [],
-            research: [],
-            navalMove: [],
-            navalMission: [],
-            diplomatic: [],
-            armyMove: [
-              ArmyMoveOrder(
-                armyId: 'army_cap',
-                destinationProvinceId: 'oldWorld|gp1_frontier',
-              ),
-            ],
-          ),
-        );
-        final snapshot = AIWorldSnapshot(
-          playerId: 'gp1',
-          threats: const ThreatSummary(atWarWith: ['minor1']),
-          opportunities: const OpportunitySummary(),
-          conquest: const ConquestSummary(
-            oldWorldProvincesOwned: 7,
-            invadableProvinceIdsSorted: ['oldWorld|minor1_a'],
-            adjacentOwnerFactionIdsSorted: ['minor1'],
-          ),
-          colonial: const ColonialSummary(),
-          economy: const EconomySummary(),
-          relations: const {},
-        );
-        const phasePlan = PhasePlanOutcome(
-          phase: ObserverGoalPhase.expand,
-          expandMilitaryPlan: kFrontierMarchExpandOwOnly,
-        );
-
-        final orders = runConquestArmyMovePlanner(
-          ctx: ctx,
-          snapshot: snapshot,
-          declaredWarTargetFactionId: 'minor1',
-          phasePlan: phasePlan,
-        );
-
-        final moves = orders.armyMoveOrdersByPlayerId['gp1'] ?? const [];
-        expect(moves, hasLength(1));
-        expect(moves.single.destinationProvinceId, 'oldWorld|gp1_frontier');
-      },
-    );
-
   });
+
+  registerPhasePlannerConquestFrontierMarchStalledFrontierCasesTail();
 }

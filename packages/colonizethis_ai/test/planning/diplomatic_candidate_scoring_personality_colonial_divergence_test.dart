@@ -73,6 +73,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/diplomatic_candidate_scoring_colonial_test_support.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
+import 'diplomatic_candidate_scoring_personality_colonial_divergence_tail_cases.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
@@ -273,66 +274,6 @@ void main() {
           );
         },
       );
-
-      test(
-        'napoleon scores declareWar strictly higher than henry; henry '
-        'scores establishOverture strictly higher than napoleon',
-        () {
-          // Cross-personality isolation: with every non-personality input
-          // held identical, the personality `warLikelihood` /
-          // `allianceTendency` deltas (napoleon 80/25 vs henry 10/75 per
-          // `SPEC/ai/ai-personalities.md`) must shift the **same** candidate
-          // type's score between configs. This catches a regression where
-          // the personality terms collapse to a constant even if relative
-          // per-personality ordering still happens to flip via some other
-          // asymmetric branch.
-          final napoleonScores = _scoreFor(_napoleonConfig);
-          final henryScores = _scoreFor(_henryConfig);
-
-          expect(
-            napoleonScores[_declareWarIdx],
-            greaterThan(henryScores[_declareWarIdx]),
-            reason:
-                'napoleon `warLikelihood`=80 (+30 vs centerline) must lift '
-                '`declareWar` above henry `warLikelihood`=10 (-40) for the '
-                'same target / state.',
-          );
-          expect(
-            henryScores[_establishOvertureIdx],
-            greaterThan(napoleonScores[_establishOvertureIdx]),
-            reason:
-                'henry `allianceTendency`=75 (+25 vs centerline) must lift '
-                '`establishOverture(joinEmpire)` above napoleon '
-                '`allianceTendency`=25 (-25) for the same target / state.',
-          );
-        },
-      );
-
-      test(
-        'identical COLONIAL inputs produce identical score lists per '
-        'personality (must-have #7 determinism)',
-        () {
-          final napoleonFirst = _scoreFor(_napoleonConfig);
-          final napoleonSecond = _scoreFor(_napoleonConfig);
-          final henryFirst = _scoreFor(_henryConfig);
-          final henrySecond = _scoreFor(_henryConfig);
-
-          expect(
-            napoleonSecond,
-            napoleonFirst,
-            reason:
-                'Determinism (must-have #7): identical COLONIAL inputs must '
-                'produce identical napoleon score lists across runs.',
-          );
-          expect(
-            henrySecond,
-            henryFirst,
-            reason:
-                'Determinism (must-have #7): identical COLONIAL inputs must '
-                'produce identical henry score lists across runs.',
-          );
-        },
-      );
     },
   );
 }
@@ -350,4 +291,6 @@ int _indexOfMax(List<int> scores) {
     }
   }
   return bestIndex;
+
+  registerDiplomaticCandidateScoringPersonalityColonialDivergenceTailCases();
 }

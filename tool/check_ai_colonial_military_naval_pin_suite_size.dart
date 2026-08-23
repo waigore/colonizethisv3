@@ -9,7 +9,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Phase 8 extends the same ≤750-or-cases pattern to COLONIAL-lite naval
 /// (Refs #3997). Phase 14 aligns the ceiling with peer suite gates at
 /// **400**-or-cases (Refs #4365 Slice C).
-const int colonialMilitaryNavalPinSuitePhysicalLineCeiling = 400;
+const int colonialMilitaryNavalPinSuitePhysicalLineCeiling = 300;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 
