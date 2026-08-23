@@ -673,6 +673,13 @@ rules:
     runner: dart
     script: tool/check_app_e2e_support_test_file_size.dart
 
+  - rule_id: repo.app_e2e_support_no_duplicate_hosts
+    group: testing
+    title: "colonizethis_app_e2e_support pin suites must not re-declare private wrap/pump hosts (Refs #4598)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_e2e_support_no_duplicate_hosts.dart
+
   - rule_id: repo.app_e2e_support_no_part_directives
     group: structure
     title: colonizethis_app_e2e_support lib and test must not use Dart part / part of directives (Refs #4344)
