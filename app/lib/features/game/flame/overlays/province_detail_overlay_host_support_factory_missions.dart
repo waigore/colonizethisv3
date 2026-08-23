@@ -12,6 +12,7 @@ import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.
 import '../map_state/province_detach_and_sail_overlay_controls.dart';
 import '../map_state/province_naval_mission_action_state.dart';
 import 'province_detail_overlay_host_support_army_move.dart';
+import 'province_detail_overlay_host_support_army_combine.dart';
 import 'province_detail_overlay_host_support_counter_espionage.dart';
 import 'province_detail_overlay_host_support_detach_sail.dart';
 import 'province_detail_overlay_host_support_naval_mission.dart';
@@ -20,6 +21,7 @@ import 'province_detail_overlay_host_support_station_spy.dart';
 /// Move/invade, naval mission, detach-and-sail, and station-spy overlay props.
 ({
   ProvinceArmyMoveOverlayControls armyMove,
+  ProvinceArmyCombineOverlayControls armyCombine,
   ProvinceNavalMissionOverlayControls navalMission,
   ProvinceDetachAndSailOverlayControls detachAndSail,
   ProvinceOverlayStationSpyProps stationSpy,
@@ -55,6 +57,19 @@ buildProvinceDetailMissionOverlayControls({
       canMutateViaUi: canMutateViaUi,
       omniscientDetail: omniscientDetail,
       armyMovePickerCache: armyMovePickerCache,
+      bus: bus,
+      isSeaZone: isSeaZone,
+    ),
+    armyCombine: buildProvinceArmyCombineOverlayControls(
+      context: context,
+      game: game,
+      region: region,
+      humanPlayerId: humanPlayerId,
+      playerView: playerView,
+      displayId: displayId,
+      draftOrders: draftOrders,
+      canMutateViaUi: canMutateViaUi,
+      omniscientDetail: omniscientDetail,
       bus: bus,
       isSeaZone: isSeaZone,
     ),

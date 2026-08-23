@@ -169,6 +169,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     cargo: homeFleetCargo,
   );
   final armyMove = missions.armyMove;
+  final armyCombine = missions.armyCombine;
   final navalMission = missions.navalMission;
   final detachAndSail = missions.detachAndSail;
   final stationSpy = missions.stationSpy;
@@ -219,6 +220,10 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     invadeArmyEnabled: armyMove.invadeEnabled,
     invadeArmyTooltip: armyMove.invadeTooltip,
     onInvadeArmyTap: armyMove.onInvadeTap,
+    showCombineArmiesControl: armyCombine.show,
+    combineArmiesEnabled: armyCombine.enabled,
+    combineArmiesTooltip: armyCombine.tooltip,
+    onCombineArmiesTap: armyCombine.onTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     blockadeStatus: navalMission.blockadeStatus,
