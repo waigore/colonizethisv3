@@ -13,8 +13,8 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckWorldTestFileSize', () {
-    test('passes on current repo tree under wave-7 ceiling', () {
-      expect(worldTestFileSizeCeiling, 300);
+    test('passes on current repo tree under wave-8 ceiling', () {
+      expect(worldTestFileSizeCeiling, 250);
       expect(runCheckWorldTestFileSize('.'), 0);
     });
 
