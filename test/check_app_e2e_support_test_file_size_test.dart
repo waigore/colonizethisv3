@@ -5,40 +5,26 @@ import 'package:test/test.dart';
 import '../tool/check_app_e2e_support_test_file_size.dart';
 
 void main() {
-  test(
-    'passes for the real e2e-support test tree with shrink-only allowlist',
-    () {
-      final logs = <String>[];
-      final code = runCheckAppE2eSupportTestFileSize(
-        Directory.current.path,
-        info: logs.add,
-        err: logs.add,
-      );
-      expect(
-        code,
-        0,
-        reason:
-            'Every packages/colonizethis_app_e2e_support/test file must stay '
-            'at or below ${maxAppE2eSupportTestPhysicalLinesForTests()} '
-            'physical lines (allowlisted baseline excepted).\n'
-            '${logs.join('\n')}',
-      );
-    },
-  );
+  test('passes for the real e2e-support test tree at the 300-line cap', () {
+    final logs = <String>[];
+    final code = runCheckAppE2eSupportTestFileSize(
+      Directory.current.path,
+      info: logs.add,
+      err: logs.add,
+    );
+    expect(
+      code,
+      0,
+      reason:
+          'Every packages/colonizethis_app_e2e_support/test file must stay '
+          'at or below ${maxAppE2eSupportTestPhysicalLinesForTests()} '
+          'physical lines (empty allowlist).\n'
+          '${logs.join('\n')}',
+    );
+  });
 
-  test('allowlisted offenders still exceed the cap (shrink-only)', () {
-    for (final relativePath in appE2eSupportTestFileSizeAllowlistForTests) {
-      final file = File('${Directory.current.path}/$relativePath');
-      expect(file.existsSync(), isTrue, reason: relativePath);
-      final lines = file.readAsLinesSync().length;
-      expect(
-        lines,
-        greaterThan(maxAppE2eSupportTestPhysicalLinesForTests()),
-        reason:
-            '$relativePath must remain over the cap while allowlisted '
-            '(got $lines).',
-      );
-    }
+  test('empty allowlist has no shrink-only leftovers', () {
+    expect(appE2eSupportTestFileSizeAllowlistForTests, isEmpty);
   });
 
   test('fails when a non-allowlisted file exceeds the cap', () {

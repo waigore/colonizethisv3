@@ -21,13 +21,7 @@ const String _testsRelativePath = 'packages/colonizethis_app_e2e_support/test';
 /// Oversized e2e-support `test/**` files accepted as a shrink-only baseline
 /// (Refs #4075). Remove an entry only after the file is at or under
 /// [_maxPhysicalLines].
-const List<String> appE2eSupportTestFileSizeAllowlistForTests = <String>[
-  'packages/colonizethis_app_e2e_support/test/e2e_await_panel_mount_after_opener_tap_test.dart',
-  'packages/colonizethis_app_e2e_support/test/e2e_check_explore_enabled_from_civilian_panel_test.dart',
-  'packages/colonizethis_app_e2e_support/test/e2e_dismiss_snackbar_if_present_test.dart',
-  'packages/colonizethis_app_e2e_support/test/e2e_shared_lib_topic_split_test.dart',
-  'packages/colonizethis_app_e2e_support/test/e2e_wait_for_next_turn_label_advance_test.dart',
-];
+const List<String> appE2eSupportTestFileSizeAllowlistForTests = <String>[];
 
 int runCheckAppE2eSupportTestFileSize(
   String repoRoot, {

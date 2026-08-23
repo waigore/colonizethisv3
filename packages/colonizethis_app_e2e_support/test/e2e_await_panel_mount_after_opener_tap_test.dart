@@ -28,6 +28,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
 import 'support/delayed_mount_harness.dart';
+import 'support/e2e_await_panel_mount_after_opener_tap_guard_group.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 const _kPanelKey = ValueKey<String>('e2e_await_panel_mount_panel');
 
@@ -57,12 +59,10 @@ void main() {
       // pump per call would re-introduce the per-opener idle frame that
       // PR #2782 already removed from the outer loop.
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: KeyedSubtree(
-              key: _kPanelKey,
-              child: SizedBox(width: 100, height: 100),
-            ),
+        wrapE2eScaffold(
+          const KeyedSubtree(
+            key: _kPanelKey,
+            child: SizedBox(width: 100, height: 100),
           ),
         ),
       );
@@ -110,9 +110,7 @@ void main() {
     // AC1 / AC5).
     late DelayedMountHostState state;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: _panelHost(onState: (s) => state = s)),
-      ),
+      wrapE2eScaffold(_panelHost(onState: (s) => state = s)),
     );
     expect(find.byKey(_kPanelKey), findsNothing);
     state.mount();
@@ -158,12 +156,10 @@ void main() {
       // best-effort contract directly.
       late DelayedMountHostState state;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: _panelHost(
-              flipAfter: const Duration(milliseconds: 60),
-              onState: (s) => state = s,
-            ),
+        wrapE2eScaffold(
+          _panelHost(
+            flipAfter: const Duration(milliseconds: 60),
+            onState: (s) => state = s,
           ),
         ),
       );
@@ -188,146 +184,5 @@ void main() {
     },
   );
 
-  testWidgets(
-    'e2eAwaitPanelMountAfterOpenerTap returns false without throwing when '
-    'the panel never mounts within the timeout',
-    (WidgetTester tester) async {
-      // Best-effort contract pin: the panel openers gate their outer
-      // adaptive-poll loop on this helper\'s `false` return to dismiss
-      // transient overlays and retry the rail/marker tap. A regression
-      // that promoted the timeout into a `fail()` call (for example by
-      // swapping [e2ePumpUntilConditionOrIdle] for the strict
-      // [e2ePumpUntil]) would surface as a hard TestFailure inside
-      // `tryOpen` instead of letting the outer loop recover, which would
-      // regress every scenario that opens a panel while a sheet is
-      // closing (Refs GitHub #2336 AC1 / AC10).
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-      Object? caught;
-      bool? result;
-      try {
-        result = await e2eAwaitPanelMountAfterOpenerTap(
-          tester,
-          find.byKey(_kPanelKey),
-          timeout: const Duration(milliseconds: 150),
-          phaseName: 'pin_never_mounts_timeout',
-        );
-      } catch (e) {
-        caught = e;
-      }
-      expect(
-        caught,
-        isNull,
-        reason:
-            'Best-effort variant must NOT call fail() on timeout so the '
-            'opener tryOpen closure can return false and let the outer '
-            'loop dismiss transient overlays and retry the rail/marker '
-            'tap (Refs GitHub #2336 AC10).',
-      );
-      expect(
-        result,
-        isFalse,
-        reason:
-            'Persistent not-mounted panel must surface as a false return '
-            'so the opener tryOpen closure can decide whether to retry '
-            'the rail/marker branch on the outer adaptive-poll loop '
-            '(Refs GitHub #2336 AC1).',
-      );
-    },
-  );
-
-  testWidgets('e2eAwaitPanelMountAfterOpenerTap accepts a custom phaseName and '
-      'E2ePerfLog on the success path', (WidgetTester tester) async {
-    // Smoke-only: the helper must not throw when handed an
-    // E2ePerfLog + explicit phaseName so scenario-level callers can
-    // keep emitting `E2E_TIMING|phase=...|result=...` markers without
-    // paying a signature regression here. The three panel openers
-    // already forward their `perf` arg into this helper; a signature
-    // break would compile-error at the call sites.
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: KeyedSubtree(
-            key: _kPanelKey,
-            child: SizedBox(width: 100, height: 100),
-          ),
-        ),
-      ),
-    );
-    final perf = E2ePerfLog('e2e_await_panel_mount_after_opener_tap_test');
-    final result = await e2eAwaitPanelMountAfterOpenerTap(
-      tester,
-      find.byKey(_kPanelKey),
-      timeout: const Duration(seconds: 2),
-      perf: perf,
-      phaseName: 'pin_perf_success',
-    );
-    expect(result, isTrue);
-  });
-
-  testWidgets('e2eAwaitPanelMountAfterOpenerTap accepts a custom phaseName and '
-      'E2ePerfLog on the timeout path without escalating to fail()', (
-    WidgetTester tester,
-  ) async {
-    // The perf arg must remain observability metadata only; a
-    // regression that started failing the test when perf was provided
-    // (for example by swapping in a strict pump helper that fails on
-    // timeout) would break every panel-opener call site that already
-    // forwards `perf` and break wall-clock attribution.
-    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-    final perf = E2ePerfLog('e2e_await_panel_mount_after_opener_tap_test');
-    final result = await e2eAwaitPanelMountAfterOpenerTap(
-      tester,
-      find.byKey(_kPanelKey),
-      timeout: const Duration(milliseconds: 80),
-      perf: perf,
-      phaseName: 'pin_perf_timeout',
-    );
-    expect(
-      result,
-      isFalse,
-      reason:
-          'Passing a perf log on the timeout path must keep the '
-          'best-effort `false` return; perf is observability metadata '
-          'only and must not promote the timeout into a fail() call '
-          '(Refs GitHub #2336 AC1 / AC10).',
-    );
-  });
-
-  testWidgets(
-    'AC1 barrel alias `awaitPanelMountAfterOpenerTap` forwards to the '
-    'shared implementation with the documented signature',
-    (WidgetTester tester) async {
-      // Compile-time alias signature pin: the tear-off must assign to a
-      // matching function type from the barrel without an explicit cast.
-      // A future signature drift here (extra positional/named arg,
-      // return-type change, or a missing `timeout` / `phaseName` named
-      // requirement) would fail at compile time so consumers of the AC1
-      // barrel cannot silently switch to a different recipe.
-      final Future<bool> Function(
-        WidgetTester,
-        Finder, {
-        required Duration timeout,
-        E2ePerfLog? perf,
-        required String phaseName,
-      })
-      tearOff = awaitPanelMountAfterOpenerTap;
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: KeyedSubtree(
-              key: _kPanelKey,
-              child: SizedBox(width: 100, height: 100),
-            ),
-          ),
-        ),
-      );
-      final result = await tearOff(
-        tester,
-        find.byKey(_kPanelKey),
-        timeout: const Duration(seconds: 1),
-        phaseName: 'pin_ac1_barrel_alias',
-      );
-      expect(result, isTrue);
-    },
-  );
+  registerAwaitPanelMountAfterOpenerTapGuardGroup();
 }
