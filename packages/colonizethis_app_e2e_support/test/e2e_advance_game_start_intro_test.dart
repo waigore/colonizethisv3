@@ -21,14 +21,15 @@ library;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 
-import 'support/advance_game_start_intro_harness.dart';
 import 'support/advance_game_start_intro_baseline_group.dart';
 import 'support/advance_game_start_intro_multi_group.dart';
 import 'support/advance_game_start_intro_perf_group.dart';
+import 'support/advance_game_start_intro_perf_loop_group.dart';
 
 void main() {
   suppressLogsForTests();
   registerAdvanceGameStartIntroBaselineGroup();
   registerAdvanceGameStartIntroMultiLabelGroup();
   registerAdvanceGameStartIntroPerfGroup();
+  registerAdvanceGameStartIntroPerfLoopGroup();
 }

@@ -40,9 +40,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 
 import 'support/dismiss_transient_ui_baseline_group.dart';
 import 'support/dismiss_transient_ui_perf_group.dart';
+import 'support/dismiss_transient_ui_perf_results_group.dart';
 
 void main() {
   suppressLogsForTests();
   registerDismissTransientUiBaselineGroup();
   registerDismissTransientUiPerfGroup();
+  registerDismissTransientUiPerfResultsGroup();
 }
