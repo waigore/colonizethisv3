@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/open_production_panel_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -62,15 +63,10 @@ void main() {
   testWidgets(
     'e2eOpenProductionPanel taps the empire rail button and detects the panel',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: _ProductionRailHarness()),
-      );
+      await tester.pumpWidget(const MaterialApp(home: ProductionRailHarness()));
       expect(find.byKey(kEmpireProductionButtonKey), findsOneWidget);
       expect(find.byKey(kCtE2EProductionPanelRootKey), findsNothing);
-      await e2eOpenProductionPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eOpenProductionPanel(tester, timeout: const Duration(seconds: 5));
       expect(
         find.byKey(kCtE2EProductionPanelRootKey),
         findsOneWidget,
@@ -87,16 +83,13 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: _DelayedProductionPanelHarness(
+          home: DelayedProductionPanelHarness(
             mountAfter: Duration(milliseconds: 120),
           ),
         ),
       );
       expect(find.byKey(kCtE2EProductionPanelRootKey), findsNothing);
-      await e2eOpenProductionPanel(
-        tester,
-        timeout: const Duration(seconds: 5),
-      );
+      await e2eOpenProductionPanel(tester, timeout: const Duration(seconds: 5));
       expect(
         find.byKey(kCtE2EProductionPanelRootKey),
         findsOneWidget,
@@ -142,7 +135,7 @@ void main() {
       // `Timed out opening production panel` path (PR #2555 contract for the
       // naval opener; this pins the same contract for production).
       await tester.pumpWidget(
-        const MaterialApp(home: _NoOpProductionRailHarness()),
+        const MaterialApp(home: NoOpProductionRailHarness()),
       );
       expect(find.byKey(kEmpireProductionButtonKey), findsOneWidget);
       expect(find.byKey(kCtE2EProductionPanelRootKey), findsNothing);
@@ -181,115 +174,4 @@ void main() {
       );
     },
   );
-}
-
-/// Test harness where the production rail button is present but tapping it
-/// never mounts the panel root. Used by the failure-message pin to validate
-/// that the helper's post-rail-tap wait does not surface its own `fail()`
-/// — the outer opener loop must own the timeout failure path.
-class _NoOpProductionRailHarness extends StatelessWidget {
-  const _NoOpProductionRailHarness();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          TextButton(
-            key: kEmpireProductionButtonKey,
-            onPressed: () {
-              // Intentionally no panel-mount side effect — the inner post-tap
-              // wait must exhaust without `fail()`, and the outer loop must
-              // surface the timeout failure (Refs GitHub #2336).
-            },
-            child: const Text('Production'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Test harness that mounts the panel root synchronously on the rail tap so
-/// the helper detects it on the very next frame.
-class _ProductionRailHarness extends StatefulWidget {
-  const _ProductionRailHarness();
-
-  @override
-  State<_ProductionRailHarness> createState() => _ProductionRailHarnessState();
-}
-
-class _ProductionRailHarnessState extends State<_ProductionRailHarness> {
-  bool _panelOpen = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          TextButton(
-            key: kEmpireProductionButtonKey,
-            onPressed: () => setState(() => _panelOpen = true),
-            child: const Text('Production'),
-          ),
-          if (_panelOpen)
-            const KeyedSubtree(
-              key: kCtE2EProductionPanelRootKey,
-              child: SizedBox(width: 100, height: 100),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Test harness that mounts the panel root only after an in-test [Timer] fires
-/// so the helper exercises its adaptive post-tap waits before returning.
-class _DelayedProductionPanelHarness extends StatefulWidget {
-  const _DelayedProductionPanelHarness({required this.mountAfter});
-
-  final Duration mountAfter;
-
-  @override
-  State<_DelayedProductionPanelHarness> createState() =>
-      _DelayedProductionPanelHarnessState();
-}
-
-class _DelayedProductionPanelHarnessState
-    extends State<_DelayedProductionPanelHarness> {
-  bool _panelOpen = false;
-  bool _scheduled = false;
-
-  void _handleTap() {
-    if (_scheduled) {
-      return;
-    }
-    _scheduled = true;
-    Future<void>.delayed(widget.mountAfter, () {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _panelOpen = true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          TextButton(
-            key: kEmpireProductionButtonKey,
-            onPressed: _handleTap,
-            child: const Text('Production'),
-          ),
-          if (_panelOpen)
-            const KeyedSubtree(
-              key: kCtE2EProductionPanelRootKey,
-              child: SizedBox(width: 100, height: 100),
-            ),
-        ],
-      ),
-    );
-  }
 }

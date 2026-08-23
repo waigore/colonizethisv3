@@ -27,6 +27,7 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/naval_fleet_move_harness.dart';
 import 'support/tap_move_on_first_non_home_fleet_true_group.dart';
+import 'support/tap_move_on_first_non_home_fleet_separator_group.dart';
 
 void main() {
   suppressLogsForTests();
@@ -105,4 +106,5 @@ void main() {
   });
 
   registerTapMoveOnFirstNonHomeFleetTrueGroup();
+  registerTapMoveOnFirstNonHomeFleetSeparatorGroup();
 }

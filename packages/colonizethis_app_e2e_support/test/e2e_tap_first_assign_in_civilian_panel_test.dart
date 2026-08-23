@@ -39,72 +39,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/custom_civilian_panel_host.dart';
 import 'support/e2e_tap_first_assign_in_civilian_panel_tail_group.dart';
 
 /// Synthetic civilian-panel host whose body is provided by the test. Lets
 /// each test choose whether to mount the root key, the ListView, the
 /// Assign button(s), and the post-tap work-menu text independently.
-class _CustomCivilianPanelHost extends StatefulWidget {
-  const _CustomCivilianPanelHost({
-    required this.bodyBuilder,
-    this.includeRootKey = true,
-    this.showWorkMenuOnTap = true,
-  });
-
-  final Widget Function(VoidCallback onAssignTapped) bodyBuilder;
-  final bool includeRootKey;
-  final bool showWorkMenuOnTap;
-
-  @override
-  State<_CustomCivilianPanelHost> createState() =>
-      _CustomCivilianPanelHostState();
-}
-
-class _CustomCivilianPanelHostState extends State<_CustomCivilianPanelHost> {
-  bool _tapped = false;
-
-  void _markTapped() {
-    if (!widget.showWorkMenuOnTap) {
-      return;
-    }
-    setState(() {
-      _tapped = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final body = widget.bodyBuilder(_markTapped);
-    final rootChild = Column(
-      children: <Widget>[
-        Expanded(child: body),
-        if (_tapped)
-          // The helper polls for any of {Build improvement, Prospect,
-          // Explore} after tapping Assign. Showing one of those labels here
-          // is the synthetic equivalent of the work-menu surfacing in the
-          // production scaffold.
-          const Text('Build improvement'),
-      ],
-    );
-    return MaterialApp(
-      home: Scaffold(
-        body: widget.includeRootKey
-            ? Container(key: kCtE2ECivilianPanelRootKey, child: rootChild)
-            : rootChild,
-      ),
-    );
-  }
-}
-
-bool _hostWasTapped(WidgetTester tester) {
-  final stateFinder = find.byType(_CustomCivilianPanelHost);
-  if (stateFinder.evaluate().isEmpty) {
-    return false;
-  }
-  final state = tester.state<_CustomCivilianPanelHostState>(stateFinder);
-  return state._tapped;
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -117,7 +57,7 @@ void main() {
     // otherwise make the descendant ListView search return zero matches
     // forever.
     await tester.pumpWidget(
-      _CustomCivilianPanelHost(
+      CustomCivilianPanelHost(
         includeRootKey: false,
         bodyBuilder: (onAssign) => ListView(
           children: <Widget>[
@@ -150,7 +90,7 @@ void main() {
           '(#2336 H9 sibling fail-fast contract).',
     );
     expect(
-      _hostWasTapped(tester),
+      customCivilianPanelHostWasTapped(tester),
       isFalse,
       reason:
           'Helper must not have tapped an off-tree Assign before its '
@@ -166,7 +106,7 @@ void main() {
     // ListView descendant; the helper's `expect(listView, findsOneWidget)`
     // guard must reject this before scrollUntilVisible is reached.
     await tester.pumpWidget(
-      _CustomCivilianPanelHost(
+      CustomCivilianPanelHost(
         bodyBuilder: (onAssign) => Column(
           children: <Widget>[
             const Text('Civilian panel placeholder'),
@@ -203,7 +143,7 @@ void main() {
       // helper's `expect(assign, findsWidgets)` guard must surface this
       // before scrollUntilVisible or tap is attempted.
       await tester.pumpWidget(
-        _CustomCivilianPanelHost(
+        CustomCivilianPanelHost(
           bodyBuilder: (_) => ListView(
             children: const <Widget>[
               ListTile(title: Text(kUnitTypeBuilder), trailing: Text('Busy')),
@@ -230,7 +170,7 @@ void main() {
             'by silently-burned 5s timeouts on broken panel states.',
       );
       expect(
-        _hostWasTapped(tester),
+        customCivilianPanelHostWasTapped(tester),
         isFalse,
         reason:
             'Helper must not tap any non-Assign widget when the assertion '
@@ -248,7 +188,7 @@ void main() {
       // the helper still works when only one Assign is present (no
       // first-of-many ambiguity to resolve).
       await tester.pumpWidget(
-        _CustomCivilianPanelHost(
+        CustomCivilianPanelHost(
           bodyBuilder: (onAssign) => ListView(
             children: <Widget>[
               ListTile(
@@ -266,7 +206,7 @@ void main() {
       await e2eTapFirstAssignInCivilianPanel(tester);
 
       expect(
-        _hostWasTapped(tester),
+        customCivilianPanelHostWasTapped(tester),
         isTrue,
         reason:
             'Single-Assign happy path: the lone Assign button must be '

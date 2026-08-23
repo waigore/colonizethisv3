@@ -34,6 +34,7 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/dismiss_widget_tester_harness.dart';
 import 'support/e2e_dismiss_ct_dialog_shell_if_present_guard_group.dart';
+import 'support/e2e_dismiss_ct_dialog_shell_if_present_perf_group.dart';
 
 void main() {
   suppressLogsForTests();
@@ -241,48 +242,6 @@ void main() {
     );
   });
 
-  group('e2eDismissCtDialogShellIfPresent — perf wiring', () {
-    testWidgets(
-      'forwards the default phase label through e2ePumpUntil so wall-clock '
-      'attribution sees the legacy phase step',
-      (WidgetTester tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        final perf = E2ePerfLog('dismiss_shell_phase');
-        await tester.pumpWidget(
-          wrapDismissCentered(
-            DismissCtDialogShellHost(
-              builder: (context, close) =>
-                  TextButton(onPressed: close, child: Text(l10n.common_cancel)),
-            ),
-          ),
-        );
-
-        final lines = <String>[];
-        final original = debugPrint;
-        debugPrint = (String? message, {int? wrapWidth}) {
-          lines.add(message ?? '');
-        };
-        try {
-          await e2eDismissCtDialogShellIfPresent(tester, l10n, perf: perf);
-        } finally {
-          debugPrint = original;
-        }
-
-        expect(
-          lines.any(
-            (l) =>
-                l.startsWith('E2E_TIMING') &&
-                l.contains('phase=$kE2eDefaultCtDialogShellClosePhase'),
-          ),
-          isTrue,
-          reason:
-              'Default phase label must equal '
-              'kE2eDefaultCtDialogShellClosePhase so existing log scrapers '
-              'continue to attribute the wait under the legacy step name.',
-        );
-      },
-    );
-  });
-
+  registerE2eDismissCtDialogShellIfPresentPerfGroup();
   registerE2eDismissCtDialogShellIfPresentGuardGroup();
 }

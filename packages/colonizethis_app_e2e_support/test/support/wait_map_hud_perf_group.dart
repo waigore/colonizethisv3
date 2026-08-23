@@ -3,7 +3,8 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' show E2ePerfLog;
+import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart'
+    show E2ePerfLog;
 import 'package:colonizethis_app_e2e_support/e2e_test_shared_bootstrap.dart';
 
 import 'wait_map_hud_harness.dart';
@@ -26,9 +27,8 @@ void registerWaitMapHudPerfGroup() {
 
         final iterationsCounter = lines
             .where(
-              (line) => line.contains(
-                'name=$kE2eWaitForMapHudIterationsCounter',
-              ),
+              (line) =>
+                  line.contains('name=$kE2eWaitForMapHudIterationsCounter'),
             )
             .toList();
         expect(
@@ -59,9 +59,8 @@ void registerWaitMapHudPerfGroup() {
 
         final timingLines = lines
             .where(
-              (line) => line.contains(
-                'phase=$kE2eDefaultWaitForMapHudPhase',
-              ) &&
+              (line) =>
+                  line.contains('phase=$kE2eDefaultWaitForMapHudPhase') &&
                   line.startsWith('E2E_TIMING|'),
             )
             .toList();
@@ -106,9 +105,8 @@ void registerWaitMapHudPerfGroup() {
 
         final iterationsLines = lines
             .where(
-              (line) => line.contains(
-                'name=$kE2eWaitForMapHudIterationsCounter',
-              ),
+              (line) =>
+                  line.contains('name=$kE2eWaitForMapHudIterationsCounter'),
             )
             .toList();
         expect(
@@ -123,9 +121,8 @@ void registerWaitMapHudPerfGroup() {
 
         final timingLines = lines
             .where(
-              (line) => line.contains(
-                'phase=$kE2eDefaultWaitForMapHudPhase',
-              ) &&
+              (line) =>
+                  line.contains('phase=$kE2eDefaultWaitForMapHudPhase') &&
                   line.startsWith('E2E_TIMING|'),
             )
             .toList();
@@ -148,65 +145,66 @@ void registerWaitMapHudPerfGroup() {
       },
     );
 
-    testWidgets(
-      'emits result=timeout on the overall-cap fail path',
-      (WidgetTester tester) async {
-        await pumpWaitMapHudHost(tester, initial: WaitMapHudSetupPhase.idle);
-        final perf = E2ePerfLog('pin_wait_for_map_hud');
-        final lines = <String>[];
-        Object? caught;
-        try {
-          await runWaitMapHudDebugPrintCapture(lines, () async {
-            await e2eWaitForMapHudAfterNewGameStart(
-              tester,
-              overallCap: const Duration(milliseconds: 150),
-              perf: perf,
-            );
-          });
-        } catch (e) {
-          caught = e;
-        }
-        expect(
-          caught,
-          isA<TestFailure>(),
-          reason:
-              'Sanity check: the timeout-fail-path test must still raise so '
-              'the perf assertion below is exercised against the same '
-              'fail-fast contract as the no-perf timeout test.',
-        );
+    testWidgets('emits result=timeout on the overall-cap fail path', (
+      WidgetTester tester,
+    ) async {
+      await pumpWaitMapHudHost(tester, initial: WaitMapHudSetupPhase.idle);
+      final perf = E2ePerfLog('pin_wait_for_map_hud');
+      final lines = <String>[];
+      Object? caught;
+      try {
+        await runWaitMapHudDebugPrintCapture(lines, () async {
+          await e2eWaitForMapHudAfterNewGameStart(
+            tester,
+            overallCap: const Duration(milliseconds: 150),
+            perf: perf,
+          );
+        });
+      } catch (e) {
+        caught = e;
+      }
+      expect(
+        caught,
+        isA<TestFailure>(),
+        reason:
+            'Sanity check: the timeout-fail-path test must still raise so '
+            'the perf assertion below is exercised against the same '
+            'fail-fast contract as the no-perf timeout test.',
+      );
 
-        final timingLines = lines
-            .where(
-              (line) => line.contains(
-                'phase=$kE2eDefaultWaitForMapHudPhase',
-              ) &&
-                  line.startsWith('E2E_TIMING|'),
-            )
-            .toList();
-        expect(
-          timingLines,
-          hasLength(1),
-          reason:
-              'Exactly one `E2E_TIMING|phase=...` line must be emitted on the '
-              'timeout fail path so a hung bootstrap surfaces in the AC8 '
-              'timing pipeline (alongside the `TestFailure`) instead of as a '
-              'silent wall-clock burn.',
-        );
-        expect(
-          timingLines.single,
-          contains('|meta=result=timeout'),
-          reason:
-              'The overall-cap fail path must report `result=timeout` so the '
-              'baseline timing pipeline can distinguish a hung bootstrap from '
-              'a successful (slow) one (#2336 AC8 / AC10 attribution).',
-        );
-      },
-    );
+      final timingLines = lines
+          .where(
+            (line) =>
+                line.contains('phase=$kE2eDefaultWaitForMapHudPhase') &&
+                line.startsWith('E2E_TIMING|'),
+          )
+          .toList();
+      expect(
+        timingLines,
+        hasLength(1),
+        reason:
+            'Exactly one `E2E_TIMING|phase=...` line must be emitted on the '
+            'timeout fail path so a hung bootstrap surfaces in the AC8 '
+            'timing pipeline (alongside the `TestFailure`) instead of as a '
+            'silent wall-clock burn.',
+      );
+      expect(
+        timingLines.single,
+        contains('|meta=result=timeout'),
+        reason:
+            'The overall-cap fail path must report `result=timeout` so the '
+            'baseline timing pipeline can distinguish a hung bootstrap from '
+            'a successful (slow) one (#2336 AC8 / AC10 attribution).',
+      );
+    });
 
     testWidgets(
       'emits result=error_dialog before failing on "Could not create game"',
       (WidgetTester tester) async {
-        await pumpWaitMapHudHost(tester, initial: WaitMapHudSetupPhase.errorDialog);
+        await pumpWaitMapHudHost(
+          tester,
+          initial: WaitMapHudSetupPhase.errorDialog,
+        );
         final perf = E2ePerfLog('pin_wait_for_map_hud');
         final lines = <String>[];
         Object? caught;
@@ -232,9 +230,8 @@ void registerWaitMapHudPerfGroup() {
 
         final timingLines = lines
             .where(
-              (line) => line.contains(
-                'phase=$kE2eDefaultWaitForMapHudPhase',
-              ) &&
+              (line) =>
+                  line.contains('phase=$kE2eDefaultWaitForMapHudPhase') &&
                   line.startsWith('E2E_TIMING|'),
             )
             .toList();
@@ -255,37 +252,6 @@ void registerWaitMapHudPerfGroup() {
               '(distinct from `result=timeout`) so the baseline timing '
               'pipeline can separate fast setup-failure paths from genuine '
               'wall-clock overruns (#2336 AC8 / AC10 attribution).',
-        );
-      },
-    );
-
-    testWidgets(
-      'emits no markers when perf is null (default), preserving the '
-      'opt-in attribution contract',
-      (WidgetTester tester) async {
-        await pumpWaitMapHudHost(tester, initial: WaitMapHudSetupPhase.mapHud);
-        final lines = <String>[];
-        await runWaitMapHudDebugPrintCapture(lines, () async {
-          await e2eWaitForMapHudAfterNewGameStart(
-            tester,
-            overallCap: const Duration(seconds: 5),
-          );
-        });
-        final mapHudMarkers = lines
-            .where(
-              (line) =>
-                  line.contains('phase=$kE2eDefaultWaitForMapHudPhase') ||
-                  line.contains('name=$kE2eWaitForMapHudIterationsCounter'),
-            )
-            .toList();
-        expect(
-          mapHudMarkers,
-          isEmpty,
-          reason:
-              'Default `perf: null` must NOT emit any helper-attribution '
-              'markers so callers that opt out of attribution (the existing '
-              'widget-test pins, ad-hoc scenarios, future low-overhead '
-              'integration paths) keep their byte-quiet contract.',
         );
       },
     );

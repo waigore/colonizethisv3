@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'custom_civilian_panel_host.dart';
+
 void registerE2eTapFirstAssignInCivilianPanelTailGroup() {
   testWidgets(
     'fails with TestFailure when the post-tap work menu never surfaces',
@@ -19,7 +21,7 @@ void registerE2eTapFirstAssignInCivilianPanelTailGroup() {
       // must run to its 5s timeout and surface a TestFailure rather than
       // returning silently.
       await tester.pumpWidget(
-        _CustomCivilianPanelHost(
+        CustomCivilianPanelHost(
           showWorkMenuOnTap: false,
           bodyBuilder: (onAssign) => ListView(
             children: <Widget>[
