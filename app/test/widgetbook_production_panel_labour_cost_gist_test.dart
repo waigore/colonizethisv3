@@ -18,6 +18,8 @@ void main() {
     'Labour cost gist',
     'Labour locked tier',
     'Labour cost gist (mobile)',
+    'Labour disband confirm',
+    'Labour disband confirm (mobile)',
   ];
 
   group(
