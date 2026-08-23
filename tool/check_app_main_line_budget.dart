@@ -109,7 +109,8 @@ const _packageName = 'colonizethis_app';
 // raised for wave-20 host splits (Refs #4582; measured 88_684).
 // raised for #4581 + #4582 merge (Refs #4581; measured 88_833).
 // raised for GAME20001 trained-worker Disband confirm (Refs #4601; measured 88_978).
-const _maxMainLines = 89050;
+// raised for wave-21 host splits (Refs #4606; measured 89_731).
+const _maxMainLines = 89800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
