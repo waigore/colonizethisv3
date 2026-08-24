@@ -4249,6 +4249,18 @@
   "@provinceOverlay_detachAndSailTooltip": {
     "description": "Enabled Detach and sail tooltip (Refs #4448)."
   },
+  "provinceOverlay_transferToHomeFleetAction": "Transfer to Home Fleet",
+  "@provinceOverlay_transferToHomeFleetAction": {
+    "description": "MAP20001 Naval control to move hulls into the Home Fleet (Refs #4625)."
+  },
+  "provinceOverlay_transferToHomeFleetTooltip": "Move hulls into the Home Fleet so cargo holds are available this turn.",
+  "@provinceOverlay_transferToHomeFleetTooltip": {
+    "description": "Enabled Transfer to Home Fleet tooltip on MAP20001 (Refs #4625)."
+  },
+  "provinceOverlay_transferToHomeFleetDisabledTooltip": "No sea-going fleet here can join the Home Fleet now.",
+  "@provinceOverlay_transferToHomeFleetDisabledTooltip": {
+    "description": "Disabled Transfer to Home Fleet tooltip on MAP20001 (Refs #4625)."
+  },
   "provinceOverlay_selectArmyTitle": "Select army",
   "@provinceOverlay_selectArmyTitle": {
     "description": "DLG20002 overlay army picker title (Refs #4350)."

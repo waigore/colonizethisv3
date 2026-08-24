@@ -11,6 +11,8 @@ import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
 import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
+import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
+    show ProvinceTransferToHomeFleetOverlayControls;
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
@@ -31,6 +33,8 @@ Widget buildNavalSection({
       ProvinceNavalMissionOverlayControls.hidden,
   ProvinceDetachAndSailOverlayControls detachAndSail =
       ProvinceDetachAndSailOverlayControls.hidden,
+  ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet =
+      ProvinceTransferToHomeFleetOverlayControls.hidden,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   final pending = pendingNavalLines(
@@ -45,6 +49,7 @@ Widget buildNavalSection({
     l10n,
     navalMission,
     detachAndSail,
+    transferToHomeFleet,
   );
   final hasRoster = fleets.isNotEmpty || pending.isNotEmpty;
   final blockadeLine = switch (blockadeStatus) {
@@ -119,13 +124,16 @@ List<Widget> _navalMissionActions(
   AppLocalizations l10n,
   ProvinceNavalMissionOverlayControls navalMission,
   ProvinceDetachAndSailOverlayControls detachAndSail,
+  ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
 ) {
   final showDetach = detachAndSail.showDetachAndSail;
+  final showTransfer = transferToHomeFleet.showTransferToHomeFleet;
   if (!navalMission.showBlockade &&
       !navalMission.showBeachhead &&
       !navalMission.showPatrol &&
       !navalMission.showDefend &&
-      !showDetach) {
+      !showDetach &&
+      !showTransfer) {
     return const [];
   }
   return [
@@ -135,6 +143,15 @@ List<Widget> _navalMissionActions(
         spacing: 8,
         runSpacing: 8,
         children: [
+          if (showTransfer)
+            CtActionTextButton(
+              label: l10n.provinceOverlay_transferToHomeFleetAction,
+              tooltip: transferToHomeFleet.transferToHomeFleetTooltip,
+              enabled: transferToHomeFleet.transferToHomeFleetEnabled,
+              onPressed: transferToHomeFleet.transferToHomeFleetEnabled
+                  ? transferToHomeFleet.onTransferToHomeFleetTap
+                  : null,
+            ),
           if (showDetach)
             CtActionTextButton(
               label: l10n.provinceOverlay_detachAndSailAction,
