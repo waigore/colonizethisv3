@@ -979,32 +979,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   ) {
     return '$owner — $fleetLabel: $shipParts';
   }
-
-  @override
-  String get provinceOverlay_sectionPolitical => 'Political';
-
-  @override
-  String get provinceOverlay_sectionTile => 'Tile';
-
-  @override
-  String get provinceOverlay_sectionEconomic => 'Economic';
-
-  @override
-  String get provinceOverlay_townProductionHeading => 'Town production';
-
-  @override
-  String provinceOverlay_townProductionQuantity(int quantity) {
-    return '+$quantity';
-  }
-
-  @override
-  String get provinceOverlay_extractionHeading => 'Extraction';
-
-  @override
-  String get provinceOverlay_availableHeading => 'Available';
-
-  @override
-  String provinceOverlay_extractionQuantity(int quantity, String name) {
-    return '$quantity $name';
-  }
 }
