@@ -1,4 +1,4 @@
-// Naval mission assign + map fleet-marker routing (Refs #4213, #4343, #4448).
+// Naval mission assign flow (Refs #4213, #4343, #4448).
 // SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -8,138 +8,13 @@ import 'package:colonizethis_orders/colonizethis_orders.dart'
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../providers/home_fleet_cargo_provider.dart';
-import '../units/naval/home_fleet_transfer_eligibility.dart';
-import 'home_fleet_detach_then_sail_flow.dart';
-import 'in_port_fleet_marker_actions_dialog.dart';
 import 'naval_mission_flow_support.dart';
 import 'naval_mission_flow_types.dart';
 import 'naval_mission_menu_dialog.dart';
 import 'naval_mission_move_dialog.dart';
-import 'overlay_transfer_to_home_fleet_flow.dart';
 
 export 'naval_mission_flow_types.dart';
 export 'naval_mission_move_dialog.dart';
-
-/// Map fleet-marker tap: pick fleet when stacked, then route to the legal action.
-///
-/// Home Fleet (non-empty) → detach-then-sail; empty Home Fleet → tile-scoped
-/// [OpenNavalUnitsPanelEvent]; capital in-port eligible transfer →
-/// [InPortFleetMarkerActionsDialog] then Move or Transfer; other in-port →
-/// [MoveFleetDialog]; sea-going at sea → [showNavalMissionFlow]
-/// (Refs #4343, #4448, #4625).
-Future<void> showNavalFleetMarkerFlow({
-  required BuildContext context,
-  required Game game,
-  required MapTopology topology,
-  required String humanPlayerId,
-  required Orders draftOrders,
-  required AppEventBus bus,
-  required List<String> fleetIds,
-  required String locationScopeKey,
-  String? preselectedFleetId,
-  String? tileScopeTileKey,
-  int overseasCargoUsed = 0,
-  int homeFleetCargoCapacity = 0,
-  bool isCargoUsedReliable = true,
-  bool cargoNotDefined = false,
-}) async {
-  if (fleetIds.isEmpty) return;
-
-  final selectedFleetId = await pickNavalMissionFleetId(
-    context: context,
-    game: game,
-    humanPlayerId: humanPlayerId,
-    fleetIds: fleetIds,
-    preselectedFleetId: preselectedFleetId,
-  );
-  if (selectedFleetId == null || !context.mounted) return;
-
-  final fleet = game.fleetById(selectedFleetId);
-  if (fleet == null || !context.mounted) return;
-
-  if (fleet.id == homeFleetIdFor(humanPlayerId)) {
-    if (fleet.ships.isEmpty) {
-      bus.emit(
-        OpenNavalUnitsPanelEvent(
-          locationScopeKey: locationScopeKey,
-          initialSelectedFleetId: fleet.id,
-          tileScopeTileKey: tileScopeTileKey,
-        ),
-      );
-      return;
-    }
-    await showHomeFleetDetachThenSailFlow(
-      context: context,
-      game: game,
-      topology: topology,
-      humanPlayerId: humanPlayerId,
-      bus: bus,
-      overseasCargoUsed: overseasCargoUsed,
-      isCargoUsedReliable: isCargoUsedReliable,
-      cargoNotDefined: cargoNotDefined,
-    );
-    return;
-  }
-
-  if (!fleet.isAtSea) {
-    final capitalProvinceId = game.playerById(humanPlayerId)?.capitalProvinceId;
-    final home = game.fleetById(homeFleetIdFor(humanPlayerId));
-    final canTransfer =
-        capitalProvinceId != null &&
-        home != null &&
-        isEligibleHomeTransferSourceFleet(
-          sourceFleet: fleet,
-          humanPlayerId: humanPlayerId,
-          capitalProvinceId: capitalProvinceId,
-          topology: topology,
-        );
-    if (canTransfer) {
-      final choice = await showDialog<InPortFleetMarkerAction>(
-        context: context,
-        builder: (_) => const InPortFleetMarkerActionsDialog(),
-      );
-      if (!context.mounted || choice == null) return;
-      if (choice == InPortFleetMarkerAction.transferHome) {
-        await showOverlayTransferToHomeFleetFlow(
-          context: context,
-          game: game,
-          humanPlayerId: humanPlayerId,
-          bus: bus,
-          homeFleet: home,
-          sourceFleets: [fleet],
-          cargo: HomeFleetCargoSummary(
-            used: overseasCargoUsed,
-            capacity: homeFleetCargoCapacity,
-            isCargoUsedReliable: isCargoUsedReliable,
-            notDefined: cargoNotDefined,
-          ),
-        );
-        return;
-      }
-    }
-    await showMoveFleetDialogForFleet(
-      context: context,
-      game: game,
-      topology: topology,
-      humanPlayerId: humanPlayerId,
-      fleet: fleet,
-      bus: bus,
-    );
-    return;
-  }
-
-  await showNavalMissionFlow(
-    context: context,
-    game: game,
-    topology: topology,
-    humanPlayerId: humanPlayerId,
-    draftOrders: draftOrders,
-    bus: bus,
-    fleetIds: [fleet.id],
-    preselectedFleetId: fleet.id,
-  );
-}
 
 /// Opens the human naval mission assign flow for [fleetIds] (map at-sea or panel).
 Future<void> showNavalMissionFlow({

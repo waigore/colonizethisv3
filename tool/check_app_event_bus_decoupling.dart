@@ -174,6 +174,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
   // (Refs #4213, #4343).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
+  // Map fleet-marker routing extracted from `naval_mission_flow.dart`
+  // (`showNavalFleetMarkerFlow` / capital in-port Transfer choice). Same
+  // local-by-design rationale as the parent flow (Refs #4343, #4625).
+  'app/lib/features/game/widgets/unit_orders/naval_fleet_marker_flow.dart',
   // Overlay Blockade/Beachhead extracted picker + target confirm helpers
   // (`pickNavalMissionFleetId` / `confirmNavalTargetedMission`). Same
   // local-by-design rationale as `naval_mission_flow.dart`
