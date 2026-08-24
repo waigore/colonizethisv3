@@ -2,15 +2,12 @@
 
 import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'quick_battle_build_test_support.dart';
 import 'quick_battle_input_test_support.dart';
 import 'scenario_runner.dart';
-
-
 
 /// Scenarios for [buildQuickBattleInput], emplaced guns, and apply paths.
 List<RunnableScenario> quickBattleBuildSiegeScenarios() => [
@@ -86,9 +83,7 @@ List<RunnableScenario> quickBattleBuildSiegeScenarios() => [
         provinceId: 'p1',
         seed: 12345,
         fortLevel: 1,
-        emplacedGuns: [
-          siegeEmplacedGun('qb:emplaced:oldWorld:p1:0', hp: 4),
-        ],
+        emplacedGuns: [siegeEmplacedGun('qb:emplaced:oldWorld:p1:0', hp: 4)],
       );
       final r1 = resolveQuickBattle(input);
       final r2 = resolveQuickBattle(input);

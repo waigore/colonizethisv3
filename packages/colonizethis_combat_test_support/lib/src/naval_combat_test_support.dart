@@ -11,29 +11,21 @@ const navalTestPlayers = [
 
 /// Diplomacy relation between [p1] and [p2] with the given [state].
 DiplomacyRelation navalDiplomacyRelation(RelationState state) =>
-    DiplomacyRelation(
-      factionId1: 'p1',
-      factionId2: 'p2',
-      state: state,
-    );
+    DiplomacyRelation(factionId1: 'p1', factionId2: 'p2', state: state);
 
 /// Two-player game with optional fleets and diplomacy for naval suites.
 Game navalTwoPlayerGame({
   List<Fleet> fleets = const [],
   List<DiplomacyRelation> diplomacyRelations = const [],
-}) =>
-    TestFixtures.minimalGame(
-      id: 'g1',
-      players: navalTestPlayers,
-      fleets: fleets,
-      diplomacyRelations: diplomacyRelations,
-    );
+}) => TestFixtures.minimalGame(
+  id: 'g1',
+  players: navalTestPlayers,
+  fleets: fleets,
+  diplomacyRelations: diplomacyRelations,
+);
 
 /// Two at-war fleets in the same sea zone (normalize / detection helpers).
-Game navalGameTwoFleetsAtWar({
-  required Fleet fleet1,
-  required Fleet fleet2,
-}) =>
+Game navalGameTwoFleetsAtWar({required Fleet fleet1, required Fleet fleet2}) =>
     navalTwoPlayerGame(
       fleets: [fleet1, fleet2],
       diplomacyRelations: [navalDiplomacyRelation(RelationState.atWar)],

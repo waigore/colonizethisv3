@@ -8,6 +8,8 @@ Each domain package (`world`, `combat`, `economy`, `diplomacy`, `orders`, `turn`
 
 Consumers (sibling domains, the thin `colonizethis_logic` core, the AI contract libraries) MUST import a sibling symbol through that sibling's barrel whenever the barrel already publishes the owning file. A deep `package:colonizethis_<domain>/src/...` import/export is permitted only for a symbol the domain barrel does not yet publish; promoting such a file into its barrel (a future Phase 1 barrel-bypass slice) is preferred over widening deep-import usage.
 
+`colonizethis_combat_test_support` is a consumer of the combat domain barrel (`package:colonizethis_combat/colonizethis_combat.dart`), not of the `colonizethis_logic` umbrella. Combat APIs used by its `lib/**` tables (`resolveBattleContext`, `detectConflicts`, `buildQuickBattleInput`, `isCapitalSiege`, `BattleContext`, …) are imported from the combat barrel. `QuickBattleInput` is imported from `package:colonizethis_models/colonizethis_models.dart` (models owns the type; combat does not re-export it). `kWorkTargetBuildRoad` is imported from `colonizethis_orders`. Unpublished combat internals may keep `package:colonizethis_combat/src/...` imports. Enforced by `repo.combat_test_support_no_logic_barrel` (Refs #4633).
+
 ## AI narrow contract (`ai_api.dart`)
 
 `packages/colonizethis_logic/lib/ai_api.dart` is the explicit, narrow logic surface consumed by `colonizethis_ai` (`colonizethis-logic-ai-decoupling.mdc`). It deliberately avoids re-exporting the broad `colonizethis_logic.dart` barrel.

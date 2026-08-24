@@ -33,8 +33,16 @@ List<RunnableScenario> preCombatMovementIndexBuildScenarios() => [
     run: () {
       final game = preCombatIndexFixtureGame(
         armies: [
-          preCombatIndexArmy('a1', ownerId: 'p1', stationedProvinceId: '$_ow|p1'),
-          preCombatIndexArmy('a2', ownerId: 'p1', stationedProvinceId: '$_ow|p5'),
+          preCombatIndexArmy(
+            'a1',
+            ownerId: 'p1',
+            stationedProvinceId: '$_ow|p1',
+          ),
+          preCombatIndexArmy(
+            'a2',
+            ownerId: 'p1',
+            stationedProvinceId: '$_ow|p5',
+          ),
         ],
       );
       final orders = Orders(
@@ -99,7 +107,9 @@ List<RunnableScenario> preCombatMovementIndexBuildScenarios() => [
     scenarioId: 'pci-build-skip-unknown',
     label: 'skips orders for unknown army ids',
     run: () {
-      final game = preCombatIndexFixtureGame(armies: [preCombatIndexArmy('a1', ownerId: 'p1')]);
+      final game = preCombatIndexFixtureGame(
+        armies: [preCombatIndexArmy('a1', ownerId: 'p1')],
+      );
       final orders = Orders(
         armyMoveOrdersByPlayerId: const {
           'p1': [
@@ -117,7 +127,9 @@ List<RunnableScenario> preCombatMovementIndexBuildScenarios() => [
     scenarioId: 'pci-build-skip-owner-mismatch',
     label: 'skips orders whose army owner differs from the ordering faction',
     run: () {
-      final game = preCombatIndexFixtureGame(armies: [preCombatIndexArmy('a1', ownerId: 'p2')]);
+      final game = preCombatIndexFixtureGame(
+        armies: [preCombatIndexArmy('a1', ownerId: 'p2')],
+      );
       final orders = Orders(
         armyMoveOrdersByPlayerId: const {
           'p1': [ArmyMoveOrder(armyId: 'a1', destinationProvinceId: '$_ow|p2')],

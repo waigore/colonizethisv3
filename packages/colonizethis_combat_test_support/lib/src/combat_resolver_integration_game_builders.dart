@@ -1,6 +1,6 @@
 // Phase/index/spy integration [Game] builders (Refs #4196 slice C).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
@@ -63,8 +63,7 @@ Game combatResolverMinimalGame({
   int turnNumber = 1,
   RegionData? oldWorld,
   RegionData? newWorld,
-  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
-      const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
   Map<String, Map<String, String>>? playerVisibilityByTile,
   Map<String, String>? purchasedTilesByTileKey,
   Map<String, Map<String, int>> spyRevealTurnsByPlayer = const {},
@@ -97,8 +96,7 @@ Game combatSpyTimerGame({
   RegionData? newWorld,
   Map<String, Map<String, String>>? playerVisibilityByTile,
   Map<String, Map<String, int>> spyRevealTurnsByPlayer = const {},
-  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
-      const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
   Map<String, String>? purchasedTilesByTileKey,
   List<Player> players = landResolverHumanPlayers,
 }) {

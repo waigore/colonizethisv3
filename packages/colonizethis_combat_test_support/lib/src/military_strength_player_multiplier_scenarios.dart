@@ -58,9 +58,7 @@ List<RunnableScenario> militaryStrengthPlayerMultiplierScenarios() => [
     label: 'is deterministic - same inputs produce same output',
     run: () {
       final game = militaryStrengthGame(
-        oldWorldUnits: [
-          testUnit(id: 'u1', type: 'grenadiers', medals: 3),
-        ],
+        oldWorldUnits: [testUnit(id: 'u1', type: 'grenadiers', medals: 3)],
         players: const [franceGreatPower],
       );
 
@@ -76,9 +74,7 @@ List<RunnableScenario> militaryStrengthPlayerMultiplierScenarios() => [
     scenarioId: 'ms-non-negative',
     label: 'returns non-negative value',
     run: () {
-      final game = militaryStrengthGame(
-        players: const [franceGreatPower],
-      );
+      final game = militaryStrengthGame(players: const [franceGreatPower]);
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
       expect(strength, greaterThanOrEqualTo(0.0));

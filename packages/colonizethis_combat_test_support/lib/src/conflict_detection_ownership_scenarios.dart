@@ -1,6 +1,6 @@
 // Table-driven land conflict-detection scenarios (Refs #3865, #4196 slice B).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -17,9 +17,7 @@ List<RunnableScenario> detectConflictsOwnershipScenarios() => [
         id: 'g1',
         players: landConflictTestPlayers,
         oldWorld: RegionData(
-          provinces: [
-            Province(id: '$ow|P1', regionId: ow, ownerId: 'player2'),
-          ],
+          provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'player2')],
           units: [
             Unit(
               id: 'u1',
@@ -58,9 +56,7 @@ List<RunnableScenario> detectConflictsOwnershipScenarios() => [
         id: 'g1',
         players: landConflictShortPlayers,
         oldWorld: RegionData(
-          provinces: [
-            Province(id: '$ow|P1', regionId: ow),
-          ],
+          provinces: [Province(id: '$ow|P1', regionId: ow)],
           units: [
             Unit(
               id: 'u1',
@@ -91,16 +87,15 @@ List<RunnableScenario> detectConflictsOwnershipScenarios() => [
   ),
   RunnableScenario(
     scenarioId: 'cd-unowned-lex-first-defender',
-    label: 'unowned province: defender is lexicographically first when all moved in',
+    label:
+        'unowned province: defender is lexicographically first when all moved in',
     run: () {
       const ow = 'oldWorld';
       final game = landConflictTwoPlayerGame(
         id: 'g1',
         players: landConflictShortPlayers,
         oldWorld: RegionData(
-          provinces: [
-            Province(id: '$ow|P1', regionId: ow),
-          ],
+          provinces: [Province(id: '$ow|P1', regionId: ow)],
           units: [
             Unit(
               id: 'u1',

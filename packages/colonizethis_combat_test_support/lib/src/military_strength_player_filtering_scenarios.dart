@@ -29,9 +29,7 @@ List<RunnableScenario> militaryStrengthPlayerFilteringScenarios() => [
     label: 'aggregates units from both Old World and New World',
     run: () {
       final game = militaryStrengthGame(
-        oldWorldUnits: [
-          testUnit(id: 'u1', type: 'musketeers'),
-        ],
+        oldWorldUnits: [testUnit(id: 'u1', type: 'musketeers')],
         newWorldUnits: [
           testUnit(
             id: 'u2',

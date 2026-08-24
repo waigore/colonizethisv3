@@ -1,6 +1,6 @@
 // Table-driven spy-timer and civilian relocation scenarios (Refs #3865, #4196 slice B).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_combat/src/combat/combat_resolver_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -10,8 +10,7 @@ import 'scenario_runner.dart';
 
 const _ow = 'oldWorld';
 
-List<RunnableScenario>
-combatResolverGeneralMoraleAuraScenarios() => [
+List<RunnableScenario> combatResolverGeneralMoraleAuraScenarios() => [
   RunnableScenario(
     scenarioId: 'crsc-general-medal-morale-aura',
     label: 'general medals provide morale aura bonus (5% per medal, max 20%)',

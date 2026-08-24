@@ -13,12 +13,17 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckCombatTestSupportFileSize', () {
+    test('combatTestSupportFileSizeCeiling is pinned at wave-2 target', () {
+      expect(combatTestSupportFileSizeCeiling, 200);
+    });
     test('passes on current repo tree under #4196 ceiling', () {
       expect(runCheckCombatTestSupportFileSize('.'), 0);
     });
 
     test('fails when a support lib file exceeds the ceiling', () {
-      final root = Directory.systemTemp.createTempSync('combat_support_size_bad');
+      final root = Directory.systemTemp.createTempSync(
+        'combat_support_size_bad',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,
@@ -38,7 +43,9 @@ void main() {
     });
 
     test('ignores generated files and passes under the ceiling', () {
-      final root = Directory.systemTemp.createTempSync('combat_support_size_gen');
+      final root = Directory.systemTemp.createTempSync(
+        'combat_support_size_gen',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,

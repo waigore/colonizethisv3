@@ -156,11 +156,10 @@ List<RunnableScenario> normalizeNavalBattleSidesScenarios() => [
           ships: legacyShipInstancesForFleet('u1', ['carrack']),
         ),
       );
-      final n = normalizeNavalBattleSidesForAttacker(
-        battle,
-        game,
-        {'fa', 'fb'},
-      );
+      final n = normalizeNavalBattleSidesForAttacker(battle, game, {
+        'fa',
+        'fb',
+      });
       expect(n.side1.ownerId, 'p1');
       expect(n.side2.ownerId, 'p2');
     },

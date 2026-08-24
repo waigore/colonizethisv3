@@ -14,7 +14,11 @@ List<RunnableScenario> resolveArmyMoveDestinationProvinceIdScenarios() => [
     scenarioId: 'pci-prefixed-destination',
     label: 'passes through an already-prefixed destination unchanged',
     run: () {
-      final army = preCombatIndexArmy('a1', ownerId: 'p1', stationedProvinceId: '$_ow|p1');
+      final army = preCombatIndexArmy(
+        'a1',
+        ownerId: 'p1',
+        stationedProvinceId: '$_ow|p1',
+      );
       const order = ArmyMoveOrder(
         armyId: 'a1',
         destinationProvinceId: '$_ow|p2',
@@ -26,7 +30,11 @@ List<RunnableScenario> resolveArmyMoveDestinationProvinceIdScenarios() => [
     scenarioId: 'pci-qualifies-local-destination',
     label: 'qualifies a bare local id with the army stationed region',
     run: () {
-      final army = preCombatIndexArmy('a1', ownerId: 'p1', stationedProvinceId: '$_ow|p1');
+      final army = preCombatIndexArmy(
+        'a1',
+        ownerId: 'p1',
+        stationedProvinceId: '$_ow|p1',
+      );
       const order = ArmyMoveOrder(armyId: 'a1', destinationProvinceId: 'p2');
       expect(resolveArmyMoveDestinationProvinceId(army, order), '$_ow|p2');
     },
