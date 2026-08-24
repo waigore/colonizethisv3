@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'trade_screen_e8_test_helpers.dart';
+import 'trade_screen_e8_market_helpers.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
