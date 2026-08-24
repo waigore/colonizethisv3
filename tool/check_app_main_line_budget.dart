@@ -114,7 +114,9 @@ const _packageName = 'colonizethis_app';
 // merge (Refs #4605; measured 89_951).
 // raised for MAP20001 overlay Combine same-province armies after
 // #4605 merge (Refs #4610; measured 90_293).
-const _maxMainLines = 90300;
+// raised for MAP20001 Transfer to Home Fleet overlay (Refs #4625;
+// measured 90_687).
+const _maxMainLines = 90700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
