@@ -4,8 +4,6 @@ import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_test/test.dart';
 import 'scenario_runner.dart';
 
-
-
 /// Attacker-side effective-strength scenarios for [combatEffectiveAttackerStrength].
 List<RunnableScenario> combatEffectiveAttackerStrengthScenarios() => [
   RunnableScenario(

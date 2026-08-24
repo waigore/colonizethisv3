@@ -8,7 +8,6 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-
 List<int> _take(Random rng, int n) =>
     List<int>.generate(n, (_) => rng.nextInt(1 << 30));
 List<int> _takeDet(DeterministicRng rng, int n) =>

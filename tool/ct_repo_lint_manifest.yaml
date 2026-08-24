@@ -253,14 +253,14 @@ rules:
 
   - rule_id: repo.combat_test_support_loc
     group: testing
-    title: colonizethis_combat_test_support/lib physical LOC must stay at or below 7250 (Refs #4196)
+    title: colonizethis_combat_test_support/lib physical LOC must stay at or below 6997 (Refs #4633)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_combat_test_support_loc.dart
 
   - rule_id: repo.combat_test_support_file_size
     group: testing
-    title: colonizethis_combat_test_support/lib files must stay at or below 220 physical lines (Refs #4196)
+    title: colonizethis_combat_test_support/lib files must stay at or below 200 physical lines (Refs #4633)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_combat_test_support_file_size.dart
@@ -1368,6 +1368,13 @@ rules:
     spec: SPEC/program/logic-package-split-phase0.md
     runner: dart
     script: tool/check_combat_no_logic_deps.dart
+
+  - rule_id: repo.combat_test_support_no_logic_barrel
+    group: architecture
+    title: colonizethis_combat_test_support/lib must not import colonizethis_logic (Refs #4633)
+    spec: SPEC/program/logic-package-barrel-contracts.md
+    runner: dart
+    script: tool/check_combat_test_support_no_logic_barrel.dart
 
   - rule_id: repo.combat_no_private_aggregate_strength
     group: architecture

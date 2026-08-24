@@ -9,9 +9,9 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Ratchet ceiling chosen just above the post-split largest file
-/// (`quick_battle_input_builder_scenarios.dart`, 220 physical lines at #4196).
-const int combatTestSupportFileSizeCeiling = 220;
+/// Ratchet ceiling chosen just above post-#4633 splits (largest leftover
+/// modules keep ≥15 lines of 200 headroom).
+const int combatTestSupportFileSizeCeiling = 200;
 
 const String _combatTestSupportLibRelativePath =
     'packages/colonizethis_combat_test_support/lib';
@@ -54,7 +54,7 @@ int runCheckCombatTestSupportFileSize(
   if (violations.isEmpty) {
     logI(
       'check_combat_test_support_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4196).',
+      '(ceiling $ceiling; Refs #4633).',
     );
     return 0;
   }
@@ -62,7 +62,7 @@ int runCheckCombatTestSupportFileSize(
   logE(
     'check_combat_test_support_file_size: found ${violations.length} '
     'violation(s) under $_combatTestSupportLibRelativePath '
-    '(ceiling $ceiling; Refs #4196):',
+    '(ceiling $ceiling; Refs #4633):',
   );
   for (final violation in violations) {
     logE(' - $violation');

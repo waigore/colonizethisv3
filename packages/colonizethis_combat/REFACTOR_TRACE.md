@@ -498,3 +498,14 @@ Delivered in this slice:
 
 Post-split max lib file: `conflict_detection.dart` / `battle_general_assignment.dart` **≈213** phys (ceiling **250**).
 
+## Wave 2 — combat-barrel SoT + 200 ratchet (Refs #4633)
+
+Delivered in this slice:
+
+- Replaced every `package:colonizethis_logic/` import under `colonizethis_combat_test_support/lib/**` with `colonizethis_combat` / `colonizethis_models` / `colonizethis_orders` / `colonizethis_world` as required. Dropped `colonizethis_logic` from that package's pubspec.
+- Split near-cap scenario/fixture modules (QB input builder, resolver seed vs lane, combat mode selection, conflict-detection core, resolver part-2, civilian relocation, QB input/build fixtures) without `part` / `part of`. Public list factories (`quickBattleInputBuilderScenarios`, `combatResolverPart2Scenarios`, `isCapitalSiegeScenarios`, `detectConflictsCoreScenarios`, `resolveQuickBattleScenarios`, …) stay on the package barrel.
+- Extracted repeated musketeers/pikemen units, capital-siege `Game`+`BattleContext`, and two-unit Old World `Game` onto named builders.
+- Added `repo.combat_test_support_no_logic_barrel` (`tool/check_combat_test_support_no_logic_barrel.dart` + pin test). Ratcheted `repo.combat_test_support_file_size` **220 → 200** and `repo.combat_test_support_loc` **7250 → 6997**.
+
+Post-wave max support file ≤ **185** phys (ceiling **200**); aggregate lib LOC **6997** (ceiling **6997**, cap never above 7100).
+
