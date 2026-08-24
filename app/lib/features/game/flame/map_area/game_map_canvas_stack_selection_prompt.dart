@@ -6,8 +6,10 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import '../../../../widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'game_map_canvas_stack.dart';
-import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
+import '../../screens/game/game_screen_shared.dart'
+    show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
+import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
@@ -20,6 +22,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     required this.onCancel,
     this.usesRelocateCopy = false,
     this.affordPreview,
+    this.nextYieldGist,
     this.payoffGist,
     super.key,
   });
@@ -29,14 +32,15 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final VoidCallback? onCancel;
   final bool usesRelocateCopy;
   final WorkOrderAffordPreview? affordPreview;
+  final String? nextYieldGist;
   final String? payoffGist;
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final preview = affordPreview;
-    final showAfford =
-        preview != null && preview.hasCostPreview && !usesRelocateCopy;
+    final yieldGist = nextYieldGist;
+    final landGist = payoffGist;
     return Positioned(
       top: 8,
       left: 0,
@@ -67,15 +71,21 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
                   usesRelocateCopy: usesRelocateCopy,
                   onCancel: onCancel,
                 ),
-                if (showAfford)
+                if (preview != null &&
+                    preview.hasCostPreview &&
+                    !usesRelocateCopy)
                   _GameMapSelectionPromptAffordSection(
                     l10n: l10n,
-                    preview: preview!,
+                    preview: preview,
                   ),
-                if (payoffGist != null &&
-                    payoffGist!.isNotEmpty &&
+                if (yieldGist != null &&
+                    yieldGist.isNotEmpty &&
                     !usesRelocateCopy)
-                  PurchaseLandPayoffGistLine(text: payoffGist!),
+                  BuildImprovementYieldGistLine(text: yieldGist),
+                if (landGist != null &&
+                    landGist.isNotEmpty &&
+                    !usesRelocateCopy)
+                  PurchaseLandPayoffGistLine(text: landGist),
               ],
             ),
           ),
@@ -147,10 +157,7 @@ class _GameMapSelectionPromptAffordSection extends StatelessWidget {
         const SizedBox(height: 6),
         buildWorkOrderAffordCostChips(l10n: l10n, preview: preview),
         const SizedBox(height: 4),
-        buildWorkOrderAffordStatusText(
-          l10n: l10n,
-          preview: preview,
-        ),
+        buildWorkOrderAffordStatusText(l10n: l10n, preview: preview),
       ],
     );
   }

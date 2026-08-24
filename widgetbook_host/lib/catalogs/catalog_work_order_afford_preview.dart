@@ -42,6 +42,49 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield raise',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          nextYieldGist: 'After this work: 0 → 1 Grain if still linked',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield road cap',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 4, 'castIron': 4},
+            canAfford: true,
+          ),
+          nextYieldGist:
+              'After this work: still 2 Timber — the road is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield town cap',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 4, 'castIron': 4},
+            canAfford: true,
+          ),
+          nextYieldGist:
+              'After this work: still 2 Grain — town development is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield disconnected',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          nextYieldGist:
+              'After this work: still none — not bound to the capital',
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Selection prompt — Purchase land tradeable gist',
         builder: (context) {
           final l10n = AppLocalizationsEn();
@@ -79,6 +122,7 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
 
 Widget _workOrderAffordSelectionPromptStory({
   required WorkOrderAffordPreview affordPreview,
+  String? nextYieldGist,
   String? payoffGist,
 }) {
   return widgetbookEditorialMonocleApp(
@@ -95,6 +139,7 @@ Widget _workOrderAffordSelectionPromptStory({
             overlayOpen: false,
             onCancel: () {},
             affordPreview: affordPreview,
+            nextYieldGist: nextYieldGist,
             payoffGist: payoffGist,
           ),
         ],

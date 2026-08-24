@@ -20,6 +20,7 @@ class ProvinceTileConnectivityDisplay {
     this.pathTransportLevel,
     this.extractionEffective,
     this.extractionFull,
+    this.nextImproveYield,
   });
 
   final bool capitalConnected;
@@ -29,6 +30,9 @@ class ProvinceTileConnectivityDisplay {
 
   final int? extractionEffective;
   final int? extractionFull;
+
+  /// Display-only next-level extraction (Refs #4627).
+  final BuildImprovementYieldPreview? nextImproveYield;
 
   bool get showExtractionRow =>
       extractionEffective != null &&
@@ -105,6 +109,12 @@ ProvinceTileConnectivityDisplay? provinceTileConnectivityDisplayPreview({
   final provincesByFullId = buildProvinceIndex(game);
   final portTileKeys = collectPortTileKeys(game);
 
+  bool isCommodityExtractable(String tileKey, String commodityId) =>
+      !kProspectRequiredResourceIds.contains(commodityId) ||
+      prospected.contains(tileKey);
+  int techCapForCommodity(String commodityId) =>
+      extractionCapForResourceForUnlocked(player.techUnlocked, commodityId);
+
   final contribution = computeTileExtractionDisplayContribution(
     game: game,
     tileMapByRegion: tileMapByRegion,
@@ -115,11 +125,21 @@ ProvinceTileConnectivityDisplay? provinceTileConnectivityDisplayPreview({
     portTileKeys: portTileKeys,
     capitalProvinceId: player.capitalProvinceId,
     provincesByFullId: provincesByFullId,
-    techCapForCommodity: (commodityId) =>
-        extractionCapForResourceForUnlocked(player.techUnlocked, commodityId),
-    isCommodityExtractable: (tileKey, commodityId) =>
-        !kProspectRequiredResourceIds.contains(commodityId) ||
-        prospected.contains(tileKey),
+    techCapForCommodity: techCapForCommodity,
+    isCommodityExtractable: isCommodityExtractable,
+  );
+  final nextImproveYield = computeBuildImprovementYieldPreview(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    tileKey: selectedTileKey,
+    connectedTileKeys: cr.connected,
+    pathTransportCap: cr.pathTransportCap,
+    connectedByRoadRule: cr.connectedByRoadRule,
+    portTileKeys: portTileKeys,
+    capitalProvinceId: player.capitalProvinceId,
+    provincesByFullId: provincesByFullId,
+    techCapForCommodity: techCapForCommodity,
+    isCommodityExtractable: isCommodityExtractable,
   );
 
   return ProvinceTileConnectivityDisplay(
@@ -130,6 +150,7 @@ ProvinceTileConnectivityDisplay? provinceTileConnectivityDisplayPreview({
         : null,
     extractionFull:
         contribution != null && contribution.full > 0 ? contribution.full : null,
+    nextImproveYield: nextImproveYield,
   );
 }
 

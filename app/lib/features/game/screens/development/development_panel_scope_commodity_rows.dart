@@ -22,6 +22,7 @@ class DevelopmentImprovableCommodityRowView extends StatelessWidget {
     required this.onShowTiles,
     required this.onAssign,
     required this.provinceDisplayNamesById,
+    this.nextYieldGistForTile,
   });
 
   final AppLocalizations l10n;
@@ -34,6 +35,7 @@ class DevelopmentImprovableCommodityRowView extends StatelessWidget {
   onShowTiles;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
   final Map<String, String> provinceDisplayNamesById;
+  final String? Function(String tileKey)? nextYieldGistForTile;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +45,9 @@ class DevelopmentImprovableCommodityRowView extends StatelessWidget {
       l10n: l10n,
       assignState: assignState,
       provinceDisplayNamesById: provinceDisplayNamesById,
+      nextYieldGist: assignState.candidate == null
+          ? null
+          : nextYieldGistForTile?.call(assignState.candidate!.targetTileKey),
     );
     return Padding(
       padding: const EdgeInsets.only(top: 4),

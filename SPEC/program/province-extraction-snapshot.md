@@ -28,6 +28,10 @@ When the province overlay needs Extraction for `provinceId`, the system projects
 
 **Scripted extraction override:** Stockpile may use scripted empire totals; this line remains formula projection from tiles (not stockpile delta).
 
+## Next-level Build improvement display (Refs #4627)
+
+`computeBuildImprovementYieldPreview` is display-only. It uses the same production / path / town-development math as extraction yield for current improvement and a hypothetical `improvementLevel + 1` (tech/terrain clamped). Level 0 tiles are previewed. Mid-turn drafts are ignored. It does not change Extraction phase totals.
+
 ## Persistence
 
 `WorldState.lastTurnProvinceExtractionByProvinceId` is **removed**. Legacy saves that still contain the JSON key are ignored on load. Extraction phase does **not** write province Extraction display data.

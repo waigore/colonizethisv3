@@ -22,7 +22,7 @@ import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
-import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'province_sea_zone_detail_overlay_tile_section_revealed_improvement.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         explorerConsulateGateBlocksMinorTribeProvince,
@@ -129,39 +129,19 @@ Widget buildRevealedTileSection({
         ),
     ],
   );
-  final buildImprovementTooltip = provinceOverlayBuildImprovementTooltip(
+  final improvementRow = buildRevealedTileImprovementRow(
     l10n: l10n,
     game: game,
     humanPlayerId: humanPlayerId,
     currentOrders: currentOrders,
     selectedTileKey: selectedTileKey,
-    enabled: buildImprovement.enabled,
-    hasMatchingUnits: buildImprovement.hasMatchingUnits,
-  );
-  final improvementRow = Row(
-    children: [
-      Expanded(
-        child: buildTileImprovementLabel(
-          l10n: l10n,
-          impLevel: impLevel,
-          visLevel: visLevel,
-          rawResourceId: resourceRaw,
-          visibleResourceId: resourceVisible,
-        ),
-      ),
-      if (buildImprovement.showIcon)
-        CtIconAction(
-          tooltip: buildImprovementTooltip,
-          onPressed: buildImprovement.enabled
-              ? inlineActionCallbacks.onBuildImprovementTap
-              : null,
-          icon: Icons.handyman,
-          enabled: buildImprovement.enabled,
-          disabledIconColor: EditorialMonoclePalette.muted.withValues(
-            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
-          ),
-        ),
-    ],
+    buildImprovement: buildImprovement,
+    inlineActionCallbacks: inlineActionCallbacks,
+    impLevel: impLevel,
+    visLevel: visLevel,
+    resourceRaw: resourceRaw,
+    resourceVisible: resourceVisible,
+    tileConnectivity: tileConnectivity,
   );
 
   final bodyStyle = overlayFgBodyStyle();

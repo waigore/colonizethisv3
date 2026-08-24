@@ -98,18 +98,36 @@ class TileRadialWedgeButton extends StatelessWidget {
           key: resolvedKey,
           onTap: isEnabled ? onPressed : null,
           child: SizedBox(
-            height: kTileRadialWedgeMinSize,
+            height: view?.caption == null
+                ? kTileRadialWedgeMinSize
+                : kTileRadialWedgeMinSize * 1.7,
             child: Center(
-              child: Text(
-                resolvedLabel,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: isEnabled
-                      ? EditorialMonoclePalette.fg
-                      : EditorialMonoclePalette.muted,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    resolvedLabel,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: isEnabled
+                          ? EditorialMonoclePalette.fg
+                          : EditorialMonoclePalette.muted,
+                    ),
+                  ),
+                  if (view?.caption != null && view!.caption!.isNotEmpty)
+                    Text(
+                      view!.caption!,
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: EditorialMonoclePalette.muted,
+                        fontSize: 10,
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

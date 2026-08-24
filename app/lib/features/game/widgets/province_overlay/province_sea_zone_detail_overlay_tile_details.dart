@@ -3,6 +3,7 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_build_port.dart';
@@ -81,6 +82,12 @@ List<String> tileConnectivityDetailLinesForTests({
       ),
     );
   }
+  final nextPreview = tileConnectivity.nextImproveYield;
+  if (nextPreview != null) {
+    lines.add(
+      buildImprovementNextYieldGistLine(l10n: l10n, preview: nextPreview),
+    );
+  }
   return lines;
 }
 
@@ -132,6 +139,12 @@ List<String> provinceTileDetailsLines({
           tileConnectivity.extractionEffective!,
           tileConnectivity.extractionFull!,
         ),
+      );
+    }
+    final nextPreview = tileConnectivity.nextImproveYield;
+    if (nextPreview != null) {
+      lines.add(
+        buildImprovementNextYieldGistLine(l10n: l10n, preview: nextPreview),
       );
     }
   }

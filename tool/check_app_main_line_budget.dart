@@ -118,7 +118,10 @@ const _packageName = 'colonizethis_app';
 // measured 90_687).
 // raised for Purchase land first-right and riches payoff (Refs #4630;
 // measured 90_948).
-const _maxMainLines = 91000;
+// raised for MAP20001 next-level Build improvement yield gist (Refs #4627;
+// measured 91_097).
+// raised after #4627+#4630 merge (measured 91_370).
+const _maxMainLines = 91400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

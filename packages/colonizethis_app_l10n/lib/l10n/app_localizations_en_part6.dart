@@ -2,6 +2,29 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
+  String provinceOverlay_unitTarget(String type, String target) {
+    return '$type: $target';
+  }
+
+  @override
+  String provinceOverlay_foreignUnitStatus(
+    String owner,
+    String type,
+    String status,
+  ) {
+    return '$owner — $type: $status';
+  }
+
+  @override
+  String provinceOverlay_fleetSummary(
+    String owner,
+    String fleetLabel,
+    String shipParts,
+  ) {
+    return '$owner — $fleetLabel: $shipParts';
+  }
+
+  @override
   String get provinceOverlay_sectionPolitical => 'Political';
 
   @override
