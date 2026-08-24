@@ -46,11 +46,6 @@ import 'check_app_turn_resolution_file_size.dart';
 import 'check_app_test_no_duplicate_shortcut_fixtures.dart';
 import 'check_app_test_no_duplicate_shortcut_golden_game_service.dart';
 import 'check_game_widgets_file_size.dart';
-import 'check_economy_cost_check_shared_helper.dart';
-import 'check_economy_dedup_credit_aggregation.dart';
-import 'check_economy_dedup_port_tile_keys.dart';
-import 'check_economy_world_market_admission_shared.dart';
-import 'check_economy_bid_treasury_spend_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_development_panel.dart';
@@ -107,6 +102,7 @@ import 'check_turn_resume_param_budget.dart';
 import 'check_work_target_constants.dart';
 import 'check_workspace_outdated_latest_direct.dart';
 import 'check_workspace_outdated_resolvable.dart';
+import 'ct_repo_lint_economy_dispatch.dart';
 import 'ct_repo_lint_map_dispatch.dart';
 import 'ct_repo_lint_process_io.dart';
 import 'ct_repo_lint_world_dispatch.dart';
@@ -800,6 +796,14 @@ int? _tryRunDartRuleInProcess({
     return logicResult;
   }
 
+  final int? economyResult = tryRunEconomyRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (economyResult != null) {
+    return economyResult;
+  }
+
   final int? mapResult = tryRunMapRuleInProcess(
     ruleId: rule.ruleId,
     repoRoot: repoRoot,
@@ -1036,16 +1040,6 @@ int? _tryRunLogicRuleInProcess({
       return runCheckLogicDeadFiles(repoRoot);
     case 'repo.logic_dedup_logger':
       return runCheckLogicDedupLogger(repoRoot);
-    case 'repo.economy_cost_check_shared_helper':
-      return runCheckEconomyCostCheckSharedHelper(repoRoot);
-    case 'repo.economy_world_market_admission_shared':
-      return runCheckEconomyWorldMarketAdmissionShared(repoRoot);
-    case 'repo.economy_dedup_port_tile_keys':
-      return runCheckEconomyDedupPortTileKeys(repoRoot);
-    case 'repo.economy_dedup_credit_aggregation':
-      return runCheckEconomyDedupCreditAggregation(repoRoot);
-    case 'repo.economy_bid_treasury_spend_shared':
-      return runCheckEconomyBidTreasurySpendShared(repoRoot);
     default:
       return null;
   }
