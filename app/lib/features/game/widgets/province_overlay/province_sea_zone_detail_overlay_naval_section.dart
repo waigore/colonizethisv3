@@ -1,7 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
@@ -13,12 +11,15 @@ import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
     show ProvinceTransferToHomeFleetOverlayControls;
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'province_panel_labels.dart';
-import 'province_panel_pending_orders.dart';
+import 'province_sea_zone_detail_overlay_naval_mission_actions.dart';
+import 'province_sea_zone_detail_overlay_naval_pending_lines.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show homeFleetIdFor;
+
+export 'province_sea_zone_detail_overlay_naval_pending_lines.dart';
 
 Widget buildNavalSection({
   required AppLocalizations l10n,
@@ -45,7 +46,7 @@ Widget buildNavalSection({
     pendingNavalPortProvinceId: pendingNavalPortProvinceId,
     pendingNavalSeaZoneId: pendingNavalSeaZoneId,
   );
-  final missionActions = _navalMissionActions(
+  final missionActions = navalMissionActionWidgets(
     l10n,
     navalMission,
     detachAndSail,
@@ -117,126 +118,5 @@ Widget buildNavalSection({
         ...missionActions,
       ],
     ),
-  );
-}
-
-List<Widget> _navalMissionActions(
-  AppLocalizations l10n,
-  ProvinceNavalMissionOverlayControls navalMission,
-  ProvinceDetachAndSailOverlayControls detachAndSail,
-  ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
-) {
-  final showDetach = detachAndSail.showDetachAndSail;
-  final showTransfer = transferToHomeFleet.showTransferToHomeFleet;
-  if (!navalMission.showBlockade &&
-      !navalMission.showBeachhead &&
-      !navalMission.showPatrol &&
-      !navalMission.showDefend &&
-      !showDetach &&
-      !showTransfer) {
-    return const [];
-  }
-  return [
-    Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          if (showTransfer)
-            CtActionTextButton(
-              label: l10n.provinceOverlay_transferToHomeFleetAction,
-              tooltip: transferToHomeFleet.transferToHomeFleetTooltip,
-              enabled: transferToHomeFleet.transferToHomeFleetEnabled,
-              onPressed: transferToHomeFleet.transferToHomeFleetEnabled
-                  ? transferToHomeFleet.onTransferToHomeFleetTap
-                  : null,
-            ),
-          if (showDetach)
-            CtActionTextButton(
-              label: l10n.provinceOverlay_detachAndSailAction,
-              tooltip: detachAndSail.detachAndSailTooltip,
-              enabled: detachAndSail.detachAndSailEnabled,
-              onPressed: detachAndSail.detachAndSailEnabled
-                  ? detachAndSail.onDetachAndSailTap
-                  : null,
-            ),
-          if (navalMission.showBlockade)
-            CtActionTextButton(
-              label: l10n.provinceOverlay_blockadeAction,
-              tooltip: navalMission.blockadeTooltip,
-              enabled: navalMission.blockadeEnabled,
-              onPressed: navalMission.blockadeEnabled
-                  ? navalMission.onBlockadeTap
-                  : null,
-            ),
-          if (navalMission.showBeachhead)
-            CtActionTextButton(
-              label: l10n.provinceOverlay_beachheadAction,
-              tooltip: navalMission.beachheadTooltip,
-              enabled: navalMission.beachheadEnabled,
-              onPressed: navalMission.beachheadEnabled
-                  ? navalMission.onBeachheadTap
-                  : null,
-            ),
-          if (navalMission.showPatrol)
-            CtActionTextButton(
-              label: l10n.provinceOverlay_patrolAction,
-              tooltip: navalMission.patrolTooltip,
-              enabled: navalMission.patrolEnabled,
-              onPressed: navalMission.patrolEnabled
-                  ? navalMission.onPatrolTap
-                  : null,
-            ),
-          if (navalMission.showDefend)
-            CtActionTextButton(
-              label: l10n.provinceOverlay_defendAction,
-              tooltip: navalMission.defendTooltip,
-              enabled: navalMission.defendEnabled,
-              onPressed: navalMission.defendEnabled
-                  ? navalMission.onDefendTap
-                  : null,
-            ),
-        ],
-      ),
-    ),
-  ];
-}
-
-List<String> pendingNavalLines({
-  required AppLocalizations l10n,
-  required Game game,
-  required String humanPlayerId,
-  required Orders draftOrders,
-  required String? pendingNavalPortProvinceId,
-  required String? pendingNavalSeaZoneId,
-}) {
-  if (pendingNavalPortProvinceId != null) {
-    return provincePanelPendingNavalLines(
-      game: game,
-      orders: draftOrders,
-      provinceId: pendingNavalPortProvinceId,
-      humanPlayerId: humanPlayerId,
-      l10n: l10n,
-    );
-  }
-  if (pendingNavalSeaZoneId == null) return const [];
-  final localSea = prefixedIdLocalSegment(pendingNavalSeaZoneId);
-  final regionId = prefixedIdRegionSegment(pendingNavalSeaZoneId);
-  final fleetIds = <String>{
-    for (final fleet in game.worldState.fleets)
-      if (fleet.ownerId == humanPlayerId &&
-          fleet.isAtSea &&
-          fleet.seaZoneId == localSea &&
-          (regionId == null || fleet.regionId == regionId))
-        fleet.id,
-  };
-  if (fleetIds.isEmpty) return const [];
-  return pendingNavalLinesForFleets(
-    game: game,
-    orders: draftOrders,
-    fleetIds: fleetIds,
-    humanPlayerId: humanPlayerId,
-    l10n: l10n,
   );
 }
