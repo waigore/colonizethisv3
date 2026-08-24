@@ -38,13 +38,16 @@ class _TrainMilitaryDialogMapGameService extends GameService {
 }
 
 class TrainMilitaryDialogTestHarness {
-  TrainMilitaryDialogTestHarness() : game = buildTrainPanelTestGame() {
+  TrainMilitaryDialogTestHarness({
+    this.handlerHiveDir = './.dart_tool/test_hive_train_military_dialog',
+  }) : game = buildTrainPanelTestGame() {
     humanPlayerId = game.players.isNotEmpty
         ? game.players.firstWhere((p) => p.isHuman).id
         : game.players.first.id;
   }
 
   final Game game;
+  final String handlerHiveDir;
   late final String humanPlayerId;
   Box<dynamic>? _gamesBox;
   GameService? _mapService;
@@ -54,7 +57,7 @@ class TrainMilitaryDialogTestHarness {
   /// Opens Hive for bus-driven UNIT50001 open (dialog builder reads GameService).
   Future<void> ensureHandlerHive() async {
     if (_gamesBox != null) return;
-    Hive.init('./.dart_tool/test_hive_train_military_dialog');
+    Hive.init(handlerHiveDir);
     _gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
     _mapService = _TrainMilitaryDialogMapGameService(
       _gamesBox!,

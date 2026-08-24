@@ -13,12 +13,12 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckDataTestFileSize', () {
-    test('passes on current repo tree under 320 physical-line ceiling', () {
+    test('passes on current repo tree under 250 physical-line ceiling', () {
       expect(runCheckDataTestFileSize('.'), 0);
     });
 
-    test('wave-6 test ceiling is 320 physical lines', () {
-      expect(dataTestFileSizeCeiling, 320);
+    test('wave-7 test ceiling is 250 physical lines', () {
+      expect(dataTestFileSizeCeiling, 250);
     });
 
     test('grandfather allowlist is empty after #4121 densify', () {
