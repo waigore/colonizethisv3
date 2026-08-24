@@ -12,11 +12,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../../widgets/resource_icon.dart';
 import '../shared/region_labels.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData;
 import 'civilian_units_panel_support_resolution.dart';
+import 'civilian_units_panel_unit_row_gists.dart';
 import 'civilian_units_panel_unit_row_pending.dart';
 import 'work_order_afford_preview_ui.dart';
-import 'purchase_land_payoff_copy.dart';
-import 'purchase_land_payoff_gist_line.dart';
 
 String? civilianUnitsPanelUnitRowSpyStatusLabel({
   required AppLocalizations l10n,
@@ -108,6 +109,9 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   required Unit unit,
   required CivilianUnitsPanelUnitRowPending pending,
   required Map<String, String> provinceNames,
+  required String humanPlayerId,
+  GameMapData? mapData,
+  String? buildImprovementShortcutTargetTileKey,
   String? purchaseLandShortcutTargetTileKey,
   bool readOnly = false,
 }) {
@@ -174,20 +178,14 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
               ),
             ),
           ),
-        if (pendingWork.target == kWorkTargetPurchaseLand)
-          Builder(
-            builder: (context) {
-              final payoff = purchaseLandPayoffCopyForTile(
-                l10n: l10n,
-                game: game,
-                tileKey: pendingWork.targetTileKey,
-                enabled: true,
-                canMutateViaUi: !readOnly,
-              );
-              if (payoff == null) return const SizedBox.shrink();
-              return PurchaseLandPayoffGistLine(text: payoff.gist);
-            },
-          ),
+        ...civilianUnitsPanelPendingWorkGistChildren(
+          l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          pendingWork: pendingWork,
+          readOnly: readOnly,
+          mapData: mapData,
+        ),
         if (pendingAfford != null &&
             pendingAfford.hasCostPreview &&
             !pendingAfford.canAfford)
@@ -211,24 +209,15 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
       ),
     ),
   );
-  final shortcutTile = purchaseLandShortcutTargetTileKey;
-  if (readOnly || shortcutTile == null || shortcutTile.isEmpty) {
-    return assigned;
-  }
-  final payoff = purchaseLandPayoffCopyForTile(
+  return wrapCivilianUnitsPanelAssignedWithShortcutGists(
+    assigned: assigned,
     l10n: l10n,
     game: game,
-    tileKey: shortcutTile,
-    enabled: true,
-    canMutateViaUi: !readOnly,
-  );
-  if (payoff == null) return assigned;
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      assigned,
-      PurchaseLandPayoffGistLine(text: payoff.gist),
-    ],
+    humanPlayerId: humanPlayerId,
+    readOnly: readOnly,
+    mapData: mapData,
+    buildImprovementShortcutTargetTileKey:
+        buildImprovementShortcutTargetTileKey,
+    purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
   );
 }

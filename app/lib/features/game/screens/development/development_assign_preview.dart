@@ -25,6 +25,7 @@ String? formatDevelopmentAssignPreviewLine({
   required AppLocalizations l10n,
   required DevelopmentAssignRowState assignState,
   required Map<String, String> provinceDisplayNamesById,
+  String? nextYieldGist,
 }) {
   if (!assignState.enabled) return null;
   final candidate = assignState.candidate;
@@ -49,8 +50,14 @@ String? formatDevelopmentAssignPreviewLine({
           candidate.nextImprovementLevel,
           cost,
         );
-  if (candidate.isCapitalConnected) return line;
-  return '$line · ${l10n.development_assignPreviewNotBoundToCapital}';
+  if (candidate.isCapitalConnected) {
+    if (nextYieldGist == null || nextYieldGist.isEmpty) return line;
+    return '$line · $nextYieldGist';
+  }
+  final disconnected =
+      '$line · ${l10n.development_assignPreviewNotBoundToCapital}';
+  if (nextYieldGist == null || nextYieldGist.isEmpty) return disconnected;
+  return '$disconnected · $nextYieldGist';
 }
 
 /// Muted wrap line under an enabled Assign row. SPEC/ui/components/development-assign-row.md.

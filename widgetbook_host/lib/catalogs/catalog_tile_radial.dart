@@ -5,6 +5,7 @@ List<TileRadialSpokeView> _tileRadialDemoWedges({
   bool prospectEnabled = true,
   bool includeBuild = true,
   bool includeExtended = false,
+  String? buildCaption,
 }) {
   return [
     TileRadialSpokeView(
@@ -31,6 +32,7 @@ List<TileRadialSpokeView> _tileRadialDemoWedges({
         label: 'Build improvement',
         // ignore: avoid_hardcoded_strings_in_widgets
         tooltip: 'Build improvement',
+        caption: buildCaption,
       ),
     if (includeExtended) ...[
       const TileRadialSpokeView(
@@ -154,6 +156,77 @@ List<WidgetbookNode> get tileRadialDirectories => [
             onMore: () {},
             onDismiss: () {},
             anchor: const Offset(16, 16),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Build improvement next yield raise',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: _tileRadialDemoWedges(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              buildCaption: 'After this work: 0 → 1 Grain if still linked',
+            ),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Build improvement next yield road cap',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: _tileRadialDemoWedges(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              buildCaption:
+                  'After this work: still 2 Timber — the road is the limit',
+            ),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Build improvement next yield town cap',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: _tileRadialDemoWedges(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              buildCaption:
+                  'After this work: still 2 Grain — town development is the limit',
+            ),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Build improvement next yield disconnected',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: _tileRadialDemoWedges(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              buildCaption:
+                  'After this work: still none — not bound to the capital',
+            ),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
           ),
         ),
       ),
