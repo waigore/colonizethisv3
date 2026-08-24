@@ -13,9 +13,9 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckColonizethisSetupLibFileSize', () {
-    test('passes on current repo tree under wave-7 ceiling', () {
+    test('passes on current repo tree under wave-8 ceiling', () {
       expect(runCheckColonizethisSetupLibFileSize('.'), 0);
-      expect(setupLibFileSizeCeiling, 300);
+      expect(setupLibFileSizeCeiling, 250);
     });
 
     test('fails when a setup lib file exceeds the ceiling', () {

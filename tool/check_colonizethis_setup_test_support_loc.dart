@@ -23,7 +23,7 @@ const String setupTestSupportRelativeDir =
 const int setupTestSupportLocCeiling = 4100;
 
 /// Fail when any support `*.dart` file has this many physical lines or more.
-const int setupTestSupportFilePhysicalLineCeiling = 380;
+const int setupTestSupportFilePhysicalLineCeiling = 250;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countSetupTestSupportPhysicalLoc(Directory dir) {

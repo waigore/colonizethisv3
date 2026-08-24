@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'init_game_orchestrator_test_support.dart';
+import 'minor_tribe_starting_development_integration_setup.dart';
 
 void main() {
   group('Minor/Tribe starting developed resources (integration)', () {
@@ -17,52 +18,7 @@ void main() {
     for (final seed in seeds) {
       test('seed $seed: every minor and tribe with a capital has up to K '
           'developed tiles in its capital province', () {
-        final config = configWithOverrides(
-          selectedGreatPowerIds: const ['england', 'france'],
-          continentCount: 2,
-          minorNationCount: 4,
-          tribeCount: 3,
-          numProvincesOldWorld: 16,
-          numProvincesNewWorld: 10,
-          minProvincesPerMinor: 1,
-          seed: seed,
-        );
-        final owParams = TileMapParams(
-          width: 44,
-          height: 34,
-          seed: seed,
-          seaFraction: 0.55,
-        );
-        final (owMap, owTopo) = defaultTileMapRegionGenerator(
-          params: owParams,
-          numProvinces: config.numProvincesOldWorld,
-          numContinents: config.continentCount,
-          regionId: kRegionOldWorld,
-          resourceRules: ResourceRules.defaultRules,
-        );
-        final nwParams = TileMapParams(
-          width: 30,
-          height: 26,
-          seed: seed + 1,
-          seaFraction: 0.55,
-        );
-        final (nwMap, nwTopo) = defaultTileMapRegionGenerator(
-          params: nwParams,
-          numProvinces: config.numProvincesNewWorld,
-          numContinents: 1,
-          regionId: kRegionNewWorld,
-          resourceRules: ResourceRules.defaultRules,
-        );
-
-        final setup = createGameFromGeneratedMaps(
-          config: config,
-          tileMapOldWorld: owMap,
-          topologyOldWorld: owTopo,
-          tileMapNewWorld: nwMap,
-          topologyNewWorld: nwTopo,
-          gameId: 'minor-tribe-dev-$seed',
-          namingSeed: seed,
-        );
+        final setup = minorTribeStartingDevelopmentIntegrationSetup(seed);
 
         final ws = setup.game.worldState;
         final forbidden = collectTownAndCapitalTileKeys(setup.game);
@@ -168,8 +124,11 @@ void main() {
           );
           totalDeveloped += pred.length;
         }
-        expect(totalDeveloped, greaterThan(0),
-            reason: 'at least one developed minor/tribe tile expected seed=$seed');
+        expect(
+          totalDeveloped,
+          greaterThan(0),
+          reason: 'at least one developed minor/tribe tile expected seed=$seed',
+        );
         expect(
           totalDeveloped,
           lessThanOrEqualTo(

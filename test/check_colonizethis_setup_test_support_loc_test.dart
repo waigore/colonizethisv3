@@ -45,13 +45,13 @@ void main() {
         )..createSync(recursive: true);
         File(
           p.join(support.path, 'fat.dart'),
-        ).writeAsStringSync(List.generate(380, (i) => 'line$i').join('\n'));
+        ).writeAsStringSync(List.generate(250, (i) => 'line$i').join('\n'));
 
         final errors = <String>[];
         final code = runCheckColonizethisSetupTestSupportLoc(
           temp.path,
           ceiling: 10000,
-          fileCeiling: 380,
+          fileCeiling: 250,
           info: (_) {},
           err: errors.add,
         );

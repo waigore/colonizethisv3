@@ -7,82 +7,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
+import 'minor_tribe_starting_development_fixtures.dart';
 
 void main() {
   group('applyMinorTribeStartingDevelopment', () {
-    Game buildGame({
-      required CapitalTile? minorCapital,
-      required CapitalTile? tribeCapital,
-    }) {
-      final owProvinces = <Province>[
-        Province(
-          id: 'oldWorld|p_minor',
-          regionId: 'oldWorld',
-          ownerId: 'minor_1',
-        ),
-      ];
-      final nwProvinces = <Province>[
-        Province(
-          id: 'newWorld|p_tribe',
-          regionId: 'newWorld',
-          ownerId: 'tribe_1',
-        ),
-      ];
-      return TestFixtures.minimalGame(
-        id: 'g_minor_tribe_dev',
-        players: const <Player>[
-          Player(id: 'gp1', displayName: 'Power 1', isHuman: true),
-        ],
-        minorNations: <MinorNation>[
-          MinorNation(
-            id: 'minor_1',
-            displayName: 'Minor',
-            capitalProvinceId:
-                minorCapital == null ? null : 'oldWorld|p_minor',
-            capitalTile: minorCapital,
-          ),
-        ],
-        tribes: <Tribe>[
-          Tribe(
-            id: 'tribe_1',
-            displayName: 'Tribe',
-            capitalProvinceId:
-                tribeCapital == null ? null : 'newWorld|p_tribe',
-            capitalTile: tribeCapital,
-          ),
-        ],
-        turnNumber: 0,
-        oldWorld: RegionData(provinces: owProvinces),
-        newWorld: RegionData(provinces: nwProvinces),
-      );
-    }
-
-    TileMapResult resourceGrid({
-      required int width,
-      required int height,
-      required String localId,
-      required String regionId,
-    }) {
-      return TileMapResult(
-        width: width,
-        height: height,
-        grid: List.generate(
-          height,
-          (_) => List<String>.filled(width, localId),
-        ),
-        terrainGrid: List.generate(
-          height,
-          (_) => List<TerrainType?>.filled(width, TerrainType.plains),
-        ),
-        resourceGrid: List.generate(
-          height,
-          (_) => List<Resource?>.filled(width, Resource.grain),
-        ),
-      );
-    }
-
     test('develops K tiles for minor and tribe with eligible provinces', () {
       final minorCap = CapitalTile(
         regionId: 'oldWorld',
@@ -96,10 +25,7 @@ void main() {
         x: 0,
         y: 0,
       );
-      final game = buildGame(
-        minorCapital: minorCap,
-        tribeCapital: tribeCap,
-      );
+      final game = buildGame(minorCapital: minorCap, tribeCapital: tribeCap);
       final tileMapByRegion = <String, TileMapResult>{
         'oldWorld': resourceGrid(
           width: 3,
@@ -139,10 +65,7 @@ void main() {
       expect(ts.improvementLevel(tribeCap.toTileKey()), 0);
 
       // None of the developed tiles is a capital tile (negative invariant).
-      final capitalKeys = <String>{
-        minorCap.toTileKey(),
-        tribeCap.toTileKey(),
-      };
+      final capitalKeys = <String>{minorCap.toTileKey(), tribeCap.toTileKey()};
       for (final keys in out.developedTileKeysByFactionId.values) {
         for (final k in keys) {
           expect(capitalKeys.contains(k), isFalse);
@@ -184,10 +107,22 @@ void main() {
       );
       expect(out.developedTileKeysByFactionId, isEmpty);
       // No improvement raised anywhere.
-      expect(out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|0|0'), 0);
-      expect(out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|1|0'), 0);
-      expect(out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|0|1'), 0);
-      expect(out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|1|1'), 0);
+      expect(
+        out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|0|0'),
+        0,
+      );
+      expect(
+        out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|1|0'),
+        0,
+      );
+      expect(
+        out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|0|1'),
+        0,
+      );
+      expect(
+        out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|1|1'),
+        0,
+      );
     });
 
     test('factions without capital tiles are silently skipped', () {
@@ -235,7 +170,9 @@ void main() {
         game: game,
         tileMapByRegion: tileMapByRegion,
       );
-      expect(out.developedTileKeysByFactionId['minor_1'], ['oldWorld|p_minor|1|0']);
+      expect(out.developedTileKeysByFactionId['minor_1'], [
+        'oldWorld|p_minor|1|0',
+      ]);
       expect(
         out.game.worldState.tileState.improvementLevel('oldWorld|p_minor|1|0'),
         1,
