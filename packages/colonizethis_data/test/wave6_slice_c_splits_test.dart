@@ -57,17 +57,21 @@ void main() {
         isTrue,
       );
       final stall = _paramNamesIn(
-        _srcFile(
-          'ai_parameter_victory_config_params_military_stall_colonial.dart',
-        ),
+        _srcFile('ai_parameter_victory_config_params_military_stall.dart'),
       );
       expect(stall.contains('kStalledOldWorldProvinceThreshold'), isTrue);
       expect(stall.contains('kStalledConquestFieldArmySplitCap'), isTrue);
-      final declareWar = _paramNamesIn(
-        _srcFile('ai_parameter_victory_config_params_declare_war.dart'),
+      final declareWarGp = _paramNamesIn(
+        _srcFile('ai_parameter_victory_config_params_declare_war_gp.dart'),
       );
-      expect(declareWar.contains('kDeclareWarAdjacentOwnerBonus'), isTrue);
-      expect(declareWar.contains('kDeclareWarStalledAnyOwMinorBonus'), isTrue);
+      expect(declareWarGp.contains('kDeclareWarAdjacentOwnerBonus'), isTrue);
+      final declareWarMinor = _paramNamesIn(
+        _srcFile('ai_parameter_victory_config_params_declare_war_minor.dart'),
+      );
+      expect(
+        declareWarMinor.contains('kDeclareWarStalledAnyOwMinorBonus'),
+        isTrue,
+      );
     });
 
     test('victoryConfigParams still covers every registered name once', () {
