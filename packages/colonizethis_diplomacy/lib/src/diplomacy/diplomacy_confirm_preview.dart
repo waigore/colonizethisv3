@@ -5,9 +5,8 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'diplomacy_boycott_confirm_preview.dart';
+import 'diplomacy_grant_aid_confirm_preview.dart';
 import 'diplomacy_declare_war_third_party_preview.dart';
-import 'diplomacy_relation_constants.dart';
-import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_resolver.dart';
 import 'favored_trading_partner_preview.dart';
 
@@ -57,9 +56,12 @@ List<String> buildDiplomacyConfirmPreviewLines({
         targetDisplayName: targetDisplayName,
       );
     case DiplomaticOrderType.grantAid:
-      return _grantAid(
-        targetDisplayName,
-        order.amount ?? grantAidDefaultAmount,
+      return grantAidConfirmPreviewLines(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        targetFactionId: order.targetFactionId,
+        targetDisplayName: targetDisplayName,
+        amount: order.amount ?? grantAidDefaultAmount,
       );
     case DiplomaticOrderType.setSubsidy:
       return _setSubsidy(
@@ -105,11 +107,6 @@ List<String> _breakAlliance(String target) => [
 
 List<String> _establishFtp(String target) =>
     favoredTradingPartnerConfirmLines(target);
-
-List<String> _grantAid(String target, int amount) => [
-  'Cost: £$amount from your treasury when the grant resolves.',
-  'Effect: Standing with $target improves when the grant resolves.',
-];
 
 /// First-order buy/sell fill copy for a subsidy percent (Refs #4546).
 /// Applies only to fills with [targetDisplayName]; not a per-turn gold charge.
