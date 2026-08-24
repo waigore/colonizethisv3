@@ -53,18 +53,9 @@ void main() {
         advancedStartNwRevealFraction(AdvancedStartType.turns50),
         kAdvancedStart50TurnNwRevealFraction,
       );
-      expect(
-        advancedStartNwRevealFraction(AdvancedStartType.turns100),
-        1.0,
-      );
-      expect(
-        advancedStartProspectFraction(AdvancedStartType.turns50),
-        0.50,
-      );
-      expect(
-        advancedStartProspectFraction(AdvancedStartType.turns100),
-        0.75,
-      );
+      expect(advancedStartNwRevealFraction(AdvancedStartType.turns100), 1.0);
+      expect(advancedStartProspectFraction(AdvancedStartType.turns50), 0.50);
+      expect(advancedStartProspectFraction(AdvancedStartType.turns100), 0.75);
       expect(
         advancedStartDiplomacyOvertureStage(AdvancedStartType.turns50),
         OvertureStage.tradeConsulate,
@@ -81,6 +72,19 @@ void main() {
         advancedStartNwColonizationCount(AdvancedStartType.turns100),
         kAdvancedStart100TurnNwColonizationCount,
       );
+    });
+
+    test('developable set stays keyed by Resource.name', () {
+      expect(
+        kAdvancedStartDevelopableResourceIds.contains(Resource.grain.name),
+        isTrue,
+      );
+      expect(
+        kAdvancedStartDevelopableResourceIds.contains(Resource.timber.name),
+        isTrue,
+      );
+      expect(advancedStartDevelopableTilePriority(Resource.grain.name), 0);
+      expect(advancedStartDevelopableTilePriority(Resource.timber.name), 2);
     });
   });
 }

@@ -2,6 +2,10 @@
 /// SPEC/game/tech-and-extraction-cap.md, SPEC/game/extraction-and-improvements.md.
 
 import 'resource.dart';
+import 'tech_extraction_caps_nw.dart';
+import 'tech_extraction_caps_ow_food.dart';
+import 'tech_extraction_caps_precious.dart';
+import 'tech_extraction_caps_timber_minerals.dart';
 import 'terrain_type.dart';
 
 /// Default max effective extraction level for a resource with no cap-raising tech unlocked.
@@ -19,90 +23,10 @@ final Map<String, int> extractionCapDesignExceptions = {
 /// resource id -> (tech id -> max extraction level for that resource).
 final Map<String, Map<String, int>> _extractionCapByResourceByTechId =
     _validatedExtractionCapTable({
-      Resource.grain.name: const {
-        'land_enclosure': 2,
-        'seed_drill': 3,
-        'moldboard_plow': 4,
-      },
-      Resource.timber.name: const {
-        'saw_mill': 2,
-        'wind_saw_mill': 3,
-        'circular_saw': 4,
-      },
-      Resource.iron.name: const {
-        'iron_mining': 2,
-        'steam_in_mining': 3,
-        'industrial_iron_mining': 4,
-      },
-      Resource.copper.name: const {
-        'copper_and_tin_mining': 2,
-        'large_copper_and_tin_mines': 3,
-        'efficient_extraction_of_copper_and_tin': 4,
-      },
-      Resource.tin.name: const {
-        'copper_and_tin_mining': 2,
-        'large_copper_and_tin_mines': 3,
-        'efficient_extraction_of_copper_and_tin': 4,
-      },
-      Resource.coal.name: const {
-        'coal_mining': 1,
-        'square_set_timbering': 2,
-        'large_coal_mines': 3,
-        'safety_lamp': 4,
-      },
-      Resource.wool.name: const {
-        'sheep_ranching': 2,
-        'scientific_sheep_breeding': 3,
-      },
-      Resource.meat.name: const {
-        'animal_husbandry': 3,
-        'scientific_cattle_breeding': 4,
-      },
-      Resource.sugarCane.name: const {
-        'sugar_planting': 2,
-        'large_sugar_plantations': 3,
-        'sugar_industry': 4,
-      },
-      Resource.tobacco.name: const {
-        'tobacco_planting': 2,
-        'large_tobacco_plantations': 3,
-        'tobacco_industry': 4,
-      },
-      Resource.cotton.name: const {
-        'cotton_planting': 2,
-        'large_cotton_plantations': 3,
-        'cotton_gin': 4,
-      },
-      Resource.furs.name: const {
-        'improved_trapping_techniques': 2,
-        'riverboats': 3,
-        'excessive_fur_harvesting': 4,
-      },
-      Resource.spices.name: const {
-        'improved_sea_routes': 2,
-        'large_spice_plantations': 3,
-        'improved_food_preservation': 4,
-      },
-      Resource.silver.name: const {
-        'precious_metals_mining': 2,
-        'extraction_of_precious_metals': 3,
-        'amalgamation_process': 4,
-      },
-      Resource.gold.name: const {
-        'precious_metals_mining': 2,
-        'extraction_of_precious_metals': 3,
-        'amalgamation_process': 4,
-      },
-      Resource.gems.name: const {
-        'precious_stone_mining': 2,
-        'large_precious_stone_mines': 3,
-        'geological_prospecting': 4,
-      },
-      Resource.diamonds.name: const {
-        'precious_stone_mining': 2,
-        'large_precious_stone_mines': 3,
-        'geological_prospecting': 4,
-      },
+      ...extractionCapTableOwFoodFibre,
+      ...extractionCapTableTimberMinerals,
+      ...extractionCapTableNwPlantationHarvest,
+      ...extractionCapTablePrecious,
     });
 
 /// All tech ids that raise an extraction cap for at least one resource.
