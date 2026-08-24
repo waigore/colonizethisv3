@@ -25,58 +25,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
+import 'civilian_units_panel_row_card_r30_support.dart';
 import 'civilian_units_panel_test_support.dart';
-
-int _argb(Color c) {
-  final int a = (c.a * 255.0).round() & 0xFF;
-  final int r = (c.r * 255.0).round() & 0xFF;
-  final int g = (c.g * 255.0).round() & 0xFF;
-  final int b = (c.b * 255.0).round() & 0xFF;
-  return (a << 24) | (r << 16) | (g << 8) | b;
-}
-
-const _human = 'h1';
-const _tileKey = 'oldWorld|p1|0|0';
-const _provinceId = 'oldWorld|p1';
-
-/// Row-card chrome fixture: builder (+ optional engineer) on OW Alpha.
-Game _miniGame({int civilianCount = 1}) {
-  return buildCivilianOwUnitsGame(
-    id: 'g_civ_row_card_r30',
-    humanId: _human,
-    units: [
-      for (int i = 0; i < civilianCount; i++)
-        civilianIdleUnit(
-          id: 'civ_$i',
-          type: i == 0 ? kUnitTypeBuilder : kUnitTypeEngineer,
-          ownerId: _human,
-          provinceId: _provinceId,
-          tileKey: _tileKey,
-        ),
-    ],
-  );
-}
-
-/// Editorial [buildAppShell] host for row-card chrome (Refs #4035).
-Widget _wrap(Widget child) {
-  return buildAppShell(
-    overrides: [
-      availableWorkTargetIdsForUnitProvider.overrideWith(
-        (ref, _) => const <String>[],
-      ),
-    ],
-    child: Scaffold(body: child),
-  );
-}
-
-DecoratedBox _cardDecoratedBox(WidgetTester tester, Finder card) {
-  final decoratedFinder = find.descendant(
-    of: card,
-    matching: find.byType(DecoratedBox),
-  );
-  expect(decoratedFinder, findsAtLeastNWidgets(1));
-  return tester.widget<DecoratedBox>(decoratedFinder.first);
-}
 
 void main() {
   suppressLogsForTests();
@@ -87,10 +37,10 @@ void main() {
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         await tester.pumpWidget(
-          _wrap(
+          wrapCivilianRowCardHost(
             CivilianUnitsPanel(
-              game: _miniGame(),
-              humanPlayerId: _human,
+              game: civilianRowCardMiniGame(),
+              humanPlayerId: kCivilianRowCardHumanId,
               currentOrders: const Orders(),
               bus: bus,
             ),
@@ -101,7 +51,7 @@ void main() {
         final card = find.byType(CivilianUnitRowCard);
         expect(card, findsOneWidget);
 
-        final decorated = _cardDecoratedBox(tester, card);
+        final decorated = civilianRowCardDecoratedBox(tester, card);
         final decoration = decorated.decoration as BoxDecoration;
         final gradient = decoration.gradient;
         expect(
@@ -113,14 +63,23 @@ void main() {
         expect(linear.begin, Alignment.topCenter);
         expect(linear.end, Alignment.bottomCenter);
         expect(linear.colors.length, 2);
-        expect(_argb(linear.colors[0]), _argb(EditorialMonoclePalette.bgDeep));
-        expect(_argb(linear.colors[1]), _argb(EditorialMonoclePalette.surface));
+        expect(
+          civilianRowCardArgb(linear.colors[0]),
+          civilianRowCardArgb(EditorialMonoclePalette.bgDeep),
+        );
+        expect(
+          civilianRowCardArgb(linear.colors[1]),
+          civilianRowCardArgb(EditorialMonoclePalette.surface),
+        );
 
         final border = decoration.border;
         expect(border, isA<Border>());
         final borderColor = (border! as Border).top.color;
         // Default (non-selected, non-hovered) state -> `border` token.
-        expect(_argb(borderColor), _argb(EditorialMonoclePalette.border));
+        expect(
+          civilianRowCardArgb(borderColor),
+          civilianRowCardArgb(EditorialMonoclePalette.border),
+        );
       },
     );
 
@@ -129,13 +88,13 @@ void main() {
     ) async {
       final bus = AppEventBus.create();
       await tester.pumpWidget(
-        _wrap(
+        wrapCivilianRowCardHost(
           CivilianUnitsPanel(
-            game: _miniGame(civilianCount: 2),
-            humanPlayerId: _human,
+            game: civilianRowCardMiniGame(civilianCount: 2),
+            humanPlayerId: kCivilianRowCardHumanId,
             currentOrders: const Orders(),
             bus: bus,
-            tileScopeTileKey: _tileKey,
+            tileScopeTileKey: kCivilianRowCardTileKey,
             initialSelectedUnitId: 'civ_0',
           ),
         ),
@@ -154,24 +113,26 @@ void main() {
       expect(unselectedRow, findsOneWidget);
 
       final selectedDecoration =
-          _cardDecoratedBox(tester, selectedRow).decoration as BoxDecoration;
+          civilianRowCardDecoratedBox(tester, selectedRow).decoration
+              as BoxDecoration;
       final unselectedDecoration =
-          _cardDecoratedBox(tester, unselectedRow).decoration as BoxDecoration;
+          civilianRowCardDecoratedBox(tester, unselectedRow).decoration
+              as BoxDecoration;
 
       final selectedBorder = (selectedDecoration.border! as Border).top.color;
       final unselectedBorder =
           (unselectedDecoration.border! as Border).top.color;
 
       expect(
-        _argb(selectedBorder),
-        _argb(EditorialMonoclePalette.accentDim),
+        civilianRowCardArgb(selectedBorder),
+        civilianRowCardArgb(EditorialMonoclePalette.accentDim),
         reason:
             'R30: selected tile-scope row paints `accentDim` border so '
             'selection reads against the default `border` token.',
       );
       expect(
-        _argb(unselectedBorder),
-        _argb(EditorialMonoclePalette.border),
+        civilianRowCardArgb(unselectedBorder),
+        civilianRowCardArgb(EditorialMonoclePalette.border),
         reason: 'Non-selected tile-scope row keeps default `border` token.',
       );
     });
@@ -181,10 +142,10 @@ void main() {
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         await tester.pumpWidget(
-          _wrap(
+          wrapCivilianRowCardHost(
             CivilianUnitsPanel(
-              game: _miniGame(),
-              humanPlayerId: _human,
+              game: civilianRowCardMiniGame(),
+              humanPlayerId: kCivilianRowCardHumanId,
               currentOrders: const Orders(),
               bus: bus,
             ),
@@ -237,129 +198,6 @@ void main() {
             reason: 'R30: Locate must be the right-most action in the cluster.',
           );
         }
-      },
-    );
-
-    testWidgets(
-      'AC (#3514): Assign renders as a neutral CtActionTextButton pill with '
-      'icon + label (mockup `.u-actions button`)',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          _wrap(
-            CivilianUnitsPanel(
-              game: _miniGame(),
-              humanPlayerId: _human,
-              currentOrders: const Orders(),
-              bus: bus,
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final card = find.byType(CivilianUnitRowCard);
-        expect(card, findsOneWidget);
-
-        final assignLabel = find.descendant(
-          of: card,
-          matching: find.text('Assign'),
-        );
-        expect(assignLabel, findsOneWidget);
-        final assignPill = find.ancestor(
-          of: assignLabel,
-          matching: find.byType(CtActionTextButton),
-        );
-        expect(assignPill, findsOneWidget);
-        final assignButton = tester.widget<CtActionTextButton>(assignPill);
-        // Row-action pills are the neutral (non-primary) variant; primary is
-        // reserved for header actions (Train) per #3514 owner decision #5.
-        expect(assignButton.primary, isFalse);
-        expect(assignButton.label, 'Assign');
-        expect(assignButton.icon, Icons.playlist_add);
-        expect(assignButton.onPressed, isNotNull);
-        // Icon + label per owner decision #7 (Assign keeps its icon).
-        expect(
-          find.descendant(
-            of: assignPill,
-            matching: find.byIcon(Icons.playlist_add),
-          ),
-          findsOneWidget,
-        );
-      },
-    );
-
-    testWidgets('AC (#3514): read-only panel renders no row-action pills', (
-      WidgetTester tester,
-    ) async {
-      final bus = AppEventBus.create();
-      await tester.pumpWidget(
-        _wrap(
-          CivilianUnitsPanel(
-            game: _miniGame(),
-            humanPlayerId: _human,
-            currentOrders: const Orders(),
-            bus: bus,
-            readOnly: true,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final card = find.byType(CivilianUnitRowCard);
-      expect(card, findsOneWidget);
-      expect(
-        find.descendant(of: card, matching: find.byType(CtActionTextButton)),
-        findsNothing,
-      );
-      expect(
-        find.descendant(
-          of: card,
-          matching: find.byType(CtCircularLocateButton),
-        ),
-        findsNothing,
-      );
-      expect(
-        find.descendant(of: card, matching: find.text('Assign')),
-        findsNothing,
-      );
-    });
-
-    testWidgets(
-      'AC: Locate stays visible on non-selected tile-scope rows even when '
-      'Assign/Cancel are hidden',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          _wrap(
-            CivilianUnitsPanel(
-              game: _miniGame(civilianCount: 2),
-              humanPlayerId: _human,
-              currentOrders: const Orders(),
-              bus: bus,
-              tileScopeTileKey: _tileKey,
-              initialSelectedUnitId: 'civ_0',
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final unselectedRow = find.byKey(
-          const ValueKey('civilian-unit-card-civ_1'),
-          skipOffstage: false,
-        );
-        expect(unselectedRow, findsOneWidget);
-
-        final locateOnUnselected = find.descendant(
-          of: unselectedRow,
-          matching: find.byTooltip('Locate', skipOffstage: false),
-        );
-        expect(
-          locateOnUnselected,
-          findsOneWidget,
-          reason:
-              'Non-selected tile-scope rows must still expose Locate per '
-              'SPEC/ui/civilian-units-panel.md § Per-unit row content.',
-        );
       },
     );
   });

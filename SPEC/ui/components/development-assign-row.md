@@ -41,7 +41,7 @@ Auto-pick policy does not change. Do not auto-queue Road first. Do not nag idle 
 
 ## Widgetbook
 
-`Development Panel` → `Assign preview enabled` (and mobile): Land Enclosure, grain at level 1, enabled Assign showing `1 → 2` and lumber + cast iron 4.
+`Development Panel` → `Assign preview enabled` (and mobile): Land Enclosure, grain at level 1, enabled Assign showing `1 → 2` and lumber + cast iron 4. Next-yield gist variants (Refs #4627): **Assign preview — Build improvement next yield raise / road cap / town cap / disconnected**.
 
 ## Acceptance criteria
 

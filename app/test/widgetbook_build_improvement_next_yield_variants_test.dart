@@ -60,7 +60,9 @@ void main() {
       expect(find.textContaining('if still linked'), findsWidgets);
     });
 
-    testWidgets('radial raise caption is catalogued', (WidgetTester tester) async {
+    testWidgets('radial raise caption is catalogued', (
+      WidgetTester tester,
+    ) async {
       final useCase = findWidgetbookUseCase(
         tileRadialDirectories,
         folderName: radialFolder,
@@ -78,6 +80,25 @@ void main() {
         useCaseName: 'Selection prompt — Build improvement next yield raise',
       );
       expect(useCase.builder, isNotNull);
+    });
+
+    testWidgets('Development Assign next-yield variants are catalogued', (
+      WidgetTester tester,
+    ) async {
+      const assignFolder = 'Development Panel';
+      for (final name in [
+        'Assign preview — Build improvement next yield raise',
+        'Assign preview — Build improvement next yield road cap',
+        'Assign preview — Build improvement next yield town cap',
+        'Assign preview — Build improvement next yield disconnected',
+      ]) {
+        final useCase = findWidgetbookUseCase(
+          developmentScreenDirectories,
+          folderName: assignFolder,
+          useCaseName: name,
+        );
+        expect(useCase.builder, isNotNull);
+      }
     });
   });
 }

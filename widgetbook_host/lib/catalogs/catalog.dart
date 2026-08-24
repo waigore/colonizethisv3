@@ -107,6 +107,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widg
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen.dart';
+import 'package:colonizethis_app/features/game/screens/development/development_assign_preview.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_disconnected_assign_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
