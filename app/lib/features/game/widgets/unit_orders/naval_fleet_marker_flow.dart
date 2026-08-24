@@ -1,6 +1,3 @@
-// Map fleet-marker tap routing (Refs #4213, #4343, #4448, #4625).
-// SPEC/program/app-ui-wiring.md.
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -15,13 +12,7 @@ import 'naval_mission_flow_support.dart';
 import 'naval_mission_move_dialog.dart';
 import 'overlay_transfer_to_home_fleet_flow.dart';
 
-/// Map fleet-marker tap: pick fleet when stacked, then route to the legal action.
-///
-/// Home Fleet (non-empty) → detach-then-sail; empty Home Fleet → tile-scoped
-/// [OpenNavalUnitsPanelEvent]; capital in-port eligible transfer →
-/// [InPortFleetMarkerActionsDialog] then Move or Transfer; other in-port →
-/// [MoveFleetDialog]; sea-going at sea → [showNavalMissionFlow]
-/// (Refs #4343, #4448, #4625).
+/// Map fleet-marker tap routing (Refs #4343, #4448, #4625).
 Future<void> showNavalFleetMarkerFlow({
   required BuildContext context,
   required Game game,
@@ -128,16 +119,16 @@ Future<bool> _tryCapitalInPortTransferThenMove({
 }) async {
   final capitalProvinceId = game.playerById(humanPlayerId)?.capitalProvinceId;
   final home = game.fleetById(homeFleetIdFor(humanPlayerId));
-  final canTransfer =
-      capitalProvinceId != null &&
-      home != null &&
-      isEligibleHomeTransferSourceFleet(
+  if (capitalProvinceId == null ||
+      home == null ||
+      !isEligibleHomeTransferSourceFleet(
         sourceFleet: fleet,
         humanPlayerId: humanPlayerId,
         capitalProvinceId: capitalProvinceId,
         topology: topology,
-      );
-  if (!canTransfer) return false;
+      )) {
+    return false;
+  }
   final choice = await showDialog<InPortFleetMarkerAction>(
     context: context,
     builder: (_) => const InPortFleetMarkerActionsDialog(),

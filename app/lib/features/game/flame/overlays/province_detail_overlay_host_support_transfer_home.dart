@@ -30,16 +30,14 @@ buildProvinceTransferToHomeFleetOverlayControls({
     capacity: 0,
   ),
 }) {
-  if (!canMutateViaUi) {
-    return ProvinceTransferToHomeFleetOverlayControls.hidden;
-  }
+  if (!canMutateViaUi) return ProvinceTransferToHomeFleetOverlayControls.hidden;
   final player = game.playerById(humanPlayerId);
   final capitalProvinceId = player?.capitalProvinceId;
-  if (player == null || capitalProvinceId == null) {
-    return ProvinceTransferToHomeFleetOverlayControls.hidden;
-  }
   final home = game.fleetById(homeFleetIdFor(humanPlayerId));
-  if (home == null || home.ownerId != humanPlayerId) {
+  if (player == null ||
+      capitalProvinceId == null ||
+      home == null ||
+      home.ownerId != humanPlayerId) {
     return ProvinceTransferToHomeFleetOverlayControls.hidden;
   }
 
@@ -80,17 +78,15 @@ buildProvinceTransferToHomeFleetOverlayControls({
         ? l10n.provinceOverlay_transferToHomeFleetTooltip
         : l10n.provinceOverlay_transferToHomeFleetDisabledTooltip,
     onTransferToHomeFleetTap: enabled
-        ? () {
-            showOverlayTransferToHomeFleetFlow(
-              context: context,
-              game: game,
-              humanPlayerId: humanPlayerId,
-              bus: bus,
-              homeFleet: home,
-              sourceFleets: sources,
-              cargo: cargo,
-            );
-          }
+        ? () => showOverlayTransferToHomeFleetFlow(
+            context: context,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            bus: bus,
+            homeFleet: home,
+            sourceFleets: sources,
+            cargo: cargo,
+          )
         : null,
   );
 }

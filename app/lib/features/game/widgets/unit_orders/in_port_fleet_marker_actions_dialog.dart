@@ -7,10 +7,9 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'move_units_dialog_base.dart';
 
-/// Capital in-port marker choice: Sail/Move vs Transfer (Refs #4625).
+/// Capital in-port marker: Sail/Move vs Transfer (DLG31004, Refs #4625).
 enum InPortFleetMarkerAction { sailMove, transferHome }
 
-/// DLG31004 — keeps Sail/Move while offering Transfer at the capital harbor.
 class InPortFleetMarkerActionsDialog extends StatelessWidget {
   const InPortFleetMarkerActionsDialog({super.key});
 

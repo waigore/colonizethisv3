@@ -18,13 +18,12 @@ Future<void> showOverlayTransferToHomeFleetFlow({
   if (sourceFleets.isEmpty) return;
   var source = sourceFleets.first;
   if (sourceFleets.length > 1) {
-    final ids = [for (final f in sourceFleets) f.id];
     final chosen = await showDialog<String>(
       context: context,
       builder: (_) => NavalMissionFleetPickerDialog(
         game: game,
         humanPlayerId: humanPlayerId,
-        fleetIds: ids,
+        fleetIds: [for (final f in sourceFleets) f.id],
       ),
     );
     if (chosen == null || !context.mounted) return;
