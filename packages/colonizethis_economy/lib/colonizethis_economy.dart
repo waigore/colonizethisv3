@@ -9,6 +9,7 @@ export 'src/economy/economy_consumption_phases.dart';
 export 'src/economy/economy_worker_consumption_rates.dart';
 export 'src/economy/game_lookup_helpers.dart';
 export 'src/economy/tile_extraction_pipeline.dart';
+export 'src/economy/build_improvement_yield_preview.dart';
 export 'src/economy/town_manufacturing_bonus.dart';
 export 'src/economy/trade_interception_constants.dart';
 export 'src/economy/trade_interception_scan.dart';

@@ -2,6 +2,57 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
+  String provinceOverlay_unitTarget(String type, String target) {
+    return '$type: $target';
+  }
+
+  @override
+  String provinceOverlay_foreignUnitStatus(
+    String owner,
+    String type,
+    String status,
+  ) {
+    return '$owner — $type: $status';
+  }
+
+  @override
+  String provinceOverlay_fleetSummary(
+    String owner,
+    String fleetLabel,
+    String shipParts,
+  ) {
+    return '$owner — $fleetLabel: $shipParts';
+  }
+
+  @override
+  String get provinceOverlay_sectionPolitical => 'Political';
+
+  @override
+  String get provinceOverlay_sectionTile => 'Tile';
+
+  @override
+  String get provinceOverlay_sectionEconomic => 'Economic';
+
+  @override
+  String get provinceOverlay_townProductionHeading => 'Town production';
+
+  @override
+  String provinceOverlay_townProductionQuantity(int quantity) {
+    return '+$quantity';
+  }
+
+  @override
+  String get provinceOverlay_extractionHeading => 'Extraction';
+
+  @override
+  String get provinceOverlay_availableHeading => 'Available';
+
+  @override
+  String provinceOverlay_extractionQuantity(int quantity, String name) {
+    return '$quantity $name';
+  }
+
+  @override
   String get commodity_grain => 'Grain';
 
   @override

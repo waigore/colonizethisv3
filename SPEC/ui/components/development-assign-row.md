@@ -20,6 +20,7 @@ Built from the cached `DevelopmentImproveAssignCandidate` (tile, connectivity, `
 - Level: `{current} → {current+1}` (same improvement-level language as map `{n} of {cap}`, not `I{n}`).
 - Cost: `formatWorkOrderMaterialCostSummary` when `materialCosts` is non-empty; omit the cost segment when waived to `{}`.
 - Capital: append **not bound to the capital** when `isCapitalConnected == false`.
+- Goods after work: append the shared next-yield gist (Refs #4627) when Assign is enabled.
 
 Example: `Next: Avalon (0, 0) · 1 → 2 · Cast iron 4, Lumber 4` (commodity order from `formatWorkOrderMaterialCostSummary`).
 
@@ -40,7 +41,7 @@ Auto-pick policy does not change. Do not auto-queue Road first. Do not nag idle 
 
 ## Widgetbook
 
-`Development Panel` → `Assign preview enabled` (and mobile): Land Enclosure, grain at level 1, enabled Assign showing `1 → 2` and lumber + cast iron 4.
+`Development Panel` → `Assign preview enabled` (and mobile): Land Enclosure, grain at level 1, enabled Assign showing `1 → 2` and lumber + cast iron 4. Next-yield gist variants (Refs #4627): **Assign preview — Build improvement next yield raise / road cap / town cap / disconnected**.
 
 ## Acceptance criteria
 
@@ -50,4 +51,5 @@ Auto-pick policy does not change. Do not auto-queue Road first. Do not nag idle 
 - Given the same tile would be a first improve with an active feedstock waiver that drops cast iron, when the row renders, then the preview matches `previewWorkOrderAffordAtTile` (lumber only or empty), not the full catalog pair.
 - Given **Assign** is disabled for materials or no Builder, when the row renders, then the UI layer shows the existing plain refusal tooltip and does not show the enabled spend preview, and no order is committed.
 - Given a disconnected auto-pick, when the row renders before tap, then the default preview states the tile is not bound to the capital; tapping **Assign** still opens Improve anyway / Road first / Cancel.
+- Given an enabled Assign, when the preview line renders, then it appends the same next-yield gist as `MAP20001` Build improvement (raise / road limit / town limit / disconnected).
 - Given a connected enabled **Assign**, when the player taps it, then the UI layer commits in one tap with no extra confirm dialog.

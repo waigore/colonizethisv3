@@ -36,8 +36,13 @@ int computeEffectiveTileYield({
   required bool usesRoadRule,
   required Set<String> portTileKeys,
   required Map<String, int> pathTransportCap,
+  int? improvementLevelOverride,
 }) {
-  final improvementLevel = tileState.improvementLevel(tileKey).clamp(0, 4);
+  final improvementLevel =
+      (improvementLevelOverride ?? tileState.improvementLevel(tileKey)).clamp(
+        0,
+        4,
+      );
   final roadLevel = tileState.roadLevel(tileKey);
   final isPort = portTileKeys.contains(tileKey);
   final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);

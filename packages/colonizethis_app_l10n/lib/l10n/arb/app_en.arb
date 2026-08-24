@@ -4040,6 +4040,35 @@
       }
     }
   },
+  "provinceOverlay_tileBuildImprovementYieldRaise": "After this work: {from} → {to} {good} if still linked",
+  "@provinceOverlay_tileBuildImprovementYieldRaise": {
+    "description": "Default-visible next-level extraction when Build improvement raises yield (Refs #4627).",
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementYieldRoadLimit": "After this work: still {n} {good} — the road is the limit",
+  "@provinceOverlay_tileBuildImprovementYieldRoadLimit": {
+    "description": "Default-visible next-level extraction when the road or path already caps yield (Refs #4627).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementYieldTownLimit": "After this work: still {n} {good} — town development is the limit",
+  "@provinceOverlay_tileBuildImprovementYieldTownLimit": {
+    "description": "Default-visible next-level extraction when town development already caps yield (Refs #4627).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementYieldDisconnected": "After this work: still none — not bound to the capital",
+  "@provinceOverlay_tileBuildImprovementYieldDisconnected": {
+    "description": "Default-visible next-level extraction when the tile is not capital-linked (Refs #4627)."
+  },
   "provinceOverlay_tileBuildRoadTooltip": "Build road",
   "@provinceOverlay_tileBuildRoadTooltip": {
     "description": "Tooltip and semantics label for province tile build-road shortcut action when enabled."
@@ -7404,6 +7433,22 @@
   "tileRadial_purchaseLand": "Purchase land",
   "@tileRadial_purchaseLand": {
     "description": "MAP30001 / MAP30002 catalog wedge label for Purchase land (Refs #4570)."
+  },
+  "provinceOverlay_tilePurchaseLandPayoffTradeable": "{good} still sells as {court}’s. After this work you get first bid on that sale, and gold when other courts buy it. The land stays theirs.",
+  "@provinceOverlay_tilePurchaseLandPayoffTradeable": {
+    "description": "Default-visible Purchase land payoff on tradeable tiles (Refs #4630).",
+    "placeholders": {
+      "good": { "type": "String" },
+      "court": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tilePurchaseLandPayoffRiches": "{good} from this tile will go to your treasury after this work. The land stays {court}’s.",
+  "@provinceOverlay_tilePurchaseLandPayoffRiches": {
+    "description": "Default-visible Purchase land payoff on riches tiles (Refs #4630).",
+    "placeholders": {
+      "good": { "type": "String" },
+      "court": { "type": "String" }
+    }
   },
   "tileRadial_upgradeTown": "Upgrade town",
   "@tileRadial_upgradeTown": {

@@ -9,6 +9,8 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_detail_ov
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -58,7 +60,13 @@ Widget buildTileResourceLabelRow({
     enabled: purchaseLandAction.enabled,
     hasMatchingUnits: purchaseLandAction.hasMatchingUnits,
   );
-  return Row(
+  final payoff = purchaseLandPayoffCopyForTile(
+    l10n: l10n,
+    game: game,
+    tileKey: selectedTileKey,
+    enabled: purchaseLandAction.enabled,
+  );
+  final resourceRow = Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       Text(l10n.provinceOverlay_tileResourcePrefix, style: bodyStyle),
@@ -76,6 +84,15 @@ Widget buildTileResourceLabelRow({
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
         ),
+    ],
+  );
+  if (payoff == null) return resourceRow;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      resourceRow,
+      PurchaseLandPayoffGistLine(text: payoff.gist),
     ],
   );
 }

@@ -107,6 +107,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widg
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen.dart';
+import 'package:colonizethis_app/features/game/screens/development/development_assign_preview.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_disconnected_assign_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
@@ -209,6 +210,7 @@ part 'catalog_transport_overlay_candidates.dart';
 part 'catalog_panel_map_build_port_stories.dart';
 part 'catalog_panel_map_build_railroad_stories.dart';
 part 'catalog_panel_map_build_road_stories.dart';
+part 'catalog_panel_map_build_improvement_yield_stories.dart';
 part 'catalog_panel_map_build_fort_stories.dart';
 part 'catalog_panel_map_purchase_land_stories.dart';
 part 'catalog_panel_map_upgrade_town_stories.dart';

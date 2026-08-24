@@ -111,6 +111,10 @@ const int grantAidDefaultAmount = 1000;
 /// Grant Aid step and multiple (pounds). Validation and UI stepper.
 const int grantAidAmountStep = 1000;
 
+/// Fixed Grant Aid relation-score modifier. Independent of the £ amount.
+/// SPEC/game/diplomacy.md § Foreign aid; [grantAidRelationUpdater].
+const int grantAidRelationScoreDelta = 5;
+
 /// Additional trade-deal relation boost **per subsidy percentage point** in
 /// effect between the trading parties (Refs #3753 R10 — `+0.2` per point, so a
 /// 10% subsidy adds `+2.0`). Added on top of [tradeDealRelationBoostBase] (and

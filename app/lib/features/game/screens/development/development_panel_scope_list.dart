@@ -21,6 +21,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
     required this.assignRowStateFor,
     required this.onAssign,
     required this.provinceDisplayNamesById,
+    this.nextYieldGistForTile,
   });
 
   final DevelopmentPanelRegionModel regionModel;
@@ -30,6 +31,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
   assignRowStateFor;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
   final Map<String, String> provinceDisplayNamesById;
+  final String? Function(String tileKey)? nextYieldGistForTile;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
             assignRowStateFor: assignRowStateFor,
             onAssign: onAssign,
             provinceDisplayNamesById: provinceDisplayNamesById,
+            nextYieldGistForTile: nextYieldGistForTile,
           ),
         ),
         const SizedBox(height: CtSpacing.m),
@@ -75,6 +78,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
               assignRowStateFor: assignRowStateFor,
               onAssign: onAssign,
               provinceDisplayNamesById: provinceDisplayNamesById,
+              nextYieldGistForTile: nextYieldGistForTile,
             ),
           ),
       ],
@@ -90,6 +94,7 @@ class _ScopeCard extends StatelessWidget {
     required this.assignRowStateFor,
     required this.onAssign,
     required this.provinceDisplayNamesById,
+    this.nextYieldGistForTile,
   });
 
   final AppLocalizations l10n;
@@ -101,6 +106,7 @@ class _ScopeCard extends StatelessWidget {
   assignRowStateFor;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
   final Map<String, String> provinceDisplayNamesById;
+  final String? Function(String tileKey)? nextYieldGistForTile;
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +149,7 @@ class _ScopeCard extends StatelessWidget {
                 onShowTiles: onShowTiles,
                 onAssign: onAssign,
                 provinceDisplayNamesById: provinceDisplayNamesById,
+                nextYieldGistForTile: nextYieldGistForTile,
               ),
             ),
         ],

@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
 
 String provinceOverlayPurchaseLandTooltip({
   required AppLocalizations l10n,
@@ -49,9 +50,20 @@ String provinceOverlayPurchaseLandTooltip({
     );
   }
   if (enabled && preview.treasuryAmount != null) {
-    return l10n.provinceOverlay_tilePurchaseLandTooltipWithCost(
+    final costLine = l10n.provinceOverlay_tilePurchaseLandTooltipWithCost(
       preview.treasuryAmount!,
     );
+    final payoff = purchaseLandPayoffCopyForTile(
+      l10n: l10n,
+      game: game,
+      tileKey: selectedTileKey,
+      enabled: true,
+    );
+    final teaching = payoff == null
+        ? null
+        : purchaseLandPayoffTeachingTooltip(l10n: l10n, copy: payoff);
+    if (teaching == null) return costLine;
+    return '$costLine\n$teaching';
   }
   return l10n.provinceOverlay_tilePurchaseLandTooltip;
 }

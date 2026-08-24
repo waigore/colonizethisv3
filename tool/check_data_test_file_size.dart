@@ -1,5 +1,5 @@
 // Physical line ratchet for colonizethis_data tests
-// (`repo.data_test_file_size`). Refs #4121, #4412.
+// (`repo.data_test_file_size`). Refs #4121, #4412, #4626.
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,11 +7,11 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int dataTestFileSizeCeiling = 320;
+const int dataTestFileSizeCeiling = 250;
 
 const String _dataTestsRelDir = 'packages/colonizethis_data/test';
 
-/// Empty allowlist: every data test file must stay ≤320 physical lines.
+/// Empty allowlist: every data test file must stay ≤250 physical lines.
 /// Override in tests via [grandfatheredPaths].
 const List<String> dataTestFileSizeGrandfatheredForTests = <String>[];
 

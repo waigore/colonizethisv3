@@ -2452,6 +2452,22 @@ abstract class AppLocalizations {
   /// Enabled build-improvement shortcut tooltip with material cost hint (Refs #4262).
   String provinceOverlay_tileBuildImprovementTooltipWithCost(String costs);
 
+  /// Next-level extraction when Build improvement would raise goods (Refs #4627).
+  String provinceOverlay_tileBuildImprovementYieldRaise(
+    int from,
+    int to,
+    String good,
+  );
+
+  /// Next-level extraction when the road or path already caps goods (Refs #4627).
+  String provinceOverlay_tileBuildImprovementYieldRoadLimit(int n, String good);
+
+  /// Next-level extraction when town development already caps goods (Refs #4627).
+  String provinceOverlay_tileBuildImprovementYieldTownLimit(int n, String good);
+
+  /// Next-level extraction when the tile is not bound to the capital (Refs #4627).
+  String get provinceOverlay_tileBuildImprovementYieldDisconnected;
+
   /// Disabled build-improvement shortcut when no Builder units exist.
   String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip;
 
@@ -2560,6 +2576,18 @@ abstract class AppLocalizations {
 
   /// Disabled purchase-land shortcut when treasury shortfall is primary.
   String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount);
+
+  /// Default-visible Purchase land payoff for tradeable goods (Refs #4630).
+  String provinceOverlay_tilePurchaseLandPayoffTradeable(
+    String good,
+    String court,
+  );
+
+  /// Default-visible Purchase land payoff for riches tiles (Refs #4630).
+  String provinceOverlay_tilePurchaseLandPayoffRiches(
+    String good,
+    String court,
+  );
 
   /// Tile section improvement row.
   String provinceOverlay_tileImprovement(String value);
