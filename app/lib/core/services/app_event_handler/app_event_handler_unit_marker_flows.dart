@@ -10,7 +10,7 @@ import '../../../features/game/flame/map_state/province_army_move_home_army.dart
 import '../../../features/game/widgets/shell/shell_player_context.dart';
 import '../../../features/game/widgets/unit_orders/army_stack_marker_action.dart';
 import '../../../features/game/widgets/unit_orders/home_army_detach_then_move_flow.dart';
-import '../../../features/game/widgets/unit_orders/naval_mission_flow.dart';
+import '../../../features/game/widgets/unit_orders/naval_fleet_marker_flow.dart';
 import '../../../features/game/widgets/unit_orders/overlay_army_move_flow.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
@@ -49,6 +49,7 @@ Future<void> appEventHandlerOpenNavalMissionMenu(
     preselectedFleetId: event.initialSelectedFleetId,
     tileScopeTileKey: event.tileScopeTileKey,
     overseasCargoUsed: cargo.used,
+    homeFleetCargoCapacity: cargo.capacity,
     isCargoUsedReliable: cargo.isCargoUsedReliable,
     cargoNotDefined: cargo.notDefined,
   );

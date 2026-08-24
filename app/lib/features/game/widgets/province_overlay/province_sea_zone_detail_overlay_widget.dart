@@ -12,6 +12,8 @@ import '../../flame/overlays/province_blockade_status_support.dart'
 import '../../flame/map_state/province_action_state_calculator.dart';
 import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
+import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
+    show ProvinceTransferToHomeFleetOverlayControls;
 import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import 'province_sea_zone_detail_overlay_chrome.dart';
@@ -58,6 +60,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onCombineArmiesTap,
     this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
     this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
+    this.transferToHomeFleet = ProvinceTransferToHomeFleetOverlayControls.hidden,
     this.blockadeStatus = ProvinceBlockadeStatus.none,
     this.stationSpy = kProvinceOverlayStationSpyHidden,
     this.counterEspionage = kProvinceOverlayCounterEspionageHidden,
@@ -113,6 +116,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final VoidCallback? onCombineArmiesTap;
   final ProvinceNavalMissionOverlayControls navalMission;
   final ProvinceDetachAndSailOverlayControls detachAndSail;
+  final ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet;
   final ProvinceBlockadeStatus blockadeStatus;
   final ProvinceOverlayStationSpyProps stationSpy;
   final ProvinceOverlayCounterEspionageProps counterEspionage;
@@ -160,6 +164,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
         draftOrders: draftOrders,
         selectedTileKey: selectedTileKey,
         navalMission: navalMission,
+        transferToHomeFleet: transferToHomeFleet,
       );
     }
     return provinceContent(
@@ -194,6 +199,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       onCombineArmiesTap: onCombineArmiesTap,
       navalMission: navalMission,
       detachAndSail: detachAndSail,
+      transferToHomeFleet: transferToHomeFleet,
       blockadeStatus: blockadeStatus,
       stationSpy: stationSpy,
       counterEspionage: counterEspionage,

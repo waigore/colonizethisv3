@@ -59,7 +59,7 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dar
 ## Trigger conditions
 
 - Opened from `NavalUnitsPanel` non-Home fleet row **Move** action; the **Home Fleet** row never shows Move ([naval-units-panel.md](naval-units-panel.md) § Move fleet).
-- Opened from map fleet-marker flow when the selected fleet is sea-going **in port** (`showNavalFleetMarkerFlow`; Refs #4343) — no mission menu.
+- Opened from map fleet-marker flow when the selected fleet is sea-going **in port** (`showNavalFleetMarkerFlow`; Refs #4343). At the capital, `DLG31004` may precede this dialog when Transfer is also legal (Refs #4625); Sail / Move still opens `DLG30001`. Other in-port markers skip the chooser.
 - Opened from Home Fleet detach-then-sail after a confirmed split, targeting the **new** sea-going fleet id from `NavalFleetsUpdatedEvent.game` (never the Home Fleet id; Refs #4448).
 - Opened from `DLG31001` **Sail / Move** when the selected fleet is sea-going **at sea**.
 - `_buildNavalMovePicks` derives candidates from `navalMoveTopologyPicksForFleet(topology, fleet)`. With zero topology picks the dialog opens in the empty state.

@@ -483,6 +483,53 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
     ],
   ),
   WidgetbookFolder(
+    name: 'In-port Fleet Marker Actions Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default',
+        builder: (context) {
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<InPortFleetMarkerAction>(
+                    context: innerContext,
+                    builder: (_) => const InPortFleetMarkerActionsDialog(),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open In-port Fleet Marker Actions'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Narrow',
+        builder: (context) {
+          return SizedBox(
+            width: 320,
+            height: 640,
+            child: _moveDialogStoryFrame(
+              open: (innerContext) {
+                return ElevatedButton(
+                  onPressed: () {
+                    showDialog<InPortFleetMarkerAction>(
+                      context: innerContext,
+                      builder: (_) => const InPortFleetMarkerActionsDialog(),
+                    );
+                  },
+                  // ignore: avoid_hardcoded_strings_in_widgets
+                  child: const Text('Open In-port Fleet Marker Actions'),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+  WidgetbookFolder(
     name: 'Overlay Army Move Picker Dialog',
     children: [
       WidgetbookUseCase(

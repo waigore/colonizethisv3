@@ -152,6 +152,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // (Refs #4350).
   'app/lib/features/game/widgets/unit_orders/show_move_army_dialog.dart',
   'app/lib/features/game/widgets/unit_orders/overlay_army_move_flow.dart',
+  // MAP20001 overlay Transfer to Home Fleet: optional DLG31003 then DLG40001.
+  // Same local-by-design rationale as overlay Move and NavalUnitsPanel home
+  // transfer — `SPEC/program/app-ui-wiring.md` § "Local by design" (Refs #4625).
+  'app/lib/features/game/widgets/unit_orders/overlay_transfer_to_home_fleet_flow.dart',
   // Home Army detach-then-move: Split then DLG20001 for the new field army.
   // Same local-by-design rationale as overlay Move/Invade (Refs #4407).
   'app/lib/features/game/widgets/unit_orders/home_army_detach_then_move_flow.dart',
@@ -170,6 +174,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
   // (Refs #4213, #4343).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
+  // Map fleet-marker routing extracted from `naval_mission_flow.dart`
+  // (`showNavalFleetMarkerFlow` / capital in-port Transfer choice). Same
+  // local-by-design rationale as the parent flow (Refs #4343, #4625).
+  'app/lib/features/game/widgets/unit_orders/naval_fleet_marker_flow.dart',
   // Overlay Blockade/Beachhead extracted picker + target confirm helpers
   // (`pickNavalMissionFleetId` / `confirmNavalTargetedMission`). Same
   // local-by-design rationale as `naval_mission_flow.dart`

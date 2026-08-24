@@ -377,6 +377,21 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'Detach a squadron from the Home Fleet, then choose an adjacent sea.';
 
   @override
+  String get provinceOverlay_transferToHomeFleetAction =>
+      'Transfer to Home Fleet';
+
+  @override
+  String get provinceOverlay_transferToHomeFleetTooltip =>
+      'Move hulls into the Home Fleet so cargo holds are available this turn.';
+
+  @override
+  String get provinceOverlay_transferToHomeFleetDisabledTooltip =>
+      'No sea-going fleet here can join the Home Fleet now.';
+
+  @override
+  String get inPortFleetMarker_chooseActionTitle => 'Choose an action';
+
+  @override
   String get provinceOverlay_selectArmyTitle => 'Select army';
 
   @override

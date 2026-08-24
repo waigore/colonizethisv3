@@ -10,6 +10,8 @@ import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
+import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
+    show ProvinceTransferToHomeFleetOverlayControls;
 import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'sea_zone_name_resolver.dart';
@@ -27,6 +29,8 @@ OverlayContent seaZoneContent({
   String? selectedTileKey,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
+  ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet =
+      ProvinceTransferToHomeFleetOverlayControls.hidden,
 }) {
   final regionId = prefixedIdRegionSegment(seaZoneId) ?? kRegionOldWorld;
   final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
@@ -104,6 +108,7 @@ OverlayContent seaZoneContent({
     pendingNavalPortProvinceId: null,
     pendingNavalSeaZoneId: seaZoneId,
     navalMission: navalMission,
+    transferToHomeFleet: transferToHomeFleet,
   );
 
   final tabLabels = [

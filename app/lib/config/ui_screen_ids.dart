@@ -68,6 +68,7 @@ abstract final class UiScreenIds {
   static const String navalMissionMenuDialog = 'DLG31001';
   static const String navalMissionTargetDialog = 'DLG31002';
   static const String navalMissionFleetPickerDialog = 'DLG31003';
+  static const String inPortFleetMarkerActionsDialog = 'DLG31004';
   static const String turnNewsDialog = 'DLG50001';
   static const String nextTurnConfirmation = 'DLG60001';
   static const String saveGameNameDialog = 'DLG70001';
