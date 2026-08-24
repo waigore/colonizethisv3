@@ -49,6 +49,7 @@ Future<void> appEventHandlerOpenNavalMissionMenu(
     preselectedFleetId: event.initialSelectedFleetId,
     tileScopeTileKey: event.tileScopeTileKey,
     overseasCargoUsed: cargo.used,
+    homeFleetCargoCapacity: cargo.capacity,
     isCargoUsedReliable: cargo.isCargoUsedReliable,
     cargoNotDefined: cargo.notDefined,
   );

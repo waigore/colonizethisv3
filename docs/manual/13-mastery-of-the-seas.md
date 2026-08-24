@@ -97,7 +97,7 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 2. If several fleets share the marker, pick one in `DLG31003` **Naval mission fleet picker dialog** (title **Select fleet**). Each row shows that fleet’s ship mix, and a pending mission line when one is already staged.
 3. If you picked the **Home Fleet with ships**, the next dialog is **Detach a squadron**, then `DLG30001` **Move fleet dialog** for the new sea-going fleet. The Home Fleet itself cannot sail.
 4. If you picked the **Home Fleet with no ships**, `UNIT30001` **Naval units panel** opens for that port so you can **Train**.
-5. If you picked a **sea-going fleet in port**, `DLG30001` **Move fleet dialog** opens so you can undock.
+5. If you picked a **sea-going fleet in port at your capital**, `DLG31004` asks **Sail / Move** or **Transfer to Home Fleet**. **Sail / Move** opens `DLG30001` **Move fleet dialog** so you can undock. **Transfer to Home Fleet** opens `DLG40001` for that fleet. If the fleet is in port at another owned harbor, `DLG30001` opens at once.
 6. If you picked a **sea-going fleet at sea**, `DLG31001` **Naval mission menu dialog** (title **Assign mission — Fleet \<id\>**) opens. Use **Sail / Move** on that menu to open `DLG30001` **Move fleet dialog** without going back to the left-side **Naval Units** list.
 7. On that mission menu, choose **Patrol**, **Defend**, **Blockade**, or **Beachhead**. Choose **Cancel pending mission** when a mission is already staged and you want to drop it.
 8. **Blockade** and **Beachhead** open `DLG31002` **Naval mission target dialog** (title **Select target**) so you choose an adjacent enemy province at war with you. Target rows keep the province name. Beachhead shows the same defender / unopposed / fort summary you see on invasion rows. Blockade shows whether the harbor has a port, is empty, or already has hostile fleets — or says the harbor is unknown when you cannot see it. You can confirm once a target is selected, even if some harbor details are unknown.
@@ -140,7 +140,7 @@ A fleet may have a pending **move** or a pending **mission** for the turn, never
 
 `UNIT30001` **Naval units panel** shows **Transfer to Home Fleet** on a regular fleet row when a Home Fleet exists in that region (Old World or New World). Tapping it opens `DLG40001` **Transfer to home fleet** (title **Transfer Ships to Home Fleet**).
 
-You can also start the same transfer from the map. On `MAP20001` **Province sea-zone overlay** **Naval**, when you own the capital and a sea-going fleet sits in that harbor, tap **Transfer to Home Fleet**. If that fleet is at sea in a sea next to the capital, open the overlay on that sea instead. One qualifying fleet opens `DLG40001` at once. Several qualifying fleets open a fleet picker first (ship mix on each row), then `DLG40001` for the fleet you choose. The control stays visible but cannot be used when the overlay is on the capital or that nearby sea and no sea-going fleet currently qualifies. It is hidden when you are only watching the game, on a foreign or inland non-capital land card, or on a sea that does not touch the capital.
+You can also start the same transfer from the map. On `MAP20001` **Province sea-zone overlay** **Naval**, when you own the capital and a sea-going fleet sits in that harbor, tap **Transfer to Home Fleet**. If that fleet is at sea in a sea next to the capital, open the overlay on that sea instead. One qualifying fleet opens `DLG40001` at once. Several qualifying fleets open a fleet picker first (ship mix on each row), then `DLG40001` for the fleet you choose. The control stays visible but cannot be used when the overlay is on the capital or that nearby sea and no sea-going fleet currently qualifies. It is hidden when you are only watching the game, on a foreign or inland non-capital land card, or on a sea that does not touch the capital. You may also tap that sea-going fleet’s harbor marker on `MAP10001`: at the capital, choose **Transfer to Home Fleet** without dropping **Sail / Move**.
 
 1. Move one or more ship types from the source list to the Home Fleet list.
 2. Read the line under the lists: remaining Home Fleet cargo holds after this transfer, this turn’s overseas load, and how many holds stay free for trade bids. Warships add no holds.
@@ -211,6 +211,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 - `SPEC/ui/naval-mission-menu-dialog.md`
 - `SPEC/ui/naval-mission-target-dialog.md`
 - `SPEC/ui/naval-mission-fleet-picker-dialog.md`
+- `SPEC/ui/in-port-fleet-marker-actions-dialog.md`
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ai/phase-planner-dispatch.md`

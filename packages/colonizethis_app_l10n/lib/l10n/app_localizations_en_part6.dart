@@ -389,6 +389,9 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'No sea-going fleet here can join the Home Fleet now.';
 
   @override
+  String get inPortFleetMarker_chooseActionTitle => 'Choose an action';
+
+  @override
   String get provinceOverlay_selectArmyTitle => 'Select army';
 
   @override

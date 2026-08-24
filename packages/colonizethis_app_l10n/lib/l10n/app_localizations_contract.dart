@@ -2878,6 +2878,9 @@ abstract class AppLocalizations {
   /// Disabled overlay Transfer to Home Fleet tooltip. Refs #4625.
   String get provinceOverlay_transferToHomeFleetDisabledTooltip;
 
+  /// DLG31004 title for capital in-port marker Sail/Move vs Transfer. Refs #4625.
+  String get inPortFleetMarker_chooseActionTitle;
+
   /// Multi-army picker title for overlay Move/Invade. Refs #4350.
   String get provinceOverlay_selectArmyTitle;
 

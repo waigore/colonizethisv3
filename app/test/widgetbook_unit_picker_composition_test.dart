@@ -36,6 +36,22 @@ void main() {
     },
   );
 
+  test(
+    'In-port Fleet Marker Actions Dialog folder includes Default + Narrow',
+    () {
+      findWidgetbookUseCase(
+        navalMissionDialogDirectories,
+        folderName: 'In-port Fleet Marker Actions Dialog',
+        useCaseName: 'Default',
+      );
+      findWidgetbookUseCase(
+        navalMissionDialogDirectories,
+        folderName: 'In-port Fleet Marker Actions Dialog',
+        useCaseName: 'Narrow',
+      );
+    },
+  );
+
   test('Overlay Army Move Picker Dialog folder includes Default + Narrow', () {
     findWidgetbookUseCase(
       navalMissionDialogDirectories,
