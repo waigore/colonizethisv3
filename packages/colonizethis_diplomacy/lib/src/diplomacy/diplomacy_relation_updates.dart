@@ -61,13 +61,14 @@ DiplomacyRelation Function(DiplomacyRelation?) peaceRelationUpdater(
   );
 };
 
-/// Updater applying a fixed Grant Aid relation modifier (+5, clamped) for the
-/// batched [RelationUpsertIndex] path (Refs #3419 step 5 / #4037).
+/// Updater applying a fixed Grant Aid relation modifier
+/// ([grantAidRelationScoreDelta], clamped) for the batched [RelationUpsertIndex]
+/// path (Refs #3419 step 5 / #4037).
 DiplomacyRelation Function(DiplomacyRelation?) grantAidRelationUpdater(
   String gpId,
   String targetId,
   int turn,
-) => _scoreDeltaUpdater(gpId, targetId, 5, turn);
+) => _scoreDeltaUpdater(gpId, targetId, grantAidRelationScoreDelta, turn);
 
 /// Updater applying a [boost] to the relation score (clamped) for the batched
 /// [RelationUpsertIndex] path (Refs #4037).

@@ -100,6 +100,15 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(
+        find.text(
+          'Effect: A larger gift this turn does not improve standing further.',
+        ),
+        findsOneWidget,
+      );
+      final standingWord = find.textContaining('Effect: Standing word ');
+      expect(standingWord, findsOneWidget);
+      final standingWordText = tester.widget<Text>(standingWord).data;
 
       await tester.tap(find.byKey(const Key('diplo_amount_plus')));
       await tester.pump();
@@ -112,6 +121,13 @@ void main() {
         find.text('Cost: £1000 from your treasury when the grant resolves.'),
         findsNothing,
       );
+      expect(
+        find.text(
+          'Effect: A larger gift this turn does not improve standing further.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(standingWordText!), findsOneWidget);
     },
   );
 
@@ -132,6 +148,8 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(find.textContaining('Standing word'), findsNothing);
+      expect(find.textContaining('larger gift'), findsNothing);
       expect(find.textContaining('market terms are affected'), findsNothing);
 
       await tester.tap(find.byKey(const Key('diplo_amount_plus')));
