@@ -20,7 +20,7 @@
 
 **Implementation status (GitHub #1912 / #4352 / #4450 / #4582 / #4606, game widgets and core services file size):** `repo.game_widgets_file_size` enforces a universal **250** physical-line cap for every `.dart` file under `app/lib/features/game/widgets/**` with no keyed waivers (wave-21 #4606, down from wave-20 **260**). Per-rule contract: `SPEC/program/game-widgets-file-size.md`. Sibling `repo.app_catalog_widgets_file_size` enforces the same **250** cap under `app/lib/widgets/**` (Refs #4352 AC4, #4582, #4606; `SPEC/program/app-catalog-widgets-file-size.md`). Wave-16 `repo.app_core_services_file_size` enforces the same **250** cap under `app/lib/core/services/**` with an empty grandfather (Refs #4450, #4582, #4606; `SPEC/program/app-core-services-file-size.md`). Wave-17 `repo.app_turn_resolution_file_size` enforces the same **250** cap under `app/lib/features/game/turn_resolution/**` with an empty grandfather (Refs #4512, #4582, #4606; `SPEC/program/app-turn-resolution-file-size.md`).
 
-**Implementation status (GitHub #1912, tech id literals):** `repo.tech_id_constants` treats the string values of every `const String kTechId*` in `packages/colonizethis_data/lib/src/tech_ids.dart` as the canonical tech-id set (replacing the prior `tech_catalog.dart` map-key scrape). `tech_catalog.dart` uses those same constants for map keys and `TechDefinition` ids so the catalog stays aligned with the checker.
+**Implementation status (GitHub #1912 / #4626, tech id literals):** `repo.tech_id_constants` treats the string values of every `const String kTechId*` in `packages/colonizethis_data/lib/src/tech_ids.dart` as the canonical tech-id set (replacing the prior `tech_catalog.dart` map-key scrape). `tech_catalog.dart` uses those same constants for map keys and `TechDefinition` ids so the catalog stays aligned with the checker. Top-level map keys in `packages/colonizethis_data/lib/src/tech_extraction_caps*.dart` that match catalog tech ids are in scope (they are otherwise skipped as `TopLevelVariableDeclaration`). Pin: `test/check_tech_id_constants_test.dart`.
 
 **Implementation status (GitHub #1912, custom exceptions):** `repo.custom_exceptions` (`tool/check_custom_exceptions.dart` + `packages/colonizethis_exception_lint`) enforces the generic-throw ban on in-scope domain files only; it does **not** read keyed waiver YAML or per-symbol / per-file exemption tables. Whole-tree scope follows `collectRepoLintDomainDartFiles` / `shouldEnforceDomainExceptions` (generated suffixes and test-path skips are scope wiring, not violation waivers). Per-rule contract: `SPEC/program/exception-enforcement.md`.
 
@@ -32,6 +32,7 @@
 
 - Given a `repo.*` rule implementation, when a maintainer audits it for waiver data, then the maintainer finds no keyed tables loaded solely to raise effective limits for specific in-scope symbols or files.
 - Given `SPEC/program/repo-lint.md`, when a contributor adds or changes a manifest rule, then the contributor does not introduce a new violation-allowlist mechanism.
+- Given a raw catalog tech-id string used as a map key under `packages/colonizethis_data/lib/src/tech_extraction_caps*.dart`, when `dart run tool/ct_repo_lint.dart` runs `repo.tech_id_constants`, then the checker fails naming that literal.
 
 ## Source of truth
 
