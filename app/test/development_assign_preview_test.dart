@@ -123,6 +123,6 @@ void main() {
     expect(line, contains('Avalon (0, 0)'));
     expect(line, contains('0 → 1'));
     expect(line, contains('if still linked'));
-    expect(line!.contains('build_improvement'), isFalse);
+    expect(line!.contains(kWorkTargetBuildImprovement), isFalse);
   });
 }

@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show MapBaseLayerFlags;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
@@ -205,9 +206,11 @@ class GameMapCanvasStack extends ConsumerWidget {
                         humanPlayerId: humanPlayerId,
                         tileKey: previewTileKey,
                         enabled: true,
-                        mapData: ref
-                            .read(gameServiceProvider)
-                            .getMapData(game.id),
+                        mapData: tryGetGameMapData(
+                          () => ref
+                              .read(gameServiceProvider)
+                              .getMapData(game.id),
+                        ),
                         canMutateViaUi: canMutateViaUi,
                       )
                     : null;

@@ -2,6 +2,8 @@
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show kWorkTargetBuildImprovement;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,7 +27,7 @@ void main() {
     expect(line.toLowerCase(), contains('grain'));
     expect(line.toLowerCase(), contains('still linked'));
     expect(line.toLowerCase(), isNot(contains('warehouse')));
-    expect(line, isNot(contains('build_improvement')));
+    expect(line, isNot(contains(kWorkTargetBuildImprovement)));
     expect(line, isNot(contains('this Next turn')));
   });
 
