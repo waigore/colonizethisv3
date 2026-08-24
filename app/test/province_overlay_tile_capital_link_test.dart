@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'province_overlay_tile_capital_link_overlay_cases.dart';
 import 'province_overlay_tile_capital_link_test_cases.dart';
 import 'province_overlay_tile_capital_link_test_fixtures.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart'
@@ -49,7 +50,10 @@ void main() {
           expect(preview.extractionFull, isNull);
         }
         if (case_.effectiveLessThanFull == true) {
-          expect(preview.extractionEffective! < preview.extractionFull!, isTrue);
+          expect(
+            preview.extractionEffective! < preview.extractionFull!,
+            isTrue,
+          );
         }
       });
     }
@@ -68,88 +72,99 @@ void main() {
           );
         }
         if (case_.expectNoExtraction) {
-          expect(find.textContaining('Extraction from this tile:'), findsNothing);
-        } else {
           expect(
-            find.textContaining(case_.extractionSnippet!),
-            findsOneWidget,
+            find.textContaining('Extraction from this tile:'),
+            findsNothing,
           );
+        } else {
+          expect(find.textContaining(case_.extractionSnippet!), findsOneWidget);
         }
       });
     }
   });
 
-  group('ProvinceSeaZoneDetailOverlay tile capital-link goldens (Refs #4149 / #4369)', () {
-    testWidgets('golden: disconnected tile shows stranded capital link only', (
-      WidgetTester tester,
-    ) async {
-      const boundaryKey = ValueKey<String>(
-        'province_overlay_tile_capital_link_disconnected_golden',
+  group(
+    'ProvinceSeaZoneDetailOverlay tile capital-link goldens (Refs #4149 / #4369)',
+    () {
+      testWidgets(
+        'golden: disconnected tile shows stranded capital link only',
+        (WidgetTester tester) async {
+          const boundaryKey = ValueKey<String>(
+            'province_overlay_tile_capital_link_disconnected_golden',
+          );
+          final game = tileCapitalLinkGame(
+            remoteImprovementLevel: 3,
+            remoteRoadLevel: 0,
+          );
+          await pumpTileCapitalLinkGolden(
+            tester,
+            boundaryKey: boundaryKey,
+            game: game,
+            displayId: kTileCapitalLinkRemoteProvinceId,
+            selectedTileKey: kTileCapitalLinkRemoteTile,
+            tileConnectivity: const ProvinceTileConnectivityDisplay(
+              capitalConnected: false,
+              extractionEffective: 0,
+              extractionFull: 3,
+            ),
+          );
+          expect(
+            find.textContaining('Capital link: Not connected'),
+            findsOneWidget,
+          );
+          expect(
+            find.textContaining('Extraction from this tile:'),
+            findsNothing,
+          );
+          expect(find.byKey(kProvinceTileDetailsActionKey), findsOneWidget);
+          await expectLater(
+            find.byKey(boundaryKey),
+            matchesGoldenFile(
+              'goldens/province_overlay_tile_capital_link_disconnected.png',
+            ),
+          );
+        },
       );
-      final game = tileCapitalLinkGame(
-        remoteImprovementLevel: 3,
-        remoteRoadLevel: 0,
-      );
-      await pumpTileCapitalLinkGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        game: game,
-        displayId: kTileCapitalLinkRemoteProvinceId,
-        selectedTileKey: kTileCapitalLinkRemoteTile,
-        tileConnectivity: const ProvinceTileConnectivityDisplay(
-          capitalConnected: false,
-          extractionEffective: 0,
-          extractionFull: 3,
-        ),
-      );
-      expect(
-        find.textContaining('Capital link: Not connected'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('Extraction from this tile:'), findsNothing);
-      expect(find.byKey(kProvinceTileDetailsActionKey), findsOneWidget);
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile(
-          'goldens/province_overlay_tile_capital_link_disconnected.png',
-        ),
-      );
-    });
 
-    testWidgets('golden: connected tile hides capital link and E of F by default', (
-      WidgetTester tester,
-    ) async {
-      const boundaryKey = ValueKey<String>(
-        'province_overlay_tile_capital_link_connected_golden',
+      testWidgets(
+        'golden: connected tile hides capital link and E of F by default',
+        (WidgetTester tester) async {
+          const boundaryKey = ValueKey<String>(
+            'province_overlay_tile_capital_link_connected_golden',
+          );
+          final game = tileCapitalLinkGame(
+            remoteImprovementLevel: 3,
+            remoteRoadLevel: 4,
+          );
+          await pumpTileCapitalLinkGolden(
+            tester,
+            boundaryKey: boundaryKey,
+            game: game,
+            displayId: kTileCapitalLinkProvinceId,
+            selectedTileKey: kTileCapitalLinkCapitalTile,
+            tileConnectivity: const ProvinceTileConnectivityDisplay(
+              capitalConnected: true,
+              pathTransportLevel: 2,
+              extractionEffective: 2,
+              extractionFull: 3,
+            ),
+          );
+          expect(find.textContaining('Capital link:'), findsNothing);
+          expect(
+            find.textContaining('Extraction from this tile:'),
+            findsNothing,
+          );
+          expect(find.byKey(kProvinceTileDetailsActionKey), findsOneWidget);
+          await expectLater(
+            find.byKey(boundaryKey),
+            matchesGoldenFile(
+              'goldens/province_overlay_tile_capital_link_connected.png',
+            ),
+          );
+        },
       );
-      final game = tileCapitalLinkGame(
-        remoteImprovementLevel: 3,
-        remoteRoadLevel: 4,
-      );
-      await pumpTileCapitalLinkGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        game: game,
-        displayId: kTileCapitalLinkProvinceId,
-        selectedTileKey: kTileCapitalLinkCapitalTile,
-        tileConnectivity: const ProvinceTileConnectivityDisplay(
-          capitalConnected: true,
-          pathTransportLevel: 2,
-          extractionEffective: 2,
-          extractionFull: 3,
-        ),
-      );
-      expect(find.textContaining('Capital link:'), findsNothing);
-      expect(find.textContaining('Extraction from this tile:'), findsNothing);
-      expect(find.byKey(kProvinceTileDetailsActionKey), findsOneWidget);
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile(
-          'goldens/province_overlay_tile_capital_link_connected.png',
-        ),
-      );
-    });
-  });
+    },
+  );
 
   group('tileConnectivityDetailLinesForTests', () {
     test('formats connected and extraction lines', () {
