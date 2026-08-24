@@ -1513,7 +1513,7 @@ rules:
 
   - rule_id: repo.data_lib_file_size
     group: structure
-    title: colonizethis_data lib/src files must stay at or below 300 physical lines (Refs #4412)
+    title: colonizethis_data lib/src files must stay at or below 250 physical lines (Refs #4412, #4626)
     spec: SPEC/program/dart-file-non-comment-line-size.md
     runner: dart
     script: tool/check_data_lib_file_size.dart
@@ -1528,7 +1528,7 @@ rules:
 
   - rule_id: repo.data_test_file_size
     group: testing
-    title: colonizethis_data test files must stay at or below 320 physical lines (Refs #4412)
+    title: colonizethis_data test files must stay at or below 250 physical lines (Refs #4412, #4626)
     spec: SPEC/program/data-test-file-size.md
     runner: dart
     script: tool/check_data_test_file_size.dart

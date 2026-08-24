@@ -1,7 +1,7 @@
 // Physical line ratchet for colonizethis_data lib source (`repo.data_lib_file_size`).
 //
-// Wave 6 (#4412) ratchets the wave-5 400 physical-line ceiling to 300 after
-// remaining topic splits. Generated suffixes are excluded.
+// Wave 7 (#4626) ratchets the wave-6 300 physical-line ceiling to 250 after
+// leftover topic splits. Generated suffixes are excluded.
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,12 +9,12 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-6 post-split target (≤300 physical lines).
-const int dataLibFileSizeCeiling = 300;
+/// Ratchet ceiling for wave-7 post-split target (≤250 physical lines).
+const int dataLibFileSizeCeiling = 250;
 
 const String _dataSrcRelDir = 'packages/colonizethis_data/lib/src';
 
-/// Empty allowlist: every hand-written data `lib/src` file must stay ≤300 physical
+/// Empty allowlist: every hand-written data `lib/src` file must stay ≤250 physical
 /// lines. Override in tests via [grandfatheredPaths].
 const List<String> dataFileSizeGrandfatheredForTests = <String>[];
 
@@ -88,7 +88,7 @@ int runCheckDataLibFileSize(
   violations.sort();
   logE(
     'check_data_lib_file_size: found ${violations.length} violation(s) under '
-    '$_dataSrcRelDir (wave-6 ceiling $ceiling; Refs #4412):',
+    '$_dataSrcRelDir (wave-7 ceiling $ceiling; Refs #4626):',
   );
   for (final violation in violations) {
     logE(' - $violation');

@@ -298,10 +298,10 @@ progress.
   the checker exits non-zero and reports that the entry must be removed from the
   allowlist.
 
-## colonizethis_data 300 physical-line gate (Refs #4072, #4292, #4412)
+## colonizethis_data 250 physical-line gate (Refs #4072, #4292, #4412, #4626)
 
 `colonizethis_data` holds ruleset constants and catalogs consumed by logic and
-AI, so it carries a **peer-aligned 300 physical-line cap** under
+AI, so it carries a **peer-aligned 250 physical-line cap** under
 `repo.data_lib_file_size` (mirroring economy/models/diplomacy packages).
 
 | Artifact | Role |
@@ -314,25 +314,25 @@ AI, so it carries a **peer-aligned 300 physical-line cap** under
 - Walks `packages/colonizethis_data/lib/src/**` recursively; only `*.dart`.
 - Skips generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`,
   `.gen.dart`) including `tech_effect_summary_embed.gen.dart`.
-- **Failure threshold:** strictly greater than 300 physical lines fails
-  (300 inclusive passes).
-- `dataFileSizeGrandfatheredForTests` is **empty** after the #4412 wave-6 splits.
+- **Failure threshold:** strictly greater than 250 physical lines fails
+  (250 inclusive passes).
+- `dataFileSizeGrandfatheredForTests` is **empty** after the #4626 wave-7 splits.
 
 ### Acceptance criteria
 
 - Given the repository root as cwd, when the System runs
   `runCheckDataLibFileSize`, then the checker exits zero because every
-  hand-written `colonizethis_data/lib/src` Dart file is at or below 300
+  hand-written `colonizethis_data/lib/src` Dart file is at or below 250
   physical lines.
 
 - Given a temporary workspace whose only data source file is a hand-written
-  `packages/colonizethis_data/lib/src/huge.dart` with more than 300
+  `packages/colonizethis_data/lib/src/huge.dart` with more than 250
   physical lines and an empty grandfather list, when the System runs
   `runCheckDataLibFileSize`, then the checker exits non-zero and names
   `huge.dart`.
 
 - Given a temporary workspace whose only data source file is
-  `tech_effect_summary_embed.gen.dart` and exceeds 300 physical lines, when the
+  `tech_effect_summary_embed.gen.dart` and exceeds 250 physical lines, when the
   System runs `runCheckDataLibFileSize`, then the checker exits zero.
 
 ## app flame 600 non-comment-line gate (Refs #3878)
