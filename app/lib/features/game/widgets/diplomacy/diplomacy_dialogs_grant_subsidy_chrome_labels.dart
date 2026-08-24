@@ -120,12 +120,14 @@ class GrantSubsidyConfirmPreview extends StatelessWidget {
     final theme = Theme.of(context);
     final base = theme.textTheme.bodySmall ?? const TextStyle();
     final style = base.copyWith(color: EditorialMonoclePalette.muted);
-    return Column(
+    return RepaintBoundary(
       key: const Key('grantOrSubsidyDialogPreview'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final line in lines) Text(line, style: style, softWrap: true),
-      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final line in lines) Text(line, style: style, softWrap: true),
+        ],
+      ),
     );
   }
 }
