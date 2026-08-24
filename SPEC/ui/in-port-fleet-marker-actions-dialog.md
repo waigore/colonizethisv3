@@ -71,4 +71,4 @@ Folder `In-port Fleet Marker Actions Dialog`:
 - Given a sea-going fleet in port at a non-capital owned port, when the marker flow selects that fleet, then the UI layer does not mount `DLG31004` and opens `DLG30001`.
 - Given Widgetbook folder **In-port Fleet Marker Actions Dialog**, when the catalog is inspected, then Default and Narrow use cases exist.
 
-Tests: `app/test/naval_fleet_marker_flow_test.dart`, `app/test/widgetbook_unit_picker_composition_test.dart`.
+Tests: `app/test/naval_fleet_marker_flow_test.dart`, `app/test/naval_fleet_marker_sail_move_test.dart`, `app/test/widgetbook_unit_picker_composition_test.dart`.
