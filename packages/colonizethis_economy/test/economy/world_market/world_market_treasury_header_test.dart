@@ -25,115 +25,97 @@ void main() {
   });
 
   group('marketTabBidBudgetHeaderState (Refs #4186)', () {
-    test('reports remaining budget after staged bid spend', () {
-      final game = buildTreasuryBidBudgetGame(
-        treasury: 100,
-        prices: const {'timber': 30},
-      );
-      final orders = humanOrdersWith([bidOrder('timber', 2)]);
-
-      final state = marketTabBidBudgetHeaderState(
-        game: game,
-        playerId: humanPlayerId,
-        orders: orders,
-        projectedTreasuryDelta: -60,
-        resourceRules: rules,
-      );
-
-      expect(state.budgetTotal, 100);
-      expect(state.budgetRemaining, 40);
-      expect(state.warningVisible, isFalse);
-    });
-
-    test('shows warning when remaining budget is zero after bids', () {
-      final game = buildTreasuryBidBudgetGame(
-        treasury: 60,
-        prices: const {'timber': 30},
-      );
-      final orders = humanOrdersWith([bidOrder('timber', 2)]);
-
-      final state = marketTabBidBudgetHeaderState(
-        game: game,
-        playerId: humanPlayerId,
-        orders: orders,
-        projectedTreasuryDelta: -60,
-        resourceRules: rules,
-      );
-
-      expect(state.budgetTotal, 60);
-      expect(state.budgetRemaining, 0);
-      expect(state.warningVisible, isTrue);
-    });
-
-    test('offers do not reduce remaining bid budget', () {
-      final game = buildTreasuryBidBudgetGame(
-        treasury: 100,
-        prices: const {'timber': 30},
-      );
-      final orders = humanOrdersWith([offerOrder('timber', 5)]);
-
-      final state = marketTabBidBudgetHeaderState(
-        game: game,
-        playerId: humanPlayerId,
-        orders: orders,
-        projectedTreasuryDelta: 0,
-        resourceRules: rules,
-      );
-
-      expect(state.budgetTotal, 100);
-      expect(state.budgetRemaining, 100);
-      expect(state.warningVisible, isFalse);
-    });
-
-    test('reduces total budget when non-bid deficit is projected', () {
-      final game = buildTreasuryBidBudgetGame(treasury: 100);
-      final orders = humanOrdersWith(const <TradeOrder>[]);
-
-      final state = marketTabBidBudgetHeaderState(
-        game: game,
-        playerId: humanPlayerId,
-        orders: orders,
-        projectedTreasuryDelta: -40,
-        resourceRules: rules,
-      );
-
-      expect(state.budgetTotal, 60);
-      expect(state.budgetRemaining, 60);
-      expect(state.warningVisible, isFalse);
-    });
-
-    test('falls back to raw treasury when projectedDelta is null', () {
-      final game = buildTreasuryBidBudgetGame(treasury: 75);
-      final orders = humanOrdersWith(const <TradeOrder>[]);
-
-      final state = marketTabBidBudgetHeaderState(
-        game: game,
-        playerId: humanPlayerId,
-        orders: orders,
-        projectedTreasuryDelta: null,
-        resourceRules: rules,
-      );
-
-      expect(state.budgetTotal, 75);
-      expect(state.budgetRemaining, 75);
-      expect(state.warningVisible, isFalse);
-    });
-
-    test('shows warning when total budget is zero with no staged bids', () {
-      final game = buildTreasuryBidBudgetGame(treasury: 0);
-      final orders = humanOrdersWith(const <TradeOrder>[]);
-
-      final state = marketTabBidBudgetHeaderState(
-        game: game,
-        playerId: humanPlayerId,
-        orders: orders,
-        projectedTreasuryDelta: 0,
-        resourceRules: rules,
-      );
-
-      expect(state.budgetTotal, 0);
-      expect(state.budgetRemaining, 0);
-      expect(state.warningVisible, isTrue);
-    });
+    runLabeledScenarios(
+      <
+        ({
+          String label,
+          int treasury,
+          Map<String, int> prices,
+          List<TradeOrder> staged,
+          int? projectedTreasuryDelta,
+          int budgetTotal,
+          int budgetRemaining,
+          bool warningVisible,
+        })
+      >[
+        (
+          label: 'reports remaining budget after staged bid spend',
+          treasury: 100,
+          prices: const {'timber': 30},
+          staged: [bidOrder('timber', 2)],
+          projectedTreasuryDelta: -60,
+          budgetTotal: 100,
+          budgetRemaining: 40,
+          warningVisible: false,
+        ),
+        (
+          label: 'shows warning when remaining budget is zero after bids',
+          treasury: 60,
+          prices: const {'timber': 30},
+          staged: [bidOrder('timber', 2)],
+          projectedTreasuryDelta: -60,
+          budgetTotal: 60,
+          budgetRemaining: 0,
+          warningVisible: true,
+        ),
+        (
+          label: 'offers do not reduce remaining bid budget',
+          treasury: 100,
+          prices: const {'timber': 30},
+          staged: [offerOrder('timber', 5)],
+          projectedTreasuryDelta: 0,
+          budgetTotal: 100,
+          budgetRemaining: 100,
+          warningVisible: false,
+        ),
+        (
+          label: 'reduces total budget when non-bid deficit is projected',
+          treasury: 100,
+          prices: const {},
+          staged: const <TradeOrder>[],
+          projectedTreasuryDelta: -40,
+          budgetTotal: 60,
+          budgetRemaining: 60,
+          warningVisible: false,
+        ),
+        (
+          label: 'falls back to raw treasury when projectedDelta is null',
+          treasury: 75,
+          prices: const {},
+          staged: const <TradeOrder>[],
+          projectedTreasuryDelta: null,
+          budgetTotal: 75,
+          budgetRemaining: 75,
+          warningVisible: false,
+        ),
+        (
+          label: 'shows warning when total budget is zero with no staged bids',
+          treasury: 0,
+          prices: const {},
+          staged: const <TradeOrder>[],
+          projectedTreasuryDelta: 0,
+          budgetTotal: 0,
+          budgetRemaining: 0,
+          warningVisible: true,
+        ),
+      ],
+      (scenario) {
+        final game = buildTreasuryBidBudgetGame(
+          treasury: scenario.treasury,
+          prices: scenario.prices,
+        );
+        final state = marketTabBidBudgetHeaderState(
+          game: game,
+          playerId: humanPlayerId,
+          orders: humanOrdersWith(scenario.staged),
+          projectedTreasuryDelta: scenario.projectedTreasuryDelta,
+          resourceRules: rules,
+        );
+        expect(state.budgetTotal, scenario.budgetTotal);
+        expect(state.budgetRemaining, scenario.budgetRemaining);
+        expect(state.warningVisible, scenario.warningVisible);
+      },
+      labelOf: (s) => s.label,
+    );
   });
 }
