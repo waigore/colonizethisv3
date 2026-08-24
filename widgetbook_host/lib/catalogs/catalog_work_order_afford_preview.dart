@@ -84,6 +84,38 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
               'After this work: still none — not bound to the capital',
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Purchase land tradeable gist',
+        builder: (context) {
+          final l10n = AppLocalizationsEn();
+          return _workOrderAffordSelectionPromptStory(
+            affordPreview: const WorkOrderAffordPreview(
+              treasuryAmount: 150,
+              canAfford: true,
+            ),
+            payoffGist: l10n.provinceOverlay_tilePurchaseLandPayoffTradeable(
+              'Timber',
+              'Portugal',
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Purchase land riches gist',
+        builder: (context) {
+          final l10n = AppLocalizationsEn();
+          return _workOrderAffordSelectionPromptStory(
+            affordPreview: const WorkOrderAffordPreview(
+              treasuryAmount: 750,
+              canAfford: true,
+            ),
+            payoffGist: l10n.provinceOverlay_tilePurchaseLandPayoffRiches(
+              'Gold',
+              'Ashanti',
+            ),
+          );
+        },
+      ),
     ],
   ),
 ];
@@ -91,13 +123,14 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
 Widget _workOrderAffordSelectionPromptStory({
   required WorkOrderAffordPreview affordPreview,
   String? nextYieldGist,
+  String? payoffGist,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     child: SizedBox(
       width: 520,
-      height: 200,
+      height: 220,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -107,6 +140,7 @@ Widget _workOrderAffordSelectionPromptStory({
             onCancel: () {},
             affordPreview: affordPreview,
             nextYieldGist: nextYieldGist,
+            payoffGist: payoffGist,
           ),
         ],
       ),

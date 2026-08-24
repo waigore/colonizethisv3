@@ -14,9 +14,8 @@ import '../../../../../widgets/resource_icon.dart';
 import '../shared/region_labels.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart'
     show GameMapData;
-import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
-import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import 'civilian_units_panel_support_resolution.dart';
+import 'civilian_units_panel_unit_row_gists.dart';
 import 'civilian_units_panel_unit_row_pending.dart';
 import 'work_order_afford_preview_ui.dart';
 
@@ -113,6 +112,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   required String humanPlayerId,
   GameMapData? mapData,
   String? buildImprovementShortcutTargetTileKey,
+  String? purchaseLandShortcutTargetTileKey,
   bool readOnly = false,
 }) {
   final pendingMove = pending.pendingMoveOrder;
@@ -178,6 +178,14 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
               ),
             ),
           ),
+        ...civilianUnitsPanelPendingWorkGistChildren(
+          l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          pendingWork: pendingWork,
+          readOnly: readOnly,
+          mapData: mapData,
+        ),
         if (pendingAfford != null &&
             pendingAfford.hasCostPreview &&
             !pendingAfford.canAfford)
@@ -188,22 +196,6 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
               preview: pendingAfford,
               muted: true,
             ),
-          ),
-        if (pendingWork.target == kWorkTargetBuildImprovement)
-          Builder(
-            builder: (context) {
-              final gist = buildImprovementNextYieldGistForTile(
-                l10n: l10n,
-                game: game,
-                humanPlayerId: humanPlayerId,
-                tileKey: pendingWork.targetTileKey,
-                enabled: true,
-                mapData: mapData,
-                canMutateViaUi: !readOnly,
-              );
-              if (gist == null) return const SizedBox.shrink();
-              return BuildImprovementYieldGistLine(text: gist);
-            },
           ),
       ],
     );
@@ -217,26 +209,15 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
       ),
     ),
   );
-  final shortcutTile = buildImprovementShortcutTargetTileKey;
-  if (readOnly || shortcutTile == null || shortcutTile.isEmpty) {
-    return assigned;
-  }
-  final gist = buildImprovementNextYieldGistForTile(
+  return wrapCivilianUnitsPanelAssignedWithShortcutGists(
+    assigned: assigned,
     l10n: l10n,
     game: game,
     humanPlayerId: humanPlayerId,
-    tileKey: shortcutTile,
-    enabled: true,
+    readOnly: readOnly,
     mapData: mapData,
-    canMutateViaUi: !readOnly,
-  );
-  if (gist == null) return assigned;
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      assigned,
-      BuildImprovementYieldGistLine(text: gist),
-    ],
+    buildImprovementShortcutTargetTileKey:
+        buildImprovementShortcutTargetTileKey,
+    purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
   );
 }

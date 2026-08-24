@@ -26,11 +26,13 @@ A **Great Power** is a playable nation. The **world market** is the one shared p
 
 If a Merchant finished **Purchase land** on a Minor Nation or Tribe tile, that land’s sales still list under the Minor or Tribe, but you keep three privileges:
 
+You can also read that payoff **before** you assign: enabled **Purchase land** on the province Tile row, the tile ring, the map banner, and the Merchant row uses the same gist (first bid and gold on tradeable sales, or riches into your treasury; the land stays theirs). Trade’s **First right** chip still appears after the purchase is recorded.
+
 1. **Bid priority** — your bid on that good is filled from that tile’s sale before ordinary rank and before **Favored Trading Partner**.
 2. **Overseas profit** — when another Great Power buys those goods, you receive a treasury share that grows with how friendly that court is toward the seller (hidden relation). Other Great Powers that hold an **Embassy** with the seller may receive a smaller share (one tenth of their relation portion), even if they do not own the tile. Embassy holders can still receive that smaller share on Minor or Tribe sales when no tile was purchased.
 3. **Riches** from a purchased gold, silver, gems, diamonds, or spices tile go into **your** treasury, not the Minor’s.
 
-**Favored Trading Partner** is a diplomacy agreement that only breaks ties inside the same bid rank when a Great Power sells; it never beats first right of refusal.
+**Favored Trading Partner** is a diplomacy agreement you offer with **Establish Favored partner** on **Diplomacy screen** (or answer on **Favored Trading Partner dialogue overlay** when a rival offers it). It only breaks ties inside the same bid rank when a Great Power sells; it never beats first right of refusal, and it does not change prices.
 
 When a Minor Nation or Tribe sells and several Great Powers bid at the same rank (after first-right fills), buyers who hold a **Consulate** or higher with that seller are served first, then by hidden relation. Great-Power sellers keep the ordinary order. This never beats first right of refusal either.
 
@@ -40,7 +42,7 @@ A **boycott** (Chapter 10) can leave bids and colony-Tribe sales between the boy
 
 ### Where you act in the UI
 
-1. On **Game screen**, tap the **Trade** icon on the left of the map to open **Trade screen**.
+1. On **Game screen**, tap the **Trade** icon on the left of the map to open **Trade screen**. You can also tap a tradeable good on **Production screen** **Available**; that opens the same Trade screen on **Market**, already focused on that good.
 2. Stay on the **Market** tab. Goods are grouped under **Food**, **Raw Materials**, and **Manufactured**.
 3. On a row, tap **None**, **Bid**, or **Offer**, then use **−** / **+** to set quantity. Bid and offer cannot both be on for the same good.
 4. Watch **Bid goods: U of C**, **Cargo remaining: X**, and **Bid budget: R of B**. Tap **?** beside a limit for a short explanation.
@@ -49,7 +51,7 @@ A **boycott** (Chapter 10) can leave bids and colony-Tribe sales between the boy
 7. A number in parentheses **(N)** beside the name is how many you can still offer after industry reservations and staged offers.
 8. When you still hold first right on that good, **First right** appears beside the name — rest on it (or press and hold) for bid priority and overseas profit. Riches never appear as rows.
 9. On **Deal Book**, read **Your bids** and **Your offers**. Filled lines sit under **Filled** as **Timber — 5 at £30 = £150** (display name, not a catalog id). Leftovers sit under **Still open** as **Timber — 5**, sometimes with a short reason beneath (for example treasury ran short, no matching sales last turn). Tap **Details** on a reason line for one next-step hint. When a leftover bid or offer did not carry forward because cargo or stores no longer covered it, **Did not stay open** lists that vanished order. Filled lines may show **First right** or **Favored partner**. When rivals bought goods under your purchased-tile rights last turn, **Overseas profit** lists each credited good, quantity, and treasury amount. Totals are **Total spent** and **Total received**. Empty panels read **No bids placed last turn.** / **No offers placed last turn.**
-10. On **Production screen**, the **Available** amounts for tradeable goods already match the Market **(N)** figure — they are not a separate labelled readout.
+10. On **Production screen**, the **Available** amounts for tradeable goods already match the Market **(N)** figure — they are not a separate labelled readout. Tap that cell to jump to this Market row.
 11. After you confirm **Next turn**, the game matches deals. Confirm fills on Deal Book and on **Player turn event feed**. Market lines look like **Market: bought £240 · sold £160**. Overseas-profit lines look like **Overseas profit credited: £… Tap to open Deal Book.** Tap either kind of line to open Deal Book. Do not look to turn news for market fills.
 
 ### Trade Counsel

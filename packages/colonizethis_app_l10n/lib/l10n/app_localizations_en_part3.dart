@@ -809,6 +809,24 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_tilePurchaseLandPayoffTradeable(
+    String good,
+    String court,
+  ) {
+    return '$good still sells as $court’s. After this work you get first bid '
+        'on that sale, and gold when other courts buy it. The land stays theirs.';
+  }
+
+  @override
+  String provinceOverlay_tilePurchaseLandPayoffRiches(
+    String good,
+    String court,
+  ) {
+    return '$good from this tile will go to your treasury after this work. '
+        'The land stays $court’s.';
+  }
+
+  @override
   String provinceOverlay_tileImprovement(String value) {
     return 'Improvement: $value';
   }
@@ -966,56 +984,5 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
-  }
-
-  @override
-  String provinceOverlay_unitTarget(String type, String target) {
-    return '$type: $target';
-  }
-
-  @override
-  String provinceOverlay_foreignUnitStatus(
-    String owner,
-    String type,
-    String status,
-  ) {
-    return '$owner — $type: $status';
-  }
-
-  @override
-  String provinceOverlay_fleetSummary(
-    String owner,
-    String fleetLabel,
-    String shipParts,
-  ) {
-    return '$owner — $fleetLabel: $shipParts';
-  }
-
-  @override
-  String get provinceOverlay_sectionPolitical => 'Political';
-
-  @override
-  String get provinceOverlay_sectionTile => 'Tile';
-
-  @override
-  String get provinceOverlay_sectionEconomic => 'Economic';
-
-  @override
-  String get provinceOverlay_townProductionHeading => 'Town production';
-
-  @override
-  String provinceOverlay_townProductionQuantity(int quantity) {
-    return '+$quantity';
-  }
-
-  @override
-  String get provinceOverlay_extractionHeading => 'Extraction';
-
-  @override
-  String get provinceOverlay_availableHeading => 'Available';
-
-  @override
-  String provinceOverlay_extractionQuantity(int quantity, String name) {
-    return '$quantity $name';
   }
 }

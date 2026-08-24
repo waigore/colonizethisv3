@@ -17,7 +17,5 @@ class TileRadialSpokeView {
   final bool enabled;
   final String label;
   final String tooltip;
-
-  /// Default-visible extra line (Build improvement next-yield gist).
   final String? caption;
 }

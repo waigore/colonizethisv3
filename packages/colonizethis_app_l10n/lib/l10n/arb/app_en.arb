@@ -7434,6 +7434,22 @@
   "@tileRadial_purchaseLand": {
     "description": "MAP30001 / MAP30002 catalog wedge label for Purchase land (Refs #4570)."
   },
+  "provinceOverlay_tilePurchaseLandPayoffTradeable": "{good} still sells as {court}’s. After this work you get first bid on that sale, and gold when other courts buy it. The land stays theirs.",
+  "@provinceOverlay_tilePurchaseLandPayoffTradeable": {
+    "description": "Default-visible Purchase land payoff on tradeable tiles (Refs #4630).",
+    "placeholders": {
+      "good": { "type": "String" },
+      "court": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tilePurchaseLandPayoffRiches": "{good} from this tile will go to your treasury after this work. The land stays {court}’s.",
+  "@provinceOverlay_tilePurchaseLandPayoffRiches": {
+    "description": "Default-visible Purchase land payoff on riches tiles (Refs #4630).",
+    "placeholders": {
+      "good": { "type": "String" },
+      "court": { "type": "String" }
+    }
+  },
   "tileRadial_upgradeTown": "Upgrade town",
   "@tileRadial_upgradeTown": {
     "description": "MAP30001 / MAP30002 catalog wedge label for Upgrade town (Refs #4570)."

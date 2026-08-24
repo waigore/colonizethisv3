@@ -2577,6 +2577,18 @@ abstract class AppLocalizations {
   /// Disabled purchase-land shortcut when treasury shortfall is primary.
   String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount);
 
+  /// Default-visible Purchase land payoff for tradeable goods (Refs #4630).
+  String provinceOverlay_tilePurchaseLandPayoffTradeable(
+    String good,
+    String court,
+  );
+
+  /// Default-visible Purchase land payoff for riches tiles (Refs #4630).
+  String provinceOverlay_tilePurchaseLandPayoffRiches(
+    String good,
+    String court,
+  );
+
   /// Tile section improvement row.
   String provinceOverlay_tileImprovement(String value);
 

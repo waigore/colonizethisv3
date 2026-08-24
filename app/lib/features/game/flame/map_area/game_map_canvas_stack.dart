@@ -13,6 +13,7 @@ import '../../../../providers/map_province_panel_provider.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
+import '../../widgets/units/civilian/purchase_land_payoff_copy.dart';
 import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
 import '../../widgets/map_radial/game_map_tile_radial_host.dart';
 import 'game_map_canvas_stack_hover.dart';
@@ -207,12 +208,22 @@ class GameMapCanvasStack extends ConsumerWidget {
                         tileKey: previewTileKey,
                         enabled: true,
                         mapData: tryGetGameMapData(
-                          () => ref
-                              .read(gameServiceProvider)
-                              .getMapData(game.id),
+                          () =>
+                              ref.read(gameServiceProvider).getMapData(game.id),
                         ),
                         canMutateViaUi: canMutateViaUi,
                       )
+                    : null;
+                final payoffGist =
+                    workTarget == kWorkTargetPurchaseLand &&
+                        previewTileKey != null &&
+                        !selectionPromptUsesRelocateCopy
+                    ? purchaseLandPayoffCopyForTile(
+                        l10n: appL10n(context),
+                        game: game,
+                        tileKey: previewTileKey,
+                        enabled: true,
+                      )?.gist
                     : null;
                 return GameMapCanvasStackSelectionPrompt(
                   isNarrow: isNarrow,
@@ -221,6 +232,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   usesRelocateCopy: selectionPromptUsesRelocateCopy,
                   affordPreview: affordPreview,
                   nextYieldGist: nextYieldGist,
+                  payoffGist: payoffGist,
                 );
               },
             ),

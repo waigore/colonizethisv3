@@ -10,6 +10,7 @@ import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
 import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
+import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
 ///
@@ -22,6 +23,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     this.usesRelocateCopy = false,
     this.affordPreview,
     this.nextYieldGist,
+    this.payoffGist,
     super.key,
   });
 
@@ -31,13 +33,14 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final bool usesRelocateCopy;
   final WorkOrderAffordPreview? affordPreview;
   final String? nextYieldGist;
+  final String? payoffGist;
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final preview = affordPreview;
-    final showAfford =
-        preview != null && preview.hasCostPreview && !usesRelocateCopy;
+    final yieldGist = nextYieldGist;
+    final landGist = payoffGist;
     return Positioned(
       top: 8,
       left: 0,
@@ -68,15 +71,21 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
                   usesRelocateCopy: usesRelocateCopy,
                   onCancel: onCancel,
                 ),
-                if (showAfford)
+                if (preview != null &&
+                    preview.hasCostPreview &&
+                    !usesRelocateCopy)
                   _GameMapSelectionPromptAffordSection(
                     l10n: l10n,
-                    preview: preview!,
+                    preview: preview,
                   ),
-                if (nextYieldGist != null &&
-                    nextYieldGist!.isNotEmpty &&
+                if (yieldGist != null &&
+                    yieldGist.isNotEmpty &&
                     !usesRelocateCopy)
-                  BuildImprovementYieldGistLine(text: nextYieldGist!),
+                  BuildImprovementYieldGistLine(text: yieldGist),
+                if (landGist != null &&
+                    landGist.isNotEmpty &&
+                    !usesRelocateCopy)
+                  PurchaseLandPayoffGistLine(text: landGist),
               ],
             ),
           ),
