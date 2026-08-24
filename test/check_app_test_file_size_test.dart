@@ -5,8 +5,8 @@ import 'package:test/test.dart';
 import '../tool/check_app_test_file_size.dart';
 
 void main() {
-  test('wave-21 app/test ceiling is 380', () {
-    expect(maxAppTestPhysicalLinesForTests(), 380);
+  test('wave-22 app/test ceiling is 350', () {
+    expect(maxAppTestPhysicalLinesForTests(), 350);
     expect(appTestFileSizeAllowlistForTests, isEmpty);
   });
 
