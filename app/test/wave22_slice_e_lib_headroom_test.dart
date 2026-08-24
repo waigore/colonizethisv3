@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// Pins wave-22 Slice E headroom: topic-split lib files stay ≤230 physical lines.
 void main() {
