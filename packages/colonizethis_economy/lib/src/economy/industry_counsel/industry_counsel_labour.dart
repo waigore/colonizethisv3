@@ -4,7 +4,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../economy_consumption_phases.dart';
+import '../economy_worker_consumption_rates.dart';
 import 'industry_counsel_constants.dart';
 import 'industry_counsel_growth_stage.dart';
 import 'industry_counsel_scored_candidate.dart';
