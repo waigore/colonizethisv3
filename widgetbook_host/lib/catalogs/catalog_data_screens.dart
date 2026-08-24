@@ -728,9 +728,56 @@ List<WidgetbookNode> get developmentScreenDirectories => [
         builder: (context) =>
             mobileViewport(context, _developmentPanelAssignPreviewStory()),
       ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield raise',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (0, 0) · 0 → 1 · Lumber 1 · Cast iron 1 · '
+          'After this work: 0 → 1 Grain if still linked',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield road cap',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (0, 0) · 2 → 3 · Lumber 4 · Cast iron 4 · '
+          'After this work: still 2 Timber — the road is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield town cap',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (0, 0) · 2 → 3 · Lumber 4 · Cast iron 4 · '
+          'After this work: still 2 Grain — town development is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield disconnected',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (1, 0) · 0 → 1 · Lumber 1 · Cast iron 1 · '
+          'not bound to the capital · '
+          'After this work: still none — not bound to the capital',
+        ),
+      ),
     ],
   ),
 ];
+
+Widget _developmentAssignNextYieldCaptionStory(String previewLine) {
+  return widgetbookEditorialMonocleApp(
+    child: Builder(
+      builder: (context) {
+        return SizedBox(
+          width: 420,
+          child: DevelopmentAssignPreviewCaption(
+            scopeKey: 'nextYield',
+            commodityId: 'grain',
+            previewLine: previewLine,
+            textTheme: Theme.of(context).textTheme,
+          ),
+        );
+      },
+    ),
+  );
+}
 
 /// Victory screen stories. SPEC/ui/victory-panel.md.
 List<WidgetbookNode> get victoryScreenDirectories => [
