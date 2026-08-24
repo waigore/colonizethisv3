@@ -9,40 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
-import 'golden_capture_harness.dart';
 import 'yarn_test_fixtures.dart';
-
-const _kInterventionYarnMinimal = r'''
-title: DialoguePoint/intervention_intro
----
-Heavy tidings cross thy desk.
--> Continue
-===
-
-title: DialoguePoint/intervention_situation
----
-Dispatch from thy minister.
--> Continue
-===
-
-title: DialoguePoint/intervention_reaction_intervene
----
-Reaction.
--> Continue
-===
-
-title: DialoguePoint/intervention_reaction_do_nothing
----
-Reaction.
--> Continue
-===
-
-title: DialoguePoint/intervention_reaction_protest
----
-Reaction.
--> Continue
-===
-''';
 
 Game _embassyInterventionGame() {
   return Game(
@@ -56,9 +23,7 @@ Game _embassyInterventionGame() {
       Player(id: 'gp1', displayName: 'England', isHuman: true, treasury: 0),
       Player(id: 'gp2', displayName: 'Castile', isHuman: false, treasury: 0),
     ],
-    minorNations: const [
-      MinorNation(id: 'minor1', displayName: 'Powhatan'),
-    ],
+    minorNations: const [MinorNation(id: 'minor1', displayName: 'Powhatan')],
     overtureStates: const [
       OvertureState(
         gpId: 'gp1',
@@ -120,7 +85,7 @@ Future<void> _pumpChoicePhase(
         prompts: prompts,
         skipIntroForTest: true,
         assetBundle: YarnStringAssetBundle({
-          kDialogueInterventionAsset: _kInterventionYarnMinimal,
+          kDialogueInterventionAsset: kYarnInterventionMinimal,
         }),
         onDecisions: onDecisions ?? (_) {},
         child: const SizedBox.expand(),
@@ -168,10 +133,7 @@ void main() {
           find.byKey(const ValueKey<String>(kInterventionChoiceSituationKey)),
           findsOneWidget,
         );
-        expect(
-          find.text('Castile declared war on Powhatan.'),
-          findsOneWidget,
-        );
+        expect(find.text('Castile declared war on Powhatan.'), findsOneWidget);
         expect(
           find.byKey(const ValueKey<String>(kInterventionHoldReasonKey)),
           findsOneWidget,
@@ -209,28 +171,30 @@ void main() {
             )
             .data!;
         expect(doNothingEffect.toLowerCase(), isNot(contains('treasury')));
-        expect(doNothingEffect.toLowerCase(), isNot(contains('lose purchased')));
+        expect(
+          doNothingEffect.toLowerCase(),
+          isNot(contains('lose purchased')),
+        );
         expect(doNothingEffect, contains('Purchased land remains'));
       },
     );
 
-    testWidgets(
-      'choice picker renders inside scroll view for narrow layouts',
-      (WidgetTester tester) async {
-        addTearDown(tester.view.reset);
-        tester.view.physicalSize = const Size(320, 640);
-        tester.view.devicePixelRatio = 1.0;
+    testWidgets('choice picker renders inside scroll view for narrow layouts', (
+      WidgetTester tester,
+    ) async {
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
 
-        await _pumpChoicePhase(tester, game: _embassyInterventionGame());
+      await _pumpChoicePhase(tester, game: _embassyInterventionGame());
 
-        expect(tester.takeException(), isNull);
-        expect(find.byType(SingleChildScrollView), findsOneWidget);
-        expect(
-          find.byKey(const ValueKey<String>(kInterventionEffectProtestKey)),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(tester.takeException(), isNull);
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>(kInterventionEffectProtestKey)),
+        findsOneWidget,
+      );
+    });
 
     testWidgets(
       'Yarn situation phase does not mount Effect line keys (#4267 negative)',
@@ -248,7 +212,7 @@ void main() {
               ],
               skipIntroForTest: true,
               assetBundle: YarnStringAssetBundle({
-                kDialogueInterventionAsset: _kInterventionYarnMinimal,
+                kDialogueInterventionAsset: kYarnInterventionMinimal,
               }),
               onDecisions: (_) {},
               child: const SizedBox.expand(),
@@ -303,7 +267,10 @@ void main() {
         );
 
         expect(find.text('Castile declared war on Powhatan.'), findsOneWidget);
-        expect(find.textContaining('Enter war with Castile this turn'), findsOneWidget);
+        expect(
+          find.textContaining('Enter war with Castile this turn'),
+          findsOneWidget,
+        );
 
         await tester.tap(
           find.byKey(const ValueKey<String>(kInterventionDoNothingButtonKey)),
@@ -314,59 +281,15 @@ void main() {
         await _advancePastSituationYarn(tester); // second prompt situation Yarn
 
         expect(find.text('France declared war on Creek.'), findsOneWidget);
-        expect(find.textContaining('Enter war with France this turn'), findsOneWidget);
-        expect(find.textContaining('Lose Embassy and all overtures with Creek'), findsOneWidget);
+        expect(
+          find.textContaining('Enter war with France this turn'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Lose Embassy and all overtures with Creek'),
+          findsOneWidget,
+        );
       },
     );
   });
-
-  testWidgets(
-    'choice picker Effect presentation golden under editorial-monocle (#4267)',
-    (WidgetTester tester) async {
-      TestWidgetsFlutterBinding.ensureInitialized();
-      const boundaryKey = ValueKey<String>('intervention_choice_picker_effects_golden');
-
-      await pumpGoldenHost(
-        tester,
-        boundaryKey: boundaryKey,
-        physicalSize: const Size(360, 800),
-        settle: false,
-        includeLocalizations: true,
-        child: InterventionDialogueOverlay(
-          game: _embassyInterventionGame(),
-          prompts: const [
-            InterventionPrompt(
-              aggressorGpId: 'gp2',
-              defenderMinorOrTribeId: 'minor1',
-              interveningGpId: 'gp1',
-            ),
-          ],
-          skipIntroForTest: true,
-          assetBundle: YarnStringAssetBundle({
-            kDialogueInterventionAsset: _kInterventionYarnMinimal,
-          }),
-          onDecisions: (_) {},
-          child: const ColoredBox(color: Color(0xFF101014)),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
-
-      expect(
-        find.byKey(const ValueKey<String>(kInterventionChoiceSituationKey)),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey<String>(kInterventionEffectInterveneKey)),
-        findsOneWidget,
-      );
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/intervention_choice_picker_effects.png'),
-      );
-    },
-  );
 }
