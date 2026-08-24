@@ -66,6 +66,7 @@ class TileMoreActionsDialog extends StatelessWidget {
                 rowKey: tileRadialSpokeKey(row.action),
                 label: row.label,
                 tooltip: row.tooltip,
+                caption: row.caption,
                 enabled: row.enabled,
                 onTap: row.enabled ? () => onAction(row.action) : null,
               ),
@@ -83,11 +84,13 @@ class _MoreRow extends StatelessWidget {
     required this.enabled,
     required this.onTap,
     this.tooltip,
+    this.caption,
   });
 
   final Key rowKey;
   final String label;
   final String? tooltip;
+  final String? caption;
   final bool enabled;
   final VoidCallback? onTap;
 
@@ -95,15 +98,34 @@ class _MoreRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final child = GestureDetector(
       key: rowKey,
+      behavior: HitTestBehavior.opaque,
       onTap: enabled ? onTap : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: CtSpacing.m),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: enabled
-                ? EditorialMonoclePalette.fg
-                : EditorialMonoclePalette.muted,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: enabled
+                      ? EditorialMonoclePalette.fg
+                      : EditorialMonoclePalette.muted,
+                ),
+              ),
+              if (caption != null && caption!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    caption!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: EditorialMonoclePalette.muted,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

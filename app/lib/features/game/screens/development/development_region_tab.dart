@@ -10,6 +10,8 @@ import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../config/constants.dart';
 import '../../../../providers/development_panel_projection_provider.dart';
 import '../../../../widgets/ct_spacing.dart';
@@ -97,6 +99,19 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
       assignRowStateFor: _assignRowStateFor,
       onAssign: widget.onAssign,
       provinceDisplayNamesById: widget.provinceDisplayNamesById,
+      nextYieldGistForTile: (tileKey) => buildImprovementNextYieldGistForTile(
+        l10n: appL10n(context),
+        game: widget.game,
+        humanPlayerId: widget.humanPlayerId,
+        tileKey: tileKey,
+        enabled: widget.canEdit,
+        mapData: (
+          combinedTopology: widget.topology,
+          tileMapByRegion: widget.tileMapByRegion,
+          topologyByRegion: const {},
+          warpLinks: null,
+        ),
+      ),
     );
     final mapPanel = DevelopmentPanelMapPanel(
       key: DevelopmentPanelKeys.panelMapKeyForRegion(widget.regionId),

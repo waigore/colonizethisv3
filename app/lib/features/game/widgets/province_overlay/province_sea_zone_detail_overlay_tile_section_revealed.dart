@@ -21,6 +21,8 @@ import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
@@ -138,7 +140,14 @@ Widget buildRevealedTileSection({
     enabled: buildImprovement.enabled,
     hasMatchingUnits: buildImprovement.hasMatchingUnits,
   );
-  final improvementRow = Row(
+  final nextYieldPreview = tileConnectivity?.nextImproveYield;
+  final nextYieldGist = buildImprovement.enabled && nextYieldPreview != null
+      ? buildImprovementNextYieldGistLine(
+          l10n: l10n,
+          preview: nextYieldPreview,
+        )
+      : null;
+  final improvementIconRow = Row(
     children: [
       Expanded(
         child: buildTileImprovementLabel(
@@ -163,6 +172,16 @@ Widget buildRevealedTileSection({
         ),
     ],
   );
+  final improvementRow = nextYieldGist == null
+      ? improvementIconRow
+      : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            improvementIconRow,
+            BuildImprovementYieldGistLine(text: nextYieldGist),
+          ],
+        );
 
   final bodyStyle = overlayFgBodyStyle();
   final designationLine = provinceOverlayTileDesignationLine(

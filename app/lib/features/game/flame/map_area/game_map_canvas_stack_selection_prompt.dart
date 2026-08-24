@@ -6,8 +6,10 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import '../../../../widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'game_map_canvas_stack.dart';
-import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
+import '../../screens/game/game_screen_shared.dart'
+    show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
+import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
 ///
@@ -19,6 +21,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     required this.onCancel,
     this.usesRelocateCopy = false,
     this.affordPreview,
+    this.nextYieldGist,
     super.key,
   });
 
@@ -27,6 +30,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final VoidCallback? onCancel;
   final bool usesRelocateCopy;
   final WorkOrderAffordPreview? affordPreview;
+  final String? nextYieldGist;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +73,10 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
                     l10n: l10n,
                     preview: preview!,
                   ),
+                if (nextYieldGist != null &&
+                    nextYieldGist!.isNotEmpty &&
+                    !usesRelocateCopy)
+                  BuildImprovementYieldGistLine(text: nextYieldGist!),
               ],
             ),
           ),
@@ -140,10 +148,7 @@ class _GameMapSelectionPromptAffordSection extends StatelessWidget {
         const SizedBox(height: 6),
         buildWorkOrderAffordCostChips(l10n: l10n, preview: preview),
         const SizedBox(height: 4),
-        buildWorkOrderAffordStatusText(
-          l10n: l10n,
-          preview: preview,
-        ),
+        buildWorkOrderAffordStatusText(l10n: l10n, preview: preview),
       ],
     );
   }

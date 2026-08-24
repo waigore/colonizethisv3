@@ -11,6 +11,7 @@ import 'package:colonizethis_orders/colonizethis_orders.dart'
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import 'development_assign_preview.dart';
 
 Map<String, String> _provinceDisplayNamesForTile(Game game, String tileKey) {
@@ -65,6 +66,19 @@ Future<void> handleDevelopmentAssign({
           provinceDisplayNamesById: _provinceDisplayNamesForTile(
             game,
             candidate.targetTileKey,
+          ),
+          nextYieldGist: buildImprovementNextYieldGistForTile(
+            l10n: appL10n(context),
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: candidate.targetTileKey,
+            enabled: true,
+            mapData: (
+              combinedTopology: topology,
+              tileMapByRegion: tileMapByRegion,
+              topologyByRegion: const {},
+              warpLinks: null,
+            ),
           ),
         ),
         onResult: completer.complete,

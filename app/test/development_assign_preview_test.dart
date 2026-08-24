@@ -102,4 +102,27 @@ void main() {
     expect(line, 'Next: Avalon (0, 0) · 0 → 1');
     expect(line, isNot(contains('Lumber')));
   });
+
+  test('enabled preview appends next-yield gist', () {
+    const state = DevelopmentAssignRowState(
+      enabled: true,
+      candidate: DevelopmentImproveAssignCandidate(
+        builderUnitId: 'b1',
+        targetTileKey: 'oldWorld|p1|0|0',
+        isCapitalConnected: true,
+        currentImprovementLevel: 0,
+        materialCosts: {'lumber': 1, 'castIron': 1},
+      ),
+    );
+    final line = formatDevelopmentAssignPreviewLine(
+      l10n: l10n,
+      assignState: state,
+      provinceDisplayNamesById: names,
+      nextYieldGist: 'After this work: 0 → 1 Grain if still linked',
+    );
+    expect(line, contains('Avalon (0, 0)'));
+    expect(line, contains('0 → 1'));
+    expect(line, contains('if still linked'));
+    expect(line!.contains('build_improvement'), isFalse);
+  });
 }

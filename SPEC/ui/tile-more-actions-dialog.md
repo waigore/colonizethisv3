@@ -28,7 +28,7 @@ CtDialogShell
   remainder rows (catalog overflow from tile-radial-catalog.md)
 ```
 
-No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish Consulate, or Offer Peace. Remainder may include Build road / railroad / port / fort, Purchase land, or Upgrade town when those are conceivable and did not fit on `MAP30001`. If remainder is empty, only Province details remains.
+No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish Consulate, or Offer Peace. Remainder may include Build road / railroad / port / fort, Purchase land, or Upgrade town when those are conceivable and did not fit on `MAP30001`. If remainder is empty, only Province details remains. Enabled **Build improvement** remainder rows show the next-yield gist (Refs #4627).
 
 ## Behavior
 

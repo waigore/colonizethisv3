@@ -7,8 +7,11 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
 import '../../widgets/map_radial/game_map_tile_radial_host.dart';
 import 'game_map_canvas_stack_hover.dart';
@@ -192,12 +195,29 @@ class GameMapCanvasStack extends ConsumerWidget {
                         targetTileKey: previewTileKey,
                       )
                     : null;
+                final nextYieldGist =
+                    workTarget == kWorkTargetBuildImprovement &&
+                        previewTileKey != null &&
+                        !selectionPromptUsesRelocateCopy
+                    ? buildImprovementNextYieldGistForTile(
+                        l10n: appL10n(context),
+                        game: game,
+                        humanPlayerId: humanPlayerId,
+                        tileKey: previewTileKey,
+                        enabled: true,
+                        mapData: ref
+                            .read(gameServiceProvider)
+                            .getMapData(game.id),
+                        canMutateViaUi: canMutateViaUi,
+                      )
+                    : null;
                 return GameMapCanvasStackSelectionPrompt(
                   isNarrow: isNarrow,
                   overlayOpen: overlayOpen,
                   onCancel: onWorkTargetSelectionCancelled,
                   usesRelocateCopy: selectionPromptUsesRelocateCopy,
                   affordPreview: affordPreview,
+                  nextYieldGist: nextYieldGist,
                 );
               },
             ),

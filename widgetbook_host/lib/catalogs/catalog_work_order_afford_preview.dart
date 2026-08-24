@@ -41,19 +41,63 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
           affordPreview: const WorkOrderAffordPreview(canAfford: true),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield raise',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          nextYieldGist: 'After this work: 0 → 1 Grain if still linked',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield road cap',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 4, 'castIron': 4},
+            canAfford: true,
+          ),
+          nextYieldGist:
+              'After this work: still 2 Timber — the road is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield town cap',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 4, 'castIron': 4},
+            canAfford: true,
+          ),
+          nextYieldGist:
+              'After this work: still 2 Grain — town development is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Build improvement next yield disconnected',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          nextYieldGist:
+              'After this work: still none — not bound to the capital',
+        ),
+      ),
     ],
   ),
 ];
 
 Widget _workOrderAffordSelectionPromptStory({
   required WorkOrderAffordPreview affordPreview,
+  String? nextYieldGist,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     child: SizedBox(
       width: 520,
-      height: 160,
+      height: 200,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -62,6 +106,7 @@ Widget _workOrderAffordSelectionPromptStory({
             overlayOpen: false,
             onCancel: () {},
             affordPreview: affordPreview,
+            nextYieldGist: nextYieldGist,
           ),
         ],
       ),

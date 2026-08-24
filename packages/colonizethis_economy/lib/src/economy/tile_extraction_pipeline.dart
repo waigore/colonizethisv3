@@ -81,6 +81,7 @@ ImprovedTileProductionPrelude? resolveImprovedTileProductionPrelude({
   required bool Function(String tileKey, CommodityId commodityId)
   isCommodityExtractable,
   Map<String, Province>? provincesByFullId,
+  int? improvementLevelOverride,
 }) {
   final tileContext = resolveTileKeyExtractionContext(
     tileKey: tileKey,
@@ -98,9 +99,10 @@ ImprovedTileProductionPrelude? resolveImprovedTileProductionPrelude({
     return null;
   }
 
-  final improvementLevel = game.worldState.tileState
-      .improvementLevel(tileKey)
-      .clamp(0, 4);
+  final improvementLevel =
+      (improvementLevelOverride ??
+              game.worldState.tileState.improvementLevel(tileKey))
+          .clamp(0, 4);
   if (improvementLevel < 1) {
     return null;
   }

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
+import '../../../../../providers/game_service_provider.dart';
 import '../../../../../providers/games_provider.dart';
 import 'civilian_units_panel_support_row_card.dart';
 import 'civilian_units_panel_unit_row_actions_host.dart';
@@ -158,6 +159,11 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
             unit: unit,
             pending: pending,
             provinceNames: provinceNames,
+            humanPlayerId: humanPlayerId,
+            mapData: ref.read(gameServiceProvider).getMapData(game.id),
+            buildImprovementShortcutTargetTileKey:
+                buildImprovementShortcutTargetTileKey,
+            readOnly: readOnly,
           ),
         ],
       ),

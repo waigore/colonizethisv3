@@ -12,6 +12,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../../widgets/resource_icon.dart';
 import '../shared/region_labels.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData;
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import 'civilian_units_panel_support_resolution.dart';
 import 'civilian_units_panel_unit_row_pending.dart';
 import 'work_order_afford_preview_ui.dart';
@@ -106,6 +110,10 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   required Unit unit,
   required CivilianUnitsPanelUnitRowPending pending,
   required Map<String, String> provinceNames,
+  required String humanPlayerId,
+  GameMapData? mapData,
+  String? buildImprovementShortcutTargetTileKey,
+  bool readOnly = false,
 }) {
   final pendingMove = pending.pendingMoveOrder;
   if (pendingMove != null) {
@@ -181,10 +189,26 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
               muted: true,
             ),
           ),
+        if (pendingWork.target == kWorkTargetBuildImprovement)
+          Builder(
+            builder: (context) {
+              final gist = buildImprovementNextYieldGistForTile(
+                l10n: l10n,
+                game: game,
+                humanPlayerId: humanPlayerId,
+                tileKey: pendingWork.targetTileKey,
+                enabled: true,
+                mapData: mapData,
+                canMutateViaUi: !readOnly,
+              );
+              if (gist == null) return const SizedBox.shrink();
+              return BuildImprovementYieldGistLine(text: gist);
+            },
+          ),
       ],
     );
   }
-  return Text(
+  final assigned = Text(
     l10n.civilian_units_assignedTo(
       civilianUnitsPanelUnitRowAssignedToLabelNonPending(
         l10n: l10n,
@@ -192,5 +216,27 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
         provinceNames: provinceNames,
       ),
     ),
+  );
+  final shortcutTile = buildImprovementShortcutTargetTileKey;
+  if (readOnly || shortcutTile == null || shortcutTile.isEmpty) {
+    return assigned;
+  }
+  final gist = buildImprovementNextYieldGistForTile(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    tileKey: shortcutTile,
+    enabled: true,
+    mapData: mapData,
+    canMutateViaUi: !readOnly,
+  );
+  if (gist == null) return assigned;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      assigned,
+      BuildImprovementYieldGistLine(text: gist),
+    ],
   );
 }

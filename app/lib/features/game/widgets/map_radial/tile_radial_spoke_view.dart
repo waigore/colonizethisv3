@@ -10,10 +10,14 @@ class TileRadialSpokeView {
     required this.enabled,
     required this.label,
     required this.tooltip,
+    this.caption,
   });
 
   final TileRadialCatalogAction action;
   final bool enabled;
   final String label;
   final String tooltip;
+
+  /// Default-visible extra line (Build improvement next-yield gist).
+  final String? caption;
 }

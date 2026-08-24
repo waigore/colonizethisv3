@@ -29,7 +29,7 @@ Stack (viewport)
     More spoke
 ```
 
-Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only. Catalog: Explore → Prospect → Build improvement → Build road → Purchase land → Upgrade town → Build port → Build railroad → Build fort ([tile-radial-catalog.md](components/tile-radial-catalog.md)).
+Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only. When **Build improvement** is enabled, the radial (and `MAP30002` remainder row) shows the same next-yield gist as `MAP20001` by default, not tooltip-only (Refs #4627). Catalog: Explore → Prospect → Build improvement → Build road → Purchase land → Upgrade town → Build port → Build railroad → Build fort ([tile-radial-catalog.md](components/tile-radial-catalog.md)).
 
 ## Behavior
 

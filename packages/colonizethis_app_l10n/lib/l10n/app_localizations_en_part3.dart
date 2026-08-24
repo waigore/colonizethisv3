@@ -688,6 +688,35 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_tileBuildImprovementYieldRaise(
+    int from,
+    int to,
+    String good,
+  ) {
+    return 'After this work: $from → $to $good if still linked';
+  }
+
+  @override
+  String provinceOverlay_tileBuildImprovementYieldRoadLimit(
+    int n,
+    String good,
+  ) {
+    return 'After this work: still $n $good — the road is the limit';
+  }
+
+  @override
+  String provinceOverlay_tileBuildImprovementYieldTownLimit(
+    int n,
+    String good,
+  ) {
+    return 'After this work: still $n $good — town development is the limit';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildImprovementYieldDisconnected =>
+      'After this work: still none — not bound to the capital';
+
+  @override
   String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip =>
       'No idle Builders';
 
