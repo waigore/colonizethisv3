@@ -14,18 +14,13 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mi
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-
-import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
-
 import 'province_overlay_unit_partition.dart';
-import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_province_content_intel.dart';
-import 'province_sea_zone_detail_overlay_province_content_tabs.dart';
-import 'province_sea_zone_detail_overlay_province_content_unit_sections.dart';
+import 'province_sea_zone_detail_overlay_province_content_revealed_political.dart';
+import 'province_sea_zone_detail_overlay_province_content_revealed_tabs.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section.dart';
-import 'package:colonizethis_app/features/game/flame/controls/map_tile_sight.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show ProvinceImprovableCommodityCount;
 import 'package:colonizethis_world/colonizethis_world.dart'
@@ -146,32 +141,20 @@ OverlayContent provinceContentRevealed({
     tileConnectivity: tileConnectivity,
     blockadeStatus: blockadeStatus,
   );
-  final political = buildPoliticalSection(
+  final political = buildRevealedProvincePoliticalSection(
     l10n: l10n,
-    name: province?.displayName ?? provinceId,
-    ownerName: ownerNameForProvinceOverlay(l10n, game, province?.ownerId),
-    sightPhrase: mapTileSightPhraseForSelectedTile(
-      l10n: l10n,
-      region: region,
-      selectedTileKey: selectedTileKey,
-    ),
-    regionLabel: provinceOverlayRegionLabel(l10n, regionId),
-    isCapital: provinceOverlayIsCapital(game, provinceId),
-    townDevelopmentLevel:
-        province?.townDevelopmentLevel ?? kTownDevelopmentLevelMin,
+    game: game,
+    region: region,
+    provinceId: provinceId,
+    regionId: regionId,
+    humanPlayerId: humanPlayerId,
+    draftOrders: draftOrders,
+    province: province,
+    selectedTileKey: selectedTileKey,
     showUpgradeTownControl: showUpgradeTownControl,
     upgradeTownEnabled: upgradeTownEnabled,
-    upgradeTownTooltip: upgradeTownTargetTileKey == null
-        ? ''
-        : provinceOverlayPoliticalUpgradeTownTooltip(
-            l10n: l10n,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: draftOrders,
-            townTileKey: upgradeTownTargetTileKey,
-            enabled: upgradeTownEnabled,
-            hasBuilderUnits: upgradeTownHasBuilderUnits,
-          ),
+    upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,
+    upgradeTownTargetTileKey: upgradeTownTargetTileKey,
     onUpgradeTownTap: onUpgradeTownTap,
     showEstablishConsulateControl: showEstablishConsulateControl,
     establishConsulateEnabled: establishConsulateEnabled,
@@ -188,8 +171,7 @@ OverlayContent provinceContentRevealed({
     onOfferPeaceTap: onOfferPeaceTap,
     isNarrow: isNarrow,
   );
-  final buildFort = civilianInlineActions.buildFort;
-  final unitSections = buildProvinceIntelGatedUnitSections(
+  return assembleRevealedProvinceUnitTabContent(
     l10n: l10n,
     game: game,
     showsFullIntel: showsFullIntel,
@@ -201,7 +183,7 @@ OverlayContent provinceContentRevealed({
     civilian: civilian,
     fleetsInPort: fleetsInPort,
     fortLevel: province?.fortLevel ?? 0,
-    buildFortAction: buildFort,
+    buildFortAction: civilianInlineActions.buildFort,
     onBuildFortTap: inlineActionCallbacks.onBuildFortTap,
     showMoveArmyControl: showMoveArmyControl,
     moveArmyEnabled: moveArmyEnabled,
@@ -231,14 +213,7 @@ OverlayContent provinceContentRevealed({
     byResImprovable: tileIntel.byResImprovable,
     resourceKeysSorted: tileIntel.resourceKeysSorted,
     selectedTileKey: selectedTileKey,
-  );
-  return assembleProvinceOverlayTabContent(
-    l10n: l10n,
     political: political,
     tileSection: tileSection,
-    economic: unitSections.economic,
-    militarySection: unitSections.military,
-    civilianSection: unitSections.civilian,
-    naval: unitSections.naval,
   );
 }
