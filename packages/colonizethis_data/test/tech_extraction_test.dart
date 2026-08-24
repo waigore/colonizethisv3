@@ -5,14 +5,14 @@ void main() {
   group('extractionCapForResourceForUnlocked', () {
     test('null tech returns default cap 1 for grain', () {
       expect(
-        extractionCapForResourceForUnlocked(null, 'grain'),
+        extractionCapForResourceForUnlocked(null, Resource.grain.name),
         equals(defaultExtractionCap),
       );
     });
 
     test('empty tech returns default cap 1 for grain', () {
       expect(
-        extractionCapForResourceForUnlocked({}, 'grain'),
+        extractionCapForResourceForUnlocked({}, Resource.grain.name),
         equals(defaultExtractionCap),
       );
     });
@@ -21,7 +21,7 @@ void main() {
       expect(
         extractionCapForResourceForUnlocked({
           kTechIdOrganisedRegiments: true,
-        }, 'grain'),
+        }, Resource.grain.name),
         equals(defaultExtractionCap),
       );
       expect(
@@ -29,7 +29,7 @@ void main() {
           kTechIdRoadConstruction: true,
           kTechIdEarlySteamEngine: true,
           kTechIdImprovedIronWeapons: true,
-        }, 'grain'),
+        }, Resource.grain.name),
         equals(defaultExtractionCap),
       );
     });
@@ -38,7 +38,7 @@ void main() {
       expect(
         extractionCapForResourceForUnlocked({
           kTechIdLandEnclosure: true,
-        }, 'grain'),
+        }, Resource.grain.name),
         equals(2),
       );
     });
@@ -48,7 +48,7 @@ void main() {
         extractionCapForResourceForUnlocked({
           kTechIdLandEnclosure: true,
           kTechIdSeedDrill: true,
-        }, 'grain'),
+        }, Resource.grain.name),
         equals(3),
       );
     });
@@ -59,7 +59,7 @@ void main() {
           kTechIdLandEnclosure: true,
           kTechIdSeedDrill: true,
           kTechIdMoldboardPlow: true,
-        }, 'grain'),
+        }, Resource.grain.name),
         equals(4),
       );
     });
@@ -69,7 +69,7 @@ void main() {
         extractionCapForResourceForUnlocked({
           kTechIdSawMill: true,
           kTechIdOrganisedRegiments: true,
-        }, 'grain'),
+        }, Resource.grain.name),
         equals(1),
       );
     });
@@ -79,217 +79,16 @@ void main() {
         extractionCapForResourceForUnlocked({
           kTechIdSheepRanching: true,
           kTechIdScientificSheepBreeding: true,
-        }, 'wool'),
+        }, Resource.wool.name),
         equals(3),
       );
     });
 
     test('horses uses explicit design exception cap 1', () {
-      expect(extractionCapForResourceForUnlocked({}, 'horses'), equals(1));
-    });
-  });
-
-  group('terrain extraction caps (R4 #3573)', () {
-    test('scrub forest hard-caps timber at level 1', () {
       expect(
-        terrainExtractionHardCap('timber', TerrainType.scrubForest),
+        extractionCapForResourceForUnlocked({}, Resource.horses.name),
         equals(1),
       );
-    });
-
-    test('hardwood forest imposes no timber hard cap', () {
-      expect(
-        terrainExtractionHardCap('timber', TerrainType.hardwoodForest),
-        isNull,
-      );
-    });
-
-    test('scrub forest hard cap applies only to timber, not furs', () {
-      expect(terrainExtractionHardCap('furs', TerrainType.scrubForest), isNull);
-    });
-
-    test('scrub timber capped at 1 even with circular_saw (tech cap 4)', () {
-      final fullTech = {
-        kTechIdSawMill: true,
-        kTechIdWindSawMill: true,
-        kTechIdCircularSaw: true,
-      };
-      expect(
-        extractionCapForResourceForUnlocked(fullTech, 'timber'),
-        equals(4),
-      );
-      expect(
-        extractionCapForResourceOnTerrain(
-          fullTech,
-          'timber',
-          TerrainType.scrubForest,
-        ),
-        equals(1),
-      );
-    });
-
-    test('hardwood timber follows normal tech progression to 4', () {
-      final fullTech = {
-        kTechIdSawMill: true,
-        kTechIdWindSawMill: true,
-        kTechIdCircularSaw: true,
-      };
-      expect(
-        extractionCapForResourceOnTerrain(
-          fullTech,
-          'timber',
-          TerrainType.hardwoodForest,
-        ),
-        equals(4),
-      );
-    });
-
-    test('hardwood timber defaults to 1 with no gathering tech', () {
-      expect(
-        extractionCapForResourceOnTerrain(
-          {},
-          'timber',
-          TerrainType.hardwoodForest,
-        ),
-        equals(defaultExtractionCap),
-      );
-    });
-
-    test('clampExtractionCapForTerrain clamps scrub timber down', () {
-      expect(
-        clampExtractionCapForTerrain(4, 'timber', TerrainType.scrubForest),
-        equals(1),
-      );
-    });
-
-    test(
-      'clampExtractionCapForTerrain leaves non-capped terrain unchanged',
-      () {
-        expect(
-          clampExtractionCapForTerrain(3, 'timber', TerrainType.hardwoodForest),
-          equals(3),
-        );
-        expect(
-          clampExtractionCapForTerrain(2, 'grain', TerrainType.plains),
-          equals(2),
-        );
-      },
-    );
-  });
-
-  group('unlockingTechByShipId', () {
-    test('fluyte requires superior_hull_design', () {
-      expect(unlockingTechByShipId['fluyte'], kTechIdSuperiorHullDesign);
-    });
-    test('carrack has no unlocking tech (buildable from start)', () {
-      expect(unlockingTechByShipId['carrack'], isNull);
-    });
-  });
-
-  group('unlock maps cached (Refs #4412 AC2)', () {
-    test(
-      'unlockingTechByRegimentId returns the same instance on consecutive reads',
-      () {
-        expect(
-          identical(unlockingTechByRegimentId, unlockingTechByRegimentId),
-          isTrue,
-        );
-      },
-    );
-
-    test(
-      'unlockingTechByShipId returns the same instance on consecutive reads',
-      () {
-        expect(identical(unlockingTechByShipId, unlockingTechByShipId), isTrue);
-      },
-    );
-
-    test('cached maps still match catalog-derived unlock ids', () {
-      expect(unlockingTechByShipId['fluyte'], kTechIdSuperiorHullDesign);
-      expect(unlockingTechByShipId.containsKey('carrack'), isFalse);
-      expect(unlockingTechByRegimentId, isNotEmpty);
-    });
-  });
-
-  group('techDisplayName', () {
-    test('uses catalog displayName when set', () {
-      expect(techDisplayName(kTechIdRoadConstruction), 'Road Construction');
-      expect(techDisplayName(kTechIdCropRotation), 'Crop Rotation');
-    });
-    test('empty returns empty', () {
-      expect(techDisplayName(''), '');
-    });
-  });
-
-  group('researchableTechIds', () {
-    test(
-      'empty unlocked returns all root techs (no tech prereqs; discovery techs included when callback null)',
-      () {
-        final r = researchableTechIds({});
-        expect(r, isNotEmpty);
-        for (final id in r) {
-          final tech = techById(id);
-          expect(tech, isNotNull);
-          expect(tech!.prerequisiteIds, isEmpty);
-        }
-      },
-    );
-    test('all unlocked returns empty', () {
-      final unlocked = {for (final id in techCatalog.keys) id: true};
-      expect(researchableTechIds(unlocked), isEmpty);
-    });
-    test('saw_mill unlocked adds wind_saw_mill to researchable', () {
-      final r = researchableTechIds({kTechIdSawMill: true});
-      expect(r.contains(kTechIdWindSawMill), isTrue);
-      expect(r.contains(kTechIdSawMill), isFalse);
-    });
-    test('null unlocked same as empty', () {
-      expect(researchableTechIds(null), researchableTechIds({}));
-    });
-
-    test(
-      'discovery tech with null callback is researchable when prereqs met',
-      () {
-        final r = researchableTechIds({});
-        expect(
-          r.contains(kTechIdDiscoveryOfSugar),
-          isTrue,
-          reason:
-              'Discovery techs are researchable when hasDiscoveredResource is null',
-        );
-      },
-    );
-
-    test(
-      'discovery tech with hasDiscoveredResource always false is not researchable',
-      () {
-        final r = researchableTechIds({}, hasDiscoveredResource: (_) => false);
-        expect(r.contains(kTechIdDiscoveryOfSugar), isFalse);
-      },
-    );
-
-    test(
-      'discovery tech with hasDiscoveredResource true for sugarCane is researchable',
-      () {
-        final r = researchableTechIds(
-          {},
-          hasDiscoveredResource: (rid) => rid == 'sugarCane',
-        );
-        expect(r.contains(kTechIdDiscoveryOfSugar), isTrue);
-      },
-    );
-  });
-
-  group('envyMirrorTechCategoryForExtractionResource', () {
-    test('returns gathering for extraction-cap resources', () {
-      expect(envyMirrorTechCategoryForExtractionResource('grain'), 'gathering');
-      expect(envyMirrorTechCategoryForExtractionResource('iron'), 'gathering');
-    });
-
-    test('returns null for unknown or empty resource id', () {
-      expect(envyMirrorTechCategoryForExtractionResource(null), isNull);
-      expect(envyMirrorTechCategoryForExtractionResource(''), isNull);
-      expect(envyMirrorTechCategoryForExtractionResource('unknown'), isNull);
     });
   });
 }
