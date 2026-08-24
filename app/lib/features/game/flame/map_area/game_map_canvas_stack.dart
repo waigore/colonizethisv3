@@ -6,36 +6,17 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show MapBaseLayerFlags;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
-import '../../../../core/services/game_service/try_get_game_map_data.dart';
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/game_service_provider.dart';
-import '../../../../providers/map_province_panel_provider.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
-import '../../widgets/units/civilian/purchase_land_payoff_copy.dart';
+import '../../../../providers/map_province_panel_provider.dart';
 import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
 import '../../widgets/map_radial/game_map_tile_radial_host.dart';
 import 'game_map_canvas_stack_hover.dart';
 import 'game_map_canvas_stack_region_row.dart';
-import 'game_map_canvas_stack_selection_prompt.dart';
+import 'game_map_canvas_stack_selection_prompt_layer.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
-/// Compact minimum tap-target height applied to the selection-prompt
-/// banner's `cancel` [CtNinePatchButton]. Pinned to keep the inline
-/// affordance vertically proportional to the surrounding banner row
-/// (banner padding is 8 logical px vertical) without inflating the prompt
-/// to the catalog default 48 dp button. SPEC: `SPEC/ui/map-widget.md`
-/// § Dark-theme selection prompt overlay tokens.
-const double kMapSelectionPromptCancelMinHeight = 34;
-
-/// Canonical alpha applied to [EditorialMonoclePalette.bgDeep] for the
-/// work-target selection prompt overlay banner background. Pinned at
-/// `0.85` per `SPEC/ui/map-widget.md` § Dark-theme selection prompt overlay
-/// tokens so the banner reads as a framed dark surface against the lit
-/// map while still allowing terrain to glimmer through.
-const double kMapSelectionPromptBackgroundAlpha = 0.85;
+export 'game_map_canvas_stack_selection_prompt_tokens.dart';
 
 /// Renders the Flame-backed map and the wide right-side detail panel.
 /// Map and panel communicate only via [mapProvincePanelProvider].
@@ -175,66 +156,17 @@ class GameMapCanvasStack extends ConsumerWidget {
             ),
           ),
           if (inWorkTargetSelectionMode)
-            Consumer(
-              builder: (context, ref, _) {
-                final overlayOpen = ref.watch(
-                  mapProvincePanelProvider.select((s) => s.overlayOpen),
-                );
-                final orders = ref.watch(currentOrdersProvider);
-                final previewTileKey =
-                    hoveredWorkTargetTileKey ??
-                    lastValidHoveredWorkTargetTileKey;
-                final workTarget = workTargetForSelection;
-                final affordPreview =
-                    workTarget != null &&
-                        previewTileKey != null &&
-                        !selectionPromptUsesRelocateCopy
-                    ? previewWorkOrderAffordAtTile(
-                        game: game,
-                        playerId: humanPlayerId,
-                        currentOrders: orders,
-                        workTarget: workTarget,
-                        targetTileKey: previewTileKey,
-                      )
-                    : null;
-                final nextYieldGist =
-                    workTarget == kWorkTargetBuildImprovement &&
-                        previewTileKey != null &&
-                        !selectionPromptUsesRelocateCopy
-                    ? buildImprovementNextYieldGistForTile(
-                        l10n: appL10n(context),
-                        game: game,
-                        humanPlayerId: humanPlayerId,
-                        tileKey: previewTileKey,
-                        enabled: true,
-                        mapData: tryGetGameMapData(
-                          () =>
-                              ref.read(gameServiceProvider).getMapData(game.id),
-                        ),
-                        canMutateViaUi: canMutateViaUi,
-                      )
-                    : null;
-                final payoffGist =
-                    workTarget == kWorkTargetPurchaseLand &&
-                        previewTileKey != null &&
-                        !selectionPromptUsesRelocateCopy
-                    ? purchaseLandPayoffCopyForTile(
-                        l10n: appL10n(context),
-                        game: game,
-                        tileKey: previewTileKey,
-                        enabled: true,
-                      )?.gist
-                    : null;
-                return GameMapCanvasStackSelectionPrompt(
-                  isNarrow: isNarrow,
-                  overlayOpen: overlayOpen,
-                  onCancel: onWorkTargetSelectionCancelled,
-                  usesRelocateCopy: selectionPromptUsesRelocateCopy,
-                  affordPreview: affordPreview,
-                  nextYieldGist: nextYieldGist,
-                  payoffGist: payoffGist,
-                );
-              },
+            GameMapCanvasStackSelectionPromptLayer(
+              isNarrow: isNarrow,
+              game: game,
+              humanPlayerId: humanPlayerId,
+              onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+              selectionPromptUsesRelocateCopy: selectionPromptUsesRelocateCopy,
+              workTargetForSelection: workTargetForSelection,
+              hoveredWorkTargetTileKey: hoveredWorkTargetTileKey,
+              lastValidHoveredWorkTargetTileKey:
+                  lastValidHoveredWorkTargetTileKey,
+              canMutateViaUi: canMutateViaUi,
             ),
         ],
       ),

@@ -121,7 +121,9 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 next-level Build improvement yield gist (Refs #4627;
 // measured 91_097).
 // raised after #4627+#4630 merge (measured 91_370).
-const _maxMainLines = 91400;
+// raised for wave-22 Slice E overlay/map topic splits (Refs #4642;
+// measured 91_659).
+const _maxMainLines = 91700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

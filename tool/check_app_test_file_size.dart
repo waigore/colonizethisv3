@@ -2,7 +2,7 @@
 //
 // SPEC: SPEC/program/repo-lint.md (§ app test file size). Refs #4013, #4021, #4352.
 //
-// Cap is 380 physical lines (Refs #4352 Slice D; wave-21 #4606 Slice E). The shrink-only
+// Cap is 350 physical lines (Refs #4352 Slice D; wave-21 #4606 Slice E; wave-22 #4642 Slice F). The shrink-only
 // [appTestFileSizeAllowlistForTests] is empty after densify; a stale
 // allowlist entry (missing file, or file now ≤ cap) fails so the backlog cannot
 // retain slack.
@@ -11,7 +11,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 380;
+const _maxPhysicalLines = 350;
 
 const String _appTestsRelativePath = 'app/test';
 
