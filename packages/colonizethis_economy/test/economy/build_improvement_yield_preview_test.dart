@@ -47,62 +47,104 @@ BuildImprovementYieldPreview? _preview({
 }
 
 void main() {
-  test('unimproved connected grain raises 0 to 1', () {
-    final preview = _preview(
-      resource: Resource.grain,
-      tileState: const TileMapState(),
-      connected: {_tileKey},
-      pathTransportCap: const {_tileKey: 4},
-      connectedByRoadRule: {_tileKey},
-    );
-    expect(preview, isNotNull);
-    expect(preview!.commodityId, 'grain');
-    expect(preview.currentEffective, 0);
-    expect(preview.nextEffective, 1);
-    expect(preview.kind, BuildImprovementYieldKind.raise);
-  });
-
-  test('path cap binds so next timber yield stays 2', () {
-    final preview = _preview(
-      resource: Resource.timber,
-      tileState: tileStateFromSpecs([
-        const TileImprovementSpec(_tileKey, 2, 2),
-      ]),
-      connected: {_tileKey},
-      pathTransportCap: const {_tileKey: 2},
-      connectedByRoadRule: {_tileKey},
-      townDevelopmentLevel: 4,
-    );
-    expect(preview!.commodityId, 'timber');
-    expect(preview.currentEffective, 2);
-    expect(preview.nextEffective, 2);
-    expect(preview.kind, BuildImprovementYieldKind.roadPathLimit);
-  });
-
-  test('town development cap binds when path is above current yield', () {
-    final preview = _preview(
-      resource: Resource.grain,
-      tileState: tileStateFromSpecs([
-        const TileImprovementSpec(_tileKey, 2, 4),
-      ]),
-      connected: {_tileKey},
-      pathTransportCap: const {_tileKey: 4},
-      connectedByRoadRule: {_tileKey},
-      townDevelopmentLevel: 2,
-    );
-    expect(preview!.currentEffective, 2);
-    expect(preview.nextEffective, 2);
-    expect(preview.kind, BuildImprovementYieldKind.townDevelopmentLimit);
-  });
-
-  test('disconnected unimproved tile is still none', () {
-    final preview = _preview(
-      resource: Resource.grain,
-      tileState: const TileMapState(),
-      connected: const {},
-    );
-    expect(preview!.kind, BuildImprovementYieldKind.disconnected);
-    expect(preview.currentEffective, 0);
-    expect(preview.nextEffective, 0);
-  });
+  for (final scenario in _yieldPreviewScenarios) {
+    test(scenario.label, () {
+      final preview = _preview(
+        resource: scenario.resource,
+        tileState: tileStateFromSpecs(scenario.tileSpecs),
+        connected: scenario.connected,
+        pathTransportCap: scenario.pathTransportCap,
+        connectedByRoadRule: scenario.connectedByRoadRule,
+        townDevelopmentLevel: scenario.townDevelopmentLevel,
+      );
+      expect(preview, isNotNull);
+      expect(preview!.commodityId, scenario.commodityId);
+      expect(preview.currentEffective, scenario.currentEffective);
+      expect(preview.nextEffective, scenario.nextEffective);
+      expect(preview.kind, scenario.kind);
+    });
+  }
 }
+
+class _YieldPreviewScenario {
+  const _YieldPreviewScenario({
+    required this.label,
+    required this.resource,
+    required this.tileSpecs,
+    required this.connected,
+    required this.pathTransportCap,
+    required this.connectedByRoadRule,
+    required this.townDevelopmentLevel,
+    required this.commodityId,
+    required this.currentEffective,
+    required this.nextEffective,
+    required this.kind,
+  });
+
+  final String label;
+  final Resource resource;
+  final List<TileImprovementSpec> tileSpecs;
+  final Set<String> connected;
+  final Map<String, int> pathTransportCap;
+  final Set<String> connectedByRoadRule;
+  final int townDevelopmentLevel;
+  final String commodityId;
+  final int currentEffective;
+  final int nextEffective;
+  final BuildImprovementYieldKind kind;
+}
+
+const _yieldPreviewScenarios = [
+  _YieldPreviewScenario(
+    label: 'unimproved connected grain raises 0 to 1',
+    resource: Resource.grain,
+    tileSpecs: [],
+    connected: {_tileKey},
+    pathTransportCap: {_tileKey: 4},
+    connectedByRoadRule: {_tileKey},
+    townDevelopmentLevel: 4,
+    commodityId: 'grain',
+    currentEffective: 0,
+    nextEffective: 1,
+    kind: BuildImprovementYieldKind.raise,
+  ),
+  _YieldPreviewScenario(
+    label: 'path cap binds so next timber yield stays 2',
+    resource: Resource.timber,
+    tileSpecs: [const TileImprovementSpec(_tileKey, 2, 2)],
+    connected: {_tileKey},
+    pathTransportCap: {_tileKey: 2},
+    connectedByRoadRule: {_tileKey},
+    townDevelopmentLevel: 4,
+    commodityId: 'timber',
+    currentEffective: 2,
+    nextEffective: 2,
+    kind: BuildImprovementYieldKind.roadPathLimit,
+  ),
+  _YieldPreviewScenario(
+    label: 'town development cap binds when path is above current yield',
+    resource: Resource.grain,
+    tileSpecs: [const TileImprovementSpec(_tileKey, 2, 4)],
+    connected: {_tileKey},
+    pathTransportCap: {_tileKey: 4},
+    connectedByRoadRule: {_tileKey},
+    townDevelopmentLevel: 2,
+    commodityId: 'grain',
+    currentEffective: 2,
+    nextEffective: 2,
+    kind: BuildImprovementYieldKind.townDevelopmentLimit,
+  ),
+  _YieldPreviewScenario(
+    label: 'disconnected unimproved tile is still none',
+    resource: Resource.grain,
+    tileSpecs: [],
+    connected: {},
+    pathTransportCap: {},
+    connectedByRoadRule: {},
+    townDevelopmentLevel: 4,
+    commodityId: 'grain',
+    currentEffective: 0,
+    nextEffective: 0,
+    kind: BuildImprovementYieldKind.disconnected,
+  ),
+];
