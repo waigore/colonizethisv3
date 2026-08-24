@@ -1,9 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 // Locked-partition gates from colonizethis_data; connectivity + topology helpers
-// and `connectedComponentsInSubset` via the colonizethis_logic barrel (Refs #4054).
+// and `connectedComponentsInSubset` via the colonizethis_setup / colonizethis_world barrels (Refs #4054).
 
 /// When OW and NW topologies both match locked multisets, assert GitHub #1830
 /// AC-1–AC-9 (subset exercised here; procedural maps often miss multisets).

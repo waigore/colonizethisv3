@@ -1,6 +1,5 @@
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -41,10 +40,7 @@ void main() {
         id: 'g1',
         turnNumber: 0,
         players: const [Player(id: 'gp1', displayName: 'AI', isHuman: false)],
-      ).copyWith(
-        globalGameSeed: 42,
-        aiSeedByGpId: const {'gp1': 100},
-      );
+      ).copyWith(globalGameSeed: 42, aiSeedByGpId: const {'gp1': 100});
       final out = assignHiddenAgendasForGame(game);
       expect(out.hiddenAgendaByGpId.length, 1);
       expect(kHiddenAgendaIds, contains(out.hiddenAgendaByGpId['gp1']));

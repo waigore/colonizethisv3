@@ -40,6 +40,7 @@ void main() {
         'game_setup_ownership_old_world_seeds.dart',
         'province_assignment_bfs_greedy.dart',
         'locked_province_assigner_engine_candidates.dart',
+        'locked_province_assigner_engine_search.dart',
         'setup_road_wiring_tile_helpers.dart',
       ]) {
         expect(File(p.join(setupDir.path, name)).existsSync(), isTrue);

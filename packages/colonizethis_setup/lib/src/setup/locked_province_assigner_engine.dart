@@ -1,39 +1,10 @@
 // SPEC/program/locked-province-assigner.md — DFS engine for locked assigner
-// (Refs #4086 Slice B de-part; #4349 Slice A candidate extract).
+// (Refs #4086 Slice B de-part; #4349 Slice A candidate extract; #4624 search extract).
 
 import 'dart:math';
 
-import 'locked_province_assigner_engine_candidates.dart';
-import 'locked_province_assigner_graph.dart';
+import 'locked_province_assigner_engine_search.dart';
 import 'locked_province_assigner_types.dart';
-import 'setup_logging.dart' show setupLog;
-
-/// When true (`dart run --define=CT_TRACE_LOCKED_ASSIGNER_DFS=true`),
-/// prints every DFS branch to stdout (tabu skips, greedy prunes, try_push with
-/// full owner map, pop_backtrack, capital-generation restarts) and mirrors the
-/// same line at [Level.info] for log sinks. Verbose: use only for small graphs.
-const bool _kTraceLockedAssignerDfs = bool.fromEnvironment(
-  'CT_TRACE_LOCKED_ASSIGNER_DFS',
-  defaultValue: false,
-);
-
-String _lockedAssignerOwnersCompact(Map<String, String> owners) {
-  final keys = owners.keys.toList()..sort();
-  return keys.map((k) => '$k:${owners[k]}').join(',');
-}
-
-typedef _TabuEntry = (
-  int capitalGeneration,
-  int choiceDepth,
-  String provinceId,
-);
-
-typedef _Placement = ({String faction, String province, bool lockedSeed});
-
-/// DFS return codes for the outer search loop.
-const int _dfsOk = 0;
-const int _dfsDeadEnd = 1;
-const int _dfsBudget = 2;
 
 final class LockedAssignerEngine {
   LockedAssignerEngine({
@@ -62,8 +33,8 @@ final class LockedAssignerEngine {
 
   final owners = <String, String>{};
   final Set<String> unassigned;
-  final tabu = <_TabuEntry>{};
-  final placementStack = <_Placement>[];
+  final tabu = <LockedAssignerTabuKey>{};
+  final placementStack = <LockedAssignerPlacement>[];
   final Map<String, int> countPerFaction;
   final Map<String, int> localBacktracks;
   final traceSeq = <int>[0];
@@ -77,13 +48,13 @@ final class LockedAssignerEngine {
       for (final f in growthOrder) {
         localBacktracks[f] = 0;
       }
-      final rc = _dfs();
-      if (rc == _dfsOk) {
+      final rc = dfs();
+      if (rc == lockedAssignerDfsOk) {
         return owners;
       }
       final blocked = lastBlockedFaction;
-      if (blocked != null && _unwindAfterBlock(blocked)) {
-        _recomputeCounts();
+      if (blocked != null && unwindAfterBlock(blocked)) {
+        recomputeCounts();
         for (final f in growthOrder) {
           localBacktracks[f] = 0;
         }
@@ -93,7 +64,9 @@ final class LockedAssignerEngine {
         throw StateError('locked province assigner: search failed on landmass');
       }
       observation?.capitalRestarts++;
-      _traceDfs('capital_restart capGen=$capitalGeneration->${capitalGeneration + 1}');
+      traceDfs(
+        'capital_restart capGen=$capitalGeneration->${capitalGeneration + 1}',
+      );
       capitalGeneration++;
       owners.clear();
       unassigned.clear();
@@ -105,166 +78,5 @@ final class LockedAssignerEngine {
       }
       tabu.clear();
     }
-  }
-
-  int _dfs() {
-    if (_landmassComplete()) return _dfsOk;
-    final faction = _activeFaction();
-    if (faction == null) return _dfsOk;
-    lastBlockedFaction = faction;
-    final ranked = lockedAssignerRankedCandidatesForFaction(
-      faction: faction,
-      owners: owners,
-      unassigned: unassigned,
-      land: land,
-      neighbours: neighbours,
-      mandatory: mandatory,
-      growthOrder: growthOrder,
-      seedPickerRandom: seedPickerRandom,
-      markBlockedFaction: (f) => lastBlockedFaction = f,
-    );
-    if (ranked == null || ranked.isEmpty) {
-      return _dfsDeadEnd;
-    }
-    final depth = placementStack.length;
-    final tryOrder = rotateList(
-      ranked,
-      (capitalGeneration + depth * 31) % max(1, ranked.length),
-    );
-    for (final p in tryOrder) {
-      final decision = _tryOnePlacement(faction: faction, province: p, depth: depth);
-      if (decision == _dfsOk || decision == _dfsBudget) {
-        return decision;
-      }
-    }
-    return _dfsDeadEnd;
-  }
-
-  int _tryOnePlacement({
-    required String faction,
-    required String province,
-    required int depth,
-  }) {
-    final tk = (capitalGeneration, depth, province);
-    if (tabu.contains(tk)) {
-      _traceDfs(
-        'skip_tabu capGen=$capitalGeneration depth=$depth faction=$faction prov=$province',
-      );
-      return _dfsDeadEnd;
-    }
-    final trialCounts = Map<String, int>.from(countPerFaction)
-      ..[faction] = countPerFaction[faction]! + 1;
-    if (!phasedGrowthFeasibilityHolds(
-      activeFaction: faction,
-      trialProvince: province,
-      ownersNow: owners,
-      unassignedNow: unassigned,
-      trialCounts: trialCounts,
-      mandatorySeed: mandatory,
-      growthOrder: growthOrder,
-      targetPerFaction: targetPerFaction,
-      neighbours: neighbours,
-      land: land,
-    )) {
-      _traceDfs(
-        'prune_phased_feasibility capGen=$capitalGeneration depth=$depth '
-        'faction=$faction prov=$province',
-      );
-      return _dfsDeadEnd;
-    }
-    final needsSeed = !owners.containsValue(faction);
-    final stackEnter = placementStack.length;
-    owners[province] = faction;
-    unassigned.remove(province);
-    placementStack.add((
-      faction: faction,
-      province: province,
-      lockedSeed: needsSeed && mandatory.containsKey(faction),
-    ));
-    countPerFaction[faction] = countPerFaction[faction]! + 1;
-    _traceDfs(
-      'try_push capGen=$capitalGeneration depth=$depth faction=$faction prov=$province '
-      'owners={${_lockedAssignerOwnersCompact(owners)}}',
-    );
-    final child = _dfs();
-    if (child == _dfsOk) {
-      localBacktracks[faction] = 0;
-      return _dfsOk;
-    }
-    while (placementStack.length > stackEnter) {
-      _popOnePlacement();
-    }
-    if (child == _dfsBudget) {
-      return _dfsBudget;
-    }
-    tabu.add(tk);
-    _removeTabuAtOrAfterDepth(depth + 1);
-    observation?.backtracks++;
-    localBacktracks[faction] = (localBacktracks[faction] ?? 0) + 1;
-    if (localBacktracks[faction]! >= backtrackLimitPerFaction) {
-      lastBlockedFaction = faction;
-      return _dfsBudget;
-    }
-    return _dfsDeadEnd;
-  }
-
-  bool _landmassComplete() {
-    for (final f in growthOrder) {
-      if (countPerFaction[f]! < targetPerFaction[f]!) return false;
-    }
-    return true;
-  }
-
-  String? _activeFaction() {
-    for (final f in growthOrder) {
-      if (countPerFaction[f]! < targetPerFaction[f]!) return f;
-    }
-    return null;
-  }
-
-  void _popOnePlacement() {
-    final top = placementStack.removeLast();
-    owners.remove(top.province);
-    unassigned.add(top.province);
-    _recomputeCounts();
-  }
-
-  void _recomputeCounts() {
-    for (final f in growthOrder) {
-      countPerFaction[f] = 0;
-    }
-    for (final e in owners.entries) {
-      countPerFaction[e.value] = (countPerFaction[e.value] ?? 0) + 1;
-    }
-  }
-
-  bool _unwindAfterBlock(String blockedFaction) {
-    final bi = growthOrder.indexOf(blockedFaction);
-    if (bi <= 0) return false;
-    final prev = growthOrder[bi - 1];
-    var idx = -1;
-    for (var i = placementStack.length - 1; i >= 0; i--) {
-      final e = placementStack[i];
-      if (e.faction == prev && !e.lockedSeed) {
-        idx = i;
-        break;
-      }
-    }
-    if (idx < 0) return false;
-    while (placementStack.length > idx) {
-      _popOnePlacement();
-    }
-    tabu.clear();
-    return true;
-  }
-
-  void _removeTabuAtOrAfterDepth(int d) {
-    tabu.removeWhere((e) => e.$1 == capitalGeneration && e.$2 >= d);
-  }
-
-  void _traceDfs(String msg) {
-    if (!_kTraceLockedAssignerDfs) return;
-    final line = 'logic: locked_assign_dfs #${traceSeq[0]++} $msg';
-    setupLog.i(line);
   }
 }

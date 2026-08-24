@@ -1,15 +1,15 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 // Reuse the production province–province adjacency + connected-components
 // helpers instead of byte-identical test reimplementations (Refs #3740):
 // `provinceNeighboursFromTopology` and `connectedComponentsInSubset` both
-// arrive through the colonizethis_logic barrel (the latter published from the
+// arrive through the colonizethis_setup barrel (the latter published from the
 // colonizethis_world barrel, Refs #4054), so no world src/ deep import.
 
 import 'init_game_orchestrator_locked_ac_expectations.dart';
 export 'init_game_orchestrator_locked_ac_expectations.dart';
+export 'init_game_orchestrator_test_support_generators.dart';
 
 /// AC-11 regression seeds for locked full-init profile (#1830 / #1861).
 const lockedFullInitAc11Seeds = <int>[
@@ -197,55 +197,3 @@ GameSetupConfig lockedFullInitConfig({
   advancedStart: advancedStart,
   infiniteMode: infiniteMode,
 );
-
-/// Wraps [defaultTileMapRegionGenerator] for tests, exposing the per-region
-/// [TileMapParams] via [onParams] and allowing a [continentProvinceSizes]
-/// override via [resolveContinentProvinceSizes]. Removes the copy-pasted full
-/// generator signature from orchestrator tests (Refs #3712).
-TileMapRegionGenerator wrapRegionGenerator({
-  void Function(String regionId, TileMapParams params)? onParams,
-  List<int>? Function({
-    required String regionId,
-    required int numProvinces,
-    required int numContinents,
-    required List<int>? continentProvinceSizes,
-  })?
-  resolveContinentProvinceSizes,
-}) {
-  return ({
-    required TileMapParams params,
-    required int numProvinces,
-    required int numContinents,
-    required String regionId,
-    String seaZoneId = 's1',
-    ResourceRules? resourceRules,
-    void Function(String)? onLog,
-    void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
-    onLandSeedsPlaced,
-    void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
-    List<int>? continentProvinceSizes,
-  }) {
-    onParams?.call(regionId, params);
-    final sizes =
-        resolveContinentProvinceSizes?.call(
-          regionId: regionId,
-          numProvinces: numProvinces,
-          numContinents: numContinents,
-          continentProvinceSizes: continentProvinceSizes,
-        ) ??
-        continentProvinceSizes;
-    return defaultTileMapRegionGenerator(
-      params: params,
-      numProvinces: numProvinces,
-      numContinents: numContinents,
-      regionId: regionId,
-      seaZoneId: seaZoneId,
-      resourceRules: resourceRules,
-      onLog: onLog,
-      onLandSeedsPlaced: onLandSeedsPlaced,
-      onContinentSeedsPlaced: onContinentSeedsPlaced,
-      continentProvinceSizes: sizes,
-    );
-  };
-}
-

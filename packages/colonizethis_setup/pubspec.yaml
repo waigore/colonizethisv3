@@ -21,7 +21,6 @@ dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
   colonizethis_economy:
-  colonizethis_logic:
   colonizethis_test:
   coverage: ^1.15.0
   custom_lint: 0.8.1
