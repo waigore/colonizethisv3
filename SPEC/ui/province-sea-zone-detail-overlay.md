@@ -668,6 +668,7 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - Given a connected extractable tile whose next improve is legal, path caps are strictly above current production, and town development already equals current effective yield, when **Build improvement** is enabled, then the default line states the same integer amount and that town development is the limit.
 - Given an unimproved extractable tile that is not capital-connected, when Tile / Assign preview renders, then the UI layer states the improve will still send nothing because the tile is not bound to the capital.
 - Given observe mode / `canMutateViaUi == false` / foreign or unrevealed tiles, when those surfaces render, then the next-level line is hidden.
+- Given Widgetbook raise / road-cap / town-cap / disconnected-unimproved next-yield stories for Province Overlay, Development Assign preview, and work-order afford preview, when `app/test/build_improvement_next_yield_goldens_test.dart` runs, then each `matchesGoldenFile` baseline under `app/test/goldens/build_improvement_next_yield_*.png` matches the committed PNG.
 
 ### Build railroad shortcut (Refs #4383)
 
