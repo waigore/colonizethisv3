@@ -96,46 +96,47 @@ class _MoreRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = GestureDetector(
-      key: rowKey,
-      onTap: enabled ? onTap : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: CtSpacing.m),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: enabled
-                    ? EditorialMonoclePalette.fg
-                    : EditorialMonoclePalette.muted,
+    final texts = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: enabled
+                ? EditorialMonoclePalette.fg
+                : EditorialMonoclePalette.muted,
+          ),
+        ),
+        if (caption != null && caption!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              caption!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: EditorialMonoclePalette.muted,
               ),
             ),
-            if (caption != null && caption!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  caption!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: EditorialMonoclePalette.muted,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
-    if (tooltip == null || tooltip!.isEmpty) {
-      return child;
-    }
-    return Tooltip(
-      message: tooltip!,
-      triggerMode: enabled
-          ? TooltipTriggerMode.longPress
-          : TooltipTriggerMode.tap,
-      child: child,
+    final labeled = (tooltip == null || tooltip!.isEmpty)
+        ? texts
+        : Tooltip(
+            message: tooltip!,
+            triggerMode: enabled
+                ? TooltipTriggerMode.longPress
+                : TooltipTriggerMode.tap,
+            child: texts,
+          );
+    return GestureDetector(
+      key: rowKey,
+      onTap: enabled ? onTap : null,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: CtSpacing.m),
+        child: labeled,
+      ),
     );
   }
 }

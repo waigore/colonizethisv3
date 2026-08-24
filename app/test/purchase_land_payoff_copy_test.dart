@@ -1,6 +1,8 @@
 // Display-only Purchase land payoff gist (Refs #4630).
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetPurchaseLand;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,7 +24,7 @@ void main() {
       expect(line, contains('first bid'));
       expect(line.toLowerCase(), contains('land stays'));
       expect(line.toLowerCase(), isNot(contains('warehouse')));
-      expect(line, isNot(contains('purchase_land')));
+      expect(line, isNot(contains(kWorkTargetPurchaseLand)));
       expect(line, isNot(contains('this Next turn')));
     },
   );
