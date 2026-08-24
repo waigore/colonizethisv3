@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'dialogs_320dp_min_viewport_support.dart';
 import 'dialogs_320dp_min_viewport_extended_support.dart';
+import 'dialogs_320dp_min_viewport_processing_and_combat_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -126,4 +127,5 @@ void main() {
   });
 
   registerDialogs320ExtendedTests();
+  registerDialogs320ProcessingAndCombatTests();
 }
