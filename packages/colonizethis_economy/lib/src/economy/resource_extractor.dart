@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'capital_tile_grain_bonus.dart';
 import 'commodity_totals.dart';
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
@@ -102,10 +103,9 @@ Map<String, ExtractionTotals> computeExtraction({
       }
     }
 
-    final capBonus = game.capitalTileGrainBonusPerTurn;
-    if (player.capitalTile != null && capBonus > 0) {
-      final grainId = CommodityCatalog.grain.id;
-      addUnits(landTotals, grainId, capBonus);
+    final capBonus = capitalTileGrainBonusForPlayer(game: game, player: player);
+    if (capBonus != null) {
+      addUnits(landTotals, CommodityCatalog.grain.id, capBonus);
     }
 
     out[player.id] = ExtractionTotals(

@@ -13,7 +13,7 @@ final _sugarId = 'refinedSugar';
 
 void runMilitaryFoodConsumption({required int stockpileGrain, Map<String, int>? regimentCountsById, int? militaryUnits, required FoodConsumptionPins pins}) {
   final stockpile = Stockpile().applyDelta(_grainId, stockpileGrain);
-  final (next, total, fullyFed) = consumeMilitaryFood(stockpile: stockpile, regimentCountsById: regimentCountsById ?? const {}, militaryUnits: militaryUnits ?? 0);
+  final (next, total, fullyFed, _) = consumeMilitaryFood(stockpile: stockpile, regimentCountsById: regimentCountsById ?? const {}, militaryUnits: militaryUnits ?? 0);
   if (pins.total != null) expect(total, pins.total);
   if (pins.fullyFed != null) expect(fullyFed, pins.fullyFed);
   if (pins.grainRemaining != null) {
@@ -37,7 +37,7 @@ void runNavyFoodConsumption({required int stockpileGrain, Map<String, int>? ship
     return;
   }
   final resolvedPins = pins!;
-  final (next, total, fullyFed) = consumeNavyFood(stockpile: stockpile, shipCountsById: shipCountsById ?? const {});
+  final (next, total, fullyFed, _) = consumeNavyFood(stockpile: stockpile, shipCountsById: shipCountsById ?? const {});
   if (resolvedPins.total != null) expect(total, resolvedPins.total);
   if (resolvedPins.fullyFed != null) expect(fullyFed, resolvedPins.fullyFed);
   if (resolvedPins.grainRemaining != null) {

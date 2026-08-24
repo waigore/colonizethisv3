@@ -4,9 +4,11 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' show CommodityId, Game;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show CommodityId, Game;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'capital_tile_grain_bonus.dart';
 import 'commodity_totals.dart';
 import 'development_panel_model.dart';
 import 'development_panel_visibility.dart';
@@ -52,8 +54,7 @@ List<DevelopmentPanelScopeRow> buildDevelopmentPurchasedScopes({
       DevelopmentPanelScopeRow(
         scopeKey: 'purchased:$provinceId',
         provinceId: provinceId,
-        displayName:
-            provinceDisplayNamesById[provinceId] ?? provinceId,
+        displayName: provinceDisplayNamesById[provinceId] ?? provinceId,
         provinceOwnerId: ownerId,
         provinceOwnerDisplayName: ownerId == null
             ? null
@@ -186,11 +187,9 @@ Map<String, int> developmentExtractionProjectionForRegion({
     addUnits(totals, contribution.commodityId, contribution.units);
   }
 
-  final capBonus = game.capitalTileGrainBonusPerTurn;
+  final capBonus = capitalTileGrainBonusForPlayer(game: game, player: player);
   final capitalRegionId = player.capitalTile?.regionId;
-  if (regionId == capitalRegionId &&
-      player.capitalTile != null &&
-      capBonus > 0) {
+  if (regionId == capitalRegionId && capBonus != null) {
     addUnits(totals, CommodityCatalog.grain.id, capBonus);
   }
 
