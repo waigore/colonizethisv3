@@ -25,8 +25,8 @@ void main() {
     );
   });
 
-  test('wave-6 lib ceiling is 300 physical lines', () {
-    expect(dataLibFileSizeCeiling, 300);
+  test('wave-7 lib ceiling is 250 physical lines', () {
+    expect(dataLibFileSizeCeiling, 250);
   });
 
   test('grandfather allowlist is empty after #4412 wave-6 splits', () {
@@ -52,7 +52,7 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge.dart'));
-    expect(logs.join('\n'), contains('physical lines > 300'));
+    expect(logs.join('\n'), contains('physical lines > 250'));
   });
 
   test('skips an over-cap generated *.gen.dart file', () {
