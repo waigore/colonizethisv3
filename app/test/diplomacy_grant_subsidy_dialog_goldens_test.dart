@@ -19,7 +19,7 @@ const _humanId = 'gp1';
 const _targetId = 'gp2';
 const Size _dialogHost = Size(420, 560);
 
-Game _buildGame({required int humanTreasury}) {
+Game _buildGame({required int humanTreasury, num? pairScore}) {
   return Game(
     id: 'g_dipl20001_golden',
     worldState: const WorldState(
@@ -41,6 +41,15 @@ Game _buildGame({required int humanTreasury}) {
         treasury: 0,
       ),
     ],
+    diplomacyRelations: pairScore == null
+        ? const []
+        : [
+            DiplomacyRelation(
+              factionId1: _humanId,
+              factionId2: _targetId,
+              score: pairScore,
+            ),
+          ],
   );
 }
 
@@ -104,6 +113,13 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.text(
+        'Effect: A larger gift this turn does not improve standing further.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Effect: Standing word stays Neutral.'), findsOneWidget);
 
     await expectLater(
       find.byKey(boundaryKey),
@@ -197,6 +213,58 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/dipl20001_grant_preview_320dp.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: DIPL20001 grant standing word becomes Neutral (Refs #4632)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'dipl20001_grant_standing_becomes_golden',
+      );
+      await _pumpDialogGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: _buildGame(humanTreasury: 5 * grantAidAmountStep, pairScore: 45),
+        isSubsidy: false,
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(
+        find.text('Effect: Standing word becomes Neutral.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('+5'), findsNothing);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/dipl20001_grant_standing_becomes.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: DIPL20001 grant standing word stays Devoted (Refs #4632)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'dipl20001_grant_standing_stays_golden',
+      );
+      await _pumpDialogGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: _buildGame(humanTreasury: 5 * grantAidAmountStep, pairScore: 95),
+        isSubsidy: false,
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.text('Effect: Standing word stays Devoted.'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/dipl20001_grant_standing_stays.png'),
       );
     },
   );

@@ -120,6 +120,98 @@ List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        name: 'Grant mode — standing word becomes Neutral',
+        builder: (context) {
+          final result = loadSeed42InitGameResult();
+          final base = result.game;
+          final humanPlayerId = base.players.first.id;
+          final targetFactionId = base.players.length >= 2
+              ? base.players[1].id
+              : (base.minorNations.isNotEmpty
+                    ? base.minorNations.first.id
+                    : 'm1');
+          final game = base.copyWith(
+            players: [
+              base.players.first.copyWith(treasury: 5000),
+              ...base.players.skip(1),
+            ],
+            diplomacyRelations: [
+              DiplomacyRelation(
+                factionId1: humanPlayerId,
+                factionId2: targetFactionId,
+                score: 45,
+              ),
+            ],
+          );
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => GrantOrSubsidyDialog(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      targetFactionId: targetFactionId,
+                      isSubsidy: false,
+                      bus: AppEventBus.create(),
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Grant Aid (becomes Neutral)'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Grant mode — standing word stays Devoted',
+        builder: (context) {
+          final result = loadSeed42InitGameResult();
+          final base = result.game;
+          final humanPlayerId = base.players.first.id;
+          final targetFactionId = base.players.length >= 2
+              ? base.players[1].id
+              : (base.minorNations.isNotEmpty
+                    ? base.minorNations.first.id
+                    : 'm1');
+          final game = base.copyWith(
+            players: [
+              base.players.first.copyWith(treasury: 5000),
+              ...base.players.skip(1),
+            ],
+            diplomacyRelations: [
+              DiplomacyRelation(
+                factionId1: humanPlayerId,
+                factionId2: targetFactionId,
+                score: 95,
+              ),
+            ],
+          );
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => GrantOrSubsidyDialog(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      targetFactionId: targetFactionId,
+                      isSubsidy: false,
+                      bus: AppEventBus.create(),
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Grant Aid (stays Devoted)'),
+              );
+            },
+          );
+        },
+      ),
     ],
   ),
 ];
