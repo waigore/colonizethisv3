@@ -780,6 +780,24 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_tilePurchaseLandPayoffTradeable(
+    String good,
+    String court,
+  ) {
+    return '$good still sells as $court’s. After this work you get first bid '
+        'on that sale, and gold when other courts buy it. The land stays theirs.';
+  }
+
+  @override
+  String provinceOverlay_tilePurchaseLandPayoffRiches(
+    String good,
+    String court,
+  ) {
+    return '$good from this tile will go to your treasury after this work. '
+        'The land stays $court’s.';
+  }
+
+  @override
   String provinceOverlay_tileImprovement(String value) {
     return 'Improvement: $value';
   }

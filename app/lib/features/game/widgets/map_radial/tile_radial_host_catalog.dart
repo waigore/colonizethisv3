@@ -19,6 +19,7 @@ import 'tile_radial_catalog.dart';
 import 'tile_radial_keys.dart';
 import 'tile_radial_spoke_view.dart';
 import 'tile_radial_tooltips.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
 
 String tileRadialProvinceIdFromTileKey(String tileKey) {
   final parsed = tileKey.split('|');
@@ -179,6 +180,14 @@ List<TileRadialSpokeView> tileRadialHostSpokeViews({
           enabled: spoke.enabled,
           hasMatchingUnits: hasMatchingUnits(spoke.action),
         ),
+        caption: spoke.action == TileRadialCatalogAction.purchaseLand
+            ? purchaseLandPayoffCopyForTile(
+                l10n: l10n,
+                game: game,
+                tileKey: tileKey,
+                enabled: spoke.enabled,
+              )?.gist
+            : null,
       ),
   ];
 }

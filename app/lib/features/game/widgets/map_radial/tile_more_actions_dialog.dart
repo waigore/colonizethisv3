@@ -65,6 +65,7 @@ class TileMoreActionsDialog extends StatelessWidget {
               _MoreRow(
                 rowKey: tileRadialSpokeKey(row.action),
                 label: row.label,
+                caption: row.caption,
                 tooltip: row.tooltip,
                 enabled: row.enabled,
                 onTap: row.enabled ? () => onAction(row.action) : null,
@@ -83,10 +84,12 @@ class _MoreRow extends StatelessWidget {
     required this.enabled,
     required this.onTap,
     this.tooltip,
+    this.caption,
   });
 
   final Key rowKey;
   final String label;
+  final String? caption;
   final String? tooltip;
   final bool enabled;
   final VoidCallback? onTap;
@@ -98,13 +101,29 @@ class _MoreRow extends StatelessWidget {
       onTap: enabled ? onTap : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: CtSpacing.m),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: enabled
-                ? EditorialMonoclePalette.fg
-                : EditorialMonoclePalette.muted,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: enabled
+                    ? EditorialMonoclePalette.fg
+                    : EditorialMonoclePalette.muted,
+              ),
+            ),
+            if (caption != null && caption!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  caption!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: EditorialMonoclePalette.muted,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

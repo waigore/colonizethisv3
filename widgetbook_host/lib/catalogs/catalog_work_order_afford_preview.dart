@@ -41,19 +41,52 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
           affordPreview: const WorkOrderAffordPreview(canAfford: true),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Purchase land tradeable gist',
+        builder: (context) {
+          final l10n = AppLocalizationsEn();
+          return _workOrderAffordSelectionPromptStory(
+            affordPreview: const WorkOrderAffordPreview(
+              treasuryAmount: 150,
+              canAfford: true,
+            ),
+            payoffGist: l10n.provinceOverlay_tilePurchaseLandPayoffTradeable(
+              'Timber',
+              'Portugal',
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Purchase land riches gist',
+        builder: (context) {
+          final l10n = AppLocalizationsEn();
+          return _workOrderAffordSelectionPromptStory(
+            affordPreview: const WorkOrderAffordPreview(
+              treasuryAmount: 750,
+              canAfford: true,
+            ),
+            payoffGist: l10n.provinceOverlay_tilePurchaseLandPayoffRiches(
+              'Gold',
+              'Ashanti',
+            ),
+          );
+        },
+      ),
     ],
   ),
 ];
 
 Widget _workOrderAffordSelectionPromptStory({
   required WorkOrderAffordPreview affordPreview,
+  String? payoffGist,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     child: SizedBox(
       width: 520,
-      height: 160,
+      height: 220,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -62,6 +95,7 @@ Widget _workOrderAffordSelectionPromptStory({
             overlayOpen: false,
             onCancel: () {},
             affordPreview: affordPreview,
+            payoffGist: payoffGist,
           ),
         ],
       ),

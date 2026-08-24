@@ -26,6 +26,8 @@ A **Great Power** is a playable nation. The **world market** is the one shared p
 
 If a Merchant finished **Purchase land** on a Minor Nation or Tribe tile, that land’s sales still list under the Minor or Tribe, but you keep three privileges:
 
+You can also read that payoff **before** you assign: enabled **Purchase land** on the province Tile row, the tile ring, the map banner, and the Merchant row uses the same gist (first bid and gold on tradeable sales, or riches into your treasury; the land stays theirs). Trade’s **First right** chip still appears after the purchase is recorded.
+
 1. **Bid priority** — your bid on that good is filled from that tile’s sale before ordinary rank and before **Favored Trading Partner**.
 2. **Overseas profit** — when another Great Power buys those goods, you receive a treasury share that grows with how friendly that court is toward the seller (hidden relation). Other Great Powers that hold an **Embassy** with the seller may receive a smaller share (one tenth of their relation portion), even if they do not own the tile. Embassy holders can still receive that smaller share on Minor or Tribe sales when no tile was purchased.
 3. **Riches** from a purchased gold, silver, gems, diamonds, or spices tile go into **your** treasury, not the Minor’s.
@@ -115,6 +117,8 @@ When a rival court’s treasury runs low, it leans toward the market: sell surpl
 - `SPEC/ui/favored-trading-partner-dialogue-overlay.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ui/empire-buttons.md`
-- `SPEC/ui/player-turn-event-feed.md`
+- `SPEC/ui/civilian-units-panel.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/map-widget.md`
 - `SPEC/ai/treasury-planner.md`
 - `SPEC/ai/economy-planner.md`

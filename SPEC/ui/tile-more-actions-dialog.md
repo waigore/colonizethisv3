@@ -56,4 +56,4 @@ Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; re
 - Given More is activated, when the dialog opens, then it lists leftover catalog actions plus Province details and does not list excluded non-catalog actions. (`app/test/tile_more_actions_dialog_test.dart`)
 - Given Province details, when activated, then `MAP20001` opens/updates for that tile and the radial/dialog close. (`app/test/tile_radial_host_test.dart`)
 - Given an enabled remainder Explore row, when activated, then the UI emits the same Explore shortcut event as `MAP20001`. (`app/test/tile_radial_emit_test.dart`)
-- Given a 320 dp viewport, when the dialog renders, then there is no horizontal overflow. (`app/test/tile_more_actions_dialog_test.dart`, `app/test/tile_radial_goldens_test.dart`)
+- Given an enabled Purchase land remainder row, when the dialog renders, then the qualitative payoff gist is default-visible (not tooltip-only). (`app/test/purchase_land_payoff_copy_test.dart`)

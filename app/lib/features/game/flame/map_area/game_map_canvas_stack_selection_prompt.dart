@@ -8,6 +8,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'game_map_canvas_stack.dart';
 import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
+import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
 ///
@@ -19,6 +20,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     required this.onCancel,
     this.usesRelocateCopy = false,
     this.affordPreview,
+    this.payoffGist,
     super.key,
   });
 
@@ -27,6 +29,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final VoidCallback? onCancel;
   final bool usesRelocateCopy;
   final WorkOrderAffordPreview? affordPreview;
+  final String? payoffGist;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +72,10 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
                     l10n: l10n,
                     preview: preview!,
                   ),
+                if (payoffGist != null &&
+                    payoffGist!.isNotEmpty &&
+                    !usesRelocateCopy)
+                  PurchaseLandPayoffGistLine(text: payoffGist!),
               ],
             ),
           ),
