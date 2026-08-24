@@ -35,7 +35,7 @@ class YarnInlineAssetBundle extends Fake implements AssetBundle {
 /// [AssetBundle] that fails [loadString] with [error] (default missing asset).
 class YarnThrowingAssetBundle extends Fake implements AssetBundle {
   YarnThrowingAssetBundle({Object? error})
-      : _error = error ?? Exception('missing asset');
+    : _error = error ?? Exception('missing asset');
 
   final Object _error;
 
@@ -120,6 +120,39 @@ title: DialoguePoint/intervention_reaction_do_nothing
 title: DialoguePoint/intervention_reaction_protest
 ---
 {$aggressorName} returneth a chill note.
+-> Continue
+===
+''';
+
+/// Minimal intervention yarn for choice-picker Effect pins (Refs #4267).
+const String kYarnInterventionMinimal = r'''
+title: DialoguePoint/intervention_intro
+---
+Heavy tidings cross thy desk.
+-> Continue
+===
+
+title: DialoguePoint/intervention_situation
+---
+Dispatch from thy minister.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_intervene
+---
+Reaction.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_do_nothing
+---
+Reaction.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_protest
+---
+Reaction.
 -> Continue
 ===
 ''';
