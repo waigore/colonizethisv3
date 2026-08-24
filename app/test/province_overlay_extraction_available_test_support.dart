@@ -1,9 +1,15 @@
 // Fixtures for province overlay extraction/available pins (Refs #4352).
 
+import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
+    show demoGameForOverlay;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show ProvinceImprovableCommodityCount;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+Game demoGameForOwnedPump() => demoGameForOverlay;
+
+String demoOverlayHumanId() => demoGameForOverlay.players.first.id;
 
 String foreignOwnedProvinceIdForOverlay({
   required Game game,

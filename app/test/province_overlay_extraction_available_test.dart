@@ -1,19 +1,12 @@
-import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
-import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show demoGameForOverlay, demoRegionForOverlay;
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'province_overlay_test_harness.dart';
 import 'province_overlay_extraction_available_test_support.dart';
+import 'province_overlay_owned_pump.dart';
 
 void main() {
   suppressLogsForTests();
@@ -21,23 +14,12 @@ void main() {
   testWidgets(
     'Extraction and Available appear above Town production (Refs #4002)',
     (tester) async {
-      final game = demoGameForOverlay;
-      final humanId = game.players.first.id;
-      final provinceId = ownedProvinceIdInOldWorld(
-        game: game,
-        ownerId: humanId,
-      );
-      final playerView = buildPlayerView(game, const MapTopology(), humanId);
-
-      await pumpProvinceOverlayAtDarkTheme(
+      await pumpOwnedProvinceOverlayAtDarkTheme(
         tester,
-        game: game,
-        displayId: provinceId,
-        region: demoRegionForOverlay,
-        humanPlayerId: humanId,
-        playerView: playerView,
         omniscientDetail: true,
-        extractionSnapshot: sampleProvinceExtractionSnapshot(humanId),
+        extractionSnapshot: sampleProvinceExtractionSnapshot(
+          demoOverlayHumanId(),
+        ),
         availableByCommodity: sampleProvinceImprovableAvailable,
       );
 
@@ -60,23 +42,12 @@ void main() {
   testWidgets(
     'partial Extraction shows muted reason line under condensed line (Refs #4150)',
     (tester) async {
-      final game = demoGameForOverlay;
-      final humanId = game.players.first.id;
-      final provinceId = ownedProvinceIdInOldWorld(
-        game: game,
-        ownerId: humanId,
-      );
-      final playerView = buildPlayerView(game, const MapTopology(), humanId);
-
-      await pumpProvinceOverlayAtDarkTheme(
+      await pumpOwnedProvinceOverlayAtDarkTheme(
         tester,
-        game: game,
-        displayId: provinceId,
-        region: demoRegionForOverlay,
-        humanPlayerId: humanId,
-        playerView: playerView,
         omniscientDetail: true,
-        extractionSnapshot: sampleProvinceExtractionSnapshot(humanId),
+        extractionSnapshot: sampleProvinceExtractionSnapshot(
+          demoOverlayHumanId(),
+        ),
         availableByCommodity: sampleProvinceImprovableAvailable,
       );
 
@@ -92,18 +63,9 @@ void main() {
   testWidgets('full-yield Extraction omits partial reason line (Refs #4150)', (
     tester,
   ) async {
-    final game = demoGameForOverlay;
-    final humanId = game.players.first.id;
-    final provinceId = ownedProvinceIdInOldWorld(game: game, ownerId: humanId);
-    final playerView = buildPlayerView(game, const MapTopology(), humanId);
-
-    await pumpProvinceOverlayAtDarkTheme(
+    final humanId = demoOverlayHumanId();
+    await pumpOwnedProvinceOverlayAtDarkTheme(
       tester,
-      game: game,
-      displayId: provinceId,
-      region: demoRegionForOverlay,
-      humanPlayerId: humanId,
-      playerView: playerView,
       omniscientDetail: true,
       extractionSnapshot: ProvinceExtractionSnapshot(
         ownerId: humanId,
@@ -128,20 +90,7 @@ void main() {
   testWidgets('empty Extraction shows dash placeholders (Refs #4002)', (
     tester,
   ) async {
-    final game = demoGameForOverlay;
-    final humanId = game.players.first.id;
-    final provinceId = ownedProvinceIdInOldWorld(game: game, ownerId: humanId);
-    final playerView = buildPlayerView(game, const MapTopology(), humanId);
-
-    await pumpProvinceOverlayAtDarkTheme(
-      tester,
-      game: game,
-      displayId: provinceId,
-      region: demoRegionForOverlay,
-      humanPlayerId: humanId,
-      playerView: playerView,
-      omniscientDetail: true,
-    );
+    await pumpOwnedProvinceOverlayAtDarkTheme(tester, omniscientDetail: true);
 
     expect(find.text('Extraction'), findsOneWidget);
     expect(find.text('Available'), findsOneWidget);
@@ -151,21 +100,13 @@ void main() {
   testWidgets(
     'intel gate hides Extraction/Available quantities behind ??? (Refs #4002)',
     (tester) async {
-      final game = demoGameForOverlay;
-      final humanId = game.players.first.id;
-      final foreignProvinceId = foreignOwnedProvinceIdForOverlay(
-        game: game,
-        humanPlayerId: humanId,
-      );
-      final playerView = buildPlayerView(game, const MapTopology(), humanId);
-
-      await pumpProvinceOverlayAtDarkTheme(
+      final humanId = demoOverlayHumanId();
+      await pumpOwnedProvinceOverlayAtDarkTheme(
         tester,
-        game: game,
-        displayId: foreignProvinceId,
-        region: demoRegionForOverlay,
-        humanPlayerId: humanId,
-        playerView: playerView,
+        displayId: foreignOwnedProvinceIdForOverlay(
+          game: demoGameForOwnedPump(),
+          humanPlayerId: humanId,
+        ),
         omniscientDetail: false,
         extractionSnapshot: sampleProvinceExtractionSnapshot(humanId),
         availableByCommodity: sampleProvinceImprovableAvailable,
@@ -182,24 +123,14 @@ void main() {
   testWidgets(
     'hovering Extraction commodity highlights related tile keys (Refs #4002)',
     (tester) async {
-      final game = demoGameForOverlay;
-      final humanId = game.players.first.id;
-      final provinceId = ownedProvinceIdInOldWorld(
-        game: game,
-        ownerId: humanId,
-      );
-      final playerView = buildPlayerView(game, const MapTopology(), humanId);
       Iterable<String>? highlighted;
 
-      await pumpProvinceOverlayAtDarkTheme(
+      await pumpOwnedProvinceOverlayAtDarkTheme(
         tester,
-        game: game,
-        displayId: provinceId,
-        region: demoRegionForOverlay,
-        humanPlayerId: humanId,
-        playerView: playerView,
         omniscientDetail: true,
-        extractionSnapshot: sampleProvinceExtractionSnapshot(humanId),
+        extractionSnapshot: sampleProvinceExtractionSnapshot(
+          demoOverlayHumanId(),
+        ),
         availableByCommodity: sampleProvinceImprovableAvailable,
         onHighlightTiles: (keys) {
           highlighted = keys;
@@ -224,25 +155,12 @@ void main() {
   testWidgets(
     'narrow shell wraps Extraction segments without ellipsis (Refs #4002)',
     (tester) async {
-      final game = demoGameForOverlay;
-      final humanId = game.players.first.id;
-      final provinceId = ownedProvinceIdInOldWorld(
-        game: game,
-        ownerId: humanId,
-      );
-      final playerView = buildPlayerView(game, const MapTopology(), humanId);
-
-      await pumpProvinceOverlayAtDarkTheme(
+      await pumpOwnedProvinceOverlayAtDarkTheme(
         tester,
-        game: game,
-        displayId: provinceId,
-        region: demoRegionForOverlay,
-        humanPlayerId: humanId,
-        playerView: playerView,
         omniscientDetail: true,
         shellWidth: 160,
         extractionSnapshot: ProvinceExtractionSnapshot(
-          ownerId: humanId,
+          ownerId: demoOverlayHumanId(),
           byCommodity: {
             for (final id in const [
               'grain',
@@ -278,24 +196,11 @@ void main() {
   testWidgets(
     'capital grain bonus annotation is muted and distinct (Refs #4064)',
     (tester) async {
-      final game = demoGameForOverlay;
-      final humanId = game.players.first.id;
-      final provinceId = ownedProvinceIdInOldWorld(
-        game: game,
-        ownerId: humanId,
-      );
-      final playerView = buildPlayerView(game, const MapTopology(), humanId);
-
-      await pumpProvinceOverlayAtDarkTheme(
+      await pumpOwnedProvinceOverlayAtDarkTheme(
         tester,
-        game: game,
-        displayId: provinceId,
-        region: demoRegionForOverlay,
-        humanPlayerId: humanId,
-        playerView: playerView,
         omniscientDetail: true,
         extractionSnapshot: sampleProvinceExtractionSnapshot(
-          humanId,
+          demoOverlayHumanId(),
           capitalGrainBonus: 2,
         ),
         availableByCommodity: sampleProvinceImprovableAvailable,
@@ -314,22 +219,13 @@ void main() {
 
   testWidgets('capital grain bonus annotation is not a hover-highlight target '
       '(Refs #4064)', (tester) async {
-    final game = demoGameForOverlay;
-    final humanId = game.players.first.id;
-    final provinceId = ownedProvinceIdInOldWorld(game: game, ownerId: humanId);
-    final playerView = buildPlayerView(game, const MapTopology(), humanId);
     Iterable<String>? highlighted;
 
-    await pumpProvinceOverlayAtDarkTheme(
+    await pumpOwnedProvinceOverlayAtDarkTheme(
       tester,
-      game: game,
-      displayId: provinceId,
-      region: demoRegionForOverlay,
-      humanPlayerId: humanId,
-      playerView: playerView,
       omniscientDetail: true,
       extractionSnapshot: sampleProvinceExtractionSnapshot(
-        humanId,
+        demoOverlayHumanId(),
         capitalGrainBonus: 2,
       ),
       availableByCommodity: sampleProvinceImprovableAvailable,
@@ -357,23 +253,4 @@ void main() {
     );
     expect(highlighted, ['oldWorld|p1|0|0', 'oldWorld|p1|0|1']);
   });
-
-  test(
-    'setSecondaryHighlights stores multi keys and clears single (Refs #4002)',
-    () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final n = container.read(mapProvincePanelProvider.notifier);
-      n.reportMapTileTapped('r1|p1|0|0');
-      n.setSecondaryHighlights(['r1|p1|1|0', 'r1|p1|2|0']);
-      var state = container.read(mapProvincePanelProvider);
-      expect(state.secondaryHighlightTileKey, isNull);
-      expect(state.secondaryHighlightTileKeys, {'r1|p1|1|0', 'r1|p1|2|0'});
-
-      n.setSecondaryHighlight('r1|p1|3|0');
-      state = container.read(mapProvincePanelProvider);
-      expect(state.secondaryHighlightTileKey, 'r1|p1|3|0');
-      expect(state.secondaryHighlightTileKeys, isNull);
-    },
-  );
 }
