@@ -47,6 +47,8 @@ import 'check_app_test_no_duplicate_shortcut_fixtures.dart';
 import 'check_app_test_no_duplicate_shortcut_golden_game_service.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_economy_cost_check_shared_helper.dart';
+import 'check_economy_force_feeding_shared_helper.dart';
+import 'check_economy_grain_bonus_shared_helper.dart';
 import 'check_economy_dedup_credit_aggregation.dart';
 import 'check_economy_dedup_port_tile_keys.dart';
 import 'check_economy_world_market_admission_shared.dart';
@@ -1038,6 +1040,10 @@ int? _tryRunLogicRuleInProcess({
       return runCheckLogicDedupLogger(repoRoot);
     case 'repo.economy_cost_check_shared_helper':
       return runCheckEconomyCostCheckSharedHelper(repoRoot);
+    case 'repo.economy_force_feeding_shared_helper':
+      return runCheckEconomyForceFeedingSharedHelper(repoRoot);
+    case 'repo.economy_grain_bonus_shared_helper':
+      return runCheckEconomyGrainBonusSharedHelper(repoRoot);
     case 'repo.economy_world_market_admission_shared':
       return runCheckEconomyWorldMarketAdmissionShared(repoRoot);
     case 'repo.economy_dedup_port_tile_keys':

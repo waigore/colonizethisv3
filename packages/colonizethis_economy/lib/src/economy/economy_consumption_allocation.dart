@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'economy_consumption_phases.dart';
+import 'economy_military_navy_food_allocation.dart';
 import 'military_navy_food_counts.dart';
 
 /// Full turn consumption allocation: land military → navy → worker food → luxury.
@@ -51,28 +52,23 @@ ConsumptionAllocation allocateConsumption({
   final foodBeforeMilitary =
       stockpile.quantityOf(grainId) + stockpile.quantityOf(meatId);
 
-  final (
-    afterMilitary,
-    totalRegiments,
-    fullyFedRegiments,
-  ) = consumeMilitaryFood(
+  final prefix = allocateMilitaryNavyFood(
     stockpile: stockpile,
-    militaryUnits: foodCounts.militaryUnits,
-    regimentCountsById: foodCounts.regimentCountsById,
+    foodCounts: foodCounts,
   );
-
-  final (afterNavy, totalShips, fullyFedShips) = consumeNavyFood(
-    stockpile: afterMilitary,
-    shipCountsById: foodCounts.shipCountsById,
-  );
+  final totalRegiments = prefix.totalRegiments;
+  final fullyFedRegiments = prefix.fullyFedRegiments;
+  final totalShips = prefix.totalShips;
+  final fullyFedShips = prefix.fullyFedShips;
 
   final foodAfterMilitaryNavy =
-      afterNavy.quantityOf(grainId) + afterNavy.quantityOf(meatId);
+      prefix.stockpile.quantityOf(grainId) +
+      prefix.stockpile.quantityOf(meatId);
   final militaryOrNavyConsumesFoodBeforeWorkers =
       foodBeforeMilitary > foodAfterMilitaryNavy &&
       (totalRegiments > 0 || totalShips > 0);
 
-  final fed = consumeWorkerFood(stockpile: afterNavy, workers: workers);
+  final fed = consumeWorkerFood(stockpile: prefix.stockpile, workers: workers);
   var current = fed.stockpile;
 
   final (s1, mastersWithLuxury) = assignWorkerLuxury(

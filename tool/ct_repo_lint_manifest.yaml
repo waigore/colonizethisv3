@@ -111,6 +111,20 @@ rules:
     runner: dart
     script: tool/check_economy_cost_check_shared_helper.dart
 
+  - rule_id: repo.economy_force_feeding_shared_helper
+    group: architecture
+    title: economy force-feeding preview and allocateConsumption must share allocateMilitaryNavyFood (Refs #4631)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_force_feeding_shared_helper.dart
+
+  - rule_id: repo.economy_grain_bonus_shared_helper
+    group: architecture
+    title: economy capital-tile grain bonus must use capitalTileGrainBonusForPlayer (Refs #4631)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_grain_bonus_shared_helper.dart
+
   - rule_id: repo.economy_world_market_admission_shared
     group: architecture
     title: economy world-market validator/suggester must delegate to the shared trade_order_admission.dart helpers (Refs #3615 Cluster 1)
@@ -148,7 +162,7 @@ rules:
 
   - rule_id: repo.economy_test_no_local_world_market_support
     group: testing
-    title: colonizethis_economy test/ must not host local domain test_support files (world_market, FRR, extraction; Refs #3823, #3831)
+    title: colonizethis_economy test/ must not host local *_test_support.dart files (Refs #3823, #3831, #4631)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_no_local_world_market_support.dart
@@ -162,7 +176,7 @@ rules:
 
   - rule_id: repo.economy_test_file_size
     group: testing
-    title: colonizethis_economy test files must stay at or below 300 physical lines (Refs #4550)
+    title: colonizethis_economy test files must stay at or below 250 physical lines (Refs #4631)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_file_size.dart

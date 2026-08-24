@@ -7,6 +7,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'capital_tile_grain_bonus.dart';
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
 import 'tile_extraction_display_contribution.dart';
@@ -61,8 +62,7 @@ Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
   final ownerByProvince = <String, String>{};
   final capitalBonusByProvince = <String, int>{};
 
-  for (final tileKey
-      in game.worldState.tileState.improvementByTile.keys) {
+  for (final tileKey in game.worldState.tileState.improvementByTile.keys) {
     final tileContext = resolveTileKeyExtractionContext(
       tileKey: tileKey,
       tileMapByRegion: tileMapByRegion,
@@ -100,8 +100,7 @@ Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
           techCapForPlayerAndResource?.call(player.id, commodityId) ??
           techCapForPlayer(player.id),
       isCommodityExtractable: (tk, commodityId) =>
-          !kMineralResourceIds.contains(commodityId) ||
-          prospected.contains(tk),
+          !kMineralResourceIds.contains(commodityId) || prospected.contains(tk),
     );
     if (contribution == null) {
       continue;
@@ -122,11 +121,9 @@ Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
   }
 
   for (final player in game.players) {
-    final capBonus = game.capitalTileGrainBonusPerTurn;
+    final capBonus = capitalTileGrainBonusForPlayer(game: game, player: player);
     final capitalProvinceId = player.capitalProvinceId;
-    if (player.capitalTile != null &&
-        capitalProvinceId != null &&
-        capBonus > 0) {
+    if (capBonus != null && capitalProvinceId != null) {
       ownerByProvince[capitalProvinceId] = player.id;
       capitalBonusByProvince[capitalProvinceId] = capBonus;
       final byCommodity = accByProvince.putIfAbsent(

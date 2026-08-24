@@ -45,5 +45,33 @@ void main() {
       );
       expect(snapshot.landCombatTier, ForceFeedingCombatTier.severe);
     });
+
+    test('matches allocateConsumption military/navy fully-fed counts', () {
+      const foodCounts = MilitaryNavyFoodCounts(
+        regimentCountsById: {'pikemen': 3},
+        shipCountsById: {'carrack': 1},
+      );
+      final stockpile = const Stockpile().applyDelta('grain', 8);
+      final preview = previewForceFeeding(
+        stockpile: stockpile,
+        foodCounts: foodCounts,
+      );
+      final alloc = allocateConsumption(
+        stockpile: stockpile,
+        workers: WorkerPool.empty,
+        foodCounts: foodCounts,
+      );
+      expect(preview.totalRegiments, alloc.totalRegiments);
+      expect(preview.fullyFedRegiments, alloc.fullyFedRegiments);
+      expect(preview.totalShips, alloc.totalShips);
+      expect(preview.fullyFedShips, alloc.fullyFedShips);
+      expect(
+        preview.forcesFoodDemand,
+        allocateMilitaryNavyFood(
+          stockpile: stockpile,
+          foodCounts: foodCounts,
+        ).forcesFoodDemand,
+      );
+    });
   });
 }

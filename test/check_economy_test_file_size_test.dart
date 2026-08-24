@@ -13,12 +13,12 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckEconomyTestFileSize', () {
-    test('passes on current repo tree under phase-9 ceiling', () {
+    test('passes on current repo tree under phase-10 ceiling', () {
       expect(runCheckEconomyTestFileSize('.'), 0);
     });
 
-    test('pins economyTestFileSizeCeiling at 300', () {
-      expect(economyTestFileSizeCeiling, 300);
+    test('pins economyTestFileSizeCeiling at 250', () {
+      expect(economyTestFileSizeCeiling, 250);
     });
 
     test('fails when an economy test file exceeds the ceiling', () {
