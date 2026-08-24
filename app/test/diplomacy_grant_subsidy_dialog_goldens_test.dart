@@ -238,8 +238,10 @@ void main() {
       );
       expect(find.textContaining('+5'), findsNothing);
 
+      // Capture the preview Column so the trailing standing word is in-frame
+      // (full-dialog 420×560 clips that last Effect line; Refs #4632).
       await expectLater(
-        find.byKey(boundaryKey),
+        find.byKey(const Key('grantOrSubsidyDialogPreview')),
         matchesGoldenFile('goldens/dipl20001_grant_standing_becomes.png'),
       );
     },
@@ -263,7 +265,7 @@ void main() {
       expect(find.text('Effect: Standing word stays Devoted.'), findsOneWidget);
 
       await expectLater(
-        find.byKey(boundaryKey),
+        find.byKey(const Key('grantOrSubsidyDialogPreview')),
         matchesGoldenFile('goldens/dipl20001_grant_standing_stays.png'),
       );
     },
