@@ -116,7 +116,9 @@ const _packageName = 'colonizethis_app';
 // #4605 merge (Refs #4610; measured 90_293).
 // raised for MAP20001 Transfer to Home Fleet overlay (Refs #4625;
 // measured 90_687).
-const _maxMainLines = 90700;
+// raised for Purchase land first-right and riches payoff (Refs #4630;
+// measured 90_948).
+const _maxMainLines = 91000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

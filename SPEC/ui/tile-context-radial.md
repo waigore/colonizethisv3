@@ -29,7 +29,7 @@ Stack (viewport)
     More spoke
 ```
 
-Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only. Catalog: Explore → Prospect → Build improvement → Build road → Purchase land → Upgrade town → Build port → Build railroad → Build fort ([tile-radial-catalog.md](components/tile-radial-catalog.md)).
+Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only. When **Purchase land** is enabled, the radial (and `MAP30002` remainder row) shows the same qualitative payoff gist as `MAP20001` by default, not tooltip-only (Refs #4630). Catalog: Explore → Prospect → Build improvement → Build road → Purchase land → Upgrade town → Build port → Build railroad → Build fort ([tile-radial-catalog.md](components/tile-radial-catalog.md)).
 
 ## Behavior
 
@@ -71,4 +71,4 @@ Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enable
 - Given an enabled Explore spoke, when activated, then the UI emits `OpenCivilianUnitsPanelEvent(explorerOnly: true, exploreShortcutTargetTileKey: tileKey)`. (`app/test/tile_radial_emit_test.dart`)
 - Given a disabled visible wedge, when activated, then no order is committed and overlay refusal copy is shown. (`app/test/tile_context_radial_test.dart`)
 - Given a primary tap, when it completes, then `MAP20001` still opens and the radial does not. (`app/test/ct_region_map_tile_radial_secondary_test.dart`)
-- Given work-target selection or `canMutateViaUi == false`, when secondary gesture fires, then the radial does not open. (`app/test/game_map_area_selection_mode_lightweight_test.dart`, `app/test/tile_radial_host_test.dart`)
+- Given an enabled Purchase land wedge, when the radial renders, then the qualitative payoff gist is default-visible (not tooltip-only). (`app/test/purchase_land_payoff_copy_test.dart`)

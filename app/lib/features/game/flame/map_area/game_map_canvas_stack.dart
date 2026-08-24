@@ -9,6 +9,8 @@ import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import '../../widgets/units/civilian/purchase_land_payoff_copy.dart';
 import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
 import '../../widgets/map_radial/game_map_tile_radial_host.dart';
 import 'game_map_canvas_stack_hover.dart';
@@ -192,12 +194,24 @@ class GameMapCanvasStack extends ConsumerWidget {
                         targetTileKey: previewTileKey,
                       )
                     : null;
+                final payoffGist =
+                    workTarget == kWorkTargetPurchaseLand &&
+                        previewTileKey != null &&
+                        !selectionPromptUsesRelocateCopy
+                    ? purchaseLandPayoffCopyForTile(
+                        l10n: appL10n(context),
+                        game: game,
+                        tileKey: previewTileKey,
+                        enabled: true,
+                      )?.gist
+                    : null;
                 return GameMapCanvasStackSelectionPrompt(
                   isNarrow: isNarrow,
                   overlayOpen: overlayOpen,
                   onCancel: onWorkTargetSelectionCancelled,
                   usesRelocateCopy: selectionPromptUsesRelocateCopy,
                   affordPreview: affordPreview,
+                  payoffGist: payoffGist,
                 );
               },
             ),

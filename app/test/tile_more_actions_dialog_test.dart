@@ -97,6 +97,7 @@ void main() {
     TileRadialCatalogAction? committed;
     await _pumpDialog(
       tester,
+      viewport: const Size(400, 900),
       remainder: const [
         TileRadialSpokeView(
           action: TileRadialCatalogAction.explore,

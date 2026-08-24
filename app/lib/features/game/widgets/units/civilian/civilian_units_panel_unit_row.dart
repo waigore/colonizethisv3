@@ -158,6 +158,9 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
             unit: unit,
             pending: pending,
             provinceNames: provinceNames,
+            purchaseLandShortcutTargetTileKey:
+                purchaseLandShortcutTargetTileKey,
+            readOnly: readOnly,
           ),
         ],
       ),
