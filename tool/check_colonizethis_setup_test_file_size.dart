@@ -1,44 +1,44 @@
-// Physical line ratchet for colonizethis_setup lib source (repo rule:
-// `repo.colonizethis_setup_lib_file_size`).
+// Physical line limit for colonizethis_setup non-support tests (repo rule:
+// `repo.colonizethis_setup_test_file_size`).
 //
-// Wave 8 (#4624) lowers the wave-7 300 ceiling to a peer-aligned 250
-// physical-line cap after splitting the remaining over-250 modules.
+// Wave 8 (#4624): peer-aligned 250 physical-line ceiling. `test/setup/support/`
+// is governed separately by `repo.colonizethis_setup_test_support_loc`.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-import 'ct_repo_lint_scan_contract.dart';
+/// Ratchet ceiling for wave-8 post-densify non-support test files.
+const int setupTestFileSizeCeiling = 250;
 
-/// Ratchet ceiling for wave-8 post-split target (≤250 physical lines).
-const int setupLibFileSizeCeiling = 250;
+const String _setupTestsRelativePath = 'packages/colonizethis_setup/test';
 
-const String _setupLibRelativePath = 'packages/colonizethis_setup/lib';
+const String _setupTestSupportPrefix =
+    'packages/colonizethis_setup/test/setup/support/';
 
-/// Shrink-only grandfather; empty after wave 8.
-const List<String> setupLibFileSizeGrandfathered = <String>[];
+/// Near-cap suites grandfathered during densify. Shrink-only; empty after #4624.
+const List<String> setupTestFileSizeGrandfathered = <String>[];
 
-final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
-
-int runCheckColonizethisSetupLibFileSize(
+int runCheckColonizethisSetupTestFileSize(
   String repoRoot, {
   Iterable<String>? targetFiles,
   Iterable<String>? grandfatheredPaths,
   void Function(String line)? info,
   void Function(String line)? err,
-  int ceiling = setupLibFileSizeCeiling,
+  int ceiling = setupTestFileSizeCeiling,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final libDir = Directory(p.join(repoRoot, _setupLibRelativePath));
-  if (!libDir.existsSync()) {
+  final setupTestsDir = Directory(p.join(repoRoot, _setupTestsRelativePath));
+  if (!setupTestsDir.existsSync()) {
     logE(
-      'check_colonizethis_setup_lib_file_size: $_setupLibRelativePath not found.',
+      'check_colonizethis_setup_test_file_size: '
+      'packages/colonizethis_setup/test not found.',
     );
     return 1;
   }
 
-  final grandfathered = (grandfatheredPaths ?? setupLibFileSizeGrandfathered)
+  final grandfathered = (grandfatheredPaths ?? setupTestFileSizeGrandfathered)
       .map((path) => path.replaceAll('\\', '/'))
       .toSet();
 
@@ -50,7 +50,7 @@ int runCheckColonizethisSetupLibFileSize(
   }
   if (missingGrandfathered.isNotEmpty) {
     logE(
-      'check_colonizethis_setup_lib_file_size: stale grandfather entries '
+      'check_colonizethis_setup_test_file_size: stale grandfather entries '
       '(file no longer exists; remove from allowlist):',
     );
     for (final relativePath in missingGrandfathered) {
@@ -60,16 +60,22 @@ int runCheckColonizethisSetupLibFileSize(
   }
 
   final violations = <String>[];
-  for (final filePath in _collectFilesToCheck(repoRoot, libDir, targetFiles)) {
-    final file = File(filePath);
+  for (final filePath in _collectFilesToCheck(
+    repoRoot,
+    setupTestsDir,
+    targetFiles,
+  )) {
     final relativePath = p
-        .relative(file.path, from: repoRoot)
+        .relative(filePath, from: repoRoot)
         .replaceAll('\\', '/');
+    if (relativePath.startsWith(_setupTestSupportPrefix)) {
+      continue;
+    }
     if (grandfathered.contains(relativePath)) {
       continue;
     }
     final physicalLines = const LineSplitter()
-        .convert(file.readAsStringSync())
+        .convert(File(filePath).readAsStringSync())
         .length;
     if (physicalLines <= ceiling) {
       continue;
@@ -79,17 +85,17 @@ int runCheckColonizethisSetupLibFileSize(
 
   if (violations.isEmpty) {
     logI(
-      'check_colonizethis_setup_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4273).',
+      'check_colonizethis_setup_test_file_size: no violations found '
+      '(ceiling $ceiling; Refs #4624).',
     );
     return 0;
   }
 
   violations.sort();
   logE(
-    'check_colonizethis_setup_lib_file_size: found ${violations.length} '
-    'violation(s) under $_setupLibRelativePath (wave-6 ceiling $ceiling; '
-    'Refs #4273):',
+    'check_colonizethis_setup_test_file_size: found ${violations.length} '
+    'violation(s) under $_setupTestsRelativePath (wave-8 ceiling $ceiling; '
+    'Refs #4624):',
   );
   for (final violation in violations) {
     logE(' - $violation');
@@ -99,27 +105,23 @@ int runCheckColonizethisSetupLibFileSize(
 
 List<String> _collectFilesToCheck(
   String repoRoot,
-  Directory libDir,
+  Directory setupTestsDir,
   Iterable<String>? targetFiles,
 ) {
   if (targetFiles == null) {
-    return libDir
+    return setupTestsDir
         .listSync(recursive: true, followLinks: false)
         .whereType<File>()
         .map((file) => file.path)
         .where((path) => path.endsWith('.dart'))
-        .where((path) => !_generatedSuffix.hasMatch(path))
         .toList(growable: false);
   }
 
-  const prefix = '$_setupLibRelativePath/';
   final results = <String>[];
   for (final relativePath in targetFiles) {
     final normalized = relativePath.replaceAll('\\', '/');
-    if (!normalized.startsWith(prefix) || !normalized.endsWith('.dart')) {
-      continue;
-    }
-    if (_generatedSuffix.hasMatch(normalized)) {
+    if (!normalized.startsWith('$_setupTestsRelativePath/') ||
+        !normalized.endsWith('.dart')) {
       continue;
     }
     final file = File(p.join(repoRoot, normalized));
@@ -131,14 +133,11 @@ List<String> _collectFilesToCheck(
   return results;
 }
 
-int maxSetupLibFilePhysicalLinesForTests() => setupLibFileSizeCeiling;
-
 void main(List<String> args) {
-  final files = repoLintStrictIncrementalFilesArgListOrExit(args);
   exit(
-    runCheckColonizethisSetupLibFileSize(
+    runCheckColonizethisSetupTestFileSize(
       Directory.current.path,
-      targetFiles: files.isEmpty ? null : files,
+      targetFiles: args.isEmpty ? null : args,
     ),
   );
 }

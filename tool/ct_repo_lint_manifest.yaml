@@ -1036,10 +1036,17 @@ rules:
 
   - rule_id: repo.colonizethis_setup_lib_file_size
     group: structure
-    title: colonizethis_setup lib files must stay at or below the wave-7 300 physical-line ceiling (Refs #4273, #4349)
+    title: colonizethis_setup lib files must stay at or below the wave-8 250 physical-line ceiling (Refs #4273, #4349, #4624)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_colonizethis_setup_lib_file_size.dart
+
+  - rule_id: repo.colonizethis_setup_test_file_size
+    group: testing
+    title: colonizethis_setup non-support tests must stay at or below the wave-8 250 physical-line ceiling (Refs #4624)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_colonizethis_setup_test_file_size.dart
 
   - rule_id: repo.colonizethis_setup_test_mirrors_lib
     group: structure
@@ -1413,7 +1420,7 @@ rules:
 
   - rule_id: repo.setup_no_logic_deps
     group: architecture
-    title: colonizethis_setup must not depend on colonizethis_logic in lib/ (Refs #3290 Phase 2)
+    title: colonizethis_setup must not depend on colonizethis_logic in lib/ or test/ (Refs #3290 Phase 2, #4624)
     spec: SPEC/program/logic-package-split-phase0.md
     runner: dart
     script: tool/check_setup_no_logic_deps.dart
