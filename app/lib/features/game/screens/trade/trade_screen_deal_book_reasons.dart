@@ -8,58 +8,9 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Why a Still open leftover row shows a muted reason line.
-enum DealBookStillOpenReasonKind {
-  treasuryInsufficient,
-  noMatchingSales,
-  noMatchingBuys,
-}
+import 'trade_screen_deal_book_reason_types.dart';
 
-/// Why a Did not stay open row exists.
-enum DealBookDropReasonKind {
-  cargoInsufficient,
-  stockpileInsufficient,
-}
-
-/// One Still open row with an optional resolver/fallback reason.
-class DealBookStillOpenRowData {
-  const DealBookStillOpenRowData({
-    required this.order,
-    this.reasonKind,
-  });
-
-  final TradeOrder order;
-  final DealBookStillOpenReasonKind? reasonKind;
-}
-
-/// One Did not stay open row sourced from a drop note.
-class DealBookDidNotStayOpenRowData {
-  const DealBookDidNotStayOpenRowData({
-    required this.commodityId,
-    required this.quantity,
-    required this.reasonKind,
-  });
-
-  final CommodityId commodityId;
-  final int quantity;
-  final DealBookDropReasonKind reasonKind;
-}
-
-/// Per-panel leftover reason rows for the Deal Book.
-class DealBookPanelReasonData {
-  const DealBookPanelReasonData({
-    required this.stillOpenRows,
-    required this.didNotStayOpenRows,
-  });
-
-  static const empty = DealBookPanelReasonData(
-    stillOpenRows: <DealBookStillOpenRowData>[],
-    didNotStayOpenRows: <DealBookDidNotStayOpenRowData>[],
-  );
-
-  final List<DealBookStillOpenRowData> stillOpenRows;
-  final List<DealBookDidNotStayOpenRowData> didNotStayOpenRows;
-}
+export 'trade_screen_deal_book_reason_types.dart';
 
 /// Builds human-scoped Deal Book leftover reason rows from
 /// [WorldMarketState.lastTurnActivity] notes and carry-forwards.
@@ -128,31 +79,29 @@ abstract final class DealBookReasonBuilder {
   }) {
     final Map<CommodityId, List<MarketActivityNote>> notesByCommodity =
         _collectPanelNotesByCommodity(
-      worldMarket: worldMarket,
-      playerId: playerId,
-      panelNoteKinds: panelNoteKinds,
-    );
+          worldMarket: worldMarket,
+          playerId: playerId,
+          panelNoteKinds: panelNoteKinds,
+        );
 
-    final List<DealBookStillOpenRowData> stillOpen =
-        unfilledOrders
-            .map(
-              (TradeOrder order) => DealBookStillOpenRowData(
-                order: order,
-                reasonKind: _stillOpenReasonForOrder(
-                  order: order,
-                  notesByCommodity: notesByCommodity,
-                  worldMarket: worldMarket,
-                  treasuryNoteKind: treasuryNoteKind,
-                  treasuryReasonKind: treasuryReasonKind,
-                  fallbackReason: fallbackReason,
-                  fallbackApplies: fallbackApplies,
-                ),
-              ),
-            )
-            .toList(growable: false);
+    final List<DealBookStillOpenRowData> stillOpen = unfilledOrders
+        .map(
+          (TradeOrder order) => DealBookStillOpenRowData(
+            order: order,
+            reasonKind: _stillOpenReasonForOrder(
+              order: order,
+              notesByCommodity: notesByCommodity,
+              worldMarket: worldMarket,
+              treasuryNoteKind: treasuryNoteKind,
+              treasuryReasonKind: treasuryReasonKind,
+              fallbackReason: fallbackReason,
+              fallbackApplies: fallbackApplies,
+            ),
+          ),
+        )
+        .toList(growable: false);
 
-    final List<DealBookDidNotStayOpenRowData> drops =
-        _collectDropRows(
+    final List<DealBookDidNotStayOpenRowData> drops = _collectDropRows(
       worldMarket: worldMarket,
       playerId: playerId,
       dropNoteKind: dropNoteKind,
@@ -161,8 +110,9 @@ abstract final class DealBookReasonBuilder {
 
     return DealBookPanelReasonData(
       stillOpenRows: List<DealBookStillOpenRowData>.unmodifiable(stillOpen),
-      didNotStayOpenRows:
-          List<DealBookDidNotStayOpenRowData>.unmodifiable(drops),
+      didNotStayOpenRows: List<DealBookDidNotStayOpenRowData>.unmodifiable(
+        drops,
+      ),
     );
   }
 
@@ -174,11 +124,9 @@ abstract final class DealBookReasonBuilder {
   }) {
     final Map<CommodityId, List<MarketActivityNote>> notesByCommodity =
         <CommodityId, List<MarketActivityNote>>{};
-    for (final MarketActivity activity
-        in worldMarket.lastTurnActivity.values) {
+    for (final MarketActivity activity in worldMarket.lastTurnActivity.values) {
       for (final MarketActivityNote note in activity.notes) {
-        if (note.factionId != playerId ||
-            !panelNoteKinds.contains(note.kind)) {
+        if (note.factionId != playerId || !panelNoteKinds.contains(note.kind)) {
           continue;
         }
         notesByCommodity
@@ -207,8 +155,7 @@ abstract final class DealBookReasonBuilder {
       return null;
     }
     final MarketActivity activity =
-        worldMarket.lastTurnActivity[order.commodityId] ??
-            MarketActivity.empty;
+        worldMarket.lastTurnActivity[order.commodityId] ?? MarketActivity.empty;
     return fallbackApplies(activity) ? fallbackReason : null;
   }
 
@@ -220,8 +167,7 @@ abstract final class DealBookReasonBuilder {
   }) {
     final List<DealBookDidNotStayOpenRowData> drops =
         <DealBookDidNotStayOpenRowData>[];
-    for (final MarketActivity activity
-        in worldMarket.lastTurnActivity.values) {
+    for (final MarketActivity activity in worldMarket.lastTurnActivity.values) {
       for (final MarketActivityNote note in activity.notes) {
         if (note.factionId != playerId || note.kind != dropNoteKind) {
           continue;

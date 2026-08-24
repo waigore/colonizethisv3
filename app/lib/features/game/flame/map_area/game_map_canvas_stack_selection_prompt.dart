@@ -5,7 +5,7 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'game_map_canvas_stack.dart';
+import 'game_map_canvas_stack_selection_prompt_tokens.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';

@@ -3,11 +3,16 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
 import 'victory_political_minimap_annotations.dart';
+import 'victory_political_minimap_paint_colors.dart';
+import 'victory_political_minimap_paint_labels.dart';
 import 'victory_political_minimap_paint_ops.dart';
 
 /// Paints Old World political ownership for the Victory panel minimap.
 class VictoryPoliticalMinimapPainter extends CustomPainter
-    with VictoryPoliticalMinimapPaintOps {
+    with
+        VictoryPoliticalMinimapPaintColors,
+        VictoryPoliticalMinimapPaintLabels,
+        VictoryPoliticalMinimapPaintOps {
   VictoryPoliticalMinimapPainter({
     required this.region,
     this.highlightedProvinceLocalId,
