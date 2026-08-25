@@ -110,6 +110,11 @@ void main() {
         expect(find.text('Slot 2'), findsOneWidget);
         expect(find.text('Slot 6'), findsOneWidget);
         expect(
+          find.textContaining('Skips the year-1800 calendar stop'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('no victory condition'), findsNothing);
+        expect(
           find.descendant(
             of: find.byType(CtNinePatchButton),
             matching: find.text('Cancel'),

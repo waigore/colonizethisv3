@@ -29,7 +29,7 @@ On **Slots 2–6** only, an **AI Profile** menu sits under the nation and leader
 
 Global options on the same dialog:
 
-- **Infinite mode (no victory condition)** — the helper says **The game will continue indefinitely** (detail in Chapters 1 and 15).
+- **Infinite mode** — the helper says **Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.** (Chapters 1 and 15).
 - **Terrain variation** — printed as a percent; helper **0% flat — 100% extreme** (default 50%).
 - **Game seed** — helper **Enter 0 for a random seed**; the field opens already filled. **0** means a random world. A non-zero seed builds that same world again.
 - **Advanced start** — printed choices **None (Turn 0)**, **50 Turns In (1598)**, **100 Turns In (1698)**. When the control is greyed out, the helper reads **Advanced start requires the standard six-power campaign profile.** A greyed-out control still begins at turn 0.
@@ -65,7 +65,7 @@ Minor nations already know a share of minerals in their **own** Old World provin
 
 **Counsel.** Hark, my liege: capitals and towns sit on **plains** so grain and roads can start there.
 
-**Tip.** If you want a longer campaign past 1800, enable **Infinite mode (no victory condition)** here; you cannot flip it mid-reign.
+**Tip.** If you want a longer campaign past 1800, turn on **Infinite mode** here; you cannot flip it mid-reign. Owning 31 Old World provinces still ends play.
 
 **Warning.** If **Advanced start** is greyed out, you still begin at turn 0. Do not expect later-year treasury, workers, or New World land from that Start.
 
