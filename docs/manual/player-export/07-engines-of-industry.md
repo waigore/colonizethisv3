@@ -18,7 +18,7 @@ Two design notes disagree on preview timing: one lists **Extraction → Riches-t
 
 1. On **Game screen**, tap the **Production** icon on the left of the map to open **Production screen**.
 2. **Available** is on the left on a wide screen and above **Allocation** on a phone.
-3. Food, **Raw Materials**, **Manufactured**, and **Workers** show amounts: for tradeable goods, the painted number is what you can still sell (warehouse minus offers already staged on Trade — Chapter 8); **Riches** and **Workers** show the warehouse / pool amount. A green **+N** or red **−N** appears only when the projected end-of-turn change is not zero.
+3. Food, **Raw Materials**, **Manufactured**, and **Workers** show amounts: for tradeable goods, the painted number is what you can still sell (warehouse minus industry reservations and offers already staged on Trade — Chapter 8). Rest on a tradeable cell (or press and hold) to read that meaning. Tap a tradeable good to open **Trade screen** on **Market**, focused on that good, without placing a bid or offer for you. **Riches** and **Workers** show the warehouse / pool amount and do not open Trade. A green **+N** or red **−N** appears only when the projected end-of-turn change is not zero.
 4. **Labour this turn** sits under the worker ranks.
 5. Tap **Labour details** for working vs not-working counts.
 6. **Labour Controls** is the hire/train block under that. For hire, train, **Queued: N**, **Disband**, and when new workers staff industry, see Chapter 5 — this chapter only points you to that block.
