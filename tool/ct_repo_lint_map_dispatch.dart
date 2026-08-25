@@ -14,6 +14,7 @@ import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
 import 'check_map_region_dispatch_central.dart';
 import 'check_map_render_legend_layout_dedup.dart';
+import 'check_map_tile_marker_sort_sot.dart';
 import 'check_map_test_file_size.dart';
 import 'check_map_test_minimal_game_shared.dart';
 import 'check_map_test_no_duplicate_view_fixtures.dart';
@@ -70,6 +71,8 @@ int? tryRunMapRuleInProcess({
       return runCheckMapTestFileSize(repoRoot);
     case 'repo.map_render_legend_layout_dedup':
       return runCheckMapRenderLegendLayoutDedup(repoRoot);
+    case 'repo.map_tile_marker_sort_sot':
+      return runCheckMapTileMarkerSortSot(repoRoot);
     default:
       return null;
   }

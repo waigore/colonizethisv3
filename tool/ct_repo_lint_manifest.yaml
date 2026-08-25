@@ -1606,7 +1606,7 @@ rules:
 
   - rule_id: repo.map_lib_file_size_headroom
     group: structure
-    title: colonizethis_map gen/view/render source files must be 250 non-comment lines or fewer (wave-7 headroom, Refs #4561)
+    title: colonizethis_map gen/view/render source files must be 250 physical lines or fewer (wave-8 headroom, Refs #4654)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_lib_file_size_headroom.dart
@@ -2213,6 +2213,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_render_legend_layout_dedup.dart
+
+  - rule_id: repo.map_tile_marker_sort_sot
+    group: architecture
+    title: colonizethis_map view markers must use shared y/x/tileKey sort helper (Refs #4654)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_tile_marker_sort_sot.dart
 
   - rule_id: repo.combat_test_mirrors_lib
     group: architecture
