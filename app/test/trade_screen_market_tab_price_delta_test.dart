@@ -189,7 +189,15 @@ void main() {
         );
 
         expect(find.text('+£6'), findsOneWidget);
-        expect(find.text('Last turn: bids 4 · offers 2'), findsOneWidget);
+        expect(
+          find.byKey(
+            TradeScreenMarketKeys.marketRowLastMarketChipKey(
+              CommodityCatalog.timber.id,
+            ),
+          ),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Last turn: bids'), findsNothing);
       },
     );
 

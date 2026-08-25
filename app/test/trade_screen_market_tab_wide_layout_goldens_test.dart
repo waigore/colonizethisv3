@@ -4,7 +4,7 @@
 //
 // Golden mapping:
 //  - AC-1/AC-2  wide row-major two-column grid + compact two-line rows
-//  - AC-3       narrow single-column three-line stacked rows
+//  - AC-3       narrow single-column two-line stacked rows
 //
 // SPEC: SPEC/ui/trade-screen.md § Market tab — wide two-column layout.
 
@@ -135,7 +135,7 @@ void main() {
     );
 
     testWidgets(
-      'golden: narrow stacked three-line rows (AC-3)',
+      'golden: narrow stacked two-line rows (AC-3)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'tradeMarketNarrowStackedGolden',

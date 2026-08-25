@@ -81,6 +81,9 @@ abstract final class TradeScreenMarketKeys {
   static Key marketRowFirstRightChipKey(CommodityId commodityId) =>
       TradeScreenMarketRowKeys.marketRowFirstRightChipKey(commodityId);
 
+  static Key marketRowLastMarketChipKey(CommodityId commodityId) =>
+      TradeScreenMarketRowKeys.marketRowLastMarketChipKey(commodityId);
+
   static Key marketRowResourceIconKey(CommodityId commodityId) =>
       TradeScreenMarketRowKeys.marketRowResourceIconKey(commodityId);
 

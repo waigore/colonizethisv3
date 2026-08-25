@@ -1,4 +1,4 @@
-// Market-tab per-commodity row builder (Refs #4352).
+// Market-tab per-commodity row builder (Refs #4352, #4653).
 // Split from `trade_screen_market_tab_catalog.dart`.
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -25,7 +25,6 @@ extension MarketTabContentCatalogRow on MarketTabContent {
     required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
-    required TextStyle volumeStyle,
     required TextStyle quantityStyle,
     required AppLocalizations l10n,
   }) {
@@ -56,14 +55,14 @@ extension MarketTabContentCatalogRow on MarketTabContent {
       currentPrice: effectivePrice,
       priceChangePercent: activity.priceChangePercent,
     );
-    final rowParams = (
+    final bool lastMarket = showLastMarketChip(activity);
+    final Widget row = MarketCommodityRow(
       commodityId: commodityId,
       commodityDisplayName: commodityDisplayName(l10n, commodityId),
       priceText: formatMarketPrice(
         staging.market.prices[commodityId],
         commodityId: commodityId,
       ),
-      volumeText: volumeText(activity, l10n),
       priceDeltaCoins: priceDelta,
       priceDeltaTooltip: priceDelta == null
           ? ''
@@ -74,60 +73,21 @@ extension MarketTabContentCatalogRow on MarketTabContent {
       canSelectBid: staging.canSelectBidOn(commodityId),
       nameStyle: nameStyle,
       priceStyle: priceStyle,
-      volumeStyle: volumeStyle,
       quantityStyle: quantityStyle,
       onDirectionChanged: (TradeOrderType? next) =>
           staging.onDirectionChanged(commodityId, next),
       onIncrement: () => staging.onQuantityDelta(commodityId, 1),
       onDecrement: () => staging.onQuantityDelta(commodityId, -1),
+      absorbControlPointers: !canEdit,
+      showFirstRightChip: showFirstRightChip,
+      firstRightChipLabel: l10n.tradeMarket_firstRightChip,
+      firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
+      showLastMarketChip: lastMarket,
+      lastMarketChipLabel: l10n.tradeMarket_lastMarketChip,
+      lastMarketTooltip: lastMarket ? lastMarketTooltip(activity, l10n) : '',
+      counselStar: counselStar,
+      compact: compact,
     );
-    final Widget row = compact
-        ? MarketCommodityRowCompact(
-            commodityId: rowParams.commodityId,
-            commodityDisplayName: rowParams.commodityDisplayName,
-            priceText: rowParams.priceText,
-            volumeText: rowParams.volumeText,
-            priceDeltaCoins: rowParams.priceDeltaCoins,
-            priceDeltaTooltip: rowParams.priceDeltaTooltip,
-            stagedOrder: rowParams.stagedOrder,
-            sellableHeadroom: rowParams.sellableHeadroom,
-            offerCap: rowParams.offerCap,
-            canSelectBid: rowParams.canSelectBid,
-            nameStyle: rowParams.nameStyle,
-            priceStyle: rowParams.priceStyle,
-            volumeStyle: rowParams.volumeStyle,
-            quantityStyle: rowParams.quantityStyle,
-            onDirectionChanged: rowParams.onDirectionChanged,
-            onIncrement: rowParams.onIncrement,
-            onDecrement: rowParams.onDecrement,
-            showFirstRightChip: showFirstRightChip,
-            firstRightChipLabel: l10n.tradeMarket_firstRightChip,
-            firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
-            counselStar: counselStar,
-          )
-        : MarketCommodityRow(
-            commodityId: rowParams.commodityId,
-            commodityDisplayName: rowParams.commodityDisplayName,
-            priceText: rowParams.priceText,
-            volumeText: rowParams.volumeText,
-            priceDeltaCoins: rowParams.priceDeltaCoins,
-            priceDeltaTooltip: rowParams.priceDeltaTooltip,
-            stagedOrder: rowParams.stagedOrder,
-            sellableHeadroom: rowParams.sellableHeadroom,
-            offerCap: rowParams.offerCap,
-            canSelectBid: rowParams.canSelectBid,
-            nameStyle: rowParams.nameStyle,
-            priceStyle: rowParams.priceStyle,
-            volumeStyle: rowParams.volumeStyle,
-            quantityStyle: rowParams.quantityStyle,
-            onDirectionChanged: rowParams.onDirectionChanged,
-            onIncrement: rowParams.onIncrement,
-            onDecrement: rowParams.onDecrement,
-            showFirstRightChip: showFirstRightChip,
-            firstRightChipLabel: l10n.tradeMarket_firstRightChip,
-            firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
-            counselStar: counselStar,
-          );
     return MarketCommodityRowHighlight(
       commodityId: commodityId,
       highlighted: highlightCommodityId == commodityId,

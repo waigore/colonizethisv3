@@ -7283,12 +7283,16 @@
   "@tradeMarket_firstRightTooltip": {
     "description": "On-request help for the Market first-right chip."
   },
-  "tradeMarket_lastTurnVolume": "Last turn: bids {bids} · offers {offers}",
-  "@tradeMarket_lastTurnVolume": {
-    "description": "Market row previous-turn aggregate bid/offer volume line (Refs #4345).",
+  "tradeMarket_lastMarketChip": "Last market",
+  "@tradeMarket_lastMarketChip": {
+    "description": "Compact chip on Market rows with non-zero last-turn world volume (Refs #4653)."
+  },
+  "tradeMarket_lastMarketTooltip": "Last market: {bought} bought · {sold} sold worldwide. This is not your staged Bid or Offer.",
+  "@tradeMarket_lastMarketTooltip": {
+    "description": "On-request worldwide last-turn volume; must not use bids/offers for world volume (Refs #4653).",
     "placeholders": {
-      "bids": { "type": "int" },
-      "offers": { "type": "int" }
+      "bought": { "type": "int" },
+      "sold": { "type": "int" }
     }
   },
   "tradeMarket_priceMovedTooltip": "Last market moved this price. This turn's deals use the price shown.",

@@ -174,10 +174,8 @@ void main() {
     );
 
     testWidgets(
-      'renders the previous-turn aggregate volume line '
-      '`Last turn: bids X · offers Y` from '
-      'WorldMarketState.lastTurnActivity (with zero-default for '
-      'commodities absent from the activity map)',
+      'renders Last market on non-zero last-turn volume and omits volume '
+      'chrome when the commodity is absent from lastTurnActivity',
       (tester) async {
         await pumpTradeScreen(
           tester,
@@ -199,10 +197,15 @@ void main() {
         expect(
           find.descendant(
             of: timberRow,
-            matching: find.text('Last turn: bids 12 · offers 8'),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowLastMarketChipKey(
+                CommodityCatalog.timber.id,
+              ),
+            ),
           ),
           findsOneWidget,
         );
+        expect(find.text('Last turn: bids 12 · offers 8'), findsNothing);
 
         final fabricRow = find.byKey(
           TradeScreenMarketKeys.marketCommodityRowKey(CommodityCatalog.fabric.id),
@@ -211,10 +214,15 @@ void main() {
         expect(
           find.descendant(
             of: fabricRow,
-            matching: find.text('Last turn: bids 0 · offers 0'),
+            matching: find.byKey(
+              TradeScreenMarketKeys.marketRowLastMarketChipKey(
+                CommodityCatalog.fabric.id,
+              ),
+            ),
           ),
-          findsOneWidget,
+          findsNothing,
         );
+        expect(find.text('Last turn: bids 0 · offers 0'), findsNothing);
       },
     );
 

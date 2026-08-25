@@ -36,7 +36,6 @@ extension MarketTabContentBuild on MarketTabContent {
     final styles = marketTabTextStyles(theme);
     final TextStyle nameStyle = styles.nameStyle;
     final TextStyle priceStyle = styles.priceStyle;
-    final TextStyle volumeStyle = styles.volumeStyle;
     final TextStyle quantityStyle = styles.quantityStyle;
     final TextStyle cargoIndicatorStyle = styles.cargoIndicatorStyle;
     final TextStyle cargoWarningStyle = styles.cargoWarningStyle;
@@ -140,7 +139,6 @@ extension MarketTabContentBuild on MarketTabContent {
           staging: staging,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
-          volumeStyle: volumeStyle,
           quantityStyle: quantityStyle,
           wideLayout: wideLayout,
         );
@@ -185,10 +183,9 @@ extension MarketTabContentBuild on MarketTabContent {
       ],
     );
 
-    // Observe-mode (canMutateViaUi == false): wrap the **interactive**
-    // list in IgnorePointer + Opacity so the chips and stepper read as
-    // read-only, but leave the bid-goods + cargo header live (they're
-    // read-only telemetry that should still surface state).
+    // Observe-mode (canMutateViaUi == false): dim the list and wrap
+    // per-row Bid/Offer/stepper in IgnorePointer so Last market /
+    // First right tooltips still receive hover, long-press, and tap.
     if (!canEdit) {
       return wrapMarketTabObserveList(header: header, list: list);
     }

@@ -17,8 +17,9 @@ export 'trade_screen_market_tab_catalog_data.dart'
         SectionedTradeableCommodities,
         effectiveMarketPriceCoins,
         formatMarketPrice,
-        tradeableCommoditiesByCategory,
-        volumeText;
+        lastMarketTooltip,
+        showLastMarketChip,
+        tradeableCommoditiesByCategory;
 
 extension MarketTabContentCatalog on MarketTabContent {
   /// Builds the widget list that renders one Market commodity category
@@ -31,7 +32,6 @@ extension MarketTabContentCatalog on MarketTabContent {
     required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
-    required TextStyle volumeStyle,
     required TextStyle quantityStyle,
     required AppLocalizations l10n,
     bool isFirstSection = true,
@@ -48,7 +48,6 @@ extension MarketTabContentCatalog on MarketTabContent {
           staging: staging,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
-          volumeStyle: volumeStyle,
           quantityStyle: quantityStyle,
           l10n: l10n,
         )
@@ -58,7 +57,6 @@ extension MarketTabContentCatalog on MarketTabContent {
           staging: staging,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
-          volumeStyle: volumeStyle,
           quantityStyle: quantityStyle,
           l10n: l10n,
         ),

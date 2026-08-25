@@ -9,9 +9,9 @@
 // static constants without further plumbing.
 
 /// One row of the Market tab commodity table. Lays the read-only
-/// content on the first two lines and the interactive direction
-/// selector + stepper on a third line so the row remains overflow-safe
-/// at the 320 dp minimum viewport (SPEC/ui/mobile-adaptation.md §7).
+/// header and the interactive direction selector + stepper so the row
+/// remains overflow-safe at the 320 dp minimum viewport
+/// (SPEC/ui/mobile-adaptation.md §7).
 library;
 
 import 'package:flutter/material.dart';
@@ -23,38 +23,38 @@ import 'trade_screen_market_row_controls.dart';
 import 'trade_screen_market_row_header.dart';
 import 'trade_screen_market_tab.dart';
 
-export 'trade_screen_market_row_compact.dart';
-
 class MarketCommodityRow extends StatelessWidget {
   const MarketCommodityRow({
     super.key,
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,
-    required this.volumeText,
     required this.stagedOrder,
     required this.sellableHeadroom,
     required this.offerCap,
     required this.canSelectBid,
     required this.nameStyle,
     required this.priceStyle,
-    required this.volumeStyle,
     required this.quantityStyle,
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
     this.priceDeltaCoins,
     this.priceDeltaTooltip = '',
+    this.absorbControlPointers = false,
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
+    this.showLastMarketChip = false,
+    this.lastMarketChipLabel = '',
+    this.lastMarketTooltip = '',
     this.counselStar,
+    this.compact = false,
   });
 
   final CommodityId commodityId;
   final String commodityDisplayName;
   final String priceText;
-  final String volumeText;
   final int? priceDeltaCoins;
   final String priceDeltaTooltip;
   final TradeOrder? stagedOrder;
@@ -78,15 +78,19 @@ class MarketCommodityRow extends StatelessWidget {
 
   final TextStyle nameStyle;
   final TextStyle priceStyle;
-  final TextStyle volumeStyle;
   final TextStyle quantityStyle;
   final ValueChanged<TradeOrderType?> onDirectionChanged;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
+  final bool absorbControlPointers;
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
+  final bool showLastMarketChip;
+  final String lastMarketChipLabel;
+  final String lastMarketTooltip;
   final Widget? counselStar;
+  final bool compact;
 
   bool get _hasStagedOrder => stagedOrder != null;
 
@@ -122,6 +126,20 @@ class MarketCommodityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget controls = MarketCommodityRowControls(
+      commodityId: commodityId,
+      stagedType: stagedOrder?.type,
+      quantityText: _quantityText,
+      quantityStyle: quantityStyle,
+      canDecrement: _canDecrement,
+      canIncrement: _canIncrement,
+      canSelectOffer: _canSelectOffer,
+      canSelectBid: canSelectBid,
+      onDirectionChanged: onDirectionChanged,
+      onIncrement: onIncrement,
+      onDecrement: onDecrement,
+      absorbPointers: absorbControlPointers,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -138,24 +156,14 @@ class MarketCommodityRow extends StatelessWidget {
           showFirstRightChip: showFirstRightChip,
           firstRightChipLabel: firstRightChipLabel,
           firstRightTooltip: firstRightTooltip,
+          showLastMarketChip: showLastMarketChip,
+          lastMarketChipLabel: lastMarketChipLabel,
+          lastMarketTooltip: lastMarketTooltip,
           counselStar: counselStar,
         ),
-        const SizedBox(height: 2),
-        Text(volumeText, style: volumeStyle),
-        const SizedBox(height: 6),
-        MarketCommodityRowControls(
-          commodityId: commodityId,
-          stagedType: stagedOrder?.type,
-          quantityText: _quantityText,
-          quantityStyle: quantityStyle,
-          canDecrement: _canDecrement,
-          canIncrement: _canIncrement,
-          canSelectOffer: _canSelectOffer,
-          canSelectBid: canSelectBid,
-          onDirectionChanged: onDirectionChanged,
-          onIncrement: onIncrement,
-          onDecrement: onDecrement,
-        ),
+        if (compact)
+          Padding(padding: const EdgeInsets.only(top: 2), child: controls)
+        else ...<Widget>[const SizedBox(height: 6), controls],
       ],
     );
   }

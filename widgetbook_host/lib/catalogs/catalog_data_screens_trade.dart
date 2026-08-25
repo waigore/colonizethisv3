@@ -9,10 +9,10 @@ Game _tradeScreenStoryGame({
   Map<String, bool>? techUnlocked,
 }) {
   const humanId = 'gp_human';
-  // Seed the world market state so the Refs #2993 E5a / #4345 Market
-  // commodity table renders representative prices, last-turn volume, and
+  // Seed the world market state so the Refs #2993 E5a / #4345 / #4653 Market
+  // commodity table renders representative prices, Last market chips, and
   // signed price deltas for a handful of commodities — remaining rows
-  // default to last-turn zeros with no delta.
+  // omit Last market (zero last-turn volume).
   // Post-#3093: WorldMarketState.prices is `Map<CommodityId, int>` (floored at
   // persistence boundary per SPEC/game/world-market.md § Price discovery).
   const Map<CommodityId, int> prices = <CommodityId, int>{
@@ -698,6 +698,10 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         builder: (context) => _tradeScreenDefaultStory(
           gameOverride: _tradeScreenStoryFirstRightGame(),
         ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — last market chip (Refs #4653)',
+        builder: (context) => _tradeScreenDefaultStory(),
       ),
       WidgetbookUseCase(
         name: 'Market tab — sellable clamp (Refs #3093)',
