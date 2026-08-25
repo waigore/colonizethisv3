@@ -74,23 +74,7 @@ class MarketCommodityRowHeader extends StatelessWidget {
           size: TradeScreenMarketKeys.marketRowResourceIconSize,
         ),
         const SizedBox(width: 4),
-        Expanded(
-          child: _MarketCommodityRowTitleBand(
-            commodityId: commodityId,
-            commodityDisplayName: commodityDisplayName,
-            sellableHeadroom: sellableHeadroom,
-            nameStyle: nameStyle,
-            sellableStyle: sellableStyle,
-            chipStyle: chipStyle,
-            showFirstRightChip: showFirstRightChip,
-            firstRightChipLabel: firstRightChipLabel,
-            firstRightTooltip: firstRightTooltip,
-            showLastMarketChip: showLastMarketChip,
-            lastMarketChipLabel: lastMarketChipLabel,
-            lastMarketTooltip: lastMarketTooltip,
-            counselStar: counselStar,
-          ),
-        ),
+        Expanded(child: _titleBand(sellableStyle, chipStyle)),
         _MarketCommodityRowPriceTrailing(
           commodityId: commodityId,
           priceText: priceText,
@@ -101,41 +85,8 @@ class MarketCommodityRowHeader extends StatelessWidget {
       ],
     );
   }
-}
 
-class _MarketCommodityRowTitleBand extends StatelessWidget {
-  const _MarketCommodityRowTitleBand({
-    required this.commodityId,
-    required this.commodityDisplayName,
-    required this.sellableHeadroom,
-    required this.nameStyle,
-    required this.sellableStyle,
-    required this.chipStyle,
-    required this.showFirstRightChip,
-    required this.firstRightChipLabel,
-    required this.firstRightTooltip,
-    required this.showLastMarketChip,
-    required this.lastMarketChipLabel,
-    required this.lastMarketTooltip,
-    this.counselStar,
-  });
-
-  final CommodityId commodityId;
-  final String commodityDisplayName;
-  final int sellableHeadroom;
-  final TextStyle nameStyle;
-  final TextStyle sellableStyle;
-  final TextStyle chipStyle;
-  final bool showFirstRightChip;
-  final String firstRightChipLabel;
-  final String firstRightTooltip;
-  final bool showLastMarketChip;
-  final String lastMarketChipLabel;
-  final String lastMarketTooltip;
-  final Widget? counselStar;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _titleBand(TextStyle sellableStyle, TextStyle chipStyle) {
     return Row(
       children: <Widget>[
         Flexible(
@@ -152,37 +103,48 @@ class _MarketCommodityRowTitleBand extends StatelessWidget {
           key: TradeScreenMarketKeys.marketRowSellableReadoutKey(commodityId),
           style: sellableStyle,
         ),
-        if (showFirstRightChip) ...<Widget>[
-          const SizedBox(width: 4),
-          Tooltip(
-            message: firstRightTooltip,
-            child: Text(
-              firstRightChipLabel,
-              key: TradeScreenMarketKeys.marketRowFirstRightChipKey(
-                commodityId,
-              ),
-              style: chipStyle,
-            ),
+        ..._chip(
+          show: showFirstRightChip,
+          tooltip: firstRightTooltip,
+          label: firstRightChipLabel,
+          chipKey: TradeScreenMarketKeys.marketRowFirstRightChipKey(
+            commodityId,
           ),
-        ],
-        if (showLastMarketChip) ...<Widget>[
-          const SizedBox(width: 4),
-          Tooltip(
-            message: lastMarketTooltip,
-            triggerMode: TooltipTriggerMode.tap,
-            child: Text(
-              lastMarketChipLabel,
-              key: TradeScreenMarketKeys.marketRowLastMarketChipKey(
-                commodityId,
-              ),
-              style: chipStyle,
-            ),
+          chipStyle: chipStyle,
+        ),
+        ..._chip(
+          show: showLastMarketChip,
+          tooltip: lastMarketTooltip,
+          label: lastMarketChipLabel,
+          chipKey: TradeScreenMarketKeys.marketRowLastMarketChipKey(
+            commodityId,
           ),
-        ],
+          chipStyle: chipStyle,
+          tap: true,
+        ),
         if (counselStar != null) counselStar!,
       ],
     );
   }
+}
+
+List<Widget> _chip({
+  required bool show,
+  required String tooltip,
+  required String label,
+  required Key chipKey,
+  required TextStyle chipStyle,
+  bool tap = false,
+}) {
+  if (!show) return const <Widget>[];
+  return <Widget>[
+    const SizedBox(width: 4),
+    Tooltip(
+      message: tooltip,
+      triggerMode: tap ? TooltipTriggerMode.tap : TooltipTriggerMode.longPress,
+      child: Text(label, key: chipKey, style: chipStyle),
+    ),
+  ];
 }
 
 class _MarketCommodityRowPriceTrailing extends StatelessWidget {

@@ -23,8 +23,6 @@ import 'trade_screen_market_row_controls.dart';
 import 'trade_screen_market_row_header.dart';
 import 'trade_screen_market_tab.dart';
 
-export 'trade_screen_market_row_compact.dart';
-
 class MarketCommodityRow extends StatelessWidget {
   const MarketCommodityRow({
     super.key,
@@ -51,6 +49,7 @@ class MarketCommodityRow extends StatelessWidget {
     this.lastMarketChipLabel = '',
     this.lastMarketTooltip = '',
     this.counselStar,
+    this.compact = false,
   });
 
   final CommodityId commodityId;
@@ -91,6 +90,7 @@ class MarketCommodityRow extends StatelessWidget {
   final String lastMarketChipLabel;
   final String lastMarketTooltip;
   final Widget? counselStar;
+  final bool compact;
 
   bool get _hasStagedOrder => stagedOrder != null;
 
@@ -124,8 +124,9 @@ class MarketCommodityRow extends StatelessWidget {
     return offerCap > 0;
   }
 
-  Widget _controls() {
-    final Widget child = MarketCommodityRowControls(
+  @override
+  Widget build(BuildContext context) {
+    final Widget controls = MarketCommodityRowControls(
       commodityId: commodityId,
       stagedType: stagedOrder?.type,
       quantityText: _quantityText,
@@ -137,13 +138,8 @@ class MarketCommodityRow extends StatelessWidget {
       onDirectionChanged: onDirectionChanged,
       onIncrement: onIncrement,
       onDecrement: onDecrement,
+      absorbPointers: absorbControlPointers,
     );
-    if (!absorbControlPointers) return child;
-    return IgnorePointer(child: child);
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -165,8 +161,9 @@ class MarketCommodityRow extends StatelessWidget {
           lastMarketTooltip: lastMarketTooltip,
           counselStar: counselStar,
         ),
-        const SizedBox(height: 6),
-        _controls(),
+        if (compact)
+          Padding(padding: const EdgeInsets.only(top: 2), child: controls)
+        else ...<Widget>[const SizedBox(height: 6), controls],
       ],
     );
   }

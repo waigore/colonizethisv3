@@ -10,10 +10,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_tab.dart';
 
-/// True when last-turn world volume is greater than zero (Refs #4653).
-bool showLastMarketChip(MarketActivity activity) {
-  return activity.totalBidQuantity + activity.totalOfferQuantity > 0;
-}
+bool showLastMarketChip(MarketActivity activity) =>
+    activity.totalBidQuantity + activity.totalOfferQuantity > 0;
 
 String lastMarketTooltip(MarketActivity activity, AppLocalizations l10n) {
   return l10n.tradeMarket_lastMarketTooltip(

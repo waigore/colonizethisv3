@@ -292,7 +292,7 @@ When the Market tab commodity list inherits `BoxConstraints.maxWidth >= TradeScr
 - **Odd item counts:** the trailing commodity occupies the **left column only**; the right column cell on that row is empty. Columns are top-aligned — no vertical stretch-to-fill.
 - **Inter-section gap:** `12` dp between sections (unchanged).
 
-On wide layouts each commodity row uses the **compact two-line** variant (`MarketCommodityRowCompact`):
+On wide layouts each commodity row uses the **compact two-line** variant (`MarketCommodityRow` with `compact: true`):
 
 - **Line 1:** `MarketCommodityRowHeader` (resource icon, name, sellable `(N)`, trailing price column) — same keys as the narrow row.
 - **Line 2:** `MarketCommodityRowControls` (`None` / `Bid` / `Offer` chips + stepper). Controls remain on the last primary line; the `Wrap` may wrap within line 2 when the column is narrow. Last-turn price deltas stack under the coin+price cluster inside the trailing price column (same keys as narrow). **Last market** lives on line 1 with **First right**, not as a body volume line.
