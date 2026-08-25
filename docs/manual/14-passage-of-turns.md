@@ -83,7 +83,7 @@ A rival’s research or a fight you were not in does **not** appear here unless 
 4. Choose **Settings** to open `DLG90001` **Settings**. The **Warn when civilians have no work order on end turn** switch applies on the next end-turn confirm, without restarting the app. Map-theme choices persist and apply after you restart the app. A theme group with only one choice is not shown.
 5. Choose **Exit to Main Menu** only when you mean to leave the current game. The pause panel closes first and the game asks for confirmation before returning to the main menu.
 
-`GAME50001` **Game side menu** is separate from the pause menu. It offers read-only Game Parameters (including whether you chose **Infinite mode** at new game) and the Debug log. It is not the place to save, load, or change settings.
+`GAME50001` **Game side menu** is separate from the pause menu. It offers read-only Game Parameters (whether you chose **Infinite mode** at new game; when it is **On**, the same calendar-stop versus 31-province explanation as New Game) and the Debug log. It is not the place to save, load, or change settings.
 
 ## Counsel
 
@@ -142,6 +142,7 @@ Their choices are not passive. A rival may strengthen its industry, seek an alli
 - `SPEC/ui/load-game-list-dialog.md`
 - `SPEC/ui/pause-menu-panel.md`
 - `SPEC/ui/settings-dialog.md`
+- `SPEC/ui/in-game-shell-narrow.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ui/game-side-menu.md`
 - `SPEC/ui/overture-dialogue-overlay.md`

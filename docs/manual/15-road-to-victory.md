@@ -53,8 +53,8 @@ The campaign may also reach its last year with no province-count winner. Then yo
 
 ### Infinite mode
 
-24. On `DLG10001` **New game leader selection**, you may turn on **Infinite mode (no victory condition)**. Chapter 2 covers the rest of New Game.
-25. The helper under that switch says **The game will continue indefinitely**. That is incomplete: owning 31 Old World provinces still ends the campaign; only the 1800 calendar stop is removed. You cannot change the switch after **Start**.
+24. On `DLG10001` **New game leader selection**, you may turn on **Infinite mode**. Chapter 2 covers the rest of New Game.
+25. The helper under that switch says **Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.** After **Start**, Game Parameters on `GAME50001` **Game side menu** restates the same meaning when Infinite mode is **On**.
 
 ### When a court wins by 31 provinces
 

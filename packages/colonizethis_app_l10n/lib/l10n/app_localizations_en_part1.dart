@@ -430,12 +430,11 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get shell_leaderDialog_seedHelper => 'Enter 0 for a random seed';
 
   @override
-  String get shell_leaderDialog_infiniteModeLabel =>
-      'Infinite mode (no victory condition)';
+  String get shell_leaderDialog_infiniteModeLabel => 'Infinite mode';
 
   @override
   String get shell_leaderDialog_infiniteModeHelper =>
-      'The game will continue indefinitely';
+      'Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.';
 
   @override
   String get shell_leaderDialog_advancedStartLabel => 'Advanced start';

@@ -406,7 +406,7 @@ abstract class AppLocalizations {
   /// Toggle label for infinite campaign mode in the new-game leader dialog.
   String get shell_leaderDialog_infiniteModeLabel;
 
-  /// Helper text for infinite mode in the new-game leader dialog.
+  /// Helper: skips the 1800 calendar stop; 31 Old World provinces still win.
   String get shell_leaderDialog_infiniteModeHelper;
 
   String get shell_leaderDialog_advancedStartLabel;

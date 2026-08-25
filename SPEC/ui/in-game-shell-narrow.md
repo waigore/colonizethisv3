@@ -33,7 +33,7 @@ Widget contract and navigation: **[game-side-menu.md](game-side-menu.md)**. Paus
 ### Game Parameters (read-only)
 
 - **Entry:** Hamburger menu item **Game Parameters**.
-- **Dialog:** `CtDialogShell` with title **Game Parameters** and a read-only row **Infinite mode: On** or **Off** matching `Game.infiniteMode`. No edit controls. **Close** dismisses.
+- **Dialog:** `CtDialogShell` with title **Game Parameters** and a read-only row **Infinite mode: On** or **Off** matching `Game.infiniteMode`. When **On**, a muted line under the row restates `shell_leaderDialog_infiniteModeHelper` (calendar stop skipped; 31+ Old World provinces still end play). When **Off**, that helper is omitted. No edit controls. **Close** dismisses.
 - **Not on load list:** Infinite mode is not shown on the load-game list screen.
 
 ---
@@ -116,6 +116,10 @@ Hamburger menu (when open):
 - **Given** the side menu is open, **when** the user taps the close (cross) button in the menu, **then** the side menu closes.
 - **Given** the side menu is open, **when** the user taps **Debug log**, **then** the app navigates to the debug log route and the side menu closes.
 - **Given** the side menu is built, **when** it renders, **then** it uses pixel-art layout (CtPanel, CtNinePatchButton for Debug log).
+
+- **Given** an in-progress game with `Game.infiniteMode == true`, **when** The Player opens Game Parameters from `GAME50001`, **then** the UI layer shows **Infinite mode: On** plus `shell_leaderDialog_infiniteModeHelper` and the dialog remains read-only.
+
+- **Given** an in-progress game with `Game.infiniteMode == false`, **when** The Player opens Game Parameters, **then** the UI layer shows **Infinite mode: Off** and does not show `shell_leaderDialog_infiniteModeHelper`.
 
 - **Given** the side menu is **open**, **when** the user attempts to interact with the map area (tap, drag, scroll, hover), **then** the map widget does not respond and no province selection or camera movement occurs until the side menu is closed.
 - **Given** the side menu is **open**, **when** the user performs a keyboard action that would normally affect the map (e.g. map hotkeys), **then** the map does not react while the menu is open.

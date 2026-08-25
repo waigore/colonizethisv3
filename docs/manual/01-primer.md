@@ -16,7 +16,7 @@ You have inherited a **Great Power** — one of the playable nations — in an a
 ### Victory at a glance
 
 - **Military victory:** control **31 or more Old World provinces** (provinces you own). Checked at the end of the turn, after the game has carried out everything for that turn. When someone wins this way, Chapter 15 covers `OVL20001` **Victory overlay**. On the map, the row with the **Old World** and **New World** tabs also shows how many Old World provinces you hold out of 31. If another Great Power is ahead, that court’s name and count appear beside yours. Tap that count to open `GAME70001` **Victory screen**. The left-side **Victory** icon opens the same screen.
-- **Calendar campaign end:** without military victory, the campaign can stop at year **1800** (usually turn **201**). That stop is not a military victory. After the last turn resolves, `OVL20001` **Victory overlay** appears as **Campaign complete**: it names the strongest Great Power when one court leads, or says no one is declared when the lead is tied. Choose **Return to Main Menu** or **View Final State** (the map stays open for inspection; further turns stay blocked). Summaries and `GAME70001` **Victory screen** still show the same declared-winner or tie wording. **Infinite mode** (chosen at new game) bypasses the calendar halt; only military victory or quitting ends the campaign.
+- **Calendar campaign end:** without military victory, the campaign can stop at year **1800** (usually turn **201**). That stop is not a military victory. After the last turn resolves, `OVL20001` **Victory overlay** appears as **Campaign complete**: it names the strongest Great Power when one court leads, or says no one is declared when the lead is tied. Choose **Return to Main Menu** or **View Final State** (the map stays open for inspection; further turns stay blocked). Summaries and `GAME70001` **Victory screen** still show the same declared-winner or tie wording. **Infinite mode** (chosen on New Game as **Infinite mode**) skips that year-1800 stop; owning 31 or more Old World provinces still ends the campaign, as does leaving play.
 
 Later chapters deepen victory counsel; start here so you know the finish line.
 
@@ -75,6 +75,7 @@ Rival Great Powers choose the same kinds of decrees you do. A chosen **leader** 
 - `SPEC/ui/game-screen.md`
 - `SPEC/ui/empire-buttons.md`
 - `SPEC/ui/game-side-menu.md`
+- `SPEC/ui/new-game-leader-selection-dialog.md`
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/empire-overview.md`
 - `SPEC/ui/victory-overlay.md`

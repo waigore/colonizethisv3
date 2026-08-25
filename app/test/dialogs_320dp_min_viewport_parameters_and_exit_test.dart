@@ -42,6 +42,10 @@ void main() {
         );
         expect(find.text('Game Parameters'), findsOneWidget);
         expect(find.text('Infinite mode: Off'), findsOneWidget);
+        expect(
+          find.textContaining('Skips the year-1800 calendar stop'),
+          findsNothing,
+        );
         expect(find.text('Close'), findsOneWidget);
       },
     );
@@ -59,6 +63,14 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.text('Game Parameters'), findsOneWidget);
         expect(find.text('Infinite mode: On'), findsOneWidget);
+        expect(
+          find.text(
+            'Skips the year-1800 calendar stop. Owning 31 or more Old World '
+            'provinces still ends the campaign. You cannot change this after '
+            'Start.',
+          ),
+          findsOneWidget,
+        );
       },
     );
 
