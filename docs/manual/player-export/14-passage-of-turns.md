@@ -25,7 +25,7 @@ The campaign calendar advances with the turn. By default, turn 1 is 1500; turns 
 11. Empty research seats or funding set to **None** are **not** listed here: holding gold back from research is a normal choice. Review **Technology screen** only when you mean to. A funded research assignment you already set can appear under **Staged this turn**; unused seats still do not.
 12. Choose **Yes** to commit the displayed turn, or **No** to keep planning.
 13. After **Yes**, a **Processing Turn** screen appears. You cannot close it, tap the map, or tap **Next turn** until the turn finishes. The three-line button still opens **Game side menu**. **Game Paused** / **Pause menu panel** does not open until **Processing Turn** closes.
-14. The turn may pause when diplomacy needs your answer. Give that answer on **Overture dialogue**, **Pending intervention overlay**, or **Call to arms dialogue overlay** before the rest of the turn can continue.
+14. The turn may pause when diplomacy needs your answer. Give that answer on **Overture dialogue**, **Pending intervention overlay**, **Call to arms dialogue overlay**, or **Favored Trading Partner dialogue overlay** before the rest of the turn can continue.
 
 ### What happens after Next turn
 
@@ -58,7 +58,7 @@ The pulses wait until **Victory overlay** is gone; closing the newspaper while i
 
 ### The newspaper feed
 
-On **Empire overview / map area**, the newspaper button sits on the map bar after treasury, cargo, the labour readout, and the Old World race chip. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide **Player turn event feed** without leaving **Game screen**. Land battles you fought appear with the province, the outcome in plain words, and both sides' regiment losses (including zero); tap a combat line to open that province on the map. Sea battles you fought appear the same way with the sea name, the outcome in plain words, both sides' ship losses (including zero), and a note when a court retreated; tap opens that sea when the map can find it.
+On **Empire overview / map area**, the newspaper button sits on the map bar after treasury, cargo, the labour readout, and the Old World race chip. Rest on that Old World count to read remaining years until the last campaign year. The feed starts **hidden**. A badge on the button shows how many lines it holds. Tap the button to show or hide **Player turn event feed** without leaving **Game screen**. Land battles you fought appear with the province, the outcome in plain words, and both sides' regiment losses (including zero); tap a combat line to open that province on the map. Sea battles you fought appear the same way with the sea name, the outcome in plain words, both sides' ship losses (including zero), and a note when a court retreated; tap opens that sea when the map can find it.
 
 Use the feed with turn news: the dialog is the formal summary; the feed keeps relevant lines on the map while you inspect. It replaces its entries each completed turn.
 
@@ -83,7 +83,7 @@ A rival’s research or a fight you were not in does **not** appear here unless 
 4. Choose **Settings** to open **Settings**. The **Warn when civilians have no work order on end turn** switch applies on the next end-turn confirm, without restarting the app. Map-theme choices persist and apply after you restart the app. A theme group with only one choice is not shown.
 5. Choose **Exit to Main Menu** only when you mean to leave the current game. The pause panel closes first and the game asks for confirmation before returning to the main menu.
 
-**Game side menu** is separate from the pause menu. It offers read-only Game Parameters (including whether you chose **Infinite mode** at new game) and the Debug log. It is not the place to save, load, or change settings.
+**Game side menu** is separate from the pause menu. It offers read-only Game Parameters (whether you chose **Infinite mode** at new game; when it is **On**, the same calendar-stop versus 31-province explanation as New Game) and the Debug log. It is not the place to save, load, or change settings.
 
 ## Counsel
 
