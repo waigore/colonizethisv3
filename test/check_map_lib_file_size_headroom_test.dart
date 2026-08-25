@@ -21,12 +21,12 @@ void main() {
       0,
       reason:
           'Every colonizethis_map gen/view/render source file must stay at or below '
-          '${maxMapLibFileHeadroomNonCommentLinesForTests()} non-comment lines.\n'
+          '${maxMapLibFileHeadroomPhysicalLinesForTests()} physical lines.\n'
           '${logs.join('\n')}',
     );
   });
 
-  test('ceiling is 250 after wave-7 headroom ratchet (#4561)', () {
+  test('ceiling is 250 physical after wave-8 headroom ratchet (#4654)', () {
     expect(mapLibFileSizeHeadroomCeiling, 250);
   });
 
@@ -34,9 +34,10 @@ void main() {
     expect(mapLibFileSizeHeadroomGrandfathered, isEmpty);
   });
 
-  test('fails when a gen file exceeds the 250 non-comment-line headroom', () {
-    final temp =
-        Directory.systemTemp.createTempSync('check_map_lib_headroom_fail_');
+  test('fails when a gen file exceeds the 250 physical-line headroom', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_map_lib_headroom_fail_',
+    );
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File('${temp.path}/$_genRoot/big_pass.dart')
@@ -55,31 +56,35 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('big_pass.dart'));
-    expect(logs.join('\n'), contains('non-comment lines > 250'));
+    expect(logs.join('\n'), contains('physical lines > 250'));
   });
 
-  test('passes a gen file at exactly the headroom cap (250 non-comment lines)',
-      () {
-    final temp =
-        Directory.systemTemp.createTempSync('check_map_lib_headroom_edge_');
-    addTearDown(() => temp.deleteSync(recursive: true));
+  test(
+    'passes a gen file at exactly the headroom cap (250 physical lines)',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_map_lib_headroom_edge_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-    File('${temp.path}/$_genRoot/edge_pass.dart')
-      ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(250, 'final x = 1;').join('\n'));
-    Directory('${temp.path}/$_viewRoot').createSync(recursive: true);
-    Directory('${temp.path}/$_renderRoot').createSync(recursive: true);
+      File('${temp.path}/$_genRoot/edge_pass.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync(List.filled(250, 'final x = 1;').join('\n'));
+      Directory('${temp.path}/$_viewRoot').createSync(recursive: true);
+      Directory('${temp.path}/$_renderRoot').createSync(recursive: true);
 
-    final code = runCheckMapLibFileSizeHeadroom(
-      temp.path,
-      scanRoots: const [_genRoot, _viewRoot, _renderRoot],
-    );
-    expect(code, 0);
-  });
+      final code = runCheckMapLibFileSizeHeadroom(
+        temp.path,
+        scanRoots: const [_genRoot, _viewRoot, _renderRoot],
+      );
+      expect(code, 0);
+    },
+  );
 
   test('skips shrink-only grandfather entries', () {
-    final temp =
-        Directory.systemTemp.createTempSync('check_map_lib_headroom_grand_');
+    final temp = Directory.systemTemp.createTempSync(
+      'check_map_lib_headroom_grand_',
+    );
     addTearDown(() => temp.deleteSync(recursive: true));
 
     File('${temp.path}/$_genRoot/grandfathered.dart')
@@ -105,8 +110,9 @@ void main() {
   });
 
   test('fails when a scanned root is missing (anti-rot existence check)', () {
-    final temp =
-        Directory.systemTemp.createTempSync('check_map_lib_headroom_gone_');
+    final temp = Directory.systemTemp.createTempSync(
+      'check_map_lib_headroom_gone_',
+    );
     addTearDown(() => temp.deleteSync(recursive: true));
 
     final logs = <String>[];

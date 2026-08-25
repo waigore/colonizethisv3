@@ -1,9 +1,9 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_map/src/tile_map_directions.dart';
 import 'package:colonizethis_map/src/tile_map_topology_helpers.dart';
 
 import 'support/tile_map_gen_fixtures.dart';
+import 'support/tile_map_generator_sea_lakes_support.dart';
 
 void main() {
   group('TileMapGenerator sea and lakes', () {
@@ -11,54 +11,12 @@ void main() {
       'no enclosed sea after fill-lakes: all sea connected to grid edge',
       () {
         final (result, _) = runTileMapGeneration(
-          params: genParams(
-            width: 30,
-            height: 30,
-            seed: 11,
-          ),
+          params: genParams(width: 30, height: 30, seed: 11),
           numProvinces: 1,
           numContinents: 1,
           regionId: 'r1',
         );
-        final seaCells = <(int, int)>{};
-        for (var y = 0; y < result.height; y++) {
-          for (var x = 0; x < result.width; x++) {
-            if (RegExp(r'^s\d+$').hasMatch(result.cell(x, y))) {
-              seaCells.add((x, y));
-            }
-          }
-        }
-        if (seaCells.isEmpty) return;
-        final queue = List<(int, int)>.from(
-          seaCells.where(
-            (p) =>
-                p.$1 == 0 ||
-                p.$1 == result.width - 1 ||
-                p.$2 == 0 ||
-                p.$2 == result.height - 1,
-          ),
-        );
-        final reachable = queue.toSet();
-        while (queue.isNotEmpty) {
-          final (x, y) = queue.removeLast();
-          for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
-            final nx = x + dx;
-            final ny = y + dy;
-            if (nx >= 0 && nx < result.width && ny >= 0 && ny < result.height) {
-              final nid = result.cell(nx, ny);
-              if (RegExp(r'^s\d+$').hasMatch(nid) &&
-                  !reachable.contains((nx, ny))) {
-                reachable.add((nx, ny));
-                queue.add((nx, ny));
-              }
-            }
-          }
-        }
-        expect(
-          reachable.length,
-          seaCells.length,
-          reason: 'All sea cells should be reachable from edge (no lakes)',
-        );
+        expectNoEnclosedSeaAfterFillLakes(result);
       },
     );
 
@@ -67,11 +25,7 @@ void main() {
       () {
         // SPEC/game/map-topology.md § Warp zones: placement uses sea zones on the map edge.
         final (result, topology) = runTileMapGeneration(
-          params: genParams(
-            width: 24,
-            height: 24,
-            seed: 7,
-          ),
+          params: genParams(width: 24, height: 24, seed: 7),
           numProvinces: 2,
           numContinents: 1,
           regionId: 'r1',
@@ -194,12 +148,7 @@ void main() {
     test('skipFillLakes true logs Fill lakes skipped', () {
       final logLines = <String>[];
       runTileMapGeneration(
-        params: genParams(
-          width: 10,
-          height: 10,
-          seed: 1,
-          skipFillLakes: true,
-        ),
+        params: genParams(width: 10, height: 10, seed: 1, skipFillLakes: true),
         numProvinces: 1,
         numContinents: 1,
         regionId: 'r1',
@@ -215,12 +164,7 @@ void main() {
     test('borderNoise greater than zero applies border noise', () {
       final logLines = <String>[];
       final (result, _) = runTileMapGeneration(
-        params: genParams(
-          width: 20,
-          height: 20,
-          seed: 2,
-          borderNoise: 0.5,
-        ),
+        params: genParams(width: 20, height: 20, seed: 2, borderNoise: 0.5),
         numProvinces: 2,
         numContinents: 1,
         regionId: 'r1',

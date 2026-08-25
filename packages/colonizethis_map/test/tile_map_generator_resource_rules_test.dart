@@ -2,17 +2,14 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'support/tile_map_gen_fixtures.dart';
+import 'support/tile_map_generator_resource_rules_support.dart';
 
 void main() {
   group('TileMapGenerator resource rules', () {
     test(
       'with resourceRules produces terrain and resource grids of same dimensions',
       () {
-        final params = genParams(
-          width: 20,
-          height: 15,
-          seed: 2,
-        );
+        final params = genParams(width: 20, height: 15, seed: 2);
         final (result, _) = runTileMapGeneration(
           params: params,
           numProvinces: 1,
@@ -20,23 +17,12 @@ void main() {
           regionId: 'oldWorld',
           resourceRules: ResourceRules.defaultRules,
         );
-        expect(result.terrainGrid, isNotNull);
-        expect(result.resourceGrid, isNotNull);
-        expect(result.terrainGrid!.length, result.height);
-        expect(result.resourceGrid!.length, result.height);
-        for (var i = 0; i < result.height; i++) {
-          expect(result.terrainGrid![i].length, result.width);
-          expect(result.resourceGrid![i].length, result.width);
-        }
+        expectTerrainGridDimensions(result);
       },
     );
 
     test('terrain and resource respect region and terrain rules', () {
-      final params = genParams(
-        width: 25,
-        height: 25,
-        seed: 3,
-      );
+      final params = genParams(width: 25, height: 25, seed: 3);
       final (result, _) = runTileMapGeneration(
         params: params,
         numProvinces: 1,
@@ -44,25 +30,11 @@ void main() {
         regionId: 'oldWorld',
         resourceRules: ResourceRules.defaultRules,
       );
-      final rules = ResourceRules.defaultRules;
-      for (var y = 0; y < result.height; y++) {
-        for (var x = 0; x < result.width; x++) {
-          final t = result.terrainAt(x, y);
-          final r = result.resourceAt(x, y);
-          if (t != null && r != null) {
-            expect(rules.isAllowedOnTerrain(r, t), isTrue);
-            expect(rules.isAllowedInRegion(r, 'oldWorld'), isTrue);
-          }
-        }
-      }
+      expectResourcesRespectRules(result, 'oldWorld');
     });
 
     test('newWorld resources respect region and terrain rules', () {
-      final params = genParams(
-        width: 30,
-        height: 30,
-        seed: 17,
-      );
+      final params = genParams(width: 30, height: 30, seed: 17);
       final (result, _) = runTileMapGeneration(
         params: params,
         numProvinces: 2,
@@ -70,17 +42,7 @@ void main() {
         regionId: 'newWorld',
         resourceRules: ResourceRules.defaultRules,
       );
-      final rules = ResourceRules.defaultRules;
-      for (var y = 0; y < result.height; y++) {
-        for (var x = 0; x < result.width; x++) {
-          final t = result.terrainAt(x, y);
-          final r = result.resourceAt(x, y);
-          if (t != null && r != null) {
-            expect(rules.isAllowedOnTerrain(r, t), isTrue);
-            expect(rules.isAllowedInRegion(r, 'newWorld'), isTrue);
-          }
-        }
-      }
+      expectResourcesRespectRules(result, 'newWorld');
     });
 
     test(
@@ -144,17 +106,7 @@ void main() {
           regionId: 'oldWorld',
           resourceRules: ResourceRules.defaultRules,
         );
-        final rules = ResourceRules.defaultRules;
-        for (var y = 0; y < result.height; y++) {
-          for (var x = 0; x < result.width; x++) {
-            final t = result.terrainAt(x, y);
-            final r = result.resourceAt(x, y);
-            if (t != null && r != null) {
-              expect(rules.isAllowedOnTerrain(r, t), isTrue);
-              expect(rules.isAllowedInRegion(r, 'oldWorld'), isTrue);
-            }
-          }
-        }
+        expectResourcesRespectRules(result, 'oldWorld');
       },
     );
 
@@ -192,10 +144,7 @@ void main() {
     });
 
     test('terrain on land uses only map region allowed set (oldWorld)', () {
-      final (
-        result,
-        _,
-      ) = runTileMapGeneration(
+      final (result, _) = runTileMapGeneration(
         params: genParams(width: 25, height: 25, seed: 4),
         numProvinces: 1,
         numContinents: 1,
