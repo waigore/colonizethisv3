@@ -56,7 +56,13 @@ class MarketCommodityRowControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget strip = Wrap(
+    final Widget strip = _directionAndQuantityStrip();
+    if (!absorbPointers) return strip;
+    return IgnorePointer(child: strip);
+  }
+
+  Widget _directionAndQuantityStrip() {
+    return Wrap(
       spacing: 6,
       runSpacing: 6,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -113,7 +119,5 @@ class MarketCommodityRowControls extends StatelessWidget {
         ),
       ],
     );
-    if (!absorbPointers) return strip;
-    return IgnorePointer(child: strip);
   }
 }
