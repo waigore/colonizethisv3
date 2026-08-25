@@ -4,6 +4,26 @@ import 'package:colonizethis_test/test.dart';
 
 final _seaId = RegExp(r'^s\d+$');
 
+void _enqueueUnreachedSeaNeighbors({
+  required TileMapResult result,
+  required int x,
+  required int y,
+  required Set<(int, int)> reachable,
+  required List<(int, int)> queue,
+}) {
+  for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
+    final nx = x + dx;
+    final ny = y + dy;
+    if (nx < 0 || nx >= result.width || ny < 0 || ny >= result.height) {
+      continue;
+    }
+    if (!_seaId.hasMatch(result.cell(nx, ny))) continue;
+    if (reachable.contains((nx, ny))) continue;
+    reachable.add((nx, ny));
+    queue.add((nx, ny));
+  }
+}
+
 void expectNoEnclosedSeaAfterFillLakes(TileMapResult result) {
   final seaCells = <(int, int)>{};
   for (var y = 0; y < result.height; y++) {
@@ -26,17 +46,13 @@ void expectNoEnclosedSeaAfterFillLakes(TileMapResult result) {
   final reachable = queue.toSet();
   while (queue.isNotEmpty) {
     final (x, y) = queue.removeLast();
-    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
-      final nx = x + dx;
-      final ny = y + dy;
-      if (nx >= 0 && nx < result.width && ny >= 0 && ny < result.height) {
-        final nid = result.cell(nx, ny);
-        if (_seaId.hasMatch(nid) && !reachable.contains((nx, ny))) {
-          reachable.add((nx, ny));
-          queue.add((nx, ny));
-        }
-      }
-    }
+    _enqueueUnreachedSeaNeighbors(
+      result: result,
+      x: x,
+      y: y,
+      reachable: reachable,
+      queue: queue,
+    );
   }
   expect(
     reachable.length,
