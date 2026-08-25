@@ -5,6 +5,8 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'init_game_map_view_data.dart';
+import 'init_game_map_view_human_player_ids.dart';
+import 'init_game_map_view_tile_marker_sort.dart';
 
 /// Builds [ArmyTileMarkerView] stacks for one region's view data.
 class InitGameMapViewArmyMarkers {
@@ -15,10 +17,7 @@ class InitGameMapViewArmyMarkers {
     required String regionId,
     required List<TownMarkerView> towns,
   }) {
-    final humanIds = game.players
-        .where((p) => p.isHuman)
-        .map((p) => p.id)
-        .toSet();
+    final humanIds = humanPlayerIds(game);
     if (humanIds.isEmpty) {
       return const [];
     }
@@ -60,17 +59,12 @@ class InitGameMapViewArmyMarkers {
         ),
       );
     }
-    markers.sort((a, b) {
-      final yc = a.y.compareTo(b.y);
-      if (yc != 0) {
-        return yc;
-      }
-      final xc = a.x.compareTo(b.x);
-      if (xc != 0) {
-        return xc;
-      }
-      return a.tileKey.compareTo(b.tileKey);
-    });
+    sortTileAnchoredMarkers(
+      markers,
+      yOf: (m) => m.y,
+      xOf: (m) => m.x,
+      tileKeyOf: (m) => m.tileKey,
+    );
     return markers;
   }
 

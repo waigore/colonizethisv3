@@ -1,21 +1,15 @@
-// Wave-7 headroom gate: colonizethis_map gen/view/render modules ≤250 NCL.
-// SPEC/program/repo-lint.md (`repo.map_lib_file_size_headroom`, Refs #4112, #4297, #4371, #4561).
-//
-// Complements `repo.map_lib_file_size` (500 NCL hard cap) with a peer-aligned
-// 250 non-comment-line advisory ratchet so near-cap modules gain headroom after
-// wave-7 splits without lowering the 500 ceiling.
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-import 'check_dart_file_non_comment_line_size.dart'
-    show countNonCommentLinesFromSource;
 import 'check_map_lib_file_size.dart' show mapLibFileSizeScanRoots;
 import 'ct_repo_lint_scan_contract.dart';
 
+// Wave-8 headroom: gen/view/render ≤250 physical lines (Refs #4654).
+// Complements `repo.map_lib_file_size` (500 NCL hard cap).
 const int mapLibFileSizeHeadroomCeiling = 250;
 
-/// Shrink-only allowlist during transition; remove entries as splits land.
 const List<String> mapLibFileSizeHeadroomGrandfathered = <String>[];
 
 int runCheckMapLibFileSizeHeadroom(
@@ -29,9 +23,10 @@ int runCheckMapLibFileSizeHeadroom(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
 
-  final grandfathered = (grandfatheredPaths ?? mapLibFileSizeHeadroomGrandfathered)
-      .map((path) => path.replaceAll('\\', '/'))
-      .toSet();
+  final grandfathered =
+      (grandfatheredPaths ?? mapLibFileSizeHeadroomGrandfathered)
+          .map((path) => path.replaceAll('\\', '/'))
+          .toSet();
 
   final missingGrandfathered = <String>[];
   for (final relativePath in grandfathered) {
@@ -68,12 +63,12 @@ int runCheckMapLibFileSizeHeadroom(
           .relative(entity.path, from: repoRoot)
           .replaceAll('\\', '/');
       if (grandfathered.contains(relativePath)) continue;
-      final nonCommentLines = countNonCommentLinesFromSource(
-        entity.readAsStringSync(),
-      );
-      if (nonCommentLines > ceiling) {
+      final physicalLines = const LineSplitter()
+          .convert(entity.readAsStringSync())
+          .length;
+      if (physicalLines > ceiling) {
         violations.add(
-          '$relativePath ($nonCommentLines non-comment lines > $ceiling)',
+          '$relativePath ($physicalLines physical lines > $ceiling)',
         );
       }
     }
@@ -98,7 +93,7 @@ int runCheckMapLibFileSizeHeadroom(
   violations.sort();
   logE(
     'check_map_lib_file_size_headroom: found ${violations.length} violation(s) '
-    '(cap $ceiling non-comment lines; split by concern per '
+    '(cap $ceiling physical lines; split by concern per '
     'colonizethis-code-review):',
   );
   for (final violation in violations) {
@@ -112,5 +107,5 @@ void main(List<String> args) {
   exit(runCheckMapLibFileSizeHeadroom(Directory.current.path));
 }
 
-int maxMapLibFileHeadroomNonCommentLinesForTests() =>
+int maxMapLibFileHeadroomPhysicalLinesForTests() =>
     mapLibFileSizeHeadroomCeiling;

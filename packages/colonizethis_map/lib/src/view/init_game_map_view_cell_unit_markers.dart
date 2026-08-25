@@ -9,6 +9,8 @@ import '../civilian_unit_view.dart';
 import '../region_data_access.dart';
 import '../tile_key_util.dart';
 import 'init_game_map_view_data.dart';
+import 'init_game_map_view_human_player_ids.dart';
+import 'init_game_map_view_tile_marker_sort.dart';
 
 class InitGameMapViewCellUnitMarkers {
   const InitGameMapViewCellUnitMarkers._();
@@ -33,12 +35,7 @@ class InitGameMapViewCellUnitMarkers {
     // callers that do not pass an explicit set keep legacy single-player
     // behavior. Observe-mode call sites (see SPEC/ui/observe-mode.md) pass an
     // explicit set because handoff clears `isHuman` on every player.
-    final civilianOwnerIds =
-        civilianMarkerOwnerIds ??
-        game.players
-            .where((player) => player.isHuman)
-            .map((player) => player.id)
-            .toSet();
+    final civilianOwnerIds = civilianMarkerOwnerIds ?? humanPlayerIds(game);
     final provincePresenceById = <String, ProvinceUnitPresenceView>{};
     for (final p in provinces) {
       provincePresenceById[p.id] = const ProvinceUnitPresenceView(
@@ -58,10 +55,7 @@ class InitGameMapViewCellUnitMarkers {
       if (current == null) {
         continue;
       }
-      provincePresenceById[fullProvinceId] = ProvinceUnitPresenceView(
-        civilianCount: current.civilianCount,
-        regimentCount: current.regimentCount,
-        shipCount: current.shipCount,
+      provincePresenceById[fullProvinceId] = current.copyWith(
         intelVisible: true,
       );
     }
@@ -93,11 +87,9 @@ class InitGameMapViewCellUnitMarkers {
         continue;
       }
       final isRegiment = isMilitaryUnit(u.type);
-      provincePresenceById[u.locationProvinceId] = ProvinceUnitPresenceView(
+      provincePresenceById[u.locationProvinceId] = current.copyWith(
         civilianCount: current.civilianCount + (isRegiment ? 0 : 1),
         regimentCount: current.regimentCount + (isRegiment ? 1 : 0),
-        shipCount: current.shipCount,
-        intelVisible: current.intelVisible,
       );
     }
 
@@ -135,17 +127,12 @@ class InitGameMapViewCellUnitMarkers {
         ),
       );
     }
-    playerOwnedCivilianTileMarkers.sort((a, b) {
-      final yCompare = a.y.compareTo(b.y);
-      if (yCompare != 0) {
-        return yCompare;
-      }
-      final xCompare = a.x.compareTo(b.x);
-      if (xCompare != 0) {
-        return xCompare;
-      }
-      return a.tileKey.compareTo(b.tileKey);
-    });
+    sortTileAnchoredMarkers(
+      playerOwnedCivilianTileMarkers,
+      yOf: (m) => m.y,
+      xOf: (m) => m.x,
+      tileKeyOf: (m) => m.tileKey,
+    );
 
     return (
       unitMarkers: unitMarkers,
