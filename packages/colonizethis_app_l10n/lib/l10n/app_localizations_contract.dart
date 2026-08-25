@@ -1963,8 +1963,11 @@ abstract class AppLocalizations {
   /// On-request help for the Market first-right chip.
   String get tradeMarket_firstRightTooltip;
 
-  /// Market row previous-turn aggregate bid/offer volume line.
-  String tradeMarket_lastTurnVolume(int bids, int offers);
+  /// Compact chip on Market rows with non-zero last-turn world volume.
+  String get tradeMarket_lastMarketChip;
+
+  /// On-request worldwide last-turn bought/sold counts.
+  String tradeMarket_lastMarketTooltip(int bought, int sold);
 
   /// Tooltip on Market price cluster when a last-turn coin delta is shown.
   String get tradeMarket_priceMovedTooltip;

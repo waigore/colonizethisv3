@@ -7,7 +7,6 @@
 /// every row shares the same price-digit column edge.
 library;
 
-
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
@@ -32,6 +31,9 @@ class MarketCommodityRowHeader extends StatelessWidget {
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
+    this.showLastMarketChip = false,
+    this.lastMarketChipLabel = '',
+    this.lastMarketTooltip = '',
     this.counselStar,
   });
 
@@ -49,6 +51,9 @@ class MarketCommodityRowHeader extends StatelessWidget {
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
+  final bool showLastMarketChip;
+  final String lastMarketChipLabel;
+  final String lastMarketTooltip;
   final Widget? counselStar;
 
   @override
@@ -56,9 +61,10 @@ class MarketCommodityRowHeader extends StatelessWidget {
     final TextStyle sellableStyle = nameStyle.copyWith(
       color: EditorialMonoclePalette.muted,
     );
-    final TextStyle chipStyle = (Theme.of(context).textTheme.labelSmall ??
-            const TextStyle(fontSize: 11))
-        .copyWith(color: EditorialMonoclePalette.muted);
+    final TextStyle chipStyle =
+        (Theme.of(context).textTheme.labelSmall ??
+                const TextStyle(fontSize: 11))
+            .copyWith(color: EditorialMonoclePalette.muted);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
@@ -79,6 +85,9 @@ class MarketCommodityRowHeader extends StatelessWidget {
             showFirstRightChip: showFirstRightChip,
             firstRightChipLabel: firstRightChipLabel,
             firstRightTooltip: firstRightTooltip,
+            showLastMarketChip: showLastMarketChip,
+            lastMarketChipLabel: lastMarketChipLabel,
+            lastMarketTooltip: lastMarketTooltip,
             counselStar: counselStar,
           ),
         ),
@@ -105,6 +114,9 @@ class _MarketCommodityRowTitleBand extends StatelessWidget {
     required this.showFirstRightChip,
     required this.firstRightChipLabel,
     required this.firstRightTooltip,
+    required this.showLastMarketChip,
+    required this.lastMarketChipLabel,
+    required this.lastMarketTooltip,
     this.counselStar,
   });
 
@@ -117,6 +129,9 @@ class _MarketCommodityRowTitleBand extends StatelessWidget {
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
+  final bool showLastMarketChip;
+  final String lastMarketChipLabel;
+  final String lastMarketTooltip;
   final Widget? counselStar;
 
   @override
@@ -143,7 +158,23 @@ class _MarketCommodityRowTitleBand extends StatelessWidget {
             message: firstRightTooltip,
             child: Text(
               firstRightChipLabel,
-              key: TradeScreenMarketKeys.marketRowFirstRightChipKey(commodityId),
+              key: TradeScreenMarketKeys.marketRowFirstRightChipKey(
+                commodityId,
+              ),
+              style: chipStyle,
+            ),
+          ),
+        ],
+        if (showLastMarketChip) ...<Widget>[
+          const SizedBox(width: 4),
+          Tooltip(
+            message: lastMarketTooltip,
+            triggerMode: TooltipTriggerMode.tap,
+            child: Text(
+              lastMarketChipLabel,
+              key: TradeScreenMarketKeys.marketRowLastMarketChipKey(
+                commodityId,
+              ),
               style: chipStyle,
             ),
           ),
@@ -197,13 +228,14 @@ class _MarketCommodityRowPriceTrailing extends StatelessWidget {
               Text(
                 formatMarketPriceDelta(delta),
                 key: TradeScreenMarketKeys.marketRowPriceDeltaKey(commodityId),
-                style: (Theme.of(context).textTheme.labelSmall ??
-                        const TextStyle(fontSize: 11))
-                    .copyWith(
-                  color: delta > 0
-                      ? EditorialMonoclePalette.success
-                      : EditorialMonoclePalette.danger,
-                ),
+                style:
+                    (Theme.of(context).textTheme.labelSmall ??
+                            const TextStyle(fontSize: 11))
+                        .copyWith(
+                          color: delta > 0
+                              ? EditorialMonoclePalette.success
+                              : EditorialMonoclePalette.danger,
+                        ),
               ),
             ],
           );

@@ -163,6 +163,7 @@ void main() {
         'Market tab — wide two-column (Refs #4227)',
         'Market tab — narrow stacked rows (Refs #4227)',
         'Market tab — first-right chip (Refs #4226)',
+        'Market tab — last market chip (Refs #4653)',
         'Market tab — sellable clamp (Refs #3093)',
         'Market tab — treasury bid cap (Refs #3093)',
         'Market tab — bid budget saturated (Refs #4186)',

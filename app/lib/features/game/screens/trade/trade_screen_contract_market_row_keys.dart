@@ -44,6 +44,10 @@ abstract final class TradeScreenMarketRowKeys {
   static Key marketRowFirstRightChipKey(CommodityId commodityId) =>
       ValueKey<String>('tradeScreenMarketRow:$commodityId:firstRightChip');
 
+  /// Per-row key for the Last market chip on line 1 (Refs #4653).
+  static Key marketRowLastMarketChipKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:lastMarketChip');
+
   /// Per-row key for the leading `ResourceIcon` paint on line 1.
   static Key marketRowResourceIconKey(CommodityId commodityId) =>
       ValueKey<String>('tradeScreenMarketRow:$commodityId:resourceIcon');

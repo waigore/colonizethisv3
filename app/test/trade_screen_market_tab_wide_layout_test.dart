@@ -106,7 +106,7 @@ void main() {
     );
 
     testWidgets(
-      'AC-2: wide compact row has two-line structure with volume + controls band',
+      'AC-2: wide compact row has two-line structure with controls on line 2',
       (tester) async {
         final CommodityId commodityId = _foodCommodities().first.id;
 
@@ -124,21 +124,19 @@ void main() {
 
         final Widget line2 = column.children[1];
         expect(line2, isA<Padding>());
-        final Row band = (line2 as Padding).child! as Row;
         expect(
           find.descendant(
-            of: find.byWidget(band),
-            // ignore: avoid_hardcoded_strings_in_widgets
-            matching: find.textContaining('Last turn'),
+            of: find.byWidget(line2),
+            matching: find.byType(MarketCommodityRowControls),
           ),
           findsOneWidget,
         );
         expect(
           find.descendant(
-            of: find.byWidget(band),
-            matching: find.byType(MarketCommodityRowControls),
+            of: find.byWidget(line2),
+            matching: find.textContaining('Last turn'),
           ),
-          findsOneWidget,
+          findsNothing,
         );
 
         final Offset headerBottom = tester.getBottomLeft(
@@ -149,13 +147,13 @@ void main() {
             ),
           ),
         );
-        final Offset bandTop = tester.getTopLeft(find.byWidget(band));
+        final Offset bandTop = tester.getTopLeft(find.byWidget(line2));
         expect(bandTop.dy - headerBottom.dy, lessThanOrEqualTo(4));
       },
     );
 
     testWidgets(
-      'AC-3: narrow viewport preserves three-line stacked row structure',
+      'AC-3: narrow viewport preserves two-line stacked row structure',
       (tester) async {
         final CommodityId commodityId = _foodCommodities().first.id;
 
@@ -169,15 +167,15 @@ void main() {
           TradeScreenMarketKeys.marketCommodityRowKey(commodityId),
         );
         final Column column = tester.widget<Column>(_rowRootColumn(rowKey));
-        expect(column.children.length, 5);
+        expect(column.children.length, 3);
 
-        final Finder volumeText = find.descendant(
-          of: rowKey,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          matching: find.textContaining('Last turn'),
+        expect(
+          find.descendant(
+            of: rowKey,
+            matching: find.textContaining('Last turn'),
+          ),
+          findsNothing,
         );
-        final Element volumeElement = tester.element(volumeText);
-        expect(volumeElement.findAncestorWidgetOfExactType<Row>(), isNull);
 
         expect(
           find.descendant(

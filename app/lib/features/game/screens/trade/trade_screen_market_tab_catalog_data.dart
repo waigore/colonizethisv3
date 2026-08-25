@@ -1,4 +1,4 @@
-// Market-tab catalog data helpers (Refs #4352).
+// Market-tab catalog data helpers (Refs #4352, #4653).
 // Split from `trade_screen_market_tab_catalog.dart`.
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -10,18 +10,20 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_tab.dart';
 
-String volumeText(MarketActivity activity, AppLocalizations l10n) {
-  return l10n.tradeMarket_lastTurnVolume(
+/// True when last-turn world volume is greater than zero (Refs #4653).
+bool showLastMarketChip(MarketActivity activity) {
+  return activity.totalBidQuantity + activity.totalOfferQuantity > 0;
+}
+
+String lastMarketTooltip(MarketActivity activity, AppLocalizations l10n) {
+  return l10n.tradeMarket_lastMarketTooltip(
     activity.totalBidQuantity,
     activity.totalOfferQuantity,
   );
 }
 
 /// Resolves the integer price used for Market display and delta math.
-int? effectiveMarketPriceCoins(
-  int? price, {
-  required CommodityId commodityId,
-}) {
+int? effectiveMarketPriceCoins(int? price, {required CommodityId commodityId}) {
   final ResourceRules rules =
       TradeScreenMarketKeys.marketPriceResourceRulesOverride ??
       ResourceRules.defaultRules;
@@ -59,8 +61,10 @@ SectionedTradeableCommodities tradeableCommoditiesByCategory() {
 
 /// Formats the per-commodity market price for the Market tab row.
 String formatMarketPrice(int? price, {required CommodityId commodityId}) {
-  final int? effective =
-      effectiveMarketPriceCoins(price, commodityId: commodityId);
+  final int? effective = effectiveMarketPriceCoins(
+    price,
+    commodityId: commodityId,
+  );
   if (effective == null) return MarketTabContent.priceUnknownGlyph;
   return effective.toString();
 }

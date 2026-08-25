@@ -59,10 +59,8 @@ void main() {
           isNull,
           reason:
               'Refs #2993 E5b observe variant: when '
-              'canMutateViaUi == false, the Market tab body is '
-              'wrapped in IgnorePointer so the controls are visible '
-              'but not interactive — taps do not stage trade '
-              'orders.',
+              'canMutateViaUi == false, Bid/Offer/stepper wrap in '
+              'IgnorePointer so taps do not stage trade orders.',
         );
       },
     );

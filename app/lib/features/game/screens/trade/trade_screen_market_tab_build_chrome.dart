@@ -76,7 +76,7 @@ extension MarketTabContentBuildChrome on MarketTabContent {
         Flexible(
           child: Opacity(
             opacity: MarketTabContentBuildChrome.observeModeOpacity,
-            child: IgnorePointer(child: list),
+            child: list,
           ),
         ),
       ],
