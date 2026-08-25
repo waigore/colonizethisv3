@@ -43,7 +43,7 @@ void main() {
           'Slot 6',
           'Game seed',
           'Enter 0 for a random seed',
-          'Infinite mode (no victory condition)',
+          'Infinite mode',
           'Terrain variation:',
           '50%',
           '0% flat — 100% extreme',
@@ -230,6 +230,27 @@ void main() {
       await ensureTapNewGameLeaderSelectionStart(tester);
       expect(gotInfiniteMode, isTrue);
     });
+
+    testWidgets(
+      'Infinite mode helper is truthful with toggle off (Refs #4641)',
+      (WidgetTester tester) async {
+        await pumpNewGameLeaderSelectionDialog(tester);
+        expect(find.text('Infinite mode'), findsOneWidget);
+        expect(
+          find.text(
+            'Skips the year-1800 calendar stop. Owning 31 or more Old World '
+            'provinces still ends the campaign. You cannot change this after '
+            'Start.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.textContaining('no victory condition'), findsNothing);
+        expect(
+          find.textContaining('The game will continue indefinitely'),
+          findsNothing,
+        );
+      },
+    );
 
     group('Advanced start selector (Refs #3895)', () {
       testWidgets('default Start emits AdvancedStartType.none', (

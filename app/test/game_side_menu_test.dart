@@ -74,47 +74,38 @@ void main() {
       shellWrapper: (app) => AppEventHandlerScope(child: app),
       child: Scaffold(
         body: Stack(
-          children: [
-            GameSideMenu(
-              sideMenuOpen: true,
-              onClose: onClose,
-            ),
-          ],
+          children: [GameSideMenu(sideMenuOpen: true, onClose: onClose)],
         ),
       ),
     );
   }
 
-  testWidgets(
-    'GameSideMenu builds Debug log and close invokes onClose',
-    (WidgetTester tester) async {
-      var closed = false;
+  testWidgets('GameSideMenu builds Debug log and close invokes onClose', (
+    WidgetTester tester,
+  ) async {
+    var closed = false;
 
-      await tester.pumpWidget(
-        host(activeGame: game, onClose: () => closed = true),
-      );
+    await tester.pumpWidget(
+      host(activeGame: game, onClose: () => closed = true),
+    );
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      expect(find.text('Game Parameters'), findsOneWidget);
-      expect(find.text('Debug log'), findsOneWidget);
-      expect(find.text('×'), findsOneWidget);
+    expect(find.text('Game Parameters'), findsOneWidget);
+    expect(find.text('Debug log'), findsOneWidget);
+    expect(find.text('×'), findsOneWidget);
 
-      await tester.tap(find.text('×'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('×'));
+    await tester.pumpAndSettle();
 
-      expect(closed, isTrue);
-    },
-  );
+    expect(closed, isTrue);
+  });
 
   testWidgets('GameSideMenu Game Parameters shows read-only infinite mode', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      host(
-        activeGame: game.copyWith(infiniteMode: true),
-        onClose: () {},
-      ),
+      host(activeGame: game.copyWith(infiniteMode: true), onClose: () {}),
     );
     await tester.pumpAndSettle();
 
@@ -123,6 +114,10 @@ void main() {
 
     expect(find.text('Game Parameters'), findsWidgets);
     expect(find.text('Infinite mode: On'), findsOneWidget);
+    expect(
+      find.textContaining('Skips the year-1800 calendar stop'),
+      findsOneWidget,
+    );
     expect(find.byType(CheckboxListTile), findsNothing);
   });
 
@@ -134,9 +129,8 @@ void main() {
         activeGame: game,
         onClose: () {},
         routes: {
-          Routes.debugLog: (_) => const Scaffold(
-            body: Center(child: Text('debug-route-marker')),
-          ),
+          Routes.debugLog: (_) =>
+              const Scaffold(body: Center(child: Text('debug-route-marker'))),
         },
       ),
     );
@@ -197,30 +191,29 @@ void main() {
       },
     );
 
-    testWidgets(
-      'vertical-only drag (delta.dx == 0) does NOT invoke onClose '
-      '(SPEC negative regression guard — only horizontal left-drag closes)',
-      (WidgetTester tester) async {
-        var closed = false;
-        await tester.pumpWidget(
-          host(activeGame: game, onClose: () => closed = true),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('vertical-only drag (delta.dx == 0) does NOT invoke onClose '
+        '(SPEC negative regression guard — only horizontal left-drag closes)', (
+      WidgetTester tester,
+    ) async {
+      var closed = false;
+      await tester.pumpWidget(
+        host(activeGame: game, onClose: () => closed = true),
+      );
+      await tester.pumpAndSettle();
 
-        await tester.drag(find.byType(GameSideMenu), const Offset(0, -40));
-        await tester.pumpAndSettle();
+      await tester.drag(find.byType(GameSideMenu), const Offset(0, -40));
+      await tester.pumpAndSettle();
 
-        expect(
-          closed,
-          isFalse,
-          reason:
-              'Vertical-only drag delivers delta.dx == 0 on every update; '
-              'the swipe-to-close handler requires delta.dx < '
-              '${GameSideMenu.kSwipeToCloseDeltaThreshold}, so the menu '
-              'MUST stay open.',
-        );
-      },
-    );
+      expect(
+        closed,
+        isFalse,
+        reason:
+            'Vertical-only drag delivers delta.dx == 0 on every update; '
+            'the swipe-to-close handler requires delta.dx < '
+            '${GameSideMenu.kSwipeToCloseDeltaThreshold}, so the menu '
+            'MUST stay open.',
+      );
+    });
   });
 
   group('GameSideMenu dark-theme chrome (Refs #2861 S10)', () {
