@@ -718,13 +718,13 @@
   "@shell_leaderDialog_seedHelper": {
     "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
   },
-  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (no victory condition)",
+  "shell_leaderDialog_infiniteModeLabel": "Infinite mode",
   "@shell_leaderDialog_infiniteModeLabel": {
-    "description": "Toggle label for infinite campaign mode in the new-game leader dialog."
+    "description": "Toggle label for infinite campaign mode in the new-game leader dialog. Does not claim there is no victory."
   },
-  "shell_leaderDialog_infiniteModeHelper": "The game will continue indefinitely",
+  "shell_leaderDialog_infiniteModeHelper": "Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.",
   "@shell_leaderDialog_infiniteModeHelper": {
-    "description": "Helper text for infinite mode in the new-game leader dialog."
+    "description": "Always-visible helper: Infinite mode skips the 1800 calendar stop only; the 31-province win still applies. Reused on Game Parameters when On."
   },
   "shell_leaderDialog_advancedStartLabel": "Advanced start",
   "@shell_leaderDialog_advancedStartLabel": {

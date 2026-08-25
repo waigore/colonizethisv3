@@ -144,6 +144,10 @@ void main() {
         expect(closes, 1);
         expect(find.text('Infinite mode: On'), findsOneWidget);
         expect(
+          find.textContaining('Skips the year-1800 calendar stop'),
+          findsOneWidget,
+        );
+        expect(
           events.whereType<OpenDialogEvent>(),
           isEmpty,
           reason: 'Game Parameters must not emit an OpenDialogEvent.',
