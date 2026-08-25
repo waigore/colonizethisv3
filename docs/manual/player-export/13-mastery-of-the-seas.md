@@ -97,7 +97,7 @@ Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, o
 2. If several fleets share the marker, pick one in **Naval mission fleet picker dialog** (title **Select fleet**). Each row shows that fleet’s ship mix, and a pending mission line when one is already staged.
 3. If you picked the **Home Fleet with ships**, the next dialog is **Detach a squadron**, then **Move fleet dialog** for the new sea-going fleet. The Home Fleet itself cannot sail.
 4. If you picked the **Home Fleet with no ships**, **Naval units panel** opens for that port so you can **Train**.
-5. If you picked a **sea-going fleet in port**, **Move fleet dialog** opens so you can undock.
+5. If you picked a **sea-going fleet in port at your capital**, **In-port fleet marker actions** asks **Sail / Move** or **Transfer to Home Fleet**. **Sail / Move** opens **Move fleet dialog** so you can undock. **Transfer to Home Fleet** opens **Transfer to home fleet** for that fleet. If the fleet is in port at another owned harbor, **Move fleet dialog** opens at once.
 6. If you picked a **sea-going fleet at sea**, **Naval mission menu dialog** (title **Assign mission — Fleet \<id\>**) opens. Use **Sail / Move** on that menu to open **Move fleet dialog** without going back to the left-side **Naval Units** list.
 7. On that mission menu, choose **Patrol**, **Defend**, **Blockade**, or **Beachhead**. Choose **Cancel pending mission** when a mission is already staged and you want to drop it.
 8. **Blockade** and **Beachhead** open **Naval mission target dialog** (title **Select target**) so you choose an adjacent enemy province at war with you. Target rows keep the province name. Beachhead shows the same defender / unopposed / fort summary you see on invasion rows. Blockade shows whether the harbor has a port, is empty, or already has hostile fleets — or says the harbor is unknown when you cannot see it. You can confirm once a target is selected, even if some harbor details are unknown.
@@ -118,6 +118,15 @@ When you assign **Blockade**, the text you see first names the warehouse cut, no
 
 Map-marker and panel **Mission** still open **Naval mission menu dialog** as usual.
 
+**Sea-zone shortcut:** On a revealed sea you already occupy with at least one sea-going fleet of yours (not the Home Fleet), **Province sea-zone overlay** **Naval** offers **Patrol** and **Defend**.
+
+1. Tap **Patrol** or **Defend**.
+2. One eligible fleet in this sea assigns that mission at once — you do not see **Naval mission menu dialog** or **Naval mission target dialog**.
+3. Several eligible fleets open **Naval mission fleet picker dialog** first so you pick which fleet stays.
+4. If a fleet of yours is in this sea but cannot take a new mission this turn (it already has a mission, or a move or mission is already staged), the buttons stay visible and cannot be tapped. Empty seas do not show these buttons.
+
+Patrol tries to intercept hostile fleets moving through this sea. Defend stays without seeking combat. Neither control prints intercept chance numbers.
+
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
 - **Blockade:** Remain in a sea zone next to the target enemy port. After **Next turn**, that port’s link to its capital is cut, so goods from that province do not reach their warehouses. If you blockade their capital port, links that only go by sea — including overseas — are cut; roads on land still reach inland. The mission also gives a stronger chance to intercept hostile fleets entering that sea, including ships leaving the blockaded port. The target list still shows whether the port is empty or has hostile fleets.
 - **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs. The target row helps you compare landing coasts; it does not mean the fleet captures the province this turn.
@@ -131,13 +140,15 @@ A fleet may have a pending **move** or a pending **mission** for the turn, never
 
 **Naval units panel** shows **Transfer to Home Fleet** on a regular fleet row when a Home Fleet exists in that region (Old World or New World). Tapping it opens **Transfer to home fleet** (title **Transfer Ships to Home Fleet**).
 
+You can also start the same transfer from the map. On **Province sea-zone overlay** **Naval**, when you own the capital and a sea-going fleet sits in that harbor, tap **Transfer to Home Fleet**. If that fleet is at sea in a sea next to the capital, open the overlay on that sea instead. One qualifying fleet opens **Transfer to home fleet** at once. Several qualifying fleets open a fleet picker first (ship mix on each row), then **Transfer to home fleet** for the fleet you choose. The control stays visible but cannot be used when the overlay is on the capital or that nearby sea and no sea-going fleet currently qualifies. It is hidden when you are only watching the game, on a foreign or inland non-capital land card, or on a sea that does not touch the capital. You may also tap that sea-going fleet’s harbor marker on **Empire overview / map area**: at the capital, choose **Transfer to Home Fleet** without dropping **Sail / Move**.
+
 1. Move one or more ship types from the source list to the Home Fleet list.
 2. Read the line under the lists: remaining Home Fleet cargo holds after this transfer, this turn’s overseas load, and how many holds stay free for trade bids. Warships add no holds.
 3. If the line turns a warm accent, no holds are spare. If it turns red, remaining holds would fall short. You can still tap **Transfer** — the line warns, it does not lock.
 4. Confirm **Transfer**. The selected ships join the Home Fleet at once.
 5. A regular fleet that gives up every ship is removed; the Home Fleet remains, even with no ships.
 
-The screens do not all describe the same moment when a transfer is allowed. **Transfer to Home Fleet** is the button you can tap whenever a Home Fleet exists in that region. The transfer dialog itself is written for a source fleet already in port at the capital. **Combine** can also move selected ships into the Home Fleet when the source is in port at the capital, or at sea in a sea next to the capital. Docking at the capital on **Next turn** merges the whole arriving fleet into the Home Fleet. Use the control you can tap; if confirm does not complete, that fleet is not in a place the game will accept.
+The screens used to disagree on when a transfer is allowed. **Transfer to Home Fleet** on **Naval units panel** appears whenever a Home Fleet exists in that region. The overlay and the transfer dialog follow a stricter place rule: the source fleet must already be in port at the capital, or at sea in a sea next to the capital. Docking at the capital on **Next turn** merges the whole arriving fleet into the Home Fleet. Use the control you can tap; if confirm does not complete, that fleet is not in a place the game will accept.
 
 Use a selected-ship transfer to return only merchants to carry cargo while leaving a warship squadron assembled, or to place escorts with the ships that carry your overseas goods.
 

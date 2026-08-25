@@ -14,13 +14,13 @@ The campaign may also reach its last year with no province-count winner. Then yo
 
 1. On **Empire overview / map area**, look at the count beside treasury and cargo. It shows how many Old World provinces you hold out of 31.
 2. If another Great Power holds **more** Old World provinces than you, that court’s name and count appear beside yours. If you lead or the counts are equal, no rival name appears.
-3. Tap that count to open **Victory screen**. Use this glance during the campaign.
+3. Rest on that count, or press and hold on a touch screen, to read how many years remain until the last campaign year. Tap that count to open **Victory screen**. Use this glance during the campaign.
 4. After a court already owns 31 Old World provinces, that count is gone. Tap the last left-side **Victory** icon instead. That icon stays available.
 
 ### Opening the Victory screen
 
 5. You can also tap the last of the left-side icons (after Technology) at any time. The top bar may print **Victory**; the screen’s title is **Victory screen**.
-6. Read the conditions. They state that you win by controlling **31 or more Old World provinces**. Calendar-end notes appear when they apply. If you chose infinite mode at new game, a note on those conditions says the calendar stop is off.
+6. Read the conditions. They state that you win by controlling **31 or more Old World provinces**. They also name this year, the last campaign year, how many years remain, and how many full turns remain. If you chose infinite mode at new game, a note says the calendar stop is off and no remaining-year count is shown.
 7. While the campaign is still running, there is no extra banner at the top. After a 31-province win, a banner names who won by owning 31 Old World provinces. After the calendar stop, a banner names the strongest overall realm or a tie.
 
 ### Reading each court
@@ -47,14 +47,14 @@ The campaign may also reach its last year with no province-count winner. Then yo
 
 ### The calendar stop
 
-21. In a standard campaign, the last full year is **1800** — turn **201** on the usual calendar.
+21. In a standard campaign, the last full year is **1800** — turn **201** on the usual calendar. **Victory screen** and the Old World count’s rest text show how many years remain while the campaign is still running.
 22. After that last year finishes with no province-count winner, **Next turn** stays unavailable.
 23. At that calendar end, a declared winner is the Great Power with the strongest overall realm: owned provinces in both worlds, army strength, and ships all contribute. A tie produces no declared winner.
 
 ### Infinite mode
 
-24. On **New game leader selection**, you may turn on **Infinite mode (no victory condition)**. Chapter 2 covers the rest of New Game.
-25. The helper under that switch says **The game will continue indefinitely**. That is incomplete: owning 31 Old World provinces still ends the campaign; only the 1800 calendar stop is removed. You cannot change the switch after **Start**.
+24. On **New game leader selection**, you may turn on **Infinite mode**. Chapter 2 covers the rest of New Game.
+25. The helper under that switch says **Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.** After **Start**, Game Parameters on **Game side menu** restates the same meaning when Infinite mode is **On**.
 
 ### When a court wins by 31 provinces
 
