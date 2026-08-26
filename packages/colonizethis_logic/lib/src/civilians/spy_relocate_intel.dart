@@ -2,9 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show pendingMoveOrderForUnit, projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart'
-    show WorldStateProvinceLookup;
-
-import '../constants.dart' show kRegionNewWorld, kRegionOldWorld;
+    show WorldStateProvinceLookup, WorldStateUnitLookup;
 
 /// Returns whether [prefixedProvinceId] (`regionId|localProvinceId`) is not
 /// owned by [humanPlayerId].
@@ -13,16 +11,9 @@ bool isForeignProvinceForPlayer({
   required String prefixedProvinceId,
   required String humanPlayerId,
 }) {
-  for (final regionId in [kRegionOldWorld, kRegionNewWorld]) {
-    for (final province in game.worldState.provincesForRegion(regionId)) {
-      if (province.id != prefixedProvinceId &&
-          '${province.regionId}|${province.id}' != prefixedProvinceId) {
-        continue;
-      }
-      return province.ownerId != humanPlayerId;
-    }
-  }
-  return false;
+  final province = game.worldState.tryGetProvince(prefixedProvinceId);
+  if (province == null) return false;
+  return province.ownerId != humanPlayerId;
 }
 
 /// Counts human-owned Spies whose projected tile (draft move/work aware) lies
@@ -157,19 +148,10 @@ MoveOrder? pendingCivilianMoveForUnit({
 
 List<Unit> _humanSpies(Game game, String humanPlayerId) {
   return [
-    for (final u in game.worldState.oldWorld.units)
-      if (u.ownerId == humanPlayerId && u.type == kUnitTypeSpy) u,
-    for (final u in game.worldState.newWorld.units)
+    for (final u in game.worldState.allUnitsById.values)
       if (u.ownerId == humanPlayerId && u.type == kUnitTypeSpy) u,
   ];
 }
 
-Unit? _findUnit(Game game, String unitId) {
-  for (final u in game.worldState.oldWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  for (final u in game.worldState.newWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  return null;
-}
+Unit? _findUnit(Game game, String unitId) =>
+    game.worldState.tryGetUnitById(unitId);

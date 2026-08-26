@@ -185,7 +185,7 @@ Four root planner files under `lib/src/ai/`: `ai_planner.dart`, `sim_game_ai.dar
 | Rule ID | Purpose |
 |---------|---------|
 | `repo.logic_domain_import_dag` | Forbidden cross-domain import pairs; grandfather allowlist until C0 completion |
-| `repo.logic_source_file_size` | `lib/src/**/*.dart` ≤500 physical lines; grandfather baseline for remaining offenders |
+| `repo.logic_source_file_size` | `lib/src/**/*.dart` ≤250 physical lines; grandfather baseline for remaining offenders (Refs #4660) |
 | `tool/logic_domain_coverage_baseline.dart` | Regenerate per-domain coverage JSON (operator/CI diagnostic) |
 
 Future per-package rules (`repo.world_dead_files`, `repo.world_no_logic_deps`, etc.) are added when packages are created in Phases 1–4 (e.g. `repo.ai_contracts_no_logic_deps` at C4).
@@ -412,7 +412,7 @@ After test migration, each split domain package owns its test suite under `packa
 
 ## Domain-package source file size gate (Refs #3290)
 
-The Phase 0 `repo.logic_source_file_size` rule decomposed every monolith `lib/src` file above 500 physical lines (the grandfather baseline `tool/logic_source_file_size_baseline.json` is now empty). After extraction those decomposed files live in their own packages, so `repo.logic_source_file_size` only observes the thin `colonizethis_logic` core and no longer guards the moved source. `repo.domain_package_source_file_size` (`tool/check_domain_package_source_file_size.dart`) re-applies the same **500 physical-line** cap to every `packages/colonizethis_<domain>/lib/src/**` tree across the eight extracted packages (`world`, `combat`, `economy`, `diplomacy`, `setup`, `orders`, `turn`, `ai_contracts`), so the decomposition cannot silently regress. Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, `*.gen.dart`) are excluded.
+The Phase 0 `repo.logic_source_file_size` rule decomposed every monolith `lib/src` file above 500 physical lines (the grandfather baseline `tool/logic_source_file_size_baseline.json` is now empty). After extraction those decomposed files live in their own packages, so `repo.logic_source_file_size` only observes the thin `colonizethis_logic` core and no longer guards the moved source; that thin-core ceiling is now **250** physical lines (Refs #4660). `repo.domain_package_source_file_size` (`tool/check_domain_package_source_file_size.dart`) re-applies a **500 physical-line** cap to every `packages/colonizethis_<domain>/lib/src/**` tree across the eight extracted packages (`world`, `combat`, `economy`, `diplomacy`, `setup`, `orders`, `turn`, `ai_contracts`), so the decomposition cannot silently regress. Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, `*.gen.dart`) are excluded.
 
 ### Acceptance criteria (domain-package source file size)
 
@@ -453,7 +453,7 @@ CI: `repo.logic_test_tree_loc` caps total physical LOC at ≤5,800; `repo.logic_
 ## Acceptance criteria (Phase 0 / C0)
 
 - **Given** the monolith on `dev`, **when** `repo.logic_domain_import_dag` runs, **then** zero imports match forbidden pairs outside the documented grandfather allowlist.
-- **Given** the files listed in `tool/logic_source_file_size_baseline.json` (the remaining grandfathered offenders, trimmed as Phase 0 decomposes them below 500 lines), **when** `repo.logic_source_file_size` runs, **then** those paths are ignored and any other `lib/src` file above 500 physical lines fails.
+- **Given** the files listed in `tool/logic_source_file_size_baseline.json` (the remaining grandfathered offenders, trimmed as Phase 0 decomposes them below the ceiling), **when** `repo.logic_source_file_size` runs, **then** those paths are ignored and any other `lib/src` file above **250** physical lines fails (Refs #4660).
 - **Given** logic package tests with coverage, **when** `dart run tool/logic_domain_coverage_baseline.dart` runs, **then** it writes/updates `tool/logic_domain_coverage_baseline.json` with per-domain line percentages.
 - **Given** wrong-direction `world→turn` and `world→setup` symbols above, **when** the graph is scanned, **then** no `world` file imports `turn/` or `setup/`.
 - **Given** `economy/world_market/trade_order_validator.dart`, **when** the graph is scanned, **then** the file imports no `orders/` symbol and `repo.logic_domain_import_dag` carries no `economy->orders` grandfather entry.

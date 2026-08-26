@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 import '../tool/check_logic_source_file_size.dart';
 
 void main() {
-  test('passes when only baseline offenders exceed 500 lines', () {
+  test('passes when only baseline offenders exceed 250 lines', () {
     final code = runCheckLogicSourceFileSize(
       Directory.current.path,
       info: (_) {},
@@ -14,7 +14,7 @@ void main() {
     expect(code, 0);
   });
 
-  test('fails when a new lib/src file exceeds 500 physical lines', () {
+  test('fails when a new lib/src file exceeds 250 physical lines', () {
     final temp = Directory.systemTemp.createTempSync('logic_src_size_fail_');
     addTearDown(() => temp.deleteSync(recursive: true));
 
@@ -25,7 +25,7 @@ void main() {
     final violating = File(
       '${temp.path}/packages/colonizethis_logic/lib/src/world/huge.dart',
     )..createSync(recursive: true);
-    violating.writeAsStringSync(List.filled(501, '// line').join('\n'));
+    violating.writeAsStringSync(List.filled(251, '// line').join('\n'));
 
     final code = runCheckLogicSourceFileSize(
       temp.path,

@@ -4,10 +4,10 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 400;
+const _maxPhysicalLines = 250;
 
 /// PR-blocking structural check: files under
-/// `packages/colonizethis_logic/test/**` must stay at or below 400 physical lines.
+/// `packages/colonizethis_logic/test/**` must stay at or below 250 physical lines.
 int runCheckLogicTestFileSize(
   String repoRoot, {
   Iterable<String>? targetFiles,
