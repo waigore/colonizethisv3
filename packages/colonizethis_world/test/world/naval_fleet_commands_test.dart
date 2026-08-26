@@ -205,6 +205,21 @@ void main() {
     );
   });
 
+  group('resolveNavalCombineTargetFleetId', () {
+    test(
+      'Given empty prefer-order When resolving Then throws LogicValidationException',
+      () {
+        expect(
+          () => resolveNavalCombineTargetFleetId(
+            humanPlayerId: 'gp_human',
+            fleetIdsInPreferOrder: const [],
+          ),
+          throwsA(isA<LogicValidationException>()),
+        );
+      },
+    );
+  });
+
   group('applyNavalCombineFleets', () {
     test('merges ships into Home Fleet when Home is included', () {
       final homeId = homeFleetIdFor('gp_human');

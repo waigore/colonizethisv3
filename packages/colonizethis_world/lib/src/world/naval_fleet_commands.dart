@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_world/src/logic_validation_exception.dart';
 import 'game_world_mutations.dart';
 import 'military_list_helpers.dart';
 import 'naval.dart';
@@ -12,7 +13,9 @@ String resolveNavalCombineTargetFleetId({
   required List<String> fleetIdsInPreferOrder,
 }) {
   if (fleetIdsInPreferOrder.isEmpty) {
-    throw ArgumentError('fleetIdsInPreferOrder must not be empty');
+    throw LogicValidationException(
+      'fleetIdsInPreferOrder must not be empty',
+    );
   }
   final homeId = homeFleetIdFor(humanPlayerId);
   for (final id in fleetIdsInPreferOrder) {
