@@ -59,6 +59,13 @@ When you split the Home Fleet, a line under the transfer lists how many cargo ho
 1. In `UNIT30001` **Naval units panel**, check two or more fleets that share the same port or the same sea.
 2. Tap **Combine** at the top of the panel.
 3. Those fleets merge immediately. If the Home Fleet is among the checked fleets, the other checked fleets join it. Empty non-Home fleets are removed.
+4. When the checked pair is exactly the Home Fleet plus one eligible sea-going source, the panel may open `DLG40001` so you can move only some ships into the Home Fleet instead of all of them.
+
+You can also combine from the map without opening the panel:
+
+1. Tap a tile in a port or sea where two or more of your fleets already sit, so `MAP20001` **Province sea-zone overlay** opens on **Naval**.
+2. Tap **Combine**. Confirm lists each fleet and the ship mix; the survivor’s mission becomes none.
+3. Confirm merges every human fleet in that viewed port or sea into one fleet. This path never opens `DLG40001` — for a subset into the Home Fleet, use **Transfer to Home Fleet** on the overlay or the panel path above.
 
 ### Send a squadron to sea from the map
 
@@ -187,7 +194,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 - [ ] Documents `DLG30001` **Move fleet dialog** one adjacent hop (port to sea, or sea to sea or owned port), capital docking after **Next turn**, sea-zone revelation, **links to** passages between the two maps, and fog-respecting sea-row hostile gist (**Hostile patrol** / **Hostile blockade** / **Hostile fleets: N** / **Fleets unknown**).
 - [ ] Documents tapping a fleet marker: Home Fleet with ships → detach-then-sail (`DLG30001` for the new fleet), empty Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with **Sail / Move**, plus `UNIT30001` **Mission**, `MAP20001` **Naval** **Detach and sail** on the owned capital, `MAP20001` **Naval** **Blockade** / **Beachhead** on a foreign coast at war (skips the mission menu when the mission is already known; `DLG31003` when several fleets qualify), and `MAP20001` **Naval** **Patrol** / **Defend** on a revealed sea you occupy (skips the mission menu; `DLG31003` when several fleets qualify). A fleet may move or take one mission, never both. Beachhead/Blockade target lines stay honest when you cannot see the coast. `DLG31003` rows show ship mix when several fleets share a marker.
 - [ ] Documents panel **Split** (**Split Fleet** / **Confirm Split**, then a separate **Move**) versus map **Detach a squadron** / **Detach and choose destination** (then `DLG30001`).
-- [ ] Documents **Combine**: two or more fleets in the same port or the same sea merge at once; ships join the Home Fleet when it is checked; empty non-Home fleets are removed.
+- [ ] Documents **Combine**: two or more fleets in the same port or the same sea merge at once from `UNIT30001` (checkbox selection; Home+one eligible source may open `DLG40001`) or from `MAP20001` Naval **Combine** (merges every human fleet in the viewed port/sea after confirm; never opens `DLG40001`); ships join the Home Fleet when it is among them; empty non-Home fleets are removed.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing; Blockade cuts the target port’s link to its capital (and sea-only overseas links when the target is a capital port); Join Home Fleet via dock/transfer only (not the mission menu).
 - [ ] Documents `DLG40001` **Transfer Ships to Home Fleet** from `UNIT30001` and from `MAP20001` **Naval** on the owned capital (in-port) or a sea next to the capital (at sea), records in player language that remaining Home Fleet holds, this turn’s overseas load, and holds free for trade bids appear on a live line, and that docking still merges only after **Next turn**.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.
@@ -214,5 +221,6 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 - `SPEC/ui/in-port-fleet-marker-actions-dialog.md`
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/province-sea-zone-detail-overlay-naval-combine.md`
 - `SPEC/ai/phase-planner-dispatch.md`
 - `SPEC/ai/ai-personalities.md`

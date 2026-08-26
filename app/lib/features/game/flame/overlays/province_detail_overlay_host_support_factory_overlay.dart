@@ -11,6 +11,7 @@ import '../map_state/province_action_state_calculator.dart';
 import '../map_state/province_detach_and_sail_overlay_controls.dart';
 import '../map_state/province_naval_mission_action_state.dart';
 import '../map_state/province_transfer_to_home_fleet_overlay_controls.dart';
+import '../map_state/province_naval_combine_overlay_controls.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'province_detail_overlay_host_support_army_combine.dart';
@@ -49,6 +50,7 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
   required ProvinceNavalMissionOverlayControls navalMission,
   required ProvinceDetachAndSailOverlayControls detachAndSail,
   required ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
+  required ProvinceNavalCombineOverlayControls navalCombine,
   required ProvinceOverlayStationSpyProps stationSpy,
   required ProvinceOverlayCounterEspionageProps counterEspionage,
   required ProvinceEstablishConsulateActionState establishConsulateState,
@@ -101,6 +103,7 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     transferToHomeFleet: transferToHomeFleet,
+    navalCombine: navalCombine,
     blockadeStatus: navalMission.blockadeStatus,
     stationSpy: stationSpy,
     counterEspionage: counterEspionage,

@@ -1,6 +1,6 @@
 # Naval Units Panel — Fleet Management (Split & Combine)
 
-**SPEC/ui** — Extends [naval-units-panel.md](naval-units-panel.md) with fleet management actions: **split fleet** and **combine fleets**. These operations allow players to reorganize their naval forces.
+**SPEC/ui** — Extends [naval-units-panel.md](naval-units-panel.md) with fleet management actions: **split fleet** and **combine fleets**. These operations allow players to reorganize their naval forces. Overlay same-locality all-ships Combine (no `DLG40001`): [province-sea-zone-detail-overlay-naval-combine.md](province-sea-zone-detail-overlay-naval-combine.md) (Refs #4659).
 
 ---
 

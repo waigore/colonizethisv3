@@ -2,6 +2,8 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
+import 'package:colonizethis_app/features/game/flame/map_state/province_naval_combine_overlay_controls.dart'
+    show ProvinceNavalCombineOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
@@ -13,15 +15,18 @@ List<Widget> navalMissionActionWidgets(
   ProvinceNavalMissionOverlayControls navalMission,
   ProvinceDetachAndSailOverlayControls detachAndSail,
   ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
+  ProvinceNavalCombineOverlayControls navalCombine,
 ) {
   final showDetach = detachAndSail.showDetachAndSail;
   final showTransfer = transferToHomeFleet.showTransferToHomeFleet;
+  final showCombine = navalCombine.showCombineFleets;
   if (!navalMission.showBlockade &&
       !navalMission.showBeachhead &&
       !navalMission.showPatrol &&
       !navalMission.showDefend &&
       !showDetach &&
-      !showTransfer) {
+      !showTransfer &&
+      !showCombine) {
     return const [];
   }
   return [
@@ -31,6 +36,15 @@ List<Widget> navalMissionActionWidgets(
         spacing: 8,
         runSpacing: 8,
         children: [
+          if (showCombine)
+            CtActionTextButton(
+              label: l10n.provinceOverlay_combineFleetsAction,
+              tooltip: navalCombine.combineFleetsTooltip,
+              enabled: navalCombine.combineFleetsEnabled,
+              onPressed: navalCombine.combineFleetsEnabled
+                  ? navalCombine.onCombineFleetsTap
+                  : null,
+            ),
           if (showTransfer)
             CtActionTextButton(
               label: l10n.provinceOverlay_transferToHomeFleetAction,

@@ -346,6 +346,37 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get provinceOverlay_combineArmiesEmptyMix => 'no regiments';
 
   @override
+  String get provinceOverlay_combineFleetsAction => 'Combine';
+
+  @override
+  String get provinceOverlay_combineFleetsPendingOrderTooltip =>
+      'Cancel the pending sail or mission before combining these fleets.';
+
+  @override
+  String get provinceOverlay_combineFleetsConfirmTitle => 'Combine fleets?';
+
+  @override
+  String get provinceOverlay_combineFleetsConfirmEffect =>
+      'They become one fleet. That fleet\'s mission becomes none.';
+
+  @override
+  String get provinceOverlay_combineFleetsSurvivorHome =>
+      'Home Fleet keeps the combined ships.';
+
+  @override
+  String provinceOverlay_combineFleetsSurvivorOther(String fleetName) {
+    return '$fleetName keeps the combined ships.';
+  }
+
+  @override
+  String provinceOverlay_combineFleetsFleetLine(String fleetName, String mix) {
+    return '$fleetName — $mix';
+  }
+
+  @override
+  String get provinceOverlay_combineFleetsEmptyMix => 'no ships';
+
+  @override
   String get provinceOverlay_stationSpyAction => 'Station spy';
 
   @override
