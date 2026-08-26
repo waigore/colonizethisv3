@@ -6,7 +6,14 @@ import 'package:test/test.dart';
 import '../tool/check_logic_dual_region_province_field_access.dart';
 
 void main() {
-  test('scan root targets colonizethis_world after package split', () {
+  test('scan roots target world and thin logic core', () {
+    expect(
+      logicDualRegionProvinceFieldAccessScanDirsForTests(),
+      [
+        'packages/colonizethis_world/lib/src',
+        'packages/colonizethis_logic/lib/src',
+      ],
+    );
     expect(
       logicDualRegionProvinceFieldAccessScanDirForTests(),
       'packages/colonizethis_world/lib/src',
@@ -107,6 +114,29 @@ void main() {
 
   test('current repo passes dual-region province field access gate', () {
     expect(runCheckLogicDualRegionProvinceFieldAccess('.', info: (_) {}), 0);
+  });
+
+  test('fails when a logic src file uses oldWorld.units', () {
+    final temp = Directory.systemTemp.createTempSync('logic_dual_region_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    // World tree must exist for the checker to proceed past the required root.
+    Directory(
+      p.join(temp.path, 'packages/colonizethis_world/lib/src/world'),
+    ).createSync(recursive: true);
+    final logicSrc = Directory(
+      p.join(temp.path, 'packages/colonizethis_logic/lib/src/civilians'),
+    )..createSync(recursive: true);
+    File(p.join(logicSrc.path, 'offender.dart'))
+      ..createSync()
+      ..writeAsStringSync(
+        'void scanMe(dynamic ws) { for (final u in ws.oldWorld.units) {} }',
+      );
+
+    expect(
+      runCheckLogicDualRegionProvinceFieldAccess(temp.path, info: (_) {}),
+      1,
+    );
   });
 
   test('fails when a world src file uses oldWorld.provinces outside canonical lookups', () {

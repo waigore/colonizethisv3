@@ -51,7 +51,7 @@ Contract:
 
 ## Enforcement: `repo.ai_api_narrow_surface`
 
-`tool/check_ai_api_narrow_surface.dart` (rule `repo.ai_api_narrow_surface`) scans `ai_api.dart`. For every `export 'package:colonizethis_<domain>/src/<file>'` directive it resolves the owning domain barrel's transitive `export` closure (following `package:` and relative `export` directives within that package's `lib/`). The directive is a **violation** when the barrel's closure already contains `<file>` — i.e. a barrel re-export alternative exists.
+`tool/check_ai_api_narrow_surface.dart` (rule `repo.ai_api_narrow_surface`) scans every logic contract library: `ai_api.dart`, `order_suggestion_api.dart`, `debug_console_api.dart`, `industry_counsel_api.dart`, `colonizethis_logic.dart`, and `src/constants.dart` (Refs #4660). For every `export 'package:colonizethis_<domain>/src/<file>'` directive it resolves the owning domain barrel's transitive `export` closure (following `package:` and relative `export` directives within that package's `lib/`). The directive is a **violation** when the barrel's closure already contains `<file>` — i.e. a barrel re-export alternative exists.
 
 The predicate is derived purely from the live barrel contents; the rule loads **no keyed waiver / allowlist data** (`SPEC/program/repo-lint.md` § Policy: no violation allowlists). Deep exports of files the barrel does not publish are not flagged because no barrel alternative exists.
 
@@ -59,7 +59,7 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 
 ### Acceptance criteria (`repo.ai_api_narrow_surface`)
 
-- **Given** the post-Phase-3 `packages/colonizethis_logic/lib/ai_api.dart` on `dev`, **when** `repo.ai_api_narrow_surface` resolves each domain barrel's transitive export closure, **then** no `export 'package:colonizethis_<domain>/src/<file>'` directive targets a file already published by that domain barrel and the rule exits `0`.
+- **Given** the post-#4660 logic contract libraries on `dev`, **when** `repo.ai_api_narrow_surface` resolves each domain barrel's transitive export closure across all scanned contract files, **then** no `export 'package:colonizethis_<domain>/src/<file>'` directive targets a file already published by that domain barrel and the rule exits `0`.
 - **Given** an `ai_api.dart` that deep-exports `package:colonizethis_world/src/world/ai_control.dart` while the `colonizethis_world` barrel already re-exports that file, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** it returns exit code `1` and lists the offending `ai_api.dart:<line>` with a "bypasses the colonizethis_world barrel" message.
 - **Given** an `ai_api.dart` that re-exports a symbol through `package:colonizethis_<domain>/colonizethis_<domain>.dart show ...`, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** that directive is not flagged.
 - **Given** the post-#4508 `ai_api.dart` on `dev`, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** no `export 'package:colonizethis_orders/src/...'` directives remain (feedstock and counsel contract files are barrel-published).
@@ -67,6 +67,7 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 - **Given** the `packages/colonizethis_logic/lib/ai_api.dart` file is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports `Missing AI contract file`.
 - **Given** `colonizethis_ai` calls IncrementalCandidateValidator.isArmyMoveAccepted through `package:colonizethis_logic/ai_api.dart`, **when** the analyzer compiles that AI library, **then** `ai_api.dart` re-exports IncrementalCandidateValidatorArmyNaval (not only the class name) so the method resolves.
 - **Given** a domain referenced by an `ai_api.dart` deep export whose barrel file `lib/<domain>.dart` is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports the missing barrel.
+- **Given** `order_suggestion_api.dart` or `debug_console_api.dart` deep-exports a file already in the owning domain barrel's transitive closure, **when** `runCheckAiApiNarrowSurface` runs, **then** it exits `1` and names the contract `file:line` (Refs #4660).
 
 ## Enforcement: `repo.app_narrow_logic_import` (Refs #4240 Slice A)
 

@@ -12,21 +12,14 @@ export 'package:colonizethis_models/colonizethis_models.dart'
         kUnitTypeMerchant,
         kUnitTypeRailBuilder,
         kUnitTypeSpy;
-export 'package:colonizethis_orders/src/debug_console/debug_console_commodities.dart'
+export 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         debugConsoleSupportedCommodityIds,
-        debugConsoleSupportedCommodityIdsSorted;
-export 'package:colonizethis_orders/src/debug_console/debug_console_regiments.dart'
-    show
+        debugConsoleSupportedCommodityIdsSorted,
         debugConsoleSupportedRegimentTypeIds,
-        debugConsoleSupportedRegimentTypeIdsSorted;
-export 'package:colonizethis_orders/src/debug_console/debug_console_ships.dart'
-    show
+        debugConsoleSupportedRegimentTypeIdsSorted,
         debugConsoleSupportedShipTypeIds,
-        debugConsoleSupportedShipTypeIdsSorted;
-export 'package:colonizethis_orders/src/debug_console/debug_console_workers.dart'
-    show
+        debugConsoleSupportedShipTypeIdsSorted,
         debugConsoleSupportedWorkerTierIds,
-        debugConsoleSupportedWorkerTierIdsSorted;
-export 'package:colonizethis_orders/src/orders/build_spawn_province.dart'
-    show resolveCivilianSpawnTileKey;
+        debugConsoleSupportedWorkerTierIdsSorted,
+        resolveCivilianSpawnTileKey;
