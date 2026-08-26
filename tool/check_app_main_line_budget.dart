@@ -123,7 +123,9 @@ const _packageName = 'colonizethis_app';
 // raised after #4627+#4630 merge (measured 91_370).
 // raised for wave-22 Slice E overlay/map topic splits (Refs #4642;
 // measured 91_659).
-const _maxMainLines = 91700;
+// raised for MAP20001 overlay Combine same-port/sea fleets (Refs #4659;
+// measured 91_882).
+const _maxMainLines = 92000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
