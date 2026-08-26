@@ -9,6 +9,8 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_detach_a
     show ProvinceDetachAndSailOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
     show ProvinceTransferToHomeFleetOverlayControls;
+import 'package:colonizethis_app/features/game/flame/map_state/province_naval_combine_overlay_controls.dart'
+    show ProvinceNavalCombineOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
@@ -63,6 +65,7 @@ OverlayContent provinceContentRevealed({
   required ProvinceNavalMissionOverlayControls navalMission,
   required ProvinceDetachAndSailOverlayControls detachAndSail,
   required ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
+  required ProvinceNavalCombineOverlayControls navalCombine,
   required ProvinceOverlayStationSpyProps stationSpy,
   required ProvinceOverlayCounterEspionageProps counterEspionage,
   required ProvinceBlockadeStatus blockadeStatus,
@@ -200,6 +203,7 @@ OverlayContent provinceContentRevealed({
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     transferToHomeFleet: transferToHomeFleet,
+    navalCombine: navalCombine,
     blockadeStatus: blockadeStatus,
     stationSpy: stationSpy,
     counterEspionage: counterEspionage,

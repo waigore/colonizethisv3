@@ -7,6 +7,8 @@ import '../../flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
 import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
     show ProvinceDetachAndSailOverlayControls;
+import '../../flame/map_state/province_naval_combine_overlay_controls.dart'
+    show ProvinceNavalCombineOverlayControls;
 import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
@@ -36,6 +38,8 @@ Widget buildNavalSection({
       ProvinceDetachAndSailOverlayControls.hidden,
   ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet =
       ProvinceTransferToHomeFleetOverlayControls.hidden,
+  ProvinceNavalCombineOverlayControls navalCombine =
+      ProvinceNavalCombineOverlayControls.hidden,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   final pending = pendingNavalLines(
@@ -51,6 +55,7 @@ Widget buildNavalSection({
     navalMission,
     detachAndSail,
     transferToHomeFleet,
+    navalCombine,
   );
   final hasRoster = fleets.isNotEmpty || pending.isNotEmpty;
   final blockadeLine = switch (blockadeStatus) {

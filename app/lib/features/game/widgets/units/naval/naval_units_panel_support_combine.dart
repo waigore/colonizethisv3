@@ -1,4 +1,5 @@
-import 'package:colonizethis_world/colonizethis_world.dart' show homeFleetIdFor;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show applyNavalCombineFleets, resolveNavalCombineTargetFleetId;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -35,16 +36,17 @@ mixin NavalUnitsPanelCombine
   }
 
   String combineTargetFleetId(List<FleetRow> flat, Set<String> selected) {
-    for (final row in flat) {
-      final id = selectionFleetId(row);
-      if (!selected.contains(id)) continue;
-      if (row.isHomeFleet) return id;
+    final preferIds = <String>[
+      for (final row in flat)
+        if (selected.contains(selectionFleetId(row))) selectionFleetId(row),
+    ];
+    if (preferIds.isEmpty) {
+      throw StateError('combine target: empty selection');
     }
-    for (final row in flat) {
-      final id = selectionFleetId(row);
-      if (selected.contains(id)) return id;
-    }
-    throw StateError('combine target: empty selection');
+    return resolveNavalCombineTargetFleetId(
+      humanPlayerId: widget.humanPlayerId,
+      fleetIdsInPreferOrder: preferIds,
+    );
   }
 
   void toggleFleetSelection(FleetRow row) {
@@ -73,49 +75,15 @@ mixin NavalUnitsPanelCombine
       );
       return;
     }
-    final targetId = combineTargetFleetId(flat, selected);
-
-    FleetRow? targetRow;
-    for (final row in flat) {
-      if (selectionFleetId(row) == targetId) {
-        targetRow = row;
-        break;
-      }
-    }
-    if (targetRow == null) return;
-
-    final targetFleet = fleetForRow(targetRow);
-    if (targetFleet == null) return;
-
-    final mergedShips = <ShipInstance>[...targetFleet.ships];
-    for (final row in flat) {
-      final id = selectionFleetId(row);
-      if (!selected.contains(id) || id == targetId) continue;
-      final f = fleetForRow(row);
-      if (f != null) mergedShips.addAll(f.ships);
-    }
-
-    final merged = Fleet(
-      id: targetId,
-      ownerId: widget.humanPlayerId,
-      seaZoneId: targetFleet.seaZoneId,
-      inPortAtProvinceId: targetFleet.inPortAtProvinceId,
-      regionId: targetFleet.regionId,
-      ships: mergedShips,
-      mission: FleetMission.none,
-    );
-
-    final homeId = homeFleetIdFor(widget.humanPlayerId);
-    var updated = widget.game.worldState.fleets
-        .where((f) => !selected.contains(f.id))
-        .toList();
-    updated = [...updated, merged];
-    updated = updated
-        .where((f) => f.ships.isNotEmpty || f.id == homeId)
-        .toList();
-
-    final newGame = widget.game.copyWith(
-      worldState: widget.game.worldState.copyWith(fleets: updated),
+    // Prefer-order matches panel display order among the selection.
+    final preferIds = <String>[
+      for (final row in flat)
+        if (selected.contains(selectionFleetId(row))) selectionFleetId(row),
+    ];
+    final newGame = applyNavalCombineFleets(
+      game: widget.game,
+      humanPlayerId: widget.humanPlayerId,
+      fleetIds: preferIds,
     );
 
     clearSelection();

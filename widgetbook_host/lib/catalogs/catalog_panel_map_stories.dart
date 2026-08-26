@@ -82,6 +82,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
       ...provinceOverlayUpgradeTownUseCases,
       ...provinceOverlayMoveInvadeUseCases,
       ...provinceOverlayCombineArmiesUseCases,
+      ...provinceOverlayCombineFleetsUseCases,
       ...provinceOverlayNavalMissionUseCases,
       ...provinceOverlayDetachAndSailUseCases,
       ...provinceOverlayTransferHomeUseCases,

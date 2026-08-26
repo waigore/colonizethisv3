@@ -4189,6 +4189,45 @@
   "@provinceOverlay_combineArmiesEmptyMix": {
     "description": "MAP20001 Combine confirm mix when an army has no regiments (Refs #4610)."
   },
+  "provinceOverlay_combineFleetsAction": "Combine",
+  "@provinceOverlay_combineFleetsAction": {
+    "description": "MAP20001 Naval Combine control label (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsPendingOrderTooltip": "Cancel the pending sail or mission before combining these fleets.",
+  "@provinceOverlay_combineFleetsPendingOrderTooltip": {
+    "description": "Disabled Naval Combine tooltip when a locality fleet has a pending naval move or mission (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsConfirmTitle": "Combine fleets?",
+  "@provinceOverlay_combineFleetsConfirmTitle": {
+    "description": "MAP20001 Naval Combine confirm title (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsConfirmEffect": "They become one fleet. That fleet's mission becomes none.",
+  "@provinceOverlay_combineFleetsConfirmEffect": {
+    "description": "MAP20001 Naval Combine confirm effect line (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsSurvivorHome": "Home Fleet keeps the combined ships.",
+  "@provinceOverlay_combineFleetsSurvivorHome": {
+    "description": "MAP20001 Naval Combine confirm survivor when Home Fleet is in the set (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsSurvivorOther": "{fleetName} keeps the combined ships.",
+  "@provinceOverlay_combineFleetsSurvivorOther": {
+    "description": "MAP20001 Naval Combine confirm survivor for a non-Home fleet (Refs #4659).",
+    "placeholders": {
+      "fleetName": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineFleetsFleetLine": "{fleetName} — {mix}",
+  "@provinceOverlay_combineFleetsFleetLine": {
+    "description": "MAP20001 Naval Combine confirm fleet row (Refs #4659).",
+    "placeholders": {
+      "fleetName": {"type": "String"},
+      "mix": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineFleetsEmptyMix": "no ships",
+  "@provinceOverlay_combineFleetsEmptyMix": {
+    "description": "MAP20001 Naval Combine confirm mix when a fleet has no ships (Refs #4659)."
+  },
   "provinceOverlay_stationSpyAction": "Station spy",
   "@provinceOverlay_stationSpyAction": {
     "description": "MAP20001 Civilian Station spy control label (Refs #4439)."

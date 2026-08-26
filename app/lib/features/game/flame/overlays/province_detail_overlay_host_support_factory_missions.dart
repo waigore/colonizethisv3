@@ -17,6 +17,7 @@ import 'province_detail_overlay_host_support_detach_sail.dart';
 import 'province_detail_overlay_host_support_naval_mission.dart';
 import 'province_detail_overlay_host_support_station_spy.dart';
 import 'province_detail_overlay_host_support_transfer_home.dart';
+import 'province_detail_overlay_host_support_fleet_combine.dart';
 
 /// Move/invade, naval mission, detach-and-sail, and station-spy overlay props.
 ({
@@ -25,6 +26,7 @@ import 'province_detail_overlay_host_support_transfer_home.dart';
   ProvinceNavalMissionOverlayControls navalMission,
   ProvinceDetachAndSailOverlayControls detachAndSail,
   ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
+  ProvinceNavalCombineOverlayControls navalCombine,
   ProvinceOverlayStationSpyProps stationSpy,
   ProvinceOverlayCounterEspionageProps counterEspionage,
 })
@@ -107,6 +109,19 @@ buildProvinceDetailMissionOverlayControls({
       bus: bus,
       isSeaZone: isSeaZone,
       cargo: cargo,
+    ),
+    navalCombine: buildProvinceNavalCombineOverlayControls(
+      context: context,
+      game: game,
+      region: region,
+      humanPlayerId: humanPlayerId,
+      playerView: playerView,
+      displayId: displayId,
+      draftOrders: draftOrders,
+      canMutateViaUi: canMutateViaUi,
+      omniscientDetail: omniscientDetail,
+      bus: bus,
+      isSeaZone: isSeaZone,
     ),
     stationSpy: buildProvinceStationSpyOverlayProps(
       context: context,

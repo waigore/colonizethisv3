@@ -1,8 +1,110 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_world/src/logic_validation_exception.dart';
 import 'game_world_mutations.dart';
 import 'military_list_helpers.dart';
 import 'naval.dart';
+
+/// Survivor fleet id for an all-ships combine: Home Fleet if present in
+/// [fleetIdsInPreferOrder], else the first id in that list.
+/// SPEC/ui/naval-units-fleet-management.md; overlay Refs #4659.
+String resolveNavalCombineTargetFleetId({
+  required String humanPlayerId,
+  required List<String> fleetIdsInPreferOrder,
+}) {
+  if (fleetIdsInPreferOrder.isEmpty) {
+    throw LogicValidationException(
+      'fleetIdsInPreferOrder must not be empty',
+    );
+  }
+  final homeId = homeFleetIdFor(humanPlayerId);
+  for (final id in fleetIdsInPreferOrder) {
+    if (id == homeId) return id;
+  }
+  return fleetIdsInPreferOrder.first;
+}
+
+bool _fleetsShareCombineLocality(List<Fleet> fleets) {
+  if (fleets.length < 2) return false;
+  final allInPort = fleets.every((f) => f.inPortAtProvinceId != null);
+  if (allInPort) {
+    final port = fleets.first.inPortAtProvinceId!;
+    return fleets.every((f) => f.inPortAtProvinceId == port);
+  }
+  final allAtSea = fleets.every(
+    (f) => f.inPortAtProvinceId == null && f.seaZoneId != null,
+  );
+  if (!allAtSea) return false;
+  final regionId = fleets.first.regionId;
+  final sea = fleets.first.seaZoneId!;
+  return fleets.every(
+    (f) => f.regionId == regionId && f.seaZoneId == sea,
+  );
+}
+
+/// Merges [fleetIds] into one fleet at the same port or sea zone.
+/// Home Fleet is always the survivor when included; otherwise the first id in
+/// [fleetIds] (caller supplies prefer order). Survivor mission becomes [FleetMission.none].
+/// Empty non-Home fleets are removed; Home Fleet is retained even when empty.
+/// SPEC/ui/naval-units-fleet-management.md; overlay Refs #4659.
+Game applyNavalCombineFleets({
+  required Game game,
+  required String humanPlayerId,
+  required List<String> fleetIds,
+}) {
+  if (fleetIds.length < 2) return game;
+  final idSet = fleetIds.toSet();
+  if (idSet.length < 2) return game;
+
+  final selected = <Fleet>[
+    for (final f in game.worldState.fleets)
+      if (f.ownerId == humanPlayerId && idSet.contains(f.id)) f,
+  ];
+  if (selected.length < 2) return game;
+  if (!_fleetsShareCombineLocality(selected)) return game;
+
+  final preferOrder = <String>[
+    for (final id in fleetIds)
+      if (selected.any((f) => f.id == id)) id,
+  ];
+  final targetId = resolveNavalCombineTargetFleetId(
+    humanPlayerId: humanPlayerId,
+    fleetIdsInPreferOrder: preferOrder,
+  );
+  Fleet? target;
+  for (final f in selected) {
+    if (f.id == targetId) {
+      target = f;
+      break;
+    }
+  }
+  if (target == null) return game;
+
+  final mergedShips = <ShipInstance>[...target.ships];
+  for (final f in selected) {
+    if (f.id == targetId) continue;
+    mergedShips.addAll(f.ships);
+  }
+
+  final merged = Fleet(
+    id: targetId,
+    ownerId: humanPlayerId,
+    seaZoneId: target.seaZoneId,
+    inPortAtProvinceId: target.inPortAtProvinceId,
+    regionId: target.regionId,
+    ships: mergedShips,
+    mission: FleetMission.none,
+  );
+
+  final homeId = homeFleetIdFor(humanPlayerId);
+  final updated = <Fleet>[
+    for (final f in game.worldState.fleets)
+      if (!idSet.contains(f.id)) f,
+    merged,
+  ].where((f) => f.ships.isNotEmpty || f.id == homeId).toList();
+
+  return game.withFleets(updated);
+}
 
 /// Returns [game] unchanged if the fleet is missing or [shipInstanceIdsToNewFleet] is empty.
 /// SPEC/ui/naval-units-fleet-management.md.

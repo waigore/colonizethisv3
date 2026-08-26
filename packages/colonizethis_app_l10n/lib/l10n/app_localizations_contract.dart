@@ -2837,6 +2837,30 @@ abstract class AppLocalizations {
   /// Combine mix when army has no regiments. Refs #4610.
   String get provinceOverlay_combineArmiesEmptyMix;
 
+  /// MAP20001 Naval Combine control label. Refs #4659.
+  String get provinceOverlay_combineFleetsAction;
+
+  /// Disabled Naval Combine when a locality fleet has a pending naval order. Refs #4659.
+  String get provinceOverlay_combineFleetsPendingOrderTooltip;
+
+  /// MAP20001 Naval Combine confirm title. Refs #4659.
+  String get provinceOverlay_combineFleetsConfirmTitle;
+
+  /// MAP20001 Naval Combine confirm effect line. Refs #4659.
+  String get provinceOverlay_combineFleetsConfirmEffect;
+
+  /// Naval Combine survivor when Home Fleet is in the set. Refs #4659.
+  String get provinceOverlay_combineFleetsSurvivorHome;
+
+  /// Naval Combine survivor for a non-Home fleet. Refs #4659.
+  String provinceOverlay_combineFleetsSurvivorOther(String fleetName);
+
+  /// Naval Combine confirm fleet row. Refs #4659.
+  String provinceOverlay_combineFleetsFleetLine(String fleetName, String mix);
+
+  /// Naval Combine mix when a fleet has no ships. Refs #4659.
+  String get provinceOverlay_combineFleetsEmptyMix;
+
   /// MAP20001 Civilian Station spy control label. Refs #4439.
   String get provinceOverlay_stationSpyAction;
 
