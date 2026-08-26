@@ -111,5 +111,49 @@ void main() {
       );
       expect(next, same(game));
     });
+
+    test(
+      'Given three fleets share a port When combine Then all merge into one',
+      () {
+        final game = gameWithFleets(
+          fleets: [
+            Fleet(
+              id: 'c',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|cap',
+              ships: const [ShipInstance(id: 'sc', typeId: 'galleon')],
+            ),
+            Fleet(
+              id: 'a',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|cap',
+              ships: const [ShipInstance(id: 'sa', typeId: 'fluyte')],
+            ),
+            Fleet(
+              id: 'b',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|cap',
+              ships: const [ShipInstance(id: 'sb', typeId: 'carrack')],
+            ),
+          ],
+        );
+        final next = applyNavalCombineFleets(
+          game: game,
+          humanPlayerId: 'gp_human',
+          fleetIds: const ['a', 'b', 'c'],
+        );
+        expect(next.worldState.fleets, hasLength(1));
+        final merged = next.worldState.fleets.single;
+        expect(merged.id, 'a');
+        expect(
+          merged.ships.map((s) => s.id).toSet(),
+          {'sa', 'sb', 'sc'},
+        );
+        expect(merged.mission, FleetMission.none);
+      },
+    );
   });
 }

@@ -79,6 +79,21 @@ void main() {
     expect(state.enabled, isTrue);
   });
 
+  test('three in-port fleets list all ids for overlay Combine', () {
+    final state = computeProvinceNavalCombineActionState(
+      game: gameWith([atPort('c'), atPort('a'), atPort('b')]),
+      humanPlayerId: human,
+      displayId: port,
+      draftOrders: const Orders(),
+      showsFullNavalIntel: true,
+      isSeaZoneContext: false,
+      canMutateViaUi: true,
+    );
+    expect(state.show, isTrue);
+    expect(state.enabled, isTrue);
+    expect(state.fleetIds, ['a', 'b', 'c']);
+  });
+
   test('Home + empty non-Home at sea is enabled (locality-only)', () {
     final homeId = homeFleetIdFor(human);
     final state = computeProvinceNavalCombineActionState(

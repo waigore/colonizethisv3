@@ -155,4 +155,69 @@ void main() {
     expect(captured!.game.worldState.fleets, hasLength(1));
     expect(captured!.game.worldState.fleets.single.id, homeId);
   });
+
+  testWidgets('confirm merges three locality fleets into one', (tester) async {
+    final bus = AppEventBus();
+    NavalFleetsUpdatedEvent? captured;
+    bus.on<NavalFleetsUpdatedEvent>().listen((e) => captured = e);
+    const human = 'gp1';
+    final fleets = [
+      Fleet(
+        id: 'a',
+        ownerId: human,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: 'oldWorld|p1',
+        ships: const [ShipInstance(id: 'sa', typeId: 'fluyte')],
+      ),
+      Fleet(
+        id: 'b',
+        ownerId: human,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: 'oldWorld|p1',
+        ships: const [ShipInstance(id: 'sb', typeId: 'carrack')],
+      ),
+      Fleet(
+        id: 'c',
+        ownerId: human,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: 'oldWorld|p1',
+        ships: const [ShipInstance(id: 'sc', typeId: 'galleon')],
+      ),
+    ];
+    final game = demoGameForOverlay.copyWith(
+      worldState: demoGameForOverlay.worldState.copyWith(fleets: fleets),
+    );
+    await tester.pumpWidget(
+      wrap(
+        Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () {
+                showProvinceOverlayFleetCombineConfirm(
+                  context: context,
+                  l10n: l10n,
+                  game: game,
+                  fleets: fleets,
+                  humanPlayerId: human,
+                  bus: bus,
+                );
+              },
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.common_confirm));
+    await tester.pumpAndSettle();
+    expect(captured, isNotNull);
+    expect(captured!.game.worldState.fleets, hasLength(1));
+    expect(captured!.game.worldState.fleets.single.id, 'a');
+    expect(
+      captured!.game.worldState.fleets.single.ships.map((s) => s.id).toSet(),
+      {'sa', 'sb', 'sc'},
+    );
+  });
 }
