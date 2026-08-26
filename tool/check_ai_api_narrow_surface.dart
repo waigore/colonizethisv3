@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// SPEC: SPEC/program/logic-package-barrel-contracts.md (Refs #3393 Phase 3 —
-/// AI API narrowing). Rule `repo.ai_api_narrow_surface`.
+/// AI API narrowing; Refs #4660 — all logic contract libraries).
 ///
-/// Enforces that the narrow AI contract
-/// `packages/colonizethis_logic/lib/ai_api.dart` re-exports sibling-domain
-/// symbols through the **domain barrel**
+/// Enforces that logic contract libraries under
+/// `packages/colonizethis_logic/lib/**` re-export sibling-domain symbols through
+/// the **domain barrel**
 /// (`package:colonizethis_<domain>/colonizethis_<domain>.dart`) instead of
 /// reaching around the barrel into a deep `package:colonizethis_<domain>/src/...`
 /// path whenever that barrel already re-exports the owning file.
@@ -28,12 +28,26 @@ const List<String> _domainPackages = <String>[
   'colonizethis_setup',
 ];
 
+/// Contract libraries scanned for barrel-bypass deep `src/` exports (Refs #4660).
+const List<String> _contractRelativePaths = <String>[
+  'packages/colonizethis_logic/lib/ai_api.dart',
+  'packages/colonizethis_logic/lib/order_suggestion_api.dart',
+  'packages/colonizethis_logic/lib/debug_console_api.dart',
+  'packages/colonizethis_logic/lib/industry_counsel_api.dart',
+  'packages/colonizethis_logic/lib/colonizethis_logic.dart',
+  'packages/colonizethis_logic/lib/src/constants.dart',
+];
+
 /// Matches the URI in any `export '<uri>'` directive (single or double quoted).
 final RegExp _exportUri = RegExp('''export\\s+['"]([^'"]+)['"]''');
 
 void main(List<String> args) {
   exit(runCheckAiApiNarrowSurface(Directory.current.path));
 }
+
+/// Relative paths of logic contract libraries scanned by this rule (for tests).
+List<String> logicContractBarrelSurfacePathsForTests() =>
+    List<String>.unmodifiable(_contractRelativePaths);
 
 int runCheckAiApiNarrowSurface(
   String repoRoot, {
@@ -55,45 +69,56 @@ int runCheckAiApiNarrowSurface(
     return 1;
   }
 
-  final content = aiApiFile.readAsStringSync();
-  final lines = content.split('\n');
+  // Resolve each referenced domain barrel lazily and memoize it: only packages
+  // actually deep-exported need a barrel reachability set.
+  final barrelReachableByPackage = <String, Set<String>>{};
   final violations = <String>[];
 
-  // Resolve each referenced domain barrel lazily and memoize it: only packages
-  // actually deep-exported by ai_api.dart need a barrel reachability set.
-  final barrelReachableByPackage = <String, Set<String>>{};
-
-  for (var i = 0; i < lines.length; i++) {
-    final match = _exportUri.firstMatch(lines[i]);
-    if (match == null) continue;
-    final uri = match.group(1)!;
-    final parsed = _parseSiblingDeepSrcUri(uri);
-    if (parsed == null) continue;
-
-    final reachable = barrelReachableByPackage.putIfAbsent(
-      parsed.package,
-      () => _barrelReachableFiles(root, parsed.package) ?? const <String>{},
-    );
-    if (!File(
-      p.join(root, 'packages', parsed.package, 'lib', '${parsed.package}.dart'),
-    ).existsSync()) {
-      logE(
-        'ERROR: Missing barrel for ${parsed.package} '
-        '(expected lib/${parsed.package}.dart).',
-      );
-      return 1;
+  for (final relative in _contractRelativePaths) {
+    final contractFile = File(p.join(root, relative));
+    if (!contractFile.existsSync()) {
+      // Fixtures may only write ai_api.dart; skip absent optional contracts.
+      continue;
     }
+    final lines = contractFile.readAsStringSync().split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      final match = _exportUri.firstMatch(lines[i]);
+      if (match == null) continue;
+      final uri = match.group(1)!;
+      final parsed = _parseSiblingDeepSrcUri(uri);
+      if (parsed == null) continue;
 
-    final targetFile = p.normalize(
-      p.join(root, 'packages', parsed.package, 'lib', parsed.srcRelative),
-    );
-    if (reachable.contains(targetFile)) {
-      violations.add(
-        'packages/colonizethis_logic/lib/ai_api.dart:${i + 1}: '
-        "export '$uri' bypasses the ${parsed.package} barrel "
-        '(barrel already re-exports ${parsed.srcRelative}); use '
-        "export 'package:${parsed.package}/${parsed.package}.dart' show ...",
+      final reachable = barrelReachableByPackage.putIfAbsent(
+        parsed.package,
+        () => _barrelReachableFiles(root, parsed.package) ?? const <String>{},
       );
+      if (!File(
+        p.join(
+          root,
+          'packages',
+          parsed.package,
+          'lib',
+          '${parsed.package}.dart',
+        ),
+      ).existsSync()) {
+        logE(
+          'ERROR: Missing barrel for ${parsed.package} '
+          '(expected lib/${parsed.package}.dart).',
+        );
+        return 1;
+      }
+
+      final targetFile = p.normalize(
+        p.join(root, 'packages', parsed.package, 'lib', parsed.srcRelative),
+      );
+      if (reachable.contains(targetFile)) {
+        violations.add(
+          '$relative:${i + 1}: '
+          "export '$uri' bypasses the ${parsed.package} barrel "
+          '(barrel already re-exports ${parsed.srcRelative}); use '
+          "export 'package:${parsed.package}/${parsed.package}.dart' show ...",
+        );
+      }
     }
   }
 
@@ -104,8 +129,8 @@ int runCheckAiApiNarrowSurface(
 
   logE(
     'check_ai_api_narrow_surface: found ${violations.length} deep `src/` '
-    'export(s) in ai_api.dart that the domain barrel already publishes. '
-    'Re-export through the domain barrel '
+    'export(s) in logic contract libraries that the domain barrel already '
+    'publishes. Re-export through the domain barrel '
     '(package:colonizethis_<domain>/colonizethis_<domain>.dart) instead.',
   );
   for (final v in violations) {
