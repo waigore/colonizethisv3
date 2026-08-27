@@ -720,42 +720,6 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'After this work: still none — not bound to the capital';
 
   @override
-  String provinceOverlay_tileTransportStepYieldRaise(
-    int from,
-    int to,
-    String good,
-  ) {
-    return 'After this work: $from → $to $good if still linked';
-  }
-
-  @override
-  String provinceOverlay_tileTransportStepYieldRoadLimit(int n, String good) {
-    return 'After this work: still $n $good — the road is the limit';
-  }
-
-  @override
-  String provinceOverlay_tileTransportStepYieldTownLimit(int n, String good) {
-    return 'After this work: still $n $good — town development is the limit';
-  }
-
-  @override
-  String get provinceOverlay_tileTransportStepYieldDisconnected =>
-      'After this work: still none — not bound to the capital until a path home exists';
-
-  @override
-  String get provinceOverlay_tileTransportStepYieldBindsCapital =>
-      'After this work: binds this tile to the capital';
-
-  @override
-  String get provinceOverlay_tileTransportStepPortOnCoast =>
-      'After this work: this coast gets a port';
-
-  @override
-  String provinceOverlay_tileRoadCaption(String caption) {
-    return 'Road / railroad: $caption';
-  }
-
-  @override
   String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip =>
       'No idle Builders';
 
