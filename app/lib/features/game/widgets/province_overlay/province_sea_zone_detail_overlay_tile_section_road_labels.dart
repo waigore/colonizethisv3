@@ -10,6 +10,10 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_gist_line.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
 
 import 'province_sea_zone_detail_overlay_support.dart';
@@ -81,9 +85,27 @@ List<Widget> buildTileRoadLabelWidgets({
   }
 
   final transportText = Text(
-    roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+    roadRailDefaultCaptionLine(l10n, roadLevel),
     style: overlayFgBodyStyle(),
   );
+  String? gistForAction(
+    ProvinceInlineActionState action,
+    TransportStepYieldPreview? preview,
+  ) {
+    if (!action.enabled || preview == null) return null;
+    return transportStepYieldGistLine(l10n: l10n, preview: preview);
+  }
+
+  final buildRoadGist = buildRoadAction.showIcon
+      ? gistForAction(buildRoadAction, tileConnectivity?.nextBuildRoadYield)
+      : null;
+  final buildPortGist = buildPortAction.showIcon
+      ? gistForAction(buildPortAction, tileConnectivity?.nextBuildPortYield)
+      : null;
+  final buildRailGist = buildRailAction.showIcon
+      ? gistForAction(buildRailAction, tileConnectivity?.nextBuildRailYield)
+      : null;
+  final transportGist = buildRoadGist ?? buildPortGist ?? buildRailGist;
   final transportRow = Row(
     children: [
       Expanded(
@@ -134,5 +156,18 @@ List<Widget> buildTileRoadLabelWidgets({
       onPressed: openDetails,
     ),
   );
-  return [transportRow, detailsAction];
+  if (transportGist == null) {
+    return [transportRow, detailsAction];
+  }
+  return [
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        transportRow,
+        TransportStepYieldGistLine(text: transportGist),
+      ],
+    ),
+    detailsAction,
+  ];
 }

@@ -13,6 +13,9 @@ import 'build_improvement_next_yield_copy.dart';
 import 'build_improvement_next_yield_gist_line.dart';
 import 'purchase_land_payoff_copy.dart';
 import 'purchase_land_payoff_gist_line.dart';
+import 'transport_step_yield_copy.dart';
+import 'transport_step_yield_gist_line.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 List<Widget> civilianUnitsPanelPendingWorkGistChildren({
   required AppLocalizations l10n,
@@ -53,6 +56,25 @@ List<Widget> civilianUnitsPanelPendingWorkGistChildren({
           return BuildImprovementYieldGistLine(text: gist);
         },
       ),
+    if (pendingWork.target == kWorkTargetBuildRoad ||
+        pendingWork.target == kWorkTargetBuildPort ||
+        pendingWork.target == kWorkTargetBuildRail)
+      Builder(
+        builder: (context) {
+          final gist = transportStepYieldGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: pendingWork.targetTileKey,
+            workTarget: pendingWork.target,
+            enabled: true,
+            mapData: mapData,
+            canMutateViaUi: !readOnly,
+          );
+          if (gist == null) return const SizedBox.shrink();
+          return TransportStepYieldGistLine(text: gist);
+        },
+      ),
   ];
 }
 
@@ -65,6 +87,9 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
   GameMapData? mapData,
   String? buildImprovementShortcutTargetTileKey,
   String? purchaseLandShortcutTargetTileKey,
+  String? buildRoadShortcutTargetTileKey,
+  String? buildPortShortcutTargetTileKey,
+  String? buildRailShortcutTargetTileKey,
 }) {
   if (readOnly) return assigned;
   final gist =
@@ -91,7 +116,34 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
           canMutateViaUi: !readOnly,
         )
       : null;
-  if (gist == null && payoff == null) return assigned;
+  String? transportGistFor(String? tileKey, String workTarget) {
+    if (tileKey == null || tileKey.isEmpty) return null;
+    return transportStepYieldGistForTile(
+      l10n: l10n,
+      game: game,
+      humanPlayerId: humanPlayerId,
+      tileKey: tileKey,
+      workTarget: workTarget,
+      enabled: true,
+      mapData: mapData,
+      canMutateViaUi: !readOnly,
+    );
+  }
+
+  final buildRoadGist = transportGistFor(
+    buildRoadShortcutTargetTileKey,
+    kWorkTargetBuildRoad,
+  );
+  final buildPortGist = transportGistFor(
+    buildPortShortcutTargetTileKey,
+    kWorkTargetBuildPort,
+  );
+  final buildRailGist = transportGistFor(
+    buildRailShortcutTargetTileKey,
+    kWorkTargetBuildRail,
+  );
+  final transportGist = buildRoadGist ?? buildPortGist ?? buildRailGist;
+  if (gist == null && payoff == null && transportGist == null) return assigned;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
@@ -99,6 +151,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
       assigned,
       if (gist != null) BuildImprovementYieldGistLine(text: gist),
       if (payoff != null) PurchaseLandPayoffGistLine(text: payoff.gist),
+      if (transportGist != null) TransportStepYieldGistLine(text: transportGist),
     ],
   );
 }

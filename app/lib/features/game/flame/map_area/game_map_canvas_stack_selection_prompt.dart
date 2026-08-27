@@ -11,6 +11,7 @@ import '../../screens/game/game_screen_shared.dart'
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
 import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
+import '../../widgets/units/civilian/transport_step_yield_gist_line.dart';
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
 ///
@@ -24,6 +25,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     this.affordPreview,
     this.nextYieldGist,
     this.payoffGist,
+    this.transportGist,
     super.key,
   });
 
@@ -34,6 +36,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final WorkOrderAffordPreview? affordPreview;
   final String? nextYieldGist;
   final String? payoffGist;
+  final String? transportGist;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     final preview = affordPreview;
     final yieldGist = nextYieldGist;
     final landGist = payoffGist;
+    final roadGist = transportGist;
     return Positioned(
       top: 8,
       left: 0,
@@ -86,6 +90,10 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
                     landGist.isNotEmpty &&
                     !usesRelocateCopy)
                   PurchaseLandPayoffGistLine(text: landGist),
+                if (roadGist != null &&
+                    roadGist.isNotEmpty &&
+                    !usesRelocateCopy)
+                  TransportStepYieldGistLine(text: roadGist),
               ],
             ),
           ),

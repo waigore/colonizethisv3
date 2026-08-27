@@ -2471,6 +2471,31 @@ abstract class AppLocalizations {
   /// Next-level extraction when the tile is not bound to the capital (Refs #4627).
   String get provinceOverlay_tileBuildImprovementYieldDisconnected;
 
+  /// Extraction after Build road/port/rail when yield rises (Refs #4663).
+  String provinceOverlay_tileTransportStepYieldRaise(
+    int from,
+    int to,
+    String good,
+  );
+
+  /// Extraction when transport step does not raise yield — road cap (Refs #4663).
+  String provinceOverlay_tileTransportStepYieldRoadLimit(int n, String good);
+
+  /// Extraction when transport step does not raise yield — town cap (Refs #4663).
+  String provinceOverlay_tileTransportStepYieldTownLimit(int n, String good);
+
+  /// Extraction when tile is not capital-linked (Refs #4663).
+  String get provinceOverlay_tileTransportStepYieldDisconnected;
+
+  /// Transport step on linked tile without extractable yield (Refs #4663).
+  String get provinceOverlay_tileTransportStepYieldBindsCapital;
+
+  /// Build port gist without cargo/capture claims (Refs #4663).
+  String get provinceOverlay_tileTransportStepPortOnCoast;
+
+  /// Default Tile road/rail player-language caption (Refs #4663).
+  String provinceOverlay_tileRoadCaption(String caption);
+
   /// Disabled build-improvement shortcut when no Builder units exist.
   String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip;
 

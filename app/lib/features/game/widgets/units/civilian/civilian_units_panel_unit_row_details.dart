@@ -113,6 +113,9 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   GameMapData? mapData,
   String? buildImprovementShortcutTargetTileKey,
   String? purchaseLandShortcutTargetTileKey,
+  String? buildRoadShortcutTargetTileKey,
+  String? buildPortShortcutTargetTileKey,
+  String? buildRailShortcutTargetTileKey,
   bool readOnly = false,
 }) {
   final pendingMove = pending.pendingMoveOrder;
@@ -219,5 +222,8 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
     buildImprovementShortcutTargetTileKey:
         buildImprovementShortcutTargetTileKey,
     purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+    buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+    buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+    buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
   );
 }

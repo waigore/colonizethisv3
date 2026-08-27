@@ -104,6 +104,7 @@ List<String> provinceTileDetailsLines({
 }) {
   final lines = <String>[];
   if (roadLevel != null) {
+    lines.add(roadRailTransportLevelPrimaryLine(l10n, roadLevel));
     lines.add(roadRailSupplementaryLabel(l10n, roadLevel));
     if (roadLevel == 1) {
       lines.add(l10n.provinceOverlay_tileRoadRailGloss);

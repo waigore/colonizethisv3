@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/core/services/game_service/try_get_game_map_data.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_copy.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -86,6 +87,26 @@ class GameMapCanvasStackSelectionPromptLayer extends ConsumerWidget {
             enabled: true,
           )?.gist
         : null;
+    final mapData = tryGetGameMapData(
+      () => ref.read(gameServiceProvider).getMapData(game.id),
+    );
+    final transportGist =
+        previewTileKey != null &&
+            !selectionPromptUsesRelocateCopy &&
+            (workTarget == kWorkTargetBuildRoad ||
+                workTarget == kWorkTargetBuildPort ||
+                workTarget == kWorkTargetBuildRail)
+        ? transportStepYieldGistForTile(
+            l10n: appL10n(context),
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: previewTileKey,
+            workTarget: workTarget!,
+            enabled: true,
+            mapData: mapData,
+            canMutateViaUi: canMutateViaUi,
+          )
+        : null;
     return GameMapCanvasStackSelectionPrompt(
       isNarrow: isNarrow,
       overlayOpen: overlayOpen,
@@ -94,6 +115,7 @@ class GameMapCanvasStackSelectionPromptLayer extends ConsumerWidget {
       affordPreview: affordPreview,
       nextYieldGist: nextYieldGist,
       payoffGist: payoffGist,
+      transportGist: transportGist,
     );
   }
 }
