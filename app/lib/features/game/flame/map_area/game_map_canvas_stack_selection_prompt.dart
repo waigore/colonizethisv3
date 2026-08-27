@@ -40,63 +40,87 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final preview = affordPreview;
-    final yieldGist = nextYieldGist;
-    final landGist = payoffGist;
-    final roadGist = transportGist;
     return Positioned(
       top: 8,
       left: 0,
       right: !isNarrow && overlayOpen ? kGameMapWideProvinceSidePanelWidth : 0,
       child: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: EditorialMonoclePalette.bgDeep.withValues(
-              alpha: kMapSelectionPromptBackgroundAlpha,
+        child: _GameMapSelectionPromptBanner(
+          usesRelocateCopy: usesRelocateCopy,
+          onCancel: onCancel,
+          affordPreview: affordPreview,
+          nextYieldGist: nextYieldGist,
+          payoffGist: payoffGist,
+          transportGist: transportGist,
+        ),
+      ),
+    );
+  }
+}
+
+class _GameMapSelectionPromptBanner extends StatelessWidget {
+  const _GameMapSelectionPromptBanner({
+    required this.usesRelocateCopy,
+    required this.onCancel,
+    this.affordPreview,
+    this.nextYieldGist,
+    this.payoffGist,
+    this.transportGist,
+  });
+
+  final bool usesRelocateCopy;
+  final VoidCallback? onCancel;
+  final WorkOrderAffordPreview? affordPreview;
+  final String? nextYieldGist;
+  final String? payoffGist;
+  final String? transportGist;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final preview = affordPreview;
+    final yieldGist = nextYieldGist;
+    final landGist = payoffGist;
+    final roadGist = transportGist;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.bgDeep.withValues(
+          alpha: kMapSelectionPromptBackgroundAlpha,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: EditorialMonoclePalette.accentDim,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: CtSpacing.m,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _GameMapSelectionPromptHeaderRow(
+              l10n: l10n,
+              usesRelocateCopy: usesRelocateCopy,
+              onCancel: onCancel,
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: EditorialMonoclePalette.accentDim,
-              width: 1,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: CtSpacing.m,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _GameMapSelectionPromptHeaderRow(
-                  l10n: l10n,
-                  usesRelocateCopy: usesRelocateCopy,
-                  onCancel: onCancel,
-                ),
-                if (preview != null &&
-                    preview.hasCostPreview &&
-                    !usesRelocateCopy)
-                  _GameMapSelectionPromptAffordSection(
-                    l10n: l10n,
-                    preview: preview,
-                  ),
-                if (yieldGist != null &&
-                    yieldGist.isNotEmpty &&
-                    !usesRelocateCopy)
-                  BuildImprovementYieldGistLine(text: yieldGist),
-                if (landGist != null &&
-                    landGist.isNotEmpty &&
-                    !usesRelocateCopy)
-                  PurchaseLandPayoffGistLine(text: landGist),
-                if (roadGist != null &&
-                    roadGist.isNotEmpty &&
-                    !usesRelocateCopy)
-                  TransportStepYieldGistLine(text: roadGist),
-              ],
-            ),
-          ),
+            if (preview != null && preview.hasCostPreview && !usesRelocateCopy)
+              _GameMapSelectionPromptAffordSection(
+                l10n: l10n,
+                preview: preview,
+              ),
+            if (yieldGist != null &&
+                yieldGist.isNotEmpty &&
+                !usesRelocateCopy)
+              BuildImprovementYieldGistLine(text: yieldGist),
+            if (landGist != null && landGist.isNotEmpty && !usesRelocateCopy)
+              PurchaseLandPayoffGistLine(text: landGist),
+            if (roadGist != null && roadGist.isNotEmpty && !usesRelocateCopy)
+              TransportStepYieldGistLine(text: roadGist),
+          ],
         ),
       ),
     );
