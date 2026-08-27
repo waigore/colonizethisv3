@@ -85,6 +85,58 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Selection prompt — transport step yield raise',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          transportGist: 'After this work: 0 → 1 Grain if still linked',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — transport step yield road cap',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          transportGist:
+              'After this work: still 2 Timber — the road is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — transport step yield disconnected',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          transportGist:
+              'After this work: still none — not bound to the capital until a path home exists',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — transport step yield binds capital',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          transportGist: 'After this work: binds this tile to the capital',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — transport step yield port on coast',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 2, 'castIron': 2},
+            canAfford: true,
+          ),
+          transportGist: 'After this work: this coast gets a port',
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Selection prompt — Purchase land tradeable gist',
         builder: (context) {
           final l10n = AppLocalizationsEn();
@@ -124,6 +176,7 @@ Widget _workOrderAffordSelectionPromptStory({
   required WorkOrderAffordPreview affordPreview,
   String? nextYieldGist,
   String? payoffGist,
+  String? transportGist,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -141,6 +194,7 @@ Widget _workOrderAffordSelectionPromptStory({
             affordPreview: affordPreview,
             nextYieldGist: nextYieldGist,
             payoffGist: payoffGist,
+            transportGist: transportGist,
           ),
         ],
       ),

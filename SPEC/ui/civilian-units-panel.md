@@ -295,6 +295,8 @@ For each civilian unit, the panel shows:
 
 - **Given** a pending or Merchant-shortcut `purchase_land` on a legal Minor/Tribe resource tile, **when** the row renders outside observe/`readOnly`, **then** the UI layer shows the same qualitative payoff gist as `MAP20001` beside cost (`app/test/purchase_land_payoff_copy_test.dart`).
 
+- **Given** an enabled Engineer / Rail Builder shortcut or pending `build_road` / `build_port` / `build_rail` row, **when** the panel renders outside observe/`readOnly`, **then** the UI layer shows the same transport-step payoff gist as `MAP20001` (`app/test/transport_step_yield_copy_test.dart`).
+
 - **Given** a unit row has a **pending** civilian work order (full-list or tile-scoped), **when** the panel renders, **then** the first **Assigned to** line shows localized inline turns using assign-time `totalTurns` for that order, and the row does not show a literal ` (pending)` suffix.
 
 - **Given** a pending civilian work order is newly assigned this turn, **when** the panel renders before turn resolution, **then** the displayed pending turn counter equals assign-time `totalTurns` for that target.
