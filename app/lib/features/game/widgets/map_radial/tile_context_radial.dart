@@ -10,7 +10,9 @@ import 'tile_context_radial_chrome.dart';
 import 'tile_radial_catalog.dart';
 import 'tile_radial_layout.dart';
 import 'tile_radial_spoke_view.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_gist_line.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_gist_line.dart';
 
 /// Map-attached contextual radial for overlay Tile shortcuts.
 class TileContextRadial extends StatelessWidget {
@@ -38,8 +40,8 @@ class TileContextRadial extends StatelessWidget {
     final l10n = appL10n(context);
     final viewport = MediaQuery.sizeOf(context);
     final needed = tileRadialNeededSize(actionWedgeCount: wedges.length);
-    final gist = _purchaseLandCaption(wedges);
-    final boxHeight = needed.height + (gist == null ? 0 : 56);
+    final captionWidget = _defaultVisibleCaptionWidget(wedges);
+    final boxHeight = needed.height + (captionWidget == null ? 0 : 56);
     final topLeft = clampTileRadialTopLeft(
       viewport: viewport,
       anchor: anchor,
@@ -80,8 +82,7 @@ class TileContextRadial extends StatelessWidget {
                       onMore: onMore,
                     ),
                   ),
-                  if (gist != null)
-                    PurchaseLandPayoffGistLine(text: gist),
+                  if (captionWidget != null) captionWidget,
                 ],
               ),
             ),
@@ -92,14 +93,26 @@ class TileContextRadial extends StatelessWidget {
   }
 }
 
-String? _purchaseLandCaption(List<TileRadialSpokeView> wedges) {
+Widget? _defaultVisibleCaptionWidget(List<TileRadialSpokeView> wedges) {
   for (final wedge in wedges) {
-    if (wedge.action == TileRadialCatalogAction.purchaseLand &&
-        wedge.enabled &&
-        wedge.caption != null &&
-        wedge.caption!.isNotEmpty) {
-      return wedge.caption;
+    if (!wedge.enabled ||
+        wedge.caption == null ||
+        wedge.caption!.isEmpty) {
+      continue;
     }
+    final text = wedge.caption!;
+    return switch (wedge.action) {
+      TileRadialCatalogAction.purchaseLand => PurchaseLandPayoffGistLine(
+        text: text,
+      ),
+      TileRadialCatalogAction.buildImprovement => BuildImprovementYieldGistLine(
+        text: text,
+      ),
+      TileRadialCatalogAction.buildRoad ||
+      TileRadialCatalogAction.buildPort ||
+      TileRadialCatalogAction.buildRail => TransportStepYieldGistLine(text: text),
+      _ => TransportStepYieldGistLine(text: text),
+    };
   }
   return null;
 }

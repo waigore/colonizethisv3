@@ -27,14 +27,39 @@ void main() {
       ]);
     });
 
-    test('AC: land level 0 — numeric 0 and supplementary none', () {
+    test('AC: land level 0 — default caption uses player-language none', () {
+      expect(roadRailDefaultCaptionLine(l10n, 0), 'Road / railroad: none');
+    });
+
+    test('AC: land level 1 — default caption primitive road', () {
+      expect(
+        roadRailDefaultCaptionLine(l10n, 1),
+        'Road / railroad: primitive road',
+      );
+    });
+
+    test('AC: land level 2 — default caption improved road', () {
+      expect(
+        roadRailDefaultCaptionLine(l10n, 2),
+        'Road / railroad: improved road',
+      );
+    });
+
+    test('AC: land level 4 — default caption port or railroad', () {
+      expect(
+        roadRailDefaultCaptionLine(l10n, 4),
+        'Road / railroad: port or railroad',
+      );
+    });
+
+    test('AC: tile details — numeric transport level and supplementary label', () {
       expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: 0), [
         'Road / railroad: transport level 0',
         'none',
       ]);
     });
 
-    test('AC: land level 1 — numeric 1, primitive road, rail gloss', () {
+    test('AC: land level 1 details — numeric 1, primitive road, rail gloss', () {
       expect(roadRailTileDetailLinesForTests(l10n: l10n, transportLevel: 1), [
         'Road / railroad: transport level 1',
         'primitive road',
@@ -68,8 +93,10 @@ void main() {
 
     test('AC: road/rail Tile lines resolve from AppLocalizations keys', () {
       expect(
-        roadRailTransportLevelPrimaryLine(l10n, 2),
-        l10n.provinceOverlay_tileRoadTransportLevel(2),
+        roadRailDefaultCaptionLine(l10n, 2),
+        l10n.provinceOverlay_tileRoadCaption(
+          l10n.provinceOverlay_tileRoadLabelImprovedRoad,
+        ),
       );
       expect(roadRailSupplementaryLabel(l10n, 0), l10n.provinceOverlay_tileRoadLabelNone);
       expect(
@@ -93,7 +120,7 @@ void main() {
 
   group('ProvinceSeaZoneDetailOverlay Tile road/rail wiring', () {
     testWidgets(
-      'AC: overlay shows transport level and supplementary label from game state',
+      'AC: overlay shows default player-language road caption from game state',
       (WidgetTester tester) async {
         final base = demoGameForOverlay;
         final region = demoRegionForOverlay;
@@ -130,8 +157,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Road / railroad: transport level 2'), findsOneWidget);
-        expect(find.text('improved road'), findsNothing);
+        expect(find.text('Road / railroad: improved road'), findsOneWidget);
+        expect(find.text('transport level 2'), findsNothing);
         expect(find.text('Tile details'), findsOneWidget);
       },
     );

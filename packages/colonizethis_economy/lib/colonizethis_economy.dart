@@ -12,6 +12,7 @@ export 'src/economy/capital_tile_grain_bonus.dart';
 export 'src/economy/game_lookup_helpers.dart';
 export 'src/economy/tile_extraction_pipeline.dart';
 export 'src/economy/build_improvement_yield_preview.dart';
+export 'src/economy/transport_step_yield_preview.dart';
 export 'src/economy/town_manufacturing_bonus.dart';
 export 'src/economy/trade_interception_constants.dart';
 export 'src/economy/trade_interception_scan.dart';

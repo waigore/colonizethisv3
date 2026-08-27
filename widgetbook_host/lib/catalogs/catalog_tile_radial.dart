@@ -6,6 +6,7 @@ List<TileRadialSpokeView> _tileRadialDemoWedges({
   bool includeBuild = true,
   bool includeExtended = false,
   String? buildCaption,
+  String? roadCaption,
 }) {
   return [
     TileRadialSpokeView(
@@ -33,6 +34,16 @@ List<TileRadialSpokeView> _tileRadialDemoWedges({
         // ignore: avoid_hardcoded_strings_in_widgets
         tooltip: 'Build improvement',
         caption: buildCaption,
+      ),
+    if (roadCaption != null)
+      TileRadialSpokeView(
+        action: TileRadialCatalogAction.buildRoad,
+        enabled: true,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        label: 'Build road',
+        // ignore: avoid_hardcoded_strings_in_widgets
+        tooltip: 'Build road',
+        caption: roadCaption,
       ),
     if (includeExtended) ...[
       const TileRadialSpokeView(
@@ -223,6 +234,67 @@ List<WidgetbookNode> get tileRadialDirectories => [
               buildCaption:
                   'After this work: still none — not bound to the capital',
             ),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Transport step yield raise',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: _tileRadialDemoWedges(
+              includeBuild: false,
+              // ignore: avoid_hardcoded_strings_in_widgets
+              roadCaption: 'After this work: 0 → 1 Grain if still linked',
+            ),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Transport step yield binds capital',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: _tileRadialDemoWedges(
+              includeBuild: false,
+              // ignore: avoid_hardcoded_strings_in_widgets
+              roadCaption: 'After this work: binds this tile to the capital',
+            ),
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Transport step yield port on coast',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: [
+              TileRadialSpokeView(
+                action: TileRadialCatalogAction.buildPort,
+                enabled: true,
+                // ignore: avoid_hardcoded_strings_in_widgets
+                label: 'Build port',
+                // ignore: avoid_hardcoded_strings_in_widgets
+                tooltip: 'Build port',
+                // ignore: avoid_hardcoded_strings_in_widgets
+                caption: 'After this work: this coast gets a port',
+              ),
+            ],
             onWedge: (_) {},
             onMore: () {},
             onDismiss: () {},

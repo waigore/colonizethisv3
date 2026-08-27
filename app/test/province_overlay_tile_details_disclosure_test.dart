@@ -34,6 +34,10 @@ void main() {
         ),
       );
       expect(lines, contains(l10n.provinceOverlay_tileRoadLabelNone));
+      expect(
+        lines,
+        contains(l10n.provinceOverlay_tileRoadTransportLevel(0)),
+      );
       expect(lines, contains(l10n.provinceOverlay_tilePortStatusNone));
       expect(lines, contains(l10n.provinceOverlay_tileCapitalLinkNotConnected));
       expect(
@@ -63,6 +67,10 @@ void main() {
       expect(lines, contains(l10n.provinceOverlay_tileRoadLabelPortOrRailroad));
       expect(
         lines,
+        contains(l10n.provinceOverlay_tileRoadTransportLevel(4)),
+      );
+      expect(
+        lines,
         contains(l10n.provinceOverlay_tileExtractionFromTile(1, 1)),
       );
     });
@@ -90,7 +98,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Road / railroad: transport level 4'), findsOneWidget);
+        expect(find.text('Road / railroad: port or railroad'), findsOneWidget);
         expect(find.text('port or railroad'), findsNothing);
         expect(find.textContaining('Port:'), findsNothing);
         expect(find.textContaining('Capital link:'), findsNothing);

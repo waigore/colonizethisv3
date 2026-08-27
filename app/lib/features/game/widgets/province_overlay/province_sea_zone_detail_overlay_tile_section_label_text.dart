@@ -14,6 +14,12 @@ String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   };
 }
 
+String roadRailDefaultCaptionLine(AppLocalizations l10n, int roadLevel) {
+  return l10n.provinceOverlay_tileRoadCaption(
+    roadRailSupplementaryLabel(l10n, roadLevel),
+  );
+}
+
 String roadRailTransportLevelPrimaryLine(
   AppLocalizations l10n,
   int transportLevel,

@@ -19,13 +19,11 @@ import 'province_overlay_test_harness.dart';
 Widget buildProvinceOverlayWithRevealedDemoTile({int roadLevel = 0}) {
   final base = demoGameForOverlay;
   final tileKey = sampleTileKeyForProvinceOverlay;
-  final game = roadLevel == 0
-      ? base
-      : gameWithRoadLevelOnTile(
-          base: base,
-          tileKey: tileKey,
-          roadLevel: roadLevel,
-        );
+  final game = gameWithRoadLevelOnTile(
+    base: base,
+    tileKey: tileKey,
+    roadLevel: roadLevel,
+  );
   return buildProvinceOverlayDarkThemeShell(
     game: game,
     displayId: provinceIdFromTileKey(tileKey),

@@ -125,7 +125,9 @@ const _packageName = 'colonizethis_app';
 // measured 91_659).
 // raised for MAP20001 overlay Combine same-port/sea fleets (Refs #4659;
 // measured 91_882).
-const _maxMainLines = 92000;
+// raised for transport-step payoff gist before Build road/port/rail
+// (Refs #4663; measured 92_253).
+const _maxMainLines = 92400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

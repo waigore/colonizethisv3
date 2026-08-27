@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show extractionCapForResourceForUnlocked;
+    show extractionCapForResourceForUnlocked, kTechIdRoadConstruction;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -21,6 +21,9 @@ class ProvinceTileConnectivityDisplay {
     this.extractionEffective,
     this.extractionFull,
     this.nextImproveYield,
+    this.nextBuildRoadYield,
+    this.nextBuildPortYield,
+    this.nextBuildRailYield,
   });
 
   final bool capitalConnected;
@@ -33,6 +36,11 @@ class ProvinceTileConnectivityDisplay {
 
   /// Display-only next-level extraction (Refs #4627).
   final BuildImprovementYieldPreview? nextImproveYield;
+
+  /// Display-only transport-step previews (Refs #4663).
+  final TransportStepYieldPreview? nextBuildRoadYield;
+  final TransportStepYieldPreview? nextBuildPortYield;
+  final TransportStepYieldPreview? nextBuildRailYield;
 
   bool get showExtractionRow =>
       extractionEffective != null &&
@@ -141,6 +149,24 @@ ProvinceTileConnectivityDisplay? provinceTileConnectivityDisplayPreview({
     techCapForCommodity: techCapForCommodity,
     isCommodityExtractable: isCommodityExtractable,
   );
+  final hasRoadConstruction =
+      player.techUnlocked?[kTechIdRoadConstruction] == true;
+  TransportStepYieldPreview? transportPreview(String workTarget) =>
+      computeTransportStepYieldPreview(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        tileKey: selectedTileKey,
+        workTarget: workTarget,
+        connectedTileKeys: cr.connected,
+        pathTransportCap: cr.pathTransportCap,
+        connectedByRoadRule: cr.connectedByRoadRule,
+        portTileKeys: portTileKeys,
+        capitalProvinceId: player.capitalProvinceId,
+        provincesByFullId: provincesByFullId,
+        techCapForCommodity: techCapForCommodity,
+        isCommodityExtractable: isCommodityExtractable,
+        hasRoadConstructionTech: hasRoadConstruction,
+      );
 
   return ProvinceTileConnectivityDisplay(
     capitalConnected: connected,
@@ -151,6 +177,9 @@ ProvinceTileConnectivityDisplay? provinceTileConnectivityDisplayPreview({
     extractionFull:
         contribution != null && contribution.full > 0 ? contribution.full : null,
     nextImproveYield: nextImproveYield,
+    nextBuildRoadYield: transportPreview(TransportStepWorkTargets.buildRoad),
+    nextBuildPortYield: transportPreview(TransportStepWorkTargets.buildPort),
+    nextBuildRailYield: transportPreview(TransportStepWorkTargets.buildRail),
   );
 }
 

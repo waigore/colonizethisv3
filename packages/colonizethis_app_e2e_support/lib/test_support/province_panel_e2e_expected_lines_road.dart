@@ -4,6 +4,10 @@
 const String kRoadRailPrimitiveVersusRailGloss =
     'Basic land link for connectivity and yield caps. Railroads are transport level 4.';
 
+String roadRailDefaultCaptionLine(int roadLevel) {
+  return 'Road / railroad: ${roadRailSupplementaryLabel(roadLevel)}';
+}
+
 String roadRailSupplementaryLabel(int roadLevel) {
   return switch (roadLevel) {
     0 => 'none',

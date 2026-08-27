@@ -53,6 +53,16 @@ class ProvinceTileDetailsPanel extends StatelessWidget {
   final List<String> lines;
   final VoidCallback onClose;
 
+  /// GDD road captions + railroad gloss use muted; numeric/port/connectivity use fg.
+  bool _isMutedRoadTeachingLine(String line) {
+    return line == l10n.provinceOverlay_tileRoadLabelNone ||
+        line == l10n.provinceOverlay_tileRoadLabelPrimitiveRoad ||
+        line == l10n.provinceOverlay_tileRoadLabelImprovedRoad ||
+        line == l10n.provinceOverlay_tileRoadLabelPortOrRailroad ||
+        line == l10n.provinceOverlay_tileRoadLabelNonStandard ||
+        line == l10n.provinceOverlay_tileRoadRailGloss;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -90,10 +100,7 @@ class ProvinceTileDetailsPanel extends StatelessWidget {
                       ),
                       child: Text(
                         lines[i],
-                        style:
-                            i == 0 ||
-                                lines[i] ==
-                                    l10n.provinceOverlay_tileRoadRailGloss
+                        style: _isMutedRoadTeachingLine(lines[i])
                             ? captionStyle
                             : bodyStyle,
                       ),

@@ -129,11 +129,7 @@ void appendProvincePanelTileSection(
     if (roadLevel == null) {
       out.add('Road / railroad: —');
     } else {
-      out.add(roadRailTransportLevelPrimaryLine(roadLevel));
-      out.add(roadRailSupplementaryLabel(roadLevel));
-      if (roadLevel == 1) {
-        out.add(kRoadRailPrimitiveVersusRailGloss);
-      }
+      out.add(roadRailDefaultCaptionLine(roadLevel));
     }
     out.add('Civilian units (province): ${ctx.visibleCivilianCount}');
   });

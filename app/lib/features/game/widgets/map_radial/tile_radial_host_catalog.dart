@@ -21,6 +21,8 @@ import 'tile_radial_spoke_view.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import 'tile_radial_tooltips.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_copy.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 String tileRadialProvinceIdFromTileKey(String tileKey) {
   final parsed = tileKey.split('|');
@@ -197,6 +199,33 @@ List<TileRadialSpokeView> tileRadialHostSpokeViews({
             tileKey: tileKey,
             enabled: spoke.enabled,
           )?.gist,
+          TileRadialCatalogAction.buildRoad => transportStepYieldGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: tileKey,
+            workTarget: kWorkTargetBuildRoad,
+            enabled: spoke.enabled,
+            mapData: mapData,
+          ),
+          TileRadialCatalogAction.buildPort => transportStepYieldGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: tileKey,
+            workTarget: kWorkTargetBuildPort,
+            enabled: spoke.enabled,
+            mapData: mapData,
+          ),
+          TileRadialCatalogAction.buildRail => transportStepYieldGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: tileKey,
+            workTarget: kWorkTargetBuildRail,
+            enabled: spoke.enabled,
+            mapData: mapData,
+          ),
           _ => null,
         },
       ),

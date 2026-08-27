@@ -4069,6 +4069,50 @@
   "@provinceOverlay_tileBuildImprovementYieldDisconnected": {
     "description": "Default-visible next-level extraction when the tile is not capital-linked (Refs #4627)."
   },
+  "provinceOverlay_tileTransportStepYieldRaise": "After this work: {from} → {to} {good} if still linked",
+  "@provinceOverlay_tileTransportStepYieldRaise": {
+    "description": "Default-visible extraction after Build road/port/rail when yield rises (Refs #4663).",
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileTransportStepYieldRoadLimit": "After this work: still {n} {good} — the road is the limit",
+  "@provinceOverlay_tileTransportStepYieldRoadLimit": {
+    "description": "Default-visible extraction when transport step does not raise yield — road cap (Refs #4663).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileTransportStepYieldTownLimit": "After this work: still {n} {good} — town development is the limit",
+  "@provinceOverlay_tileTransportStepYieldTownLimit": {
+    "description": "Default-visible extraction when transport step does not raise yield — town cap (Refs #4663).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileTransportStepYieldDisconnected": "After this work: still none — not bound to the capital until a path home exists",
+  "@provinceOverlay_tileTransportStepYieldDisconnected": {
+    "description": "Default-visible extraction when tile is not capital-linked (Refs #4663)."
+  },
+  "provinceOverlay_tileTransportStepYieldBindsCapital": "After this work: binds this tile to the capital",
+  "@provinceOverlay_tileTransportStepYieldBindsCapital": {
+    "description": "Default-visible transport step on linked tile without extractable yield (Refs #4663)."
+  },
+  "provinceOverlay_tileTransportStepPortOnCoast": "After this work: this coast gets a port",
+  "@provinceOverlay_tileTransportStepPortOnCoast": {
+    "description": "Default-visible Build port gist without cargo/capture claims (Refs #4663)."
+  },
+  "provinceOverlay_tileRoadCaption": "Road / railroad: {caption}",
+  "@provinceOverlay_tileRoadCaption": {
+    "description": "Default Tile road/rail player-language caption (Refs #4663).",
+    "placeholders": {
+      "caption": { "type": "String" }
+    }
+  },
   "provinceOverlay_tileBuildRoadTooltip": "Build road",
   "@provinceOverlay_tileBuildRoadTooltip": {
     "description": "Tooltip and semantics label for province tile build-road shortcut action when enabled."

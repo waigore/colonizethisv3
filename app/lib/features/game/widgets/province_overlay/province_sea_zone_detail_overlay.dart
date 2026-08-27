@@ -18,6 +18,7 @@ export 'province_sea_zone_detail_overlay_sections_political.dart'
 export 'province_sea_zone_detail_overlay_tile_section_labels.dart'
     show
         kProvinceOverlayTileInlineActionDisabledAlpha,
+        roadRailDefaultCaptionLine,
         roadRailSupplementaryLabel,
         roadRailTileDetailLinesForTests,
         roadRailTransportLevelPrimaryLine,

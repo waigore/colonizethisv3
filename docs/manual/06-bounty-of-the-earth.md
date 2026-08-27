@@ -50,7 +50,7 @@ The header **Counsel** opens `GAME90001` **Counsel screen** on the **Development
 
 ### Tile labels on `MAP20001`
 
-The default Tile surface shows **Road / railroad: transport level N** plus the shortcut icons. Tap the transport text, or **Tile details**, for `Port: None` or `Port: Present`, the road caption, and whether the tile is linked to your capital. Do not look for a line named “Port status.”
+The default Tile surface shows **Road / railroad** in plain words (**none**, **primitive road**, **improved road**, or **port or railroad**) plus the shortcut icons. When **Build road**, **Build port**, or **Build railroad** is enabled, a muted line beside that row states what the step would mean for this tile (capital link, goods that would arrive, or that this coast gets a port). Tap the transport text, or **Tile details**, for the numeric transport level, `Port: None` or `Port: Present`, and whether the tile is linked to your capital.
 
 ### Reading Extraction on `MAP20001`
 
@@ -75,10 +75,10 @@ Those **Extraction** and **Available** rows **project** what this province would
 |------|------|----------------|
 | **Build improvement** | Builder | Raises the site by 1 (cap 4) on a tile **with a resource**. Next step costs lumber + cast iron **1 / 4 / 8 / 16**. Next level must respect your gathering-tech limit and terrain hard caps (scrub-forest timber stays at **1**). Minerals must already be prospected. The first improve on some timber or iron tiles can cost less (or nothing) until you already hold lumber and cast iron; the usual pair returns once you can pay it. Before you assign, enabled **Build improvement** on **Province sea-zone overlay**, **Tile context radial** / **More tile actions**, the map banner, the Builder row, and Development **Assign** tells you what this tile will send after the work: current goods versus the next level if it stays linked; or that the road or town development already limits what arrives; or that an unlinked tile will still send nothing. The warehouse does not fill on the tap, or on this Next turn if the Builder still has remaining work. |
 | **Upgrade town** | Builder | Raises **town development** by 1 (cap 4) on the town tile. Overlay **Upgrade town** is owned land only. See Counsel for the National Bureaucracy gate. |
-| **Build road** | Engineer | **1 lumber + 1 cast iron**. Level 2 needs **Road Construction**. |
-| **Build port** | Engineer | **5 lumber + 5 cast iron**. One port per seaboard (each coast that faces one sea). Shortcut only on a seaboard tile that can still take a port. |
+| **Build road** | Engineer | **1 lumber + 1 cast iron**. Level 2 needs **Road Construction**. Enabled shortcuts show a payoff gist beside the cost. |
+| **Build port** | Engineer | **5 lumber + 5 cast iron**. One port per seaboard (each coast that faces one sea). Shortcut only on a seaboard tile that can still take a port. Enabled shortcuts show a payoff gist. |
 | **Build fort** | Engineer | Town tile only; levels 1–3. **3 lumber + 3 bronze**; then **4 lumber + 4 bronze** plus **Mine Engineering**; then **5 steel + 5 lumber** plus **Modern Forts**. Higher levels take extra turns. Overlay **Build fort** only when the town tile is selected. |
-| **Build railroad** | Rail Builder | Needs a primitive or improved road (transport **1** or **2**), **2 lumber + 2 steel**, and rail technology. Sets railroad transport level **4**. |
+| **Build railroad** | Rail Builder | Needs a primitive or improved road (transport **1** or **2**), **2 lumber + 2 steel**, and rail technology. Sets railroad transport level **4**. Enabled shortcuts show a payoff gist beside the cost. |
 | **Purchase land** | Merchant | On Minor Nation or Tribe resource tiles: embassy, not at war, not already bought by any playable nation. Treasury ≥ **15 × resource base price** at assign; coins leave and the purchase is recorded when the work finishes (**1 turn**). Minerals must be prospected. A tile already bought cannot be bought again. Before you assign, enabled **Purchase land** on `MAP20001`, `MAP30001` / `MAP30002`, the map banner, and the Merchant row tells you the payoff in plain words: tradeable goods still sell as that court’s (you get first bid and gold when other courts buy after the work); riches from that tile go to **your** treasury after the work; the land stays theirs. Privileges do not start on the tap or on this Next turn if the Merchant still has remaining work. |
 | **Explore** / **Prospect** | Explorer | Covered in Chapter 4 (free; completion-timed effects). |
 

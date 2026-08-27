@@ -29,7 +29,7 @@ Stack (viewport)
     More spoke
 ```
 
-Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only. When **Build improvement** is enabled, the radial (and `MAP30002` remainder row) shows the same next-yield gist as `MAP20001` by default, not tooltip-only (Refs #4627). When **Purchase land** is enabled, the radial (and `MAP30002` remainder row) shows the same qualitative payoff gist as `MAP20001` by default, not tooltip-only (Refs #4630). Catalog: Explore → Prospect → Build improvement → Build road → Purchase land → Upgrade town → Build port → Build railroad → Build fort ([tile-radial-catalog.md](components/tile-radial-catalog.md)).
+Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog chrome. Labels are player words, not icon-only. When **Build improvement** is enabled, the radial (and `MAP30002` remainder row) shows the same next-yield gist as `MAP20001` by default, not tooltip-only (Refs #4627). When **Purchase land** is enabled, the radial (and `MAP30002` remainder row) shows the same qualitative payoff gist as `MAP20001` by default, not tooltip-only (Refs #4630). When **Build road** / **Build port** / **Build railroad** is enabled, the radial (and `MAP30002` remainder row) shows the same transport-step payoff gist as `MAP20001` by default, not tooltip-only (Refs #4663). Catalog: Explore → Prospect → Build improvement → Build road → Purchase land → Upgrade town → Build port → Build railroad → Build fort ([tile-radial-catalog.md](components/tile-radial-catalog.md)).
 
 ## Behavior
 
@@ -72,3 +72,4 @@ Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enable
 - Given a disabled visible wedge, when activated, then no order is committed and overlay refusal copy is shown. (`app/test/tile_context_radial_test.dart`)
 - Given a primary tap, when it completes, then `MAP20001` still opens and the radial does not. (`app/test/ct_region_map_tile_radial_secondary_test.dart`)
 - Given an enabled Purchase land wedge, when the radial renders, then the qualitative payoff gist is default-visible (not tooltip-only). (`app/test/purchase_land_payoff_copy_test.dart`)
+- Given an enabled Build road / Build port / Build railroad wedge, when the radial renders, then the transport-step payoff gist is default-visible (not tooltip-only). (`app/test/transport_step_yield_copy_test.dart`, `app/test/widgetbook_transport_step_yield_variants_test.dart`)
