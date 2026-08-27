@@ -45,7 +45,8 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
       left: 0,
       right: !isNarrow && overlayOpen ? kGameMapWideProvinceSidePanelWidth : 0,
       child: Center(
-        child: _GameMapSelectionPromptBanner(
+        child: _GameMapSelectionPromptCard(
+          l10n: appL10n(context),
           usesRelocateCopy: usesRelocateCopy,
           onCancel: onCancel,
           affordPreview: affordPreview,
@@ -58,8 +59,9 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   }
 }
 
-class _GameMapSelectionPromptBanner extends StatelessWidget {
-  const _GameMapSelectionPromptBanner({
+class _GameMapSelectionPromptCard extends StatelessWidget {
+  const _GameMapSelectionPromptCard({
+    required this.l10n,
     required this.usesRelocateCopy,
     required this.onCancel,
     this.affordPreview,
@@ -68,6 +70,7 @@ class _GameMapSelectionPromptBanner extends StatelessWidget {
     this.transportGist,
   });
 
+  final AppLocalizations l10n;
   final bool usesRelocateCopy;
   final VoidCallback? onCancel;
   final WorkOrderAffordPreview? affordPreview;
@@ -77,7 +80,6 @@ class _GameMapSelectionPromptBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
     final preview = affordPreview;
     final yieldGist = nextYieldGist;
     final landGist = payoffGist;
@@ -88,10 +90,7 @@ class _GameMapSelectionPromptBanner extends StatelessWidget {
           alpha: kMapSelectionPromptBackgroundAlpha,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: EditorialMonoclePalette.accentDim,
-          width: 1,
-        ),
+        border: Border.all(color: EditorialMonoclePalette.accentDim, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -112,9 +111,7 @@ class _GameMapSelectionPromptBanner extends StatelessWidget {
                 l10n: l10n,
                 preview: preview,
               ),
-            if (yieldGist != null &&
-                yieldGist.isNotEmpty &&
-                !usesRelocateCopy)
+            if (yieldGist != null && yieldGist.isNotEmpty && !usesRelocateCopy)
               BuildImprovementYieldGistLine(text: yieldGist),
             if (landGist != null && landGist.isNotEmpty && !usesRelocateCopy)
               PurchaseLandPayoffGistLine(text: landGist),
