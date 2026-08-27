@@ -1,18 +1,24 @@
 // Pins the dark editorial-monocle Tile section live-data rows that were
 // not in the original three-row slice (coordinates / terrain / civilian
-// units): Prospected, Improvement, the Road / railroad primary numeric
-// line on land tiles, and the sea-tile "Road / railroad: —" row.
+// units): Prospected, Improvement, the default player-language Road /
+// railroad caption line on land tiles, the numeric transport line in
+// Tile details, and the sea-tile "Road / railroad: —" row.
 //
 // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
 // § Style / implementation — Dark-theme Tile section body tokens
 // (Refs #2865 S5 — extends the existing road-caption + live-data rows
-// slice). Shared prefix/roadLevel tables densify residual mid-size cases
-// (Refs #4021).
+// slice; Refs #4663 default caption / details numeric inversion). Shared
+// prefix/roadLevel tables densify residual mid-size cases (Refs #4021).
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details_dialog.dart'
+    show
+        ProvinceTileDetailsDialog,
+        kProvinceTileDetailsActionKey,
+        kProvinceTileDetailsPanelKey;
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 import 'province_overlay_test_harness.dart';
@@ -56,6 +62,26 @@ Future<void> _expectFgPrefix(
   );
 }
 
+Future<void> _expectFgNumericInTileDetails(
+  WidgetTester tester, {
+  required int roadLevel,
+}) async {
+  await _pumpRevealed(tester, roadLevel: roadLevel);
+  expect(find.textContaining('transport level $roadLevel'), findsNothing);
+  await tester.tap(find.byKey(kProvinceTileDetailsActionKey));
+  await tester.pumpAndSettle();
+  expect(find.byKey(kProvinceTileDetailsPanelKey), findsOneWidget);
+  expect(
+    _findTileBodyText(
+      tester,
+      'Road / railroad: transport level ',
+    ).style?.color,
+    EditorialMonoclePalette.fg,
+  );
+  await tester.tap(find.byKey(ProvinceTileDetailsDialog.closeButtonKey));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -65,7 +91,7 @@ void main() {
     for (final c in <({String prefix, int roadLevel})>[
       (prefix: 'Prospected: ', roadLevel: 0),
       (prefix: 'Improvement: ', roadLevel: 0),
-      (prefix: 'Road / railroad: transport level ', roadLevel: 2),
+      (prefix: 'Road / railroad: ', roadLevel: 2),
     ]) {
       testWidgets(
         '${c.prefix.trim()} resolves to EditorialMonoclePalette.fg',
@@ -79,16 +105,29 @@ void main() {
       );
     }
 
-    testWidgets('Road / railroad primary numeric line remains fg across '
-        'stored transport levels 0 / 1 / 2 / 4', (WidgetTester tester) async {
-      for (final level in const <int>[0, 1, 2, 4]) {
-        await _expectFgPrefix(
-          tester,
-          roadLevel: level,
-          prefix: 'Road / railroad: transport level ',
-        );
-      }
-    });
+    testWidgets(
+      'default Road / railroad player-language caption remains fg across '
+      'stored transport levels 0 / 1 / 2 / 4',
+      (WidgetTester tester) async {
+        for (final level in const <int>[0, 1, 2, 4]) {
+          await _expectFgPrefix(
+            tester,
+            roadLevel: level,
+            prefix: 'Road / railroad: ',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'Tile details numeric transport line remains fg across '
+      'stored transport levels 0 / 1 / 2 / 4',
+      (WidgetTester tester) async {
+        for (final level in const <int>[0, 1, 2, 4]) {
+          await _expectFgNumericInTileDetails(tester, roadLevel: level);
+        }
+      },
+    );
 
     testWidgets('sea-tile no-road row (Road / railroad: —) resolves to fg '
         'when a sea-cell selectedTileKey is live', (WidgetTester tester) async {
@@ -112,8 +151,8 @@ void main() {
       );
     });
 
-    testWidgets('negative — Prospected / Improvement / road primary never '
-        'fall through DefaultTextStyle or Colors.white', (
+    testWidgets('negative — Prospected / Improvement / default road caption '
+        'never fall through DefaultTextStyle or Colors.white', (
       WidgetTester tester,
     ) async {
       await _pumpRevealed(tester, roadLevel: 2);
@@ -121,7 +160,7 @@ void main() {
       for (final prefix in const <String>[
         'Prospected: ',
         'Improvement: ',
-        'Road / railroad: transport level ',
+        'Road / railroad: ',
       ]) {
         final text = _findTileBodyText(tester, prefix);
         expect(text.style, isNotNull);
