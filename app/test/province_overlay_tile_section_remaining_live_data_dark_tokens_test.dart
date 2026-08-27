@@ -20,6 +20,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
         kProvinceTileDetailsActionKey,
         kProvinceTileDetailsPanelKey;
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 
 import 'province_overlay_test_harness.dart';
 import 'province_overlay_test_harness_demo_shells.dart';
@@ -82,6 +83,18 @@ Future<void> _expectFgNumericInTileDetails(
   await tester.pumpAndSettle();
 }
 
+String _defaultRoadCaptionPrefix(int roadLevel) {
+  final l10n = AppLocalizationsEn();
+  final caption = switch (roadLevel) {
+    0 => l10n.provinceOverlay_tileRoadLabelNone,
+    1 => l10n.provinceOverlay_tileRoadLabelPrimitiveRoad,
+    2 => l10n.provinceOverlay_tileRoadLabelImprovedRoad,
+    4 => l10n.provinceOverlay_tileRoadLabelPortOrRailroad,
+    _ => l10n.provinceOverlay_tileRoadLabelNonStandard,
+  };
+  return l10n.provinceOverlay_tileRoadCaption(caption);
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -91,7 +104,7 @@ void main() {
     for (final c in <({String prefix, int roadLevel})>[
       (prefix: 'Prospected: ', roadLevel: 0),
       (prefix: 'Improvement: ', roadLevel: 0),
-      (prefix: 'Road / railroad: ', roadLevel: 2),
+      (prefix: _defaultRoadCaptionPrefix(2), roadLevel: 2),
     ]) {
       testWidgets(
         '${c.prefix.trim()} resolves to EditorialMonoclePalette.fg',
@@ -113,7 +126,7 @@ void main() {
           await _expectFgPrefix(
             tester,
             roadLevel: level,
-            prefix: 'Road / railroad: ',
+            prefix: _defaultRoadCaptionPrefix(level),
           );
         }
       },
@@ -157,10 +170,10 @@ void main() {
     ) async {
       await _pumpRevealed(tester, roadLevel: 2);
 
-      for (final prefix in const <String>[
+      for (final prefix in <String>[
         'Prospected: ',
         'Improvement: ',
-        'Road / railroad: ',
+        _defaultRoadCaptionPrefix(2),
       ]) {
         final text = _findTileBodyText(tester, prefix);
         expect(text.style, isNotNull);

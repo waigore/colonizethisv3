@@ -256,7 +256,7 @@ Every designation string resolves through `AppLocalizations` parameterized keys 
 
 **Tile details (on request; Refs #4369):** For revealed **land** tiles in province context, teaching lines that are not required to commit Explore / Prospect / Improve / Road / Port open via:
 
-- **Primary:** tap/click the transport / connectivity **text** cluster (numeric transport line and, when present, the default stranded line). Do **not** steal taps from Build road / Build port / Build railroad / other Tile shortcut icons.
+- **Primary:** tap/click the transport / connectivity **text** cluster (player-language caption / transport text cluster and, when present, the default stranded line). Do **not** steal taps from Build road / Build port / Build railroad / other Tile shortcut icons.
 - **Fallback:** named **Tile details** text control (`provinceOverlay_tileDetailsAction`) adjacent to that cluster (stable for tests, keyboard/a11y, Widgetbook).
 - **Surface:** dismissible `CtDialogShell` helper (`provinceOverlay_tileDetailsTitle`); Close / outside tap / Esc; no auto-open; no new Tile tab.
 - **Helper content (when applicable):** road GDD caption + level-1 gloss; `Port: None`/`Present` for human-owned land; capital-link Connected / Not connected (and path-cap wording when connected); when Not connected **and** the province is human-owned blockaded, one cause line `provinceOverlay_tileCapitalLinkCutByBlockade`; `Extraction from this tile: E of F` **only when E > 0 and F > 0**.
