@@ -4,7 +4,8 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:hive/hive.dart';
+
+import 'support/game_save_adapter_test_harness.dart';
 
 /// Snapshot of advanced-start fields required by SPEC/game/advanced-starts.md
 /// save/load AC (excludes load-time general reconciliation).
@@ -29,7 +30,7 @@ class _AdvancedStartSnapshot {
   final AdvancedStartType? advancedStartType;
   final int turnNumber;
   final Map<String, ({int treasury, int peasants, int apprentices})>
-      playerEconomyById;
+  playerEconomyById;
   final Map<String, Map<String, bool>> playerTechUnlockedById;
   final Map<String, Map<String, String>> playerVisibilityByTile;
   final Map<String, Set<String>> playerProspectedTiles;
@@ -64,7 +65,7 @@ class _AdvancedStartSnapshot {
           .singleOrNull;
       homeFleetShipTypes[player.id] = homeFleet == null
           ? const []
-          : homeFleet.ships.map((s) => s.typeId).toList()..sort();
+          : (homeFleet.ships.map((s) => s.typeId).toList()..sort());
     }
 
     final economy = {
@@ -88,9 +89,7 @@ class _AdvancedStartSnapshot {
       for (final p in game.worldState.newWorld.provinces) p.id: p.ownerId,
     };
 
-    final overturesJson = game.overtureStates
-        .map((o) => o.toJson())
-        .toList()
+    final overturesJson = game.overtureStates.map((o) => o.toJson()).toList()
       ..sort((a, b) {
         final byGp = (a['gpId'] as String).compareTo(b['gpId'] as String);
         if (byGp != 0) return byGp;
@@ -134,22 +133,14 @@ class _AdvancedStartSnapshot {
 }
 
 void main() {
-  late Box<dynamic> box;
-  late GameSaveAdapter adapter;
+  final harness = GameSaveAdapterHiveHarness(
+    hivePath: './.dart_tool/test_hive_advanced_start',
+    boxName: 'advanced_start_games',
+  );
 
-  setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_advanced_start');
-    box = await Hive.openBox<dynamic>('advanced_start_games');
-  });
-
-  tearDownAll(() async {
-    await box.close();
-  });
-
-  setUp(() async {
-    await box.clear();
-    adapter = GameSaveAdapter();
-  });
+  setUpAll(harness.open);
+  tearDownAll(harness.close);
+  setUp(harness.reset);
 
   group('advanced start save/load', () {
     test('turns50 runInitGame state round-trips through GameSaveAdapter', () {
@@ -160,8 +151,8 @@ void main() {
       final game = init.game;
       final before = _AdvancedStartSnapshot.from(game);
 
-      adapter.save(box, game);
-      final loaded = adapter.load(box, game.id);
+      harness.adapter.save(harness.box, game);
+      final loaded = harness.adapter.load(harness.box, game.id);
       expect(loaded, isNotNull);
 
       final after = _AdvancedStartSnapshot.from(loaded!);
@@ -176,8 +167,8 @@ void main() {
       final game = init.game;
       final before = _AdvancedStartSnapshot.from(game);
 
-      adapter.save(box, game);
-      final loaded = adapter.load(box, game.id);
+      harness.adapter.save(harness.box, game);
+      final loaded = harness.adapter.load(harness.box, game.id);
       expect(loaded, isNotNull);
 
       final after = _AdvancedStartSnapshot.from(loaded!);

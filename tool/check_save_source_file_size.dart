@@ -1,5 +1,5 @@
 // Physical line ratchet for colonizethis_save lib/src
-// (`repo.save_source_file_size`). Refs #4077.
+// (`repo.save_source_file_size`). Refs #4077 / #4664.
 //
 // Complements the repository-wide 1000 NCL gate so the GameSaveAdapter concern
 // splits cannot silently re-merge into a kitchen-sink module.
@@ -10,13 +10,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int saveSourceFileSizeCeiling = 400;
+const int saveSourceFileSizeCeiling = 250;
 
 const String _saveSrcRelDir = 'packages/colonizethis_save/lib/src';
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
-/// Empty allowlist: every save `lib/src` file must stay ≤400 physical lines.
+/// Empty allowlist: every save `lib/src` file must stay ≤250 physical lines.
 /// Override in tests via [grandfatheredPaths].
 const List<String> saveSourceFileSizeGrandfatheredForTests = <String>[];
 
@@ -80,7 +80,7 @@ int runCheckSaveSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_save_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4077).',
+      '(ceiling $ceiling; Refs #4664).',
     );
     return 0;
   }
@@ -88,7 +88,7 @@ int runCheckSaveSourceFileSize(
   violations.sort();
   logE(
     'check_save_source_file_size: found ${violations.length} violation(s) '
-    'under $_saveSrcRelDir (ceiling $ceiling; Refs #4077):',
+    'under $_saveSrcRelDir (ceiling $ceiling; Refs #4664):',
   );
   for (final violation in violations) {
     logE(' - $violation');
