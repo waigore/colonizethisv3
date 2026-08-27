@@ -1,6 +1,14 @@
 /// Hive key suffixes and envelope field names for game saves.
-/// SPEC/program/save-load.md. Refs #4077.
+/// SPEC/program/save-load.md. Refs #4077 / #4664.
 library;
+
+/// Max manual named saves for **new** create; overwrite still allowed at cap.
+/// SPEC/program/save-load-list-metadata.md.
+const int kMaxManualSaves = 20;
+
+/// Fixed Hive key stem for the single auto-save slot. Not listed in listGameIds.
+/// See SPEC/program/save-load.md § Auto-save slot.
+const String kAutoSaveSlotId = '__colonizethis_autosave';
 
 const String kSuffixTileMapByRegion = '_tileMapByRegion';
 const String kSuffixTopologyByRegion = '_topologyByRegion';

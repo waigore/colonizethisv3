@@ -13,7 +13,11 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckSaveSourceFileSize', () {
-    test('passes on current repo tree under 400 physical-line ceiling', () {
+    test('ceiling is 250 after #4664', () {
+      expect(saveSourceFileSizeCeiling, 250);
+    });
+
+    test('passes on current repo tree under 250 physical-line ceiling', () {
       expect(runCheckSaveSourceFileSize('.'), 0);
     });
 

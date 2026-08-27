@@ -295,7 +295,7 @@ rules:
 
   - rule_id: repo.save_source_file_size
     group: structure
-    title: colonizethis_save lib/src files must stay at or below 400 physical lines (Refs #4077)
+    title: colonizethis_save lib/src files must stay at or below 250 physical lines (Refs #4664)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_save_source_file_size.dart
@@ -303,7 +303,7 @@ rules:
 
   - rule_id: repo.save_test_file_size
     group: testing
-    title: colonizethis_save test files must stay at or below 400 physical lines (Refs #4077)
+    title: colonizethis_save test files must stay at or below 250 physical lines (Refs #4664)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_save_test_file_size.dart
