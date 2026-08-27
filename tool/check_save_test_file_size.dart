@@ -1,5 +1,5 @@
 // Physical line ratchet for colonizethis_save tests
-// (`repo.save_test_file_size`). Refs #4077.
+// (`repo.save_test_file_size`). Refs #4077 / #4664.
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,11 +7,11 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int saveTestFileSizeCeiling = 400;
+const int saveTestFileSizeCeiling = 250;
 
 const String _saveTestsRelDir = 'packages/colonizethis_save/test';
 
-/// Empty allowlist: every save test file must stay ≤400 physical lines.
+/// Empty allowlist: every save test file must stay ≤250 physical lines.
 /// Override in tests via [grandfatheredPaths].
 const List<String> saveTestFileSizeGrandfatheredForTests = <String>[];
 
@@ -79,7 +79,7 @@ int runCheckSaveTestFileSize(
   if (violations.isEmpty) {
     logI(
       'check_save_test_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4077).',
+      '(ceiling $ceiling; Refs #4664).',
     );
     return 0;
   }
@@ -87,7 +87,7 @@ int runCheckSaveTestFileSize(
   violations.sort();
   logE(
     'check_save_test_file_size: found ${violations.length} violation(s) '
-    'under $_saveTestsRelDir (ceiling $ceiling; Refs #4077):',
+    'under $_saveTestsRelDir (ceiling $ceiling; Refs #4664):',
   );
   for (final violation in violations) {
     logE(' - $violation');
