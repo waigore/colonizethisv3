@@ -277,10 +277,10 @@ packages:
     dependency: transitive
     description:
       name: flame
-      sha256: c918f8d0e340cbc5e3b20603bd5dc0bac6d939133fed4044366180081a63561d
+      sha256: "9e6f7402d9a976f04d11c84cf75a7b42548990e23a755e975709d0f9660cd757"
       url: "https://pub.dev"
     source: hosted
-    version: "1.38.0"
+    version: "1.38.1"
   flutter:
     dependency: transitive
     description: flutter
