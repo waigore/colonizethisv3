@@ -116,6 +116,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   String? buildRoadShortcutTargetTileKey,
   String? buildPortShortcutTargetTileKey,
   String? buildRailShortcutTargetTileKey,
+  String? buildFortShortcutTargetTileKey,
   bool readOnly = false,
 }) {
   final pendingMove = pending.pendingMoveOrder;
@@ -225,5 +226,6 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
     buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
     buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
     buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
+    buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
   );
 }

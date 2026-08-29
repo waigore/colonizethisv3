@@ -18,6 +18,7 @@ import 'package:flutter/widgets.dart';
 import 'tile_radial_catalog.dart';
 import 'tile_radial_keys.dart';
 import 'tile_radial_spoke_view.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import 'tile_radial_tooltips.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
@@ -225,6 +226,13 @@ List<TileRadialSpokeView> tileRadialHostSpokeViews({
             workTarget: kWorkTargetBuildRail,
             enabled: spoke.enabled,
             mapData: mapData,
+          ),
+          TileRadialCatalogAction.buildFort => buildFortPayoffGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: tileKey,
+            enabled: spoke.enabled,
           ),
           _ => null,
         },

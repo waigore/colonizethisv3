@@ -9,13 +9,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:flutter/material.dart';
 
+import 'build_fort_payoff_copy.dart';
+import 'build_fort_payoff_gist_line.dart';
 import 'build_improvement_next_yield_copy.dart';
 import 'build_improvement_next_yield_gist_line.dart';
 import 'purchase_land_payoff_copy.dart';
 import 'purchase_land_payoff_gist_line.dart';
 import 'transport_step_yield_copy.dart';
 import 'transport_step_yield_gist_line.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 List<Widget> civilianUnitsPanelPendingWorkGistChildren({
   required AppLocalizations l10n,
@@ -75,6 +76,21 @@ List<Widget> civilianUnitsPanelPendingWorkGistChildren({
           return TransportStepYieldGistLine(text: gist);
         },
       ),
+    if (pendingWork.target == kWorkTargetBuildFort)
+      Builder(
+        builder: (context) {
+          final gist = buildFortPayoffGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: pendingWork.targetTileKey,
+            enabled: true,
+            canMutateViaUi: !readOnly,
+          );
+          if (gist == null) return const SizedBox.shrink();
+          return BuildFortPayoffGistLine(text: gist);
+        },
+      ),
   ];
 }
 
@@ -90,6 +106,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
   String? buildRoadShortcutTargetTileKey,
   String? buildPortShortcutTargetTileKey,
   String? buildRailShortcutTargetTileKey,
+  String? buildFortShortcutTargetTileKey,
 }) {
   if (readOnly) return assigned;
   final gist =
@@ -143,7 +160,24 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
     kWorkTargetBuildRail,
   );
   final transportGist = buildRoadGist ?? buildPortGist ?? buildRailGist;
-  if (gist == null && payoff == null && transportGist == null) return assigned;
+  final buildFortGist =
+      (buildFortShortcutTargetTileKey != null &&
+          buildFortShortcutTargetTileKey.isNotEmpty)
+      ? buildFortPayoffGistForTile(
+          l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          tileKey: buildFortShortcutTargetTileKey,
+          enabled: true,
+          canMutateViaUi: !readOnly,
+        )
+      : null;
+  if (gist == null &&
+      payoff == null &&
+      transportGist == null &&
+      buildFortGist == null) {
+    return assigned;
+  }
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
@@ -152,6 +186,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
       if (gist != null) BuildImprovementYieldGistLine(text: gist),
       if (payoff != null) PurchaseLandPayoffGistLine(text: payoff.gist),
       if (transportGist != null) TransportStepYieldGistLine(text: transportGist),
+      if (buildFortGist != null) BuildFortPayoffGistLine(text: buildFortGist),
     ],
   );
 }

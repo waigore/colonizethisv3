@@ -127,7 +127,8 @@ const _packageName = 'colonizethis_app';
 // measured 91_882).
 // raised for transport-step payoff gist before Build road/port/rail
 // (Refs #4663; measured 92_253).
-const _maxMainLines = 92400;
+// raised for MAP20001 Build fort siege payoff gist (Refs #4668; measured 92_433).
+const _maxMainLines = 92500;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

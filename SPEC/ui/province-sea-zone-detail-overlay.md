@@ -683,6 +683,15 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - Given observe mode / `canMutateViaUi == false` / foreign or unrevealed tiles / disabled transport-step controls, when those surfaces render, then the transport-step line is hidden.
 - Given Widgetbook transport-step raise / road-cap / town-cap / disconnected / binds-capital / port-on-coast stories for Province Overlay, Tile Context Radial, and work-order afford preview, when `app/test/transport_step_yield_goldens_test.dart` runs, then each `matchesGoldenFile` baseline under `app/test/goldens/transport_step_yield_*.png` matches the committed PNG.
 
+### Build fort payoff gist (Refs #4668)
+
+- Given a human-owned town tile at `fortLevel == 0` with enabled **Build fort**, when `MAP20001` Military renders, then the UI layer shows `After this work: Open field → Wood fort siege · Takes 1 turn` as a default-visible muted line (`app/test/build_fort_payoff_copy_test.dart`).
+- Given `fortLevel == 1`, when **Build fort** is enabled, then the default line is `After this work: Wood fort siege → Stone fort siege · Takes 2 turns`.
+- Given `fortLevel == 2`, when **Build fort** is enabled, then the default line is `After this work: Stone fort siege → Modern fort siege · Takes 3 turns`.
+- Given observe mode / `canMutateViaUi == false` / disabled or hidden **Build fort** / foreign or unrevealed tiles / Military `???`, when those surfaces render, then the build-fort payoff line is hidden.
+- Given the same enabled **Build fort** gist on `MAP30001` / `MAP30002`, the map work-target banner, and `UNIT10001` Engineer shortcut / pending **Build fort** rows, when those surfaces render, then they show the same one-line gist (`app/test/build_fort_payoff_goldens_test.dart`).
+- Given Widgetbook Build fort payoff open-to-wood / wood-to-stone / stone-to-modern stories, when `app/test/widgetbook_build_fort_payoff_variants_test.dart` runs, then each use case is registered and the open-to-wood story shows `build_fort_payoff_gist`.
+
 ### Build railroad shortcut (Refs #4383)
 
 - Given a revealed human-owned land tile with transport level 1 or 2, when `MAP20001` Tile renders, then the Road / railroad row shows an inline **Build railroad** control.

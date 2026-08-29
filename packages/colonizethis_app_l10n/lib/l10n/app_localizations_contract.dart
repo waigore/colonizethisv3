@@ -2546,6 +2546,13 @@ abstract class AppLocalizations {
   /// Disabled build-fort shortcut when materials or treasury are short.
   String provinceOverlay_tileBuildFortDisabledMaterialsTooltip(String reason);
 
+  /// Build fort payoff gist: siege posture step and duration (Refs #4668).
+  String provinceOverlay_tileBuildFortPayoffGist(
+    String fromLabel,
+    String toLabel,
+    int turns,
+  );
+
   /// Tooltip for enabled build-port shortcut on coastal tile (Refs #4332).
   String get provinceOverlay_tileBuildPortTooltip;
 

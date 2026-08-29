@@ -24,6 +24,7 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_
     show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_copy.dart';
 
 ({Widget economic, Widget military, Widget civilian, Widget naval})
 buildProvinceIntelGatedUnitSections({
@@ -104,6 +105,16 @@ buildProvinceIntelGatedUnitSections({
           fortLevel: fortLevel,
           showBuildFortActionIcon: buildFortAction.showIcon,
           buildFortActionEnabled: buildFortAction.enabled,
+          buildFortPayoffGist:
+              buildFortAction.enabled && selectedTileKey != null
+              ? buildFortPayoffGistForTile(
+                  l10n: l10n,
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  tileKey: selectedTileKey,
+                  enabled: true,
+                )
+              : null,
           buildFortTooltip: selectedTileKey == null
               ? l10n.provinceOverlay_tileBuildFortDisabledTooltip
               : provinceOverlayBuildFortTooltip(

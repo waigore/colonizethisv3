@@ -10,6 +10,7 @@ import 'tile_context_radial_chrome.dart';
 import 'tile_radial_catalog.dart';
 import 'tile_radial_layout.dart';
 import 'tile_radial_spoke_view.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_gist_line.dart';
@@ -111,6 +112,7 @@ Widget? _defaultVisibleCaptionWidget(List<TileRadialSpokeView> wedges) {
       TileRadialCatalogAction.buildRoad ||
       TileRadialCatalogAction.buildPort ||
       TileRadialCatalogAction.buildRail => TransportStepYieldGistLine(text: text),
+      TileRadialCatalogAction.buildFort => BuildFortPayoffGistLine(text: text),
       _ => TransportStepYieldGistLine(text: text),
     };
   }
