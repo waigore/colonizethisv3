@@ -30,6 +30,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 - **Rows:** One row per `ShipEconomyCatalog.all` entry (all 12 ship types) as a single line — left info `Column` (ship name above the icon-bearing cost summary) plus the stepper on the right.
   - primary label: **ship display name** via `shipTypeDisplayName` in `colonizethis_data` (e.g. `Ship of the Line`, not `ship_of_the_line`).
   - **role + capability line** (always visible, muted `10` px body): `Merchant` / `Warship` (`naval_units_compositionRoleMerchant` / `naval_units_compositionRoleWarship`) from `NavalStatsCatalog.get(shipTypeId).cargoHold` (`cargoHold == 0` → Warship, else Merchant), then ` · `, then one capability gist — merchants: `+{N} cargo holds` from `cargoHold`; warships: authored combat-role gist per `ship_type_id` (`Fast interceptor` for `sloop`, `frigate`, `raider`; `Battle ship` for `ship_of_the_line`, `ironclad`; see `SPEC/game/tech-tree-naval.md` § Notes). Warships never show a cargo-holds line. Locked rows keep role/capability visible (muted at row opacity).
+  - **food upkeep line** (always visible, muted `10` px body): `{N} food / turn` from `ShipEconomyEntry.foodUpkeep` via `trainMilitary_foodUpkeepPerTurn` wording (catalog default **2** for every hull). Food is **not** paid at train commit; the line is ongoing upkeep after the hull exists. Locked rows keep the line (muted at row opacity). No grain-vs-meat split, consumption-order formulas, or end-turn navy-feeding nag on this surface.
   - cost summary: treasury + 1 peasant + commodity requirements with icons.
   - locked state + `Requires: {tech}` when unlocking tech is missing.
   - `[-] count [+]` stepper on the right.
@@ -146,3 +147,11 @@ The dialog uses the shared `app/lib/features/game/widgets/train/train_unit_dialo
 - **Given** a tech-locked ship row, **when** it renders, **then** role/capability remain visible (muted at locked row opacity) with existing `Requires: {tech}` and disabled steppers.
 
 - **Given** any ship row on Train Naval, **when** the default row renders, **then** the UI layer does **not** dump the full FRP/RNG/ARM/HULL/MV stat list as always-visible primary content and does **not** include a Details control or full-stat tooltip (deferred follow-up).
+
+- **Given** `UNIT60001` lists Carrack, **when** the Carrack row renders, **then** the UI layer shows a default-visible muted line `2 food / turn` (from `ShipEconomyCatalog` `foodUpkeep` for `carrack`) in addition to the existing Merchant · cargo-holds gist and build costs. Copy does not claim food is paid when the dialog closes.
+
+- **Given** every other catalog hull (including locked warships), **when** those rows render, **then** each shows `{foodUpkeep} food / turn` matching that `ShipEconomyEntry` (catalog is 2 today; value comes from the catalog field, not a hard-coded numeral).
+
+- **Given** a tech-locked ship row, **when** it renders at locked opacity, **then** the food upkeep line is still present (not dropped).
+
+- **Given** the default Train Naval surface, **when** the player reads a row, **then** the food line does not include grain-vs-meat split, consumption-phase order, labour-strike math, or an end-turn unused-navy nag; treasury/materials/peasant costs stay on the existing cost strip.

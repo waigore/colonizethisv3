@@ -39,5 +39,19 @@ void main() {
         l10n.trainNaval_warshipRoleBattleShip,
       );
     });
+
+    test('food upkeep line uses catalog value', () {
+      expect(
+        TrainNavalShipRoleDisplay.foodUpkeepForShip('carrack'),
+        ShipEconomyCatalog.carrack.foodUpkeep,
+      );
+      expect(
+        TrainNavalShipRoleDisplay.foodUpkeepLine(
+          l10n,
+          ShipEconomyCatalog.carrack.foodUpkeep,
+        ),
+        '${ShipEconomyCatalog.carrack.foodUpkeep} food / turn',
+      );
+    });
   });
 }
