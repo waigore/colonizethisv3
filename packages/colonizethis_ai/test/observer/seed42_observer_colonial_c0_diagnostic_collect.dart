@@ -71,50 +71,15 @@ void recordSeed42ColonialC0DiagnosticBeforeResolve({
           game.worldState.playerProspectedTiles[gpId] ?? const <String>{};
       final purchasedByTile = game.worldState.purchasedTilesByTileKey;
 
-      var arm1JoinEmpireEligible = false;
-      var arm2PurchaseLandEligible = false;
-      var arm3HasNonWarNonGpOwner = false;
-      for (final provinceId in invadable) {
-        final ownerId = provinceOwner[provinceId];
-        if (ownerId == null) continue;
-        if (game.playerById(ownerId) != null) continue;
-
-        if (!arm1JoinEmpireEligible) {
-          final overture = getOverture(game, gpId, ownerId);
-          final relation = getRelation(game, gpId, ownerId);
-          if (overture != null &&
-              overture.stage == OvertureStage.nap &&
-              relation != null &&
-              relation.score >= relationScoreMinFriendly &&
-              treasury >= joinEmpireCostForMinorOrTribe(game, ownerId)) {
-            arm1JoinEmpireEligible = true;
-          }
-        }
-
-        if (!arm2PurchaseLandEligible) {
-          final relation = getRelation(game, gpId, ownerId);
-          final overture = getOverture(game, gpId, ownerId);
-          if ((relation == null || !relation.atWar) &&
-              overture != null &&
-              overture.hasEmbassy &&
-              provinceHasValidPurchaseLandTileForC0Diagnostic(
-                world: game.worldState,
-                provinceId: provinceId,
-                treasury: treasury,
-                prospected: prospected,
-                purchasedByTile: purchasedByTile,
-              )) {
-            arm2PurchaseLandEligible = true;
-          }
-        }
-
-        if (!arm3HasNonWarNonGpOwner) {
-          final relation = getRelation(game, gpId, ownerId);
-          if (relation == null || !relation.atWar) {
-            arm3HasNonWarNonGpOwner = true;
-          }
-        }
-      }
+      final armScan = scanColonialArmEligibilityForInvadable(
+        game: game,
+        gpId: gpId,
+        invadable: invadable,
+        provinceOwner: provinceOwner,
+        treasury: treasury,
+        prospected: prospected,
+        purchasedByTile: purchasedByTile,
+      );
 
       final arm2HasIdleMerchant = hasIdleMerchantForC0Diagnostic(
         game.worldState,
@@ -123,15 +88,15 @@ void recordSeed42ColonialC0DiagnosticBeforeResolve({
       final arm3RegimentsGte1 = regiments >= 1;
       final arm3TreasuryGte = treasury >= cheapestRegimentCost;
 
-      if (arm1JoinEmpireEligible) {
+      if (armScan.arm1JoinEmpireEligible) {
         counts['arm1JoinEmpireEligible'] = counts['arm1JoinEmpireEligible']! + 1;
       }
       if (arm2HasIdleMerchant) {
         counts['arm2HasIdleMerchant'] = counts['arm2HasIdleMerchant']! + 1;
-        if (arm2PurchaseLandEligible) {
-          counts['arm2PurchaseLandEligible'] =
-              counts['arm2PurchaseLandEligible']! + 1;
-        }
+      }
+      if (arm2HasIdleMerchant && armScan.arm2PurchaseLandEligible) {
+        counts['arm2PurchaseLandEligible'] =
+            counts['arm2PurchaseLandEligible']! + 1;
       }
       if (arm3RegimentsGte1) {
         counts['arm3RegimentsGte1'] = counts['arm3RegimentsGte1']! + 1;
@@ -140,7 +105,9 @@ void recordSeed42ColonialC0DiagnosticBeforeResolve({
         counts['arm3TreasuryGteCheapestRegiment'] =
             counts['arm3TreasuryGteCheapestRegiment']! + 1;
       }
-      if (arm3RegimentsGte1 && arm3TreasuryGte && arm3HasNonWarNonGpOwner) {
+      if (arm3RegimentsGte1 &&
+          arm3TreasuryGte &&
+          armScan.arm3HasNonWarNonGpOwner) {
         counts['arm3DeclareWarEligible'] =
             counts['arm3DeclareWarEligible']! + 1;
       }
