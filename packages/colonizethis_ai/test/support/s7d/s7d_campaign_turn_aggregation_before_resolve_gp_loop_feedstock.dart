@@ -4,18 +4,11 @@ import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
     show isCastIronLabourPeasantRecruitFabricMarketPathActive;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     show expandSellerFeedstockTileAcquisitionTarget;
-import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart'
-    show
-        hasIdleExplorerUnit,
-        ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile,
-        ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile,
-        ownsProspectedOldWorldMineralFeedstockTile,
-        colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates,
-        suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 's7d_campaign_rollup.dart';
+import 's7d_campaign_turn_aggregation_before_resolve_gp_loop_prospect.dart';
 import 's7d_campaign_turn_aggregation_before_resolve_scratch.dart';
 import '../seed42_s7d_feedstock_helpers.dart';
 
@@ -139,80 +132,13 @@ extension Seed42S7dCampaignTurnAggregationBeforeResolveFeedstock
           feedstockTiles[feedstockId] = (feedstockTiles[feedstockId] ?? 0) + 1;
         }
       }
-      // Refs #2847 H8-extraction prospect localization: split the
-      // never-extracted `iron` residual into Explorer availability vs a
-      // downstream (prospect-done / improvement) break.
-      if (hasIdleExplorerUnit(game, gpId)) {
-        supplierIdleExplorerPresentTurns[gpId] =
-            (supplierIdleExplorerPresentTurns[gpId] ?? 0) + 1;
-      }
-      if (ownsProspectedOldWorldMineralFeedstockTile(
-        game,
-        gpId,
-        castIronFeedstockIds,
-      )) {
-        supplierProspectedMineralFeedstockTileTurns[gpId] =
-            (supplierProspectedMineralFeedstockTileTurns[gpId] ?? 0) + 1;
-      }
-      if (ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
-        game,
-        gpId,
-        castIronFeedstockIds,
-      )) {
-        supplierIdleExplorerColocatedFeedstockTileTurns[gpId] =
-            (supplierIdleExplorerColocatedFeedstockTileTurns[gpId] ?? 0) + 1;
-      }
-      if (ownsIdleExplorerColocatedWithMineralEligibleUnprospectedOldWorldFeedstockTile(
-        game,
-        gpId,
-        castIronFeedstockIds,
-        tileMap,
-      )) {
-        supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns[gpId] =
-            (supplierIdleExplorerColocatedMineralEligibleFeedstockTileTurns[gpId] ??
-                0) +
-            1;
-      }
-      if (suggestsProspectForColocatedMineralEligibleUnprospectedOldWorldFeedstockTile(
-        game,
-        topo,
-        view,
-        gpId,
-        castIronFeedstockIds,
-        tileMap,
-      )) {
-        supplierIdleExplorerColocatedSuggestedProspectTileTurns[gpId] =
-            (supplierIdleExplorerColocatedSuggestedProspectTileTurns[gpId] ??
-                0) +
-            1;
-      }
-      final intraPassGates =
-          colocatedMineralEligibleUnprospectedOldWorldFeedstockProspectIntraPassGates(
-            game: game,
-            topology: topo,
-            view: view,
-            playerId: gpId,
-            feedstockIds: castIronFeedstockIds,
-            tileMapByRegion: tileMap,
-          );
-      if (intraPassGates.provinceFoggedVisibility) {
-        supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns[gpId] =
-            (supplierIdleExplorerColocatedFeedstockProspectProvinceVisibleTurns[gpId] ??
-                0) +
-            1;
-      }
-      if (intraPassGates.bundledMoveLeg) {
-        supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns[gpId] =
-            (supplierIdleExplorerColocatedFeedstockProspectBundledMoveLegTurns[gpId] ??
-                0) +
-            1;
-      }
-      if (intraPassGates.validatorAccepted) {
-        supplierIdleExplorerColocatedFeedstockProspectValidatorTurns[gpId] =
-            (supplierIdleExplorerColocatedFeedstockProspectValidatorTurns[gpId] ??
-                0) +
-            1;
-      }
+      recordBeforeResolveSupplierProspectCounters(
+        game: game,
+        topology: topo,
+        tileMap: tileMap,
+        gpId: gpId,
+        view: view,
+      );
     }
     if (player != null) {
       // Refs #2847 — per-turn castIron-labour stage localization. The

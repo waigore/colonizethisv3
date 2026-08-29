@@ -7,8 +7,8 @@ import '../tool/check_ai_test_file_size.dart';
 
 void main() {
   group('runCheckAiTestFileSize', () {
-    test('ceiling is 300 after #4602 Slice D', () {
-      expect(aiTestFileSizeCeiling, 300);
+    test('ceiling is 250 after #4669 Slice E', () {
+      expect(aiTestFileSizeCeiling, 250);
     });
 
     test('passes on the current repo tree', () {
@@ -38,6 +38,25 @@ void main() {
       addTearDown(() => temp.deleteSync(recursive: true));
       _writePlanning(temp, 'thin_host_test.dart', 'void main() {}\n');
       expect(runCheckAiTestFileSize(temp.path, info: (_) {}, err: (_) {}), 0);
+    });
+
+    test('scopes perception test files under the ceiling', () {
+      final temp = Directory.systemTemp.createTempSync('ai-test-size-perc-');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      final perception = Directory(
+        p.join(temp.path, 'packages', 'colonizethis_ai', 'test', 'perception'),
+      )..createSync(recursive: true);
+      File(p.join(perception.path, 'fat_perception_test.dart')).writeAsStringSync(
+        List<String>.filled(aiTestFileSizeCeiling + 2, '// pad').join('\n'),
+      );
+      final errors = <String>[];
+      final exitCode = runCheckAiTestFileSize(
+        temp.path,
+        info: (_) {},
+        err: errors.add,
+      );
+      expect(exitCode, 1);
+      expect(errors.join('\n'), contains('fat_perception_test.dart'));
     });
 
     test('ignores observer files (separate suite gate)', () {

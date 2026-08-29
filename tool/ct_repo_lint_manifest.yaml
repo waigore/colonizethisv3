@@ -1106,7 +1106,7 @@ rules:
 
   - rule_id: repo.ai_source_file_size
     group: structure
-    title: colonizethis_ai lib/src files must stay at or below 300 physical lines (Refs #4079, #4310, #4365)
+    title: colonizethis_ai lib/src files must stay at or below 250 physical lines (Refs #4079, #4310, #4365, #4669)
     spec: SPEC/program/ai-source-file-size.md
     runner: dart
     script: tool/check_ai_source_file_size.dart
@@ -1823,7 +1823,7 @@ rules:
 
   - rule_id: repo.ai_expand_peace_pin_cases_required
     group: testing
-    title: "colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 300 physical lines must import a sibling *_cases.dart (Refs #3977, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D)"
+    title: "colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 250 physical lines must import a sibling *_cases.dart (Refs #3977, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D, #4669 Slice E)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_expand_peace_pin_suite_size.dart
@@ -2054,21 +2054,21 @@ rules:
 
   - rule_id: repo.ai_colonial_military_naval_pin_cases_required
     group: testing
-    title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 300 physical lines must import a sibling *_cases.dart (Refs #3977, #3997, #4365 Slice C, #4602 Slice D)
+    title: colonizethis_ai colonial_phase_planner_{military,naval,colonial_lite_naval}_test.dart contracts above 250 physical lines must import a sibling *_cases.dart (Refs #3977, #3997, #4365 Slice C, #4602 Slice D, #4669 Slice E)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_colonial_military_naval_pin_suite_size.dart
 
   - rule_id: repo.ai_planning_cases_suite_size
     group: testing
-    title: "colonizethis_ai test/planning/*_cases.dart modules must stay at or under 300 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D)"
+    title: "colonizethis_ai test/planning/*_cases.dart modules must stay at or under 250 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D, #4669 Slice E)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_planning_cases_suite_size.dart
 
   - rule_id: repo.ai_test_file_size
     group: testing
-    title: colonizethis_ai test/planning/** and test/support_test/** Dart files must stay at or under 300 physical lines (Refs #4602)
+    title: colonizethis_ai test/planning/**, test/support_test/**, and test/perception/** Dart files must stay at or under 250 physical lines (Refs #4602, #4669)
     spec: SPEC/program/ai-test-file-size.md
     runner: dart
     script: tool/check_ai_test_file_size.dart
@@ -2076,28 +2076,28 @@ rules:
 
   - rule_id: repo.ai_residual_fat_pin_cases_required
     group: testing
-    title: "colonizethis_ai residual fat-pin contracts (Phase-8/9/10 gated basenames) above 300 physical lines must import a sibling *_cases.dart (Refs #3997, #4079, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D)"
+    title: "colonizethis_ai residual fat-pin contracts (Phase-8/9/10 gated basenames) above 250 physical lines must import a sibling *_cases.dart (Refs #3997, #4079, #4104 Slice C, #4310 Slice D, #4365 Slice B, #4602 Slice D, #4669 Slice E)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_residual_fat_pin_suite_size.dart
 
   - rule_id: repo.ai_s7d_support_suite_size
     group: testing
-    title: "colonizethis_ai test/support/s7d/*.dart modules must stay at or under 400 physical lines (Refs #3997, #4079, #4104 Slice C, #4310 Slice A, #4365 Slice B)"
+    title: "colonizethis_ai test/support/s7d/*.dart modules must stay at or under 250 physical lines (Refs #3997, #4079, #4104 Slice C, #4310 Slice A, #4365 Slice B, #4669 Slice E)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_s7d_support_suite_size.dart
 
   - rule_id: repo.ai_observer_suite_size
     group: testing
-    title: colonizethis_ai test/observer/**/*.dart must stay at or under 400 physical lines (Refs #4530)
+    title: colonizethis_ai test/observer/**/*.dart must stay at or under 250 physical lines (Refs #4530, #4669)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_observer_suite_size.dart
 
   - rule_id: repo.ai_test_support_file_size
     group: testing
-    title: colonizethis_ai test/support/**/*.dart (excluding s7d/) must stay at or under 400 physical lines (Refs #4291)
+    title: colonizethis_ai test/support/**/*.dart (excluding s7d/) must stay at or under 250 physical lines (Refs #4291, #4669)
     spec: SPEC/program/ai-test-support-file-size.md
     runner: dart
     script: tool/check_ai_test_support_file_size.dart

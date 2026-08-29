@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int aiTestSupportFileSizeCeiling = 300;
+const int aiTestSupportFileSizeCeiling = 250;
 
 const String _aiSupportRelDir = 'packages/colonizethis_ai/test/support';
 

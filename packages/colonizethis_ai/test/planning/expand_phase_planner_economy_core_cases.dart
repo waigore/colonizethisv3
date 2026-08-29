@@ -239,11 +239,8 @@ void registerExpandPhasePlannerEconomyCoreCases() {
           boostTreasuryRecoveryCargo: true,
         ),
         reason:
-            'Arm A: reg=0 + invadable -> forceRebuild (no treasury '
-            'gate). Arm C: effective treasury 0 < cheapest -> cargo '
-            'boost. Both flags fire together; the orchestrator '
-            'translates the dual signal into a build attempt AND a '
-            'cargo preference bump.',
+            'Arm A: reg=0 + invadable -> forceRebuild. Arm C: treasury 0 '
+            '< cheapest -> cargo boost; orchestrator emits build + cargo.',
       );
     });
   });

@@ -7,8 +7,8 @@ import '../tool/check_ai_expand_peace_pin_suite_size.dart';
 
 void main() {
   group('runCheckAiExpandPeacePinSuiteSize', () {
-    test('ceiling is 300 after #4602 Slice D', () {
-      expect(expandPeacePinSuitePhysicalLineCeiling, 300);
+    test('ceiling is 250 after #4669 Slice E', () {
+      expect(expandPeacePinSuitePhysicalLineCeiling, 250);
     });
 
     test('fails when an oversize peace pin has no *_cases.dart import', () {
