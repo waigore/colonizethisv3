@@ -23,58 +23,42 @@ import 'package:colonizethis_ai/src/planning/phase_planner_dispatch.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_expand_economy.dart';
 import 'package:colonizethis_test/test.dart';
 
-const ExpandEconomyPlan _rebuildOnly = ExpandEconomyPlan(
-  forceCheapestRegimentBuild: true,
-  boostTreasuryRecoveryCargo: false,
-);
-
-const ExpandEconomyPlan _boostOnly = ExpandEconomyPlan(
-  forceCheapestRegimentBuild: false,
-  boostTreasuryRecoveryCargo: true,
-);
-
-const ExpandEconomyPlan _rebuildAndBoost = ExpandEconomyPlan(
-  forceCheapestRegimentBuild: true,
-  boostTreasuryRecoveryCargo: true,
-);
+import 'phase_planner_expand_economy_determinism_cases.dart';
+import 'phase_planner_expand_economy_test_support.dart';
 
 void main() {
   group('expandEconomyPlanFromPhasePlan — phase routing', () {
     test('EXPAND surfaces expandEconomyPlan verbatim (rebuild + boost)', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
-        expandEconomyPlan: _rebuildAndBoost,
+        expandEconomyPlan: kExpandEconomyRebuildAndBoost,
       );
-      expect(expandEconomyPlanFromPhasePlan(outcome), _rebuildAndBoost);
+      expect(expandEconomyPlanFromPhasePlan(outcome), kExpandEconomyRebuildAndBoost);
     });
 
     test('EXPAND surfaces expandEconomyPlan verbatim (rebuild only)', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
-        expandEconomyPlan: _rebuildOnly,
+        expandEconomyPlan: kExpandEconomyRebuildOnly,
       );
-      expect(expandEconomyPlanFromPhasePlan(outcome), _rebuildOnly);
+      expect(expandEconomyPlanFromPhasePlan(outcome), kExpandEconomyRebuildOnly);
     });
 
     test('EXPAND surfaces expandEconomyPlan verbatim (boost only)', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
-        expandEconomyPlan: _boostOnly,
+        expandEconomyPlan: kExpandEconomyBoostOnly,
       );
-      expect(expandEconomyPlanFromPhasePlan(outcome), _boostOnly);
+      expect(expandEconomyPlanFromPhasePlan(outcome), kExpandEconomyBoostOnly);
     });
 
     test('COLONIAL-lite surfaces expandEconomyPlan verbatim '
         '(OW push continues during safeguard)', () {
-      // Issue #2509 § COLONIAL-lite: "Begin NW overture/naval penetration
-      // without weakening OW push". The EXPAND economy directive must
-      // survive the safeguard so a below-quota GP can still force a
-      // regiment rebuild while running COLONIAL-lite overtures.
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.colonialLite,
-        expandEconomyPlan: _rebuildAndBoost,
+        expandEconomyPlan: kExpandEconomyRebuildAndBoost,
       );
-      expect(expandEconomyPlanFromPhasePlan(outcome), _rebuildAndBoost);
+      expect(expandEconomyPlanFromPhasePlan(outcome), kExpandEconomyRebuildAndBoost);
     });
 
     test('COLONIAL routes to ExpandEconomyPlan.defaultPlan (structural '
@@ -99,15 +83,9 @@ void main() {
   group('expandEconomyPlanFromPhasePlan — defensive phase suppression', () {
     test('COLONIAL surfaces ExpandEconomyPlan.defaultPlan even when EXPAND '
         'slot non-default', () {
-      // Defensive: the dispatcher never populates expandEconomyPlan in
-      // COLONIAL, but the adapter must short-circuit on phase to defend
-      // the suppression matrix against a future regression that leaks
-      // an EXPAND directive into the COLONIAL economy pass (which is
-      // driven by colonialCivilianWorkOrders + the COLONIAL build cap,
-      // not the EXPAND regiment-rebuild crisis arm).
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.colonial,
-        expandEconomyPlan: _rebuildAndBoost,
+        expandEconomyPlan: kExpandEconomyRebuildAndBoost,
       );
       expect(
         expandEconomyPlanFromPhasePlan(outcome),
@@ -121,14 +99,9 @@ void main() {
 
     test('DEVELOP surfaces ExpandEconomyPlan.defaultPlan even when EXPAND '
         'slot non-default', () {
-      // Defensive: the DEVELOP phase has its own civilian-build cadence
-      // (developCivilianWorkOrders) and no EXPAND regiment-rebuild
-      // crisis path. Even if a future regression populated
-      // expandEconomyPlan under DEVELOP, the adapter must keep
-      // returning ExpandEconomyPlan.defaultPlan.
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.develop,
-        expandEconomyPlan: _rebuildAndBoost,
+        expandEconomyPlan: kExpandEconomyRebuildAndBoost,
       );
       expect(
         expandEconomyPlanFromPhasePlan(outcome),
@@ -195,7 +168,7 @@ void main() {
     test('EXPAND preserves both ExpandEconomyPlan field values', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.expand,
-        expandEconomyPlan: _rebuildAndBoost,
+        expandEconomyPlan: kExpandEconomyRebuildAndBoost,
       );
       final result = expandEconomyPlanFromPhasePlan(outcome);
       expect(result.forceCheapestRegimentBuild, isTrue);
@@ -205,7 +178,7 @@ void main() {
     test('COLONIAL-lite preserves both ExpandEconomyPlan field values', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.colonialLite,
-        expandEconomyPlan: _boostOnly,
+        expandEconomyPlan: kExpandEconomyBoostOnly,
       );
       final result = expandEconomyPlanFromPhasePlan(outcome);
       expect(result.forceCheapestRegimentBuild, isFalse);
@@ -213,45 +186,5 @@ void main() {
     });
   });
 
-  group('expandEconomyPlanFromPhasePlan — determinism (Must-have #7)', () {
-    test('identical EXPAND outcomes yield identical plans', () {
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.expand,
-        expandEconomyPlan: _rebuildOnly,
-      );
-      expect(
-        expandEconomyPlanFromPhasePlan(outcome),
-        expandEconomyPlanFromPhasePlan(outcome),
-      );
-    });
-
-    test('identical COLONIAL-lite outcomes yield identical plans', () {
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonialLite,
-        expandEconomyPlan: _boostOnly,
-      );
-      expect(
-        expandEconomyPlanFromPhasePlan(outcome),
-        expandEconomyPlanFromPhasePlan(outcome),
-      );
-    });
-
-    test('identical COLONIAL outcomes yield identical ExpandEconomyPlan'
-        '.defaultPlan', () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.colonial);
-      expect(
-        expandEconomyPlanFromPhasePlan(outcome),
-        expandEconomyPlanFromPhasePlan(outcome),
-      );
-    });
-
-    test('identical DEVELOP outcomes yield identical ExpandEconomyPlan'
-        '.defaultPlan', () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.develop);
-      expect(
-        expandEconomyPlanFromPhasePlan(outcome),
-        expandEconomyPlanFromPhasePlan(outcome),
-      );
-    });
-  });
+  registerPhasePlannerExpandEconomyDeterminismCases();
 }

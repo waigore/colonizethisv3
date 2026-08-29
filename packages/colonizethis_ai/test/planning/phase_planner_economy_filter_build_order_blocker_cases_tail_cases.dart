@@ -10,6 +10,19 @@ import 'package:colonizethis_test/test.dart';
 import 'phase_planner_economy_filter_support.dart';
 
 void registerPhasePlannerEconomyFilterBuildOrderBlockerCasesTail() {
+group('resolvePhaseEconomyExpandGpBlockerFocusActive', () {
+    test('active under EXPAND when expand frontier slots are set', () {
+      const outcome = PhasePlanOutcome(
+        phase: ObserverGoalPhase.expand,
+        expandGpOnlyInvadableFrontierActive: true,
+      );
+      expect(
+        resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: outcome),
+        isTrue,
+      );
+    });
+  });
+
 group('resolvePhaseEconomyColonialBuildOrderThresholdCap', () {
     // Refs #2847 Phase 3 economy build-order threshold cap wiring: the
     // cap magnitude scales with `priorityWeights.newWorldAcquisition`

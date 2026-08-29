@@ -7,6 +7,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'phase_planner_goal_filter_colonial_pressure_clamp_cases.dart';
 import 'phase_planner_goal_filter_colonial_pressure_support.dart';
+import 'phase_planner_goal_filter_colonial_pressure_weight_precedence_cases.dart';
 
 void main() {
   group('Phase 3 goal-score colonial-pressure soft-weight wiring '
@@ -216,41 +217,7 @@ void main() {
       },
     );
 
-    test('colonialPressureWeight takes precedence over observerGoalPhase '
-        'when both are supplied', () {
-      // When both parameters are present the weight wins: a weight
-      // of 0.0 with `ObserverGoalPhase.colonial` must collapse the
-      // floors (instead of activating them via the boolean), and a
-      // weight of 1.0 with `ObserverGoalPhase.expand` must activate
-      // the floors (instead of suppressing them via the boolean).
-      final colonialWithZeroWeight = evaluateStrategicGoalScores(
-        kColonialPressureSoftWeightSnapshot,
-        kColonialPressureSoftWeightConfig,
-        observerGoalPhase: ObserverGoalPhase.colonial,
-        colonialPressureWeight: 0.0,
-      );
-      final expandWithFullWeight = evaluateStrategicGoalScores(
-        kColonialPressureSoftWeightSnapshot,
-        kColonialPressureSoftWeightConfig,
-        observerGoalPhase: ObserverGoalPhase.expand,
-        colonialPressureWeight: 1.0,
-      );
-      expect(
-        colonialWithZeroWeight[StrategicGoal.conquer]!,
-        lessThan(kMinimumColonialConquerScoreWhenPressure),
-        reason:
-            'weight = 0.0 overrides COLONIAL phase boolean and skips '
-            'the conquer floor.',
-      );
-      expect(
-        expandWithFullWeight[StrategicGoal.conquer]!,
-        greaterThanOrEqualTo(kMinimumColonialConquerScoreWhenPressure),
-        reason:
-            'weight = 1.0 overrides EXPAND phase boolean suppress and '
-            'activates the conquer floor.',
-      );
-    });
-
+    registerPhasePlannerGoalFilterColonialPressureWeightPrecedenceCases();
     registerPhasePlannerColonialPressureClampCases();
   });
 }
