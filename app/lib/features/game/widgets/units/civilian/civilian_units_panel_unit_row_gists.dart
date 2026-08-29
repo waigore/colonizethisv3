@@ -17,7 +17,6 @@ import 'purchase_land_payoff_copy.dart';
 import 'purchase_land_payoff_gist_line.dart';
 import 'transport_step_yield_copy.dart';
 import 'transport_step_yield_gist_line.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 List<Widget> civilianUnitsPanelPendingWorkGistChildren({
   required AppLocalizations l10n,
