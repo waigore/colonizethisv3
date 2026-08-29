@@ -1,4 +1,4 @@
-// Case bodies for `greatPowerWarCountOnTarget` pin (Refs #4310 Slice D).
+// Topic-split pins (Refs #4669 Slice B).
 
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

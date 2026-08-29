@@ -110,5 +110,41 @@ void main() {
         temp.deleteSync(recursive: true);
       }
     });
+
+    test(
+      'fails when a lettered part_a_cases shard exists under planning tests',
+      () {
+        final temp = Directory.systemTemp.createTempSync('ai-matrix-letter-');
+        try {
+          final planning = Directory(
+            p.join(
+              temp.path,
+              'packages',
+              'colonizethis_ai',
+              'test',
+              'planning',
+            ),
+          )..createSync(recursive: true);
+          File(
+            p.join(planning.path, 'foo_part_a_cases.dart'),
+          ).writeAsStringSync('// cases\n');
+          File(
+            p.join(planning.path, 'foo_part_b_test.dart'),
+          ).writeAsStringSync(_body);
+
+          final errors = <String>[];
+          final exitCode = runCheckAiTestNoMatrixPartShards(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('foo_part_a_cases.dart'));
+          expect(errors.join('\n'), contains('foo_part_b_test.dart'));
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
   });
 }

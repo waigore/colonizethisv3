@@ -1,7 +1,4 @@
-// Case bodies for `expand_phase_planner_economy_test.dart` (Refs #4079 Slice D).
-// Registered from the thin contract; pin coverage preserved 1:1 from the
-// former inline suite.
-
+// Topic-split pins (Refs #4669 Slice B).
 import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
     show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';

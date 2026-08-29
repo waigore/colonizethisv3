@@ -1,4 +1,4 @@
-// Case bodies for `canPivotFromSoleGpWarAfterPeace` pin group (Refs #4310).
+// Topic-split pins (Refs #4669 Slice B).
 
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
