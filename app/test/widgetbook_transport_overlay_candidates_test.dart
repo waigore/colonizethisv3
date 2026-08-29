@@ -1,4 +1,4 @@
-// Pins Transport Overlay Candidates Widgetbook registration + shipped isolation
+// Pins Transport Overlay Candidates Widgetbook registration + promoted-art checks
 // (Refs #1819).
 import 'dart:convert';
 
@@ -67,6 +67,26 @@ void main() {
         expect(atlas.contains('widgetbook_host'), isFalse);
         expect(atlas.contains('transport_overlay_candidates'), isFalse);
         expect(atlas.contains('pytool/out'), isFalse);
+      }
+    },
+  );
+
+  test(
+    'shipped transport atlases match promoted candidate bytes (PO #1819)',
+    () async {
+      for (final family in ['road', 'rail']) {
+        final shipped = await rootBundle.load(
+          'assets/images/terrain/tilesets/tileset_transport_${family}_64.png',
+        );
+        final candidate = await rootBundle.load(
+          'packages/widgetbook_host/assets/transport_overlay_candidates/'
+          'tileset_transport_${family}_64.png',
+        );
+        expect(
+          shipped.buffer.asUint8List(),
+          candidate.buffer.asUint8List(),
+          reason: 'shipped $family atlas should match promoted candidate art',
+        );
       }
     },
   );

@@ -25,6 +25,15 @@ GENERATOR = REPO_ROOT / "pytool/generate_transport_overlay_tiles_64.py"
 DEFAULT_TERRAIN = REPO_ROOT / "app/assets/images/terrain/tilesets/tileset_sea_plains_v2_64.png"
 DEFAULT_CONTRACTS = REPO_ROOT / "pytool/out/transport_edge_contracts_64"
 DEFAULT_ATLAS_OUT = REPO_ROOT / "pytool/out/transport_overlay_atlases_64"
+SHIPPED_TILESET_DIR = REPO_ROOT / "app/assets/images/terrain/tilesets"
+SEPIA_TILESET_DIR = REPO_ROOT / "app/assets/themes/sepia/images/terrain/tilesets"
+WIDGETBOOK_CANDIDATE_DIR = REPO_ROOT / "widgetbook_host/assets/transport_overlay_candidates"
+
+PROMOTE_TARGETS = (
+    SHIPPED_TILESET_DIR,
+    SEPIA_TILESET_DIR,
+    WIDGETBOOK_CANDIDATE_DIR,
+)
 
 
 def load_generator():
@@ -187,6 +196,19 @@ def write_terrain_qa_composites(
         print(f"[{family}] wrote terrain QA composite {dest}")
 
 
+def promote_atlases(out_dir: Path, *, families: tuple[str, ...]) -> None:
+    """Copy candidate atlases into shipped default, sepia theme, and Widgetbook paths."""
+    for family in families:
+        source = out_dir / f"tileset_transport_{family}_64.png"
+        if not source.is_file():
+            raise FileNotFoundError(f"Missing candidate atlas to promote: {source}")
+        for target_dir in PROMOTE_TARGETS:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            dest = target_dir / source.name
+            dest.write_bytes(source.read_bytes())
+            print(f"[{family}] promoted {source.name} -> {dest}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--terrain", type=Path, default=DEFAULT_TERRAIN)
@@ -198,7 +220,25 @@ def main() -> None:
         action="store_true",
         help="Also write QA composites overlaid on a plains terrain tile",
     )
+    parser.add_argument(
+        "--promote",
+        action="store_true",
+        help=(
+            "After rebuild, copy candidate atlases into shipped default + sepia theme "
+            "tileset folders and Widgetbook candidate assets (byte-identical copies)."
+        ),
+    )
+    parser.add_argument(
+        "--promote-only",
+        action="store_true",
+        help="Copy existing candidate atlases from --out-dir into shipped/theme paths (no rebuild).",
+    )
     args = parser.parse_args()
+
+    if args.promote_only:
+        families = ("road", "rail") if args.family == "both" else (args.family,)
+        promote_atlases(args.out_dir.resolve(), families=families)
+        return
 
     mod = load_generator()
     mod.refuse_shipped_out_dir(args.out_dir.resolve(), allow_shipped=False)
@@ -210,13 +250,15 @@ def main() -> None:
     earth = extract_terrain_earth_palette(terrain_path)
     road_colors = road_palette(earth)
 
-    families: list[tuple[str, Image.Image]] = []
+    built_families: list[tuple[str, Image.Image]] = []
     if args.family in ("road", "both"):
-        families.append(("road", build_road_straight(mod, road_colors)))
+        built_families.append(("road", build_road_straight(mod, road_colors)))
     if args.family in ("rail", "both"):
-        families.append(("rail", build_rail_straight(mod, earth)))
+        built_families.append(("rail", build_rail_straight(mod, earth)))
 
-    for family, straight in families:
+    family_keys: list[str] = []
+    for family, straight in built_families:
+        family_keys.append(family)
         family_dir = write_family_seed(mod, family, straight, args.contracts_out.resolve())
         mod.refresh_family_tiles_from_seed(family_dir)
         atlas_path = args.out_dir.resolve() / f"tileset_transport_{family}_64.png"
@@ -228,6 +270,9 @@ def main() -> None:
         if args.terrain_qa:
             write_terrain_qa_composites(mod, family_dir, terrain_path, args.out_dir.resolve())
         print(f"[{family}] restyle complete -> {atlas_path}")
+
+    if args.promote:
+        promote_atlases(args.out_dir.resolve(), families=tuple(family_keys))
 
 
 if __name__ == "__main__":
