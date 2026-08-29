@@ -184,6 +184,25 @@ class TransportOverlayCandidateSeamsTest(unittest.TestCase):
         )
         self.assertGreaterEqual(edge_opaque, self.mod.CORRIDOR_PX - 1)
 
+    def test_shipped_atlases_match_candidates_when_promoted(self) -> None:
+        for family in ("road", "rail"):
+            candidate = CANDIDATE_DIR / f"tileset_transport_{family}_64.png"
+            shipped = REPO / f"app/assets/images/terrain/tilesets/tileset_transport_{family}_64.png"
+            sepia = (
+                REPO
+                / f"app/assets/themes/sepia/images/terrain/tilesets/tileset_transport_{family}_64.png"
+            )
+            widgetbook = (
+                REPO
+                / f"widgetbook_host/assets/transport_overlay_candidates/tileset_transport_{family}_64.png"
+            )
+            if not candidate.is_file():
+                self.skipTest(f"candidate {family} atlas not committed yet")
+            candidate_bytes = candidate.read_bytes()
+            self.assertEqual(shipped.read_bytes(), candidate_bytes)
+            self.assertEqual(sepia.read_bytes(), candidate_bytes)
+            self.assertEqual(widgetbook.read_bytes(), candidate_bytes)
+
     def test_committed_candidates_pass_seam_check_when_present(self) -> None:
         for family in ("road", "rail"):
             atlas = CANDIDATE_DIR / f"tileset_transport_{family}_64.png"

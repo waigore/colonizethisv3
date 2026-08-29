@@ -59,25 +59,29 @@ FAMILY_PLANS = (
     FamilyPlan(
         key="road",
         seed_prompt=(
-            "pixel art top-down dirt road straight segment, centered 14px wide corridor, "
-            "64x64 tile, transparent background, no grass or sand lot outside the corridor, "
-            "crisp strategy game overlay"
+            "pixel art top-down worn earth track straight segment, muted olive-brown palette "
+            "matching ColonizeThis sea/plains terrain tileset, centered 14px wide corridor, "
+            "64x64 tile, transparent background, stippled pixel texture not sandy yellow, "
+            "no grass lot outside the corridor, crisp strategy game overlay"
         ),
         center_fill_prompt=(
-            "connect the existing 14px dirt-road corridor through the plus-shaped interior only. "
-            "do not paint outside the corridor, no asphalt, no parking lot, keep transparent background."
+            "connect the existing 14px earth-track corridor through the plus-shaped interior only. "
+            "muted olive-brown pixel stipple matching terrain palette, no asphalt, no sandy path, "
+            "keep transparent background."
         ),
     ),
     FamilyPlan(
         key="rail",
         seed_prompt=(
-            "pixel art top-down railroad straight segment, centered 14px wide corridor, "
-            "64x64 tile, transparent background, wooden ties evenly spaced from top to bottom, "
-            "steel rails, no ballast platform or bridge deck"
+            "pixel art top-down railroad straight segment, muted grey steel rails and brown "
+            "wooden ties, palette matching ColonizeThis terrain (no purple wood, no pier decking), "
+            "centered 14px wide corridor, 64x64 tile, transparent background, "
+            "no ballast platform or bridge deck"
         ),
         center_fill_prompt=(
             "connect the existing 14px rail corridor through the plus-shaped interior only. "
-            "even wooden ties and steel rails, no gravel platform, keep transparent background."
+            "even brown wooden ties and dark steel rails, muted grey bed, no purple planks, "
+            "keep transparent background."
         ),
     ),
 )
