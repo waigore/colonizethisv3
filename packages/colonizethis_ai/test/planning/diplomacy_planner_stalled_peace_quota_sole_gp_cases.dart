@@ -7,8 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'diplomacy_planner_stalled_peace_quota_sole_gp_part_a_cases.dart';
-import 'diplomacy_planner_stalled_peace_quota_sole_gp_part_b_cases.dart';
+import 'diplomacy_planner_stalled_peace_quota_sole_gp_branch_cases.dart';
+import 'diplomacy_planner_stalled_peace_quota_sole_gp_tail_cases.dart';
 
 void registerDiplomacyPlannerStalledPeaceQuotaSoleGpCases() {
   registerDiplomacyPlannerStalledPeaceQuotaSoleGpPartACases();

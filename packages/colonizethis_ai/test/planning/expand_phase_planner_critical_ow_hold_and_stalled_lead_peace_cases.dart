@@ -1,5 +1,5 @@
-import 'expand_phase_planner_critical_ow_hold_and_stalled_lead_peace_part_a_cases.dart';
-import 'expand_phase_planner_critical_ow_hold_and_stalled_lead_peace_part_b_cases.dart';
+import 'expand_phase_planner_critical_ow_hold_and_stalled_lead_peace_branch_cases.dart';
+import 'expand_phase_planner_critical_ow_hold_and_stalled_lead_peace_tail_cases.dart';
 
 void registerExpandPhasePlannerCriticalOwHoldAndStalledLeadPeaceCases() {
   registerExpandPhasePlannerCriticalOwHoldAndStalledLeadPeaceCasesPartA();
