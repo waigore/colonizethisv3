@@ -13,7 +13,11 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckAiTestSupportFileSize', () {
-    test('passes on current repo tree under 300 physical-line ceiling', () {
+    test('ceiling is 250 after #4669 Slice E', () {
+      expect(aiTestSupportFileSizeCeiling, 250);
+    });
+
+    test('passes on current repo tree under 250 physical-line ceiling', () {
       expect(runCheckAiTestSupportFileSize('.'), 0);
     });
 

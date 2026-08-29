@@ -8,7 +8,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// (Refs #3997). Phase-10 Slice C densify ratchets 650→600 (Refs #4104);
 /// Phase-11 Slice C →550 (#4239); Phase-12 Slice D →500 (Refs #4291);
 /// Phase-13 Slice D →450 (Refs #4310); Phase-14 Slice B →400 (Refs #4365).
-const int aiPlanningCasesSuitePhysicalLineCeiling = 300;
+const int aiPlanningCasesSuitePhysicalLineCeiling = 250;
 
 /// Repo-relative path prefix for AI planning case libraries.
 const String _aiPlanningCasesPathPrefix =

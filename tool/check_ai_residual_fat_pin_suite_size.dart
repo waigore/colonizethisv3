@@ -9,7 +9,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// ≤750-or-cases; Phase-9 tightened to ≤650-or-cases; Phase-10 densify
 /// ratchets to ≤500-or-cases for gated basenames (Phase-12 Slice D);
 /// Phase-13 Slice D →450 (Refs #4310); Phase-14 Slice B →400 (Refs #4365).
-const int residualFatPinSuitePhysicalLineCeiling = 300;
+const int residualFatPinSuitePhysicalLineCeiling = 250;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const String _supportTestPrefix = 'packages/colonizethis_ai/test/support_test/';
