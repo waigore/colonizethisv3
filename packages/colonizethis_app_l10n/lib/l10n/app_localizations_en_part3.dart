@@ -791,6 +791,16 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_tileBuildFortPayoffGist(
+    String fromLabel,
+    String toLabel,
+    int turns,
+  ) {
+    final duration = turns == 1 ? '1 turn' : '$turns turns';
+    return 'After this work: $fromLabel → $toLabel · Takes $duration';
+  }
+
+  @override
   String get provinceOverlay_tilePurchaseLandTooltip => 'Purchase land';
 
   @override

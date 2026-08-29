@@ -7,6 +7,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import '../unit_orders/move_army_invasion_intel_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_gist_line.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
@@ -25,6 +26,7 @@ Widget buildMilitarySectionByOwner({
   required bool showBuildFortActionIcon,
   required bool buildFortActionEnabled,
   required String buildFortTooltip,
+  String? buildFortPayoffGist,
   VoidCallback? onBuildFortTap,
   bool showMoveArmyControl = false,
   bool moveArmyEnabled = false,
@@ -68,6 +70,15 @@ Widget buildMilitarySectionByOwner({
         ),
     ],
   );
+  final fortStatusBlock = Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      fortStatusRow,
+      if (buildFortPayoffGist != null && buildFortPayoffGist.isNotEmpty)
+        BuildFortPayoffGistLine(text: buildFortPayoffGist),
+    ],
+  );
   final moveInvadeActions = <Widget>[
     if (showMoveArmyControl)
       Padding(
@@ -108,7 +119,7 @@ Widget buildMilitarySectionByOwner({
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [fortStatusRow, ...moveInvadeActions],
+        children: [fortStatusBlock, ...moveInvadeActions],
       ),
     );
   }
@@ -119,7 +130,7 @@ Widget buildMilitarySectionByOwner({
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          fortStatusRow,
+          fortStatusBlock,
           ...moveInvadeActions,
           ...pending.map(
             (line) => Padding(
@@ -154,7 +165,7 @@ Widget buildMilitarySectionByOwner({
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        fortStatusRow,
+        fortStatusBlock,
         ...moveInvadeActions,
         const SizedBox(height: CtSpacing.m / 2),
         ...ownerIds.map((oid) {

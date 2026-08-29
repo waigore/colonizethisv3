@@ -4411,6 +4411,21 @@
       }
     }
   },
+  "provinceOverlay_tileBuildFortPayoffGist": "After this work: {fromLabel} → {toLabel} · Takes {turns, plural, one {1 turn} other {{turns} turns}}",
+  "@provinceOverlay_tileBuildFortPayoffGist": {
+    "description": "Default-visible Build fort payoff: current and next siege posture plus work duration (Refs #4668).",
+    "placeholders": {
+      "fromLabel": {
+        "type": "String"
+      },
+      "toLabel": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_tileBuildPortTooltip": "Build port",
   "@provinceOverlay_tileBuildPortTooltip": {
     "description": "MAP20001 Tile Build port shortcut tooltip when enabled without cost preview"

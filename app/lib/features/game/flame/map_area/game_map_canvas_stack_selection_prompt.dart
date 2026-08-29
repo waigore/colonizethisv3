@@ -9,6 +9,7 @@ import 'game_map_canvas_stack_selection_prompt_tokens.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
+import '../../widgets/units/civilian/build_fort_payoff_gist_line.dart';
 import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 import '../../widgets/units/civilian/transport_step_yield_gist_line.dart';
@@ -26,6 +27,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     this.nextYieldGist,
     this.payoffGist,
     this.transportGist,
+    this.buildFortGist,
     super.key,
   });
 
@@ -37,6 +39,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final String? nextYieldGist;
   final String? payoffGist;
   final String? transportGist;
+  final String? buildFortGist;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +56,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
           nextYieldGist: nextYieldGist,
           payoffGist: payoffGist,
           transportGist: transportGist,
+          buildFortGist: buildFortGist,
         ),
       ),
     );
@@ -68,6 +72,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
     this.nextYieldGist,
     this.payoffGist,
     this.transportGist,
+    this.buildFortGist,
   });
 
   final AppLocalizations l10n;
@@ -77,6 +82,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
   final String? nextYieldGist;
   final String? payoffGist;
   final String? transportGist;
+  final String? buildFortGist;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +90,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
     final yieldGist = nextYieldGist;
     final landGist = payoffGist;
     final roadGist = transportGist;
+    final fortGist = buildFortGist;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: EditorialMonoclePalette.bgDeep.withValues(
@@ -117,6 +124,8 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
               PurchaseLandPayoffGistLine(text: landGist),
             if (roadGist != null && roadGist.isNotEmpty && !usesRelocateCopy)
               TransportStepYieldGistLine(text: roadGist),
+            if (fortGist != null && fortGist.isNotEmpty && !usesRelocateCopy)
+              BuildFortPayoffGistLine(text: fortGist),
           ],
         ),
       ),
