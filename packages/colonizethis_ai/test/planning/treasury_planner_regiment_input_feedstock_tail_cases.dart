@@ -16,6 +16,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'treasury_planner_regiment_input_feedstock_games.dart';
 import 'treasury_planner_regiment_input_support.dart';
 
 void registerTreasuryRegimentInputFeedstockCasesPartB() {
@@ -24,64 +25,9 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
     () {
       final threshold = regimentInputThreshold();
       const peasantFabricCost = 2;
-      const tileIron = 'oldWorld|p0|2|0';
-
-      Game populationBoundSellerGame({
-        required int fabricHeld,
-        int woolHeld = 20,
-      }) {
-        var stockpile = Stockpile.empty
-            .applyDelta(CommodityCatalog.iron.id, 2)
-            .applyDelta(CommodityCatalog.grain.id, 10);
-        if (woolHeld > 0) {
-          stockpile = stockpile.applyDelta(kRegimentInputWoolId, woolHeld);
-        }
-        if (fabricHeld > 0) {
-          stockpile = stockpile.applyDelta(kRegimentInputFabricId, fabricHeld);
-        }
-        return Game(
-          id: 'g-peasant-recruit-feedstock',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-            oldWorld: RegionData(
-              provinces: [
-                for (var i = 0; i < 5; i++)
-                  Province(
-                    id: 'oldWorld|p$i',
-                    regionId: kRegionOldWorld,
-                    ownerId: kRegimentInputSingleGpId,
-                  ),
-              ],
-            ),
-            newWorld: const RegionData(provinces: []),
-            resourceByTileKey: const {tileIron: 'iron'},
-            tileKeysByRegionAndProvince: const {
-              kRegionOldWorld: {
-                'oldWorld|p0': [tileIron],
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: kRegimentInputSingleGpId,
-              displayName: 'Seller',
-              isHuman: false,
-              capitalProvinceId: 'oldWorld|p0',
-              stockpile: stockpile,
-              treasury: threshold,
-              workerPool: const WorkerPool(peasants: 1),
-            ),
-          ],
-          worldMarketState: WorldMarketState.withDefaultPrices(const {
-            'grain': 10,
-            kRegimentInputWoolId: 20,
-            kRegimentInputFabricId: 40,
-          }),
-        );
-      }
 
       test('fixture is population-bound with fabric below recruit cost', () {
-        final game = populationBoundSellerGame(fabricHeld: 1);
+        final game = populationBoundSellerRegimentInputGame(fabricHeld: 1);
         expect(
           isCastIronLabourPopulationBoundForLockRecoverySeller(
             game: game,
@@ -100,7 +46,7 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
       test(
         'withholds wool when fabric meets regiment cost but not peasant recruit',
         () {
-          final game = populationBoundSellerGame(fabricHeld: 1);
+          final game = populationBoundSellerRegimentInputGame(fabricHeld: 1);
           expect(
             regimentInputOffersFor(
               runRegimentInputTreasuryPlanner(game),
@@ -118,7 +64,7 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
       test(
         'resumes offering wool once fabric meets peasant recruit cost of 2',
         () {
-          final game = populationBoundSellerGame(fabricHeld: 2);
+          final game = populationBoundSellerRegimentInputGame(fabricHeld: 2);
           expect(
             regimentInputOffersFor(
               runRegimentInputTreasuryPlanner(game),
@@ -135,7 +81,7 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
         'emits a fabric bid for the remaining unit when fabric meets regiment '
         'cost but not peasant recruit',
         () {
-          final game = populationBoundSellerGame(fabricHeld: 1, woolHeld: 20);
+          final game = populationBoundSellerRegimentInputGame(fabricHeld: 1, woolHeld: 20);
           final fabricBids = runRegimentInputTreasuryPlanner(game)
               .where(
                 (o) =>
@@ -162,7 +108,7 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
         'emits a fabric bid sized to the peasant recruit cost when fabric is '
         'zero and feedstock is on hand',
         () {
-          final game = populationBoundSellerGame(fabricHeld: 0, woolHeld: 20);
+          final game = populationBoundSellerRegimentInputGame(fabricHeld: 0, woolHeld: 20);
           final fabricBids = runRegimentInputTreasuryPlanner(game)
               .where(
                 (o) =>
@@ -187,7 +133,7 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
       test(
         'emits no fabric bid once peasant recruit fabric cost is met',
         () {
-          final game = populationBoundSellerGame(fabricHeld: 2, woolHeld: 20);
+          final game = populationBoundSellerRegimentInputGame(fabricHeld: 2, woolHeld: 20);
           final fabricBids = runRegimentInputTreasuryPlanner(game)
               .where(
                 (o) =>
@@ -203,12 +149,12 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
         'labour-infeasible domestic fabric bids fabric directly, not wool '
         'feedstock',
         () {
-          final game = populationBoundSellerGame(
+          final game = populationBoundSellerRegimentInputGame(
             fabricHeld: 0,
             woolHeld: 20,
           ).copyWith(
             players: [
-              populationBoundSellerGame(fabricHeld: 0, woolHeld: 20)
+              populationBoundSellerRegimentInputGame(fabricHeld: 0, woolHeld: 20)
                   .players
                   .first
                   .copyWith(workerPool: const WorkerPool(peasants: 1)),
@@ -240,7 +186,7 @@ void registerTreasuryRegimentInputFeedstockCasesPartB() {
         'population-bound seller with a regiment still emits a fabric bid when '
         'domestic fabric is labour-infeasible',
         () {
-          final base = populationBoundSellerGame(fabricHeld: 1, woolHeld: 20);
+          final base = populationBoundSellerRegimentInputGame(fabricHeld: 1, woolHeld: 20);
           final game = base.copyWith(
             worldState: base.worldState.copyWith(
               armies: [

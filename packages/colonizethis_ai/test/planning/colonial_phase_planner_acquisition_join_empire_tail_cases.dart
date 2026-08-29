@@ -66,6 +66,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/colonial_acquisition_test_support.dart';
+import 'colonial_phase_planner_acquisition_join_empire_iteration_cases.dart';
 
 const String _gp1 = kColonialPhaseGp1;
 const String _gp2 = kColonialPhaseGp2;
@@ -178,117 +179,7 @@ group('planColonialAcquisition (Join Empire path)', () {
             'target.',
       );
     });
-
-    test('two valid tribe targets -> first sorted invadable NW wins', () {
-      // Both tribe1 and tribe2 satisfy every Join Empire gate. The
-      // planner picks the tribe whose NW province appears first in
-      // `invadableNewWorldProvinceIdsSorted` (ascending). With
-      // `province1 = newWorld|tribe1_a` < `province2 = newWorld|tribe2_b`
-      // the iteration hits tribe1 first.
-      final game = buildColonialAcquisitionGame(
-        gameIdPrefix: 'g-2509-colonial-acquisition',
-        minorNations: kColonialAcquisitionDefaultMinors,
-        newWorldProvinces: const [
-          Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
-          Province(id: _province2, regionId: 'newWorld', ownerId: _tribe2),
-        ],
-        overtureStates: <OvertureState>[
-          colonialAcquisitionNap(_gp1, _tribe1),
-          colonialAcquisitionNap(_gp1, _tribe2),
-        ],
-        diplomacyRelations: <DiplomacyRelation>[
-          colonialAcquisitionFriendly(_gp1, _tribe1),
-          colonialAcquisitionFriendly(_gp1, _tribe2),
-        ],
-      );
-      final snapshot = buildColonialAcquisitionSnapshot(
-        invadableNw: const [_province1, _province2],
-      );
-      expect(
-        planColonialAcquisition(game: game, snapshot: snapshot),
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe1,
-          method: AcquisitionMethod.joinEmpire,
-        ),
-        reason:
-            'Iteration over `invadableNewWorldProvinceIdsSorted` is '
-            'ascending; the first satisfying province (tribe1) wins '
-            'the deterministic tie-break (Refs #2509 Must-have #7).',
-      );
-    });
-
-    test('second sorted tribe wins when first sorted tribe fails a gate', () {
-      // Same two-target setup, but tribe1 fails the treasury gate
-      // (single-province join-empire cost 7000 > 5000 treasury) while
-      // tribe2 (also single-province, cost 7000) also fails. Drop the
-      // treasury below tribe1 cost but raise NW province count so
-      // tribe2 fails earlier. We instead use overture stage: tribe1
-      // at `embassy` (fails the nap gate), tribe2 at `nap` -> tribe2
-      // wins. Pins the per-target gate evaluation order independently
-      // of the iteration order.
-      final game = buildColonialAcquisitionGame(
-        gameIdPrefix: 'g-2509-colonial-acquisition',
-        minorNations: kColonialAcquisitionDefaultMinors,
-        newWorldProvinces: const [
-          Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
-          Province(id: _province2, regionId: 'newWorld', ownerId: _tribe2),
-        ],
-        overtureStates: <OvertureState>[
-          colonialAcquisitionEmbassy(_gp1, _tribe1),
-          colonialAcquisitionNap(_gp1, _tribe2),
-        ],
-        diplomacyRelations: <DiplomacyRelation>[
-          colonialAcquisitionFriendly(_gp1, _tribe1),
-          colonialAcquisitionFriendly(_gp1, _tribe2),
-        ],
-      );
-      final snapshot = buildColonialAcquisitionSnapshot(
-        invadableNw: const [_province1, _province2],
-      );
-      expect(
-        planColonialAcquisition(game: game, snapshot: snapshot),
-        const ColonialAcquisitionTarget(
-          targetFactionId: _tribe2,
-          method: AcquisitionMethod.joinEmpire,
-        ),
-        reason:
-            'tribe1 fails the nap gate (overture at embassy) so the '
-            'iteration falls through to tribe2 whose overture is at '
-            'nap. The second-sorted province wins when the first '
-            'fails a gate.',
-      );
-    });
-
-    test('determinism: identical inputs produce identical targets', () {
-      // Must-have #7 pin: repeated calls on the same game / snapshot
-      // must return byte-identical results.
-      final game = buildColonialAcquisitionGame(
-        gameIdPrefix: 'g-2509-colonial-acquisition',
-        minorNations: kColonialAcquisitionDefaultMinors,
-        newWorldProvinces: const [
-          Province(id: _province1, regionId: 'newWorld', ownerId: _tribe1),
-          Province(id: _province2, regionId: 'newWorld', ownerId: _tribe2),
-        ],
-        overtureStates: <OvertureState>[
-          colonialAcquisitionNap(_gp1, _tribe1),
-          colonialAcquisitionNap(_gp1, _tribe2),
-        ],
-        diplomacyRelations: <DiplomacyRelation>[
-          colonialAcquisitionFriendly(_gp1, _tribe1),
-          colonialAcquisitionFriendly(_gp1, _tribe2),
-        ],
-      );
-      final snapshot = buildColonialAcquisitionSnapshot(
-        invadableNw: const [_province1, _province2],
-      );
-      final first = planColonialAcquisition(game: game, snapshot: snapshot);
-      final second = planColonialAcquisition(game: game, snapshot: snapshot);
-      expect(second, first);
-      expect(
-        first,
-        isNotNull,
-        reason: 'Determinism test must run on a satisfying input.',
-      );
-    });
   });
+
+  registerColonialPhasePlannerAcquisitionJoinEmpireCasesIteration();
 }

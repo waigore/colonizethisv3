@@ -11,6 +11,7 @@ import 'package:colonizethis_ai/src/planning/phase_planner_naval_filter.dart'
     show resolvePhaseNavalColonialPressureWeight;
 import 'package:colonizethis_test/test.dart';
 import 'phase_planner_priority_weight_resolvers_support.dart';
+import 'phase_planner_priority_weight_resolvers_goal_economy_diplomacy_disjoint_cases.dart';
 
 void registerPhasePlannerPriorityWeightResolversGoalEconomyDiplomacyCasesTail() {
 group('Phase 2 weight resolvers — goal filter', () {
@@ -184,75 +185,7 @@ group('cross-filter field-exclusivity sweep', () {
         equals(kPriorityWeightResolversUnique.newWorldCivilian),
       );
     });
-
-    test('the four fields are read disjointly — flipping a single field '
-        'changes only the resolvers that project it', () {
-      const baseline = PhasePriorityWeights(
-        oldWorldConquest: 0.10,
-        newWorldAcquisition: 0.20,
-        oldWorldCivilian: 0.30,
-        newWorldCivilian: 0.40,
-      );
-      const owConquestBumped = PhasePriorityWeights(
-        oldWorldConquest: 0.99,
-        newWorldAcquisition: 0.20,
-        oldWorldCivilian: 0.30,
-        newWorldCivilian: 0.40,
-      );
-
-      final base = priorityWeightResolversOutcomeWithWeights(
-        phase: ObserverGoalPhase.expand,
-        weights: baseline,
-      );
-      final bumped = priorityWeightResolversOutcomeWithWeights(
-        phase: ObserverGoalPhase.expand,
-        weights: owConquestBumped,
-      );
-
-      // OW conquest resolvers must change.
-      expect(
-        resolvePhaseConquestOldWorldInvasionWeight(phasePlan: bumped),
-        isNot(
-          equals(
-            resolvePhaseConquestOldWorldInvasionWeight(phasePlan: base),
-          ),
-        ),
-      );
-      expect(
-        resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight(
-          phasePlan: bumped,
-        ),
-        isNot(
-          equals(
-            resolvePhaseDiplomacyDeclareWarOldWorldConquestWeight(
-              phasePlan: base,
-            ),
-          ),
-        ),
-      );
-      // Other resolvers must NOT change.
-      expect(
-        resolvePhaseConquestNwInvasionWeight(phasePlan: bumped),
-        equals(resolvePhaseConquestNwInvasionWeight(phasePlan: base)),
-      );
-      expect(
-        resolvePhaseEconomyOldWorldCivilianWeight(phasePlan: bumped),
-        equals(
-          resolvePhaseEconomyOldWorldCivilianWeight(phasePlan: base),
-        ),
-      );
-      expect(
-        resolvePhaseEconomyNewWorldCivilianWeight(phasePlan: bumped),
-        equals(
-          resolvePhaseEconomyNewWorldCivilianWeight(phasePlan: base),
-        ),
-      );
-      expect(
-        resolvePhaseEconomyColonialPressureWeight(phasePlan: bumped),
-        equals(
-          resolvePhaseEconomyColonialPressureWeight(phasePlan: base),
-        ),
-      );
-    });
   });
+
+  registerPhasePlannerPriorityWeightResolversGoalEconomyDiplomacyDisjointCases();
 }

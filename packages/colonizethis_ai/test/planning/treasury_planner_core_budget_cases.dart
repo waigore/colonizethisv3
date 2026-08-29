@@ -10,6 +10,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'treasury_planner_main_support.dart';
+import 'treasury_planner_core_budget_lock_recovery_tail_cases.dart';
 
 
 void registerTreasuryPlannerCoreBudgetCases() {
@@ -201,54 +202,7 @@ group('runTreasuryPlanner(TreasuryPlannerInput(Refs #2994))', () {
         expect(lockRecoveryDesignatedBuyerId(game), 'gp2');
       },
     );
-
-    test(
-      'below-quota zero-NW affluent GP is excluded from designated buyer '
-      'pool (Refs #2924 Path F)',
-      () {
-        const ow = 'oldWorld';
-        final game = Game(
-          id: 'g-lock-recovery-seller',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: RegionData(
-              provinces: [
-                for (var i = 0; i < 7; i++)
-                  Province(
-                    id: '$ow|p2_$i',
-                    regionId: ow,
-                    ownerId: 'gp2',
-                  ),
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(
-              id: 'gp1',
-              displayName: 'GP1',
-              isHuman: false,
-              capitalProvinceId: '$ow|p1',
-              treasury: 0,
-            ),
-            Player(
-              id: 'gp2',
-              displayName: 'GP2',
-              isHuman: false,
-              capitalProvinceId: '$ow|p2_0',
-              treasury: 2500,
-            ),
-          ],
-        );
-        expect(
-          lockRecoveryDesignatedBuyerId(game),
-          isEmpty,
-          reason: 'gp2 is affluent but below quota with zero NW — must stay '
-              'sell-only until Path F credits accumulate.',
-        );
-      },
-    );
-
   });
+
+  registerTreasuryPlannerCoreBudgetLockRecoveryTailCases();
 }
