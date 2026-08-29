@@ -11,6 +11,7 @@
 
 import 'diplomacy_planner_below_quota_peace_core_cases.dart';
 import 'diplomacy_planner_below_quota_peace_near_quota_cases.dart';
+import 'diplomacy_planner_below_quota_peace_near_quota_tail_cases.dart';
 import 'diplomacy_planner_below_quota_peace_peer_cases.dart';
 import 'diplomacy_planner_below_quota_peace_stalled_integration_cases.dart';
 
@@ -18,5 +19,6 @@ void main() {
   registerDiplomacyBelowQuotaPeaceCoreCases();
   registerDiplomacyBelowQuotaPeacePeerCases();
   registerDiplomacyBelowQuotaPeaceNearQuotaCases();
+  registerDiplomacyBelowQuotaPeaceNearQuotaTailCases();
   registerDiplomacyBelowQuotaPeaceStalledIntegrationCases();
 }
