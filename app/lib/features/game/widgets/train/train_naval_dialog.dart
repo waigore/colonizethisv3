@@ -69,12 +69,17 @@ class _TrainNavalDialogState
     CommodityCostUnitEntry entry,
   ) {
     final l10n = appL10n(context);
+    final foodUpkeep =
+        TrainNavalShipRoleDisplay.foodUpkeepForShip(entry.unitTypeId);
     return CommodityCostTrainDialogUnitRowExtras(
       roleLabel: TrainNavalShipRoleDisplay.roleLabel(l10n, entry.unitTypeId),
       capabilityLine: TrainNavalShipRoleDisplay.capabilityLine(
         l10n,
         entry.unitTypeId,
       ),
+      ongoingCostLine: foodUpkeep == null
+          ? null
+          : TrainNavalShipRoleDisplay.foodUpkeepLine(l10n, foodUpkeep),
     );
   }
 
