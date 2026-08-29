@@ -1,9 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-/// Pure display helpers for ship role and capability gist on Train Naval rows.
-/// SPEC/ui/train-naval-dialog.md; GDD: SPEC/game/ships-and-naval.md,
-/// SPEC/game/tech-tree-naval.md § Notes.
+/// Pure display helpers for ship role, capability gist, and food upkeep on
+/// Train Naval rows. SPEC/ui/train-naval-dialog.md; GDD:
+/// SPEC/game/ships-and-naval.md, SPEC/game/tech-tree-naval.md § Notes.
 class TrainNavalShipRoleDisplay {
   TrainNavalShipRoleDisplay._();
 
@@ -36,5 +36,15 @@ class TrainNavalShipRoleDisplay {
       default:
         return l10n.naval_units_compositionRoleWarship;
     }
+  }
+
+  static String foodUpkeepLine(AppLocalizations l10n, int foodUpkeep) =>
+      l10n.trainMilitary_foodUpkeepPerTurn(foodUpkeep);
+
+  static int? foodUpkeepForShip(String shipTypeId) {
+    for (final econ in ShipEconomyCatalog.all) {
+      if (econ.shipTypeId == shipTypeId) return econ.foodUpkeep;
+    }
+    return null;
   }
 }
