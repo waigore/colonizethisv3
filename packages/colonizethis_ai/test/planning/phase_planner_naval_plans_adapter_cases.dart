@@ -40,12 +40,12 @@ const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
   newWorldCivilian: 0.10,
 );
 
-const ColonialNavalPlan _colonialNavalSingleOwner = ColonialNavalPlan(
+const ColonialNavalPlan kColonialNavalSingleOwner = ColonialNavalPlan(
   priorityInvasionTransportProvinceIdsSorted: <String>['newWorld|tribe_a|nw1'],
   priorityTargetOwnerFactionIdsSorted: <String>['tribe_a'],
 );
 
-const ColonialNavalPlan _colonialNavalMultiOwner = ColonialNavalPlan(
+const ColonialNavalPlan kColonialNavalMultiOwner = ColonialNavalPlan(
   priorityInvasionTransportProvinceIdsSorted: <String>[
     'newWorld|gp_b|nw2',
     'newWorld|tribe_a|nw1',
@@ -54,13 +54,13 @@ const ColonialNavalPlan _colonialNavalMultiOwner = ColonialNavalPlan(
   priorityTargetOwnerFactionIdsSorted: <String>['gp_b', 'tribe_a'],
 );
 
-const ColonialLiteNavalPlan _colonialLiteNavalSingleOwner =
+const ColonialLiteNavalPlan kColonialLiteNavalSingleOwner =
     ColonialLiteNavalPlan(
       priorityNwProvinceIdsSorted: <String>['newWorld|tribe_a|nw1'],
       priorityTargetOwnerFactionIdsSorted: <String>['tribe_a'],
     );
 
-const ColonialLiteNavalPlan _colonialLiteNavalMultiOwner =
+const ColonialLiteNavalPlan kColonialLiteNavalMultiOwner =
     ColonialLiteNavalPlan(
       priorityNwProvinceIdsSorted: <String>[
         'newWorld|minor_b|nw2',
@@ -129,7 +129,7 @@ void registerPhasePlannerNavalPlansAdapterCases() {
         'order', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.colonial,
-        colonialNavalPlan: _colonialNavalMultiOwner,
+        colonialNavalPlan: kColonialNavalMultiOwner,
       );
       final result = colonialNavalPlanFromPhasePlan(outcome);
       expect(result.priorityInvasionTransportProvinceIdsSorted, const <String>[
@@ -147,7 +147,7 @@ void registerPhasePlannerNavalPlansAdapterCases() {
         'contents in order', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.colonialLite,
-        colonialLiteNavalPlan: _colonialLiteNavalMultiOwner,
+        colonialLiteNavalPlan: kColonialLiteNavalMultiOwner,
       );
       final result = colonialLiteNavalPlanFromPhasePlan(outcome);
       expect(result.priorityNwProvinceIdsSorted, const <String>[
@@ -167,10 +167,10 @@ void registerPhasePlannerNavalPlansAdapterCases() {
         'default', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.colonial,
-        colonialNavalPlan: _colonialNavalMultiOwner,
-        colonialLiteNavalPlan: _colonialLiteNavalMultiOwner,
+        colonialNavalPlan: kColonialNavalMultiOwner,
+        colonialLiteNavalPlan: kColonialLiteNavalMultiOwner,
       );
-      expect(colonialNavalPlanFromPhasePlan(outcome), _colonialNavalMultiOwner);
+      expect(colonialNavalPlanFromPhasePlan(outcome), kColonialNavalMultiOwner);
       expect(
         colonialLiteNavalPlanFromPhasePlan(outcome),
         ColonialLiteNavalPlan.defaultPlan,
@@ -185,12 +185,12 @@ void registerPhasePlannerNavalPlansAdapterCases() {
         'plan default', () {
       const outcome = PhasePlanOutcome(
         phase: ObserverGoalPhase.colonialLite,
-        colonialNavalPlan: _colonialNavalMultiOwner,
-        colonialLiteNavalPlan: _colonialLiteNavalMultiOwner,
+        colonialNavalPlan: kColonialNavalMultiOwner,
+        colonialLiteNavalPlan: kColonialLiteNavalMultiOwner,
       );
       expect(
         colonialLiteNavalPlanFromPhasePlan(outcome),
-        _colonialLiteNavalMultiOwner,
+        kColonialLiteNavalMultiOwner,
       );
       expect(
         colonialNavalPlanFromPhasePlan(outcome),
@@ -198,65 +198,6 @@ void registerPhasePlannerNavalPlansAdapterCases() {
         reason:
             'COLONIAL-lite explicitly suppresses NW invasion transport; '
             'colonialNavalPlan must default even when populated.',
-      );
-    });
-  });
-
-  group('naval adapters — determinism (Must-have #7)', () {
-    test('identical COLONIAL outcomes yield identical naval plans', () {
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonial,
-        colonialNavalPlan: _colonialNavalSingleOwner,
-      );
-      expect(
-        colonialNavalPlanFromPhasePlan(outcome),
-        colonialNavalPlanFromPhasePlan(outcome),
-      );
-      expect(
-        colonialLiteNavalPlanFromPhasePlan(outcome),
-        colonialLiteNavalPlanFromPhasePlan(outcome),
-      );
-    });
-
-    test('identical COLONIAL-lite outcomes yield identical naval plans '
-        '(colonial-lite passthrough, colonial default)', () {
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonialLite,
-        colonialLiteNavalPlan: _colonialLiteNavalMultiOwner,
-      );
-      expect(
-        colonialNavalPlanFromPhasePlan(outcome),
-        colonialNavalPlanFromPhasePlan(outcome),
-      );
-      expect(
-        colonialLiteNavalPlanFromPhasePlan(outcome),
-        colonialLiteNavalPlanFromPhasePlan(outcome),
-      );
-    });
-
-    test('identical EXPAND outcomes yield identical defaults for both '
-        'adapters', () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
-      expect(
-        colonialNavalPlanFromPhasePlan(outcome),
-        colonialNavalPlanFromPhasePlan(outcome),
-      );
-      expect(
-        colonialLiteNavalPlanFromPhasePlan(outcome),
-        colonialLiteNavalPlanFromPhasePlan(outcome),
-      );
-    });
-
-    test('identical DEVELOP outcomes yield identical defaults for both '
-        'adapters', () {
-      const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.develop);
-      expect(
-        colonialNavalPlanFromPhasePlan(outcome),
-        colonialNavalPlanFromPhasePlan(outcome),
-      );
-      expect(
-        colonialLiteNavalPlanFromPhasePlan(outcome),
-        colonialLiteNavalPlanFromPhasePlan(outcome),
       );
     });
   });
