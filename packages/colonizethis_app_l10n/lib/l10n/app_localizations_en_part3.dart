@@ -993,9 +993,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String provinceOverlay_establishConsulateDisabledSemantics(String reason) {
     return 'Establish Consulate unavailable: $reason';
   }
-
-  @override
-  String provinceOverlay_indentedCount(String label, int count) {
-    return '  $label: $count';
-  }
 }

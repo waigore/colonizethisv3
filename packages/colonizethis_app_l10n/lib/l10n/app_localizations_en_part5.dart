@@ -827,4 +827,13 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
         'Cost: Gold and paper spent to train them are not returned.\n'
         'When: Immediately, not after Next turn.';
   }
+
+  @override
+  String get provinceOverlay_extractionPartialReason =>
+      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
+
+  @override
+  String provinceOverlay_availableTileCount(int count, String name) {
+    return '$count $name';
+  }
 }
