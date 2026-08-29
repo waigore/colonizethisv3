@@ -246,9 +246,4 @@ void registerExpandPhasePlannerCriticalOwHoldAndStalledLeadPeaceCasesPartA() {
       );
     });
   });
-
-  group(
-    'stalledBelowQuotaGpLeadPeaceTargets — canonical minLeadDeficit band',
-    () {},
-  );
 }

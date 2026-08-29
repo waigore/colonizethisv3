@@ -1,4 +1,4 @@
-// Zero-regiment stalemate stub pins (Refs #4602 Slice B).
+// Topic-split pins (Refs #4669 Slice B).
 
 import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
