@@ -6,6 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_orchestrator_quota_consts.dart';
 
+export 'domain_planner_orchestrator_expand_snapshots_develop.dart';
+
 /// Shared EXPAND snapshot: gp1 below OW quota, at war with the OW minor
 /// frontier used by [buildOrchestratorExpandMinorWarScenarioGame].
 ///
@@ -177,5 +179,3 @@ AIWorldSnapshot buildOrchestratorDevelopGpOnlyBlockerSnapshot({
     relations: const <String, DiplomacyRelation>{},
   );
 }
-
-export 'domain_planner_orchestrator_expand_snapshots_develop.dart';

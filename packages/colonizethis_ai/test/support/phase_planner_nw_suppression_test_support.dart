@@ -13,6 +13,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../planning/ai_planner_fixtures.dart';
 
+export 'phase_planner_nw_suppression_test_support_develop.dart';
+
 /// Active GP for NW-suppression planner-set pins.
 const String kNwSuppressionGp1 = 'gp1';
 
@@ -151,5 +153,3 @@ AIWorldSnapshot buildExpandPhaseNwSuppressionSnapshot({
     relations: const {},
   );
 }
-
-export 'phase_planner_nw_suppression_test_support_develop.dart';

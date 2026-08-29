@@ -9,6 +9,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../planning/ai_planner_fixtures.dart';
 import 'colonial_phase_planner_test_support_core.dart';
 
+export 'colonial_phase_planner_test_support_dispatch_develop.dart';
+
 /// Phase-planner dispatch COLONIAL-lite Game: turn ≥ 120, OW near quota
 /// scaffold with a tribe-owned NW province (Refs #3977).
 Game buildPhasePlannerDispatchColonialLiteGame({
@@ -137,5 +139,3 @@ Game buildPhasePlannerDispatchExpandGame({
     tribes: const [Tribe(id: kColonialPhaseTribe1, displayName: 'Tribe1')],
   );
 }
-
-export 'colonial_phase_planner_test_support_dispatch_develop.dart';

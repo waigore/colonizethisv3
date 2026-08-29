@@ -1,5 +1,9 @@
 // Relocation / reserved-bootstrap fixtures (Refs #3371 / #4602 Slice E).
 
+import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 const kGrowthStageRelocationOw = 'oldWorld';
 const kGrowthStageRelocationPGrain = '$kGrowthStageRelocationOw|p_grain';
 const kGrowthStageRelocationPWool = '$kGrowthStageRelocationOw|p_wool';

@@ -7,6 +7,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'colonial_phase_planner_test_support_core.dart';
 
+export 'colonial_phase_planner_test_support_games_peace.dart';
+
 /// Game scaffold for COLONIAL-phase / lite destination-filter pins.
 ///
 /// New World provinces, players, tribes, and minors are passed in so each
@@ -211,5 +213,3 @@ AIWorldSnapshot buildColonialCivilianSnapshot({
     relations: const {},
   );
 }
-
-export 'colonial_phase_planner_test_support_games_peace.dart';

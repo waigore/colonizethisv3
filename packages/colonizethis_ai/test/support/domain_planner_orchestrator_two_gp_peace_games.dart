@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'domain_planner_orchestrator_quota_consts.dart';
 
 export 'domain_planner_orchestrator_two_gp_peace_games_colonial.dart';
+export 'domain_planner_orchestrator_two_gp_peace_games_develop.dart';
 
 /// Blocker GP id for EXPAND two-GP peace orchestrator pins.
 const String kOrchestratorExpandTwoGpBlockerId = 'gp2';
@@ -32,10 +33,6 @@ const String kOrchestratorDevelopTwoGpAtWarGpBId = 'gp3';
 
 /// At-war minor for DEVELOP two-GP peace negative-control pins.
 const String kOrchestratorDevelopTwoGpAtWarMinorId = 'minor1';
-
-const String _developGpAOwProvince = 'oldWorld|gp2_0';
-const String _developGpBOwProvince = 'oldWorld|gp3_0';
-const String _developMinorOwProvince = 'oldWorld|minor1_0';
 
 /// Blocker GP id for COLONIAL two-GP peace orchestrator pins.
 const String kOrchestratorColonialTwoGpBlockerId = 'gp2';
@@ -158,5 +155,3 @@ Game buildOrchestratorExpandTwoGpWarsScenarioGame() {
     ],
   );
 }
-
-export 'domain_planner_orchestrator_two_gp_peace_games_develop.dart';

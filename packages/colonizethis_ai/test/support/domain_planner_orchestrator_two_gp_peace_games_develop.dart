@@ -7,6 +7,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'domain_planner_orchestrator_quota_consts.dart';
 import 'domain_planner_orchestrator_two_gp_peace_games.dart';
 
+const String _developGpAOwProvince = 'oldWorld|gp2_0';
+const String _developGpBOwProvince = 'oldWorld|gp3_0';
+const String _developMinorOwProvince = 'oldWorld|minor1_0';
+
 /// DEVELOP-phase two-GP wars Game for orchestrator peace pins (#2509 S10 DEVELOP).
 Game buildOrchestratorDevelopTwoGpWarsScenarioGame() {
   return Game(

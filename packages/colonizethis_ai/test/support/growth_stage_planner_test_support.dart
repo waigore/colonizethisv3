@@ -8,6 +8,9 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+
+export 'growth_stage_planner_relocation_support.dart';
+
 const kTestTopology = MapTopology(nodes: [], edges: []);
 final kTestSeeds = AISeedBundle.fromTurnSeed(3371);
 
@@ -115,5 +118,3 @@ Game matureCastIronGame({int castIronHeld = 0}) {
     ],
   );
 }
-
-export 'growth_stage_planner_relocation_support.dart';
