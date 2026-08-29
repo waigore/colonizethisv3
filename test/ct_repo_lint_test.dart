@@ -152,7 +152,7 @@ void main() {
   });
 
   group('manifest file', () {
-    test('AI suite-size titles advertise 300 after #4602 Slice D', () {
+    test('AI suite-size titles advertise 250 after #4669 Slice E', () {
       final rules = loadRepoLintManifest(
         repoRoot,
         'tool/ct_repo_lint_manifest.yaml',
@@ -164,22 +164,22 @@ void main() {
       ];
       for (final id in ids) {
         final title = rules.firstWhere((r) => r.ruleId == id).title;
-        expect(title, contains('300 physical lines'), reason: id);
-        expect(title, isNot(contains('400 physical lines')), reason: id);
-        expect(title, contains('#4602 Slice D'), reason: id);
+        expect(title, contains('250 physical lines'), reason: id);
+        expect(title, isNot(contains('300 physical lines')), reason: id);
+        expect(title, contains('#4669 Slice E'), reason: id);
       }
     });
 
-    test('AI s7d suite-size title still advertises 400 after #4365 Slice B', () {
+    test('AI s7d suite-size title advertises 250 after #4669 Slice E', () {
       final rules = loadRepoLintManifest(
         repoRoot,
         'tool/ct_repo_lint_manifest.yaml',
       );
       const id = 'repo.ai_s7d_support_suite_size';
       final title = rules.firstWhere((r) => r.ruleId == id).title;
-      expect(title, contains('400 physical lines'), reason: id);
-      expect(title, isNot(contains('450 physical lines')), reason: id);
-      expect(title, contains('#4365 Slice B'), reason: id);
+      expect(title, contains('250 physical lines'), reason: id);
+      expect(title, isNot(contains('400 physical lines')), reason: id);
+      expect(title, contains('#4669 Slice E'), reason: id);
     });
 
     test('version and rules list are present', () {

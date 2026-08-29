@@ -7,8 +7,8 @@ import '../tool/check_ai_residual_fat_pin_suite_size.dart';
 
 void main() {
   group('runCheckAiResidualFatPinSuiteSize', () {
-    test('ceiling is 300 after #4602 Slice D', () {
-      expect(residualFatPinSuitePhysicalLineCeiling, 300);
+    test('ceiling is 250 after #4669 Slice E', () {
+      expect(residualFatPinSuitePhysicalLineCeiling, 250);
     });
 
     test('fails when gated residual fat pin is oversize without cases', () {

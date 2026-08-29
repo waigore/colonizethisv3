@@ -11,8 +11,8 @@ void main() {
       expect(runCheckAiColonialMilitaryNavalPinSuiteSize('.' ), 0);
     });
 
-    test('ceiling is 300 after #4602 Slice D alignment', () {
-      expect(colonialMilitaryNavalPinSuitePhysicalLineCeiling, 300);
+    test('ceiling is 250 after #4669 Slice E alignment', () {
+      expect(colonialMilitaryNavalPinSuitePhysicalLineCeiling, 250);
     });
 
     test('fails when military pin is oversize without cases import', () {

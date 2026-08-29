@@ -1,7 +1,4 @@
-// Topic-split case module (Refs #4602 Slice B).
-
-// Case bodies for `expand_phase_planner_declare_war_test.dart` (Refs #4104 Slice C).
-
+// Topic-split case bodies for `expand_phase_planner_declare_war_test.dart` (Refs #4104 Slice C, #4602 Slice B).
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';

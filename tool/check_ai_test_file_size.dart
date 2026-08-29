@@ -7,12 +7,13 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// Physical-line ceiling for ungated AI planning / support_test Dart
 /// (Refs #4602 Slice D). Complements `*_cases.dart` and support/s7d/observer
-/// suite gates so `_test.dart` hosts cannot silently re-grow past 300.
-const int aiTestFileSizeCeiling = 300;
+/// suite gates so `_test.dart` hosts cannot silently re-grow past 250.
+const int aiTestFileSizeCeiling = 250;
 
 const List<String> _aiTestFileSizePathPrefixes = <String>[
   'packages/colonizethis_ai/test/planning/',
   'packages/colonizethis_ai/test/support_test/',
+  'packages/colonizethis_ai/test/perception/',
 ];
 
 bool aiTestFileSizePathInScope(String slashPath) {

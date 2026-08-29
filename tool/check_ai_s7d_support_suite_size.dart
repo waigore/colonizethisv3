@@ -9,7 +9,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Slice C densify ratchets to 600 (Refs #4104); Phase-11 Slice C →550 (#4239);
 /// Phase-12 Slice D →500 (Refs #4291); Phase-13 Slice A →450 (Refs #4310);
 /// Phase-14 Slice B →400 (Refs #4365); Phase-16 Slice E →300 (Refs #4602).
-const int aiS7dSupportSuitePhysicalLineCeiling = 300;
+const int aiS7dSupportSuitePhysicalLineCeiling = 250;
 
 /// Repo-relative path prefix for S7D support modules.
 const String _aiS7dSupportPathPrefix =
