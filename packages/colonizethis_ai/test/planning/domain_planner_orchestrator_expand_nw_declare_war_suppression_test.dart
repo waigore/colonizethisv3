@@ -55,88 +55,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
+import 'domain_planner_orchestrator_expand_nw_declare_war_suppression_support.dart';
 import 'domain_planner_orchestrator_expand_nw_declare_war_suppression_tail_cases.dart';
-
-const String _nationId = kOrchestratorGp1NationId;
-const String _tribeId = kOrchestratorTribeId;
-
-// Explicit NW-acquisition-zero phase plan emulating the legacy
-// hard-suppress contract for EXPAND-phase regression assertions
-// (Refs #2847 Phase 3 — soft-weight migration). The production
-// `_curveWeightsForOw(7)` curve emits `newWorldAcquisition = 0.05`
-// (early-sprint plateau), which scoring-side migration in
-// `_declareWarSuppressedExpandColonialScore` treats as
-// "reachable at low priority" — see the PR's
-// `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
-// Tests that pin the strict hard-suppress regression contract
-// thread this explicit override through the orchestrator so
-// `nwAcquisitionWeight == 0.0` collapses NW colonial declare-war
-// candidates. SPEC § Observer goal phases (Full AI), EXPAND
-// suppressions: "NW declareWar/establishOverture..." remains the
-// effective contract under this override.
-const PhasePriorityWeights _nwAcquisitionZeroExpand = PhasePriorityWeights(
-  oldWorldConquest: 0.95,
-  newWorldAcquisition: 0.0,
-  oldWorldCivilian: 0.90,
-  newWorldCivilian: 0.10,
-);
-
-const PhasePlanOutcome _expandPhasePlanHardSuppressNw = PhasePlanOutcome(
-  phase: ObserverGoalPhase.expand,
-  priorityWeights: _nwAcquisitionZeroExpand,
-);
-
-// Uses kGp1OwProvincesBelowQuota / kGp1OwProvincesAtQuota from
-// domain_planner_orchestrator_test_support.dart (Refs #3941).
-
-// Fake API provides one `declareWar(tribe1)` candidate. The fake's
-// `suggestDeclareWarOrders` filters by `type == declareWar`, so the
-// `declareWarOnly` pass of `runDiplomacyPlannerWithResult` is the path
-// under test for the SPEC EXPAND `declareWar` suppression rule.
-const FakeOrderSuggestionAPIForDomainPlannerTests _nwTribeDeclareWarApi =
-    FakeOrderSuggestionAPIForDomainPlannerTests(
-  work: [],
-  build: [],
-  move: [],
-  research: [],
-  navalMove: [],
-  navalMission: [],
-  diplomatic: [
-    DiplomaticOrder(
-      type: DiplomaticOrderType.declareWar,
-      targetFactionId: _tribeId,
-    ),
-  ],
-);
-
-const EconomyPlan _economyPlan = EconomyPlan(
-  productionAssignments: [],
-  cargoPreference: CargoPreference.none,
-);
-
-// `henry` + `merchant` matches the personality/agenda used by the
-// scoring-level `EXPAND suppresses NW declareWar scoring` and
-// `COLONIAL allows NW tribe declareWar scoring` groups in
-// `observer_goal_phase_test.dart`. `peacemaker` is intentionally avoided
-// here because that agenda zeroes declare-war candidates regardless of
-// phase and would confound both the EXPAND positive (already-zero score)
-// and the COLONIAL negative control.
-const AIConfig _aiConfig = AIConfig(
-  leaderId: 'henry',
-  personalityId: 'henry',
-  hiddenAgendaId: 'merchant',
-);
-
-// Snapshots: buildOrchestratorExpandNwTribeTargetSnapshot /
-// buildOrchestratorColonialNwTribeTargetSnapshot (Refs #3997).
-
-List<String> _declareWarTargets(Orders orders) => <String>[
-  for (final order
-      in orders.diplomaticOrdersByPlayerId[_nationId] ?? const [])
-    if (order.type == DiplomaticOrderType.declareWar) order.targetFactionId,
-];
 
 void main() {
   group('runDomainPlanners EXPAND-phase NW declareWar suppression', () {
@@ -154,7 +75,7 @@ void main() {
         ],
       );
       const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, _nationId);
+      final view = buildPlayerView(game, topology, kExpandNwDeclareWarSuppressionNationId);
       final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(tribePeaceRelationScore: 0);
 
       expect(
@@ -171,29 +92,21 @@ void main() {
         DomainPlannerInput(
           game: game,
           topology: topology,
-          nationId: _nationId,
+          nationId: kExpandNwDeclareWarSuppressionNationId,
           view: view,
           snapshot: snapshot,
-          config: _aiConfig,
+          config: kExpandNwDeclareWarSuppressionAiConfig,
           primaryGoal: StrategicGoal.expand,
           seeds: AISeedBundle.fromTurnSeed(2509240),
-          suggestionAPI: _nwTribeDeclareWarApi,
-          economyPlan: _economyPlan,
-          // Pin the legacy EXPAND hard-suppress contract by threading an
-          // explicit `newWorldAcquisition = 0.0` override through the
-          // orchestrator (Refs #2847 Phase 3). Under the soft-weight
-          // production curve `_curveWeightsForOw(7)` returns 0.05 and the
-          // scoring path now keeps NW declare-war reachable at low
-          // priority — see
-          // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
-          // This test continues to assert the strict regression contract.
-          options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+          suggestionAPI: kNwTribeDeclareWarApi,
+          economyPlan: kExpandNwDeclareWarSuppressionEconomyPlan,
+          options: OrchestratorOptions(phasePlan: kExpandPhasePlanHardSuppressNw),
         ),
       );
 
       expect(
-        _declareWarTargets(orders),
-        isNot(contains(_tribeId)),
+        expandNwDeclareWarSuppressionTargets(orders),
+        isNot(contains(kExpandNwDeclareWarSuppressionTribeId)),
         reason:
             'Under the explicit `newWorldAcquisition = 0.0` override '
             '(legacy hard-suppress regression contract), EXPAND must '
@@ -224,7 +137,7 @@ void main() {
           ],
         );
         const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
+        final view = buildPlayerView(game, topology, kExpandNwDeclareWarSuppressionNationId);
         final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(tribeRelationScore: 0);
 
         expect(
@@ -243,20 +156,20 @@ void main() {
           DomainPlannerInput(
             game: game,
             topology: topology,
-            nationId: _nationId,
+            nationId: kExpandNwDeclareWarSuppressionNationId,
             view: view,
             snapshot: snapshot,
-            config: _aiConfig,
+            config: kExpandNwDeclareWarSuppressionAiConfig,
             primaryGoal: StrategicGoal.conquer,
             seeds: AISeedBundle.fromTurnSeed(2509241),
-            suggestionAPI: _nwTribeDeclareWarApi,
-            economyPlan: _economyPlan,
+            suggestionAPI: kNwTribeDeclareWarApi,
+            economyPlan: kExpandNwDeclareWarSuppressionEconomyPlan,
           ),
         );
 
         expect(
-          _declareWarTargets(orders),
-          contains(_tribeId),
+          expandNwDeclareWarSuppressionTargets(orders),
+          contains(kExpandNwDeclareWarSuppressionTribeId),
           reason:
               'COLONIAL must allow declareWar toward visible tribe '
               'colonial targets so the SPEC COLONIAL acquisition '

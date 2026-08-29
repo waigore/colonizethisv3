@@ -5,6 +5,7 @@ library;
 
 export 'expand_phase_peace_test_support_core.dart';
 export 'expand_phase_peace_test_support_classic_peace.dart';
+export 'expand_phase_peace_test_support_zero_regiment.dart';
 export 'expand_phase_peace_test_support_own_vs_partner.dart';
 export 'expand_phase_peace_test_support_default_start.dart';
 export 'expand_phase_peace_test_support_tribe_pivot_survival.dart';

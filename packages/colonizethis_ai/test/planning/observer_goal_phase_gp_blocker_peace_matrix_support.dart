@@ -11,6 +11,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 export 'observer_goal_phase_gp_blocker_peace_matrix_support_fixtures.dart';
+export 'observer_goal_phase_gp_blocker_peace_matrix_support_stalled_peace_fixtures.dart';
 
 typedef BlockerFn = String? Function({
   required Game game,

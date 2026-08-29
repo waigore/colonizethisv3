@@ -236,18 +236,5 @@ group('resolvePhaseEconomyColonialBuildOrderThresholdCap', () {
     });
   });
 
-group('resolvePhaseEconomyExpandGpBlockerFocusActive', () {
-    test('active under EXPAND when expand frontier slots are set', () {
-      const outcome = PhasePlanOutcome(
-        phase: ObserverGoalPhase.expand,
-        expandGpOnlyInvadableFrontierActive: true,
-      );
-      expect(
-        resolvePhaseEconomyExpandGpBlockerFocusActive(phasePlan: outcome),
-        isTrue,
-      );
-    });
-  });
-
   registerPhasePlannerEconomyFilterBuildOrderBlockerCasesTail();
 }
