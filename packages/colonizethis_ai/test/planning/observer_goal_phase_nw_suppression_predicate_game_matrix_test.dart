@@ -44,6 +44,8 @@ import 'package:colonizethis_test/test.dart';
 
 import '../support/observer_goal_phase_nw_suppression_predicate_matrix_test_support.dart';
 
+import 'observer_goal_phase_nw_suppression_predicate_game_matrix_determinism_cases.dart';
+
 /// One observer phase fixture: a `(snapshot, game)` pair whose
 /// `observerGoalPhaseFor` resolves to [expectedPhase]. The game is built per
 /// row so each `test` gets an independent instance (matching the source
@@ -235,66 +237,5 @@ void main() {
     ],
   );
 
-  // Determinism guards (must-have #7) retained verbatim from the source
-  // suites: each predicate is pure with respect to (snapshot, game), so
-  // repeated invocations across all four phases must agree with the
-  // expected per-phase outcome. These are the only assertions that are not a
-  // single `(snapshot, game) -> bool` matrix row.
-  group('shouldSuppressNewWorldColonialOrders determinism', () {
-    test('identical phase inputs produce identical predicate outcome', () {
-      final colonialLiteGame =
-          observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn);
-      final colonialGame = observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: 110);
-      final developGame = observerGoalPhaseNwSuppressionMatrixGameWithGpOwnedNw();
-      final expandGame = observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: 50);
-
-      for (final entry in <(AIWorldSnapshot, Game, bool)>[
-        (kObserverGoalPhaseNwSuppressionMatrixExpandSnapshot, expandGame, true),
-        (kObserverGoalPhaseNwSuppressionMatrixColonialLiteSnapshot, colonialLiteGame, false),
-        (kObserverGoalPhaseNwSuppressionMatrixColonialSnapshot, colonialGame, false),
-        (kObserverGoalPhaseNwSuppressionMatrixDevelopSnapshot, developGame, false),
-      ]) {
-        final (snapshot, game, expected) = entry;
-        final first = shouldSuppressNewWorldColonialOrders(
-          snapshot: snapshot,
-          game: game,
-        );
-        final second = shouldSuppressNewWorldColonialOrders(
-          snapshot: snapshot,
-          game: game,
-        );
-        expect(first, expected);
-        expect(second, first);
-      }
-    });
-  });
-
-  group('shouldSuppressNewWorldDeclareWarInvasionAndPurchase determinism', () {
-    test('identical phase inputs produce identical predicate outcome', () {
-      final colonialLiteGame =
-          observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn);
-      final colonialGame = observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: 110);
-      final developGame = observerGoalPhaseNwSuppressionMatrixGameWithGpOwnedNw();
-      final expandGame = observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: 50);
-
-      for (final entry in <(AIWorldSnapshot, Game, bool)>[
-        (kObserverGoalPhaseNwSuppressionMatrixExpandSnapshot, expandGame, true),
-        (kObserverGoalPhaseNwSuppressionMatrixColonialLiteSnapshot, colonialLiteGame, true),
-        (kObserverGoalPhaseNwSuppressionMatrixColonialSnapshot, colonialGame, false),
-        (kObserverGoalPhaseNwSuppressionMatrixDevelopSnapshot, developGame, true),
-      ]) {
-        final (snapshot, game, expected) = entry;
-        final first = shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: snapshot,
-          game: game,
-        );
-        final second = shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: snapshot,
-          game: game,
-        );
-        expect(first, expected);
-        expect(second, first);
-      }
-    });
-  });
+  registerObserverGoalPhaseNwSuppressionPredicateGameMatrixDeterminismCases();
 }

@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
+import 'colonial_naval_topology_context.dart';
 import 'scored_candidate.dart';
 
 /// Sea zones in [kNewWorldRegionId] that border an invadable NW province.
@@ -9,25 +10,11 @@ Set<String> newWorldSeaZonesAdjacentToInvadableProvinces(
   MapTopology topology,
   List<String> invadableNewWorldProvinceIdsSorted,
 ) {
-  if (invadableNewWorldProvinceIdsSorted.isEmpty) return const {};
-  final invadable = invadableNewWorldProvinceIdsSorted.toSet();
-  final adj = <String, Set<String>>{};
-  for (final e in topology.edges) {
-    adj.putIfAbsent(e.id1, () => <String>{}).add(e.id2);
-    adj.putIfAbsent(e.id2, () => <String>{}).add(e.id1);
-  }
-  final nodeType = <String, TopologyNodeType>{
-    for (final n in topology.nodes) n.id: n.type,
-  };
-  final out = <String>{};
-  for (final provId in invadable) {
-    for (final nb in adj[provId] ?? const <String>{}) {
-      if (nodeType[nb] != TopologyNodeType.seaZone) continue;
-      if (ProvinceId.regionIdFrom(nb) != kNewWorldRegionId) continue;
-      out.add(nb);
-    }
-  }
-  return out;
+  return ColonialNavalTopologyContext.fromTopology(
+    topology,
+  ).newWorldSeaZonesAdjacentToInvadableProvinces(
+    invadableNewWorldProvinceIdsSorted,
+  );
 }
 
 /// Deterministic score for prioritizing fleet moves toward colonial targets.
@@ -47,16 +34,28 @@ int colonialNavalMoveScore(
   ColonialSummary colonial, {
   List<String>? phasePriorityNwProvinceIdsSorted,
 }) {
-  final prioritySeas = newWorldSeaZonesAdjacentToInvadableProvinces(
-    topology,
+  return colonialNavalMoveScoreWithContext(
+    move,
+    ColonialNavalTopologyContext.fromTopology(topology),
+    colonial,
+    phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
+  );
+}
+
+int colonialNavalMoveScoreWithContext(
+  NavalMoveOrder move,
+  ColonialNavalTopologyContext topologyContext,
+  ColonialSummary colonial, {
+  List<String>? phasePriorityNwProvinceIdsSorted,
+}) {
+  final prioritySeas = topologyContext.newWorldSeaZonesAdjacentToInvadableProvinces(
     colonial.invadableNewWorldProvinceIdsSorted,
   );
   final phasePrioritySeas =
       (phasePriorityNwProvinceIdsSorted == null ||
           phasePriorityNwProvinceIdsSorted.isEmpty)
       ? const <String>{}
-      : newWorldSeaZonesAdjacentToInvadableProvinces(
-          topology,
+      : topologyContext.newWorldSeaZonesAdjacentToInvadableProvinces(
           phasePriorityNwProvinceIdsSorted,
         );
 
@@ -83,28 +82,10 @@ int colonialNavalMoveScore(
     return kColonialNavalMoveNwSeaZoneScore;
   }
 
-  if (_isOldWorldSeaAdjacentToNewWorldSea(topology, seaId)) {
+  if (topologyContext.isOldWorldSeaAdjacentToNewWorldSea(seaId)) {
     return kColonialNavalMoveGatewaySeaZoneScore;
   }
   return 0;
-}
-
-bool _isOldWorldSeaAdjacentToNewWorldSea(
-  MapTopology topology,
-  String oldWorldSeaZoneId,
-) {
-  if (ProvinceId.regionIdFrom(oldWorldSeaZoneId) != kOldWorldRegionId) {
-    return false;
-  }
-  final adj = <String, Set<String>>{};
-  for (final e in topology.edges) {
-    adj.putIfAbsent(e.id1, () => <String>{}).add(e.id2);
-    adj.putIfAbsent(e.id2, () => <String>{}).add(e.id1);
-  }
-  for (final nb in adj[oldWorldSeaZoneId] ?? const <String>{}) {
-    if (ProvinceId.regionIdFrom(nb) == kNewWorldRegionId) return true;
-  }
-  return false;
 }
 
 /// Sort [candidates] by [colonialNavalMoveScore] descending, then stable id order.
@@ -119,13 +100,14 @@ List<NavalMoveOrder> sortNavalMovesForColonialPressure(
   ColonialSummary colonial, {
   List<String>? phasePriorityNwProvinceIdsSorted,
 }) {
+  final topologyContext = ColonialNavalTopologyContext.fromTopology(topology);
   return sortByScore(
     candidates.map(
       (move) => ScoredCandidate(
         item: move,
-        score: colonialNavalMoveScore(
+        score: colonialNavalMoveScoreWithContext(
           move,
-          topology,
+          topologyContext,
           colonial,
           phasePriorityNwProvinceIdsSorted: phasePriorityNwProvinceIdsSorted,
         ),
