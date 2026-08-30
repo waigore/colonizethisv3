@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 class _DummyGameService extends GameService {
   _DummyGameService(super.box, super.adapter);
@@ -102,8 +103,7 @@ void main() {
   });
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_shell_screen');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'shell_screen');
     dummyService = _DummyGameService(gamesBox, GameSaveAdapter());
   });
 

@@ -17,13 +17,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
 
 import 'games_provider_test_support.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_games_provider');
-    await Hive.openBox<dynamic>(HiveBoxNames.games);
+    await openAppTestHiveBox(suiteId: 'games_provider');
   });
 
   tearDownAll(() async {

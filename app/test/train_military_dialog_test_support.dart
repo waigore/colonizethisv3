@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 import 'panel_test_fixtures.dart';
 
 /// Stub map service: dialog builder only needs [getMapData] (empty topology OK).
@@ -57,8 +58,7 @@ class TrainMilitaryDialogTestHarness {
   /// Opens Hive for bus-driven UNIT50001 open (dialog builder reads GameService).
   Future<void> ensureHandlerHive() async {
     if (_gamesBox != null) return;
-    Hive.init(handlerHiveDir);
-    _gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    _gamesBox = await openAppTestHiveBox(suiteId: 'train_military_dialog');
     _mapService = _TrainMilitaryDialogMapGameService(
       _gamesBox!,
       GameSaveAdapter(),

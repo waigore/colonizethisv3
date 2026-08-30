@@ -84,8 +84,8 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
     });
   }
 
-  TileRadialCatalogLayout _layoutFor(String tileKey) {
-    return tileRadialHostCatalogLayout(
+  TileRadialHostCatalogContext _catalogContextFor(String tileKey) {
+    return computeTileRadialHostCatalogContext(
       game: widget.game,
       humanPlayerId: widget.humanPlayerId,
       tileKey: tileKey,
@@ -99,8 +99,16 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
     );
   }
 
+  TileRadialCatalogLayout _layoutFor(TileRadialHostCatalogContext catalogContext, String tileKey) {
+    return tileRadialHostCatalogLayout(
+      catalogContext: catalogContext,
+      tileKey: tileKey,
+    );
+  }
+
   List<TileRadialSpokeView> _viewsFor(
     BuildContext context,
+    TileRadialHostCatalogContext catalogContext,
     String tileKey,
     List<TileRadialSpoke> spokes,
   ) {
@@ -110,13 +118,8 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
       game: widget.game,
       humanPlayerId: widget.humanPlayerId,
       tileKey: tileKey,
-      region: widget.region,
-      playerView: widget.playerView,
-      workTargetSelectionCache: widget.workTargetSelectionCache,
       draftOrders: ref.read(currentOrdersProvider),
-      mapData: tryGetGameMapData(
-        () => ref.read(gameServiceProvider).getMapData(widget.game.id),
-      ),
+      catalogContext: catalogContext,
       spokes: spokes,
     );
   }
@@ -145,7 +148,8 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
   Future<void> _openMoreDialog({required bool includeAllCatalog}) async {
     final tileKey = _tileKey;
     if (tileKey == null || !mounted) return;
-    final layout = _layoutFor(tileKey);
+    final catalogContext = _catalogContextFor(tileKey);
+    final layout = _layoutFor(catalogContext, tileKey);
     final remainder = includeAllCatalog ? layout.wedges : layout.moreRemainder;
     final place =
         tryMapTileHoverReadoutCopy(
@@ -160,7 +164,7 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
       builder: (dialogContext) {
         return TileMoreActionsDialog(
           placeLine: place,
-          remainder: _viewsFor(dialogContext, tileKey, remainder),
+          remainder: _viewsFor(dialogContext, catalogContext, tileKey, remainder),
           onAction: (action) {
             Navigator.of(dialogContext).pop();
             _commit(action);
@@ -186,7 +190,8 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
     final onSecondary = widget.canMutateViaUi ? openFromSecondary : null;
     Widget overlay = const SizedBox.shrink();
     if (_radialOpen && tileKey != null) {
-      final layout = _layoutFor(tileKey);
+      final catalogContext = _catalogContextFor(tileKey);
+      final layout = _layoutFor(catalogContext, tileKey);
       final place =
           tryMapTileHoverReadoutCopy(
             l10n: appL10n(context),
@@ -197,7 +202,7 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
           tileKey;
       overlay = TileContextRadial(
         placeLine: place,
-        wedges: _viewsFor(context, tileKey, layout.wedges),
+        wedges: _viewsFor(context, catalogContext, tileKey, layout.wedges),
         anchor: _anchor,
         onWedge: _commit,
         onMore: () {

@@ -7,6 +7,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
 
+import 'app_test_hive_harness.dart';
 import 'panel_fixtures/core.dart';
 
 const String kVictoryPanelMapTestGameId = 'victory-layout-test';
@@ -229,7 +230,8 @@ RegionMapViewData sampleVictoryAnnotatedOldWorldRegion() {
   );
 }
 
-Future<Box<dynamic>> openVictoryPanelTestHiveBox() async {
-  Hive.init('./.dart_tool/test_hive_victory_panel');
-  return Hive.openBox<dynamic>(HiveBoxNames.games);
+Future<Box<dynamic>> openVictoryPanelTestHiveBox({
+  required String suiteId,
+}) async {
+  return openAppTestHiveBox(suiteId: suiteId);
 }

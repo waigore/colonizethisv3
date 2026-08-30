@@ -10,6 +10,8 @@ import 'package:hive/hive.dart';
 
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 
+import 'app_test_hive_harness.dart';
+
 void main() {
   // Suppress logs for test run.
   suppressLogsForTests();
@@ -19,8 +21,10 @@ void main() {
     late GameService service;
 
     setUp(() async {
-      Hive.init('./.dart_tool/test_hive');
-      box = await Hive.openBox<dynamic>('games_integration');
+      box = await openAppTestHiveBox(
+        suiteId: 'game_service_integration',
+        boxName: 'games_integration',
+      );
       service = GameService(box, GameSaveAdapter());
     });
 

@@ -11,6 +11,7 @@ import 'package:hive/hive.dart';
 
 import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'app_test_hive_harness.dart';
 
 class _CountingGameSaveAdapter extends GameSaveAdapter {
   int loadCallCount = 0;
@@ -32,8 +33,7 @@ void main() {
 
     setUp(() async {
       hiveDir = await Directory.systemTemp.createTemp('ct_app_test_hive_');
-      Hive.init(hiveDir.path);
-      box = await Hive.openBox<dynamic>('games_cache');
+      box = await openAppTestHiveBox(suiteId: 'game_service_cache', directory: hiveDir, boxName: 'games_cache');
       service = GameService(box, GameSaveAdapter());
     });
 

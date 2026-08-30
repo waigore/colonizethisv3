@@ -19,6 +19,7 @@ import 'package:flutter/rendering.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 class _NoSavesGameService extends GameService {
   _NoSavesGameService(super.box, super.adapter);
@@ -46,8 +47,7 @@ void main() {
   });
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_quit_chip_fidelity');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'quit_chip_fidelity');
     dummyService = _NoSavesGameService(gamesBox, GameSaveAdapter());
   });
 

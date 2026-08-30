@@ -33,6 +33,7 @@ import 'package:hive/hive.dart';
 import 'app_shell_harness.dart';
 import 'game_fixture.dart';
 import 'map_view_fixture.dart';
+import 'app_test_hive_harness.dart';
 
 /// Loads the committed seed-42 `Game` + map-view fixtures instead of paying the
 /// ~7-11s `getDebugInitGameResult()` procedural map generation per isolate. This
@@ -135,8 +136,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_map_area_minimap');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_map_area_minimap');
   });
 
   testWidgets('region minimap: toggle visibility and minimap bus pan', (

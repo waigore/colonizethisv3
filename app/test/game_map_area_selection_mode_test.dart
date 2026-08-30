@@ -20,6 +20,7 @@ import 'app_shell_harness.dart';
 import 'game_fixture.dart';
 import 'map_view_fixture.dart';
 import 'tile_map_fixture.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -43,8 +44,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_map_area');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_map_area');
   });
 
   testWidgets(

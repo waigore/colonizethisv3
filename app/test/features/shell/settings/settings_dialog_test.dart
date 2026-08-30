@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import '../../../app_shell_harness.dart';
+import '../../../app_test_hive_harness.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -66,8 +67,7 @@ void main() {
     'settingsProvider setValue persists warnIdleCiviliansOnEndTurn in Hive',
     () async {
       final dir = await Directory.systemTemp.createTemp('ct_settings_warn_');
-      Hive.init(dir.path);
-      final box = await Hive.openBox<dynamic>(HiveBoxNames.settings);
+      final box = await openAppTestHiveBox(suiteId: 'settings_dialog', directory: dir, boxName: HiveBoxNames.settings);
       addTearDown(() async {
         await box.close();
         await Hive.deleteBoxFromDisk(HiveBoxNames.settings);
@@ -91,8 +91,7 @@ void main() {
 
   test('settingsProvider setValue persists mapTheme.terrain in Hive', () async {
     final dir = await Directory.systemTemp.createTemp('ct_settings_dlg_');
-    Hive.init(dir.path);
-    await Hive.openBox<dynamic>(HiveBoxNames.settings);
+    await openAppTestHiveBox(suiteId: 'settings_dialog', directory: dir, boxName: HiveBoxNames.settings);
     addTearDown(() async {
       await Hive.close();
       await dir.delete(recursive: true);

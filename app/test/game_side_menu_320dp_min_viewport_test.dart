@@ -77,6 +77,7 @@ import 'package:hive/hive.dart';
 
 import 'min_viewport_harness.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -151,8 +152,7 @@ void main() {
     // drawer only reads the active Game for `currentGameProvider`.
     game = buildSideMenuTestGame();
 
-    Hive.init('./.dart_tool/test_hive_side_menu_320dp');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'side_menu_320dp');
   });
 
   group(

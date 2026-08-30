@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'province_shortcut_host_emit_test_support.dart';
+import 'app_test_hive_harness.dart';
 
 const String _kGameId = 'g_counter_espionage_emit';
 const String _kHumanPlayerId = 'gp1';
@@ -150,10 +151,9 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init(
-      './.dart_tool/test_hive_province_counter_espionage_shortcut_emit',
+    gamesBox = await openAppTestHiveBox(
+      suiteId: 'province_counter_espionage_shortcut_emit',
     );
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
   Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(

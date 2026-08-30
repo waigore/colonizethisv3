@@ -10,6 +10,7 @@ import 'package:hive/hive.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'app_test_hive_harness.dart';
 
 class _PendingOverturesGameService extends GameService {
   _PendingOverturesGameService(super.box, super.adapter);
@@ -59,8 +60,7 @@ void main() {
   setUpAll(() async {
     final dir = await Directory.systemTemp.createTemp('ct_game_service_test_');
     hiveDir = dir;
-    Hive.init(dir.path);
-    box = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    box = await openAppTestHiveBox(suiteId: 'game_service', directory: dir);
     adapter = GameSaveAdapter();
   });
 

@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'province_shortcut_host_emit_test_support.dart';
+import 'app_test_hive_harness.dart';
 
 const String _kGameId = 'g_ut_shortcut_emit';
 const String _kHumanPlayerId = 'gp1';
@@ -153,8 +154,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_province_ut_shortcut_emit');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'province_ut_shortcut_emit');
   });
 
   Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(

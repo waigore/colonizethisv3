@@ -27,6 +27,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 class _UiPathGameService extends GameService {
   _UiPathGameService(super.box, super.adapter);
@@ -98,8 +99,7 @@ void main() {
 
   setUp(() async {
     hiveDir = await Directory.systemTemp.createTemp('ct_session_clear_ui_');
-    Hive.init(hiveDir.path);
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_session_clear_ui_path', directory: hiveDir);
     AppEventBus.reset();
     bus = AppEventBus.create();
     service = _UiPathGameService(gamesBox, GameSaveAdapter());

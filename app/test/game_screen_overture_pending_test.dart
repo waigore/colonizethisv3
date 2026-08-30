@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 
 import 'game_screen_test_support.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -15,8 +16,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_screen_overture');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_screen_overture');
   });
 
   testWidgets('GameScreen shows OvertureDialogueOverlay for pending overtures',

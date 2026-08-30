@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'game_screen_test_support.dart';
+import 'app_test_hive_harness.dart';
 
 class _FakeOvertureRunner extends TurnResolutionRunner {
   @override
@@ -112,8 +113,7 @@ void main() {
   }
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_screen_turn_branches');
-    box = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    box = await openAppTestHiveBox(suiteId: 'game_screen_turn_branches');
     adapter = GameSaveAdapter();
   });
 

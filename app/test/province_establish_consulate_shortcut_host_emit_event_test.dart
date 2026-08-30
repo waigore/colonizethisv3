@@ -23,6 +23,7 @@ import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'province_shortcut_host_emit_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 const _gameId = 'g_consulate_shortcut';
 const _humanId = 'gp1';
@@ -146,8 +147,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_province_consulate_shortcut');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'province_consulate_shortcut');
   });
 
   Future<AppEventBus> pumpHost(

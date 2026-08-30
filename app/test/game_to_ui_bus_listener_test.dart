@@ -18,6 +18,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 TurnNewsDigest _emptyDigestForTurn(int resolvedTurn) =>
     TurnNewsDigest(resolvedTurnNumber: resolvedTurn, lines: const []);
@@ -107,8 +108,7 @@ void main() {
   }
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_to_ui');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_to_ui');
     adapter = GameSaveAdapter();
   });
 

@@ -19,6 +19,7 @@ import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 /// Narrow-layout contract for [GameMapEmpireLeftRail] (issue #2870 S3).
 ///
@@ -46,8 +47,7 @@ void main() {
     // the rail itself (no panels opened), so a single human player is enough.
     game = buildPanelTestGame();
 
-    Hive.init('./.dart_tool/test_hive_empire_rail_narrow');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'empire_rail_narrow');
   });
 
   String humanId() => game.players.where((p) => p.isHuman).isNotEmpty

@@ -63,6 +63,34 @@ void main() {
       }
     });
 
+    test('fails when below-quota pin redeclares _belowQuotaSellerGame', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'ai-contracts-h8-below-quota-',
+      );
+      try {
+        _writeSupportStubs(temp);
+        _writeBelowQuotaImprovementInputTest(
+          temp,
+          "import 'package:test/test.dart';\n\n"
+          'Game _belowQuotaSellerGame() {\n'
+          '  throw UnimplementedError();\n'
+          '}\n\n'
+          'void main() {}\n',
+        );
+        final errors = <String>[];
+        final exitCode = runCheckAiContractsH8TestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('_belowQuotaSellerGame'));
+        expect(errors.join('\n'), contains('h8_below_quota_zero_nw_seller_game'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('passes when adopters import shared builders', () {
       final temp = Directory.systemTemp.createTempSync('ai-contracts-h8-ok-');
       try {
@@ -130,6 +158,9 @@ void _writeSupportStubs(Directory temp) {
   File(
     p.join(support.path, 'h8_supplier_prospect_game.dart'),
   ).writeAsStringSync('Object supplierGame() => Object();\n');
+  File(
+    p.join(support.path, 'h8_below_quota_zero_nw_seller_game.dart'),
+  ).writeAsStringSync('Object belowQuotaActiveGateSellerGame() => Object();\n');
 }
 
 void _writeSellerTargetTest(Directory temp, String body) {
@@ -152,6 +183,18 @@ void _writeProspectLocalizationTest(Directory temp, String body) {
     p.join(
       testDir.path,
       'full_ai_civilian_work_ow_feedstock_prospect_localization_test.dart',
+    ),
+  ).writeAsStringSync(body);
+}
+
+void _writeBelowQuotaImprovementInputTest(Directory temp, String body) {
+  final testDir = Directory(
+    p.join(temp.path, 'packages', 'colonizethis_ai_contracts', 'test'),
+  )..createSync(recursive: true);
+  File(
+    p.join(
+      testDir.path,
+      'full_ai_civilian_work_seller_improvement_input_feedstock_extraction_test.dart',
     ),
   ).writeAsStringSync(body);
 }

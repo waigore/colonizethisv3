@@ -29,6 +29,7 @@ import 'package:hive/hive.dart';
 import 'golden_capture_harness.dart';
 import 'province_shortcut_host_emit_fixtures.dart';
 import 'province_shortcut_host_golden_game_service.dart';
+import 'app_test_hive_harness.dart';
 
 const String _kGameId = 'g_bf_golden';
 const String _kHumanPlayerId = 'gp1';
@@ -146,8 +147,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_province_bf_golden');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'province_bf_golden');
   });
 
   Future<void> pumpWideHost(WidgetTester tester) async {

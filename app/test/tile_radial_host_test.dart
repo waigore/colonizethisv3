@@ -23,6 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 const String _kHumanPlayerId = 'gp1';
 const String _kProvinceId = 'oldWorld|p1';
@@ -164,8 +165,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_tile_radial_host');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'tile_radial_host');
   });
 
   testWidgets('secondary stub opens MAP30001 when mutate is allowed', (
