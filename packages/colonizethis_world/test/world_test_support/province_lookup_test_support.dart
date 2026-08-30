@@ -1,13 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/province_owner_cache.dart';
-import 'package:colonizethis_world/src/world_constants.dart'
-    show kRegionNewWorld, kRegionOldWorld;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 WorldState provinceLookupTestWorld() => TestFixtures.worldStateAtOrdersPhase(
   oldWorld: const RegionData(
@@ -122,3 +117,55 @@ WorldState traversalDualRegionWorld({
   );
 }
 
+/// Legacy local-id tile bucket used by landTileKeys fallback pins (Refs #4330).
+WorldState provinceLookupLegacyLocalIdBucketWorld() =>
+    TestFixtures.worldStateAtOrdersPhase(
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          'p1': ['oldWorld|p1|0|0'],
+        },
+      },
+    );
+
+/// Mixed full-id + local-id buckets for shadowing pins (Refs #4330).
+WorldState provinceLookupMixedBucketWorld() =>
+    TestFixtures.worldStateAtOrdersPhase(
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          'oldWorld|p1': ['oldWorld|p1|0|0'],
+          'p1': ['oldWorld|p1|9|9'],
+        },
+      },
+    );
+
+/// Dual-region world for [traverseProvinces] order pins (Refs #4330).
+WorldState provinceLookupTraverseWorld() =>
+    TestFixtures.worldStateAtOrdersPhase(
+      oldWorld: const RegionData(
+        provinces: [
+          Province(
+            id: 'oldWorld|p1',
+            regionId: kRegionOldWorld,
+            ownerId: 'gp1',
+          ),
+          Province(id: 'oldWorld|p2', regionId: kRegionOldWorld),
+        ],
+      ),
+      newWorld: const RegionData(
+        provinces: [
+          Province(
+            id: 'newWorld|p9',
+            regionId: kRegionNewWorld,
+            ownerId: 'gp2',
+          ),
+        ],
+      ),
+      tileKeysByRegionAndProvince: const {
+        kRegionOldWorld: {
+          'oldWorld|p1': ['oldWorld|p1|0|0'],
+        },
+        kRegionNewWorld: {
+          'newWorld|p9': ['newWorld|p9|1|1'],
+        },
+      },
+    );

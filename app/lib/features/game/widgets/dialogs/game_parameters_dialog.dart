@@ -3,16 +3,14 @@
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_gap.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 /// Shows immutable setup flags for the active game session.
 class GameParametersDialog extends StatelessWidget {
-  const GameParametersDialog({
-    super.key,
-    required this.infiniteMode,
-  });
+  const GameParametersDialog({super.key, required this.infiniteMode});
 
   final bool infiniteMode;
 
@@ -38,6 +36,15 @@ class GameParametersDialog extends StatelessWidget {
             l10n.gameParameters_infiniteModeLine(infiniteValue),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
+          if (infiniteMode) ...[
+            CtGap.m,
+            Text(
+              l10n.shell_leaderDialog_infiniteModeHelper,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: EditorialMonoclePalette.muted,
+              ),
+            ),
+          ],
           CtGap.l,
           Align(
             alignment: Alignment.centerRight,

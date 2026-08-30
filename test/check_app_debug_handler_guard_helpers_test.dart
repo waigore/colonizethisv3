@@ -67,4 +67,26 @@ DebugCommandResult applyDebugClean({Object? currentGame}) {
     final code = runCheckAppDebugHandlerGuardHelpers(temp.path);
     expect(code, 0);
   });
+
+  test('fails when a spawn handler inlines raw 25 clamp literal', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_debug_handler_guard_helpers_raw25_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final servicesDir = Directory(
+      '${temp.path}/packages/colonizethis_app_debug/lib/src',
+    )..createSync(recursive: true);
+
+    File(
+      '${servicesDir.path}/app_event_handler_debug_spawn_offender.dart',
+    ).writeAsStringSync('''
+DebugCommandResult applyDebugSpawnOffender({required int count}) {
+  final bounded = count > 25 ? 25 : count;
+  return (game: null, message: 'spawned \$bounded');
+}
+''');
+
+    final code = runCheckAppDebugHandlerGuardHelpers(temp.path);
+    expect(code, 1);
+  });
 }

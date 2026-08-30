@@ -13,14 +13,16 @@ abstract final class TradeScreenDealBookKeys {
   /// after the user taps the Deal Book label). Refs #2993 E6 swapped
   /// the placeholder for `DealBookTabContent` — the key is intentionally
   /// stable so existing tab-switch tests keep pinning the same body root.
-  static const Key dealBookTabBodyKey =
-      ValueKey<String>('tradeScreenDealBookTabBody');
+  static const Key dealBookTabBodyKey = ValueKey<String>(
+    'tradeScreenDealBookTabBody',
+  );
 
   /// Stable widget key for the root of the live Deal Book ledger content
   /// (Refs #2993 E6). Sits directly under `dealBookTabBodyKey` and pins
   /// the two-panel layout so widget tests can scope queries.
-  static const Key dealBookContentKey =
-      ValueKey<String>('tradeScreenDealBookContent');
+  static const Key dealBookContentKey = ValueKey<String>(
+    'tradeScreenDealBookContent',
+  );
 
   /// Side identifier used to scope per-row Deal Book keys to the bids
   /// panel (commodities the player **bought**).
@@ -32,36 +34,42 @@ abstract final class TradeScreenDealBookKeys {
 
   /// Stable widget key for the Deal Book bids panel container
   /// (Refs #2993 E6).
-  static const Key dealBookBidsPanelKey =
-      ValueKey<String>('tradeScreenDealBookBidsPanel');
+  static const Key dealBookBidsPanelKey = ValueKey<String>(
+    'tradeScreenDealBookBidsPanel',
+  );
 
   /// Stable widget key for the Deal Book offers panel container
   /// (Refs #2993 E6).
-  static const Key dealBookOffersPanelKey =
-      ValueKey<String>('tradeScreenDealBookOffersPanel');
+  static const Key dealBookOffersPanelKey = ValueKey<String>(
+    'tradeScreenDealBookOffersPanel',
+  );
 
   /// Stable widget key for the Deal Book bids panel treasury-totals row
   /// (`Total spent: N`). Always mounted under the bids panel even when
   /// `filledTotal == 0` so widget tests can pin the totals affordance.
-  static const Key dealBookBidsTotalsKey =
-      ValueKey<String>('tradeScreenDealBookBidsTotals');
+  static const Key dealBookBidsTotalsKey = ValueKey<String>(
+    'tradeScreenDealBookBidsTotals',
+  );
 
   /// Stable widget key for the Deal Book offers panel treasury-totals
   /// row (`Total received: N`).
-  static const Key dealBookOffersTotalsKey =
-      ValueKey<String>('tradeScreenDealBookOffersTotals');
+  static const Key dealBookOffersTotalsKey = ValueKey<String>(
+    'tradeScreenDealBookOffersTotals',
+  );
 
   /// Stable widget key for the Deal Book bids panel empty-state copy.
   /// Mounted only when the player has zero filled bids **and** zero
   /// carry-forward bids for the resolved turn; absent otherwise.
-  static const Key dealBookBidsEmptyKey =
-      ValueKey<String>('tradeScreenDealBookBidsEmpty');
+  static const Key dealBookBidsEmptyKey = ValueKey<String>(
+    'tradeScreenDealBookBidsEmpty',
+  );
 
   /// Stable widget key for the Deal Book offers panel empty-state copy.
   /// Mounted only when the player has zero filled sales **and** zero
   /// carry-forward offers for the resolved turn; absent otherwise.
-  static const Key dealBookOffersEmptyKey =
-      ValueKey<String>('tradeScreenDealBookOffersEmpty');
+  static const Key dealBookOffersEmptyKey = ValueKey<String>(
+    'tradeScreenDealBookOffersEmpty',
+  );
 
   /// Per-row Deal Book key for a filled deal row, scoped by `side`
   /// (`dealBookSideBids` or `dealBookSideOffers`) and the row's
@@ -74,6 +82,36 @@ abstract final class TradeScreenDealBookKeys {
   /// scoped by `side` and zero-based index.
   static Key dealBookUnfilledRowKey(String side, int index) =>
       ValueKey<String>('tradeScreenDealBookUnfilledRow:$side:$index');
+
+  /// Per-row Deal Book key for a Did not stay open drop row.
+  static Key dealBookDidNotStayOpenRowKey(String side, int index) =>
+      ValueKey<String>('tradeScreenDealBookDidNotStayOpenRow:$side:$index');
+
+  /// Row-kind token for Still open leftover Details keys (Refs #4500).
+  static const String dealBookRowKindStillOpen = 'stillOpen';
+
+  /// Row-kind token for Did not stay open Details keys (Refs #4500).
+  static const String dealBookRowKindDidNotStayOpen = 'didNotStayOpen';
+
+  /// Stable key for a Still open row's muted reason line, scoped by commodity.
+  static Key dealBookUnfilledReasonKey(String commodityId) =>
+      ValueKey<String>('tradeScreenDealBookUnfilledReason:$commodityId');
+
+  /// Stable key for the Details affordance on a reason/drop row.
+  static Key dealBookDetailsAffordanceKey(String rowKind, String commodityId) =>
+      ValueKey<String>(
+        'tradeScreenDealBookDetailsAffordance:$rowKind:$commodityId',
+      );
+
+  /// Stable key for an expanded on-request detail line.
+  static Key dealBookDetailsExpandedKey(String rowKind, String commodityId) =>
+      ValueKey<String>(
+        'tradeScreenDealBookDetailsExpanded:$rowKind:$commodityId',
+      );
+
+  /// Localized section heading for dropped carry-forwards (Refs #4500).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String dealBookDidNotStayOpenHeading = 'Did not stay open';
 
   /// Minimum viewport width (logical px) above which the Deal Book
   /// renders its two panels side-by-side. Below this threshold the
@@ -96,23 +134,21 @@ abstract final class TradeScreenDealBookKeys {
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String dealBookFilledHeading = 'Filled';
 
-  /// Localized section heading for carry-forward (unfilled) rows inside
+  /// Localized section heading for leftover (unfilled) rows inside
   /// a Deal Book panel.
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String dealBookUnfilledHeading = 'Unfilled (carry-forward)';
+  static const String dealBookUnfilledHeading = 'Still open';
 
   /// Localized empty-state copy for the bids panel when the player has
   /// neither filled bids nor carry-forward bids for the resolved turn.
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String dealBookBidsEmptyText =
-      'No bids placed last turn.';
+  static const String dealBookBidsEmptyText = 'No bids placed last turn.';
 
   /// Localized empty-state copy for the offers panel when the player
   /// has neither filled sales nor carry-forward offers for the resolved
   /// turn.
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String dealBookOffersEmptyText =
-      'No offers placed last turn.';
+  static const String dealBookOffersEmptyText = 'No offers placed last turn.';
 
   /// Localized totals label for the bids panel (treasury spent on
   /// filled buys this turn — carry-forwards excluded because they have
@@ -133,6 +169,11 @@ abstract final class TradeScreenDealBookKeys {
   static String formatFilledDealUnitPrice(double pricePerUnit) =>
       pricePerUnit.floor().toString();
 
+  /// Formats a Deal Book totals line with a treasury mark (Refs #4414).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static String formatTotalsLine(String label, int amount) =>
+      '$label: £$amount';
+
   /// Localized empty-state copy rendered inside a Deal Book panel's
   /// **Filled** section when the player has no filled rows on that side
   /// (but does have carry-forwards, so the panel itself is non-empty).
@@ -140,12 +181,10 @@ abstract final class TradeScreenDealBookKeys {
   static const String dealBookFilledEmptyText = 'No deals filled this turn.';
 
   /// Localized empty-state copy rendered inside a Deal Book panel's
-  /// **Unfilled** section when the player has no carry-forward orders
-  /// on that side (but does have filled rows, so the panel itself is
-  /// non-empty).
+  /// leftover section when the player has no leftover orders on that
+  /// side (but does have filled rows, so the panel itself is non-empty).
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String dealBookUnfilledEmptyText =
-      'No orders carrying forward.';
+  static const String dealBookUnfilledEmptyText = 'None still open.';
 
   /// Tab label for the Deal Book tab (previous-turn ledger). SPEC §
   /// Layout / wireframe pins the literal `"Deal Book"`.

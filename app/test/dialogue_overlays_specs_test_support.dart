@@ -1,4 +1,4 @@
-// Shared helpers for dialogue_overlays_specs_part*_test (Refs #4013 / #4117 slice F).
+// Shared helpers for dialogue_overlays_specs concern suites (Refs #4013 / #4117 slice F, #4352).
 // Pins SPEC/ui ct-dialogue-view + blocking dialogue overlay contracts.
 
 import 'dart:io' show File;

@@ -4,6 +4,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'panel_fixtures/core.dart';
@@ -188,7 +189,19 @@ Game buildDevelopmentPanelGoldenGame() {
   );
 }
 
-Future<Box<dynamic>> openDevelopmentPanelTestHiveBox() async {
-  Hive.init('./.dart_tool/test_hive_development_panel');
+/// Opens an isolated Hive games box for one Development panel test suite.
+///
+/// [suiteId] must be unique per `*_test.dart` file so parallel `flutter test`
+/// shards do not contend on `games.lock` (Refs #4175 Slice E).
+Future<Box<dynamic>> openDevelopmentPanelTestHiveBox({
+  required String suiteId,
+}) async {
+  Hive.init('./.dart_tool/test_hive_development_panel_$suiteId');
   return Hive.openBox<dynamic>(HiveBoxNames.games);
+}
+
+/// Pumps post-frame gates for read-model and map deferral (Slice E).
+Future<void> pumpDevelopmentPanelReady(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump();
 }

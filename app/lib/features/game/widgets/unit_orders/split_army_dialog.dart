@@ -16,6 +16,8 @@ class SplitArmyDialog extends SplitEntityDialog {
     required this.humanPlayerId,
     required this.bus,
     required this.isHomeArmy,
+    this.title,
+    this.confirmLabel,
   });
 
   final Army army;
@@ -23,6 +25,8 @@ class SplitArmyDialog extends SplitEntityDialog {
   final String humanPlayerId;
   final AppEventBus bus;
   final bool isHomeArmy;
+  final String? title;
+  final String? confirmLabel;
 
   Unit? _unit(String id) => game.worldState.tryGetUnitById(id);
 
@@ -58,7 +62,7 @@ class SplitArmyDialog extends SplitEntityDialog {
         unitIdsToMove: toMove,
       ),
     );
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(true);
   }
 
   @override
@@ -66,7 +70,7 @@ class SplitArmyDialog extends SplitEntityDialog {
     final l10n = appL10n(context);
     return buildSplitDialogScaffold(
       context: context,
-      title: l10n.splitArmy_title,
+      title: title ?? l10n.splitArmy_title,
       leftTitle: army.isHomeArmy ? 'Home Army' : 'Army ${army.id}',
       rightTitle: 'New Army',
       locationLabel: _locationLabel(),
@@ -74,7 +78,7 @@ class SplitArmyDialog extends SplitEntityDialog {
       itemLabelBuilder: (bucketKey) => bucketKey,
       leftEmptyLabel: 'No regiments',
       rightEmptyLabel: 'No regiments',
-      confirmLabel: 'Confirm Split',
+      confirmLabel: confirmLabel ?? 'Confirm Split',
       totalLabelBuilder: (total) => 'Total: $total regiments',
       isHomeEntity: isHomeArmy,
       onConfirm: (right) => _handleConfirm(right, context),

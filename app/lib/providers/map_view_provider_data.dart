@@ -30,11 +30,9 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     final shell = ref.watch(shellPlayerContextProvider);
     final mapPlayerId = shell.mapPlayerIdFor(game);
     final topology = mapData.combinedTopology;
-    final view = shell.playerView ??
-        buildPlayerView(game, topology, mapPlayerId);
-    final mapPlayer =
-        game.playerById(mapPlayerId) ??
-        game.players.first;
+    final view =
+        shell.playerView ?? buildPlayerView(game, topology, mapPlayerId);
+    final mapPlayer = game.playerById(mapPlayerId) ?? game.players.first;
 
     final visibilityByTile = <String, TileVisibility>{};
     final byRegion = game.worldState.tileKeysByRegionAndProvince;
@@ -72,11 +70,15 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     final connectivityForHuman = connectivity[mapPlayer.id];
     var extractionMaps = MapResourceExtractionMaps.empty;
     if (connectivityForHuman != null) {
-      extractionMaps = mapViewBuildResourceExtractionMaps(
+      final built = mapViewBuildResourceExtractionMaps(
         game: game,
         mapPlayer: mapPlayer,
         tileMapByRegion: mapData.tileMapByRegion,
         connectivityForHuman: connectivityForHuman,
+      );
+      extractionMaps = mapViewExtractionMapsForShell(
+        built: built,
+        panelPlayerId: shell.panelPlayerId,
       );
     }
 
@@ -92,7 +94,13 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       resourceExtractionEffectiveUnitsByTile:
           extractionMaps.effectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile: extractionMaps.blockedUnitsByTile,
+      capitalLinkDisconnectedTileKeys:
+          extractionMaps.capitalLinkDisconnectedTileKeys,
       civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
+      viewingFactionId: shell.panelPlayerId,
+      viewingTechUnlocked: shell.panelPlayerId == null
+          ? null
+          : game.playerById(shell.panelPlayerId!)?.techUnlocked,
     );
     return applyMapFortVisibility(
       data: base,
@@ -109,10 +117,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
 /// on `Player.isHuman`, which observe handoff clears for every GP. Returns
 /// null when the current shell context implies legacy single-player behavior
 /// (the map builder then falls back to its own `isHuman` filter).
-Set<String>? civilianMarkerOwnerIdsFor(
-  ShellPlayerContext shell,
-  Game game,
-) {
+Set<String>? civilianMarkerOwnerIdsFor(ShellPlayerContext shell, Game game) {
   // Player observe pins markers to the observed GP only; player chrome stays
   // visible so we use the panel/viewing id rather than the full GP list.
   if (shell.inObservePhase && shell.viewingPlayerId != null) {

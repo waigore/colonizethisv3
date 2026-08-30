@@ -19,6 +19,9 @@ Map<String, dynamic> _cellToJson(CellViewData cell) {
   if (cell.improvementLevel != null) {
     json['improvementLevel'] = cell.improvementLevel;
   }
+  if (cell.improvementTechCap != null) {
+    json['improvementTechCap'] = cell.improvementTechCap;
+  }
   if (cell.roadLevel != null) json['roadLevel'] = cell.roadLevel;
   if (cell.resourceExtractionUnits != null) {
     json['resourceExtractionUnits'] = cell.resourceExtractionUnits;
@@ -77,6 +80,21 @@ Map<String, dynamic> _fleetMarkerToJson(FleetTileMarkerView m) {
   };
   if (m.renderGrayscale) json['renderGrayscale'] = true;
   if (m.applyFleetRevealHalo) json['applyFleetRevealHalo'] = true;
+  return json;
+}
+
+Map<String, dynamic> _armyMarkerToJson(ArmyTileMarkerView m) {
+  final json = <String, dynamic>{
+    'tileKey': m.tileKey,
+    'x': m.x,
+    'y': m.y,
+    'provinceId': m.provinceId,
+    'armyIds': m.armyIds,
+    'fieldArmyIds': m.fieldArmyIds,
+    'stackCount': m.stackCount,
+    'hasHomeArmy': m.hasHomeArmy,
+  };
+  if (m.renderGrayscale) json['renderGrayscale'] = true;
   return json;
 }
 
@@ -145,6 +163,8 @@ Map<String, dynamic> regionMapViewDataToJson(RegionMapViewData region) => {
       .map(_civilianMarkerToJson)
       .toList(),
   'fleetTileMarkers': region.fleetTileMarkers.map(_fleetMarkerToJson).toList(),
+  if (region.armyTileMarkers.isNotEmpty)
+    'armyTileMarkers': region.armyTileMarkers.map(_armyMarkerToJson).toList(),
   'provinceUnitPresenceByProvinceId': region.provinceUnitPresenceByProvinceId
       .map((k, v) => MapEntry(k, _presenceToJson(v))),
   'provincePoliticalOwnerByPrefixedProvinceId':

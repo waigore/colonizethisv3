@@ -451,3 +451,61 @@ Delivered in this slice:
 
 Post-split max lib file: `quick_battle_resolver_engine.dart` **≈268** phys (ceiling **280**).
 
+## Phase 5 — slice A (Refs #4545)
+
+Delivered in this slice:
+
+- Extracted `ProbabilisticRoundResult`, `ProbabilisticEngagementOutcome`, and round constants into `combat_resolver_probabilistic_types.dart`.
+- Moved `_poissonSample` / `_selectCasualtiesWeighted` into `combat_resolver_probabilistic_casualties.dart`.
+- `combat_resolver_probabilistic.dart` remains the barrel-exported entry for `resolveEngagementProbabilistic`; re-exports types.
+
+Post-split physical lines (approx.): `combat_resolver_probabilistic.dart` **~157** (was 267); `combat_resolver_probabilistic_types.dart` **~45**; `combat_resolver_probabilistic_casualties.dart` **~75**.
+
+Deferred to slices B–D on #4545: Quick Battle engine split, snapshot densify, 250 ratchet.
+
+## Phase 5 — slice B (Refs #4545)
+
+Delivered in this slice:
+
+- Split `quick_battle_resolver_engine.dart` into single-concern siblings:
+  - `quick_battle_resolver_engine_groups.dart` (group/CP bookkeeping)
+  - `quick_battle_resolver_engine_strike.dart` (strike-strength math)
+  - `quick_battle_resolver_engine_emplaced.dart` (emplaced mixed losses)
+- `quick_battle_resolver_engine.dart` re-exports siblings; `#3448` copy-disposition marker preserved on `copyGroups`.
+
+Post-split physical lines (approx.): `quick_battle_resolver_engine.dart` **~35** (was 268); largest sibling **~153** phys.
+
+Deferred to slices C–D on #4545: snapshot densify, 250 ratchet.
+
+## Phase 5 — slice C (Refs #4545)
+
+Delivered in this slice:
+
+- Replaced imperative `combat_engagement_snapshot_test.dart` (#4090 characterization) with `runLabeledScenarioGroup` runner.
+- Added `combat_engagement_snapshot_scenarios.dart` under `test/combat/` (9 labeled rows; support-package LOC/file-size ratchets precluded a support-module home).
+
+Post-split physical lines (approx.): `combat_engagement_snapshot_test.dart` **~10** (was 209); support scenario module **~220** phys.
+
+Deferred to slice D on #4545: lib size CI ratchet 280→250.
+
+## Phase 5 — slice D (Refs #4545)
+
+Delivered in this slice:
+
+- Lowered `combatLibFileSizeCeiling` to **250** with an empty grandfather list.
+- Pinned constant in `test/check_combat_lib_file_size_test.dart`.
+- Updated `tool/ct_repo_lint_manifest.yaml` title and `SPEC/program/repo-lint.md` `repo.combat_lib_file_size` row.
+
+Post-split max lib file: `conflict_detection.dart` / `battle_general_assignment.dart` **≈213** phys (ceiling **250**).
+
+## Wave 2 — combat-barrel SoT + 200 ratchet (Refs #4633)
+
+Delivered in this slice:
+
+- Replaced every `package:colonizethis_logic/` import under `colonizethis_combat_test_support/lib/**` with `colonizethis_combat` / `colonizethis_models` / `colonizethis_orders` / `colonizethis_world` as required. Dropped `colonizethis_logic` from that package's pubspec.
+- Split near-cap scenario/fixture modules (QB input builder, resolver seed vs lane, combat mode selection, conflict-detection core, resolver part-2, civilian relocation, QB input/build fixtures) without `part` / `part of`. Public list factories (`quickBattleInputBuilderScenarios`, `combatResolverPart2Scenarios`, `isCapitalSiegeScenarios`, `detectConflictsCoreScenarios`, `resolveQuickBattleScenarios`, …) stay on the package barrel.
+- Extracted repeated musketeers/pikemen units, capital-siege `Game`+`BattleContext`, and two-unit Old World `Game` onto named builders.
+- Added `repo.combat_test_support_no_logic_barrel` (`tool/check_combat_test_support_no_logic_barrel.dart` + pin test). Ratcheted `repo.combat_test_support_file_size` **220 → 200** and `repo.combat_test_support_loc` **7250 → 6997**.
+
+Post-wave max support file ≤ **185** phys (ceiling **200**); aggregate lib LOC **6997** (ceiling **6997**, cap never above 7100).
+

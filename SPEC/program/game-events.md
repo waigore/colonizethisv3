@@ -18,13 +18,13 @@ A single event stream for "what happened in the game" consumable by the Flutter 
 
 ## Event types (contract)
 
-Events are a union or sealed type (e.g. `GameEvent`) with variants. Payloads use keys/ids only; no UI strings. Province ids in any payload are **prefixed** (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
+Events are a union or sealed type (e.g. `GameEvent`) with variants. Payloads use keys/ids only; no UI strings. Province ids in any payload are **prefixed** (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md). Implementation keeps sealed variants in one Dart library so pattern-switch exhaustiveness stays sound; multi-file splits would need `part` directives (disallowed under world package lint) or a non-sealed base (Refs #4330). That library (`packages/colonizethis_world/lib/src/game_events.dart`) has a dedicated **400** physical-line ceiling; other world lib files are gated at **250** (`repo.colonizethis_world_lib_file_size`, Refs #4515, #4611).
 
 | Event type           | When emitted                    | Payload (minimal) |
 |----------------------|----------------------------------|-------------------|
-| `combat_result`      | After Combat phase              | provinceId (prefixed), attackerId, defenderId, winnerId, casualties (or summary). |
+| `combat_result`      | After Combat phase              | provinceId (prefixed), attackerId, defenderId, outcomeName (`EngagementResult.name`), turnNumber, optional winnerId (null for stalemate / mutual annihilation), attackerCasualtyCount, defenderCasualtyCount, optional legacy casualties map keyed by faction id. |
 | `general_medal_gained` | After Combat phase when a winning general's medals increase | playerId (general owner), generalId, provinceId (prefixed), newMedals, turnNumber. Omitted when medals unchanged or at cap (Refs #4234). |
-| `naval_combat_result` | After each resolved sea battle in Naval interception phase | seaZoneId (local, e.g. s3), side1OwnerId, side2OwnerId, outcomeName (`NavalBattleOutcome.name`), turnNumber, optional winnerOwnerId, retreat flags. |
+| `naval_combat_result` | After each resolved sea battle in Naval interception phase | seaZoneId (local, e.g. s3), side1OwnerId, side2OwnerId, outcomeName (`NavalBattleOutcome.name`), turnNumber, optional winnerOwnerId, side1CasualtyCount, side2CasualtyCount (ships sunk = starting hulls − survivors; include 0), retreat flags. |
 | `province_captured`  | When province ownership transfers **from one non-empty faction to another** (combat capture or other supported handover) | provinceId (prefixed), previousOwnerId, newOwnerId (both non-empty faction ids), turnNumber. Not emitted when the new `ownerId` would be null/empty—uncolonized frontier is not a capture outcome; see [world-model.md](../game/world-model.md) § Invariants. |
 | `diplomacy_change`   | After Diplomacy phase           | actorId, targetId, changeType (e.g. war, peace, alliance), turnNumber. |
 | `research_complete`   | When a tech is researched      | playerId, techId, turnNumber. |
@@ -48,6 +48,8 @@ Additional event types (e.g. extraction_summary) may be added in the same format
 
 The **caller** that owns the order list or invokes TurnResolver is responsible for wiring the event stream to the resolver/engine so that events are emitted in a deterministic order. Same game state and seeds produce the same event sequence (replay and save/load compatibility).
 
+**Last-turn intelligence (Refs #4476):** After a complete resolution, the pipeline folds this turn’s `diplomacy_change` / history events, `combat_result`, `naval_combat_result`, `province_captured`, and `research_complete` into a persisted `LastTurnIntelligenceDigest` on `Game` ([intelligence-digest.md](intelligence-digest.md)). Payloads stay ids-only; UI formats display names. Do not persist `hiddenAgenda`.
+
 ---
 
 ## Determinism
@@ -60,12 +62,12 @@ The **caller** that owns the order list or invokes TurnResolver is responsible f
 
 ## Acceptance criteria (Given–When–Then)
 
-- **Emission — combat_result.** Given a turn resolution run in which the Combat phase resolves a battle in province P with a winner, when the Combat phase completes, then the system emits exactly one `combat_result` event with provinceId in prefixed form, and the payload includes winnerId and at least one of attackerId or defenderId consistent with the resolved battle.
-- **Emission — naval_combat_result.** Given the Naval interception phase resolves a sea battle in zone Z, when that battle’s resolution completes, then the system emits exactly one `naval_combat_result` event with seaZoneId, both side owner ids, outcomeName, turnNumber, and winnerOwnerId when the outcome is a decisive victory for one side.
+- **Emission — combat_result.** Given a turn resolution run in which the Combat phase resolves a land battle in province P, when the Combat phase completes, then the system emits exactly one `combat_result` event with provinceId in prefixed form, attackerId, defenderId, outcomeName (`EngagementResult.name`), attackerCasualtyCount, defenderCasualtyCount, and winnerId set only for decisive attacker or defender victories (null for stalemate or mutual annihilation). Given a stalemate or mutual annihilation, when the Combat phase completes, then the system still emits the `combat_result` event (the fight is not silent).
+- **Emission — naval_combat_result.** Given the Naval interception phase resolves a sea battle in zone Z, when that battle’s resolution completes, then the system emits exactly one `naval_combat_result` event with seaZoneId, both side owner ids, outcomeName, turnNumber, side1CasualtyCount and side2CasualtyCount equal to starting ships minus surviving ships for each side (including 0), and winnerOwnerId when the outcome is a decisive victory for one side.
 - **Emission — victory_set.** Given a turn resolution run in which the End-of-turn phase sets `Game.victory` (winner, type military, turn number), when the End-of-turn phase completes, then the system emits exactly one `victory_set` event with winnerPlayerId, victoryType, and turnNumber equal to the game’s victory state.
 - **Emission — order_rejected.** Given the order engine validates a player’s order list and the first rejection occurs at order N with reason R and order family K, when validation returns, then the system has emitted an `order_rejected` event for that order with `orderKind` equal to K and a `reasonCode` consistent with R (or the validation layer exposes the same so that a consumer can emit the event).
 - **Determinism.** Given the same Game (and WorldState), same per-player order lists, same ruleset, and same seeds, when the system runs turn resolution and order validation, then the sequence of GameEvents emitted for that run is identical to any other run with the same inputs.
-- **Province identity.** Given any GameEvent that carries a province id, when the event is emitted, then that id is in prefixed form (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
+- **Sealed single-library size.** Given `GameEvent` remains `sealed` in `packages/colonizethis_world/lib/src/game_events.dart`, when `repo.colonizethis_world_lib_file_size` runs, then that file is allowed up to 400 physical lines and every other non-generated world lib file is gated at 250 (Refs #4515, #4611).
 
 - **Emission — province_captured.** Given combat or another resolver step would change a province from owner **A** to owner **B**, when **A** and **B** are each a non-empty faction id and **A ≠ B**, then the system may emit a `province_captured` event with `previousOwnerId == A`, `newOwnerId == B`, and prefixed `provinceId`. Given the post-resolution `ownerId` for that province is null or empty while the previous snapshot had a non-empty owner, when the emitter runs, then the system does **not** emit `province_captured` for that province (invalid capture state; see [world-model.md](../game/world-model.md) § Invariants).
 

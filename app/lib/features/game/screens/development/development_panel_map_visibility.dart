@@ -4,13 +4,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Builds per-tile visibility for Development panel map (player-constrained).
+///
+/// When [regionId] is set, only tiles in that region are included (Slice E).
 Map<String, TileVisibility> developmentPanelVisibilityByTile({
   required Game game,
   required PlayerView playerView,
+  String? regionId,
 }) {
   final visibilityByTile = <String, TileVisibility>{};
-  for (final provinceMap in game.worldState.tileKeysByRegionAndProvince.values) {
-    for (final tileKeys in provinceMap.values) {
+  for (final entry in game.worldState.tileKeysByRegionAndProvince.entries) {
+    if (regionId != null && entry.key != regionId) continue;
+    for (final tileKeys in entry.value.values) {
       for (final tileKey in tileKeys) {
         visibilityByTile[tileKey] = switch (playerView.visibilityForTile(tileKey)) {
           VisibilityLevel.fullyVisible => TileVisibility.visible,

@@ -25,7 +25,7 @@ When exempt, record a one-line **manual non-update justification** in the issue 
 | Issue filing | `create-github-issue`, `plan-feature` | If player UX/gameplay is impacted: name target manual chapter(s), add a **Manual follow-up** subtask, and include a testable AC for `docs/manual/` update (or explicit justified non-update). |
 | Implementation | `implement-github-issue` | Run **`update-game-manual`** before opening/updating the PR when the issue touches player UX/gameplay. |
 | PR review | `review-pr` | Player-impacting PRs must update affected manual chapters **or** justify non-update in the PR body. |
-| Verification | `verify-github-issue` | Check manual AC / chapter updates on merged `dev` when the issue is player-facing. |
+| Verification | `verify-github-issue` | Check manual AC / chapter updates on merged `dev` when the issue is player-facing. When chapters were updated, audit them for STYLE_GUIDE conformance and SPEC-accurate instructions/UI refs (same two checks as `review-game-manual-agent`). |
 
 Identify affected chapters by **exact string match** of changed SPEC paths against each chapter’s `## Sources` bullets (see style guide). When no Sources match yet, use the ToC coverage map in `docs/manual/index.md`.
 
@@ -51,7 +51,7 @@ A PR **must** review affected manual chapters (update them, or explicitly justif
 ## Manual update principles
 
 1. **Player angle** — Explain why the player uses the mechanic and how it affects winning or enjoyment; do not merely restate a rule diff.
-2. **Tone** — Vizier advising a young monarch; modern clear body prose; archaic flourishes only in Counsel callouts.
+2. **Tone and reading level** — Per `STYLE_GUIDE.md`: vizier advising a young monarch; everyday body prose a 12th-grade reader can follow; UI-engineering and genre jargon banned; archaic flourishes only in Counsel callouts.
 3. **Chapter template** — Purpose; How it is done; Counsel; The other courts; Consequences; Acceptance criteria for this chapter; Sources (last `##`).
 4. **Sources footer** — Last `##` is exactly `## Sources`; each bullet is one backtick-wrapped repo-relative SPEC path with no trailing prose.
 5. **Draft surfaces** — Omit, or cite as `**[DRAFT]** \`SCREENID\``; never operable steps in How it is done.
@@ -63,5 +63,5 @@ A PR **must** review affected manual chapters (update them, or explicitly justif
 - [ ] Player UX/gameplay impact assessed; exempt cases justified when applicable.
 - [ ] Required-review paths (if any) checked against chapter `## Sources` footers.
 - [ ] Affected chapters updated **or** PR body justifies non-update.
-- [ ] Player-angle framing preserved; tone contract respected.
+- [ ] Player-angle framing preserved; tone and reading-level contract respected.
 - [ ] Draft citations use `**[DRAFT]** \`SCREENID\`` or are omitted.

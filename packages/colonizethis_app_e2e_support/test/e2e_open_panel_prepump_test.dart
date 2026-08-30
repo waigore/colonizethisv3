@@ -9,44 +9,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
-  testWidgets('e2eOpenCivilianPanel short-circuits when panel already mounted', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: KeyedSubtree(
+  testWidgets(
+    'e2eOpenCivilianPanel short-circuits when panel already mounted',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        wrapE2eScaffold(
+          KeyedSubtree(
             key: kCtE2ECivilianPanelRootKey,
             child: Container(width: 200, height: 200, color: Colors.blue),
           ),
         ),
-      ),
-    );
-    final sw = Stopwatch()..start();
-    await e2eOpenCivilianPanel(tester);
-    expect(
-      sw.elapsed < const Duration(milliseconds: 200),
-      isTrue,
-      reason:
-          'Already-mounted civilian panel root must return before the loop '
-          'pumps a leading frame (Refs GitHub #2336 AC5).',
-    );
-  });
+      );
+      final sw = Stopwatch()..start();
+      await e2eOpenCivilianPanel(tester);
+      expect(
+        sw.elapsed < const Duration(milliseconds: 200),
+        isTrue,
+        reason:
+            'Already-mounted civilian panel root must return before the loop '
+            'pumps a leading frame (Refs GitHub #2336 AC5).',
+      );
+    },
+  );
 
   testWidgets('e2eOpenNavalPanel short-circuits when panel already mounted', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: KeyedSubtree(
-            key: kCtE2ENavalPanelRootKey,
-            child: Container(width: 200, height: 200, color: Colors.blue),
-          ),
+      wrapE2eScaffold(
+        KeyedSubtree(
+          key: kCtE2ENavalPanelRootKey,
+          child: Container(width: 200, height: 200, color: Colors.blue),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 part of 'catalog.dart';
 
-Map<String, IndustryCounselRecommendation> _demoStarredProduceRecommendations() {
+Map<String, IndustryCounselRecommendation>
+_demoStarredProduceRecommendations() {
   IndustryCounselRecommendation rec(String recipeId) {
     return IndustryCounselRecommendation(
       recommendationId: 'produce:$recipeId',
@@ -103,9 +104,8 @@ List<WidgetbookNode> get productionPanelDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Labour zero',
-        builder: (context) => ProductionPanelStory(
-          playerOverride: zeroLabourReadinessPlayer(),
-        ),
+        builder: (context) =>
+            ProductionPanelStory(playerOverride: zeroLabourReadinessPlayer()),
       ),
       WidgetbookUseCase(
         name: 'Labour food shortfall (mobile)',
@@ -116,129 +116,45 @@ List<WidgetbookNode> get productionPanelDirectories => [
           ),
         ),
       ),
-    ],
-  ),
-];
-
-/// Minimal game fixture with no industry counsel recommendations.
-Game _counselEmptyAdviceGame() {
-  const playerId = 'counsel_empty_gp';
-  return const Game(
-    id: 'counsel_empty_advice',
-    players: [
-      Player(
-        id: playerId,
-        displayName: 'Empty counsel GP',
-        isHuman: true,
-      ),
-    ],
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-  );
-}
-
-Widget _counselIndustryStory(
-  BuildContext context, {
-  required Game game,
-  String? highlightRecommendationId,
-  bool narrowViewport = false,
-}) {
-  final screen = CounselScreen(
-    game: game,
-    humanPlayerId: game.players.first.id,
-    highlightRecommendationId: highlightRecommendationId,
-  );
-  final child = ProviderScope(
-    child: widgetbookEditorialMonocleApp(child: screen),
-  );
-  return narrowViewport ? mobileViewport(context, child) : child;
-}
-
-Widget _counselTradeStory(
-  BuildContext context, {
-  required Game game,
-  String? highlightRecommendationId,
-  bool narrowViewport = false,
-}) {
-  final screen = CounselScreen(
-    game: game,
-    humanPlayerId: game.players.first.id,
-    highlightRecommendationId: highlightRecommendationId,
-    initialTab: CounselTab.trade,
-  );
-  final child = ProviderScope(
-    child: widgetbookEditorialMonocleApp(child: screen),
-  );
-  return narrowViewport ? mobileViewport(context, child) : child;
-}
-
-/// Counsel Panel stories. SPEC/ui/counsel-panel.md.
-List<WidgetbookNode> get counselPanelDirectories => [
-  WidgetbookFolder(
-    name: 'Counsel Panel',
-    children: [
       WidgetbookUseCase(
-        name: 'Counsel Industry (default)',
-        builder: (context) => _counselIndustryStory(
-          context,
-          game: demoGameForOverlay,
+        name: 'Labour cost gist',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: labourCostGistProductionPlayer(),
         ),
       ),
       WidgetbookUseCase(
-        name: 'Counsel Industry (highlight)',
-        builder: (context) => _counselIndustryStory(
-          context,
-          game: demoGameForOverlay,
-          highlightRecommendationId: 'produce:lumber_from_timber',
+        name: 'Labour locked tier',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: labourLockedTierProductionPlayer(),
         ),
       ),
       WidgetbookUseCase(
-        name: 'Counsel Industry (empty)',
-        builder: (context) {
-          final game = _counselEmptyAdviceGame();
-          return _counselIndustryStory(context, game: game);
-        },
-      ),
-      WidgetbookUseCase(
-        name: 'Counsel Industry (narrow 360)',
-        builder: (context) => _counselIndustryStory(
+        name: 'Labour cost gist (mobile)',
+        builder: (context) => mobileViewport(
           context,
-          game: demoGameForOverlay,
-          narrowViewport: true,
+          ProductionPanelStory(
+            playerOverride: labourCostGistProductionPlayer(),
+          ),
         ),
       ),
       WidgetbookUseCase(
-        name: 'Counsel Trade (default)',
-        builder: (context) => _counselTradeStory(
-          context,
-          game: demoGameForOverlay,
+        name: 'Labour disband confirm',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: labourCostGistProductionPlayer(),
         ),
       ),
       WidgetbookUseCase(
-        name: 'Counsel Trade (highlight)',
-        builder: (context) => _counselTradeStory(
+        name: 'Labour disband confirm (mobile)',
+        builder: (context) => mobileViewport(
           context,
-          game: demoGameForOverlay,
-          highlightRecommendationId: 'offer:timber',
+          ProductionPanelStory(
+            playerOverride: labourCostGistProductionPlayer(),
+          ),
         ),
       ),
       WidgetbookUseCase(
-        name: 'Counsel Trade (empty)',
-        builder: (context) {
-          final game = _counselEmptyAdviceGame();
-          return _counselTradeStory(context, game: game);
-        },
-      ),
-      WidgetbookUseCase(
-        name: 'Counsel Trade (narrow 360)',
-        builder: (context) => _counselTradeStory(
-          context,
-          game: demoGameForOverlay,
-          narrowViewport: true,
-        ),
+        name: 'Tap Available opens Trade',
+        builder: (context) => ProductionPanelStory(onOpenTradeMarket: (_) {}),
       ),
     ],
   ),
@@ -429,6 +345,7 @@ List<WidgetbookNode> get techTreeDirectories => [
           );
         },
       ),
+      ...technologyTreeAssignUseCases,
       WidgetbookUseCase(
         name: 'Slots — default (3 slots, 4th locked)',
         builder: (context) => _technologySlotsStoryHost(
@@ -461,6 +378,12 @@ List<WidgetbookNode> get techTreeDirectories => [
           _technologyFundingPreviewStoryHost(context),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Slots — sequential funding preview',
+        builder: (context) =>
+            _technologySequentialFundingPreviewStoryHost(context),
+      ),
+      ...technologySpyInsightUseCases,
       WidgetbookUseCase(
         name: 'Slots — persisted in-progress (no fresh orders)',
         builder: (context) => _technologyPersistedSlotStoryHost(context),
@@ -657,6 +580,34 @@ const List<ResearchFundingLevel> _kFundingPreviewLevels =
   return (player: player, game: game, orders: orders);
 }
 
+/// Builds the editable fixture for the sequential funding preview story: two
+/// slots at Medium funding with treasury `200` so slot 0 spends and slot 1 is
+/// sequential-blocked. SPEC/ui/technology-panel.md § Widgetbook. Refs #4335.
+({Player player, Game game, Orders orders})
+technologySequentialFundingPreviewFixture({
+  required Game baseGame,
+  required Player basePlayer,
+}) {
+  const techIds = <String>[kTechIdCropRotation, kTechIdSawMill];
+  final player = basePlayer.copyWith(treasury: 200, researchSlots: 3);
+  final game = baseGame.copyWith(
+    players: [player, ...baseGame.players.skip(1)],
+  );
+  final orders = Orders(
+    researchOrdersByPlayerId: <String, List<ResearchOrder>>{
+      player.id: <ResearchOrder>[
+        for (var i = 0; i < techIds.length; i++)
+          ResearchOrder(
+            slotIndex: i,
+            techId: techIds[i],
+            funding: ResearchFundingLevel.medium,
+          ),
+      ],
+    },
+  );
+  return (player: player, game: game, orders: orders);
+}
+
 /// Builds the editable `(Player, Game)` fixture for the persisted-occupancy
 /// story: a player whose first three research slots are occupied by persisted
 /// `researchSlotAssignments` (with accrued progress) but who has **no** fresh
@@ -828,145 +779,68 @@ class _TechnologyFundingPreviewStoryState
   }
 }
 
-/// Turn news dialog. SPEC/ui/turn-news-dialog.md.
-List<WidgetbookNode> get turnNewsDialogDirectories => [
-  WidgetbookFolder(
-    name: 'Turn news',
-    children: [
-      WidgetbookUseCase(
-        name: 'Sample lines',
-        builder: (context) {
-          final game = Game(
-            id: 'wb_news',
-            worldState: const WorldState(
-              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(
-                    id: 'oldWorld|P1',
-                    regionId: 'oldWorld',
-                    ownerId: 'gp1',
-                    displayName: 'Sample Province',
-                  ),
-                ],
-              ),
-              newWorld: RegionData(),
-            ),
-            players: const [
-              Player(
-                id: 'gp1',
-                displayName: 'Spain',
-                isHuman: true,
-                treasury: 0,
-              ),
-              Player(
-                id: 'gp2',
-                displayName: 'Portugal',
-                isHuman: false,
-                treasury: 0,
-              ),
-            ],
-          );
-          final digest = TurnNewsDigest(
-            resolvedTurnNumber: 2,
-            lines: [
-              const TurnNewsDiplomacyLine(
-                factionIdA: 'gp1',
-                factionIdB: 'gp2',
-                kind: TurnNewsDiplomacyKind.war,
-              ),
-              const TurnNewsProvinceDiscoveredLine(provinceId: 'oldWorld|P1'),
-            ],
-          );
-          return widgetbookEditorialMonocleApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            child: Center(
-              child: TurnNewsDialog(
-                game: game,
-                digest: digest,
-                newTurnNumber: 3,
-              ),
-            ),
-          );
-        },
+/// Builds the sequential funding preview Widgetbook story host (Refs #4335).
+Widget _technologySequentialFundingPreviewStoryHost(BuildContext context) {
+  final result = loadSeed42InitGameResult();
+  final game = result.game;
+  if (game.players.isEmpty) {
+    return Center(child: Text(appL10n(context).widgetbook_noPlayers));
+  }
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: _TechnologySequentialFundingPreviewStory(
+      baseGame: game,
+      basePlayer: game.players.first,
+    ),
+  );
+}
+
+class _TechnologySequentialFundingPreviewStory extends StatefulWidget {
+  const _TechnologySequentialFundingPreviewStory({
+    required this.baseGame,
+    required this.basePlayer,
+  });
+
+  final Game baseGame;
+  final Player basePlayer;
+
+  @override
+  State<_TechnologySequentialFundingPreviewStory> createState() =>
+      _TechnologySequentialFundingPreviewStoryState();
+}
+
+class _TechnologySequentialFundingPreviewStoryState
+    extends State<_TechnologySequentialFundingPreviewStory> {
+  late Player _player;
+  late Game _game;
+  late Orders _orders;
+
+  @override
+  void initState() {
+    super.initState();
+    final fixture = technologySequentialFundingPreviewFixture(
+      baseGame: widget.baseGame,
+      basePlayer: widget.basePlayer,
+    );
+    _player = fixture.player;
+    _game = fixture.game;
+    _orders = fixture.orders;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(CtSpacing.l),
+      child: TechnologyPanel(
+        game: _game,
+        player: _player,
+        currentOrders: _orders,
+        onOrdersChanged: (next) => setState(() => _orders = next),
       ),
-      WidgetbookUseCase(
-        name: 'Empty digest',
-        builder: (context) {
-          final game = Game(
-            id: 'wb_news_e',
-            worldState: const WorldState(
-              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
-              oldWorld: RegionData(),
-              newWorld: RegionData(),
-            ),
-            players: const [
-              Player(
-                id: 'gp1',
-                displayName: 'Spain',
-                isHuman: true,
-                treasury: 0,
-              ),
-            ],
-          );
-          return widgetbookEditorialMonocleApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            child: Center(
-              child: TurnNewsDialog(
-                game: game,
-                digest: const TurnNewsDigest(resolvedTurnNumber: 1, lines: []),
-                newTurnNumber: 2,
-              ),
-            ),
-          );
-        },
-      ),
-      WidgetbookUseCase(
-        name: 'Mobile viewport',
-        builder: (context) {
-          final game = Game(
-            id: 'wb_news_m',
-            worldState: const WorldState(
-              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
-              oldWorld: RegionData(),
-              newWorld: RegionData(),
-            ),
-            players: const [
-              Player(
-                id: 'gp1',
-                displayName: 'Spain',
-                isHuman: true,
-                treasury: 0,
-              ),
-            ],
-          );
-          return mobileViewport(
-            context,
-            widgetbookEditorialMonocleApp(
-              localizationsDelegates:
-                  AppLocalizationsBinding.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              child: Center(
-                child: TurnNewsDialog(
-                  game: game,
-                  digest: const TurnNewsDigest(
-                    resolvedTurnNumber: 1,
-                    lines: [],
-                  ),
-                  newTurnNumber: 2,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    ],
-  ),
-];
+    );
+  }
+}
 
 /// Military Units Panel stories. SPEC/ui/military-units-panel.md.
 List<WidgetbookNode> get militaryUnitsPanelDirectories => [

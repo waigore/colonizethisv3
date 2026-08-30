@@ -9,6 +9,7 @@ import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
+import '../../../../providers/games_provider.dart';
 
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
@@ -16,6 +17,7 @@ import 'game_map_area_selection.dart';
 import 'game_map_area_relocate_selection.dart';
 import 'game_map_area_view.dart';
 import 'game_map_area_events.dart';
+import 'game_map_area_last_turn_playback.dart';
 
 /// State lifecycle for [GameMapArea]: bus-subscription wiring in [initState],
 /// observe-mode listeners, teardown in [dispose], and the per-game reset /
@@ -27,12 +29,13 @@ mixin GameMapAreaLifecycle
         GameMapAreaSelection,
         GameMapAreaRelocateSelection,
         GameMapAreaView,
-        GameMapAreaEvents {
+        GameMapAreaEvents,
+        GameMapAreaLastTurnPlayback {
   @override
   void initState() {
     super.initState();
     mapViewState = widget.game.mapViewState;
-    refreshWorkTargetSelectionCache(widget.game);
+    refreshMapSuggestionCaches(widget.game);
     final bus = ref.read(appEventBusProvider);
     for (final subscription in [
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
@@ -81,6 +84,9 @@ mixin GameMapAreaLifecycle
       bus.on<ct_models.AppMarketTurnSummaryEvent>().listen(
         onAppMarketTurnSummaryEvent,
       ),
+      bus.on<ct_models.AppEconomyTurnSummaryEvent>().listen(
+        onAppEconomyTurnSummaryEvent,
+      ),
       bus.on<ct_models.AppPlayerProvinceDiscoveredEvent>().listen(
         onAppPlayerProvinceDiscoveredEvent,
       ),
@@ -97,6 +103,12 @@ mixin GameMapAreaLifecycle
       ),
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
         onTurnResolutionCompleteEvent,
+      ),
+      bus.on<ct_models.TurnNewsDialogClosedEvent>().listen(
+        onTurnNewsDialogClosedEvent,
+      ),
+      bus.on<ct_models.VictoryOverlayViewFinalStateEvent>().listen(
+        onVictoryOverlayViewFinalStateEvent,
       ),
       bus.on<ct_models.OpenDebugConsolePanelEvent>().listen((_) {
         if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
@@ -123,6 +135,11 @@ mixin GameMapAreaLifecycle
         cancelAnyMapTileSelection();
       }
     });
+    ref.listenManual(currentOrdersProvider, (previous, next) {
+      if (!mounted) return;
+      if (identical(previous, next)) return;
+      refreshArmyMovePickerCache(widget.game);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       maybeAutoCenterOnShellEntry();
@@ -131,6 +148,7 @@ mixin GameMapAreaLifecycle
 
   @override
   void dispose() {
+    disposeLastTurnPlayback();
     turnResolutionProgressSub?.cancel();
     turnResolutionProgressSub = null;
     busSubscriptions.cancelAll();
@@ -144,7 +162,7 @@ mixin GameMapAreaLifecycle
       ref.read(mapProvincePanelProvider.notifier).reset();
       ref.read(regionMinimapVisibleProvider.notifier).reset();
       setState(() {
-        refreshWorkTargetSelectionCache(widget.game);
+        refreshMapSuggestionCaches(widget.game);
         mapViewState = widget.game.mapViewState;
         regionViewportSnapshot = null;
         pendingRegionViewport = null;
@@ -161,7 +179,7 @@ mixin GameMapAreaLifecycle
     if (oldWidget.game.worldState.turnState.turnNumber !=
         widget.game.worldState.turnState.turnNumber) {
       setState(() {
-        refreshWorkTargetSelectionCache(widget.game);
+        refreshMapSuggestionCaches(widget.game);
       });
     }
   }

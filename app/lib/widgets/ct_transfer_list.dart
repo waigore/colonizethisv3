@@ -25,6 +25,7 @@ class CtTransferList extends StatefulWidget {
     this.itemLabelBuilder,
     this.canConfirm,
     this.onChanged,
+    this.extraContentBuilder,
     this.onCancel,
     this.leftEmptyLabel = 'No items',
     this.rightEmptyLabel = 'No items',
@@ -48,6 +49,8 @@ class CtTransferList extends StatefulWidget {
   final bool Function(Map<String, int> left, Map<String, int> right)?
   canConfirm;
   final void Function(Map<String, int> left, Map<String, int> right)? onChanged;
+  final Widget? Function(Map<String, int> left, Map<String, int> right)?
+  extraContentBuilder;
   final void Function(Map<String, int> left, Map<String, int> right) onConfirm;
   final VoidCallback? onCancel;
   final String leftEmptyLabel;

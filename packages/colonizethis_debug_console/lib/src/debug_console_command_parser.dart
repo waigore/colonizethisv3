@@ -1,8 +1,8 @@
 import 'package:colonizethis_logic/debug_console_api.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_console_parse_result.dart';
 import 'debug_console_parser_diplomacy_commands.dart';
+import 'debug_console_parser_help.dart';
 import 'debug_console_parser_helpers.dart';
 import 'debug_console_parser_province_commands.dart';
 import 'debug_console_parsed_invocation.dart';
@@ -42,7 +42,7 @@ class DebugConsoleCommandParser {
       '/list_players' => _parseListPlayers(tokens),
       '/observe' => parseObserveCommand(tokens),
       '/set_diplomacy' => parseSetDiplomacyCommand(trimmed),
-      '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
+      '/help' => DebugConsoleParseResult.error(buildDebugConsoleHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
       ),
@@ -90,108 +90,80 @@ class DebugConsoleCommandParser {
   }
 
   DebugConsoleParseResult _parseAddWorker(List<String> tokens) {
-    if (tokens.length < 3) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /add_worker <peasants|apprentices|journeymen|masters> <amount>',
-      );
-    }
-    final tierInput = tokens[1].trim().toLowerCase();
-    final canonicalTierId = canonicalIdForInput(
-      tierInput,
-      debugConsoleSupportedWorkerTierIds,
+    final parsed = parseCreditByCanonicalId(
+      tokens: tokens,
+      usage:
+          'Usage: /add_worker <peasants|apprentices|journeymen|masters> <amount>',
+      unknownIdMessage:
+          'Unknown worker tier. Use peasants, apprentices, journeymen, or masters.',
+      candidates: debugConsoleSupportedWorkerTierIds,
     );
-    if (canonicalTierId == null) {
-      return const DebugConsoleParseResult.error(
-        'Unknown worker tier. Use peasants, apprentices, journeymen, or masters.',
-      );
-    }
-    final amountResult = parseAmountWithClamp(tokens[2]);
-    if (amountResult.error != null) {
-      return DebugConsoleParseResult.error(amountResult.error!);
+    if (parsed.error != null) {
+      return DebugConsoleParseResult.error(parsed.error!);
     }
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.workerPoolCredit(
-        workerTierId: canonicalTierId,
-        requestedAmount: amountResult.requested,
-        creditedAmount: amountResult.credited,
+        workerTierId: parsed.canonicalId!,
+        requestedAmount: parsed.requested,
+        creditedAmount: parsed.credited,
       ),
     );
   }
 
   DebugConsoleParseResult _parseAddResource(List<String> tokens) {
-    if (tokens.length < 3) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /add_resource <commodity_id> <amount>',
-      );
-    }
-    final requestedCommodityId = tokens[1].trim();
-    final normalizedCommodityId = requestedCommodityId.toLowerCase();
-    final canonicalCommodityId = canonicalIdForInput(
-      normalizedCommodityId,
-      debugConsoleSupportedCommodityIds,
+    final parsed = parseCreditByCanonicalId(
+      tokens: tokens,
+      usage: 'Usage: /add_resource <commodity_id> <amount>',
+      unknownIdMessage:
+          'Unknown commodity id. Use /help for supported commodity ids.',
+      candidates: debugConsoleSupportedCommodityIds,
     );
-    if (canonicalCommodityId == null) {
-      return const DebugConsoleParseResult.error(
-        'Unknown commodity id. Use /help for supported commodity ids.',
-      );
-    }
-    final amountResult = parseAmountWithClamp(tokens[2]);
-    if (amountResult.error != null) {
-      return DebugConsoleParseResult.error(amountResult.error!);
+    if (parsed.error != null) {
+      return DebugConsoleParseResult.error(parsed.error!);
     }
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.stockpileCredit(
-        commodityId: canonicalCommodityId,
-        requestedAmount: amountResult.requested,
-        creditedAmount: amountResult.credited,
+        commodityId: parsed.canonicalId!,
+        requestedAmount: parsed.requested,
+        creditedAmount: parsed.credited,
       ),
     );
   }
 
   DebugConsoleParseResult _parseSpawnRegiment(List<String> tokens) {
-    if (tokens.length < 2) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /spawn_regiment <regiment_type_id> [count]',
-      );
-    }
-    final regimentTypeId = tokens[1].trim().toLowerCase();
-    if (!debugConsoleSupportedRegimentTypeIds.contains(regimentTypeId)) {
-      return const DebugConsoleParseResult.error(
-        'Unknown regiment type id. Use /help for supported regiment ids.',
-      );
-    }
-    final countResult = parseOptionalCount(tokens, 3);
-    if (countResult.error != null) {
-      return DebugConsoleParseResult.error(countResult.error!);
+    final parsed = parseSpawnBySupportedId(
+      tokens: tokens,
+      usage: 'Usage: /spawn_regiment <regiment_type_id> [count]',
+      unknownIdMessage:
+          'Unknown regiment type id. Use /help for supported regiment ids.',
+      supportedIds: debugConsoleSupportedRegimentTypeIds,
+    );
+    if (parsed.error != null) {
+      return DebugConsoleParseResult.error(parsed.error!);
     }
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.spawnRegimentAtCapital(
-        regimentTypeId: regimentTypeId,
-        count: countResult.count,
+        regimentTypeId: parsed.typeId!,
+        count: parsed.count,
       ),
     );
   }
 
   DebugConsoleParseResult _parseSpawnShip(List<String> tokens) {
-    if (tokens.length < 2) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /spawn_ship <ship_type_id> [count]',
-      );
-    }
-    final shipTypeId = tokens[1].trim().toLowerCase();
-    if (!debugConsoleSupportedShipTypeIds.contains(shipTypeId)) {
-      return const DebugConsoleParseResult.error(
-        'Unknown ship type id. Use /help for supported ship ids.',
-      );
-    }
-    final countResult = parseOptionalCount(tokens, 3);
-    if (countResult.error != null) {
-      return DebugConsoleParseResult.error(countResult.error!);
+    final parsed = parseSpawnBySupportedId(
+      tokens: tokens,
+      usage: 'Usage: /spawn_ship <ship_type_id> [count]',
+      unknownIdMessage:
+          'Unknown ship type id. Use /help for supported ship ids.',
+      supportedIds: debugConsoleSupportedShipTypeIds,
+    );
+    if (parsed.error != null) {
+      return DebugConsoleParseResult.error(parsed.error!);
     }
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.spawnShipAtCapitalHomeFleet(
-        shipTypeId: shipTypeId,
-        count: countResult.count,
+        shipTypeId: parsed.typeId!,
+        count: parsed.count,
       ),
     );
   }
@@ -213,44 +185,6 @@ class DebugConsoleCommandParser {
       DebugConsoleParsedInvocation.listPlayers(),
     );
   }
-
-}
-
-String _buildHelpMessage() {
-  final regimentIds = debugConsoleSupportedRegimentTypeIdsSorted.join(', ');
-  final shipIds = debugConsoleSupportedShipTypeIdsSorted.join(', ');
-  final commodityIds = debugConsoleSupportedCommodityIdsSorted.join(', ');
-  final workerTierIds = debugConsoleSupportedWorkerTierIdsSorted.join(', ');
-  final diplomacyActions = DebugDiplomacyActionTokens.sortedKeywords.join(', ');
-  return 'Supported commands:\n'
-      '- /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]\n'
-      '- /spawn_regiment <regiment_type_id> [count]\n'
-      '  supported ids: $regimentIds\n'
-      '- /spawn_ship <ship_type_id> [count]\n'
-      '  supported ids: $shipIds\n'
-      '- /add_money <amount>\n'
-      '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
-      '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
-      '- /add_worker <peasants|apprentices|journeymen|masters> <amount>\n'
-      '  supported tier ids: $workerTierIds\n'
-      '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
-      '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
-      '- /add_resource <commodity_id> <amount>\n'
-      '  supported ids: $commodityIds\n'
-      '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
-      '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
-      '- /flip_province <regionId> <province_display_name>\n'
-      '- /flip_province <regionId|localId>\n'
-      '- /reveal_province <regionId|localId | province_display_name>\n'
-      '- /get_tile_basic_info\n'
-      '  if name is ambiguous, retry with full province id.\n'
-      '- /list_players\n'
-      '- /observe\n'
-      '- /observe off\n'
-      '- /observe <player_id | display_name>\n'
-      '- /set_diplomacy <faction> <action>\n'
-      '- /set_diplomacy <faction_a> <faction_b> <action>\n'
-      '  supported actions: $diplomacyActions';
 }
 
 String? _unitTypeFromAlias(String alias) {

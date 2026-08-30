@@ -1,209 +1,18 @@
-import '../perception/perception_snapshot.dart';
 import '../util/faction_query.dart';
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'diplomatic_candidate_scoring_offer_peace_stalled_gp.dart';
+import 'diplomatic_candidate_scoring_offer_peace_target_lists.dart';
 import 'diplomatic_candidate_scoring_shared.dart';
 import 'diplomatic_scoring_context.dart';
 import 'expand_phase_planner.dart';
 import 'planning_helpers.dart'
     show
         atWarGreatPowerOrderTarget,
-        atWarPeaceTargetBonus,
-        factionOwnsInvadableOldWorldProvince,
-        gpFactionIdsAtWarWith,
         isOwnOldWorldBelowConquestQuota,
         isOwnOldWorldExpansionStalled,
         kDiplomaticDefaultBaseScore,
-        mutualExhaustedGpStalemateSideQualifies,
         orderTargetIsAtWarInvadableBlocker;
 import 'planning_imports.dart';
-
-/// True when [order] proposes offerPeace toward the sole at-war Great Power and
-/// the mutual-exhausted plateau conditions hold for both sides. Mirrors
-/// [mutualExhaustedBelowQuotaGpStalematePeaceTargets] inline (the peace-target
-/// helper lives in `diplomacy_planner_peace_targets.dart`, which is not part of
-/// this scoring library; the same SPEC-authorized conditions apply here to keep
-/// the offer-peace bonus aligned with the collector). Refs #2509.
-bool _mutualExhaustedBelowQuotaSoleGpStalemate({
-  required DiplomaticOrder order,
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required String nationId,
-}) {
-  if (!snapshot.threats.atWarWith.contains(order.targetFactionId)) {
-    return false;
-  }
-  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
-  // Route the duplicated per-side "mutual-exhausted below-quota GP stalemate"
-  // qualification (min-OW + below-quota + stalled + treasury/regiment
-  // exhaustion) through the shared [mutualExhaustedGpStalemateSideQualifies]
-  // helper (Refs #3717 offer-peace / expand-peace scoring-skeleton dedup). The
-  // helper bundles the same side-effect-free guards the inline checks used for
-  // both the active player and the enemy GP, so results are byte-identical; the
-  // inter-side `(enemyOw - ownOw).abs()` proximity gate stays here.
-  if (!mutualExhaustedGpStalemateSideQualifies(
-    game: game,
-    factionId: nationId,
-    ow: ownOw,
-  )) {
-    return false;
-  }
-  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
-  if (gpWars.length != 1 || gpWars.single != order.targetFactionId) {
-    return false;
-  }
-  final enemyOw = provinceCountOwnedBy(game, order.targetFactionId);
-  if (!mutualExhaustedGpStalemateSideQualifies(
-    game: game,
-    factionId: order.targetFactionId,
-    ow: enemyOw,
-  )) {
-    return false;
-  }
-  if ((enemyOw - ownOw).abs() > 1) {
-    return false;
-  }
-  return true;
-}
-
-int _offerPeaceStalledGpWarAdjustments({
-  required DiplomaticOrder order,
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required Map<String, String> provinceOwner,
-  required Player? targetGp,
-}) {
-  var s = 0;
-  // Hoist the repeated "order target is an at-war Great Power" eligibility gate
-  // (Refs #3717 offer-peace scoring-skeleton dedup). [atWarGreatPowerOrderTarget]
-  // is a pure projection over the already-resolved [targetGp] and the snapshot
-  // threat set and was previously recomputed identically as the first `&&`
-  // operand of all four stalled-GP-war branches below; evaluating it once is
-  // byte-identical (it was always evaluated as the leading conjunct) and avoids
-  // the redundant repeated `atWarWith.contains` membership tests.
-  final atWarGreatPowerTarget = atWarGreatPowerOrderTarget(
-    targetGp: targetGp,
-    snapshot: snapshot,
-    targetFactionId: order.targetFactionId,
-  );
-  final gpBlockerFocus = isStalledOldWorldGpBlockerFocus(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (atWarGreatPowerTarget &&
-      !gpBlockerFocus &&
-      isOwnOldWorldExpansionStalled(snapshot) &&
-      provinceCountOwnedBy(game, order.targetFactionId) >
-          snapshot.conquest.oldWorldProvincesOwned &&
-      factionOwnsInvadableOldWorldProvince(
-        snapshot: snapshot,
-        provinceOwner: provinceOwner,
-        factionId: order.targetFactionId,
-      )) {
-    s += kOfferPeaceStalledStrongerGpBlockerBonus;
-  }
-  if (atWarGreatPowerTarget &&
-      isOwnOldWorldExpansionStalled(snapshot) &&
-      !factionOwnsInvadableOldWorldProvince(
-        snapshot: snapshot,
-        provinceOwner: provinceOwner,
-        factionId: order.targetFactionId,
-      ) &&
-      snapshot.conquest.invadableProvinceIdsSorted.any((pid) {
-        final owner = provinceOwner[pid];
-        return owner != null &&
-            (isMinorFaction(game, owner) || game.playerById(owner) != null);
-      })) {
-    s += kOfferPeaceStalledFutileGpWarBonus;
-  }
-  final gpBlocker = primaryInvadableOldWorldGpBlocker(
-    game: game,
-    snapshot: snapshot,
-  );
-  if (atWarGreatPowerTarget &&
-      gpBlocker != null &&
-      order.targetFactionId != gpBlocker &&
-      isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot)) {
-    s += kOfferPeaceStalledFutileGpWarBonus;
-  }
-  final gpWarCount = gpFactionIdsAtWarWith(game, snapshot).length;
-  if (atWarGreatPowerTarget &&
-      gpBlocker != null &&
-      gpWarCount > 1 &&
-      order.targetFactionId != gpBlocker &&
-      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
-    s += kOfferPeaceStalledFutileGpWarBonus;
-  }
-  return s;
-}
-
-int _offerPeacePeaceTargetListAdjustments({
-  required DiplomaticOrder order,
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required Player? targetGp,
-}) {
-  final atWarGp = atWarGreatPowerOrderTarget(
-    targetGp: targetGp,
-    snapshot: snapshot,
-    targetFactionId: order.targetFactionId,
-  );
-  var s = 0;
-  s += atWarPeaceTargetBonus(
-    atWarGreatPowerTarget: atWarGp,
-    isPeaceTarget: () =>
-        unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) ==
-        order.targetFactionId,
-    bonus: kOfferPeaceUnwinnableSoleGpWarBonus,
-  );
-  s += atWarPeaceTargetBonus(
-    atWarGreatPowerTarget: atWarGp,
-    isPeaceTarget: () => stalledBelowQuotaGpLeadPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).contains(order.targetFactionId),
-    bonus: kOfferPeaceUnwinnableSoleGpWarBonus,
-  );
-  s += atWarPeaceTargetBonus(
-    atWarGreatPowerTarget: atWarGp,
-    isPeaceTarget: () => belowQuotaPeerGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).contains(order.targetFactionId),
-    bonus: kOfferPeaceStalledFutileGpWarBonus,
-  );
-  s += atWarPeaceTargetBonus(
-    atWarGreatPowerTarget: atWarGp,
-    isPeaceTarget: () => nearQuotaHoldPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).contains(order.targetFactionId),
-    bonus: kOfferPeaceConsolidateGainsSoleGpWarBonus,
-  );
-  s += atWarPeaceTargetBonus(
-    atWarGreatPowerTarget: atWarGp,
-    isPeaceTarget: () => quotaMetFutileBelowQuotaGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).contains(order.targetFactionId),
-    bonus: kOfferPeaceStalledFutileGpWarBonus,
-  );
-  s += atWarPeaceTargetBonus(
-    atWarGreatPowerTarget: atWarGp,
-    isPeaceTarget: () => quotaMetBelowQuotaAtWarPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).contains(order.targetFactionId),
-    bonus: kOfferPeaceStalledFutileGpWarBonus,
-  );
-  s += atWarPeaceTargetBonus(
-    atWarGreatPowerTarget: atWarGp,
-    isPeaceTarget: () =>
-        consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) ==
-        order.targetFactionId,
-    bonus: kOfferPeaceConsolidateGainsSoleGpWarBonus,
-  );
-  return s;
-}
 
 int scoreOfferPeaceDiplomaticOrder(
   DiplomaticScoringContext ctx,
@@ -239,14 +48,14 @@ int scoreOfferPeaceDiplomaticOrder(
     s -= kOfferPeaceBelowQuotaActiveMinorWarPenalty;
   }
   final targetGp = game.playerById(order.targetFactionId);
-  s += _offerPeaceStalledGpWarAdjustments(
+  s += offerPeaceStalledGpWarAdjustments(
     order: order,
     game: game,
     snapshot: snapshot,
     provinceOwner: provinceOwner,
     targetGp: targetGp,
   );
-  s += _offerPeacePeaceTargetListAdjustments(
+  s += offerPeacePeaceTargetListAdjustments(
     order: order,
     game: game,
     snapshot: snapshot,
@@ -257,13 +66,9 @@ int scoreOfferPeaceDiplomaticOrder(
     snapshot: snapshot,
   );
   // Route the repeated "order target is the at-war primary invadable OW GP
-  // blocker" eligibility gate through the shared
-  // [orderTargetIsAtWarInvadableBlocker] helper (Refs #3717 offer-peace
-  // scoring-skeleton dedup); reuse the single [gpBlocker] result for both
-  // blocker branches below instead of recomputing
-  // [primaryInvadableOldWorldGpBlocker]. Byte-identical: the helper spells out
-  // the same `targetGp != null && blocker != null && target == blocker &&
-  // atWarWith.contains(blocker)` conjunction the inline guards used.
+  // blocker" eligibility gate through [orderTargetIsAtWarInvadableBlocker]
+  // (Refs #3717); reuse the single [gpBlocker] result for both blocker
+  // branches below. Byte-identical to the prior inline conjunction.
   final targetIsAtWarBlocker = orderTargetIsAtWarInvadableBlocker(
     targetGp: targetGp,
     snapshot: snapshot,
@@ -290,7 +95,7 @@ int scoreOfferPeaceDiplomaticOrder(
     s += kOfferPeaceStalledZeroRegimentGpWarBonus;
   }
   if (targetGp != null &&
-      _mutualExhaustedBelowQuotaSoleGpStalemate(
+      offerPeaceMutualExhaustedBelowQuotaSoleGpStalemate(
         order: order,
         game: game,
         snapshot: snapshot,

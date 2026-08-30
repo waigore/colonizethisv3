@@ -98,8 +98,7 @@ void gameServiceEmitTurnResolutionEvents(
     return;
   }
   if (result is TurnResolutionPendingFtp) {
-    // FTP accept/reject UI is follow-up work; pending state is set via
-    // [applyTurnResolutionResult] / [pendingDiplomacyProvider].
+    service.eventBus?.emit(FtpRequiredEvent(offers: result.pendingFtpOffers));
     return;
   }
   if (result is TurnResolutionPendingIntervention) {

@@ -7,8 +7,6 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'scenario_runner.dart';
 
-
-
 Game _gameWithInterceptorTech({required bool hasPrivateering}) =>
     TestFixtures.minimalGame(
       id: 'g1',
@@ -54,19 +52,13 @@ int _countIntercepts({required bool hasPrivateering}) {
   final battles = _battlesFor(game);
   var intercepts = 0;
   for (var seed = 0; seed < 200; seed++) {
-    final out = filterBattlesByInterception(
-      game,
-      battles,
-      {'mover_p1'},
-      seed,
-    );
+    final out = filterBattlesByInterception(game, battles, {'mover_p1'}, seed);
     if (out.isNotEmpty) intercepts++;
   }
   return intercepts;
 }
 
-List<RunnableScenario>
-    navalPrivateeringInterceptProbabilityScenarios() => [
+List<RunnableScenario> navalPrivateeringInterceptProbabilityScenarios() => [
   RunnableScenario(
     scenarioId: 'npp-baseline',
     label: 'no privateering uses the baseline (unscaled) interceptor score',
@@ -130,8 +122,7 @@ List<RunnableScenario>
   ),
 ];
 
-List<RunnableScenario>
-    filterBattlesByInterceptionPrivateeringScenarios() => [
+List<RunnableScenario> filterBattlesByInterceptionPrivateeringScenarios() => [
   RunnableScenario(
     scenarioId: 'fbi-at-least-as-often',
     label: 'interceptor with privateering intercepts at least as often',

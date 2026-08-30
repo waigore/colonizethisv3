@@ -27,6 +27,8 @@ class CtTabStrip extends StatefulWidget {
     required this.tabViews,
     EdgeInsets? contentPadding,
     this.initialTabIndex = 0,
+    this.lazyTabBodies = false,
+    this.onTabIndexChanged,
   })  : assert(tabLabels.length == tabViews.length),
         assert(tabLabels.isNotEmpty),
         assert(
@@ -48,6 +50,13 @@ class CtTabStrip extends StatefulWidget {
   /// dark-theme E4 contract for `TradeScreen` documents the default of
   /// `0` so callers must opt in explicitly.
   final int initialTabIndex;
+
+  /// When true, off-tab bodies are not built until their tab is selected
+  /// for the first time (reduces open-path work for heavy panel tabs).
+  final bool lazyTabBodies;
+
+  /// Optional callback when the selected tab index changes.
+  final ValueChanged<int>? onTabIndexChanged;
 
   /// Inner padding applied to every tab label container.
   static const EdgeInsets tabContentPadding =
@@ -104,7 +113,16 @@ class _CtTabStripState extends State<CtTabStrip> {
             child: IndexedStack(
               index: _selectedIndex,
               sizing: StackFit.expand,
-              children: widget.tabViews,
+              children: List<Widget>.generate(
+                widget.tabViews.length,
+                (int i) => widget.lazyTabBodies
+                    ? _CtLazyTabBody(
+                        index: i,
+                        selectedIndex: _selectedIndex,
+                        child: widget.tabViews[i],
+                      )
+                    : widget.tabViews[i],
+              ),
             ),
           ),
         ),
@@ -130,7 +148,11 @@ class _CtTabStripState extends State<CtTabStrip> {
     return Padding(
       padding: EdgeInsets.only(right: hasGap ? CtTabStrip.tabGap : 0),
       child: GestureDetector(
-        onTap: () => setState(() => _selectedIndex = i),
+        onTap: () {
+          if (_selectedIndex == i) return;
+          setState(() => _selectedIndex = i);
+          widget.onTabIndexChanged?.call(i);
+        },
         child: Container(
           padding: CtTabStrip.tabContentPadding,
           decoration: BoxDecoration(
@@ -147,5 +169,36 @@ class _CtTabStripState extends State<CtTabStrip> {
         ),
       ),
     );
+  }
+}
+
+/// Defers building [child] until [index] is selected for the first time.
+class _CtLazyTabBody extends StatefulWidget {
+  const _CtLazyTabBody({
+    required this.index,
+    required this.selectedIndex,
+    required this.child,
+  });
+
+  final int index;
+  final int selectedIndex;
+  final Widget child;
+
+  @override
+  State<_CtLazyTabBody> createState() => _CtLazyTabBodyState();
+}
+
+class _CtLazyTabBodyState extends State<_CtLazyTabBody> {
+  bool _wasEverActive = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.index == widget.selectedIndex) {
+      _wasEverActive = true;
+    }
+    if (!_wasEverActive) {
+      return const SizedBox.shrink();
+    }
+    return widget.child;
   }
 }

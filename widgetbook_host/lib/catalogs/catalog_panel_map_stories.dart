@@ -49,7 +49,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
-        name: 'Standalone — tile capital-link disconnected',
+        name: 'Standalone — tile stranded capital-link default (Refs #4369)',
         builder: (context) {
           final game = demoGameForOverlay;
           final region = demoRegionForOverlay;
@@ -73,78 +73,25 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           );
         },
       ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Build road enabled',
-        builder: (context) => _provinceOverlayBuildRoadStory(
-          showBuildRoadActionIcon: true,
-          buildRoadActionEnabled: true,
-          buildRoadActionHasEngineerUnits: true,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Build road disabled',
-        builder: (context) => _provinceOverlayBuildRoadStory(
-          showBuildRoadActionIcon: true,
-          buildRoadActionEnabled: false,
-          buildRoadActionHasEngineerUnits: false,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Build road hidden',
-        builder: (context) => _provinceOverlayBuildRoadStory(
-          showBuildRoadActionIcon: false,
-          buildRoadActionEnabled: false,
-          buildRoadActionHasEngineerUnits: false,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Build fort enabled',
-        builder: (context) => _provinceOverlayBuildFortStory(
-          showBuildFortActionIcon: true,
-          buildFortActionEnabled: true,
-          buildFortActionHasEngineerUnits: true,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Build fort disabled',
-        builder: (context) => _provinceOverlayBuildFortStory(
-          showBuildFortActionIcon: true,
-          buildFortActionEnabled: false,
-          buildFortActionHasEngineerUnits: false,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Build fort hidden',
-        builder: (context) => _provinceOverlayBuildFortStory(
-          showBuildFortActionIcon: false,
-          buildFortActionEnabled: false,
-          buildFortActionHasEngineerUnits: false,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Purchase land enabled',
-        builder: (context) => _provinceOverlayPurchaseLandStory(
-          showPurchaseLandActionIcon: true,
-          purchaseLandActionEnabled: true,
-          purchaseLandActionHasMerchantUnits: true,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Purchase land disabled',
-        builder: (context) => _provinceOverlayPurchaseLandStory(
-          showPurchaseLandActionIcon: true,
-          purchaseLandActionEnabled: false,
-          purchaseLandActionHasMerchantUnits: false,
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Standalone — tile Purchase land hidden',
-        builder: (context) => _provinceOverlayPurchaseLandStory(
-          showPurchaseLandActionIcon: false,
-          purchaseLandActionEnabled: false,
-          purchaseLandActionHasMerchantUnits: false,
-        ),
-      ),
+      ...provinceOverlayBuildRoadUseCases,
+      ...provinceOverlayBuildImprovementYieldUseCases,
+      ...provinceOverlayTransportStepYieldUseCases,
+      ...provinceOverlayBuildFortUseCases,
+      ...provinceOverlayBuildPortUseCases,
+      ...provinceOverlayBuildRailroadUseCases,
+      ...provinceOverlayPurchaseLandUseCases,
+      ...provinceOverlayUpgradeTownUseCases,
+      ...provinceOverlayMoveInvadeUseCases,
+      ...provinceOverlayCombineArmiesUseCases,
+      ...provinceOverlayCombineFleetsUseCases,
+      ...provinceOverlayNavalMissionUseCases,
+      ...provinceOverlayDetachAndSailUseCases,
+      ...provinceOverlayTransferHomeUseCases,
+      ...provinceOverlayStationSpyUseCases,
+      ...provinceOverlayCounterEspionageUseCases,
+      ...provinceOverlayEstablishConsulateUseCases,
+      ...provinceOverlayOwnerStandingUseCases,
+      ...provinceOverlayPoliticalSightUseCases,
       WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
@@ -187,14 +134,16 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
                 },
               ),
               availableByCommodity: {
-                CommodityCatalog.grain.id: const ProvinceImprovableCommodityCount(
-                  count: 3,
-                  tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|2|0'],
-                ),
-                CommodityCatalog.timber.id: const ProvinceImprovableCommodityCount(
-                  count: 2,
-                  tileKeys: ['oldWorld|p1|0|1'],
-                ),
+                CommodityCatalog.grain.id:
+                    const ProvinceImprovableCommodityCount(
+                      count: 3,
+                      tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|2|0'],
+                    ),
+                CommodityCatalog.timber.id:
+                    const ProvinceImprovableCommodityCount(
+                      count: 2,
+                      tileKeys: ['oldWorld|p1|0|1'],
+                    ),
               },
               onClose: () {},
             ),
@@ -256,87 +205,6 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
   ),
 ];
 
-/// MAP20001 Military **Build fort** inline-action variants. Refs #4280.
-Widget _provinceOverlayBuildFortStory({
-  required bool showBuildFortActionIcon,
-  required bool buildFortActionEnabled,
-  required bool buildFortActionHasEngineerUnits,
-}) {
-  final game = demoGameForOverlay;
-  final region = demoRegionForOverlay;
-  return SizedBox(
-    width: 640,
-    height: 520,
-    child: ProvinceSeaZoneDetailOverlay(
-      game: game,
-      region: region,
-      displayId: sampleProvinceIdForOverlay,
-      selectedTileKey: sampleTileKeyForProvinceOverlay,
-      humanPlayerId: game.players.first.id,
-      playerView: demoHumanPlayerViewForOverlay,
-      showBuildFortActionIcon: showBuildFortActionIcon,
-      buildFortActionEnabled: buildFortActionEnabled,
-      buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
-      onBuildFortTap: () {},
-      onClose: () {},
-    ),
-  );
-}
-
-/// MAP20001 Tile **Build road** inline-action variants. Refs #4260.
-Widget _provinceOverlayBuildRoadStory({
-  required bool showBuildRoadActionIcon,
-  required bool buildRoadActionEnabled,
-  required bool buildRoadActionHasEngineerUnits,
-}) {
-  final game = demoGameForOverlay;
-  final region = demoRegionForOverlay;
-  return SizedBox(
-    width: 640,
-    height: 520,
-    child: ProvinceSeaZoneDetailOverlay(
-      game: game,
-      region: region,
-      displayId: sampleProvinceIdForOverlay,
-      selectedTileKey: sampleTileKeyForProvinceOverlay,
-      humanPlayerId: game.players.first.id,
-      playerView: demoHumanPlayerViewForOverlay,
-      showBuildRoadActionIcon: showBuildRoadActionIcon,
-      buildRoadActionEnabled: buildRoadActionEnabled,
-      buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
-      onBuildRoadTap: () {},
-      onClose: () {},
-    ),
-  );
-}
-
-/// MAP20001 Tile **Purchase land** inline-action variants. Refs #4274.
-Widget _provinceOverlayPurchaseLandStory({
-  required bool showPurchaseLandActionIcon,
-  required bool purchaseLandActionEnabled,
-  required bool purchaseLandActionHasMerchantUnits,
-}) {
-  final game = demoGameForOverlay;
-  final region = demoRegionForOverlay;
-  return SizedBox(
-    width: 640,
-    height: 520,
-    child: ProvinceSeaZoneDetailOverlay(
-      game: game,
-      region: region,
-      displayId: sampleProvinceIdForOverlay,
-      selectedTileKey: sampleTileKeyForProvinceOverlay,
-      humanPlayerId: game.players.first.id,
-      playerView: demoHumanPlayerViewForOverlay,
-      showPurchaseLandActionIcon: showPurchaseLandActionIcon,
-      purchaseLandActionEnabled: purchaseLandActionEnabled,
-      purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
-      onPurchaseLandTap: () {},
-      onClose: () {},
-    ),
-  );
-}
-
 /// Production panel story with `ProviderScope` + live Breakdown dialog
 /// wired into the same `previewStockpileNetDeltaByCommodityForPlayer`
 /// preview pipeline the running app uses, per
@@ -350,6 +218,7 @@ class ProductionPanelStory extends StatelessWidget {
     this.useFullAvailability = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
+    this.onOpenTradeMarket,
   });
 
   /// When set, used instead of the full/partial demo player.
@@ -362,6 +231,7 @@ class ProductionPanelStory extends StatelessWidget {
   starredProduceRecommendationsByRecipeId;
 
   final ProductionOpenCounselCallback? onOpenCounsel;
+  final void Function(String commodityId)? onOpenTradeMarket;
 
   @override
   Widget build(BuildContext context) {
@@ -381,6 +251,7 @@ class ProductionPanelStory extends StatelessWidget {
               starredProduceRecommendationsByRecipeId:
                   starredProduceRecommendationsByRecipeId,
               onOpenCounsel: onOpenCounsel,
+              onOpenTradeMarket: onOpenTradeMarket,
             ),
           ),
         ),
@@ -406,6 +277,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
     this.useFullAvailability = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
+    this.onOpenTradeMarket,
   });
 
   final Player? playerOverride;
@@ -413,6 +285,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
   final Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId;
   final ProductionOpenCounselCallback? onOpenCounsel;
+  final void Function(String commodityId)? onOpenTradeMarket;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -462,10 +335,10 @@ class ProductionPanelStoryBody extends ConsumerWidget {
         );
         ref.read(currentOrdersProvider.notifier).replaceAll(next);
       },
-      onDisband: (_) {
-        // Disband mutates the live Game; the Widgetbook story uses a
-        // shared demo game so we deliberately no-op here. Reviewers still
-        // see the danger text button at idle / disabled opacity.
+      onDisband: (tier) {
+        unawaited(
+          showImmediateLabourDisbandConfirm(context: context, tier: tier),
+        );
       },
     );
     final labourReadiness = labourReadinessForPlayer(
@@ -481,10 +354,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       game.worldState,
       player.id,
     );
-    final shipCounts = shipTypeCountsForPlayer(
-      game.worldState,
-      player.id,
-    );
+    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
     final forcesFeeding = forcesFeedingForPlayer(
       game: game,
       topology: topology,
@@ -526,6 +396,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       starredProduceRecommendationsByRecipeId:
           starredProduceRecommendationsByRecipeId,
       onOpenCounsel: onOpenCounsel,
+      onOpenTradeMarket: onOpenTradeMarket,
     );
   }
 }
@@ -560,8 +431,7 @@ class CivilianPanelWithMapStory extends StatefulWidget {
       CivilianPanelWithMapStoryState();
 }
 
-class CivilianPanelWithMapStoryState
-    extends State<CivilianPanelWithMapStory> {
+class CivilianPanelWithMapStoryState extends State<CivilianPanelWithMapStory> {
   late Game _game;
   late AppEventBus _panelBus;
   final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
@@ -893,8 +763,7 @@ class MilitaryPanelWithMapStory extends StatefulWidget {
       MilitaryPanelWithMapStoryState();
 }
 
-class MilitaryPanelWithMapStoryState
-    extends State<MilitaryPanelWithMapStory> {
+class MilitaryPanelWithMapStoryState extends State<MilitaryPanelWithMapStory> {
   int _regionIndex = 0;
   String? _secondaryHighlightTileKey;
   String? _centerOnTileKey;

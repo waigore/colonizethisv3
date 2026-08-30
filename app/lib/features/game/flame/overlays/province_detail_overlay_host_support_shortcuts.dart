@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';
@@ -8,6 +7,9 @@ import '../../../../core/services/game_service/game_service.dart'
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/game_map_area_state_logic.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
+import 'province_detail_overlay_host_support_shortcuts_consulate.dart';
+import 'province_detail_overlay_host_support_shortcuts_offer_peace.dart';
+import 'province_detail_overlay_host_support_shortcuts_work.dart';
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`
 /// when its action is disabled or no tile is selected, matching the previous
@@ -18,7 +20,12 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onBuildImprovementTap,
   VoidCallback? onBuildRoadTap,
   VoidCallback? onBuildFortTap,
+  VoidCallback? onBuildPortTap,
+  VoidCallback? onBuildRailroadTap,
   VoidCallback? onPurchaseLandTap,
+  VoidCallback? onUpgradeTownTap,
+  VoidCallback? onEstablishConsulateTap,
+  VoidCallback? onOfferPeaceTap,
 });
 
 VoidCallback? _provinceDetailShortcutTap({
@@ -59,10 +66,72 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool buildImprovementEnabled,
   required bool buildRoadEnabled,
   required bool buildFortEnabled,
+  required bool buildPortEnabled,
+  required bool buildRailEnabled,
   required bool purchaseLandEnabled,
+  required String provinceId,
+  required bool upgradeTownEnabled,
+  required String? upgradeTownTargetTileKey,
+  required bool establishConsulateEnabled,
+  required bool establishConsulatePending,
+  required ct_models.DiplomaticOrder? establishConsulateOrder,
+  required String establishConsulateTargetName,
+  required bool isSeaZone,
+  required bool offerPeaceEnabled,
+  required bool offerPeacePending,
+  required ct_models.DiplomaticOrder? offerPeaceOrder,
+  required String offerPeaceTargetName,
   required ct_models.AppEventBus bus,
 }) {
+  final topology = mapData?.combinedTopology;
   final String? tileKey = selectedTileKey;
+  final upgradeTownTap = upgradeTownTargetTileKey == null
+      ? null
+      : _provinceDetailShortcutTap(
+          enabled: upgradeTownEnabled,
+          revalidateEnabled: () =>
+              GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                provinceId: provinceId,
+                playerView: playerView,
+                workTargetSelectionCache: workTargetSelectionCache,
+                topology: topology,
+                currentOrders: draftOrders,
+                tileMapByRegion: mapData?.tileMapByRegion,
+              ).enabled,
+          emit: () => bus.emit(
+            ct_models.OpenCivilianUnitsPanelEvent(
+              builderOnly: true,
+              upgradeTownShortcutTargetTileKey: upgradeTownTargetTileKey,
+            ),
+          ),
+        );
+  final establishConsulateTap = buildEstablishConsulateShortcutTap(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    draftOrders: draftOrders,
+    topology: topology,
+    enabled: establishConsulateEnabled,
+    pending: establishConsulatePending,
+    order: establishConsulateOrder,
+    targetName: establishConsulateTargetName,
+    bus: bus,
+  );
+  final offerPeaceTap = buildOfferPeaceShortcutTap(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    draftOrders: draftOrders,
+    topology: topology,
+    isSeaZone: isSeaZone,
+    enabled: offerPeaceEnabled,
+    pending: offerPeacePending,
+    order: offerPeaceOrder,
+    targetName: offerPeaceTargetName,
+    bus: bus,
+  );
   if (tileKey == null) {
     return (
       onExploreWithExplorerTap: null,
@@ -70,112 +139,46 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onBuildImprovementTap: null,
       onBuildRoadTap: null,
       onBuildFortTap: null,
+      onBuildPortTap: null,
+      onBuildRailroadTap: null,
       onPurchaseLandTap: null,
+      onUpgradeTownTap: upgradeTownTap,
+      onEstablishConsulateTap: establishConsulateTap,
+      onOfferPeaceTap: offerPeaceTap,
     );
   }
-  final topology = mapData?.combinedTopology;
 
+  final workTaps = buildProvinceDetailWorkShortcutTaps(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    region: region,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    draftOrders: draftOrders,
+    mapData: mapData,
+    tileKey: tileKey,
+    exploreEnabled: exploreEnabled,
+    prospectEnabled: prospectEnabled,
+    buildImprovementEnabled: buildImprovementEnabled,
+    buildRoadEnabled: buildRoadEnabled,
+    buildFortEnabled: buildFortEnabled,
+    buildPortEnabled: buildPortEnabled,
+    buildRailEnabled: buildRailEnabled,
+    purchaseLandEnabled: purchaseLandEnabled,
+    bus: bus,
+    shortcutTap: _provinceDetailShortcutTap,
+  );
   return (
-    onExploreWithExplorerTap: _provinceDetailShortcutTap(
-      enabled: exploreEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceExploreActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        selectedRegion: region,
-        workTargetSelectionCache: workTargetSelectionCache,
-      ).enabled,
-      emit: () => bus.emit(
-        ct_models.OpenCivilianUnitsPanelEvent(
-          explorerOnly: true,
-          exploreShortcutTargetTileKey: tileKey,
-        ),
-      ),
-    ),
-    onProspectWithExplorerTap: _provinceDetailShortcutTap(
-      enabled: prospectEnabled,
-      revalidateEnabled: () =>
-          GameMapAreaStateLogic.provinceProspectActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: tileKey,
-            playerView: playerView,
-            topology: topology,
-            currentOrders: draftOrders,
-            tileMapByRegion: mapData?.tileMapByRegion,
-          ).enabled,
-      emit: () => bus.emit(
-        ct_models.OpenCivilianUnitsPanelEvent(
-          explorerOnly: true,
-          prospectShortcutTargetTileKey: tileKey,
-        ),
-      ),
-    ),
-    onBuildImprovementTap: _provinceDetailShortcutTap(
-      enabled: buildImprovementEnabled,
-      revalidateEnabled: () =>
-          GameMapAreaStateLogic.provinceBuildImprovementActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: tileKey,
-            playerView: playerView,
-            workTargetSelectionCache: workTargetSelectionCache,
-          ).enabled,
-      emit: () => bus.emit(
-        ct_models.OpenCivilianUnitsPanelEvent(
-          builderOnly: true,
-          buildImprovementShortcutTargetTileKey: tileKey,
-        ),
-      ),
-    ),
-    onBuildRoadTap: _provinceDetailShortcutTap(
-      enabled: buildRoadEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildRoadActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-      ).enabled,
-      emit: () => bus.emit(
-        ct_models.OpenCivilianUnitsPanelEvent(
-          engineerOnly: true,
-          buildRoadShortcutTargetTileKey: tileKey,
-        ),
-      ),
-    ),
-    onBuildFortTap: _provinceDetailShortcutTap(
-      enabled: buildFortEnabled,
-      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildFortActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-      ).enabled,
-      emit: () => bus.emit(
-        ct_models.OpenCivilianUnitsPanelEvent(
-          engineerOnly: true,
-          buildFortShortcutTargetTileKey: tileKey,
-        ),
-      ),
-    ),
-    onPurchaseLandTap: _provinceDetailShortcutTap(
-      enabled: purchaseLandEnabled,
-      revalidateEnabled: () =>
-          GameMapAreaStateLogic.provincePurchaseLandActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: tileKey,
-            playerView: playerView,
-            workTargetSelectionCache: workTargetSelectionCache,
-          ).enabled,
-      emit: () => bus.emit(
-        ct_models.OpenCivilianUnitsPanelEvent(
-          merchantOnly: true,
-          purchaseLandShortcutTargetTileKey: tileKey,
-        ),
-      ),
-    ),
+    onExploreWithExplorerTap: workTaps.onExploreWithExplorerTap,
+    onProspectWithExplorerTap: workTaps.onProspectWithExplorerTap,
+    onBuildImprovementTap: workTaps.onBuildImprovementTap,
+    onBuildRoadTap: workTaps.onBuildRoadTap,
+    onBuildFortTap: workTaps.onBuildFortTap,
+    onBuildPortTap: workTaps.onBuildPortTap,
+    onBuildRailroadTap: workTaps.onBuildRailroadTap,
+    onPurchaseLandTap: workTaps.onPurchaseLandTap,
+    onUpgradeTownTap: upgradeTownTap,
+    onEstablishConsulateTap: establishConsulateTap,
+    onOfferPeaceTap: offerPeaceTap,
   );
 }

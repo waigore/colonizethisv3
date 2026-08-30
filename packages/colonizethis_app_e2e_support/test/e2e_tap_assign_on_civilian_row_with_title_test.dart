@@ -38,108 +38,13 @@
 //     lexically first `Assign` regardless of row title.
 library;
 
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app/config/themes.dart' show AppThemes;
-import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart'
-    show CivilianUnitRowCard;
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart'
-    show UnitsEntityAction;
 import 'package:colonizethis_models/colonizethis_models.dart'
     show kUnitTypeBuilder, kUnitTypeMerchant;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
-
-/// One row spec for the synthetic civilian panel host (title + whether the
-/// row exposes an `Assign` button).
-class _RowSpec {
-  const _RowSpec({required this.title, required this.hasAssign});
-
-  final String title;
-  final bool hasAssign;
-}
-
-class _CivilianPanelHost extends StatefulWidget {
-  const _CivilianPanelHost({required this.rows});
-
-  final List<_RowSpec> rows;
-
-  @override
-  State<_CivilianPanelHost> createState() => _CivilianPanelHostState();
-}
-
-class _CivilianPanelHostState extends State<_CivilianPanelHost> {
-  /// Index of the row whose `Assign` was tapped. `-1` means no tap yet.
-  int _tappedRowIndex = -1;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      // CtNinePatchButton (the Assign control rendered inside
-      // CivilianUnitRowCard) resolves its palette from the editorial-monocle
-      // theme; the production civilian panel runs under the same theme.
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        body: Container(
-          key: kCtE2ECivilianPanelRootKey,
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  children: [
-                    // The civilian panel migrated its unit rows off Material
-                    // `ListTile` to the bespoke `CivilianUnitRowCard`
-                    // (Refs #2914 S8). The title-scoped Assign helper now
-                    // scopes its per-row lookup to that card, so the synthetic
-                    // host must host its rows in the same widget for the pin to
-                    // exercise the real lookup path (#2336 H9).
-                    for (var i = 0; i < widget.rows.length; i++)
-                      CivilianUnitRowCard(
-                        details: Text(widget.rows[i].title),
-                        selected: false,
-                        onTap: () {},
-                        actions: widget.rows[i].hasAssign
-                            ? [
-                                UnitsEntityAction(
-                                  tooltip: 'Assign',
-                                  icon: Icons.add,
-                                  label: 'Assign',
-                                  onPressed: () {
-                                    setState(() {
-                                      _tappedRowIndex = i;
-                                    });
-                                  },
-                                ),
-                              ]
-                            : const <UnitsEntityAction>[],
-                      ),
-                  ],
-                ),
-              ),
-              if (_tappedRowIndex >= 0)
-                // The helper polls for any of {Build improvement, Prospect,
-                // Explore} after tapping Assign. Showing one of those labels
-                // here is the synthetic equivalent of the work-menu surfacing
-                // in the production scaffold.
-                const Text('Build improvement'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-int _tappedRowIndexOf(WidgetTester tester) {
-  final stateFinder = find.byType(_CivilianPanelHost);
-  if (stateFinder.evaluate().isEmpty) {
-    return -1;
-  }
-  final state = tester.state<_CivilianPanelHostState>(stateFinder);
-  return state._tappedRowIndex;
-}
+import 'support/assign_civilian_row_panel_host.dart';
 
 void main() {
   suppressLogsForTests();
@@ -148,10 +53,10 @@ void main() {
     'e2eTapAssignOnCivilianRowWithTitle taps Assign on the single matching row',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const _CivilianPanelHost(
+        const AssignCivilianRowPanelHost(
           rows: [
-            _RowSpec(title: kUnitTypeBuilder, hasAssign: true),
-            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
+            AssignCivilianRowSpec(title: kUnitTypeBuilder, hasAssign: true),
+            AssignCivilianRowSpec(title: kUnitTypeMerchant, hasAssign: true),
           ],
         ),
       );
@@ -159,7 +64,7 @@ void main() {
       await e2eTapAssignOnCivilianRowWithTitle(tester, kUnitTypeBuilder);
 
       expect(
-        _tappedRowIndexOf(tester),
+        assignCivilianRowTappedIndex(tester),
         0,
         reason:
             'Single Builder row must have its Assign tapped (not the '
@@ -172,15 +77,15 @@ void main() {
     'e2eTapAssignOnCivilianRowWithTitle skips matching rows without Assign and taps the first idle row',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const _CivilianPanelHost(
+        const AssignCivilianRowPanelHost(
           rows: [
             // First Builder is already assigned (no Assign button).
-            _RowSpec(title: kUnitTypeBuilder, hasAssign: false),
+            AssignCivilianRowSpec(title: kUnitTypeBuilder, hasAssign: false),
             // Second Builder is still idle and must be picked.
-            _RowSpec(title: kUnitTypeBuilder, hasAssign: true),
+            AssignCivilianRowSpec(title: kUnitTypeBuilder, hasAssign: true),
             // Trailing rows guard against helpers that accidentally tap an
             // off-title row when the matching rows look exhausted.
-            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
+            AssignCivilianRowSpec(title: kUnitTypeMerchant, hasAssign: true),
           ],
         ),
       );
@@ -188,7 +93,7 @@ void main() {
       await e2eTapAssignOnCivilianRowWithTitle(tester, kUnitTypeBuilder);
 
       expect(
-        _tappedRowIndexOf(tester),
+        assignCivilianRowTappedIndex(tester),
         1,
         reason:
             'Helper must skip the first Builder row (no Assign descendant) '
@@ -202,13 +107,13 @@ void main() {
     'e2eTapAssignOnCivilianRowWithTitle fails when no matching row exposes Assign',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const _CivilianPanelHost(
+        const AssignCivilianRowPanelHost(
           rows: [
-            _RowSpec(title: kUnitTypeBuilder, hasAssign: false),
-            _RowSpec(title: kUnitTypeBuilder, hasAssign: false),
+            AssignCivilianRowSpec(title: kUnitTypeBuilder, hasAssign: false),
+            AssignCivilianRowSpec(title: kUnitTypeBuilder, hasAssign: false),
             // Off-title row with Assign present to verify the helper does
             // not lower its title filter when matching rows look exhausted.
-            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
+            AssignCivilianRowSpec(title: kUnitTypeMerchant, hasAssign: true),
           ],
         ),
       );
@@ -229,7 +134,7 @@ void main() {
             'unit type or hang (#2336 H9 fail-fast contract).',
       );
       expect(
-        _tappedRowIndexOf(tester),
+        assignCivilianRowTappedIndex(tester),
         -1,
         reason:
             'Off-title Merchant row at index 2 must not be tapped when the '
@@ -242,12 +147,12 @@ void main() {
     'e2eTapFirstAssignInCivilianPanel taps the first Assign regardless of row title',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const _CivilianPanelHost(
+        const AssignCivilianRowPanelHost(
           rows: [
             // First row deliberately uses a non-Builder title to confirm
             // the helper picks Assign by position, not by title match.
-            _RowSpec(title: kUnitTypeMerchant, hasAssign: true),
-            _RowSpec(title: kUnitTypeBuilder, hasAssign: true),
+            AssignCivilianRowSpec(title: kUnitTypeMerchant, hasAssign: true),
+            AssignCivilianRowSpec(title: kUnitTypeBuilder, hasAssign: true),
           ],
         ),
       );
@@ -255,7 +160,7 @@ void main() {
       await e2eTapFirstAssignInCivilianPanel(tester);
 
       expect(
-        _tappedRowIndexOf(tester),
+        assignCivilianRowTappedIndex(tester),
         0,
         reason:
             'First-Assign sibling must tap the Merchant row at index 0 '

@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/init_game_map_view_fixtures.dart';
 import 'support/init_game_map_view_region_cells_scenarios.dart';
+import 'support/init_game_map_view_region_cells_presence_scenarios.dart';
+import 'support/init_game_map_view_region_cells_slice_scenarios.dart';
 
 void main() {
   group('buildInitGameMapViewData region data', () {
@@ -65,91 +67,28 @@ void main() {
   group('buildInitGameMapViewData extracted slice coverage', () {
     test(
       'region setup maps owner/display and terrain palette from minimal data',
-      () {
-        final view = buildViewDataForScenario(
-          oldWorldFocusedScenario(
-            game: regionCellsTerrainSliceGame(),
-            oldWorldGrid: const [
-              ['p1'],
-            ],
-            oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
-            oldWorldTerrainGrid: const [
-              [TerrainType.hardwoodForest],
-            ],
-          ),
-        );
-
-        final cell = view.oldWorld.cells.single;
-        expect(cell.ownerFactionId, 'gp1');
-        expect(cell.provinceDisplayName, 'Alpha');
-        expect(
-          view.oldWorld.terrainColors.containsKey(TerrainType.hardwoodForest),
-          isTrue,
-        );
-        expect(
-          view.oldWorld.provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
-          'gp1',
-        );
-      },
+      expectRegionCellsTerrainSliceMapping,
     );
 
     test('overlay setup counts regiments, civilians, and in-port ships', () {
-      final view = buildViewDataForScenario(
-        oldWorldFocusedScenario(
-          game: regionCellsOverlaySetupGame(),
-          oldWorldGrid: const [
-            ['p1'],
-          ],
-          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
-        ),
-      );
-
-      final presence =
-          view.oldWorld.provinceUnitPresenceByProvinceId['oldWorld|p1']!;
-      expect(presence.civilianCount, 1);
-      expect(presence.regimentCount, 1);
-      expect(presence.shipCount, 1);
-      expect(presence.intelVisible, isTrue);
+      expectRegionCellsOverlayUnitCounts();
     });
 
     test('marker helpers expose capitals ports towns and warps', () {
-      final view = buildRegionCellsMarkerWarpView(regionCellsMarkerHelpersGame());
-
-      expect(view.oldWorld.capitalMarkers.length, 1);
-      expect(view.oldWorld.capitalMarkers.single.factionId, 'gp1');
-      expect(view.oldWorld.portMarkers.length, 1);
-      expect(view.oldWorld.portMarkers.single.provinceId, 'p1');
-      expect(view.oldWorld.townMarkers.length, 1);
-      expect(view.oldWorld.townMarkers.single.isPort, isTrue);
-      expect(view.oldWorld.townMarkers.single.touchesSea, isTrue);
-      expect(view.oldWorld.warpMarkers.length, 1);
-      expect(view.oldWorld.warpMarkers.single.seaZoneId, 's1');
-      expect(view.oldWorld.warpMarkers.single.otherRegionId, 'newWorld');
+      expectRegionCellsMarkerHelpersExposeWarp();
     });
 
     test('cell helper applies visibility and extraction overlays', () {
-      final view = regionCellsVisibilityOverlayView();
-
-      final cell = view.oldWorld.cells.single;
-      expect(cell.visibility, TileVisibility.fogged);
-      expect(cell.resourceExtractionUnits, 9);
-      expect(cell.resourceExtractionEffectiveUnits, 7);
-      expect(cell.resourceExtractionBlockedUnits, 2);
+      expectRegionCellsVisibilityOverlayOnCell();
     });
 
     test(
       'does not synthesize a Home Fleet marker when fleet entity is missing',
-      () {
-        final view = buildRegionCellsHomeFleetView(withFleet: false);
-        expect(view.oldWorld.fleetTileMarkers, isEmpty);
-      },
+      expectRegionCellsHomeFleetMissingEntity,
     );
 
     test('keeps an empty Home Fleet marker when real fleet entity exists', () {
-      final view = buildRegionCellsHomeFleetView(withFleet: true);
-      expect(view.oldWorld.fleetTileMarkers, hasLength(1));
-      expect(view.oldWorld.fleetTileMarkers.single.fleetIds, ['fleet_gp1']);
-      expect(view.oldWorld.fleetTileMarkers.single.stackCount, 1);
+      expectRegionCellsHomeFleetWithEntity();
     });
   });
 

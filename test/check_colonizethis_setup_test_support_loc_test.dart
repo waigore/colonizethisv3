@@ -30,6 +30,39 @@ void main() {
       expect(runCheckColonizethisSetupTestSupportLoc('.'), 0);
     });
 
+    test('fails when a support file meets the per-file line ceiling', () {
+      final temp = Directory.systemTemp.createTempSync('setup-support-loc-');
+      try {
+        final support = Directory(
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_setup',
+            'test',
+            'setup',
+            'support',
+          ),
+        )..createSync(recursive: true);
+        File(
+          p.join(support.path, 'fat.dart'),
+        ).writeAsStringSync(List.generate(250, (i) => 'line$i').join('\n'));
+
+        final errors = <String>[];
+        final code = runCheckColonizethisSetupTestSupportLoc(
+          temp.path,
+          ceiling: 10000,
+          fileCeiling: 250,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(code, 1);
+        expect(errors.join('\n'), contains('physical lines'));
+        expect(errors.join('\n'), contains('fat.dart'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('fails when measured support LOC exceeds ceiling', () {
       final temp = Directory.systemTemp.createTempSync('setup-support-loc-');
       try {

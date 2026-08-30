@@ -1,4 +1,7 @@
-part of 'terrain_tileset.dart';
+import 'dart:ui' as ui;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:flutter/material.dart';
 
 /// Sea terrain identifier (not in TerrainType enum).
 const String seaTerrainId = 'sea';
@@ -33,15 +36,15 @@ TerrainLayer terrainLayer(TerrainType terrain) {
 
 /// Tile metadata from PixelLab Wang tileset JSON.
 class WangTile {
-  final String id;
-  final Map<String, String> corners;
-  final Rect boundingBox;
-
   WangTile({
     required this.id,
     required this.corners,
     required this.boundingBox,
   });
+
+  final String id;
+  final Map<String, String> corners;
+  final Rect boundingBox;
 
   factory WangTile.fromJson(Map<String, dynamic> json) {
     return WangTile(
@@ -61,14 +64,6 @@ class WangTile {
 
 /// Loaded Wang tileset with image and tile metadata.
 class WangTileset {
-  final String name;
-  final String lowerTerrainId;
-  final String upperTerrainId;
-  final String? lowerBaseTileId;
-  final String? upperBaseTileId;
-  final ui.Image image;
-  final List<WangTile> tiles;
-
   WangTileset({
     required this.name,
     required this.lowerTerrainId,
@@ -78,6 +73,14 @@ class WangTileset {
     required this.image,
     required this.tiles,
   });
+
+  final String name;
+  final String lowerTerrainId;
+  final String upperTerrainId;
+  final String? lowerBaseTileId;
+  final String? upperBaseTileId;
+  final ui.Image image;
+  final List<WangTile> tiles;
 
   WangTile? findTile({
     required bool nw,
@@ -111,8 +114,8 @@ class WangTileset {
 
 /// Standalone tile for terrain features (forest, hills, mountain, swamp).
 class StandaloneTile {
+  StandaloneTile({required this.tileId, required this.image});
+
   final String tileId;
   final ui.Image image;
-
-  StandaloneTile({required this.tileId, required this.image});
 }

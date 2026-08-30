@@ -3,7 +3,6 @@
 // (avoids fragile cross-engine golden drift on CI).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
@@ -26,79 +25,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'golden_capture_harness.dart';
+import 'province_shortcut_host_emit_fixtures.dart';
+import 'province_shortcut_host_golden_game_service.dart';
 
 const String _kMinorId = 'minor1';
 
-final MapTopology _goldenCombinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
-
-class _GameServicePurchaseLandGolden extends GameService {
-  _GameServicePurchaseLandGolden(super.box, super.adapter);
-
-  static final Map<String, MapTopology> _topologyByRegion = {
-    'oldWorld': MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 's1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.seaZone,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-    ),
-  };
-
-  static final Map<String, TileMapResult> _tileMapByRegion = {
-    'oldWorld': TileMapResult(
-      width: 1,
-      height: 1,
-      grid: const [
-        ['p1'],
-      ],
-      terrainGrid: const [
-        [TerrainType.plains],
-      ],
-      resourceGrid: const [
-        [Resource.grain],
-      ],
-    ),
-  };
-
-  @override
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
-    if (gameId != 'g_pl_golden') return null;
-    return (
-      combinedTopology: _goldenCombinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-      warpLinks: null,
-    );
-  }
-}
+final MapTopology _goldenCombinedTopology =
+    provinceShortcutHostCombinedTopology();
 
 Game goldenPurchaseLandGame() {
   const humanPlayerId = 'gp1';
@@ -110,11 +43,7 @@ Game goldenPurchaseLandGame() {
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(
         provinces: [
-          Province(
-            id: provinceId,
-            regionId: 'oldWorld',
-            ownerId: _kMinorId,
-          ),
+          Province(id: provinceId, regionId: 'oldWorld', ownerId: _kMinorId),
         ],
         units: [
           Unit(
@@ -204,7 +133,9 @@ PerPlayerWorkTargetSelectionCache _buildSelectionCache({
       playerView: playerView,
       topology: _goldenCombinedTopology,
       currentOrders: const Orders(),
-      tileMapByRegion: _GameServicePurchaseLandGolden._tileMapByRegion,
+      tileMapByRegion: ProvinceShortcutHostGoldenGameService.tileMapByRegionFor(
+        useCoastalTileMap: false,
+      ),
     ),
   );
   return cache;
@@ -236,8 +167,12 @@ void main() {
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
-            (ref) =>
-                _GameServicePurchaseLandGolden(gamesBox, GameSaveAdapter()),
+            (ref) => ProvinceShortcutHostGoldenGameService(
+              gamesBox,
+              GameSaveAdapter(),
+              gameId: 'g_pl_golden',
+              useCoastalTileMap: false,
+            ),
           ),
           appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -292,8 +227,12 @@ void main() {
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
-            (ref) =>
-                _GameServicePurchaseLandGolden(gamesBox, GameSaveAdapter()),
+            (ref) => ProvinceShortcutHostGoldenGameService(
+              gamesBox,
+              GameSaveAdapter(),
+              gameId: 'g_pl_golden',
+              useCoastalTileMap: false,
+            ),
           ),
           appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),

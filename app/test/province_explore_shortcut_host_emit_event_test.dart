@@ -23,281 +23,10 @@
 //     click-time revalidation drift silent no-op.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
-import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
-import 'package:colonizethis_app/widgets/ct_icon_action.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView, kWorkTargetExplore;
-import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
-
-const String _kGameId = 'g_explore_shortcut_emit';
-const String _kHumanPlayerId = 'gp1';
-const String _kProvinceId = 'oldWorld|p1';
-const String _kTileKey = 'oldWorld|p1|0|0';
-const String _kExploreTargetTileKey = 'oldWorld|p1|1|0';
-
-final MapTopology _combinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|s1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-  ],
-  edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|s1')],
-);
-
-final Map<String, MapTopology> _topologyByRegion = {
-  'oldWorld': MapTopology(
-    nodes: const [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: 's1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  ),
-};
-
-final Map<String, TileMapResult> _tileMapByRegion = {
-  'oldWorld': TileMapResult(
-    width: 2,
-    height: 1,
-    grid: const [
-      ['p1', 'p1'],
-    ],
-    terrainGrid: const [
-      [TerrainType.plains, TerrainType.plains],
-    ],
-    resourceGrid: const [
-      [Resource.grain, Resource.grain],
-    ],
-  ),
-};
-
-/// Cache that can simulate click-time drift by clearing explore targets on the
-/// next [get] after [armExploreDriftOnNextRead].
-class _ExploreDriftWorkTargetCache extends PerPlayerWorkTargetSelectionCache {
-  _ExploreDriftWorkTargetCache()
-      : super(
-          strategies: <String, WorkTargetSelectionPopulationStrategy>{
-            kWorkTargetExplore: (_) => const <String>{
-              _kTileKey,
-              _kExploreTargetTileKey,
-            },
-          },
-        );
-
-  bool _armDrift = false;
-
-  void armExploreDriftOnNextRead() => _armDrift = true;
-
-  @override
-  Set<String> get(String playerId, String workTarget) {
-    if (_armDrift && workTarget == kWorkTargetExplore) {
-      _armDrift = false;
-      return const <String>{};
-    }
-    return super.get(playerId, workTarget);
-  }
-}
-
-class _GameServiceExploreShortcut extends GameService {
-  _GameServiceExploreShortcut(super.box, super.adapter);
-
-  @override
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
-    if (gameId != _kGameId) return null;
-    return (
-      combinedTopology: _combinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-      warpLinks: null,
-    );
-  }
-}
-
-Game _buildGame({required bool withExplorer}) {
-  return Game(
-    id: _kGameId,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _kProvinceId,
-            regionId: 'oldWorld',
-            ownerId: _kHumanPlayerId,
-          ),
-        ],
-        units: [
-          if (withExplorer)
-            Unit(
-              id: 'u_explorer',
-              type: kUnitTypeExplorer,
-              ownerId: _kHumanPlayerId,
-              locationProvinceId: _kProvinceId,
-              tileKey: _kTileKey,
-              status: UnitStatus.idle,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(provinces: [], units: []),
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          _kProvinceId: [_kTileKey, _kExploreTargetTileKey],
-        },
-      },
-      playerVisibilityByTile: {
-        _kHumanPlayerId: {
-          _kTileKey: 'fullyVisible',
-          _kExploreTargetTileKey: 'unknown',
-        },
-      },
-    ),
-    players: [
-      Player(
-        id: _kHumanPlayerId,
-        displayName: 'Human',
-        isHuman: true,
-        capitalProvinceId: _kProvinceId,
-      ),
-    ],
-    minorNations: const [],
-    tribes: const [],
-  );
-}
-
-/// Partially revealed province: one fogged tile and one unrevealed tile in p1.
-RegionMapViewData _partiallyRevealedRegion() {
-  return RegionMapViewData(
-    regionId: 'oldWorld',
-    width: 2,
-    height: 1,
-    cellSize: 16,
-    cells: const [
-      CellViewData(
-        x: 0,
-        y: 0,
-        regionCellId: 'p1',
-        isSea: false,
-        terrainType: TerrainType.plains,
-        resourceId: 'grain',
-        ownerFactionId: _kHumanPlayerId,
-        provinceDisplayName: 'Test Province',
-        visibility: TileVisibility.fogged,
-      ),
-      CellViewData(
-        x: 1,
-        y: 0,
-        regionCellId: 'p1',
-        isSea: false,
-        terrainType: TerrainType.plains,
-        resourceId: 'grain',
-        ownerFactionId: _kHumanPlayerId,
-        provinceDisplayName: 'Test Province',
-        visibility: TileVisibility.unrevealed,
-      ),
-    ],
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: {_kHumanPlayerId},
-    terrainColors: const {},
-    provincePoliticalOwnerByPrefixedProvinceId: const {
-      'oldWorld|p1': _kHumanPlayerId,
-    },
-  );
-}
-
-PerPlayerWorkTargetSelectionCache _exploreCache() {
-  final game = _buildGame(withExplorer: true);
-  return PerPlayerWorkTargetSelectionCache(
-    strategies: <String, WorkTargetSelectionPopulationStrategy>{
-      kWorkTargetExplore: (_) => const <String>{
-        _kTileKey,
-        _kExploreTargetTileKey,
-      },
-    },
-  )..refresh(
-      WorkTargetSelectionSnapshot(
-        game: game,
-        playerId: _kHumanPlayerId,
-        playerView: buildPlayerView(game, _combinedTopology, _kHumanPlayerId),
-        topology: _combinedTopology,
-        currentOrders: const Orders(),
-        tileMapByRegion: _tileMapByRegion,
-      ),
-    );
-}
-
-Finder _exploreAction({required bool enabled}) {
-  return find.byWidgetPredicate(
-    (Widget w) =>
-        w is CtIconAction &&
-        w.icon == Icons.explore &&
-        (enabled ? w.onPressed != null : true),
-  );
-}
-
-typedef _HostCase = ({
-  String label,
-  Type hostType,
-  Size surfaceSize,
-  bool selectTileTab,
-  bool wide,
-});
-
-const List<_HostCase> _hostCases = <_HostCase>[
-  (
-    label: 'The wide side panel',
-    hostType: GameMapProvinceDetailSidePanel,
-    surfaceSize: Size(720, 720),
-    selectTileTab: false,
-    wide: true,
-  ),
-  (
-    label: 'The narrow bottom-slot host',
-    hostType: GameMapNarrowDetailOverlaySlot,
-    surfaceSize: Size(400, 600),
-    selectTileTab: true,
-    wide: false,
-  ),
-];
+import 'province_explore_shortcut_host_emit_event_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -312,78 +41,33 @@ void main() {
   Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(
     WidgetTester tester, {
     required Game game,
-    required _HostCase host,
+    required ProvinceShortcutHostCase host,
     required PerPlayerWorkTargetSelectionCache cache,
-  }) async {
-    final region = _partiallyRevealedRegion();
-    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    final Widget body = host.wide
-        ? Center(
-            child: SizedBox(
-              width: 320,
-              child: GameMapProvinceDetailSidePanel(
-                game: game,
-                region: region,
-                humanPlayerId: _kHumanPlayerId,
-                playerView: playerView,
-                workTargetSelectionCache: cache,
-              ),
-            ),
-          )
-        : Align(
-            alignment: Alignment.bottomCenter,
-            child: GameMapNarrowDetailOverlaySlot(
-              game: game,
-              region: region,
-              humanPlayerId: _kHumanPlayerId,
-              playerView: playerView,
-              workTargetSelectionCache: cache,
-            ),
-          );
-
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-    final opened = <OpenCivilianUnitsPanelEvent>[];
-    final sub = bus.on<OpenCivilianUnitsPanelEvent>().listen(opened.add);
-    addTearDown(sub.cancel);
-
-    await pumpAppShell(
-      tester,
-      viewport: host.surfaceSize,
-      overrides: [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => _GameServiceExploreShortcut(gamesBox, GameSaveAdapter()),
-        ),
-        appEventBusProvider.overrideWith((ref) => bus),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-      ],
-      child: Scaffold(body: body),
-    );
-
-    final ctx = tester.element(find.byType(host.hostType));
-    ProviderScope.containerOf(ctx)
-        .read(mapProvincePanelProvider.notifier)
-        .reportMapTileTapped(_kTileKey);
-    await tester.pumpAndSettle();
-    if (host.selectTileTab) {
-      final tileTab = find.text('Tile');
-      expect(tileTab, findsOneWidget);
-      await tester.tap(tileTab);
-      await tester.pumpAndSettle();
-    }
-    return opened;
-  }
+  }) => pumpProvinceShortcutHostAndSelect(
+    tester,
+    gamesBox: gamesBox,
+    gameService: provinceShortcutHostEmitGameService(
+      gamesBox: gamesBox,
+      gameId: kExploreShortcutGameId,
+      combinedTopology: exploreShortcutCombinedTopology,
+      tileMapByRegion: exploreShortcutTileMapByRegion,
+      topologyByRegion: exploreShortcutTopologyByRegion,
+    ),
+    game: game,
+    humanPlayerId: kExploreShortcutHumanPlayerId,
+    host: host,
+    region: exploreShortcutPartiallyRevealedRegion(),
+    combinedTopology: exploreShortcutCombinedTopology,
+    workTargetSelectionCache: cache,
+    selectedTileKey: kExploreShortcutTileKey,
+  );
 
   Future<void> expectExploreShortcutEmits(
     WidgetTester tester, {
     required List<OpenCivilianUnitsPanelEvent> opened,
     required String hostLabel,
   }) async {
-    final shortcut = _exploreAction(enabled: true);
+    final shortcut = exploreShortcutAction(enabled: true);
     expect(
       shortcut,
       findsOneWidget,
@@ -399,12 +83,12 @@ void main() {
     final event = opened.single;
     expect(event.explorerOnly, isTrue);
     expect(event.builderOnly, isFalse);
-    expect(event.exploreShortcutTargetTileKey, _kTileKey);
+    expect(event.exploreShortcutTargetTileKey, kExploreShortcutTileKey);
     expect(event.buildImprovementShortcutTargetTileKey, isNull);
     expect(event.prospectShortcutTargetTileKey, isNull);
   }
 
-  for (final host in _hostCases) {
+  for (final host in provinceShortcutHostCases) {
     testWidgets(
       '${host.wide ? 'wide' : 'narrow'} host: tapping the enabled Explore '
       'shortcut emits an explorer-only OpenCivilianUnitsPanelEvent targeting '
@@ -413,9 +97,9 @@ void main() {
       (WidgetTester tester) async {
         final opened = await pumpHostAndSelect(
           tester,
-          game: _buildGame(withExplorer: true),
+          game: buildExploreShortcutGame(withExplorer: true),
           host: host,
-          cache: _exploreCache(),
+          cache: exploreShortcutCache(),
         );
         await expectExploreShortcutEmits(
           tester,
@@ -431,11 +115,11 @@ void main() {
       (WidgetTester tester) async {
         final opened = await pumpHostAndSelect(
           tester,
-          game: _buildGame(withExplorer: false),
+          game: buildExploreShortcutGame(withExplorer: false),
           host: host,
-          cache: _exploreCache(),
+          cache: exploreShortcutCache(),
         );
-        expect(_exploreAction(enabled: true), findsNothing);
+        expect(exploreShortcutAction(enabled: true), findsNothing);
         if (host.wide) {
           final anyShortcut = find.byWidgetPredicate(
             (Widget w) => w is CtIconAction && w.icon == Icons.explore,
@@ -454,27 +138,31 @@ void main() {
     'negative — click-time drift invalidates explore assignment and the tap '
     'is a silent no-op on the event bus (SPEC § Tile inline actions)',
     (WidgetTester tester) async {
-      final game = _buildGame(withExplorer: true);
-      final driftCache = _ExploreDriftWorkTargetCache()
+      final game = buildExploreShortcutGame(withExplorer: true);
+      final driftCache = ExploreDriftWorkTargetCache()
         ..refresh(
           WorkTargetSelectionSnapshot(
             game: game,
-            playerId: _kHumanPlayerId,
-            playerView: buildPlayerView(game, _combinedTopology, _kHumanPlayerId),
-            topology: _combinedTopology,
+            playerId: kExploreShortcutHumanPlayerId,
+            playerView: buildPlayerView(
+              game,
+              exploreShortcutCombinedTopology,
+              kExploreShortcutHumanPlayerId,
+            ),
+            topology: exploreShortcutCombinedTopology,
             currentOrders: const Orders(),
-            tileMapByRegion: _tileMapByRegion,
+            tileMapByRegion: exploreShortcutTileMapByRegion,
           ),
         );
 
       final opened = await pumpHostAndSelect(
         tester,
         game: game,
-        host: _hostCases.first,
+        host: provinceShortcutHostCases.first,
         cache: driftCache,
       );
 
-      final shortcut = _exploreAction(enabled: true);
+      final shortcut = exploreShortcutAction(enabled: true);
       expect(shortcut, findsOneWidget);
       driftCache.armExploreDriftOnNextRead();
       await tester.ensureVisible(shortcut);

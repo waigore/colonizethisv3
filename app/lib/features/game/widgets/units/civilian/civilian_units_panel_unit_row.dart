@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
+import '../../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../../providers/game_service_provider.dart';
 import '../../../../../providers/games_provider.dart';
 import 'civilian_units_panel_support_row_card.dart';
 import 'civilian_units_panel_unit_row_actions_host.dart';
@@ -32,7 +34,12 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     required this.buildImprovementShortcutTargetTileKey,
     required this.buildRoadShortcutTargetTileKey,
     required this.buildFortShortcutTargetTileKey,
+    required this.buildPortShortcutTargetTileKey,
+    required this.buildRailShortcutTargetTileKey,
     required this.purchaseLandShortcutTargetTileKey,
+    required this.upgradeTownShortcutTargetTileKey,
+    required this.relocateShortcutTargetTileKey,
+    this.counterSpyShortcutTargetTileKey,
     this.readOnly = false,
     super.key,
   });
@@ -52,7 +59,12 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   final String? buildImprovementShortcutTargetTileKey;
   final String? buildRoadShortcutTargetTileKey;
   final String? buildFortShortcutTargetTileKey;
+  final String? buildPortShortcutTargetTileKey;
+  final String? buildRailShortcutTargetTileKey;
   final String? purchaseLandShortcutTargetTileKey;
+  final String? upgradeTownShortcutTargetTileKey;
+  final String? relocateShortcutTargetTileKey;
+  final String? counterSpyShortcutTargetTileKey;
   final bool readOnly;
 
   @override
@@ -81,21 +93,26 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
           UnitStatus.working => l10n.province_unitStatus_working,
         };
     final showActions = !isTileScope || isSelectedInTileScope;
-    final inExplorerShortcutMode = civilianUnitsPanelUnitRowInExplorerShortcutMode(
-      prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-      exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-      buildImprovementShortcutTargetTileKey:
-          buildImprovementShortcutTargetTileKey,
-      buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
-      buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
-      purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
-    );
+    final inExplorerShortcutMode =
+        civilianUnitsPanelUnitRowInExplorerShortcutMode(
+          prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+          exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+          buildImprovementShortcutTargetTileKey:
+              buildImprovementShortcutTargetTileKey,
+          buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+          buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+          buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+          buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
+          purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+          upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
+        );
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
     final rowActions = buildCivilianUnitsPanelUnitRowActions(
       l10n: l10n,
       context: context,
       bus: bus,
+      game: game,
       unit: unit,
       humanPlayerId: humanPlayerId,
       pending: pending,
@@ -111,7 +128,12 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
           buildImprovementShortcutTargetTileKey,
       buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+      buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+      buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+      upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
+      relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
+      counterSpyShortcutTargetTileKey: counterSpyShortcutTargetTileKey,
     );
     final selected = isTileScope && isSelectedInTileScope;
     return CivilianUnitRowCard(
@@ -138,6 +160,19 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
             unit: unit,
             pending: pending,
             provinceNames: provinceNames,
+            humanPlayerId: humanPlayerId,
+            mapData: tryGetGameMapData(
+              () => ref.read(gameServiceProvider).getMapData(game.id),
+            ),
+            buildImprovementShortcutTargetTileKey:
+                buildImprovementShortcutTargetTileKey,
+            purchaseLandShortcutTargetTileKey:
+                purchaseLandShortcutTargetTileKey,
+            buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+            buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+            buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
+            buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+            readOnly: readOnly,
           ),
         ],
       ),

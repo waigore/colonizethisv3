@@ -298,9 +298,49 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
   ),
 ];
 
-Widget _moveDialogStoryFrame({
-  required Widget Function(BuildContext) open,
-}) {
+/// Favored Trading Partner Dialogue Overlay stories. SPEC/ui/favored-trading-partner-dialogue-overlay.md.
+List<WidgetbookNode> get ftpDialogueOverlayDirectories => [
+  WidgetbookFolder(
+    name: 'Favored Trading Partner Dialogue Overlay',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — one pending offer',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: FtpDialogueOverlay(
+            game: _callToArmsStoryGame(),
+            pending: const [
+              FtpOffer(proposerGpId: 'gp_portugal', targetGpId: 'gp_player'),
+            ],
+            onDecisions: (_) {},
+            child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Two pending offers',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: FtpDialogueOverlay(
+            game: _callToArmsStoryGame(),
+            pending: const [
+              FtpOffer(proposerGpId: 'gp_portugal', targetGpId: 'gp_player'),
+              FtpOffer(proposerGpId: 'gp_spain', targetGpId: 'gp_player'),
+            ],
+            onDecisions: (_) {},
+            child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
+Widget _moveDialogStoryFrame({required Widget Function(BuildContext) open}) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -569,6 +609,7 @@ List<WidgetbookNode> get moveFleetDialogDirectories => [
           );
         },
       ),
+      ...moveFleetDestinationIntelDialogUseCases,
     ],
   ),
 ];
@@ -627,6 +668,29 @@ List<WidgetbookNode> get moveFleetDialogDirectories => [
   return (game: game, source: source, home: home);
 }
 
+Widget _transferToHomeFleetOpenButton(
+  BuildContext innerContext,
+  ({Game game, Fleet source, Fleet home}) fixture,
+) {
+  return ElevatedButton(
+    onPressed: () {
+      showDialog<void>(
+        context: innerContext,
+        builder: (_) => TransferToHomeFleetDialog(
+          sourceFleet: fixture.source,
+          homeFleet: fixture.home,
+          game: fixture.game,
+          humanPlayerId: 'gp_transfer_story',
+          bus: AppEventBus.create(),
+          overseasCargoUsed: 2,
+        ),
+      );
+    },
+    // ignore: avoid_hardcoded_strings_in_widgets
+    child: const Text('Open Transfer to Home Fleet'),
+  );
+}
+
 /// Transfer to Home Fleet Dialog stories. SPEC/ui/transfer-to-home-fleet-dialog.md.
 List<WidgetbookNode> get transferToHomeFleetDialogDirectories => [
   WidgetbookFolder(
@@ -637,24 +701,22 @@ List<WidgetbookNode> get transferToHomeFleetDialogDirectories => [
         builder: (context) {
           final fixture = _transferToHomeFleetStoryFixture();
           return _moveDialogStoryFrame(
-            open: (innerContext) {
-              return ElevatedButton(
-                onPressed: () {
-                  showDialog<void>(
-                    context: innerContext,
-                    builder: (_) => TransferToHomeFleetDialog(
-                      sourceFleet: fixture.source,
-                      homeFleet: fixture.home,
-                      game: fixture.game,
-                      humanPlayerId: 'gp_transfer_story',
-                      bus: AppEventBus.create(),
-                    ),
-                  );
-                },
-                // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('Open Transfer to Home Fleet'),
-              );
-            },
+            open: (innerContext) =>
+                _transferToHomeFleetOpenButton(innerContext, fixture),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Cargo line wraps (320 dp)',
+        builder: (context) {
+          final fixture = _transferToHomeFleetStoryFixture();
+          return SizedBox(
+            width: 320,
+            height: 640,
+            child: _moveDialogStoryFrame(
+              open: (innerContext) =>
+                  _transferToHomeFleetOpenButton(innerContext, fixture),
+            ),
           );
         },
       ),
@@ -704,88 +766,6 @@ List<WidgetbookNode> get productionCommodityBreakdownDialogDirectories => [
                 );
               },
             ),
-          );
-        },
-      ),
-    ],
-  ),
-];
-
-/// Grant or Subsidy Dialog stories. SPEC/ui/grant-or-subsidy-dialog.md.
-List<WidgetbookNode> get grantOrSubsidyDialogDirectories => [
-  WidgetbookFolder(
-    name: 'Grant or Subsidy Dialog',
-    children: [
-      WidgetbookUseCase(
-        name: 'Grant mode — treasury sufficient',
-        builder: (context) {
-          final result = loadSeed42InitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.first.id;
-          final targetFactionId = game.players.length >= 2
-              ? game.players[1].id
-              : (game.minorNations.isNotEmpty
-                    ? game.minorNations.first.id
-                    : 'm1');
-          return _moveDialogStoryFrame(
-            open: (innerContext) {
-              return ElevatedButton(
-                onPressed: () {
-                  showDialog<void>(
-                    context: innerContext,
-                    builder: (_) => GrantOrSubsidyDialog(
-                      game: game,
-                      humanPlayerId: humanPlayerId,
-                      targetFactionId: targetFactionId,
-                      isSubsidy: false,
-                      bus: AppEventBus.create(),
-                    ),
-                  );
-                },
-                // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('Open Grant Aid'),
-              );
-            },
-          );
-        },
-      ),
-      WidgetbookUseCase(
-        name: 'Subsidy mode — percent stepper',
-        builder: (context) {
-          final base = loadSeed42InitGameResult().game;
-          final humanPlayerId = base.players.first.id;
-          final targetFactionId = base.players.length >= 2
-              ? base.players[1].id
-              : (base.minorNations.isNotEmpty
-                    ? base.minorNations.first.id
-                    : 'm1');
-          // Subsidy is a treasury-independent percentage (Refs #3753 R3); even
-          // with treasury 0 the percent stepper (5–20%) stays enabled.
-          final game = base.copyWith(
-            players: [
-              base.players.first.copyWith(treasury: 0),
-              ...base.players.skip(1),
-            ],
-          );
-          return _moveDialogStoryFrame(
-            open: (innerContext) {
-              return ElevatedButton(
-                onPressed: () {
-                  showDialog<void>(
-                    context: innerContext,
-                    builder: (_) => GrantOrSubsidyDialog(
-                      game: game,
-                      humanPlayerId: humanPlayerId,
-                      targetFactionId: targetFactionId,
-                      isSubsidy: true,
-                      bus: AppEventBus.create(),
-                    ),
-                  );
-                },
-                // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('Open Set Subsidy'),
-              );
-            },
           );
         },
       ),

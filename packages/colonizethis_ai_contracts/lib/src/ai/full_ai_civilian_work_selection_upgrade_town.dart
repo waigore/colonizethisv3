@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'full_ai_civilian_work_selection_build_purchase.dart';
+import 'full_ai_civilian_work_selection_shared.dart';
 
 // Builder `upgrade_town` candidate scoring / row selection. Adds the
 // `upgrade_town` target to the Builder's scored pool so town upgrades compete
@@ -50,13 +51,6 @@ int _upgradeTownWorkScore(
 /// `upgrade_town` candidates: province id first, then full tile key (Refs #3794
 /// § Builder). All candidates share the `upgrade_town` target, so this never
 /// depends on the target string's alphabetical position.
-int _compareUpgradeTownCandidate(WorkOrder a, WorkOrder b) {
-  final pa = Unit.provinceIdFromTileKey(a.targetTileKey) ?? '';
-  final pb = Unit.provinceIdFromTileKey(b.targetTileKey) ?? '';
-  final p = pa.compareTo(pb);
-  if (p != 0) return p;
-  return a.targetTileKey.compareTo(b.targetTileKey);
-}
 
 WorkOrder? _bestUpgradeTownRow(
   List<WorkOrder> candidates,
@@ -66,22 +60,11 @@ WorkOrder? _bestUpgradeTownRow(
   final towns = candidates
       .where((w) => w.target == kWorkTargetUpgradeTown)
       .toList();
-  if (towns.isEmpty) return null;
-  var best = towns.first;
-  var bestScore = _upgradeTownWorkScore(best, game, playerId: playerId);
-  for (var i = 1; i < towns.length; i++) {
-    final w = towns[i];
-    final s = _upgradeTownWorkScore(w, game, playerId: playerId);
-    if (s > bestScore) {
-      bestScore = s;
-      best = w;
-      continue;
-    }
-    if (s == bestScore && _compareUpgradeTownCandidate(w, best) < 0) {
-      best = w;
-    }
-  }
-  return best;
+  return bestScoredWorkRow(
+    towns,
+    scoreOf: (w) => _upgradeTownWorkScore(w, game, playerId: playerId),
+    compareTieBreak: compareWorkOrderProvinceThenTile,
+  );
 }
 
 /// Stable, non-alphabetical-on-target tie-break between the best

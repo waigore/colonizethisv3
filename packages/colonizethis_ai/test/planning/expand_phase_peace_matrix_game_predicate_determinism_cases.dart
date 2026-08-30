@@ -48,54 +48,61 @@ class _Case {
 
 void registerExpandPeaceGamePredicateDeterminismCases() {
   group('peace-predicate determinism guards', () {
-    test(
-      'canPivotFromSoleGpWarAfterPeace: identical inputs produce identical '
-      'outputs (must-have #7)',
-      () {
-        const c = _Case(
-          name: 'determinism',
-          players: _gp1gp2,
-          playerId: _gp1,
-          owProvinces: [
-            Province(id: 'oldWorld|gp1_1', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|gp1_2', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|gp1_3', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|gp1_4', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|gp1_5', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|gp1_6', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|gp1_7', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|gp1_8', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|minor1_a', regionId: 'oldWorld', ownerId: _minor1),
-          ],
-          minorNations: [MinorNation(id: _minor1, displayName: 'M1')],
-          ow: 8,
-          atWarWith: [_gp2],
-          invadable: ['oldWorld|minor1_a'],
-          expected: true,
-        );
-        final game = buildExpandPeaceMatrixGame(
-          owProvinces: c.owProvinces,
-          players: c.players,
-          minorNations: c.minorNations,
-          turnNumber: c.turnNumber,
-        );
-        final snapshot = buildExpandPeaceMatrixSnapshot(
-          playerId: c.playerId,
-          atWarWith: c.atWarWith,
-          oldWorldProvincesOwned: c.ow,
-          invadableProvinceIdsSorted: c.invadable,
-        );
-        final first =
-            canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot);
-        final second =
-            canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot);
-        final third =
-            canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot);
-        expect(first, isTrue);
-        expect(second, first);
-        expect(third, first);
-      },
-    );
+    test('canPivotFromSoleGpWarAfterPeace: identical inputs produce identical '
+        'outputs (must-have #7)', () {
+      const c = _Case(
+        name: 'determinism',
+        players: _gp1gp2,
+        playerId: _gp1,
+        owProvinces: [
+          Province(id: 'oldWorld|gp1_1', regionId: 'oldWorld', ownerId: _gp1),
+          Province(id: 'oldWorld|gp1_2', regionId: 'oldWorld', ownerId: _gp1),
+          Province(id: 'oldWorld|gp1_3', regionId: 'oldWorld', ownerId: _gp1),
+          Province(id: 'oldWorld|gp1_4', regionId: 'oldWorld', ownerId: _gp1),
+          Province(id: 'oldWorld|gp1_5', regionId: 'oldWorld', ownerId: _gp1),
+          Province(id: 'oldWorld|gp1_6', regionId: 'oldWorld', ownerId: _gp1),
+          Province(id: 'oldWorld|gp1_7', regionId: 'oldWorld', ownerId: _gp1),
+          Province(id: 'oldWorld|gp1_8', regionId: 'oldWorld', ownerId: _gp1),
+          Province(
+            id: 'oldWorld|minor1_a',
+            regionId: 'oldWorld',
+            ownerId: _minor1,
+          ),
+        ],
+        minorNations: [MinorNation(id: _minor1, displayName: 'M1')],
+        ow: 8,
+        atWarWith: [_gp2],
+        invadable: ['oldWorld|minor1_a'],
+        expected: true,
+      );
+      final game = buildExpandPeaceMatrixGame(
+        owProvinces: c.owProvinces,
+        players: c.players,
+        minorNations: c.minorNations,
+        turnNumber: c.turnNumber,
+      );
+      final snapshot = buildExpandPeaceMatrixSnapshot(
+        playerId: c.playerId,
+        atWarWith: c.atWarWith,
+        oldWorldProvincesOwned: c.ow,
+        invadableProvinceIdsSorted: c.invadable,
+      );
+      final first = canPivotFromSoleGpWarAfterPeace(
+        game: game,
+        snapshot: snapshot,
+      );
+      final second = canPivotFromSoleGpWarAfterPeace(
+        game: game,
+        snapshot: snapshot,
+      );
+      final third = canPivotFromSoleGpWarAfterPeace(
+        game: game,
+        snapshot: snapshot,
+      );
+      expect(first, isTrue);
+      expect(second, first);
+      expect(third, first);
+    });
 
     test(
       'hasUninvadedOldWorldMinor: identical inputs produce identical outputs',
@@ -106,7 +113,11 @@ void registerExpandPeaceGamePredicateDeterminismCases() {
           playerId: _gp1,
           owProvinces: [
             Province(id: 'oldWorld|gp1_a', regionId: 'oldWorld', ownerId: _gp1),
-            Province(id: 'oldWorld|m2_a', regionId: 'oldWorld', ownerId: _minor2),
+            Province(
+              id: 'oldWorld|m2_a',
+              regionId: 'oldWorld',
+              ownerId: _minor2,
+            ),
           ],
           minorNations: [
             MinorNation(id: _minor1, displayName: 'M1'),
@@ -130,7 +141,10 @@ void registerExpandPeaceGamePredicateDeterminismCases() {
           invadableProvinceIdsSorted: c.invadable,
         );
         final first = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot);
-        final second = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot);
+        final second = hasUninvadedOldWorldMinor(
+          game: game,
+          snapshot: snapshot,
+        );
         expect(second, first);
         expect(
           first,

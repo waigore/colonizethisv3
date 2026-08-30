@@ -1,6 +1,6 @@
 # Naval Units Panel — Fleet Management (Split & Combine)
 
-**SPEC/ui** — Extends [naval-units-panel.md](naval-units-panel.md) with fleet management actions: **split fleet** and **combine fleets**. These operations allow players to reorganize their naval forces.
+**SPEC/ui** — Extends [naval-units-panel.md](naval-units-panel.md) with fleet management actions: **split fleet** and **combine fleets**. These operations allow players to reorganize their naval forces. Overlay same-locality all-ships Combine (no `DLG40001`): [province-sea-zone-detail-overlay-naval-combine.md](province-sea-zone-detail-overlay-naval-combine.md) (Refs #4659).
 
 ---
 
@@ -86,7 +86,11 @@ Each fleet row shows a **Split** action in the collapsed header content so the a
 
 ### Dialog
 
-Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**.
+Clicking "Split Fleet" opens a modal dialog: **Split Fleet Dialog**. Map detach-then-sail (`showHomeFleetDetachThenSailFlow`, Refs #4448) opens the same dialog with title **Detach a squadron** and confirm **Detach and choose destination**.
+
+### Home Fleet cargo consequence (Refs #4448)
+
+On a **Home Fleet** split (panel **Split** and map detach-then-sail), a live line below the transfer list states remaining Home Fleet cargo holds after the staged transfer versus this turn’s overseas extraction load. Hosts pass `overseasCargoUsed`, `isCargoUsedReliable`, and `cargoNotDefined` as constructor params; the dialog does **not** import Riverpod. Remaining holds are `NavalStatsCatalog.cargoHold` summed over ships still on the Home Fleet after the staged counts. When `cargoNotDefined` or `!isCargoUsedReliable`, used displays as `—` and the line is not coloured as a shortfall. When used is reliable: `--muted` if remaining **>** used; `--accent` if remaining **==** used; `--danger` if remaining **<** used. A legal split is never blocked. Transfer into Home Fleet (`DLG40001`) uses a separate transfer-worded remaining/used/free-for-trade line on **right** staged counts ([transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md)); this split copy, colour contract, and goldens stay unchanged (`Refs #4448`).
 
 ### Reusable Transfer Component
 
@@ -236,6 +240,10 @@ After any fleet operation (split or combine):
 
 - **Given** the Home Fleet is present with ships, **when** the user expands the Home Fleet row, **then** the Home Fleet shows a Split Fleet button, allowing the player to split off a detachment.
 
+- **Given** `SplitFleetDialog` is open on the Home Fleet with constructor-passed `overseasCargoUsed` / `isCargoUsedReliable` / `cargoNotDefined`, **when** the player stages merchants to the new fleet, **then** the UI layer shows remaining Home Fleet cargo holds versus this turn’s overseas extraction load. When used is reliable: `--muted` if remaining **>** used, `--accent` if remaining **==** used, `--danger` if remaining **<** used. When `cargoNotDefined` or `!isCargoUsedReliable`, used displays as `—` and the line is not coloured as a shortfall. A legal split is never blocked.
+
+- **Given** the map detach-then-sail `SplitFleetDialog` is hosted under `AppThemes.editorialMonocle` with title **Detach a squadron**, confirm **Detach and choose destination**, and constructor-passed cargo flags, **when** `app/test/split_fleet_dialog_detach_goldens_test.dart` captures each keyed `RepaintBoundary`, **then** each `matchesGoldenFile` baseline under `app/test/goldens/split_fleet_dialog_detach*.png` matches the committed PNG for that copy and for cargo-line `--muted` / `--accent` / `--danger` / `—` colours (Refs #4448).
+
 ### Empty Fleet Cleanup
 
 - **Given** a fleet operation results in a non-Home Fleet having zero ships, **when** the operation completes, **then** that fleet is automatically removed from the game state and the panel updates immediately.
@@ -271,7 +279,8 @@ After any fleet operation (split or combine):
 |------|-------------|
 | `app/lib/features/game/widgets/units/naval/naval_units_panel.dart` | Main panel with combine/split UI |
 | `app/lib/features/game/widgets/unit_orders/split_fleet_dialog.dart` | Split fleet modal dialog |
-| `app/test/naval_units_panel_test.dart` | Tests for fleet management |
+| `app/test/naval_units_panel_roster_and_draft_test.dart` | Roster, locate, and draft-move subtitle |
+| `app/test/naval_units_panel_combine_and_mockup_test.dart` | Combine selection and UNIT30001 mockup fidelity |
 
 ### Key Implementation Details
 

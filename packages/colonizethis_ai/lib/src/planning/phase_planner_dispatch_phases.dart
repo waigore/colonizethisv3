@@ -30,7 +30,8 @@ PhasePlanOutcome expandPhasePlanOutcome({
           expandEconomyPlan: expandEconomyPlan,
         )
       : null;
-  return PhasePlanOutcome.expand(
+  return PhasePlanOutcome(
+    phase: ObserverGoalPhase.expand,
     expandDeclareWarTargetFactionId: declareWarTarget,
     expandPeaceTargetFactionIdsSorted: planExpandPeace(
       game: game,
@@ -66,7 +67,8 @@ PhasePlanOutcome colonialLitePhasePlanOutcome({
   final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
   final expandFrontier = expandFrontierContext(game: game, snapshot: snapshot);
   final expandEconomyPlan = planExpandEconomy(game: game, snapshot: snapshot);
-  return PhasePlanOutcome.colonialLite(
+  return PhasePlanOutcome(
+    phase: ObserverGoalPhase.colonialLite,
     expandDeclareWarTargetFactionId: declareWarTarget,
     expandPeaceTargetFactionIdsSorted: planExpandPeace(
       game: game,
@@ -154,7 +156,8 @@ PhasePlanOutcome colonialPhasePlanOutcome({
     personalityId: personalityId,
     expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
   );
-  return PhasePlanOutcome.colonial(
+  return PhasePlanOutcome(
+    phase: ObserverGoalPhase.colonial,
     colonialAcquisitionTarget: colonial.acquisition,
     colonialPeaceTargetFactionIdsSorted: colonial.peaceTargets,
     colonialMilitaryPlan: colonial.military,
@@ -172,7 +175,8 @@ PhasePlanOutcome developPhasePlanOutcome({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
-  return PhasePlanOutcome.develop(
+  return PhasePlanOutcome(
+    phase: ObserverGoalPhase.develop,
     developPeaceTargetFactionIdsSorted: planDevelopPeace(
       game: game,
       snapshot: snapshot,

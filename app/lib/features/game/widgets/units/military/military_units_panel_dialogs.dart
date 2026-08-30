@@ -7,11 +7,12 @@ import 'package:colonizethis_world/colonizethis_world.dart' show buildPlayerView
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../config/routes.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../panels/tree_builders/military_tree_builder.dart';
-import '../../unit_orders/move_army_dialog.dart';
+import '../../unit_orders/show_move_army_dialog.dart';
 import '../../unit_orders/split_army_dialog.dart';
 import '../shared/base_units_panel.dart';
 import 'military_units_panel.dart';
@@ -35,6 +36,16 @@ mixin MilitaryUnitsPanelDialogs on BaseUnitsPanelState<MilitaryUnitsPanel> {
     widget.bus.closePanelThenEmit(OpenDialogEvent(trainMilitaryDialogId));
   }
 
+  void openCounsel() {
+    widget.bus.closePanelThenEmit(
+      NavigateToRouteEvent(Routes.counsel, {
+        'game': widget.game,
+        'humanPlayerId': widget.humanPlayerId,
+        'counselTab': 'military',
+      }),
+    );
+  }
+
   void openSplitDialog(ArmyBlock block) {
     showDialog<void>(
       context: context,
@@ -54,17 +65,15 @@ mixin MilitaryUnitsPanelDialogs on BaseUnitsPanelState<MilitaryUnitsPanel> {
       widget.topology,
       widget.humanPlayerId,
     );
-    showDialog<void>(
+    showMoveArmyDialog(
       context: context,
-      builder: (ctx) => MoveArmyDialog(
-        army: block.army,
-        game: widget.game,
-        humanPlayerId: widget.humanPlayerId,
-        bus: widget.bus,
-        topology: widget.topology,
-        draftOrders: widget.draftOrders,
-        playerView: playerView,
-      ),
+      army: block.army,
+      game: widget.game,
+      humanPlayerId: widget.humanPlayerId,
+      bus: widget.bus,
+      topology: widget.topology,
+      draftOrders: widget.draftOrders,
+      playerView: playerView,
     );
   }
 }

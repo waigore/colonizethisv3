@@ -9,6 +9,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared_bootstrap.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 /// Pins DLG10001 advanced-start selection at the CI desktop viewport (1280×720)
 /// where the dropdown sits below the fold until the shell scrolls (Refs #3895).
@@ -20,13 +21,8 @@ void main() {
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1.0;
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.colonial,
-        localizationsDelegates:
-            AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        home: Scaffold(
+      wrapE2eApp(
+        Scaffold(
           body: Builder(
             builder: (context) {
               return TextButton(
@@ -57,6 +53,10 @@ void main() {
             },
           ),
         ),
+        theme: AppThemes.colonial,
+        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
       ),
     );
     await tester.pumpAndSettle();
@@ -69,10 +69,7 @@ void main() {
     (WidgetTester tester) async {
       await pumpLockedFullInitDialog(tester);
 
-      await e2eSelectLeaderDialogAdvancedStart(
-        tester,
-        '50 Turns In (1598)',
-      );
+      await e2eSelectLeaderDialogAdvancedStart(tester, '50 Turns In (1598)');
 
       expect(
         find.widgetWithText(

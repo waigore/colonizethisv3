@@ -14,7 +14,7 @@ Major flows only; keep this table small.
 |------|------|----------------------------|
 | `SHEL` | App shell, main menu, initializing, pause menu | `1` menu/shell route, `3` game initializing, `4` pause menu panel |
 | `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route, `7` victory route, `9` counsel route |
-| `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
+| `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay, `3` tile radial / more actions |
 | `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military, `6` train naval |
 | `DIPL` | Diplomacy panels and grant flows | `1` diplomacy panel/screen, `2` grant/subsidy dialog |
 | `PROD` | Production surfaces | `1` production panel/screen, `2` commodity breakdown dialog |
@@ -40,6 +40,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME20001` | Production screen | [production-panel.md](production-panel.md) | `app/lib/features/game/screens/production/production_screen.dart` | Production Panel | active |
 | `GAME30001` | Diplomacy screen | [diplomacy-panel.md](diplomacy-panel.md) | `app/lib/features/game/screens/diplomacy/diplomacy_screen.dart` | Diplomacy Panel | active |
 | `GAME30002` | Diplomacy detail screen | [diplomacy-detail-screen.md](diplomacy-detail-screen.md) | `app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart` | Diplomacy Detail Screen | active |
+| `GAME30003` | Intelligence Council | [intelligence-council.md](intelligence-council.md) | `app/lib/features/game/screens/diplomacy/intelligence_council_screen.dart` | Intelligence Council | active |
 | `GAME40001` | Technology screen | [technology-panel.md](technology-panel.md) | `app/lib/features/game/screens/technology/technology_screen.dart` | Tech Tree | active |
 | `GAME50001` | Game side menu | [game-side-menu.md](game-side-menu.md) | `app/lib/features/game/flame/controls/game_side_menu.dart` | Game Side Menu | active |
 | `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade/trade_screen.dart` | Trade Screen | active |
@@ -48,6 +49,8 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME90001` | Counsel screen | [counsel-panel.md](counsel-panel.md) | `app/lib/features/game/screens/counsel/counsel_screen.dart` | Counsel Panel | active |
 | `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/map_state/game_map_area.dart` | Map Widget | active |
 | `MAP20001` | Province sea-zone overlay | [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) | `app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart` | Province Overlay | active |
+| `MAP30001` | Tile context radial | [tile-context-radial.md](tile-context-radial.md) | `app/lib/features/game/widgets/map_radial/tile_context_radial.dart` | Tile Context Radial | active |
+| `MAP30002` | More tile actions | [tile-more-actions-dialog.md](tile-more-actions-dialog.md) | `app/lib/features/game/widgets/map_radial/tile_more_actions_dialog.dart` | More Tile Actions | active |
 | `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart` | Civilian Units Panel | active |
 | `UNIT20001` | Military units panel | [military-units-panel.md](military-units-panel.md) | `app/lib/features/game/widgets/units/military/military_units_panel.dart` | Military Units Panel | active |
 | `UNIT30001` | Naval units panel | [naval-units-panel.md](naval-units-panel.md) | `app/lib/features/game/widgets/units/naval/naval_units_panel.dart` | Naval Units Panel | active |
@@ -56,15 +59,17 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `UNIT60001` | Train naval dialog | [train-naval-dialog.md](train-naval-dialog.md) | `app/lib/features/game/widgets/train/train_naval_dialog.dart` | Train Naval Dialog | active |
 | `DIPL20001` | Grant or subsidy dialog | [grant-or-subsidy-dialog.md](grant-or-subsidy-dialog.md) | `app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart` | Grant or Subsidy Dialog | active |
 | `PROD20001` | Production commodity breakdown dialog | [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | `app/lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart` | Production Commodity Breakdown Dialog | active |
-| `CMPT10001` | Combat mode choice dialog | [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md) | `app/lib/features/game/widgets/combat/combat_mode_choice_dialog.dart` | Quick Battle | active |
+| `CMPT10001` | Combat mode choice dialog | [combat-mode-choice-dialog.md](combat-mode-choice-dialog.md) | `app/lib/features/game/widgets/combat/combat_mode_choice_dialog.dart` | Combat Mode Choice Dialog | active |
 | `CMPT20001` | Quick battle screen | [quick-battle-screen.md](quick-battle-screen.md) | `app/lib/features/game/screens/combat/quick_battle_screen.dart` | Quick Battle | active |
 | `CMPT50001` | Quick battle result dialog | [quick-battle-result-dialog.md](quick-battle-result-dialog.md) | `app/lib/features/game/widgets/combat/quick_battle_result_dialog.dart` | Quick Battle | active |
 | `DLG10001` | New game leader selection | [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) | `app/lib/features/shell/new_game_leader_selection_dialog.dart` | New Game Leader Selection Dialog | active |
 | `DLG20001` | Move army dialog | [move-army-dialog.md](move-army-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart` | Move Army Dialog | active |
+| `DLG20002` | Overlay army move picker | [overlay-army-move-picker-dialog.md](overlay-army-move-picker-dialog.md) | `app/lib/features/game/widgets/unit_orders/overlay_army_move_picker_dialog.dart` | Overlay Army Move Picker Dialog | active |
 | `DLG30001` | Move fleet dialog | [move-fleet-dialog.md](move-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart` | Move Fleet Dialog | active |
 | `DLG31001` | Naval mission menu dialog | [naval-mission-menu-dialog.md](naval-mission-menu-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart` | Naval Mission Menu Dialog | active |
 | `DLG31002` | Naval mission target dialog | [naval-mission-target-dialog.md](naval-mission-target-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_target_dialog.dart` | Naval Mission Target Dialog | active |
 | `DLG31003` | Naval mission fleet picker dialog | [naval-mission-fleet-picker-dialog.md](naval-mission-fleet-picker-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart` | Naval Mission Fleet Picker Dialog | active |
+| `DLG31004` | In-port fleet marker actions | [in-port-fleet-marker-actions-dialog.md](in-port-fleet-marker-actions-dialog.md) | `app/lib/features/game/widgets/unit_orders/in_port_fleet_marker_actions_dialog.dart` | In-port Fleet Marker Actions Dialog | active |
 | `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
 | `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/dialogs/turn_news_dialog.dart` | Turn news | active |
 | `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | `app/lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart` | Next Turn Confirmation | active |
@@ -79,6 +84,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | `app/lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart` | Observe Mode Not Defined Panel | active |
 | `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | `app/lib/features/game/widgets/shell/player_turn_event_feed_card.dart` | Player Turn Event Feed Card | active |
 | `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
+| `OVL90001` | Favored Trading Partner dialogue overlay | [favored-trading-partner-dialogue-overlay.md](favored-trading-partner-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/ftp_dialogue_overlay.dart` | Favored Trading Partner Dialogue Overlay | active |
 | `SYS10001` | Debug log viewer | [debug-log-viewer.md](debug-log-viewer.md) | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | Debug Log Viewer | active |
 | `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | `app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart` | Debug Console Panel | active |
 

@@ -15,11 +15,14 @@ class CtRegionMap extends StatefulWidget {
     this.showProvinceOverlay = true,
     this.showProvinceOwnershipTint = false,
     this.showProvinceNamesLayer = true,
+    this.showCapitalLinkDisconnectedHighlight = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
+    this.mapBaseLayerFlags,
     this.baseLayerDisplayMode,
     this.onProvinceSelected,
     this.onMapTileTappedForDetail,
+    this.onMapTileSecondaryForRadial,
     this.onRegionViewChanged,
     this.onProvinceHovered,
     this.onTileHovered,
@@ -31,6 +34,7 @@ class CtRegionMap extends StatefulWidget {
     this.secondaryHighlightTileKeys,
     this.centerOnTileKey,
     this.validTileKeys,
+    this.lastTurnPulseTileKey,
     this.onTileSelected,
     this.onWorkTargetSelectionCancelled,
     this.bus,
@@ -46,13 +50,20 @@ class CtRegionMap extends StatefulWidget {
   final bool showProvinceOverlay;
   final bool showProvinceOwnershipTint;
   final bool showProvinceNamesLayer;
+  final bool showCapitalLinkDisconnectedHighlight;
   final double cellSizePx;
   final CtMapVisibilityMode visibilityMode;
+
+  /// When set, these flags are the paint source of truth (Refs #4388).
+  /// When null, [baseLayerDisplayMode] (or full detail) is used.
+  final MapBaseLayerFlags? mapBaseLayerFlags;
 
   /// When null, full detail (terrain + resources + improvements + roads) for backward compatibility.
   final BaseLayerDisplayMode? baseLayerDisplayMode;
   final void Function(String provinceId)? onProvinceSelected;
   final void Function(String tileKey)? onMapTileTappedForDetail;
+  final void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial;
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
   final void Function(String? tileKey)? onTileHovered;
@@ -64,6 +75,7 @@ class CtRegionMap extends StatefulWidget {
   final Set<String>? secondaryHighlightTileKeys;
   final String? centerOnTileKey;
   final Set<String>? validTileKeys;
+  final String? lastTurnPulseTileKey;
   final void Function(String tileKey)? onTileSelected;
   final VoidCallback? onWorkTargetSelectionCancelled;
 

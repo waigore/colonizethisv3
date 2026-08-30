@@ -8,17 +8,15 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_resource_cell.dart';
-import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/resource_icon.dart';
 import 'commodity_ui_helpers.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'production_available_grid.dart';
-import 'production_forces_food_readiness_summary.dart';
-import 'production_labour_readiness_summary.dart';
+import 'production_available_trade_cell.dart';
 import 'production_labour_helpers.dart';
-import 'production_labour_section.dart';
 import 'production_panel_constants.dart';
+import 'production_panel_support_available_sections.dart';
 
 /// Left-hand Available subpanel on the production screen.
 class ProductionPanelAvailableSubpanel extends StatelessWidget {
@@ -35,6 +33,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
+    this.onOpenTradeMarket,
     super.key,
   });
 
@@ -50,6 +49,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
   final Orders? currentOrders;
   final ProductionLabourCallbacks? labourCallbacks;
   final bool canEditLabour;
+  final void Function(String commodityId)? onOpenTradeMarket;
 
   /// Quantity shown in Available commodity cells for tradeable stock.
   ///
@@ -67,19 +67,27 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
 
   Widget _buildCommodityCell(Commodity c, int qty, int change) {
     final name = commodityDisplayName(l10n, c.id);
-    return CtResourceCell(
+    final cell = CtResourceCell(
       key: ValueKey<String>('production_available_cell_${c.id}'),
-      iconBuilder: (_) => ResourceIcon(
-        commodityId: c.id,
-        size: CtResourceCell.leadingIconSize,
-      ),
+      iconBuilder: (_) =>
+          ResourceIcon(commodityId: c.id, size: CtResourceCell.leadingIconSize),
       name: name,
       quantity: qty,
       delta: change == 0 ? null : change,
     );
+    final openTrade = onOpenTradeMarket;
+    if (openTrade == null || !isWorldMarketTradeableCommodity(c.id)) {
+      return cell;
+    }
+    return ProductionAvailableTradeCell(
+      cell: cell,
+      onOpenTrade: () => openTrade(c.id),
+      tooltip: l10n.production_availableSellableTooltip,
+      semanticLabel: l10n.production_availableOpenTradeSemantic(name),
+    );
   }
 
-  Widget _buildCommodityGrid(
+  Widget buildCommodityGrid(
     List<Commodity> commodities,
     Map<String, int> netChanges,
     Map<CommodityId, int> sellableByCommodityId,
@@ -100,33 +108,6 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
     );
   }
 
-  Widget _buildWorkerCell(String workerType, int count) {
-    return CtResourceCell(
-      key: ValueKey<String>('production_available_worker_$workerType'),
-      iconBuilder: (_) => WorkerIcon(
-        workerType: workerType,
-        size: CtResourceCell.leadingIconSize,
-      ),
-      name: _workerDisplayName(workerType),
-      quantity: count,
-    );
-  }
-
-  String _workerDisplayName(String workerType) {
-    switch (workerType) {
-      case 'peasant':
-        return l10n.production_workers_peasants;
-      case 'apprentice':
-        return l10n.production_workers_apprentices;
-      case 'journeyman':
-        return l10n.production_workers_journeymen;
-      case 'master':
-        return l10n.production_workers_masters;
-      default:
-        return workerType;
-    }
-  }
-
   Widget _buildHeader(ThemeData theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -144,88 +125,6 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  List<Widget> _buildFoodSection(
-    List<Commodity> availableFood,
-    Map<String, int> netChanges,
-    Map<CommodityId, int> sellableByCommodityId,
-  ) {
-    if (availableFood.isEmpty) {
-      return const <Widget>[];
-    }
-    return <Widget>[
-      CtSectionLabel(l10n.production_food),
-      const SizedBox(height: 6),
-      _buildCommodityGrid(availableFood, netChanges, sellableByCommodityId),
-      CtGap.ml,
-    ];
-  }
-
-  List<Widget> _buildMaterialsSection(
-    List<Commodity> rawMaterials,
-    List<Commodity> manufactured,
-    Map<String, int> netChanges,
-    Map<CommodityId, int> sellableByCommodityId,
-  ) {
-    final children = <Widget>[
-      CtSectionLabel(l10n.production_rawMaterials),
-      const SizedBox(height: 6),
-      _buildCommodityGrid(rawMaterials, netChanges, sellableByCommodityId),
-    ];
-    if (manufactured.isNotEmpty) {
-      children.addAll([
-        CtGap.ml,
-        CtSectionLabel(l10n.production_manufactured),
-        const SizedBox(height: 6),
-        _buildCommodityGrid(manufactured, netChanges, sellableByCommodityId),
-      ]);
-    }
-    return children;
-  }
-
-  List<Widget> _buildWorkerSection(ThemeData theme) {
-    final children = <Widget>[
-      CtGap.ml,
-      CtSectionLabel(l10n.production_workers),
-      const SizedBox(height: 6),
-      AvailableCellGrid(
-        key: kProductionAvailableWorkerGridKey,
-        columnCount: kProductionAvailableWorkerGridColumns,
-        cells: <Widget>[
-          _buildWorkerCell('peasant', player.workerPool.peasants),
-          _buildWorkerCell('apprentice', player.workerPool.apprentices),
-          _buildWorkerCell('journeyman', player.workerPool.journeymen),
-          _buildWorkerCell('master', player.workerPool.masters),
-        ],
-      ),
-      CtGap.m,
-      ProductionLabourReadinessSummary(
-        snapshot: labourReadiness,
-        l10n: l10n,
-        theme: theme,
-      ),
-      CtGap.m,
-      ProductionForcesFoodReadinessSummary(
-        snapshot: forcesFeeding,
-        l10n: l10n,
-        theme: theme,
-      ),
-    ];
-    if (currentOrders != null && labourCallbacks != null) {
-      children.addAll(<Widget>[
-        CtGap.ml,
-        CtSectionLabel(l10n.production_labourControlsSectionLabel),
-        const SizedBox(height: 6),
-        ProductionLabourSection(
-          player: player,
-          currentOrders: currentOrders!,
-          canEdit: canEditLabour,
-          callbacks: labourCallbacks!,
-        ),
-      ]);
-    }
-    return children;
   }
 
   List<Widget> _buildBodyChildren(ThemeData theme) {
@@ -251,18 +150,14 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
     return <Widget>[
       _buildHeader(theme),
       CtGap.m,
-      ..._buildFoodSection(
-        availableFood,
-        netChanges,
-        sellableByCommodityId,
-      ),
-      ..._buildMaterialsSection(
+      ...buildFoodSection(availableFood, netChanges, sellableByCommodityId),
+      ...buildMaterialsSection(
         rawMaterials,
         manufactured,
         netChanges,
         sellableByCommodityId,
       ),
-      ..._buildWorkerSection(theme),
+      ...buildWorkerSection(theme),
     ];
   }
 

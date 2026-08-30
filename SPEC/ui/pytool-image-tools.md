@@ -289,56 +289,33 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 
 ### Transport overlay atlas production contract (road/rail)
 
-**Purpose:** Define the reproducible asset contract for road/rail transport atlases used by region map bitmask rendering (`roadLevel` based, masks `0..15`).
+**Purpose:** Reproducible road/rail atlases for region-map bitmask rendering (`roadLevel`, masks `0..15`). Candidate generation writes to `pytool/out/transport_overlay_atlases_64/` first; PO promotion copies into shipped UI paths.
 
-**Families:**
-
-- `tileset_transport_road_64` (road levels `1/2`)
-- `tileset_transport_rail_64` (road level `4`)
+**Families:** `tileset_transport_road_64` (levels `1/2`); `tileset_transport_rail_64` (level `4`).
 
 **Generation pattern:**
 
-1. Start from a shared **64x64** straight reference tile using a centered **14px** transport corridor.
-2. Build cardinal edge contracts (`N`, `E`, `S`, `W`) and combine to produce masks `0..15` (bits: `N=1`, `E=2`, `S=4`, `W=8`).
-3. Use the same incremental inpaint/composite style as Wang tooling where style blending is required (`POST /v2/inpaint-v3`); use Pillow compositing helpers for deterministic assembly/cropping.
-4. Pack each family to a 16-tile atlas and emit matching JSON (`tile_size=64x64`, one tile entry per mask id).
+1. Pixflux **64x64** straight seed, centered **14px** corridor; wrap corridor edges so N↔S and E↔W joins match.
+2. Lock cardinal contracts (`N=1`, `E=2`, `S=4`, `W=8`); compose masks `0..15`; inpaint-v3 the **14px plus** interior (not a 32px square); clip bleed; reinforce contract edges. Repeat sparse rail-tie periods so N↔S wraps.
+3. Pack a 4×4 256×256 atlas (JSON bounding boxes unchanged). Default `--out-dir` is `pytool/out/transport_overlay_atlases_64/`. Writing into `app/assets/images/terrain/tilesets/` requires `--allow-shipped-out-dir` on the PixelLab generator, or `pytool/restyle_transport_overlay_candidates.py --promote-only` after candidate review.
 
-**Required validation before commit:**
+**Shipped vs candidate:** Shipped PNGs live at `app/assets/images/terrain/tilesets/tileset_transport_{road,rail}_64.png` (default terrain theme) and `app/assets/themes/sepia/images/terrain/tilesets/` (sepia theme copies). Candidates: `pytool/out/transport_overlay_atlases_64/`. Intermediates: `pytool/out/transport_edge_contracts_64/`. `map_terrain_tilesets.json` paths are unchanged; promotion overwrites the PNG bytes at those paths.
 
-- All masks `0..15` exist for both families.
-- Every tile `bounding_box` is unique, 64px grid-aligned, and inside atlas dimensions.
-- `app/assets/data/map_terrain_tilesets.json` includes `transport_tilesets.road` and `transport_tilesets.rail` entries pointing to the emitted atlas/spec files.
-- Atlas PNGs contain substantive rendered content (not near-empty placeholders): each 256x256 transport atlas must have at least 2,500 non-transparent pixels.
-- App tests covering transport contract pass (`flutter test test/transport_overlay_assets_test.dart` and `flutter test test/transport_overlay_tileset_cache_test.dart`).
-- Visual sanity test passes (`flutter test test/transport_overlay_visual_sanity_test.dart`).
+**Widgetbook preview (Refs #1819):** Reviewers inspect candidates in the developer Widgetbook host folder **Transport Overlay Candidates** (mask grids, network joins, shipped vs candidate). Preview copies live under `widgetbook_host/assets/transport_overlay_candidates/` and are declared only in `widgetbook_host/pubspec.yaml`. After PO promotion (2026-08-29), shipped and Widgetbook candidate PNGs are byte-identical; production `MapTerrainConfig` / `TransportOverlayTilesetCache` load shipped `transport_tilesets` paths (never `pytool/out` or Widgetbook-only keys in JSON).
 
-This contract is normative for issue #1775 transport overlays and future atlas refreshes.
+**Required validation:** masks `0..15` both families; unique 64px `bounding_box`es; shipped JSON still points at shipped atlases; each **shipped** 256×256 atlas has ≥2,500 opaque pixels; `flutter test test/transport_overlay_{assets,tileset_cache,mask,render_policy,visual_sanity}_test.dart`; candidate seam check `python3 pytool/test_transport_overlay_candidate_seams.py`; Widgetbook registration test for **Transport Overlay Candidates**; after promotion, shipped/sepia/widgetbook PNG bytes match `pytool/out/transport_overlay_atlases_64/`.
 
-**Resumable generation workflow (`pytool/generate_transport_overlay_tiles_64.py`):**
+**Resumable workflow (`pytool/generate_transport_overlay_tiles_64.py`):** `--init-seed` (contracts only); `--resume` / `--mask` for inpaint; `--rebuild-atlas` (no API key) into the candidate `--out-dir`. Terrain-palette restyle without PixelLab: `pytool/restyle_transport_overlay_candidates.py`; PO promotion: `--promote-only`. State: `pytool/out/transport_edge_contracts_64/state.json`.
 
-1. Initialize family contracts from Pixflux (once per family, or when reseeding style):
+**Acceptance criteria**
 
-```bash
-uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --init-seed
-uv run --directory pytool python generate_transport_overlay_tiles_64.py --family rail --init-seed
-```
-
-2. Generate masks one-by-one (`inpaint-v3` heavy step), with resume safety:
-
-```bash
-uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --mask 1 --resume
-uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --mask 2 --resume
-# ...continue through mask 15, repeat for --family rail
-```
-
-3. Rebuild atlas PNG after all `tile_mask_00..15.png` exist for that family:
-
-```bash
-uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --rebuild-atlas
-uv run --directory pytool python generate_transport_overlay_tiles_64.py --family rail --rebuild-atlas
-```
-
-4. Resume point for handoff: `pytool/out/transport_edge_contracts_64/state.json` stores completed masks by family and is authoritative for `--resume`.
+- Given `--rebuild-atlas` and no `--allow-shipped-out-dir`, when `--out-dir` is omitted, then the System writes `tileset_transport_{road,rail}_64.png` under `pytool/out/transport_overlay_atlases_64/` and does not modify shipped tileset PNGs or `map_terrain_tilesets.json`.
+- Given `--out-dir` resolves to `app/assets/images/terrain/tilesets` and `--allow-shipped-out-dir` is omitted, when the System starts, then it exits non-zero without writing atlas PNGs.
+- Given two candidate tiles whose masks share a complementary cardinal (N↔S or E↔W), when their shared 64-pixel edges are compared, then those edges match the family contract (identical RGBA, or per-channel delta ≤ 2) and the 14px corridor on that edge is not fully transparent.
+- Given a candidate mask tile `1..15`, when opaque pixels are counted, then none lie outside the 14px plus for that mask.
+- Given the Widgetbook host catalog is loaded, when the reviewer opens folder **Transport Overlay Candidates**, then the UI layer exposes the six use cases `Road — mask grid (candidate)`, `Rail — mask grid (candidate)`, `Road — network joins (candidate)`, `Rail — network joins (candidate)`, `Road — shipped vs candidate`, and `Rail — shipped vs candidate`, each sampling candidate atlases from `widgetbook_host` assets only.
+- Given `map_terrain_tilesets.json` `transport_tilesets` entries, when `TransportOverlayTilesetCache` resolves atlas paths, then the System uses only the shipped `app/assets/images/terrain/tilesets/tileset_transport_{road,rail}_64.png` paths and never the Widgetbook candidate asset directory in JSON config.
+- Given PO promotion of accepted candidates, when `restyle_transport_overlay_candidates.py --promote-only` completes, then shipped default, sepia theme, and Widgetbook candidate PNGs are byte-identical to `pytool/out/transport_overlay_atlases_64/`.
 
 ---
 

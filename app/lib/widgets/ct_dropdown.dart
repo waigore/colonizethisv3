@@ -1,41 +1,9 @@
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-import '../config/constants.dart';
-import 'ct_dialog_shell.dart';
+import 'ct_dropdown_state.dart';
 
-part 'ct_dropdown_trigger.dart';
-part 'ct_dropdown_picker.dart';
-
-/// Animation timing for the trigger chevron rotation between
-/// closed (chevron-down) and open (chevron-up) states per
-/// SPEC/ui/pixel-art-ui-catalog.md (CtDropdown / Refs #2859 R5d).
-const Duration kCtDropdownChevronAnimationDuration = Duration(milliseconds: 120);
-
-/// Final turn fraction the chevron rotates through when the picker opens.
-/// `0.5` turns equals 180°, taking the glyph from chevron-down to chevron-up.
-const double _kChevronOpenTurns = 0.5;
-const double _kChevronClosedTurns = 0.0;
-
-/// Width of the picker row's accent left-edge indicator. Pinned to 1 dp so
-/// selected and unselected rows occupy identical horizontal space — the
-/// unselected variant paints a fully transparent border at the same width,
-/// keeping the layout stable across selection changes (Refs #2859 R5c).
-const double kCtDropdownPickerSelectedLeftEdgeWidth = 1.0;
-
-/// Compact trigger visual min-height (DLG10001 mockup `.dropdown-wrapper
-/// select`). Layout contribution stays at this height; hit testing expands
-/// to [kMinTouchTargetSize] via an invisible OverflowBox (Refs #4062).
-const double kCtDropdownTriggerVisualMinHeight = 34.0;
-
-/// Compact picker-row visual min-height (Refs #4062).
-const double kCtDropdownPickerRowVisualMinHeight = 32.0;
-
-/// Trigger / picker label font size (mockup `font-size:12px`).
-const double kCtDropdownLabelFontSize = 12.0;
-
-/// Trigger chevron glyph size (mockup `.chevron` `font-size:10px`).
-const double kCtDropdownChevronSize = 10.0;
+export 'ct_dropdown_constants.dart';
+export 'ct_dropdown_state.dart' show CtDropdownState;
 
 /// Compact flat select + modal list of options.
 ///
@@ -108,25 +76,5 @@ class CtDropdown<T> extends StatefulWidget {
   );
 
   @override
-  State<CtDropdown<T>> createState() => _CtDropdownState<T>();
-}
-
-class _CtDropdownState<T> extends State<CtDropdown<T>> {
-  bool _isOpen = false;
-  bool _hovered = false;
-
-  String labelFor(T v) =>
-      widget.itemLabel != null ? widget.itemLabel!(v) : v.toString();
-
-  void _setHovered(bool value) {
-    if (_hovered == value) return;
-    setState(() => _hovered = value);
-  }
-
-  bool get _accentBorder => _hovered || _isOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return buildTrigger(context);
-  }
+  State<CtDropdown<T>> createState() => CtDropdownState<T>();
 }

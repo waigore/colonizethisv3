@@ -36,12 +36,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
-/// Mutable tap counter held outside the [StatelessWidget] harness so the
-/// `must_be_immutable` lint stays satisfied (matches the
-/// `e2e_ensure_visible_and_tap_hit_testable_test.dart` sibling).
-class _TapCounter {
-  int value = 0;
-}
+import 'support/e2e_tap_counter.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 /// Synthetic civilian work-menu fixture. The fixture builds the labels
 /// inside a [GestureDetector] (mirrors the production [InkWell]/`onTap`
@@ -50,36 +46,34 @@ class _TapCounter {
 /// off-screen drop leaves it at zero.
 Widget _buildWorkMenuFixture({
   required List<String> labels,
-  required _TapCounter taps,
+  required E2eTapCounter taps,
   String? counterTargetLabel,
   bool ignorePointer = false,
   double topSpacer = 0,
 }) {
-  return MaterialApp(
-    home: Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            if (topSpacer > 0) SizedBox(height: topSpacer),
-            for (final label in labels)
-              IgnorePointer(
-                ignoring: ignorePointer,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    if (counterTargetLabel == null ||
-                        label == counterTargetLabel) {
-                      taps.value += 1;
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Text(label),
-                  ),
+  return wrapE2eScaffold(
+    SingleChildScrollView(
+      child: Column(
+        children: <Widget>[
+          if (topSpacer > 0) SizedBox(height: topSpacer),
+          for (final label in labels)
+            IgnorePointer(
+              ignoring: ignorePointer,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (counterTargetLabel == null ||
+                      label == counterTargetLabel) {
+                    taps.value += 1;
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(label),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     ),
   );
@@ -94,7 +88,7 @@ void main() {
       // Positive happy path: the work menu hosts Build improvement /
       // Prospect / Explore — the helper must resolve and tap exactly the
       // requested label (no fallback to the first sibling).
-      final taps = _TapCounter();
+      final taps = E2eTapCounter();
       await tester.pumpWidget(
         _buildWorkMenuFixture(
           labels: const <String>['Build improvement', 'Prospect', 'Explore'],
@@ -126,7 +120,7 @@ void main() {
       // must surface a TestFailure rather than silently proceeding to the
       // downstream work-tile pick on a stale menu (which would burn the
       // appear-timeout against a not-yet-rendered work order).
-      final taps = _TapCounter();
+      final taps = E2eTapCounter();
       await tester.pumpWidget(
         _buildWorkMenuFixture(
           labels: const <String>['Build improvement', 'Explore'],
@@ -161,42 +155,40 @@ void main() {
     },
   );
 
-  testWidgets(
-    'fails fast with TestFailure on an empty work-menu fixture',
-    (WidgetTester tester) async {
-      // No work-order labels at all (work menu never mounted) — same
-      // contract as the missing-specific-label test but pins the
-      // zero-mount edge case so a future refactor that swaps
-      // `findsWidgets` for `findsOneWidget` does not silently weaken
-      // the guard to a less obvious failure path.
-      final taps = _TapCounter();
-      await tester.pumpWidget(
-        _buildWorkMenuFixture(labels: const <String>[], taps: taps),
-      );
+  testWidgets('fails fast with TestFailure on an empty work-menu fixture', (
+    WidgetTester tester,
+  ) async {
+    // No work-order labels at all (work menu never mounted) — same
+    // contract as the missing-specific-label test but pins the
+    // zero-mount edge case so a future refactor that swaps
+    // `findsWidgets` for `findsOneWidget` does not silently weaken
+    // the guard to a less obvious failure path.
+    final taps = E2eTapCounter();
+    await tester.pumpWidget(
+      _buildWorkMenuFixture(labels: const <String>[], taps: taps),
+    );
 
-      Object? caught;
-      try {
-        await tapCivilianWorkOrderLabel(tester, 'Build improvement');
-      } catch (e) {
-        caught = e;
-      }
+    Object? caught;
+    try {
+      await tapCivilianWorkOrderLabel(tester, 'Build improvement');
+    } catch (e) {
+      caught = e;
+    }
 
-      expect(
-        caught,
-        isA<TestFailure>(),
-        reason:
-            'When no work-order label is mounted, the helper must surface '
-            'a TestFailure (the same fail-fast contract documented on '
-            'e2eTapFirstAssignInCivilianPanel).',
-      );
-      expect(
-        taps.value,
-        0,
-        reason:
-            'Empty-fixture case: helper must not have tapped anything.',
-      );
-    },
-  );
+    expect(
+      caught,
+      isA<TestFailure>(),
+      reason:
+          'When no work-order label is mounted, the helper must surface '
+          'a TestFailure (the same fail-fast contract documented on '
+          'e2eTapFirstAssignInCivilianPanel).',
+    );
+    expect(
+      taps.value,
+      0,
+      reason: 'Empty-fixture case: helper must not have tapped anything.',
+    );
+  });
 
   testWidgets(
     'taps the canonical hit-testable element when multiple matches exist',
@@ -209,7 +201,7 @@ void main() {
       // regression that switched to `tester.tap(label)` directly — that
       // path would throw on the multi-element ambiguity instead of
       // resolving deterministically.
-      final taps = _TapCounter();
+      final taps = E2eTapCounter();
       await tester.pumpWidget(
         _buildWorkMenuFixture(
           labels: const <String>['Build improvement', 'Build improvement'],
@@ -231,35 +223,34 @@ void main() {
     },
   );
 
-  testWidgets(
-    'scrolls an off-screen label into view before tapping',
-    (WidgetTester tester) async {
-      // The requested label is rendered far below the visible area; the
-      // helper must rely on `e2eEnsureVisibleAndTapHitTestable` to
-      // best-effort scroll the label into view before the tap. A
-      // regression that dropped the `ensureVisible` call would either
-      // miss the tap (no counter increment) on Linux headless CI.
-      final taps = _TapCounter();
-      await tester.pumpWidget(
-        _buildWorkMenuFixture(
-          labels: const <String>['Build improvement', 'Prospect'],
-          taps: taps,
-          counterTargetLabel: 'Prospect',
-          topSpacer: 3000,
-        ),
-      );
+  testWidgets('scrolls an off-screen label into view before tapping', (
+    WidgetTester tester,
+  ) async {
+    // The requested label is rendered far below the visible area; the
+    // helper must rely on `e2eEnsureVisibleAndTapHitTestable` to
+    // best-effort scroll the label into view before the tap. A
+    // regression that dropped the `ensureVisible` call would either
+    // miss the tap (no counter increment) on Linux headless CI.
+    final taps = E2eTapCounter();
+    await tester.pumpWidget(
+      _buildWorkMenuFixture(
+        labels: const <String>['Build improvement', 'Prospect'],
+        taps: taps,
+        counterTargetLabel: 'Prospect',
+        topSpacer: 3000,
+      ),
+    );
 
-      await tapCivilianWorkOrderLabel(tester, 'Prospect');
+    await tapCivilianWorkOrderLabel(tester, 'Prospect');
 
-      expect(
-        taps.value,
-        1,
-        reason:
-            'Helper must scroll the off-screen label into view before '
-            'tapping (the e2e-ui-stability rule: verify visibility before '
-            'interaction). A regression that dropped ensureVisible would '
-            'silently drop the tap on a small surface.',
-      );
-    },
-  );
+    expect(
+      taps.value,
+      1,
+      reason:
+          'Helper must scroll the off-screen label into view before '
+          'tapping (the e2e-ui-stability rule: verify visibility before '
+          'interaction). A regression that dropped ensureVisible would '
+          'silently drop the tap on a small surface.',
+    );
+  });
 }

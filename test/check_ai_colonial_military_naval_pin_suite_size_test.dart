@@ -7,6 +7,14 @@ import '../tool/check_ai_colonial_military_naval_pin_suite_size.dart';
 
 void main() {
   group('runCheckAiColonialMilitaryNavalPinSuiteSize', () {
+    test('passes on current repo tree under 400 physical-line ceiling', () {
+      expect(runCheckAiColonialMilitaryNavalPinSuiteSize('.' ), 0);
+    });
+
+    test('ceiling is 250 after #4669 Slice E alignment', () {
+      expect(colonialMilitaryNavalPinSuitePhysicalLineCeiling, 250);
+    });
+
     test('fails when military pin is oversize without cases import', () {
       final temp = Directory.systemTemp.createTempSync('ai-mil-size-');
       try {

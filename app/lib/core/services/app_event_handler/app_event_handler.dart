@@ -28,6 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/turn_resolution_blocking_provider.dart';
 import '../subscription_tracker.dart';
 import 'app_event_handler_navigation.dart';
+import 'app_event_handler_unit_marker_flows.dart';
 import 'app_event_handler_unit_panels.dart';
 
 typedef DialogBuilder =
@@ -37,6 +38,14 @@ typedef DialogBuilder =
 /// key.
 typedef NavigatorKeyDialogBuilder =
     DialogBuilder Function(GlobalKey<NavigatorState> navigatorKey);
+
+/// Feature-layer [UIActionEvent] handler that needs the app navigator key.
+///
+/// Injected at the composition root via
+/// [AppEventHandlerScope.extraActionHandlers] so `core/services/` does not
+/// import `features/shell/`. Refs #4416.
+typedef NavigatorKeyActionHandler =
+    void Function(GlobalKey<NavigatorState> navigatorKey);
 
 /// Mutable session fields shared by de-parted [AppEventHandler] libraries.
 class AppEventHandlerState {
@@ -49,13 +58,15 @@ class AppEventHandlerState {
     this.onShowOverlay,
     this.onDismissOverlay,
     this.onNotify,
+    this.extraActionHandlers = const {},
   });
 
   final AppEventBus bus;
   final GlobalKey<NavigatorState> navigatorKey;
   final Map<String, DialogBuilder> dialogBuilders;
   final Map<String, Widget Function(BuildContext, Map<String, Object?>?)>
-      panelBuilders;
+  panelBuilders;
+  final Map<Type, NavigatorKeyActionHandler> extraActionHandlers;
   final void Function(ShowSnackBarEvent)? onShowSnackBar;
   final void Function(ShowOverlayEvent)? onShowOverlay;
   final void Function(DismissOverlayEvent)? onDismissOverlay;
@@ -70,11 +81,12 @@ class AppEventHandler {
     required GlobalKey<NavigatorState> navigatorKey,
     Map<String, DialogBuilder>? dialogBuilders,
     Map<String, Widget Function(BuildContext, Map<String, Object?>?)>?
-        panelBuilders,
+    panelBuilders,
     void Function(ShowSnackBarEvent)? onShowSnackBar,
     void Function(ShowOverlayEvent)? onShowOverlay,
     void Function(DismissOverlayEvent)? onDismissOverlay,
     void Function(NotifyEvent)? onNotify,
+    Map<Type, NavigatorKeyActionHandler>? extraActionHandlers,
   }) : state = AppEventHandlerState(
          bus: bus,
          navigatorKey: navigatorKey,
@@ -84,6 +96,7 @@ class AppEventHandler {
          onShowOverlay: onShowOverlay,
          onDismissOverlay: onDismissOverlay,
          onNotify: onNotify,
+         extraActionHandlers: extraActionHandlers ?? const {},
        );
 
   /// Session fields shared by de-parted implementation libraries (Refs #4117).
@@ -103,7 +116,9 @@ class AppEventHandler {
   }
 
   void _handleUIAction(UIActionEvent event) {
-    if (event is LocateMapTileEvent) {
+    if (event is LocateMapTileEvent ||
+        event is TurnNewsDialogClosedEvent ||
+        event is VictoryOverlayViewFinalStateEvent) {
       return;
     }
     final nav = state.navigatorKey.currentState;
@@ -119,7 +134,11 @@ class AppEventHandler {
       case ConfirmDialogEvent():
         appEventHandlerShowConfirmDialog(this, event, nav);
       case DevelopmentDisconnectedAssignDialogEvent():
-        appEventHandlerShowDevelopmentDisconnectedAssignDialog(this, event, nav);
+        appEventHandlerShowDevelopmentDisconnectedAssignDialog(
+          this,
+          event,
+          nav,
+        );
       case NavigateToRouteEvent():
         nav?.pushNamed(event.route, arguments: event.arguments);
       case NavigateToShellEvent():
@@ -138,12 +157,14 @@ class AppEventHandler {
         appEventHandlerOpenNavalUnitsPanel(this, event, nav);
       case OpenNavalMissionMenuEvent():
         appEventHandlerOpenNavalMissionMenu(this, event, nav);
+      case OpenArmyStackMarkerEvent():
+        appEventHandlerOpenArmyStackMarker(this, event, nav);
       case OpenPanelEvent():
         appEventHandlerOpenPanel(this, event, nav);
       case ClosePanelEvent():
         nav?.maybePop();
       case _:
-        return;
+        state.extraActionHandlers[event.runtimeType]?.call(state.navigatorKey);
     }
   }
 

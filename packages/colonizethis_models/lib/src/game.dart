@@ -5,6 +5,7 @@ import 'diplomacy.dart';
 import 'game_equality.dart';
 import 'game_serialization.dart';
 import 'general.dart';
+import 'last_turn_intelligence_digest.dart';
 import 'map_view_state.dart';
 import 'minor_nation.dart';
 import 'player.dart';
@@ -14,7 +15,7 @@ import 'victory.dart';
 import 'world_market.dart';
 import 'world_state.dart';
 
-export 'victory.dart';
+export 'game_copy_with.dart';
 
 /// Top-level game container. SPEC/game/world-model.
 class Game {
@@ -40,6 +41,7 @@ class Game {
     this.hiddenAgendaByGpId = const {},
     this.dossierEvidenceEntries = const [],
     this.diplomaticHistoryEvents = const [],
+    this.lastTurnIntelligenceDigest,
     this.globalGameSeed,
     this.greatPowerColorOverride,
     this.victory,
@@ -117,6 +119,10 @@ class Game {
   /// Flat, append-only list of diplomatic history events. Phase 6.
   final List<DiplomaticEvent> diplomaticHistoryEvents;
 
+  /// Last completed turn's world + spy briefing. Replaced each resolve.
+  /// SPEC/program/intelligence-digest.md. Null on legacy saves.
+  final LastTurnIntelligenceDigest? lastTurnIntelligenceDigest;
+
   /// Global game seed for AI determinism. Phase 4.
   final int? globalGameSeed;
 
@@ -180,97 +186,6 @@ class Game {
   Map<String, dynamic> toJson() => encodeGameToJson(this);
 
   static Game fromJson(Map<String, dynamic> json) => decodeGameFromJson(json);
-
-  Game copyWith({
-    String? id,
-    WorldState? worldState,
-    List<Player>? players,
-    List<MinorNation>? minorNations,
-    List<Tribe>? tribes,
-    List<General>? generals,
-    TurnTimeMapping? turnTimeMapping,
-    CombatMode? defaultCombatMode,
-    Map<String, CombatMode>? combatModeByProvinceId,
-    List<DiplomacyRelation>? diplomacyRelations,
-    List<OvertureState>? overtureStates,
-    List<SubsidyState>? subsidyStates,
-    List<ColonyState>? colonyStates,
-    List<BoycottState>? boycottStates,
-    List<AllianceBreakCooldownState>? allianceBreakCooldowns,
-    Map<String, bool>? aiControlByGpId,
-    Map<String, int>? aiSeedByGpId,
-    Map<String, String?>? aiProfileByGpId,
-    Map<String, String>? hiddenAgendaByGpId,
-    List<DossierEvidenceEntry>? dossierEvidenceEntries,
-    List<DiplomaticEvent>? diplomaticHistoryEvents,
-    int? globalGameSeed,
-    Map<String, List<int>>? greatPowerColorOverride,
-    VictoryState? victory,
-    bool? calendarCampaignHalted,
-    bool? infiniteMode,
-    double? richesCashMultiplier,
-    int? capitalTileGrainBonusPerTurn,
-    Map<String, String>? politicalGlyphByPlayerId,
-    String? lastHumanCompletedResearchCategory,
-    int? lastHumanResearchCategoryCompletionTurn,
-    MapViewState? mapViewState,
-    WorldMarketState? worldMarketState,
-    Set<String>? ftpPartnershipKeys,
-    Set<String>? debugDiplomacyUsedPairKeys,
-    AdvancedStartType? advancedStartType,
-  }) {
-    return Game(
-      id: id ?? this.id,
-      worldState: worldState ?? this.worldState,
-      players: players ?? this.players,
-      minorNations: minorNations ?? this.minorNations,
-      tribes: tribes ?? this.tribes,
-      generals: generals ?? this.generals,
-      turnTimeMapping: turnTimeMapping ?? this.turnTimeMapping,
-      defaultCombatMode: defaultCombatMode ?? this.defaultCombatMode,
-      combatModeByProvinceId:
-          combatModeByProvinceId ?? this.combatModeByProvinceId,
-      diplomacyRelations: diplomacyRelations ?? this.diplomacyRelations,
-      overtureStates: overtureStates ?? this.overtureStates,
-      subsidyStates: subsidyStates ?? this.subsidyStates,
-      colonyStates: colonyStates ?? this.colonyStates,
-      boycottStates: boycottStates ?? this.boycottStates,
-      allianceBreakCooldowns:
-          allianceBreakCooldowns ?? this.allianceBreakCooldowns,
-      aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
-      aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
-      aiProfileByGpId: aiProfileByGpId ?? this.aiProfileByGpId,
-      hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
-      dossierEvidenceEntries:
-          dossierEvidenceEntries ?? this.dossierEvidenceEntries,
-      diplomaticHistoryEvents:
-          diplomaticHistoryEvents ?? this.diplomaticHistoryEvents,
-      globalGameSeed: globalGameSeed ?? this.globalGameSeed,
-      greatPowerColorOverride:
-          greatPowerColorOverride ?? this.greatPowerColorOverride,
-      victory: victory ?? this.victory,
-      calendarCampaignHalted:
-          calendarCampaignHalted ?? this.calendarCampaignHalted,
-      infiniteMode: infiniteMode ?? this.infiniteMode,
-      richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
-      capitalTileGrainBonusPerTurn:
-          capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
-      politicalGlyphByPlayerId:
-          politicalGlyphByPlayerId ?? this.politicalGlyphByPlayerId,
-      lastHumanCompletedResearchCategory:
-          lastHumanCompletedResearchCategory ??
-          this.lastHumanCompletedResearchCategory,
-      lastHumanResearchCategoryCompletionTurn:
-          lastHumanResearchCategoryCompletionTurn ??
-          this.lastHumanResearchCategoryCompletionTurn,
-      mapViewState: mapViewState ?? this.mapViewState,
-      worldMarketState: worldMarketState ?? this.worldMarketState,
-      ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
-      debugDiplomacyUsedPairKeys:
-          debugDiplomacyUsedPairKeys ?? this.debugDiplomacyUsedPairKeys,
-      advancedStartType: advancedStartType ?? this.advancedStartType,
-    );
-  }
 
   @override
   bool operator ==(Object other) => gameEquals(this, other);

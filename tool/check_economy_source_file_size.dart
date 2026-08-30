@@ -15,8 +15,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Ratchet ceiling for phase-8 economy lib files (Refs #4299).
-const int economySourceFileSizeCeiling = 260;
+/// Ratchet ceiling for phase-9 economy lib files (Refs #4550).
+const int economySourceFileSizeCeiling = 250;
 
 const String _economyLibRelativePath = 'packages/colonizethis_economy/lib';
 
@@ -53,14 +53,14 @@ int runCheckEconomySourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_economy_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4299).',
+      '(ceiling $ceiling; Refs #4550).',
     );
     return 0;
   }
 
   logE(
     'check_economy_source_file_size: found ${violations.length} violation(s) '
-    'under $_economyLibRelativePath (phase-8 ceiling $ceiling; Refs #4299):',
+    'under $_economyLibRelativePath (phase-9 ceiling $ceiling; Refs #4550):',
   );
   for (final violation in violations) {
     logE(' - $violation');

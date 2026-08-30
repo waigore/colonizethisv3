@@ -163,6 +163,7 @@ void main() {
         'Market tab — wide two-column (Refs #4227)',
         'Market tab — narrow stacked rows (Refs #4227)',
         'Market tab — first-right chip (Refs #4226)',
+        'Market tab — last market chip (Refs #4653)',
         'Market tab — sellable clamp (Refs #3093)',
         'Market tab — treasury bid cap (Refs #3093)',
         'Market tab — bid budget saturated (Refs #4186)',
@@ -170,9 +171,11 @@ void main() {
         'Market tab — bid-type cap 3 baseline (Refs #4170, #4186)',
         'Market tab — bid-type cap 6 Trade Fairs (Refs #4170, #4186)',
         'Market tab — trade counsel stars (Refs #4282)',
+        'Market tab — highlighted commodity from Production (Refs #4581)',
         'Deal Book tab — empty (Refs #2993 E7)',
         'Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)',
         'Deal Book tab — overseas profit ledger (Refs #4226)',
+        'Deal Book tab — leftover reasons (Refs #4500)',
         'Deal Book tab — mobile (stacked) (Refs #2993 E7)',
       ]);
     });

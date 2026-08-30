@@ -75,6 +75,48 @@ const ResearchSlotTurnPreview _debtBlocked = ResearchSlotTurnPreview(
   debtBlocked: true,
 );
 
+const ResearchSlotTurnPreview _spyInsightOne = ResearchSlotTurnPreview(
+  funding: ResearchFundingLevel.medium,
+  committedProgress: _kCommitted,
+  cost: _kCost,
+  baseRpPerTurn: 300,
+  industrialBonusRpPerTurn: 0,
+  anticipatedRpPerTurn: 345,
+  goldCostPerTurn: 150,
+  goldSpentThisTurn: 150,
+  debtBlocked: false,
+  spyInsightRpPerTurn: 45,
+  spyInsightRivalCount: 1,
+  spyInsightRivalNames: ['France'],
+);
+
+const ResearchSlotTurnPreview _spyInsightTwo = ResearchSlotTurnPreview(
+  funding: ResearchFundingLevel.medium,
+  committedProgress: _kCommitted,
+  cost: _kCost,
+  baseRpPerTurn: 300,
+  industrialBonusRpPerTurn: 0,
+  anticipatedRpPerTurn: 390,
+  goldCostPerTurn: 150,
+  goldSpentThisTurn: 150,
+  debtBlocked: false,
+  spyInsightRpPerTurn: 90,
+  spyInsightRivalCount: 2,
+  spyInsightRivalNames: ['France', 'Spain'],
+);
+
+const ResearchSlotTurnPreview _completesNextTurn = ResearchSlotTurnPreview(
+  funding: ResearchFundingLevel.medium,
+  committedProgress: 1600,
+  cost: _kCost,
+  baseRpPerTurn: 300,
+  industrialBonusRpPerTurn: 0,
+  anticipatedRpPerTurn: 300,
+  goldCostPerTurn: 150,
+  goldSpentThisTurn: 150,
+  debtBlocked: false,
+);
+
 Future<void> _pumpHost(
   WidgetTester tester, {
   required Key boundaryKey,
@@ -180,22 +222,97 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: research funding breakdown dialog (Refs #3512 AC11)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('researchFundingBreakdownGolden');
-      await _pumpHost(
-        tester,
-        boundaryKey: boundaryKey,
-        surfaceSize: const Size(420, 360),
-        child: const ResearchFundingBreakdownDialog(preview: _mediumFunded),
-      );
+  testWidgets('golden: research funding breakdown dialog (Refs #3512 AC11)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('researchFundingBreakdownGolden');
+    await _pumpHost(
+      tester,
+      boundaryKey: boundaryKey,
+      surfaceSize: const Size(420, 360),
+      child: const ResearchFundingBreakdownDialog(preview: _mediumFunded),
+    );
 
-      expect(tester.takeException(), isNull);
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/research_funding_breakdown_dialog.png'),
-      );
-    },
-  );
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/research_funding_breakdown_dialog.png'),
+    );
+  });
+
+  testWidgets('golden: spy-insight breakdown one rival (Refs #4457)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('researchFundingBreakdownSpyOne');
+    await _pumpHost(
+      tester,
+      boundaryKey: boundaryKey,
+      surfaceSize: const Size(420, 400),
+      child: const ResearchFundingBreakdownDialog(preview: _spyInsightOne),
+    );
+
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/research_funding_breakdown_spy_one.png'),
+    );
+  });
+
+  testWidgets('golden: spy-insight breakdown two rivals (Refs #4457)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('researchFundingBreakdownSpyTwo');
+    await _pumpHost(
+      tester,
+      boundaryKey: boundaryKey,
+      surfaceSize: const Size(420, 400),
+      child: const ResearchFundingBreakdownDialog(preview: _spyInsightTwo),
+    );
+
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/research_funding_breakdown_spy_two.png'),
+    );
+  });
+
+  testWidgets('golden: spy-insight Medium slot card (Refs #4457)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('researchSlotCardSpyInsightGolden');
+    await _pumpHost(
+      tester,
+      boundaryKey: boundaryKey,
+      child: _slotCard(
+        funding: ResearchFundingLevel.medium,
+        preview: _spyInsightOne,
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/research_slot_card_spy_insight.png'),
+    );
+  });
+
+  testWidgets('golden: Completes next turn finish-time line (Refs #4511)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('researchSlotCardCompletesNextTurn');
+    await _pumpHost(
+      tester,
+      boundaryKey: boundaryKey,
+      child: _slotCard(
+        funding: ResearchFundingLevel.medium,
+        preview: _completesNextTurn,
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/research_slot_card_completes_next_turn.png'),
+    );
+  });
 }

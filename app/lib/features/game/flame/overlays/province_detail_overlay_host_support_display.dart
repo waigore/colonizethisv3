@@ -1,7 +1,18 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../../../../providers/map_province_panel_provider.dart'
     show displayProvinceOrSeaIdFromTileKey;
+
+/// Resolves a faction id to overlay copy (empty when [factionId] is null).
+String resolveProvinceDetailFactionDisplayName(
+  ct_models.Game game,
+  String? factionId,
+) =>
+    factionId == null
+        ? ''
+        : (game.factionDisplayNameById(factionId) ?? factionId);
 
 /// Resolves the overlay `displayId` from a selected tile key.
 ///

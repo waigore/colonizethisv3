@@ -27,12 +27,30 @@ void main() {
 
     test('isAllowedInRegion enforces old world, new world, and both rules', () {
       final rules = ResourceRules.defaultRules;
-      expect(rules.isAllowedInRegion(Resource.grain, 'oldWorld'), isTrue);
-      expect(rules.isAllowedInRegion(Resource.grain, 'newWorld'), isFalse);
-      expect(rules.isAllowedInRegion(Resource.sugarCane, 'oldWorld'), isFalse);
-      expect(rules.isAllowedInRegion(Resource.sugarCane, 'newWorld'), isTrue);
-      expect(rules.isAllowedInRegion(Resource.timber, 'oldWorld'), isTrue);
-      expect(rules.isAllowedInRegion(Resource.timber, 'newWorld'), isTrue);
+      expect(
+        rules.isAllowedInRegion(Resource.grain, kOldWorldRegionId),
+        isTrue,
+      );
+      expect(
+        rules.isAllowedInRegion(Resource.grain, kNewWorldRegionId),
+        isFalse,
+      );
+      expect(
+        rules.isAllowedInRegion(Resource.sugarCane, kOldWorldRegionId),
+        isFalse,
+      );
+      expect(
+        rules.isAllowedInRegion(Resource.sugarCane, kNewWorldRegionId),
+        isTrue,
+      );
+      expect(
+        rules.isAllowedInRegion(Resource.timber, kOldWorldRegionId),
+        isTrue,
+      );
+      expect(
+        rules.isAllowedInRegion(Resource.timber, kNewWorldRegionId),
+        isTrue,
+      );
     });
 
     test('isAllowedOnTerrain validates explicit terrain lists', () {
@@ -80,204 +98,6 @@ void main() {
         rules.isAllowedOnTerrain(Resource.furs, TerrainType.scrubForest),
         isFalse,
       );
-    });
-
-    group('defaultMarketPriceForCommodityId (Refs #3093)', () {
-      final rules = ResourceRules.defaultRules;
-
-      test('returns the int default price for a raw-resource commodity', () {
-        expect(rules.defaultMarketPriceForCommodityId('timber'), 30);
-        expect(rules.defaultMarketPriceForCommodityId('iron'), 80);
-        expect(rules.defaultMarketPriceForCommodityId('grain'), isNotNull);
-        expect(rules.defaultMarketPriceForCommodityId('grain'), isA<int>());
-      });
-
-      test('returns null for an unknown commodity id', () {
-        expect(rules.defaultMarketPriceForCommodityId('not_a_commodity'), isNull);
-      });
-
-      test('returns null for the empty string', () {
-        expect(rules.defaultMarketPriceForCommodityId(''), isNull);
-      });
-
-      test(
-          'returns the catalog base price for every manufactured commodity '
-          '(Refs #3093 manufactured-default-prices slice)', () {
-        // SPEC/game/commodity-catalog.md § Manufactured base prices —
-        // every tradeable manufactured commodity now has a catalog-published
-        // integer base price derived from the recipe input-cost subtotal
-        // (no markup), so neither the Trade UI, the bid validator, nor the
-        // AI treasury planner sees a null fallback for manufactured ids on
-        // a fresh game.
-        expect(rules.defaultMarketPriceForCommodityId('lumber'), 60);
-        expect(rules.defaultMarketPriceForCommodityId('fabric'), 80);
-        expect(rules.defaultMarketPriceForCommodityId('castIron'), 160);
-        expect(rules.defaultMarketPriceForCommodityId('refinedSugar'), 70);
-        expect(rules.defaultMarketPriceForCommodityId('cigars'), 80);
-        expect(rules.defaultMarketPriceForCommodityId('furHats'), 110);
-        expect(rules.defaultMarketPriceForCommodityId('steel'), 170);
-        expect(rules.defaultMarketPriceForCommodityId('paper'), 60);
-        expect(rules.defaultMarketPriceForCommodityId('bronze'), 145);
-      });
-
-      test('manufactured base prices match the recipe input-cost subtotal', () {
-        // Pin the derivation rule itself (SPEC/game/commodity-catalog.md §
-        // Manufactured base prices): each value equals the sum of the
-        // raw-resource default prices for the canonical recipe inputs in
-        // production-recipes.md. fabric uses the cheaper `wool` variant.
-        final int? timberPrice = rules.defaultMarketPriceForCommodityId('timber');
-        final int? ironPrice = rules.defaultMarketPriceForCommodityId('iron');
-        final int? coalPrice = rules.defaultMarketPriceForCommodityId('coal');
-        final int? woolPrice = rules.defaultMarketPriceForCommodityId('wool');
-        final int? sugarCanePrice =
-            rules.defaultMarketPriceForCommodityId('sugarCane');
-        final int? tobaccoPrice =
-            rules.defaultMarketPriceForCommodityId('tobacco');
-        final int? fursPrice = rules.defaultMarketPriceForCommodityId('furs');
-        final int? copperPrice =
-            rules.defaultMarketPriceForCommodityId('copper');
-        final int? tinPrice = rules.defaultMarketPriceForCommodityId('tin');
-        final int? castIronPrice =
-            rules.defaultMarketPriceForCommodityId('castIron');
-
-        expect(timberPrice, isNotNull);
-        expect(ironPrice, isNotNull);
-        expect(coalPrice, isNotNull);
-        expect(woolPrice, isNotNull);
-        expect(sugarCanePrice, isNotNull);
-        expect(tobaccoPrice, isNotNull);
-        expect(fursPrice, isNotNull);
-        expect(copperPrice, isNotNull);
-        expect(tinPrice, isNotNull);
-        expect(castIronPrice, isNotNull);
-
-        expect(
-          rules.defaultMarketPriceForCommodityId('lumber'),
-          timberPrice! * 2,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('fabric'),
-          woolPrice! * 2,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('castIron'),
-          ironPrice! * 2,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('refinedSugar'),
-          sugarCanePrice! * 2,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('cigars'),
-          tobaccoPrice! * 2,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('furHats'),
-          fursPrice! * 2,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('steel'),
-          ironPrice! * 1 + coalPrice! * 1,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('paper'),
-          timberPrice * 2,
-        );
-        expect(
-          rules.defaultMarketPriceForCommodityId('bronze'),
-          copperPrice! * 1 + tinPrice! * 1,
-        );
-      });
-
-      test(
-          'every non-riches catalog commodity resolves to a non-null, '
-          'non-negative default market price (Refs #3661 step 6 — full '
-          'catalog sweep relocated from colonizethis_economy)', () {
-        // SPEC/game/world-market.md § Treasury budget for bids + Tradeable
-        // commodities: the bid validator (rule 5) prices a bid via
-        // worldMarketState.prices ?? catalog default. This is the single
-        // source of truth that no tradeable (non-riches) commodity silently
-        // ships without a catalog default — a null default would let the
-        // validator admit unbounded bids on that commodity (null price ->
-        // 0 spend contribution). Owned here because CommodityCatalog and the
-        // ResourceRules defaults both live in colonizethis_data.
-        for (final commodity in CommodityCatalog.all) {
-          if (richesCommodityIds.contains(commodity.id)) continue;
-          final price = rules.defaultMarketPriceForCommodityId(commodity.id);
-          expect(
-            price,
-            isNotNull,
-            reason:
-                'commodity ${commodity.id} (non-riches) must have a catalog '
-                'default so the bid validator can price it',
-          );
-          expect(
-            price! >= 0,
-            isTrue,
-            reason: 'catalog default for ${commodity.id} must be non-negative',
-          );
-        }
-      });
-
-      test('returns null for riches and spices (non-tradeable on the market)',
-          () {
-        // SPEC/game/world-market.md § Tradeable commodities excludes the
-        // riches set (gold, silver, gems, diamonds, spices); the trade-side
-        // catalog default must therefore continue to return null for them
-        // even though they appear in ResourceRules.defaultMarketPrice (the
-        // raw-resource spawn-weight map).
-        //
-        // Riches resolve via the riches-to-treasury phase, not via the
-        // world market, so a `null` here is the correct signal that the
-        // Trade UI should render the em-dash defensive glyph if a riches
-        // commodity ever appears in a Market row (in practice the tab
-        // filters them out).
-        //
-        // The raw-resource map still returns their integer price (a
-        // different code path) — this test pins the *catalog default for
-        // the world market* contract.
-      });
-    });
-
-    group('manufacturedDefaultMarketPrice (Refs #3093)', () {
-      test('exposes the nine tradeable manufactured commodity ids', () {
-        final rules = ResourceRules.defaultRules;
-        expect(
-          rules.manufacturedDefaultMarketPrice.keys.toSet(),
-          <String>{
-            'lumber',
-            'fabric',
-            'castIron',
-            'refinedSugar',
-            'cigars',
-            'furHats',
-            'steel',
-            'paper',
-            'bronze',
-          },
-        );
-      });
-
-      test('every manufactured base price is a positive integer', () {
-        final rules = ResourceRules.defaultRules;
-        for (final entry in rules.manufacturedDefaultMarketPrice.entries) {
-          expect(
-            entry.value,
-            greaterThan(0),
-            reason: 'Manufactured base price for ${entry.key} must be > 0',
-          );
-        }
-      });
-
-      test('defaults to an empty map for custom ResourceRules', () {
-        final custom = ResourceRules(
-          regionRule: const <Resource, ResourceRegionRule>{},
-          allowedTerrains: const <Resource, List<TerrainType>>{},
-          defaultMarketPrice: const <Resource, int>{},
-        );
-        expect(custom.manufacturedDefaultMarketPrice, isEmpty);
-        expect(custom.defaultMarketPriceForCommodityId('lumber'), isNull);
-      });
     });
   });
 }

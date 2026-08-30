@@ -21,7 +21,8 @@ List<RunnableScenario> navalStrengthScenarios() => [
     label: 'uses configured weighted formula including durability',
     run: () {
       final carrack = NavalStatsCatalog.get('carrack');
-      final expected = carrack.firepower +
+      final expected =
+          carrack.firepower +
           (carrack.range * 0.4) +
           (carrack.armour * 0.15) +
           (carrack.hull * (1 + carrack.armour / 10.0)) +

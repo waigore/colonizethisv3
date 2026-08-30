@@ -40,12 +40,23 @@ InitGameMapViewData buildInitGameMapViewData({
   /// Optional per-tile transport-blocked extraction units for map overlays.
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
 
+  /// Optional tile keys for viewing-player owned land not in the capital
+  /// connected set (Refs #4370).
+  Set<String>? capitalLinkDisconnectedTileKeys,
+
   /// Optional explicit owner set for civilian tile markers. When null, the
   /// builder falls back to `Player.isHuman` players (legacy single-player
   /// behavior). When provided, only civilians owned by ids in this set get
   /// markers; pass all faction ids in global observe and the observed GP id in
   /// player observe per SPEC/ui/observe-mode.md.
   Set<String>? civilianMarkerOwnerIds,
+
+  /// Viewing-player faction id used to store [CellViewData.improvementTechCap].
+  /// Omit in global observe so caps are not shown (Refs #4408).
+  String? viewingFactionId,
+
+  /// Viewing player's `techUnlocked` map for extraction-cap lookup.
+  Map<String, bool>? viewingTechUnlocked,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
   final viewByRegion = <String, RegionMapViewData>{};
@@ -62,8 +73,12 @@ InitGameMapViewData buildInitGameMapViewData({
       resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
       resourceExtractionEffectiveUnitsByTile:
           resourceExtractionEffectiveUnitsByTile,
-      resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+      resourceExtractionBlockedUnitsByTile:
+          resourceExtractionBlockedUnitsByTile,
+      capitalLinkDisconnectedTileKeys: capitalLinkDisconnectedTileKeys,
       civilianMarkerOwnerIds: civilianMarkerOwnerIds,
+      viewingFactionId: viewingFactionId,
+      viewingTechUnlocked: viewingTechUnlocked,
     );
   }
 
@@ -78,5 +93,25 @@ InitGameMapViewData buildInitGameMapViewData({
     combinedTopology: combinedTopology,
     seed: seed,
     configSummary: configSummary,
+  );
+}
+
+/// Builds [RegionMapViewData] for one region without assembling the full
+/// dual-region [InitGameMapViewData] (lighter path for panel minimaps).
+RegionMapViewData buildInitGameMapRegionViewData({
+  required String regionId,
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, MapTopology> topologyByRegion,
+  required int cellSize,
+  Map<String, TileVisibility>? visibilityByTile,
+}) {
+  return buildRegionViewData(
+    regionId: regionId,
+    tileMap: tileMapByRegion[regionId]!,
+    topology: topologyByRegion[regionId]!,
+    game: game,
+    cellSize: cellSize,
+    visibilityByTile: visibilityByTile,
   );
 }

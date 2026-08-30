@@ -15,6 +15,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// package `test/`; `colonizethis_test` gains no dependency on
 /// `colonizethis_map`. Refs #3746.
 
+export 'init_game_map_view_fixture_scenarios.dart';
+
 /// Builds a [TileMapResult] from a [grid], deriving width/height from the rows.
 ///
 /// All view-builder tests use rectangular grids, so width is taken from the
@@ -88,12 +90,14 @@ Game minimalGame({
   List<Unit> oldWorldUnits = const [],
   List<Unit> newWorldUnits = const [],
   List<Fleet> fleets = const [],
+  List<Army> armies = const [],
   List<Player> players = const [],
   List<MinorNation> minorNations = const [],
   List<Tribe> tribes = const [],
   Map<String, String> portsByProvinceSeaboard = const {},
   Map<String, String> seaZoneDisplayNameById = const {},
   Map<String, List<int>>? greatPowerColorOverride,
+  TileMapState tileState = const TileMapState(),
 }) {
   return Game(
     id: id,
@@ -103,219 +107,13 @@ Game minimalGame({
       oldWorld: RegionData(provinces: oldWorldProvinces, units: oldWorldUnits),
       newWorld: RegionData(provinces: newWorldProvinces, units: newWorldUnits),
       fleets: fleets,
+      armies: armies,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
+      tileState: tileState,
     ),
     players: players,
     minorNations: minorNations,
     tribes: tribes,
     greatPowerColorOverride: greatPowerColorOverride,
-  );
-}
-
-/// Dual-region topology + tile maps used by visualization render tests.
-MapTopology oldWorldTwoProvinceSeaVisualizationTopology() {
-  return regionTopology(
-    regionId: 'oldWorld',
-    provinceIds: const ['p1', 'p2'],
-    seaZoneIds: const ['s1'],
-    edges: const [
-      TopologyEdge(id1: 'p1', id2: 'p2'),
-      TopologyEdge(id1: 'p1', id2: 's1'),
-    ],
-  );
-}
-
-/// Two adjacent sea zones in [regionId] (sea–sea border render tests).
-MapTopology twoAdjacentSeaZonesTopology(String regionId) {
-  return regionTopology(
-    regionId: regionId,
-    seaZoneIds: const ['s1', 's2'],
-    edges: const [TopologyEdge(id1: 's1', id2: 's2')],
-  );
-}
-
-/// Standard 4×3 visualization grid with p1/p2 land and s1 sea.
-TileMapResult visualizationSmallTileMap() {
-  return mapTileGrid([
-    ['p1', 'p1', 'p2', 'p2'],
-    ['p1', 's1', 's1', 'p2'],
-    ['p1', 'p1', 'p2', 'p2'],
-  ]);
-}
-
-/// Dual-region view-builder / visualizer scenario wiring.
-class DualRegionViewScenario {
-  const DualRegionViewScenario({
-    required this.game,
-    required this.tileMapByRegion,
-    required this.topologyByRegion,
-  });
-
-  final Game game;
-  final Map<String, TileMapResult> tileMapByRegion;
-  final Map<String, MapTopology> topologyByRegion;
-
-  InitGameMapViewData buildViewData({
-    int cellSize = 8,
-    int? seed,
-    String? configSummary,
-    Map<String, (int r, int g, int b)>? greatPowerColorOverride,
-    Map<String, TileVisibility>? visibilityByTile,
-    List<WarpLink>? warpLinks,
-    Map<String, int>? resourceExtractionUnitsByTile,
-    Map<String, int>? resourceExtractionEffectiveUnitsByTile,
-    Map<String, int>? resourceExtractionBlockedUnitsByTile,
-    Set<String>? civilianMarkerOwnerIds,
-  }) {
-    return buildInitGameMapViewData(
-      game: game,
-      tileMapByRegion: tileMapByRegion,
-      topologyByRegion: topologyByRegion,
-      cellSize: cellSize,
-      seed: seed,
-      configSummary: configSummary,
-      greatPowerColorOverride: greatPowerColorOverride,
-      visibilityByTile: visibilityByTile,
-      warpLinks: warpLinks,
-      resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
-      resourceExtractionEffectiveUnitsByTile:
-          resourceExtractionEffectiveUnitsByTile,
-      resourceExtractionBlockedUnitsByTile:
-          resourceExtractionBlockedUnitsByTile,
-      civilianMarkerOwnerIds: civilianMarkerOwnerIds,
-    );
-  }
-}
-
-/// Builds a [DualRegionViewScenario] from dual-region maps, topologies, and game.
-DualRegionViewScenario dualRegionViewScenario({
-  required Game game,
-  required TileMapResult oldWorldMap,
-  required TileMapResult newWorldMap,
-  required MapTopology oldWorldTopology,
-  required MapTopology newWorldTopology,
-}) {
-  return DualRegionViewScenario(
-    game: game,
-    tileMapByRegion: {'oldWorld': oldWorldMap, 'newWorld': newWorldMap},
-    topologyByRegion: {
-      'oldWorld': oldWorldTopology,
-      'newWorld': newWorldTopology,
-    },
-  );
-}
-
-/// Default single-tile new-world map for view-builder tests that focus on OW.
-TileMapResult defaultNewWorldMap() => mapTileGrid([
-  ['p1'],
-]);
-
-/// Default single-province new-world topology for view-builder tests.
-MapTopology defaultNewWorldTopology({List<String> provinceIds = const ['p1']}) {
-  return regionTopology(regionId: 'newWorld', provinceIds: provinceIds);
-}
-
-/// Shorthand [dualRegionViewScenario] with a default single-province new world.
-DualRegionViewScenario dualRegionScenario({
-  required Game game,
-  required List<List<String>> oldWorldGrid,
-  required MapTopology oldWorldTopology,
-  List<List<String>>? newWorldGrid,
-  MapTopology? newWorldTopology,
-  List<List<TerrainType?>>? oldWorldTerrainGrid,
-  List<List<Resource?>>? oldWorldResourceGrid,
-}) {
-  return dualRegionViewScenario(
-    game: game,
-    oldWorldMap: mapTileGrid(
-      oldWorldGrid,
-      terrainGrid: oldWorldTerrainGrid,
-      resourceGrid: oldWorldResourceGrid,
-    ),
-    newWorldMap: mapTileGrid(
-      newWorldGrid ??
-          const [
-            ['p1'],
-          ],
-    ),
-    oldWorldTopology: oldWorldTopology,
-    newWorldTopology: newWorldTopology ?? defaultNewWorldTopology(),
-  );
-}
-
-/// OW-focused scenario with a sea-only new-world placeholder grid.
-DualRegionViewScenario oldWorldFocusedScenario({
-  required Game game,
-  required List<List<String>> oldWorldGrid,
-  required MapTopology oldWorldTopology,
-  List<List<String>> newWorldGrid = const [
-    ['s1'],
-  ],
-  MapTopology? newWorldTopology,
-  List<List<TerrainType?>>? oldWorldTerrainGrid,
-}) {
-  return dualRegionViewScenario(
-    game: game,
-    oldWorldMap: mapTileGrid(oldWorldGrid, terrainGrid: oldWorldTerrainGrid),
-    newWorldMap: mapTileGrid(newWorldGrid),
-    oldWorldTopology: oldWorldTopology,
-    newWorldTopology:
-        newWorldTopology ?? singleProvinceAndSeaTopology('newWorld'),
-  );
-}
-
-/// Standard 2×2 province+sea grid in both regions (region/cell smoke tests).
-DualRegionViewScenario provinceSeaDualRegionScenario({required Game game}) {
-  final grid = [
-    ['p1', 's1'],
-    ['s1', 's1'],
-  ];
-  final topology = regionTopology(
-    regionId: 'oldWorld',
-    provinceIds: const ['p1'],
-    seaZoneIds: const ['s1'],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  );
-  final nwTopology = regionTopology(
-    regionId: 'newWorld',
-    provinceIds: const ['p1'],
-    seaZoneIds: const ['s1'],
-    edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-  );
-  return dualRegionViewScenario(
-    game: game,
-    oldWorldMap: mapTileGrid(grid),
-    newWorldMap: mapTileGrid(grid),
-    oldWorldTopology: topology,
-    newWorldTopology: nwTopology,
-  );
-}
-
-/// Convenience wrapper for the common dual-region [buildInitGameMapViewData] call.
-InitGameMapViewData buildViewDataForScenario(
-  DualRegionViewScenario scenario, {
-  int cellSize = 8,
-  int? seed,
-  String? configSummary,
-  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
-  Map<String, TileVisibility>? visibilityByTile,
-  List<WarpLink>? warpLinks,
-  Map<String, int>? resourceExtractionUnitsByTile,
-  Map<String, int>? resourceExtractionEffectiveUnitsByTile,
-  Map<String, int>? resourceExtractionBlockedUnitsByTile,
-  Set<String>? civilianMarkerOwnerIds,
-}) {
-  return scenario.buildViewData(
-    cellSize: cellSize,
-    seed: seed,
-    configSummary: configSummary,
-    greatPowerColorOverride: greatPowerColorOverride,
-    visibilityByTile: visibilityByTile,
-    warpLinks: warpLinks,
-    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
-    resourceExtractionEffectiveUnitsByTile:
-        resourceExtractionEffectiveUnitsByTile,
-    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
-    civilianMarkerOwnerIds: civilianMarkerOwnerIds,
   );
 }

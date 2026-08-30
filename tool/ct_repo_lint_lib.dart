@@ -40,12 +40,12 @@ import 'check_disallowed_ast_patterns.dart';
 import 'check_long_string_switches.dart';
 import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
+import 'check_app_catalog_widgets_file_size.dart';
+import 'check_app_core_services_file_size.dart';
+import 'check_app_turn_resolution_file_size.dart';
+import 'check_app_test_no_duplicate_shortcut_fixtures.dart';
+import 'check_app_test_no_duplicate_shortcut_golden_game_service.dart';
 import 'check_game_widgets_file_size.dart';
-import 'check_economy_cost_check_shared_helper.dart';
-import 'check_economy_dedup_credit_aggregation.dart';
-import 'check_economy_dedup_port_tile_keys.dart';
-import 'check_economy_world_market_admission_shared.dart';
-import 'check_economy_bid_treasury_spend_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
 import 'check_orders_dedup_development_panel.dart';
@@ -79,10 +79,7 @@ import 'check_logic_work_target_switch.dart';
 import 'check_logic_test_file_size.dart';
 import 'check_logic_domain_import_dag.dart';
 import 'check_logic_source_file_size.dart';
-import 'check_world_no_logic_deps.dart';
 import 'check_logic_no_map_deps.dart';
-import 'check_world_no_circular_imports.dart';
-import 'check_world_no_duplicate_extension_helper.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dedup_logger.dart';
 import 'check_domain_package_logger_dedup.dart';
@@ -100,11 +97,15 @@ import 'check_screen_registry_active_paths.dart';
 import 'check_subscription_tracker.dart';
 import 'check_tech_id_constants.dart';
 import 'check_turn_no_part_directives.dart';
+import 'check_ai_no_part_directives.dart';
 import 'check_turn_resume_param_budget.dart';
 import 'check_work_target_constants.dart';
 import 'check_workspace_outdated_latest_direct.dart';
 import 'check_workspace_outdated_resolvable.dart';
+import 'ct_repo_lint_economy_dispatch.dart';
 import 'ct_repo_lint_map_dispatch.dart';
+import 'ct_repo_lint_process_io.dart';
+import 'ct_repo_lint_world_dispatch.dart';
 import 'ct_repo_lint_scan_contract.dart';
 
 /// One entry from [tool/ct_repo_lint_manifest.yaml].
@@ -707,7 +708,7 @@ int _runOneRule({
       environment: Platform.environment,
       runInShell: false,
     );
-    _forwardProcessOutput(
+    forwardRepoLintProcessOutput(
       result,
       relayStdoutToStderr: relayChildStdoutToStderr,
     );
@@ -746,7 +747,10 @@ int _runOneRule({
     environment: Platform.environment,
     runInShell: false,
   );
-  _forwardProcessOutput(result, relayStdoutToStderr: relayChildStdoutToStderr);
+  forwardRepoLintProcessOutput(
+    result,
+    relayStdoutToStderr: relayChildStdoutToStderr,
+  );
   if (result.exitCode != 0) {
     stderr.writeln(
       'ct_repo_lint: FAILED [${rule.ruleId}] exit ${result.exitCode} (see output above)',
@@ -792,6 +796,14 @@ int? _tryRunDartRuleInProcess({
     return logicResult;
   }
 
+  final int? economyResult = tryRunEconomyRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (economyResult != null) {
+    return economyResult;
+  }
+
   final int? mapResult = tryRunMapRuleInProcess(
     ruleId: rule.ruleId,
     repoRoot: repoRoot,
@@ -806,6 +818,14 @@ int? _tryRunDartRuleInProcess({
   );
   if (setupResult != null) {
     return setupResult;
+  }
+
+  final int? worldResult = tryRunWorldRuleInProcess(
+    ruleId: rule.ruleId,
+    repoRoot: repoRoot,
+  );
+  if (worldResult != null) {
+    return worldResult;
   }
 
   switch (rule.ruleId) {
@@ -853,16 +873,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckFunctionSize(repoRoot);
     case 'repo.debug_handler_one_per_file':
       return runCheckDebugHandlerOnePerFile(repoRoot);
-    case 'repo.game_widgets_file_size':
-      return runCheckGameWidgetsFileSize(repoRoot);
-    case 'repo.world_no_logic_deps':
-      return runCheckWorldNoLogicDeps(repoRoot);
     case 'repo.logic_no_map_deps':
       return runCheckLogicNoMapDeps(repoRoot);
-    case 'repo.world_no_circular_imports':
-      return runCheckWorldNoCircularImports(repoRoot);
-    case 'repo.world_no_duplicate_extension_helper':
-      return runCheckWorldNoDuplicateExtensionHelper(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,
@@ -872,6 +884,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckPartUnitSize(repoRoot);
     case 'repo.turn_no_part_directives':
       return runCheckTurnNoPartDirectives(repoRoot);
+    case 'repo.app_e2e_support_no_part_directives':
+      return runCheckAppE2eSupportNoPartDirectives(repoRoot);
     case 'repo.turn_resume_param_budget':
       return runCheckTurnResumeParamBudget(repoRoot);
     case 'repo.diplomacy_no_part_of':
@@ -973,6 +987,18 @@ int? _tryRunAppRuleInProcess({
       return runCheckAppWidgetbookFileNaming(repoRoot);
     case 'repo.app_debug_handler_guard_helpers':
       return runCheckAppDebugHandlerGuardHelpers(repoRoot);
+    case 'repo.game_widgets_file_size':
+      return runCheckGameWidgetsFileSize(repoRoot);
+    case 'repo.app_catalog_widgets_file_size':
+      return runCheckAppCatalogWidgetsFileSize(repoRoot);
+    case 'repo.app_core_services_file_size':
+      return runCheckAppCoreServicesFileSize(repoRoot);
+    case 'repo.app_turn_resolution_file_size':
+      return runCheckAppTurnResolutionFileSize(repoRoot);
+    case 'repo.app_test_no_duplicate_shortcut_fixtures':
+      return runCheckAppTestNoDuplicateShortcutFixtures(repoRoot);
+    case 'repo.app_test_no_duplicate_shortcut_golden_game_service':
+      return runCheckAppTestNoDuplicateShortcutGoldenGameService(repoRoot);
     default:
       return null;
   }
@@ -1014,16 +1040,6 @@ int? _tryRunLogicRuleInProcess({
       return runCheckLogicDeadFiles(repoRoot);
     case 'repo.logic_dedup_logger':
       return runCheckLogicDedupLogger(repoRoot);
-    case 'repo.economy_cost_check_shared_helper':
-      return runCheckEconomyCostCheckSharedHelper(repoRoot);
-    case 'repo.economy_world_market_admission_shared':
-      return runCheckEconomyWorldMarketAdmissionShared(repoRoot);
-    case 'repo.economy_dedup_port_tile_keys':
-      return runCheckEconomyDedupPortTileKeys(repoRoot);
-    case 'repo.economy_dedup_credit_aggregation':
-      return runCheckEconomyDedupCreditAggregation(repoRoot);
-    case 'repo.economy_bid_treasury_spend_shared':
-      return runCheckEconomyBidTreasurySpendShared(repoRoot);
     default:
       return null;
   }
@@ -1079,23 +1095,5 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupTestUseSharedFixtures(repoRoot);
     default:
       return null;
-  }
-}
-
-void _forwardProcessOutput(
-  ProcessResult result, {
-  required bool relayStdoutToStderr,
-}) {
-  final out = result.stdout.toString();
-  final err = result.stderr.toString();
-  if (out.isNotEmpty) {
-    if (relayStdoutToStderr) {
-      stderr.write(out);
-    } else {
-      stdout.write(out);
-    }
-  }
-  if (err.isNotEmpty) {
-    stderr.write(err);
   }
 }

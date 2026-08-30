@@ -12,29 +12,19 @@ void registerEconomyContinuedTests() {
         () {
           const ow = kRegionOldWorld;
           const tileKey = '$ow|p1|0|0';
-          final game = Game(
-            id: 'g1',
+          final game = turnTestOwGame(
             capitalTileGrainBonusPerTurn: 0,
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
+            provinces: [
+              Province(
+                id: '$ow|p1',
+                regionId: ow,
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
               ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(
-                    id: '$ow|p1',
-                    regionId: ow,
-                    ownerId: 'pl1',
-                    townDevelopmentLevel: 4,
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(),
-              tileState: TileMapState()
-                  .setImprovement(tileKey, 2)
-                  .setRoadLevel(tileKey, 1),
-            ),
+            ],
+            tileState: TileMapState()
+                .setImprovement(tileKey, 2)
+                .setRoadLevel(tileKey, 1),
             players: [
               Player(
                 id: 'pl1',
@@ -68,29 +58,15 @@ void registerEconomyContinuedTests() {
         () {
           const ow = kRegionOldWorld;
           const nw = kRegionNewWorld;
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-                ],
-              ),
-              newWorld: RegionData(
-                provinces: [
-                  Province(id: '$nw|n1', regionId: nw, ownerId: 'pl1'),
-                ],
-              ),
-              tileState: TileMapState()
-                  .setImprovement('$ow|p1|0|0', 1)
-                  .setRoadLevel('$ow|p1|0|0', 1)
-                  .setImprovement('$nw|n1|0|0', 1)
-                  .setRoadLevel('$nw|n1|0|0', 1),
-            ),
+          final game = turnTestOwNwCrossRegionGame(
+            ownerId: 'pl1',
+            owProvinceLocalId: 'p1',
+            nwProvinceLocalId: 'n1',
+            tileState: TileMapState()
+                .setImprovement('$ow|p1|0|0', 1)
+                .setRoadLevel('$ow|p1|0|0', 1)
+                .setImprovement('$nw|n1|0|0', 1)
+                .setRoadLevel('$nw|n1|0|0', 1),
             players: [
               Player(
                 id: 'pl1',
@@ -115,7 +91,10 @@ void registerEconomyContinuedTests() {
             orders: const Orders(),
             tileMapByRegion: {
               kRegionOldWorld: turnTestResourceTileMap('p1', Resource.grain),
-              kRegionNewWorld: turnTestResourceTileMap('n1', Resource.sugarCane),
+              kRegionNewWorld: turnTestResourceTileMap(
+                'n1',
+                Resource.sugarCane,
+              ),
             },
           );
           expect(next.worldState.turnState.turnNumber, 1);
@@ -127,13 +106,8 @@ void registerEconomyContinuedTests() {
       );
 
       test('production phase uses defaultAssignmentsByPlayerId per player', () {
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(provinces: [], units: []),
-            newWorld: RegionData(provinces: [], units: []),
-          ),
+        final game = turnTestOwGame(
+          provinces: const [],
           players: [
             Player(
               id: 'p1',
@@ -165,10 +139,16 @@ void registerEconomyContinuedTests() {
           orders: const Orders(),
           defaultAssignmentsByPlayerId: const {
             'p1': [
-              AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
+              AssignedRecipe(
+                recipeId: 'lumber_from_timber',
+                assignedLabour: 10,
+              ),
             ],
             'p2': [
-              AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 15),
+              AssignedRecipe(
+                recipeId: 'castIron_from_iron',
+                assignedLabour: 15,
+              ),
             ],
           },
         );

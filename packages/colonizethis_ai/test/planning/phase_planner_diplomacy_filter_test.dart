@@ -4,9 +4,11 @@
 import 'phase_planner_diplomacy_filter_colonial_pressure_cases.dart';
 import 'phase_planner_diplomacy_filter_partition_cases.dart';
 import 'phase_planner_diplomacy_filter_phase_suppression_cases.dart';
+import 'phase_planner_diplomacy_filter_phase_suppression_expand_colonial_cases.dart';
 
 void main() {
   registerPhasePlannerDiplomacyFilterColonialPressureCases();
   registerPhasePlannerDiplomacyFilterPhaseSuppressionCases();
+  registerPhasePlannerDiplomacyFilterExpandColonialSuppressionCases();
   registerPhasePlannerDiplomacyFilterPartitionCases();
 }

@@ -12,9 +12,7 @@ List<RunnableScenario> militaryStrengthPlayerFactionScenarios() => [
     scenarioId: 'ms-empty-army',
     label: 'returns 0 for empty army',
     run: () {
-      final game = militaryStrengthGame(
-        players: const [franceGreatPower],
-      );
+      final game = militaryStrengthGame(players: const [franceGreatPower]);
 
       final strength = aggregateMilitaryStrengthForPlayer(game, 'france');
       expect(strength, equals(0.0));
@@ -76,11 +74,7 @@ List<RunnableScenario> militaryStrengthPlayerFactionScenarios() => [
           ),
         ],
         tribes: const [
-          Tribe(
-            id: 'tribe1',
-            displayName: 'Tribe',
-            effectiveMilitaryLevel: 1,
-          ),
+          Tribe(id: 'tribe1', displayName: 'Tribe', effectiveMilitaryLevel: 1),
         ],
       );
 
@@ -93,9 +87,7 @@ List<RunnableScenario> militaryStrengthPlayerFactionScenarios() => [
     label: 'Great Power uses era 4 (does not downgrade era 3 units)',
     run: () {
       final game = militaryStrengthGame(
-        oldWorldUnits: [
-          testUnit(id: 'u1', type: 'grenadiers'),
-        ],
+        oldWorldUnits: [testUnit(id: 'u1', type: 'grenadiers')],
         players: const [franceGreatPower],
       );
 

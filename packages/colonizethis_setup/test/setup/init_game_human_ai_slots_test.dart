@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 
 import 'init_game_orchestrator_test_support.dart';
 

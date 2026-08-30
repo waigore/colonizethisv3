@@ -20,7 +20,9 @@ int? resolveMapVisibleFortLevel({
   }
   final regionId = ProvinceId.regionIdFrom(prefixedProvinceId);
   final tileKeys =
-      game.worldState.tileKeysByRegionAndProvince[regionId]?[prefixedProvinceId] ??
+      game
+          .worldState
+          .tileKeysByRegionAndProvince[regionId]?[prefixedProvinceId] ??
       const <String>[];
   if (provincePanelShowsFullTileDerivedIntel(
     game: game,
@@ -82,6 +84,7 @@ InitGameMapViewData applyMapFortVisibility({
       unitMarkers: region.unitMarkers,
       civilianTileMarkers: region.civilianTileMarkers,
       fleetTileMarkers: region.fleetTileMarkers,
+      armyTileMarkers: region.armyTileMarkers,
       provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
       provincePoliticalOwnerByPrefixedProvinceId:
           region.provincePoliticalOwnerByPrefixedProvinceId,

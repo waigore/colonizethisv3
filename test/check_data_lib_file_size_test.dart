@@ -20,12 +20,16 @@ void main() {
       reason:
           'Every colonizethis_data lib/src file must stay at or below '
           '${maxDataLibFilePhysicalLinesForTests()} physical lines '
-          '(generated *.gen.dart skipped; Refs #4292).\n'
+          '(generated *.gen.dart skipped; Refs #4412).\n'
           '${logs.join('\n')}',
     );
   });
 
-  test('grandfather allowlist is empty after #4292 wave-5 splits', () {
+  test('wave-7 lib ceiling is 250 physical lines', () {
+    expect(dataLibFileSizeCeiling, 250);
+  });
+
+  test('grandfather allowlist is empty after #4412 wave-6 splits', () {
     expect(dataFileSizeGrandfatheredForTests, isEmpty);
   });
 
@@ -36,7 +40,7 @@ void main() {
     Directory('${temp.path}/$_srcRel').createSync(recursive: true);
     File('${temp.path}/$_srcRel/huge.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(301, 'final x = 1;').join('\n'));
 
     final logs = <String>[];
     final code = runCheckDataLibFileSize(
@@ -48,7 +52,7 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge.dart'));
-    expect(logs.join('\n'), contains('physical lines > 400'));
+    expect(logs.join('\n'), contains('physical lines > 250'));
   });
 
   test('skips an over-cap generated *.gen.dart file', () {
@@ -58,7 +62,7 @@ void main() {
     Directory('${temp.path}/$_srcRel').createSync(recursive: true);
     File('${temp.path}/$_srcRel/tech_effect_summary_embed.gen.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(301, 'final x = 1;').join('\n'));
 
     final code = runCheckDataLibFileSize(
       temp.path,
@@ -75,7 +79,7 @@ void main() {
     const grandfatheredRel = '$_srcRel/legacy.dart';
     File('${temp.path}/$grandfatheredRel')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(301, 'final x = 1;').join('\n'));
 
     final code = runCheckDataLibFileSize(
       temp.path,

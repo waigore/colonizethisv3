@@ -82,6 +82,18 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        name: 'Declare War confirm — named formal ally',
+        builder: (context) => _declareWarConfirmNamedAllyStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Boycott confirm — two named colonies',
+        builder: (context) => boycottConfirmTwoColoniesStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Revoke Boycott confirm — two named colonies',
+        builder: (context) => revokeBoycottConfirmTwoColoniesStory(),
+      ),
     ],
   ),
   // SPEC/ui/diplomacy-panel.md § Relative power line — isolated stories for
@@ -92,22 +104,26 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Tiers (all five)',
-        builder: (context) => _relativePowerLineStory(
-          const <int>[-50, -20, 0, 20, 50],
-        ),
+        builder: (context) =>
+            _relativePowerLineStory(const <int>[-50, -20, 0, 20, 50]),
       ),
       WidgetbookUseCase(
         name: 'Boundaries (±10, ±11, ±30, ±31)',
-        builder: (context) => _relativePowerLineStory(
-          const <int>[10, 11, 30, 31, -10, -11, -30, -31],
-        ),
+        builder: (context) => _relativePowerLineStory(const <int>[
+          10,
+          11,
+          30,
+          31,
+          -10,
+          -11,
+          -30,
+          -31,
+        ]),
       ),
       WidgetbookUseCase(
         name: 'Narrow viewport wrap (320 dp)',
-        builder: (context) => _relativePowerLineStory(
-          const <int>[31, -31],
-          maxWidth: 320,
-        ),
+        builder: (context) =>
+            _relativePowerLineStory(const <int>[31, -31], maxWidth: 320),
       ),
     ],
   ),
@@ -119,9 +135,18 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Ladder (all 10 steps)',
-        builder: (context) => _relationMeterStory(
-          const <num>[5, 15, 25, 35, 45, 55, 65, 75, 85, 95],
-        ),
+        builder: (context) => _relationMeterStory(const <num>[
+          5,
+          15,
+          25,
+          35,
+          45,
+          55,
+          65,
+          75,
+          85,
+          95,
+        ]),
       ),
       WidgetbookUseCase(
         name: 'Band boundaries (0, 50, 90, 100)',
@@ -260,8 +285,48 @@ Widget _relativePowerLineStory(List<int> percents, {double? maxWidth}) {
   );
 }
 
-/// Stable human-player id used by the Diplomacy Panel empty-state
-/// Widgetbook story. SPEC/ui/diplomacy-panel.md § Widgetbook.
+Widget _declareWarConfirmNamedAllyStory() {
+  const humanId = 'gp1';
+  const spainId = 'gp2';
+  const franceId = 'gp3';
+  final game = Game(
+    id: 'wb-declare-war-confirm',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    players: const [
+      Player(id: humanId, displayName: 'Portugal', isHuman: true),
+      Player(id: spainId, displayName: 'Spain', isHuman: false),
+      Player(id: franceId, displayName: 'France', isHuman: false),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: spainId,
+        factionId2: franceId,
+        formalAlliance: true,
+      ),
+    ],
+  );
+  final message = buildDiplomacyConfirmPreviewMessage(
+    order: const DiplomaticOrder(
+      type: DiplomaticOrderType.declareWar,
+      targetFactionId: spainId,
+    ),
+    game: game,
+    humanPlayerId: humanId,
+    targetDisplayName: 'Spain',
+  );
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Center(
+      child: CtConfirmDialog(title: 'Declare War', message: message),
+    ),
+  );
+}
+
 const String _diplomacyPanelEmptyHumanPlayerId = 'gp1';
 
 /// Minimal `Game` for the Diplomacy Panel empty-state Widgetbook story:

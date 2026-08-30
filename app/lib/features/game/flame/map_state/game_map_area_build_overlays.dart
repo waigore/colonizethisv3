@@ -124,6 +124,7 @@ mixin GameMapAreaBuildOverlays
                   omniscientDetail: shell.omniscientDetail,
                   canMutateViaUi: shell.canMutateViaUi,
                   workTargetSelectionCache: workTargetSelectionCache,
+                  armyMovePickerCache: armyMovePickerCache,
                 ),
               ],
             ),

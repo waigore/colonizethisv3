@@ -8,7 +8,7 @@
 /// performed the same parse → coordinates → map → resource → commodity-id steps
 /// independently. The context/prelude **resolution** types now live in the
 /// sibling `tile_extraction_context.dart` (re-exported here); this module
-/// keeps the production prelude and effective-yield orchestration. Callers
+/// keeps production prelude resolve and effective-yield orchestration. Callers
 /// supply the documented per-path gates (prospecting, mineral exclusion,
 /// riches filter) and yield math via [computeEffectiveTileYield].
 library;
@@ -17,57 +17,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'tile_extraction_context.dart';
+import 'tile_extraction_pipeline_types.dart';
 import 'tile_extraction_yield.dart';
 
 export 'tile_extraction_context.dart';
-
-/// Effective per-tile extraction yield for one connected tile, shared by the
-/// Great-Power and non-Great-Power extraction paths.
-///
-/// [units] is the computed effective extracted quantity (always `> 0`;
-/// non-yielding tiles return `null` from [computeTileYieldContribution]).
-/// [regionId] / [isLandRelativeToCapital] classify the tile against the
-/// caller's capital region so callers decide whether to keep overseas
-/// contributions (Great Powers) or drop them (non-GP factions).
-class TileYieldContribution {
-  const TileYieldContribution({
-    required this.commodityId,
-    required this.units,
-    required this.regionId,
-    required this.isLandRelativeToCapital,
-  });
-
-  final CommodityId commodityId;
-  final int units;
-  final String regionId;
-
-  /// True when the tile's region matches the caller-supplied capital region.
-  final bool isLandRelativeToCapital;
-}
-
-/// Shared resolve → mineral gate → terrain-clamped tech cap → production
-/// prelude for improved extractable tiles (Refs #4014).
-///
-/// Used by [computeTileYieldContribution] (connected-only GP/non-GP path) and
-/// [computeTileExtractionDisplayContribution] (display dual-yield including
-/// disconnected `full > 0` / `effective == 0`).
-class ImprovedTileProductionPrelude {
-  const ImprovedTileProductionPrelude({
-    required this.tileContext,
-    required this.techCap,
-    required this.production,
-  });
-
-  final TileKeyExtractionContext tileContext;
-  final int techCap;
-
-  /// Terrain-/tech-capped production units (`full` for snapshot display).
-  final int production;
-
-  CommodityId get commodityId => tileContext.commodityId;
-  String get provinceId => tileContext.provinceId;
-  Province get province => tileContext.province;
-}
+export 'tile_extraction_pipeline_types.dart';
 
 /// Resolves tile context, applies [isCommodityExtractable], clamps tech for
 /// terrain, and computes production = min(improvement, techCap). Returns null
@@ -81,6 +35,7 @@ ImprovedTileProductionPrelude? resolveImprovedTileProductionPrelude({
   required bool Function(String tileKey, CommodityId commodityId)
   isCommodityExtractable,
   Map<String, Province>? provincesByFullId,
+  int? improvementLevelOverride,
 }) {
   final tileContext = resolveTileKeyExtractionContext(
     tileKey: tileKey,
@@ -98,9 +53,10 @@ ImprovedTileProductionPrelude? resolveImprovedTileProductionPrelude({
     return null;
   }
 
-  final improvementLevel = game.worldState.tileState
-      .improvementLevel(tileKey)
-      .clamp(0, 4);
+  final improvementLevel =
+      (improvementLevelOverride ??
+              game.worldState.tileState.improvementLevel(tileKey))
+          .clamp(0, 4);
   if (improvementLevel < 1) {
     return null;
   }
@@ -140,7 +96,7 @@ ImprovedTileProductionPrelude? resolveImprovedTileProductionPrelude({
 /// The two call sites diverge only by the three documented non-GP
 /// simplifications (`SPEC/game/extraction-and-improvements.md` § Non-Great-Power
 /// extraction), supplied here as knobs so the shared production / transport-cap
-/// / town-development math stays provably in lockstep (Refs #3517 Cluster 1):
+/// / town-development math stays in lockstep (Refs #3517 Cluster 1):
 ///
 ///   * [techCapForCommodity] resolves the per-resource tech cap (Great Powers
 ///     use the player / per-resource cap; non-GP factions use the package

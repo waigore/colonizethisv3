@@ -7,7 +7,12 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_app/core/utils/faction_display_name.dart';
+
 import 'diplomacy_panel_rows.dart';
+
+export 'package:colonizethis_app/core/utils/faction_display_name.dart'
+    show displayNameForFaction;
 
 int? outgoingSubsidyPercent(Game game, String payerId, String targetId) {
   for (final s in game.subsidyStates) {
@@ -78,18 +83,6 @@ DiplomacyRelation defaultFirstContactRelation(
   lastInteractionTurn: currentTurn,
 );
 
-String displayNameForFaction(Game game, String id) {
-  final p = game.playerById(id);
-  if (p != null) return p.displayName;
-  for (final m in game.minorNations) {
-    if (m.id == id) return m.displayName ?? id;
-  }
-  for (final t in game.tribes) {
-    if (t.id == id) return t.displayName ?? id;
-  }
-  return id;
-}
-
 DiplomacyRowData buildDiplomacyRowData({
   required Game game,
   required String humanPlayerId,
@@ -120,7 +113,11 @@ DiplomacyRowData buildDiplomacyRowData({
     playerPowerScore: playerPowerScore,
     pendingOrderTypes: pendingOrderTypes,
     pendingOvertureStage: pendingOvertureStage,
-    activeSubsidyPercent: outgoingSubsidyPercent(game, humanPlayerId, factionId),
+    activeSubsidyPercent: outgoingSubsidyPercent(
+      game,
+      humanPlayerId,
+      factionId,
+    ),
     pendingGrantAmount: pendingGrantAmount,
     pendingSubsidyPercent: pendingSubsidyPercent,
     standingChips: diplomaticStandingChips(

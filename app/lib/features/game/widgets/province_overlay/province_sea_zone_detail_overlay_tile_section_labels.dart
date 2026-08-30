@@ -1,10 +1,11 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
 library;
 
-import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
-    show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
-import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_gist_line.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -14,83 +15,22 @@ import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show VisibilityLevel;
+import 'province_sea_zone_detail_overlay_tile_section_tokens.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
-  return switch (roadLevel) {
-    0 => l10n.provinceOverlay_tileRoadLabelNone,
-    1 => l10n.provinceOverlay_tileRoadLabelPrimitiveRoad,
-    2 => l10n.provinceOverlay_tileRoadLabelImprovedRoad,
-    4 => l10n.provinceOverlay_tileRoadLabelPortOrRailroad,
-    _ => l10n.provinceOverlay_tileRoadLabelNonStandard,
-  };
-}
-
-String roadRailTransportLevelPrimaryLine(
-  AppLocalizations l10n,
-  int transportLevel,
-) {
-  return l10n.provinceOverlay_tileRoadTransportLevel(transportLevel);
-}
-
-@visibleForTesting
-List<String> roadRailTileDetailLinesForTests({
-  required AppLocalizations l10n,
-  required int? transportLevel,
-}) {
-  if (transportLevel == null) {
-    return [l10n.provinceOverlay_tileRoadNone];
-  }
-  final v = transportLevel;
-  final lines = <String>[
-    roadRailTransportLevelPrimaryLine(l10n, v),
-    roadRailSupplementaryLabel(l10n, v),
-  ];
-  if (v == 1) {
-    lines.add(l10n.provinceOverlay_tileRoadRailGloss);
-  }
-  return lines;
-}
-
-({int x, int y})? tryParseProvinceOverlayTileCoords({
-  required String regionId,
-  required int regionWidth,
-  required int regionHeight,
-  required String selectedTileKey,
-}) {
-  final firstPipe = selectedTileKey.indexOf('|');
-  if (firstPipe <= 0) return null;
-  final keyRegion = selectedTileKey.substring(0, firstPipe);
-  if (keyRegion != regionId) return null;
-  final lastPipe = selectedTileKey.lastIndexOf('|');
-  if (lastPipe <= firstPipe || lastPipe + 1 >= selectedTileKey.length) {
-    return null;
-  }
-  final secondLastPipe = selectedTileKey.lastIndexOf('|', lastPipe - 1);
-  if (secondLastPipe <= firstPipe) return null;
-  final x = int.tryParse(
-    selectedTileKey.substring(secondLastPipe + 1, lastPipe),
-  );
-  final y = int.tryParse(selectedTileKey.substring(lastPipe + 1));
-  if (x == null || y == null) {
-    return null;
-  }
-  if (x < 0 || x >= regionWidth || y < 0 || y >= regionHeight) {
-    return null;
-  }
-  return (x: x, y: y);
-}
-
-String tileDetailProspectedDisplayLabel(
-  AppLocalizations l10n, {
-  required bool terrainProspectable,
-  required bool playerHasProspected,
-}) {
-  if (!terrainProspectable) return '—';
-  return playerHasProspected
-      ? l10n.provinceOverlay_tileProspectedYes
-      : l10n.provinceOverlay_tileProspectedNo;
-}
+export 'province_sea_zone_detail_overlay_tile_section_label_text.dart';
+export 'province_sea_zone_detail_overlay_tile_section_connectivity.dart';
+export 'province_sea_zone_detail_overlay_tile_section_road_labels.dart';
+export 'province_sea_zone_detail_overlay_tile_section_tokens.dart';
+export 'province_sea_zone_detail_overlay_tile_details.dart'
+    show
+        kProvinceTileDetailsActionKey,
+        kProvinceTileDetailsClusterKey,
+        kProvinceTileDetailsPanelKey,
+        showDefaultStrandedCapitalLink,
+        showTileDetailsExtractionRow,
+        tileCapitalLinkLine,
+        tileConnectivityDetailLinesForTests;
 
 Widget buildTileResourceLabelRow({
   required BuildContext context,
@@ -102,9 +42,7 @@ Widget buildTileResourceLabelRow({
   required String provinceId,
   required String? resourceVisible,
   required String resourceLabel,
-  required bool showPurchaseLandActionIcon,
-  required bool purchaseLandActionEnabled,
-  required bool purchaseLandActionHasMerchantUnits,
+  required ProvinceInlineActionState purchaseLandAction,
   VoidCallback? onPurchaseLandTap,
 }) {
   final bodyStyle = overlayFgBodyStyle();
@@ -115,30 +53,42 @@ Widget buildTileResourceLabelRow({
     currentOrders: currentOrders,
     selectedTileKey: selectedTileKey,
     provinceId: provinceId,
-    enabled: purchaseLandActionEnabled,
-    hasMerchantUnits: purchaseLandActionHasMerchantUnits,
+    enabled: purchaseLandAction.enabled,
+    hasMatchingUnits: purchaseLandAction.hasMatchingUnits,
   );
-  return Row(
+  final payoff = purchaseLandPayoffCopyForTile(
+    l10n: l10n,
+    game: game,
+    tileKey: selectedTileKey,
+    enabled: purchaseLandAction.enabled,
+  );
+  final resourceRow = Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       Text(l10n.provinceOverlay_tileResourcePrefix, style: bodyStyle),
       if (resourceVisible != null)
-        ResourceLabelInline(
-          commodityId: resourceVisible,
-          labelStyle: bodyStyle,
-        )
+        ResourceLabelInline(commodityId: resourceVisible, labelStyle: bodyStyle)
       else
         Text(resourceLabel, style: bodyStyle),
-      if (showPurchaseLandActionIcon)
+      if (purchaseLandAction.showIcon)
         CtIconAction(
           tooltip: purchaseLandTooltip,
-          onPressed: purchaseLandActionEnabled ? onPurchaseLandTap : null,
+          onPressed: purchaseLandAction.enabled ? onPurchaseLandTap : null,
           icon: Icons.payments,
-          enabled: purchaseLandActionEnabled,
+          enabled: purchaseLandAction.enabled,
           disabledIconColor: EditorialMonoclePalette.muted.withValues(
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
         ),
+    ],
+  );
+  if (payoff == null) return resourceRow;
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      resourceRow,
+      PurchaseLandPayoffGistLine(text: payoff.gist),
     ],
   );
 }
@@ -161,125 +111,4 @@ Widget buildTileImprovementLabel({
     l10n.provinceOverlay_tileImprovement(improvementLine),
     style: overlayFgBodyStyle(),
   );
-}
-
-const double kProvinceOverlayTileInlineActionDisabledAlpha = 0.65;
-
-List<Widget> buildTileRoadLabelWidgets({
-  required BuildContext context,
-  required AppLocalizations l10n,
-  required Game game,
-  required String humanPlayerId,
-  required Orders currentOrders,
-  required String selectedTileKey,
-  required int? roadLevel,
-  required bool showBuildRoadActionIcon,
-  required bool buildRoadActionEnabled,
-  required bool buildRoadActionHasEngineerUnits,
-  VoidCallback? onBuildRoadTap,
-}) {
-  if (roadLevel == null) {
-    return [Text(l10n.provinceOverlay_tileRoadNone, style: overlayFgBodyStyle())];
-  }
-  final theme = Theme.of(context);
-  final roadCaptionStyle = (theme.textTheme.labelSmall ??
-          const TextStyle(fontSize: 11))
-      .copyWith(
-    height: 1.25,
-    color: EditorialMonoclePalette.muted,
-  );
-  final buildRoadTooltip = provinceOverlayBuildRoadTooltip(
-    l10n: l10n,
-    game: game,
-    humanPlayerId: humanPlayerId,
-    currentOrders: currentOrders,
-    selectedTileKey: selectedTileKey,
-    enabled: buildRoadActionEnabled,
-    hasEngineerUnits: buildRoadActionHasEngineerUnits,
-  );
-  final transportRow = Row(
-    children: [
-      Expanded(
-        child: Text(
-          roadRailTransportLevelPrimaryLine(l10n, roadLevel),
-          style: overlayFgBodyStyle(),
-        ),
-      ),
-      if (showBuildRoadActionIcon)
-        CtIconAction(
-          tooltip: buildRoadTooltip,
-          onPressed: buildRoadActionEnabled ? onBuildRoadTap : null,
-          icon: Icons.add_road,
-          enabled: buildRoadActionEnabled,
-          disabledIconColor: EditorialMonoclePalette.muted.withValues(
-            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
-          ),
-        ),
-    ],
-  );
-  return [
-    transportRow,
-    Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
-    if (roadLevel == 1)
-      Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
-  ];
-}
-
-String tileCapitalLinkLine(
-  AppLocalizations l10n,
-  ProvinceTileConnectivityDisplay display,
-) {
-  if (display.capitalConnected) {
-    final pathLevel = display.pathTransportLevel;
-    if (pathLevel != null) {
-      return l10n.provinceOverlay_tileCapitalLinkConnectedWithPath(pathLevel);
-    }
-    return l10n.provinceOverlay_tileCapitalLinkConnected;
-  }
-  return l10n.provinceOverlay_tileCapitalLinkNotConnected;
-}
-
-@visibleForTesting
-List<String> tileConnectivityDetailLinesForTests({
-  required AppLocalizations l10n,
-  required ProvinceTileConnectivityDisplay? tileConnectivity,
-}) {
-  if (tileConnectivity == null) {
-    return const [];
-  }
-  final lines = <String>[tileCapitalLinkLine(l10n, tileConnectivity)];
-  if (tileConnectivity.showExtractionRow) {
-    lines.add(
-      l10n.provinceOverlay_tileExtractionFromTile(
-        tileConnectivity.extractionEffective!,
-        tileConnectivity.extractionFull!,
-      ),
-    );
-  }
-  return lines;
-}
-
-List<Widget> buildTileConnectivityLabelWidgets({
-  required AppLocalizations l10n,
-  required ProvinceTileConnectivityDisplay? tileConnectivity,
-}) {
-  if (tileConnectivity == null) {
-    return const [];
-  }
-  final bodyStyle = overlayFgBodyStyle();
-  final widgets = <Widget>[
-    Text(tileCapitalLinkLine(l10n, tileConnectivity), style: bodyStyle),
-  ];
-  if (tileConnectivity.showExtractionRow) {
-    widgets.add(
-      Text(
-        l10n.provinceOverlay_tileExtractionFromTile(
-          tileConnectivity.extractionEffective!,
-          tileConnectivity.extractionFull!,
-        ),
-        style: bodyStyle,
-      ),
-    );
-  }
-  return widgets;
 }

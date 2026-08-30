@@ -112,7 +112,18 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
                   : null,
             );
           case TechnologyScreenTab.tree:
-            return TechnologyTreeBody(game: displayGame, player: displayPlayer);
+            return TechnologyTreeBody(
+              game: displayGame,
+              player: displayPlayer,
+              currentOrders: currentOrders,
+              onOrdersChanged: canEdit
+                  ? (next) {
+                      shellRef
+                          .read(currentOrdersProvider.notifier)
+                          .replaceAll(next);
+                    }
+                  : null,
+            );
         }
       },
     );

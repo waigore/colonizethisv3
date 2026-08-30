@@ -46,89 +46,12 @@
 //     across repeat calls.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/observer_goal_phase.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_ai/src/planning/expand_peace_frontier_helpers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _gp3 = 'gp3';
-const String _gp4 = 'gp4';
-
-const List<Player> _fourGpRoster = [
-  Player(id: _gp1, displayName: 'GP1', isHuman: false),
-  Player(id: _gp2, displayName: 'GP2', isHuman: false),
-  Player(id: _gp3, displayName: 'GP3', isHuman: false),
-  Player(id: _gp4, displayName: 'GP4', isHuman: false),
-];
-
-Game _gameForOwBlocker(List<Province> owProvinces) {
-  return Game(
-    id: 'g-2509-primary-blocker-tiebreak-ow',
-    worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 50,
-        phase: TurnPhase.orders,
-      ),
-      oldWorld: RegionData(provinces: owProvinces),
-      newWorld: const RegionData(),
-    ),
-    players: _fourGpRoster,
-  );
-}
-
-Game _gameForNwBlocker(List<Province> nwProvinces) {
-  return Game(
-    id: 'g-2509-primary-blocker-tiebreak-nw',
-    worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 110,
-        phase: TurnPhase.orders,
-      ),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(provinces: nwProvinces),
-    ),
-    players: _fourGpRoster,
-  );
-}
-
-AIWorldSnapshot _expandSnapshotForOw({
-  required List<String> invadableOw,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 8,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: invadableOw,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
-AIWorldSnapshot _colonialSnapshotForNw({
-  required List<String> invadableNw,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-      provincesToVictory: 21,
-    ),
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: invadableNw,
-    ),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
+import '../support/primary_gp_blocker_tiebreak_test_support.dart';
+import 'primary_gp_blocker_tiebreak_colonial_cases.dart';
 
 void main() {
   group('primaryInvadableOldWorldGpBlocker tiebreak', () {
@@ -136,13 +59,29 @@ void main() {
       // gp2 owns oldWorld|a*, gp3 owns oldWorld|b*. Sorted iteration visits
       // gp2's provinces before gp3's, so gp2 reaches count=2 before gp3 ever
       // updates the running max. Under strict `>` gp3 cannot displace gp2.
-      final game = _gameForOwBlocker(const [
-        Province(id: 'oldWorld|a1', regionId: 'oldWorld', ownerId: _gp2),
-        Province(id: 'oldWorld|a2', regionId: 'oldWorld', ownerId: _gp2),
-        Province(id: 'oldWorld|b1', regionId: 'oldWorld', ownerId: _gp3),
-        Province(id: 'oldWorld|b2', regionId: 'oldWorld', ownerId: _gp3),
+      final game = primaryGpBlockerTiebreakGameForOwBlocker(const [
+        Province(
+          id: 'oldWorld|a1',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp2,
+        ),
+        Province(
+          id: 'oldWorld|a2',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp2,
+        ),
+        Province(
+          id: 'oldWorld|b1',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp3,
+        ),
+        Province(
+          id: 'oldWorld|b2',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp3,
+        ),
       ]);
-      final snapshot = _expandSnapshotForOw(
+      final snapshot = primaryGpBlockerTiebreakExpandSnapshotForOw(
         invadableOw: const [
           'oldWorld|a1',
           'oldWorld|a2',
@@ -152,7 +91,7 @@ void main() {
       );
       expect(
         primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
-        _gp2,
+        kPrimaryGpBlockerTiebreakGp2,
         reason:
             'Equal-count plurality must resolve by first-iterated-province '
             'order over `invadableProvinceIdsSorted`. A refactor that '
@@ -166,13 +105,29 @@ void main() {
       // Symmetric inversion: gp3's provinces (oldWorld|a*) now sort before
       // gp2's (oldWorld|b*). The plurality winner flips to gp3 because the
       // first-iterated GP owner reaches count=2 first.
-      final game = _gameForOwBlocker(const [
-        Province(id: 'oldWorld|a1', regionId: 'oldWorld', ownerId: _gp3),
-        Province(id: 'oldWorld|a2', regionId: 'oldWorld', ownerId: _gp3),
-        Province(id: 'oldWorld|b1', regionId: 'oldWorld', ownerId: _gp2),
-        Province(id: 'oldWorld|b2', regionId: 'oldWorld', ownerId: _gp2),
+      final game = primaryGpBlockerTiebreakGameForOwBlocker(const [
+        Province(
+          id: 'oldWorld|a1',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp3,
+        ),
+        Province(
+          id: 'oldWorld|a2',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp3,
+        ),
+        Province(
+          id: 'oldWorld|b1',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp2,
+        ),
+        Province(
+          id: 'oldWorld|b2',
+          regionId: 'oldWorld',
+          ownerId: kPrimaryGpBlockerTiebreakGp2,
+        ),
       ]);
-      final snapshot = _expandSnapshotForOw(
+      final snapshot = primaryGpBlockerTiebreakExpandSnapshotForOw(
         invadableOw: const [
           'oldWorld|a1',
           'oldWorld|a2',
@@ -182,7 +137,7 @@ void main() {
       );
       expect(
         primaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot),
-        _gp3,
+        kPrimaryGpBlockerTiebreakGp3,
         reason:
             'Equal-count plurality must resolve by first-iterated-province '
             'order, not by ascending factionId. A refactor that picked the '
@@ -191,167 +146,73 @@ void main() {
       );
     });
 
-    test('3-way 2-2-2 tie: first GP in sorted order wins deterministically',
-        () {
-      // gp2, gp3, gp4 each own two invadable OW provinces; sorted iteration
-      // visits gp2's pair first. Determinism guard: identical inputs must
-      // produce an identical winner across repeat calls (must-have #7).
-      final game = _gameForOwBlocker(const [
-        Province(id: 'oldWorld|a1', regionId: 'oldWorld', ownerId: _gp2),
-        Province(id: 'oldWorld|a2', regionId: 'oldWorld', ownerId: _gp2),
-        Province(id: 'oldWorld|b1', regionId: 'oldWorld', ownerId: _gp3),
-        Province(id: 'oldWorld|b2', regionId: 'oldWorld', ownerId: _gp3),
-        Province(id: 'oldWorld|c1', regionId: 'oldWorld', ownerId: _gp4),
-        Province(id: 'oldWorld|c2', regionId: 'oldWorld', ownerId: _gp4),
-      ]);
-      final snapshot = _expandSnapshotForOw(
-        invadableOw: const [
-          'oldWorld|a1',
-          'oldWorld|a2',
-          'oldWorld|b1',
-          'oldWorld|b2',
-          'oldWorld|c1',
-          'oldWorld|c2',
-        ],
-      );
-      final first = primaryInvadableOldWorldGpBlocker(
-        game: game,
-        snapshot: snapshot,
-      );
-      final second = primaryInvadableOldWorldGpBlocker(
-        game: game,
-        snapshot: snapshot,
-      );
-      expect(first, _gp2);
-      expect(
-        second,
-        _gp2,
-        reason:
-            'Determinism guard: identical fixture must produce the same '
-            'plurality winner on repeat calls.',
-      );
-    });
+    test(
+      '3-way 2-2-2 tie: first GP in sorted order wins deterministically',
+      () {
+        // gp2, gp3, gp4 each own two invadable OW provinces; sorted iteration
+        // visits gp2's pair first. Determinism guard: identical inputs must
+        // produce an identical winner across repeat calls (must-have #7).
+        final game = primaryGpBlockerTiebreakGameForOwBlocker(const [
+          Province(
+            id: 'oldWorld|a1',
+            regionId: 'oldWorld',
+            ownerId: kPrimaryGpBlockerTiebreakGp2,
+          ),
+          Province(
+            id: 'oldWorld|a2',
+            regionId: 'oldWorld',
+            ownerId: kPrimaryGpBlockerTiebreakGp2,
+          ),
+          Province(
+            id: 'oldWorld|b1',
+            regionId: 'oldWorld',
+            ownerId: kPrimaryGpBlockerTiebreakGp3,
+          ),
+          Province(
+            id: 'oldWorld|b2',
+            regionId: 'oldWorld',
+            ownerId: kPrimaryGpBlockerTiebreakGp3,
+          ),
+          Province(
+            id: 'oldWorld|c1',
+            regionId: 'oldWorld',
+            ownerId: kPrimaryGpBlockerTiebreakGp4,
+          ),
+          Province(
+            id: 'oldWorld|c2',
+            regionId: 'oldWorld',
+            ownerId: kPrimaryGpBlockerTiebreakGp4,
+          ),
+        ]);
+        final snapshot = primaryGpBlockerTiebreakExpandSnapshotForOw(
+          invadableOw: const [
+            'oldWorld|a1',
+            'oldWorld|a2',
+            'oldWorld|b1',
+            'oldWorld|b2',
+            'oldWorld|c1',
+            'oldWorld|c2',
+          ],
+        );
+        final first = primaryInvadableOldWorldGpBlocker(
+          game: game,
+          snapshot: snapshot,
+        );
+        final second = primaryInvadableOldWorldGpBlocker(
+          game: game,
+          snapshot: snapshot,
+        );
+        expect(first, kPrimaryGpBlockerTiebreakGp2);
+        expect(
+          second,
+          kPrimaryGpBlockerTiebreakGp2,
+          reason:
+              'Determinism guard: identical fixture must produce the same '
+              'plurality winner on repeat calls.',
+        );
+      },
+    );
   });
 
-  group('primaryColonialGpBlocker tiebreak', () {
-    test('2-vs-2 split: gp2 wins when its sorted provinces appear first', () {
-      // Mirror of the OW tiebreak case for the NW colonial blocker. gp2 owns
-      // the first two invadable NW provinces in sorted order; gp3 owns the
-      // remaining two. The COLONIAL blocker-preservation set keeps the war
-      // with gp2 intact and peaces gp3 (when both are at war).
-      final game = _gameForNwBlocker(const [
-        Province(id: 'newWorld|a1', regionId: 'newWorld', ownerId: _gp2),
-        Province(id: 'newWorld|a2', regionId: 'newWorld', ownerId: _gp2),
-        Province(id: 'newWorld|b1', regionId: 'newWorld', ownerId: _gp3),
-        Province(id: 'newWorld|b2', regionId: 'newWorld', ownerId: _gp3),
-      ]);
-      final snapshot = _colonialSnapshotForNw(
-        invadableNw: const [
-          'newWorld|a1',
-          'newWorld|a2',
-          'newWorld|b1',
-          'newWorld|b2',
-        ],
-      );
-      expect(
-        primaryColonialGpBlocker(game: game, snapshot: snapshot),
-        _gp2,
-        reason:
-            'Equal-count plurality must resolve by first-iterated-province '
-            'order over `invadableNewWorldProvinceIdsSorted`. A refactor '
-            'switching strict `>` to `>=` would flip this to gp3 and '
-            'silently shift COLONIAL peace-preservation onto the wrong GP.',
-      );
-    });
-
-    test('2-vs-2 split: gp3 wins when its sorted provinces appear first', () {
-      // Symmetric inversion to confirm the tiebreak is genuinely
-      // first-iterated-province driven, not a factionId-ascending bias.
-      final game = _gameForNwBlocker(const [
-        Province(id: 'newWorld|a1', regionId: 'newWorld', ownerId: _gp3),
-        Province(id: 'newWorld|a2', regionId: 'newWorld', ownerId: _gp3),
-        Province(id: 'newWorld|b1', regionId: 'newWorld', ownerId: _gp2),
-        Province(id: 'newWorld|b2', regionId: 'newWorld', ownerId: _gp2),
-      ]);
-      final snapshot = _colonialSnapshotForNw(
-        invadableNw: const [
-          'newWorld|a1',
-          'newWorld|a2',
-          'newWorld|b1',
-          'newWorld|b2',
-        ],
-      );
-      expect(
-        primaryColonialGpBlocker(game: game, snapshot: snapshot),
-        _gp3,
-      );
-    });
-
-    test('3-way 2-2-2 tie: first GP in sorted order wins deterministically',
-        () {
-      final game = _gameForNwBlocker(const [
-        Province(id: 'newWorld|a1', regionId: 'newWorld', ownerId: _gp2),
-        Province(id: 'newWorld|a2', regionId: 'newWorld', ownerId: _gp2),
-        Province(id: 'newWorld|b1', regionId: 'newWorld', ownerId: _gp3),
-        Province(id: 'newWorld|b2', regionId: 'newWorld', ownerId: _gp3),
-        Province(id: 'newWorld|c1', regionId: 'newWorld', ownerId: _gp4),
-        Province(id: 'newWorld|c2', regionId: 'newWorld', ownerId: _gp4),
-      ]);
-      final snapshot = _colonialSnapshotForNw(
-        invadableNw: const [
-          'newWorld|a1',
-          'newWorld|a2',
-          'newWorld|b1',
-          'newWorld|b2',
-          'newWorld|c1',
-          'newWorld|c2',
-        ],
-      );
-      final first = primaryColonialGpBlocker(game: game, snapshot: snapshot);
-      final second = primaryColonialGpBlocker(game: game, snapshot: snapshot);
-      expect(first, _gp2);
-      expect(second, _gp2, reason: 'Determinism guard (must-have #7).');
-    });
-
-    test('large-N many-province scenario: plurality winner is stable', () {
-      // 30-invadable-NW fixture stresses the linearized scan path (the
-      // previous quadratic implementation traversed 30 * 30 = 900 inner
-      // iterations; the refactored version visits each province twice).
-      // The plurality GP must remain gp3 with 15 owned invadable NW
-      // provinces against gp2's 10 and gp4's 5.
-      final provinces = <Province>[
-        for (var i = 0; i < 10; i++)
-          Province(
-            id: 'newWorld|gp2_$i',
-            regionId: 'newWorld',
-            ownerId: _gp2,
-          ),
-        for (var i = 0; i < 15; i++)
-          Province(
-            id: 'newWorld|gp3_$i',
-            regionId: 'newWorld',
-            ownerId: _gp3,
-          ),
-        for (var i = 0; i < 5; i++)
-          Province(
-            id: 'newWorld|gp4_$i',
-            regionId: 'newWorld',
-            ownerId: _gp4,
-          ),
-      ];
-      final game = _gameForNwBlocker(provinces);
-      final invadable = [for (final p in provinces) p.id]..sort();
-      final snapshot = _colonialSnapshotForNw(invadableNw: invadable);
-      expect(
-        primaryColonialGpBlocker(game: game, snapshot: snapshot),
-        _gp3,
-        reason:
-            'Strict plurality (15 > 10 > 5) must continue to resolve to gp3 '
-            'after the quadratic-to-linear refactor. A regression that '
-            'tallied counts incorrectly (e.g. counting tribe-owned or '
-            'unowned provinces, or skipping the strict `>` update) would '
-            'shift the winner.',
-      );
-    });
-  });
+  registerPrimaryColonialGpBlockerTiebreakCases();
 }

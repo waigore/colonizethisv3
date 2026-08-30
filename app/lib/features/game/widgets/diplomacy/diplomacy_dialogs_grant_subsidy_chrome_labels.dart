@@ -53,9 +53,7 @@ class GrantSubsidyThinDivider extends StatelessWidget {
     return Container(
       key: const Key('grantOrSubsidyDialogThinDivider'),
       height: 1,
-      decoration: BoxDecoration(
-        color: EditorialMonoclePalette.border,
-      ),
+      decoration: BoxDecoration(color: EditorialMonoclePalette.border),
     );
   }
 }
@@ -107,6 +105,29 @@ class GrantSubsidyBelowMinimumWarning extends StatelessWidget {
       text,
       key: const Key('grantOrSubsidyDialogWarning'),
       style: style,
+    );
+  }
+}
+
+/// Live Cost / Effect lines from [buildDiplomacyConfirmPreviewLines] (Refs #4415).
+class GrantSubsidyConfirmPreview extends StatelessWidget {
+  const GrantSubsidyConfirmPreview({super.key, required this.lines});
+
+  final List<String> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final base = theme.textTheme.bodySmall ?? const TextStyle();
+    final style = base.copyWith(color: EditorialMonoclePalette.muted);
+    return RepaintBoundary(
+      key: const Key('grantOrSubsidyDialogPreview'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final line in lines) Text(line, style: style, softWrap: true),
+        ],
+      ),
     );
   }
 }

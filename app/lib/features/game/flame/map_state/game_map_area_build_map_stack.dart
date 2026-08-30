@@ -1,15 +1,13 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-import 'package:colonizethis_map/colonizethis_map.dart'
-    show RegionMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../widgets/shell/shell_player_context.dart';
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../screens/game/game_screen_shared.dart';
 import '../map_area/map_area.dart'
@@ -24,6 +22,8 @@ import 'game_map_area_selection.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_build_map_stack_chrome.dart';
 import 'game_map_area_relocate_selection.dart';
+import 'game_map_area_last_turn_playback.dart';
+import 'last_turn_playback_chrome.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 
@@ -38,7 +38,8 @@ mixin GameMapAreaBuildMapStack
         GameMapAreaSelection,
         GameMapAreaRelocateSelection,
         GameMapAreaE2e,
-        GameMapAreaBuildMapStackChrome {
+        GameMapAreaBuildMapStackChrome,
+        GameMapAreaLastTurnPlayback {
   Widget buildMapFocusedStack({
     required BuildContext context,
     required bool isNarrow,
@@ -55,18 +56,25 @@ mixin GameMapAreaBuildMapStack
           isNarrow: isNarrow,
           game: widget.game,
           region: projectedRegion,
-          baseLayerDisplayMode: baseLayerDisplayMode,
+          mapBaseLayerFlags: mapViewState.mapBaseLayerFlags,
           showProvinceOverlay: mapViewState.showProvinceOverlay,
           showProvinceOwnershipTint: mapViewState.showProvinceOwnershipTint,
           showProvinceNamesLayer: mapViewState.showProvinceNamesLayer,
+          showCapitalLinkDisconnectedHighlight:
+              mapViewState.showCapitalLinkDisconnectedHighlight,
           humanPlayerId: mapPlayerId,
           playerView: mapPlayerView,
           visibilityMode: shell.mapVisibilityMode,
           omniscientDetail: shell.omniscientDetail,
           canMutateViaUi: shell.canMutateViaUi,
           workTargetSelectionCache: workTargetSelectionCache,
+          armyMovePickerCache: armyMovePickerCache,
           centerOnTileKey: centerOnTileKey,
           validTileKeysForSelection: validTileKeysForSelection,
+          lastTurnPulseTileKey: lastTurnPulseTileKey,
+          onLastTurnPlaybackMapTap: isLastTurnPlaybackRunning
+              ? skipLastTurnPlayback
+              : null,
           selectedCivilianTileKey: selectedCivilianTileKey,
           onTileSelectedForWork: workTargetSelection != null
               ? onTileSelectedForWork
@@ -98,6 +106,13 @@ mixin GameMapAreaBuildMapStack
           onRegionViewportSnapshot: onRegionViewportSnapshot,
           zoomMultiplier: mapViewState.zoomMultiplier,
         ),
+        if (isLastTurnPlaybackRunning && lastTurnPlaybackCaption != null)
+          lastTurnPlaybackChromeOverlay(
+            isNarrow: isNarrow,
+            caption: lastTurnPlaybackCaption!,
+            skipLabel: appL10n(context).map_lastTurnPlayback_skip,
+            onSkip: skipLastTurnPlayback,
+          ),
         if (!sideMenuOpen)
           Positioned(
             left: 0,
@@ -128,23 +143,62 @@ mixin GameMapAreaBuildMapStack
         Positioned(
           left: kMapOverlayEdgeInset,
           bottom: kMapOverlayEdgeInset,
-          child: GameMapCornerControls(
-            narrow: isNarrow,
-            onCycleBaseLayerDisplayMode: cycleBaseLayerDisplayMode,
-            onCenterOnHomeCapital: centerOnCurrentPlayerCapital,
-            homeToCapitalEnabled: shell.viewingPlayerId != null,
-            onOpenMapDisplayOptions: () {
-              showDialog<void>(
-                context: context,
-                barrierColor: EditorialMonoclePalette.dialogScrim,
-                builder: (context) {
-                  return GameMapOptionsDialog(
-                    initialState: mapViewState,
-                    onChanged: setMapViewState,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (shouldShowImprovementHeadroomLegend(
+                flags: mapViewState.mapBaseLayerFlags,
+                viewingPlayerId: shell.viewingPlayerId,
+              )) ...[
+                ImprovementHeadroomLegend(
+                  key: improvementHeadroomLegendAnchorKey,
+                  narrow: isNarrow,
+                  anchorKey: improvementHeadroomLegendAnchorKey,
+                  chromeBottomY:
+                      (context.findRenderObject() as RenderBox?)
+                          ?.localToGlobal(Offset.zero)
+                          .dy ??
+                      0,
+                ),
+                SizedBox(height: isNarrow ? 2 : 4),
+              ],
+              if (shouldShowExtractionDiscLegend(
+                flags: mapViewState.mapBaseLayerFlags,
+                viewingPlayerId: shell.viewingPlayerId,
+              )) ...[
+                ExtractionDiscLegend(
+                  key: extractionDiscLegendAnchorKey,
+                  narrow: isNarrow,
+                  anchorKey: extractionDiscLegendAnchorKey,
+                  chromeBottomY:
+                      (context.findRenderObject() as RenderBox?)
+                          ?.localToGlobal(Offset.zero)
+                          .dy ??
+                      0,
+                ),
+                SizedBox(height: isNarrow ? 2 : 4),
+              ],
+              GameMapCornerControls(
+                narrow: isNarrow,
+                mapBaseLayerFlags: mapViewState.mapBaseLayerFlags,
+                onCycleBaseLayerDisplayMode: cycleBaseLayerDisplayMode,
+                onCenterOnHomeCapital: centerOnCurrentPlayerCapital,
+                homeToCapitalEnabled: shell.viewingPlayerId != null,
+                onOpenMapDisplayOptions: () {
+                  showDialog<void>(
+                    context: context,
+                    barrierColor: EditorialMonoclePalette.dialogScrim,
+                    builder: (context) {
+                      return GameMapOptionsDialog(
+                        initialState: mapViewState,
+                        onChanged: setMapViewState,
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ],
           ),
         ),
         if (kCtE2EEnabled) ...buildE2eOverlayTaps(projectedRegion),

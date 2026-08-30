@@ -12,6 +12,14 @@ export 'src/turn/economy_tech_effects.dart';
 export 'src/turn/pending_treasury_costs.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/research_rules.dart';
+// Spy-insight RP helpers are surfaced so GAME40001 Slots preview matches the
+// research-phase resolver (Refs #4457).
+export 'src/turn/spy_research_boost.dart'
+    show
+        applySpyResearchBoostToPoints,
+        spyResearchBoostGpCountForTech,
+        spyResearchBoostRivalIdsForTech;
 export 'src/turn/turn_news_digest.dart';
+export 'src/turn/last_turn_intelligence_digest.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';

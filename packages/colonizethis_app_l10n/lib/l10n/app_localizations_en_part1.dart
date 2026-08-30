@@ -1,8 +1,6 @@
 part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings1 on AppLocalizations {
-
-
   @override
   String get app_title => 'Colonize This';
 
@@ -24,6 +22,13 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   @override
   String get mainMenu_subtitleAfterVictory =>
       'Congratulations, you won your last game.';
+
+  @override
+  String get mainMenu_quickStart => 'Quick Start';
+
+  @override
+  String get mainMenu_quickStartHelper =>
+      'Play as England, turn 0, random map, five AI courts.';
 
   @override
   String get mainMenu_newGame => 'New Game';
@@ -173,6 +178,90 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       "Don't show this warning again";
 
   @override
+  String get game_nextTurnConfirm_stagedSection => 'Staged this turn';
+
+  @override
+  String get game_nextTurnConfirm_reviewDecrees => 'Review decrees';
+
+  @override
+  String get game_nextTurnConfirm_hideDecrees => 'Hide decrees';
+
+  @override
+  String get game_nextTurnConfirm_familySeparator => ' · ';
+
+  @override
+  String game_nextTurnConfirm_familyCount(String family, int count) {
+    return '$family ($count)';
+  }
+
+  @override
+  String get game_nextTurnConfirm_familyCivilianWork => 'Civilian work';
+
+  @override
+  String get game_nextTurnConfirm_familySpyRelocate => 'Spy relocate';
+
+  @override
+  String get game_nextTurnConfirm_familyArmyMoves => 'Army moves';
+
+  @override
+  String get game_nextTurnConfirm_familyFleet => 'Fleet moves and missions';
+
+  @override
+  String get game_nextTurnConfirm_familyTraining => 'Training';
+
+  @override
+  String get game_nextTurnConfirm_familyLabour => 'Labour recruit';
+
+  @override
+  String get game_nextTurnConfirm_familyDiplomacy => 'Diplomacy';
+
+  @override
+  String get game_nextTurnConfirm_familyTrade => 'Trade';
+
+  @override
+  String get game_nextTurnConfirm_familyResearch => 'Research';
+
+  @override
+  String game_nextTurnConfirm_rowWork(String unitType, String work) {
+    return '$unitType: $work';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowRelocate(String unitType, String place) {
+    return '$unitType → $place';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowArmyMove(String army, String place) {
+    return '$army → $place';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowFleetMove(String fleet, String place) {
+    return '$fleet → $place';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowFleetMission(String fleet, String mission) {
+    return '$fleet: $mission';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowTrain(String name) {
+    return 'Train $name';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowDiplomacy(String action, String faction) {
+    return '$action — $faction';
+  }
+
+  @override
+  String game_nextTurnConfirm_rowResearch(String tech, String funding) {
+    return '$tech ($funding)';
+  }
+
+  @override
   String get game_turnResolutionProcessingTitle => 'Processing Turn';
 
   @override
@@ -215,7 +304,8 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get map_displayOptions_title => 'Map display options';
 
   @override
-  String get map_displayOptions_showProvinceOverlay => 'Show province overlay';
+  String get map_displayOptions_showProvinceOverlay =>
+      'Show province and sea borders';
 
   @override
   String get map_displayOptions_showProvinceOwnership =>
@@ -223,6 +313,22 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get map_displayOptions_showProvinceNames => 'Show province names';
+
+  @override
+  String get map_displayOptions_showCapitalLinkDisconnected =>
+      'Highlight land not bound to the capital';
+
+  @override
+  String get map_displayOptions_mapMarksHeading => 'Map marks';
+
+  @override
+  String get map_displayOptions_showMapResources => 'Show resources';
+
+  @override
+  String get map_displayOptions_showMapImprovements => 'Show improvements';
+
+  @override
+  String get map_displayOptions_showMapRoads => 'Show roads and rails';
 
   @override
   String get common_close => 'Close';
@@ -296,6 +402,9 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get map_relocate_leaveIntel_cancel => 'Stay';
 
   @override
+  String get map_lastTurnPlayback_skip => 'Skip';
+
+  @override
   String get common_start => 'Start';
 
   @override
@@ -321,12 +430,11 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get shell_leaderDialog_seedHelper => 'Enter 0 for a random seed';
 
   @override
-  String get shell_leaderDialog_infiniteModeLabel =>
-      'Infinite mode (no victory condition)';
+  String get shell_leaderDialog_infiniteModeLabel => 'Infinite mode';
 
   @override
   String get shell_leaderDialog_infiniteModeHelper =>
-      'The game will continue indefinitely';
+      'Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.';
 
   @override
   String get shell_leaderDialog_advancedStartLabel => 'Advanced start';
@@ -419,6 +527,34 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get game_callToArms_submit => 'Submit';
+
+  @override
+  String game_callToArms_formalAllianceReason(String defender) {
+    return 'Formal alliance with $defender';
+  }
+
+  @override
+  String game_callToArms_effectJoin(String aggressor, String defender) {
+    return 'Effect: Enter war with $aggressor this turn. The treaty with $defender stays.';
+  }
+
+  @override
+  String game_callToArms_effectRefuse(String defender) {
+    return 'Effect: The treaty with $defender ends. Relations with $defender worsen (−50). Standing with other Great Powers worsens (−10).';
+  }
+
+  @override
+  String get game_ftp_title => 'Favored Trading Partner';
+
+  @override
+  String get game_ftp_intro =>
+      'A rival court offers Favored Trading Partner. Accept or reject each offer. This prefers fills at the same rank; it does not change prices and does not beat First right of refusal.';
+
+  @override
+  String get game_ftp_accept => 'Accept';
+
+  @override
+  String get game_ftp_reject => 'Reject';
 
   @override
   String game_intervention_loadError(String error) {
@@ -543,6 +679,128 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get turnNews_stage_joinEmpire => 'join empire';
 
   @override
+  String turnNews_spiesFooter(int count) {
+    return 'Your spies report $count items — open Intelligence';
+  }
+
+  @override
+  String turnNews_courtBlock(String clauses) {
+    return 'Your court: $clauses';
+  }
+
+  @override
+  String turnNews_courtMore(int count) {
+    return '$count more';
+  }
+
+  @override
+  String get turnNews_openEvents => 'open Events';
+
+  @override
+  String turnNews_courtResearchFinished(String tech) {
+    return '$tech finished';
+  }
+
+  @override
+  String turnNews_courtResearchFinishedMany(int count) {
+    return '$count technologies finished';
+  }
+
+  @override
+  String get turnNews_courtResearchFinishedUnknown => 'a technology finished';
+
+  @override
+  String get turnNews_courtDecreeRefused => 'a decree was refused';
+
+  @override
+  String turnNews_courtDecreesRefused(int count) {
+    return '$count decrees were refused';
+  }
+
+  @override
+  String get turnNews_courtBattleFought => 'a battle was fought';
+
+  @override
+  String turnNews_courtBattlesFought(int count) {
+    return '$count battles were fought';
+  }
+
+  @override
+  String get turnNews_courtMarket => 'market and realm accounts';
+
+  @override
+  String get turnNews_courtWorkFinished => 'work finished';
+
+  @override
+  String turnNews_courtWorksFinished(int count) {
+    return '$count works finished';
+  }
+
+  @override
+  String get diplomacy_intelligence => 'Intelligence';
+
+  @override
+  String get intelligence_worldHeading => 'World briefing';
+
+  @override
+  String get intelligence_spyHeading => 'Spy reports';
+
+  @override
+  String get intelligence_worldEmpty => 'No major world events last turn.';
+
+  @override
+  String get intelligence_spyEmpty =>
+      'No spy reports. Station a Spy in a foreign province to hear that court\'s news.';
+
+  @override
+  String intelligence_spyPrefix(String court, String fact) {
+    return 'Our spy in $court reports: $fact';
+  }
+
+  @override
+  String intelligence_allianceFormed(String a, String b) {
+    return '$a and $b formed a formal alliance.';
+  }
+
+  @override
+  String intelligence_allianceBroken(String a, String b) {
+    return '$a and $b broke their formal alliance.';
+  }
+
+  @override
+  String intelligence_spyCaptureMade(
+    String court,
+    String province,
+    String other,
+  ) {
+    return '$court captured $province from $other.';
+  }
+
+  @override
+  String intelligence_spyCaptureLost(
+    String court,
+    String province,
+    String other,
+  ) {
+    return '$court lost $province to $other.';
+  }
+
+  @override
+  String intelligence_spyResearch(String court, String tech) {
+    return '$court finished researching $tech.';
+  }
+
+  @override
+  String intelligence_spyCombat(String court, String province) {
+    return '$court fought in $province.';
+  }
+
+  @override
+  String intelligence_spyNaval(String court, String zone) {
+    return '$court fought at sea in $zone.';
+  }
+
+  @override
   String get province_unitStatus_idle => 'idle';
 
   @override
@@ -658,5 +916,4 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get province_regiment_musketeers => 'Musketeers';
-
 }

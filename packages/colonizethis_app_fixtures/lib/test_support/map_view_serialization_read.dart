@@ -21,6 +21,7 @@ CellViewData _cellFromJson(Map<String, dynamic> json) {
     ownerFactionId: json['ownerFactionId'] as String?,
     provinceDisplayName: json['provinceDisplayName'] as String?,
     improvementLevel: json['improvementLevel'] as int?,
+    improvementTechCap: json['improvementTechCap'] as int?,
     roadLevel: json['roadLevel'] as int?,
     resourceExtractionUnits: json['resourceExtractionUnits'] as int?,
     resourceExtractionEffectiveUnits:
@@ -47,22 +48,22 @@ UnitMarkerView _unitMarkerFromJson(Map<String, dynamic> json) => UnitMarkerView(
   ownerFactionId: json['ownerFactionId'] as String,
 );
 
-CivilianTileMarkerView _civilianMarkerFromJson(Map<String, dynamic> json) =>
-    CivilianTileMarkerView(
-      tileKey: json['tileKey'] as String,
-      x: json['x'] as int,
-      y: json['y'] as int,
-      localProvinceId: json['localProvinceId'] as String,
-      unitIds: (json['unitIds'] as List<dynamic>).cast<String>(),
-      unitTypes: (json['unitTypes'] as Map<String, dynamic>).map(
-        (k, v) => MapEntry(k, v as String),
-      ),
-      representativeUnitType: json['representativeUnitType'] as String,
-      stackCount: json['stackCount'] as int,
-      representativeIsAssigned:
-          json['representativeIsAssigned'] as bool? ?? false,
-      applyCivilianRevealHalo: json['applyCivilianRevealHalo'] as bool? ?? false,
-    );
+CivilianTileMarkerView _civilianMarkerFromJson(
+  Map<String, dynamic> json,
+) => CivilianTileMarkerView(
+  tileKey: json['tileKey'] as String,
+  x: json['x'] as int,
+  y: json['y'] as int,
+  localProvinceId: json['localProvinceId'] as String,
+  unitIds: (json['unitIds'] as List<dynamic>).cast<String>(),
+  unitTypes: (json['unitTypes'] as Map<String, dynamic>).map(
+    (k, v) => MapEntry(k, v as String),
+  ),
+  representativeUnitType: json['representativeUnitType'] as String,
+  stackCount: json['stackCount'] as int,
+  representativeIsAssigned: json['representativeIsAssigned'] as bool? ?? false,
+  applyCivilianRevealHalo: json['applyCivilianRevealHalo'] as bool? ?? false,
+);
 
 FleetTileMarkerView _fleetMarkerFromJson(Map<String, dynamic> json) =>
     FleetTileMarkerView(
@@ -74,6 +75,19 @@ FleetTileMarkerView _fleetMarkerFromJson(Map<String, dynamic> json) =>
       stackCount: json['stackCount'] as int,
       renderGrayscale: json['renderGrayscale'] as bool? ?? false,
       applyFleetRevealHalo: json['applyFleetRevealHalo'] as bool? ?? false,
+    );
+
+ArmyTileMarkerView _armyMarkerFromJson(Map<String, dynamic> json) =>
+    ArmyTileMarkerView(
+      tileKey: json['tileKey'] as String,
+      x: json['x'] as int,
+      y: json['y'] as int,
+      provinceId: json['provinceId'] as String,
+      armyIds: (json['armyIds'] as List<dynamic>).cast<String>(),
+      fieldArmyIds: (json['fieldArmyIds'] as List<dynamic>).cast<String>(),
+      stackCount: json['stackCount'] as int,
+      hasHomeArmy: json['hasHomeArmy'] as bool? ?? false,
+      renderGrayscale: json['renderGrayscale'] as bool? ?? false,
     );
 
 ProvinceUnitPresenceView _presenceFromJson(Map<String, dynamic> json) =>
@@ -156,6 +170,9 @@ RegionMapViewData regionMapViewDataFromJson(Map<String, dynamic> json) {
     fleetTileMarkers: (json['fleetTileMarkers'] as List<dynamic>)
         .map((e) => _fleetMarkerFromJson(e as Map<String, dynamic>))
         .toList(),
+    armyTileMarkers: (json['armyTileMarkers'] as List<dynamic>? ?? const [])
+        .map((e) => _armyMarkerFromJson(e as Map<String, dynamic>))
+        .toList(),
     provinceUnitPresenceByProvinceId:
         (json['provinceUnitPresenceByProvinceId'] as Map<String, dynamic>).map(
           (k, v) => MapEntry(k, _presenceFromJson(v as Map<String, dynamic>)),
@@ -181,7 +198,9 @@ InitGameMapViewData initGameMapViewDataFromJson(Map<String, dynamic> json) {
       json['newWorld'] as Map<String, dynamic>,
     ),
     combinedTopology: MapTopology.fromJson(
-      Map<String, dynamic>.from(json['combinedTopology'] as Map<String, dynamic>),
+      Map<String, dynamic>.from(
+        json['combinedTopology'] as Map<String, dynamic>,
+      ),
     ),
     seed: json['seed'] as int?,
     configSummary: json['configSummary'] as String?,

@@ -1,7 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart'
-    show projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -31,6 +29,13 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
   bool isEngineerUnit(Unit unit) {
     return workOrderTargetsByUnitType[unit.type]?.contains(
           kWorkTargetBuildRoad,
+        ) ??
+        false;
+  }
+
+  bool isRailBuilderUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetBuildRail,
         ) ??
         false;
   }
@@ -131,7 +136,13 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
           widget.buildImprovementShortcutTargetTileKey,
       buildRoadShortcutTargetTileKey: widget.buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: widget.buildFortShortcutTargetTileKey,
-      purchaseLandShortcutTargetTileKey: widget.purchaseLandShortcutTargetTileKey,
+      buildPortShortcutTargetTileKey: widget.buildPortShortcutTargetTileKey,
+      buildRailShortcutTargetTileKey: widget.buildRailShortcutTargetTileKey,
+      purchaseLandShortcutTargetTileKey:
+          widget.purchaseLandShortcutTargetTileKey,
+      upgradeTownShortcutTargetTileKey: widget.upgradeTownShortcutTargetTileKey,
+      relocateShortcutTargetTileKey: widget.relocateShortcutTargetTileKey,
+      counterSpyShortcutTargetTileKey: widget.counterSpyShortcutTargetTileKey,
     );
   }
 
@@ -141,7 +152,9 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     required bool explorerOnly,
     required bool builderOnly,
     required bool engineerOnly,
+    required bool railBuilderOnly,
     required bool merchantOnly,
+    required bool spyOnly,
   }) {
     final tileScopeActive =
         tileScopeTileKey != null && tileScopeTileKey.isNotEmpty;
@@ -149,7 +162,9 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
         !explorerOnly &&
         !builderOnly &&
         !engineerOnly &&
-        !merchantOnly) {
+        !railBuilderOnly &&
+        !merchantOnly &&
+        !spyOnly) {
       return units;
     }
     return [
@@ -164,7 +179,9 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
             (!explorerOnly || isExplorerUnit(u)) &&
             (!builderOnly || isBuilderUnit(u)) &&
             (!engineerOnly || isEngineerUnit(u)) &&
-            (!merchantOnly || isMerchantUnit(u)))
+            (!railBuilderOnly || isRailBuilderUnit(u)) &&
+            (!merchantOnly || isMerchantUnit(u)) &&
+            (!spyOnly || u.type == kUnitTypeSpy))
           u,
     ];
   }

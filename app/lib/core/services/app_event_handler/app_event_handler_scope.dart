@@ -30,12 +30,16 @@ class AppEventHandlerScope extends ConsumerStatefulWidget {
     super.key,
     required this.child,
     this.extraDialogBuilders = const {},
+    this.extraActionHandlers = const {},
   });
 
   final Widget child;
 
   /// Feature dialog builders injected at composition root (Refs #3546).
   final Map<String, NavigatorKeyDialogBuilder> extraDialogBuilders;
+
+  /// Feature [UIActionEvent] handlers injected at composition root (Refs #4416).
+  final Map<Type, NavigatorKeyActionHandler> extraActionHandlers;
 
   @override
   ConsumerState<AppEventHandlerScope> createState() =>

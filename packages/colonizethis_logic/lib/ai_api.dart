@@ -10,10 +10,8 @@
 /// - Sibling-domain symbols are re-exported through the domain **barrel**
 ///   (`package:colonizethis_<domain>/colonizethis_<domain>.dart`) whenever that
 ///   barrel already publishes the owning file — never through a deep `src/` path.
-/// - The remaining deep `src/` exports are for symbols the domain barrel does
-///   not (yet) publish; each is grouped and justified at the bottom of this file
-///   and stays deep only until a future Phase 1 barrel-bypass slice promotes the
-///   file into its domain barrel.
+/// - As of #4508 (orders wave 9), all `colonizethis_orders` symbols consumed
+///   here are barrel-published; no deep `src/` exports remain on this file.
 library;
 
 // colonizethis_world (barrel-level re-exports).
@@ -43,11 +41,22 @@ export 'package:colonizethis_world/colonizethis_world.dart'
 export 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         IncrementalCandidateValidator,
+        IncrementalCandidateValidatorArmyNaval,
         applyArmyMoveOrderForPlayer,
         armyMoveCandidateDestinationProvinceIds,
+        feedstockBootstrapBuildImprovementCastIronWaived,
+        feedstockBootstrapBuildImprovementEffectiveCost,
+        feedstockBootstrapBuildImprovementLumberWaived,
+        feedstockExtractionResourceIdsForPlayer,
         filterArmyMoveOrdersByDiplomacy,
         filterMoveOrdersByDiplomacy,
-        getProvinceOwnerMap;
+        getProvinceOwnerMap,
+        peerLockRecoverySellerNeededProducibleImprovementInputs,
+        regimentBuildInputFeedstockExtractionResourceIds,
+        regimentBuildInputFeedstockImprovementInputCost,
+        selfLockRecoverySellerNeededProducibleImprovementInputs,
+        sellerImprovementInputFeedstockExtractionResourceIds,
+        supplierImprovementInputFeedstockExtractionResourceIds;
 
 // colonizethis_economy (barrel-level re-exports).
 export 'package:colonizethis_economy/colonizethis_economy.dart'
@@ -101,24 +110,3 @@ export 'src/constants.dart'
         kWorkTargetBuildImprovement,
         kWorkTargetCounterSpy,
         kWorkTargetPurchaseLand;
-
-// Justified deep `src/` exports — no domain-barrel alternative (Refs #3393
-// Phase 3). Each symbol below is required by `colonizethis_ai` but is not yet
-// published by its domain package barrel, so a deep `src/` export is the only
-// available contract surface. These stay deep until a Phase 1 barrel-bypass
-// slice promotes the owning file into the domain barrel; `repo.ai_api_narrow_surface`
-// permits them precisely because the barrel does not re-export these files.
-export 'package:colonizethis_orders/src/orders/feedstock_bootstrap_cost.dart'
-    show
-        feedstockBootstrapBuildImprovementCastIronWaived,
-        feedstockBootstrapBuildImprovementEffectiveCost,
-        feedstockBootstrapBuildImprovementLumberWaived;
-export 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart'
-    show
-        feedstockExtractionResourceIdsForPlayer,
-        peerLockRecoverySellerNeededProducibleImprovementInputs,
-        regimentBuildInputFeedstockExtractionResourceIds,
-        regimentBuildInputFeedstockImprovementInputCost,
-        selfLockRecoverySellerNeededProducibleImprovementInputs,
-        sellerImprovementInputFeedstockExtractionResourceIds,
-        supplierImprovementInputFeedstockExtractionResourceIds;

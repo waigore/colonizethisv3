@@ -5,6 +5,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/core/utils/faction_display_name.dart';
 import 'package:colonizethis_app/package_logger.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -124,7 +125,9 @@ mixin InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
       }
 
       if (!mounted) return;
-      widget.onDecisions(List<InterventionDecision>.from(interventionDecisions));
+      widget.onDecisions(
+        List<InterventionDecision>.from(interventionDecisions),
+      );
     } catch (e, st) {
       log.e('ui:dialogue: intervention flow failed', error: e, stackTrace: st);
       if (mounted) setState(() => interventionLoadError = e);
@@ -144,7 +147,10 @@ mixin InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
     );
     project.variables.setVariable(
       r'$defenderName',
-      interventionFactionDisplayName(widget.game, prompt.defenderMinorOrTribeId),
+      interventionFactionDisplayName(
+        widget.game,
+        prompt.defenderMinorOrTribeId,
+      ),
     );
     project.variables.setVariable(
       r'$interveningName',
@@ -186,21 +192,12 @@ String reactionNodeForInterventionChoice(InterventionChoice choice) {
   }
 }
 
-String interventionFactionDisplayName(Game game, String factionId) {
-  for (final p in game.players) {
-    if (p.id == factionId) return p.displayName;
-  }
-  for (final m in game.minorNations) {
-    if (m.id == factionId) return m.displayName ?? m.id;
-  }
-  for (final t in game.tribes) {
-    if (t.id == factionId) return t.displayName ?? t.id;
-  }
-  return factionId;
-}
+String interventionFactionDisplayName(Game game, String factionId) =>
+    displayNameForFaction(game, factionId);
 
 const String kInterventionIntroNode = 'DialoguePoint/intervention_intro';
-const String kInterventionSituationNode = 'DialoguePoint/intervention_situation';
+const String kInterventionSituationNode =
+    'DialoguePoint/intervention_situation';
 const String kInterventionReactInterveneNode =
     'DialoguePoint/intervention_reaction_intervene';
 const String kInterventionReactNothingNode =

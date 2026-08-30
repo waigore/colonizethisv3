@@ -1,7 +1,6 @@
 // Rule 4–7 and precedence validator scenarios (Refs #3836, #3939 phase 3 slice 30).
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'trade_order_validator_test_support.dart';
-import 'validator_expectations.dart';
 import 'validator_scenario.dart';
 /// Rule 4–7 and precedence scenarios from
 /// `world_market_trade_order_validator_caps_test.dart`.

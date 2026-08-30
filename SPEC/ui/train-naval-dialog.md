@@ -2,7 +2,7 @@
 
 **Screen ID:** `UNIT60001` — stable; do not reassign.
 **SPEC/ui** — Modal dialog for queuing naval (ship) training orders. Implementation: `app/lib/features/game/widgets/train/train_naval_dialog.dart`. Integrates with [naval-units-panel.md](naval-units-panel.md) and the shared [components/train-dialog-chrome.md](components/train-dialog-chrome.md). Game model: [ships-and-naval.md](../game/ships-and-naval.md), [tech-tree-naval.md](../game/tech-tree-naval.md), [world-model.md](../game/world-model.md). Order model: [orders.md](../program/orders.md).
-**Widgetbook:** `Train Naval Dialog` → `app/lib/widgetbook/catalog_screens_combat.dart`.
+**Widgetbook:** `Train Naval Dialog` → `widgetbook_host/lib/catalogs/catalog_screens_combat.dart` (use cases: `Standalone` clean pool, `Reserved peasants`).
 **Mockup:** [mockups/UNIT60001-train-naval-dialog.html](mockups/UNIT60001-train-naval-dialog.html)
 
 ---
@@ -24,11 +24,13 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 ## Layout
 
 - **Header:** centered `Train Naval` title via `TrainDialogHeader` — no `×` close button and no brass section dividers between sections (#3568 parity); the dialog dismisses via scrim tap / system back and applies orders on close.
-- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`). Shows `Treasury`, `Peasants`, and the union of all ship-input commodities `lumber`, `fabric`, `castIron`, `coal` (every commodity referenced by `ShipEconomyCatalog.buildInputs`) as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £42,000 / £50,000`, `Peasants: 19 / 20`, `Lumber: 8 / 10`. Treasury uses `£` + comma grouping on both sides.
+- **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`). Shows `Treasury`, `Peasants`, and the union of all ship-input commodities `lumber`, `fabric`, `castIron`, `coal` as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form — e.g. `Treasury: £42,000 / £50,000`, `Peasants: 19 / 20`, `Lumber: 8 / 10`. **Peasants remaining** uses the same GDD reservation ledger as [train-military-dialog.md](train-military-dialog.md): `available = pool.peasants − (queued peasant-consuming worker trains + queued military/naval builds outside this dialog’s managed set)`; chip remaining = `available − this dialog’s counts`; chip total = `pool.peasants`. When other-family reservation is `> 0`, a muted one-line gist names those families in player words (e.g. worker training, regiments). Tap/tooltip on the Peasants chip shows the short family breakdown. Treasury uses `£` + comma grouping on both sides.
 - **Per-item cost colour:** In each ship row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` (`EditorialMonoclePalette.danger`) independently when `remaining` for that resource is less than this ship's per-unit cost for it (considering committed totals). Sufficient items stay normal.
 - **Deficit hint:** Same wording style as civilian/military — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`) below the box.
 - **Rows:** One row per `ShipEconomyCatalog.all` entry (all 12 ship types) as a single line — left info `Column` (ship name above the icon-bearing cost summary) plus the stepper on the right.
   - primary label: **ship display name** via `shipTypeDisplayName` in `colonizethis_data` (e.g. `Ship of the Line`, not `ship_of_the_line`).
+  - **role + capability line** (always visible, muted `10` px body): `Merchant` / `Warship` (`naval_units_compositionRoleMerchant` / `naval_units_compositionRoleWarship`) from `NavalStatsCatalog.get(shipTypeId).cargoHold` (`cargoHold == 0` → Warship, else Merchant), then ` · `, then one capability gist — merchants: `+{N} cargo holds` from `cargoHold`; warships: authored combat-role gist per `ship_type_id` (`Fast interceptor` for `sloop`, `frigate`, `raider`; `Battle ship` for `ship_of_the_line`, `ironclad`; see `SPEC/game/tech-tree-naval.md` § Notes). Warships never show a cargo-holds line. Locked rows keep role/capability visible (muted at row opacity).
+  - **food upkeep line** (always visible, muted `10` px body): `{N} food / turn` from `ShipEconomyEntry.foodUpkeep` via `trainMilitary_foodUpkeepPerTurn` wording (catalog default **2** for every hull). Food is **not** paid at train commit; the line is ongoing upkeep after the hull exists. Locked rows keep the line (muted at row opacity). No grain-vs-meat split, consumption-order formulas, or end-turn navy-feeding nag on this surface.
   - cost summary: treasury + 1 peasant + commodity requirements with icons.
   - locked state + `Requires: {tech}` when unlocking tech is missing.
   - `[-] count [+]` stepper on the right.
@@ -44,7 +46,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 - Locked ships: name prefixed with the 🔒 glyph (`kTrainDialogLockPrefix`), row subdued at `0.5` opacity (`kTrainDialogLockedOpacity`), and steppers disabled.
 - `+` uses aggregate affordability across all currently selected rows:
   - treasury
-  - peasants (`workerPool.peasants`, 1 consumed per ship)
+  - peasants (`available` from the reservation ledger above, 1 consumed per ship)
   - commodity stockpile requirements for all selected rows
 - When `+` is disabled **specifically** due to resource insufficiency (not a tech lock), it renders the `--danger` button variant (red border/label), distinct from the tech-locked disabled appearance.
 
@@ -61,7 +63,7 @@ On every stepper change:
 Affordability requires all constraints:
 
 - `totalTreasuryCost <= Player.treasury`
-- `totalPeasantCost <= Player.workerPool.peasants`
+- `totalPeasantCost <= availablePeasants` (pool minus other-family reservation; this dialog’s managed capital naval orders are counted only via local stepper counts)
 - `totalCommodityCost[c] <= Player.stockpile.quantityOf(c)` for each required commodity
 
 ---
@@ -110,6 +112,12 @@ The dialog uses the shared `app/lib/features/game/widgets/train/train_unit_dialo
 
 - **Given** treasury `50000` and peasants `20`, **when** the user queues `1` Carrack (`£8,000 + 1 peasant`), **then** the treasury chip reads `Treasury: £42,000 / £50,000` and the peasants chip reads `Peasants: 19 / 20`.
 
+- **Given** 8 peasants and 3 queued peasant-consuming worker trains with no other military/naval builds, **when** `UNIT60001` opens at zero ship counts, **then** the Peasants chip remaining is `5 / 8` and a muted promised gist names worker training.
+
+- **Given** 8 peasants, no worker trains, and 2 queued capital regiment builds, **when** `UNIT60001` opens at zero ship counts, **then** remaining is `6 / 8` and the gist names regiments.
+
+- **Given** Widgetbook Train Naval stories include reserved-peasant and clean-pool cases, **when** those stories pump, **then** they take no exception.
+
 - **Given** a ship row that requires `castIron` and remaining `castIron` is less than that requirement, **when** the row renders, **then** only the `castIron` inline cost item renders in `EditorialMonoclePalette.danger` and the other sufficient items remain normal.
 
 - **Given** an unlocked ship row whose `[+]` is disabled because adding one more exceeds available resources, **when** the row renders, **then** the `[+]` button uses the `danger` variant distinct from the normal disabled appearance.
@@ -129,3 +137,21 @@ The dialog uses the shared `app/lib/features/game/widgets/train/train_unit_dialo
 - **Given** any cost icon in a ship row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.
 
 - **Given** the Train Naval dialog is open and two or more resources are insufficient for the queued ships (e.g. treasury and lumber), **when** the deficit hint renders, **then** each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`), with no `" and "` connector.
+
+- **Given** Train Naval is open and Carrack is listed, **when** the Carrack row renders, **then** the UI layer shows `Merchant` and `+3 cargo holds` (matching `NavalStatsCatalog` for `carrack`) on the default muted role/capability line without external docs.
+
+- **Given** a warship row (e.g. Sloop) renders, **when** the default surface is read, **then** the UI layer shows `Warship · Fast interceptor` and does **not** show a cargo-holds sell line.
+
+- **Given** Ship of the Line is listed, **when** its row renders, **then** the UI layer shows `Warship · Battle ship` on the default role/capability line.
+
+- **Given** a tech-locked ship row, **when** it renders, **then** role/capability remain visible (muted at locked row opacity) with existing `Requires: {tech}` and disabled steppers.
+
+- **Given** any ship row on Train Naval, **when** the default row renders, **then** the UI layer does **not** dump the full FRP/RNG/ARM/HULL/MV stat list as always-visible primary content and does **not** include a Details control or full-stat tooltip (deferred follow-up).
+
+- **Given** `UNIT60001` lists Carrack, **when** the Carrack row renders, **then** the UI layer shows a default-visible muted line `2 food / turn` (from `ShipEconomyCatalog` `foodUpkeep` for `carrack`) in addition to the existing Merchant · cargo-holds gist and build costs. Copy does not claim food is paid when the dialog closes.
+
+- **Given** every other catalog hull (including locked warships), **when** those rows render, **then** each shows `{foodUpkeep} food / turn` matching that `ShipEconomyEntry` (catalog is 2 today; value comes from the catalog field, not a hard-coded numeral).
+
+- **Given** a tech-locked ship row, **when** it renders at locked opacity, **then** the food upkeep line is still present (not dropped).
+
+- **Given** the default Train Naval surface, **when** the player reads a row, **then** the food line does not include grain-vs-meat split, consumption-phase order, labour-strike math, or an end-turn unused-navy nag; treasury/materials/peasant costs stay on the existing cost strip.

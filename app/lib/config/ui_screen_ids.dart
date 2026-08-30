@@ -15,6 +15,7 @@ abstract final class UiScreenIds {
   static const String productionScreen = 'GAME20001';
   static const String diplomacyScreen = 'GAME30001';
   static const String diplomacyDetailScreen = 'GAME30002';
+  static const String intelligenceCouncilScreen = 'GAME30003';
   static const String technologyScreen = 'GAME40001';
   static const String gameSideMenu = 'GAME50001';
   static const String tradeScreen = 'GAME60001';
@@ -25,6 +26,8 @@ abstract final class UiScreenIds {
   // MAP — map surfaces
   static const String empireOverviewMapArea = 'MAP10001';
   static const String provinceSeaZoneOverlay = 'MAP20001';
+  static const String tileContextRadial = 'MAP30001';
+  static const String tileMoreActionsDialog = 'MAP30002';
 
   // UNIT — unit management panels and train dialogs
   static const String civilianUnitsPanel = 'UNIT10001';
@@ -54,15 +57,18 @@ abstract final class UiScreenIds {
   static const String observeModeOverlay = 'OVL60001';
   static const String playerTurnEventFeed = 'OVL70001';
   static const String tribeFirstContactOverlay = 'OVL80001';
+  static const String ftpDialogueOverlay = 'OVL90001';
 
   // DLG — modal dialogs (non-route)
   static const String newGameLeaderSelectionDialog = 'DLG10001';
   static const String moveArmyDialog = 'DLG20001';
+  static const String overlayArmyMovePickerDialog = 'DLG20002';
   static const String moveFleetDialog = 'DLG30001';
   static const String transferToHomeFleetDialog = 'DLG40001';
   static const String navalMissionMenuDialog = 'DLG31001';
   static const String navalMissionTargetDialog = 'DLG31002';
   static const String navalMissionFleetPickerDialog = 'DLG31003';
+  static const String inPortFleetMarkerActionsDialog = 'DLG31004';
   static const String turnNewsDialog = 'DLG50001';
   static const String nextTurnConfirmation = 'DLG60001';
   static const String saveGameNameDialog = 'DLG70001';

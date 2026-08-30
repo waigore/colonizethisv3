@@ -9,7 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'core.dart';
 
-/// Lightweight game shaped for the `civilian_units_panel_part*` family.
+/// Lightweight game shaped for the civilian panel suite family.
 ///
 /// Covers what those parts read from `game`:
 /// - one human player ([kPanelTestHumanPlayerId]) owning idle civilians of the

@@ -5,22 +5,25 @@ import 'package:test/test.dart';
 import '../tool/check_app_e2e_support_lib_file_size.dart';
 
 void main() {
-  test('passes for the real e2e-support lib tree with shrink-only allowlist', () {
-    final logs = <String>[];
-    final code = runCheckAppE2eSupportLibFileSize(
-      Directory.current.path,
-      info: logs.add,
-      err: logs.add,
-    );
-    expect(
-      code,
-      0,
-      reason:
-          'Every packages/colonizethis_app_e2e_support/lib file must stay at '
-          'or below ${maxAppE2eSupportLibPhysicalLinesForTests()} physical '
-          'lines (allowlisted baseline excepted).\n${logs.join('\n')}',
-    );
-  });
+  test(
+    'passes for the real e2e-support lib tree with shrink-only allowlist',
+    () {
+      final logs = <String>[];
+      final code = runCheckAppE2eSupportLibFileSize(
+        Directory.current.path,
+        info: logs.add,
+        err: logs.add,
+      );
+      expect(
+        code,
+        0,
+        reason:
+            'Every packages/colonizethis_app_e2e_support/lib file must stay at '
+            'or below ${maxAppE2eSupportLibPhysicalLinesForTests()} physical '
+            'lines (allowlisted baseline excepted).\n${logs.join('\n')}',
+      );
+    },
+  );
 
   test('allowlisted offenders still exceed the cap (shrink-only)', () {
     for (final relativePath in appE2eSupportLibFileSizeAllowlistForTests) {
@@ -46,11 +49,9 @@ void main() {
     Directory(
       '${temp.path}/packages/colonizethis_app_e2e_support/lib',
     ).createSync(recursive: true);
-    File(
-        '${temp.path}/packages/colonizethis_app_e2e_support/lib/huge.dart',
-      )
+    File('${temp.path}/packages/colonizethis_app_e2e_support/lib/huge.dart')
       ..createSync()
-      ..writeAsStringSync(List.filled(401, '// line').join('\n'));
+      ..writeAsStringSync(List.filled(251, '// line').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppE2eSupportLibFileSize(
@@ -72,8 +73,7 @@ void main() {
     Directory(
       '${temp.path}/packages/colonizethis_app_e2e_support/lib',
     ).createSync(recursive: true);
-    const relative =
-        'packages/colonizethis_app_e2e_support/lib/shrunk.dart';
+    const relative = 'packages/colonizethis_app_e2e_support/lib/shrunk.dart';
     File('${temp.path}/$relative')
       ..createSync()
       ..writeAsStringSync('void main() {}\n');

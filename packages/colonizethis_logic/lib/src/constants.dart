@@ -21,4 +21,21 @@ export 'package:colonizethis_world/colonizethis_world.dart'
         kGridNeighborsCardinal4,
         kRegionNewWorld,
         kRegionOldWorld;
-export 'package:colonizethis_orders/src/orders/order_work_constants.dart';
+export 'package:colonizethis_orders/colonizethis_orders.dart'
+    show
+        isProspectableTerrain,
+        isProspectableTerrainId,
+        kMineralResourceIds,
+        kProspectableByTerrainType,
+        kWorkTargetBuildFort,
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildPort,
+        kWorkTargetBuildRail,
+        kWorkTargetBuildRoad,
+        kWorkTargetCounterSpy,
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetPurchaseLand,
+        kWorkTargetUpgradeTown,
+        kWorkTargetsWithoutMaterialCost,
+        kWorkTargetsWithoutProjectedMaterialCost;

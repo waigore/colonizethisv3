@@ -4,6 +4,7 @@
 library colonizethis_turn_testing;
 
 export 'src/turn/combat_medal_gain_events.dart';
+export 'src/turn/economy_turn_summary_events.dart';
 export 'src/turn/end_of_turn_resolver.dart';
 export 'src/turn/naval_resolution.dart';
 export 'src/turn/naval_resolution_battle.dart';

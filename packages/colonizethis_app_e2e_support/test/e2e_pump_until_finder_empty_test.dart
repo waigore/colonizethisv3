@@ -25,102 +25,44 @@
 /// no-op `app_e2e_linux` lane today.
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
-
-/// Host that removes an internal child widget after an optional fake-async
-/// delay so a polling helper can observe the disappearance without the
-/// test calling `tester.pump` itself (which would deadlock against the
-/// helper's guarded pump loop).
-class _DelayedRemovalHost extends StatefulWidget {
-  const _DelayedRemovalHost({
-    required this.removeAfter,
-    required this.onState,
-  });
-
-  final Duration removeAfter;
-  final void Function(_DelayedRemovalState state) onState;
-
-  @override
-  State<_DelayedRemovalHost> createState() => _DelayedRemovalState();
-}
-
-class _DelayedRemovalState extends State<_DelayedRemovalHost> {
-  bool present = true;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.onState(this);
-    Timer(widget.removeAfter, () {
-      if (!mounted) return;
-      setState(() => present = false);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!present) {
-      return const SizedBox.shrink();
-    }
-    return const Text('pin-target', textDirection: TextDirection.ltr);
-  }
-}
-
-Future<_DelayedRemovalState> _pumpHost(
-  WidgetTester tester, {
-  required Duration removeAfter,
-}) async {
-  late _DelayedRemovalState captured;
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: _DelayedRemovalHost(
-          removeAfter: removeAfter,
-          onState: (s) => captured = s,
-        ),
-      ),
-    ),
-  );
-  return captured;
-}
+import 'support/delayed_removal_harness.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('e2ePumpUntilFinderEmpty', () {
-    testWidgets(
-      'short-circuits before any pump when finder is already empty',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-        final sw = Stopwatch()..start();
-        await e2ePumpUntilFinderEmpty(
-          tester,
-          find.text('never-mounted'),
-          timeout: const Duration(seconds: 5),
-        );
-        expect(
-          sw.elapsed,
-          lessThan(const Duration(milliseconds: 200)),
-          reason:
-              'Pre-pump short-circuit must return well before the timeout '
-              'cap when the finder is already empty on entry. Callers chain '
-              'this after a pop and the post-dismiss frame may already have '
-              'cleared the target, so any pump cycle here is wasted work '
-              'against the wall-clock budget (#2336 AC5).',
-        );
-      },
-    );
+    testWidgets('short-circuits before any pump when finder is already empty', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(wrapE2eApp(SizedBox()));
+      final sw = Stopwatch()..start();
+      await e2ePumpUntilFinderEmpty(
+        tester,
+        find.text('never-mounted'),
+        timeout: const Duration(seconds: 5),
+      );
+      expect(
+        sw.elapsed,
+        lessThan(const Duration(milliseconds: 200)),
+        reason:
+            'Pre-pump short-circuit must return well before the timeout '
+            'cap when the finder is already empty on entry. Callers chain '
+            'this after a pop and the post-dismiss frame may already have '
+            'cleared the target, so any pump cycle here is wasted work '
+            'against the wall-clock budget (#2336 AC5).',
+      );
+    });
 
     testWidgets(
       'returns once a scheduled removal makes the finder empty during pump',
       (WidgetTester tester) async {
-        final state = await _pumpHost(
+        final state = await pumpDelayedRemovalHost(
           tester,
           removeAfter: const Duration(milliseconds: 80),
         );
@@ -148,10 +90,8 @@ void main() {
       'returns without throwing when finder is persistently non-empty',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: Text('persistent-target', textDirection: TextDirection.ltr),
-            ),
+          wrapE2eScaffold(
+            Text('persistent-target', textDirection: TextDirection.ltr),
           ),
         );
         expect(find.text('persistent-target'), findsOneWidget);
@@ -185,32 +125,27 @@ void main() {
       },
     );
 
-    testWidgets(
-      'respects the timeout window when the finder never empties',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: Text('stuck-target', textDirection: TextDirection.ltr),
-            ),
-          ),
-        );
-        final sw = Stopwatch()..start();
-        await e2ePumpUntilFinderEmpty(
-          tester,
-          find.text('stuck-target'),
-          timeout: const Duration(milliseconds: 150),
-        );
-        expect(
-          sw.elapsed,
-          lessThan(const Duration(seconds: 2)),
-          reason:
-              'The helper must honour the caller-supplied timeout window; '
-              'a stuck finder must not pump indefinitely past the cap, '
-              'otherwise wall-clock budgets cannot be reasoned about at '
-              'the call site (#2336 AC5).',
-        );
-      },
-    );
+    testWidgets('respects the timeout window when the finder never empties', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        wrapE2eScaffold(Text('stuck-target', textDirection: TextDirection.ltr)),
+      );
+      final sw = Stopwatch()..start();
+      await e2ePumpUntilFinderEmpty(
+        tester,
+        find.text('stuck-target'),
+        timeout: const Duration(milliseconds: 150),
+      );
+      expect(
+        sw.elapsed,
+        lessThan(const Duration(seconds: 2)),
+        reason:
+            'The helper must honour the caller-supplied timeout window; '
+            'a stuck finder must not pump indefinitely past the cap, '
+            'otherwise wall-clock budgets cannot be reasoned about at '
+            'the call site (#2336 AC5).',
+      );
+    });
   });
 }

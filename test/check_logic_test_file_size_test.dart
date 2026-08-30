@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 import '../tool/check_logic_test_file_size.dart';
 
 void main() {
-  test('fails when a logic test file exceeds 400 lines', () {
+  test('fails when a logic test file exceeds 250 lines', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_logic_test_file_size_fail_',
     );
@@ -14,7 +14,7 @@ void main() {
     final violatingFile = File(
       '${temp.path}/packages/colonizethis_logic/test/huge_test.dart',
     )..createSync(recursive: true);
-    violatingFile.writeAsStringSync(List.filled(401, '// line').join('\n'));
+    violatingFile.writeAsStringSync(List.filled(251, '// line').join('\n'));
 
     final logs = <String>[];
     final code = runCheckLogicTestFileSize(
@@ -25,7 +25,7 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge_test.dart'));
-    expect(logs.join('\n'), contains('401 physical lines > 400'));
+    expect(logs.join('\n'), contains('251 physical lines > 250'));
   });
 
   test('fails when logic test directory is missing', () {
@@ -45,7 +45,7 @@ void main() {
     expect(logs.join('\n'), contains('test not found'));
   });
 
-  test('passes when all logic test files are at or below 400 lines', () {
+  test('passes when all logic test files are at or below 250 lines', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_logic_test_file_size_pass_',
     );
@@ -54,7 +54,7 @@ void main() {
     final okFile = File(
       '${temp.path}/packages/colonizethis_logic/test/ok_test.dart',
     )..createSync(recursive: true);
-    okFile.writeAsStringSync(List.filled(400, '// line').join('\n'));
+    okFile.writeAsStringSync(List.filled(250, '// line').join('\n'));
 
     final code = runCheckLogicTestFileSize(temp.path);
     expect(code, 0);
@@ -69,7 +69,7 @@ void main() {
     final largeUntargeted = File(
       '${temp.path}/packages/colonizethis_logic/test/large_untargeted_test.dart',
     )..createSync(recursive: true);
-    largeUntargeted.writeAsStringSync(List.filled(401, '// line').join('\n'));
+    largeUntargeted.writeAsStringSync(List.filled(251, '// line').join('\n'));
 
     final smallTargeted = File(
       '${temp.path}/packages/colonizethis_logic/test/small_targeted_test.dart',

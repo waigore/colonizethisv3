@@ -79,6 +79,8 @@ abstract class SplitEntityDialog extends StatelessWidget {
     required String Function(int total) totalLabelBuilder,
     required bool isHomeEntity,
     required void Function(Map<String, int> right) onConfirm,
+    Widget? Function(Map<String, int> left, Map<String, int> right)?
+    extraContentBuilder,
   }) {
     return CtDialogShell(
       maxWidth: dialogMaxWidth,
@@ -92,7 +94,11 @@ abstract class SplitEntityDialog extends StatelessWidget {
             Text(title, style: Theme.of(context).textTheme.titleLarge),
             CtGap.l,
             CtTransferList(
-              listHeight: transferListHeight,
+              // Cargo (or other extra) lines consume vertical space inside the
+              // fixed 520×500 shell; shrink the lists so Confirm stays hittable.
+              listHeight: extraContentBuilder == null
+                  ? transferListHeight
+                  : transferListHeight - 40,
               leftTitle: leftTitle,
               rightTitle: rightTitle,
               leftSubtitle: locationLabel,
@@ -108,6 +114,7 @@ abstract class SplitEntityDialog extends StatelessWidget {
                 right: right,
                 isHomeEntity: isHomeEntity,
               ),
+              extraContentBuilder: extraContentBuilder,
               onCancel: () => Navigator.of(context).pop(),
               onConfirm: (_, right) => onConfirm(right),
             ),

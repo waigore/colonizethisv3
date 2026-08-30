@@ -1,14 +1,17 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'game_map_area_province_action_states_build_improvement.dart';
 import 'game_map_area_province_action_states_build_road.dart';
 import 'game_map_area_province_action_states_build_fort.dart';
+import 'game_map_area_province_action_states_build_port.dart';
+import 'game_map_area_province_action_states_build_rail.dart';
 import 'game_map_area_province_action_states_explore.dart';
 import 'game_map_area_province_action_states_prospect.dart';
 import 'game_map_area_province_action_states_purchase_land.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show ProvinceInlineActionState;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -25,33 +28,8 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 class GameMapAreaProvinceActionStates {
   GameMapAreaProvinceActionStates._();
 
-  static const ({bool showIcon, bool enabled, bool hasExplorerUnits})
-  kHiddenExplorerInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasExplorerUnits: false,
-  );
-  static const ({bool showIcon, bool enabled, bool hasBuilderUnits})
-  kHiddenBuilderInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasBuilderUnits: false,
-  );
-  static const ({bool showIcon, bool enabled, bool hasEngineerUnits})
-  kHiddenEngineerInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasEngineerUnits: false,
-  );
-  static const ({bool showIcon, bool enabled, bool hasMerchantUnits})
-  kHiddenMerchantInlineActionState = (
-    showIcon: false,
-    enabled: false,
-    hasMerchantUnits: false,
-  );
-
   /// Returns province-overlay prospect action visibility + enablement.
-  static ({bool showIcon, bool enabled, bool hasExplorerUnits}) prospect({
+  static ProvinceInlineActionState prospect({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -59,16 +37,15 @@ class GameMapAreaProvinceActionStates {
     required MapTopology? topology,
     required ct_models.Orders currentOrders,
     required Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      GameMapAreaProvinceActionStatesProspect.compute(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: selectedTileKey,
-        playerView: playerView,
-        topology: topology,
-        currentOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => GameMapAreaProvinceActionStatesProspect.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   static Set<String> buildExploreEligibleTileKeyCache({
     required ct_models.Game game,
@@ -77,35 +54,32 @@ class GameMapAreaProvinceActionStates {
     required MapTopology topology,
     required Map<String, TileMapResult>? tileMapByRegion,
     required ct_models.Orders currentOrders,
-  }) =>
-      GameMapAreaProvinceActionStatesExplore.buildEligibleTileKeyCache(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        playerView: playerView,
-        topology: topology,
-        tileMapByRegion: tileMapByRegion,
-        currentOrders: currentOrders,
-      );
+  }) => GameMapAreaProvinceActionStatesExplore.buildEligibleTileKeyCache(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    playerView: playerView,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+    currentOrders: currentOrders,
+  );
 
-  static ({bool showIcon, bool enabled, bool hasExplorerUnits}) explore({
+  static ProvinceInlineActionState explore({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
     required RegionMapViewData selectedRegion,
     PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
     Set<String>? cachedExploreEligibleTileKeys,
-  }) =>
-      GameMapAreaProvinceActionStatesExplore.compute(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: selectedTileKey,
-        selectedRegion: selectedRegion,
-        workTargetSelectionCache: workTargetSelectionCache,
-        cachedExploreEligibleTileKeys: cachedExploreEligibleTileKeys,
-      );
+  }) => GameMapAreaProvinceActionStatesExplore.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    selectedRegion: selectedRegion,
+    workTargetSelectionCache: workTargetSelectionCache,
+    cachedExploreEligibleTileKeys: cachedExploreEligibleTileKeys,
+  );
 
-  static ({bool showIcon, bool enabled, bool hasBuilderUnits})
-  buildImprovement({
+  static ProvinceInlineActionState buildImprovement({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -114,19 +88,18 @@ class GameMapAreaProvinceActionStates {
     MapTopology? topology,
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      GameMapAreaProvinceActionStatesBuildImprovement.compute(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: selectedTileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-        topology: topology,
-        currentOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => GameMapAreaProvinceActionStatesBuildImprovement.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildRoad({
+  static ProvinceInlineActionState buildRoad({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -135,19 +108,18 @@ class GameMapAreaProvinceActionStates {
     MapTopology? topology,
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      GameMapAreaProvinceActionStatesBuildRoad.compute(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: selectedTileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-        topology: topology,
-        currentOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => GameMapAreaProvinceActionStatesBuildRoad.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
 
-  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildFort({
+  static ProvinceInlineActionState buildFort({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -156,19 +128,18 @@ class GameMapAreaProvinceActionStates {
     MapTopology? topology,
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      GameMapAreaProvinceActionStatesBuildFort.compute(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: selectedTileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-        topology: topology,
-        currentOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => GameMapAreaProvinceActionStatesBuildFort.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
 
-  static ({bool showIcon, bool enabled, bool hasMerchantUnits}) purchaseLand({
+  static ProvinceInlineActionState buildPort({
     required ct_models.Game game,
     required String humanPlayerId,
     required String selectedTileKey,
@@ -177,15 +148,54 @@ class GameMapAreaProvinceActionStates {
     MapTopology? topology,
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      GameMapAreaProvinceActionStatesPurchaseLand.compute(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: selectedTileKey,
-        playerView: playerView,
-        workTargetSelectionCache: workTargetSelectionCache,
-        topology: topology,
-        currentOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => GameMapAreaProvinceActionStatesBuildPort.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
+
+  static ProvinceInlineActionState buildRail({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) => GameMapAreaProvinceActionStatesBuildRail.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
+
+  static ProvinceInlineActionState purchaseLand({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) => GameMapAreaProvinceActionStatesPurchaseLand.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: topology,
+    currentOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
 }

@@ -30,6 +30,10 @@ void main() {
       expect(runCheckOrdersTestSupportLoc('.'), 0);
     });
 
+    test('wave-9 package ceiling is 15800', () {
+      expect(ordersTestPackageLocCeiling, 15800);
+    });
+
     test('fails when measured support LOC exceeds ceiling', () {
       final temp = Directory.systemTemp.createTempSync('orders-support-loc-');
       try {

@@ -130,9 +130,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_dialogs.dart',
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
   // Home-transfer dialog opener split into `naval_units_panel_support_combine.dart`
-  // during wave-9 de-part (Refs #4117). Same local-by-design rationale as
+  // during wave-9 de-part (Refs #4117), then `naval_units_panel_support_combine_home.dart`
+  // (Refs #4606). Same local-by-design rationale as
   // `naval_units_panel_support_home_transfer.dart`.
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_combine.dart',
+  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_combine_home.dart',
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
   // Dialog openers extracted from `military_units_panel.dart` to keep panel
@@ -143,11 +145,58 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Declare-war confirm `showDialog` lives in state after wave-9 de-part
   // (Refs #4117). Same local-by-design rationale as `move_army_dialog_declare_war.dart`.
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_state.dart',
-  // Naval mission assign flow — fleet picker / mission menu / target picker
-  // `showDialog` steps in `showNavalMissionFlow`. Same local-by-design rationale
-  // as move fleet — `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
-  // (Refs #4213).
+  // Shared MoveArmyDialog opener + MAP20001 overlay Move/Invade flow
+  // (optional DLG20002 army picker). Same local-by-design rationale as
+  // `move_army_dialog.dart` / naval mission flow —
+  // `SPEC/program/app-ui-wiring.md` Land armies + overlay Move/Invade
+  // (Refs #4350).
+  'app/lib/features/game/widgets/unit_orders/show_move_army_dialog.dart',
+  'app/lib/features/game/widgets/unit_orders/overlay_army_move_flow.dart',
+  // MAP20001 overlay Transfer to Home Fleet: optional DLG31003 then DLG40001.
+  // Same local-by-design rationale as overlay Move and NavalUnitsPanel home
+  // transfer — `SPEC/program/app-ui-wiring.md` § "Local by design" (Refs #4625).
+  'app/lib/features/game/widgets/unit_orders/overlay_transfer_to_home_fleet_flow.dart',
+  // Home Army detach-then-move: Split then DLG20001 for the new field army.
+  // Same local-by-design rationale as overlay Move/Invade (Refs #4407).
+  'app/lib/features/game/widgets/unit_orders/home_army_detach_then_move_flow.dart',
+  // Home Fleet detach-then-sail: Split then DLG30001 for the new sea-going
+  // fleet. Same local-by-design rationale as Home Army detach-then-move —
+  // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
+  // (Refs #4448).
+  'app/lib/features/game/widgets/unit_orders/home_fleet_detach_then_sail_flow.dart',
+  // Military Counsel invade Agree reuses the move-army declare-war copy and
+  // chrome — same local-by-design rationale as
+  // `move_army_dialog_declare_war.dart` (Refs #4307).
+  'app/lib/features/game/screens/counsel/counsel_military_invade_confirm.dart',
+  // Naval mission / fleet-marker flow — fleet picker / mission menu / target /
+  // move `showDialog` steps in `showNavalFleetMarkerFlow` /
+  // `showNavalMissionFlow`. Same local-by-design rationale as move fleet —
+  // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
+  // (Refs #4213, #4343).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
+  // Map fleet-marker routing extracted from `naval_mission_flow.dart`
+  // (`showNavalFleetMarkerFlow` / capital in-port Transfer choice). Same
+  // local-by-design rationale as the parent flow (Refs #4343, #4625).
+  'app/lib/features/game/widgets/unit_orders/naval_fleet_marker_flow.dart',
+  // Overlay Blockade/Beachhead extracted picker + target confirm helpers
+  // (`pickNavalMissionFleetId` / `confirmNavalTargetedMission`). Same
+  // local-by-design rationale as `naval_mission_flow.dart`
+  // (Refs #4213, #4413).
+  'app/lib/features/game/widgets/unit_orders/naval_mission_flow_support.dart',
+  // Move Fleet local `showDialog` extracted from `naval_mission_flow.dart`
+  // (`showMoveFleetDialogForFleet` / DLG30001). Same local-by-design
+  // rationale as the parent flow (Refs #4213, #4343, #4582).
+  'app/lib/features/game/widgets/unit_orders/naval_mission_move_dialog.dart',
+  // MAP20001 Tile teaching helper — read-only connectivity/port/caption
+  // details opened from transport cluster tap or named Tile details action
+  // within the province overlay (Refs #4369). Same local-by-design rationale
+  // as tech detail / research breakdown dialogs.
+  'app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart',
+  // MAP30002 More tile actions — overflow list plus Province details after
+  // a map secondary gesture (Refs #4440). Same local-by-design rationale as
+  // MAP20001 Tile details — `SPEC/program/app-ui-wiring.md` § "Tile context
+  // More dialog".
+  'app/lib/features/game/widgets/map_radial/game_map_tile_radial_host.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate
@@ -155,6 +204,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/flame/controls/game_side_menu.dart',
   'app/lib/features/game/flame/controls/game_side_menu_panel.dart',
   'app/lib/features/game/screens/production/production_screen_body.dart',
+  // Production commodity breakdown `showDialog` extracted from
+  // `production_screen_body.dart` (`buildProductionScreenPanel`). Same
+  // local-by-design rationale as the parent body (Refs #2626, #4606).
+  'app/lib/features/game/screens/production/production_screen_body_panel.dart',
 };
 
 /// Files allowed to emit a non-[ClosePanelEvent] bus event from inside a
@@ -238,7 +291,8 @@ int runCheckAppEventBusDecoupling(
     postFrameBusEmitViolations.addAll(visitor.postFrameBusEmitViolations);
   }
 
-  final total = singletonViolations.length +
+  final total =
+      singletonViolations.length +
       navigatorKeyViolations.length +
       dialogViolations.length +
       postFrameBusEmitViolations.length;
@@ -246,9 +300,7 @@ int runCheckAppEventBusDecoupling(
     logI('check_app_event_bus_decoupling: no violations found.');
     return 0;
   }
-  logE(
-    'check_app_event_bus_decoupling: found $total violation(s):',
-  );
+  logE('check_app_event_bus_decoupling: found $total violation(s):');
   if (singletonViolations.isNotEmpty) {
     logE(
       ' AppEventBus() singleton calls (use appEventBusProvider or '

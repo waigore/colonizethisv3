@@ -45,52 +45,16 @@
 library;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
-import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart' as shared;
-
-/// Mounts a hit-testable panel root with the given children so
-/// [e2eWaitUntilFound] short-circuits on the first poll. The helper exits
-/// before its `timeout` ever elapses, isolating the contract under test
-/// to the wait → null-check → collect → compare composition only.
-
-part 'support/expect_panel_texts_constants_part.dart';
-part 'support/expect_panel_texts_happy_part.dart';
-part 'support/expect_panel_texts_null_part.dart';
-part 'support/expect_panel_texts_mismatch_a_part.dart';
-part 'support/expect_panel_texts_mismatch_b_part.dart';
-part 'support/expect_panel_texts_ignore_part.dart';
-part 'support/expect_panel_texts_perf_part.dart';
-part 'support/expect_panel_texts_barrel_part.dart';
-
-Widget _wrap(Key panelRootKey, List<Widget> children) => MaterialApp(
-  home: Scaffold(
-    body: KeyedSubtree(
-      key: panelRootKey,
-      child: ListView(children: children),
-    ),
-  ),
-);
-
-/// Captures every `debugPrint` line emitted while [body] runs and restores
-/// the original printer afterwards (defensive in `finally` so a thrown
-/// expectation does not leak the override into later tests).
-Future<List<String>> _captureDebugPrints(Future<void> Function() body) async {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
-
+import 'support/expect_panel_texts_harness.dart';
+import 'support/expect_panel_texts_constants_group.dart';
+import 'support/expect_panel_texts_happy_group.dart';
+import 'support/expect_panel_texts_null_group.dart';
+import 'support/expect_panel_texts_mismatch_a_group.dart';
+import 'support/expect_panel_texts_mismatch_b_group.dart';
+import 'support/expect_panel_texts_ignore_group.dart';
+import 'support/expect_panel_texts_perf_group.dart';
+import 'support/expect_panel_texts_barrel_group.dart';
 
 void main() {
   suppressLogsForTests();

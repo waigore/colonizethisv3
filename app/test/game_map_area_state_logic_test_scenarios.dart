@@ -1,4 +1,4 @@
-// State-logic scenario fixtures for `game_map_area_state_logic_part*_test.dart`
+// State-logic scenario fixtures for `game_map_area_state_logic_*_test.dart`
 // (Refs #4183 Slice E). Lives outside `app/test/support/` so scenario tables do
 // not count toward the support LOC ratchet.
 // SPEC: SPEC/program/repo-lint.md § Stay-split families.
@@ -179,7 +179,7 @@ RegionMapViewData stateLogicProjectDraft({
   required ct_models.Game game,
   required ct_models.Orders orders,
   String humanPlayerId = kStateLogicHumanPlayerId,
-}) => GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+}) => GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft(
   region: region,
   game: game,
   orders: orders,

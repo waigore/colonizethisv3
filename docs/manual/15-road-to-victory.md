@@ -2,54 +2,107 @@
 
 ## Purpose
 
-A Great Power wins a campaign by controlling **31 or more Old World provinces**, including provinces formerly held by Minor Nations. New World provinces, including those of Tribes, do not count toward this threshold.
+A **Great Power** is a playable nation. A **province** is a named piece of land on the map. The **Old World** and the **New World** are the two maps. **Minor Nations** live in the Old World; **Tribes** live in the New World. A **decree** is an action you choose on your turn.
 
-The campaign may also reach its calendar end without a province-count winner. In that case, the realm with the strongest overall position may be declared the winner of the completed campaign summary—but that is separate from winning by province count.
+Glory is counted in Old World land. You win a campaign by owning **31 or more Old World provinces**, including land that once belonged to Minor Nations. New World riches — and Tribe provinces — do not move that needle.
+
+The campaign may also reach its last year with no province-count winner. Then you read the result on `OVL20001` **Victory overlay**, and you can open `GAME70001` **Victory screen** to see the same outcome. That calendar stop is not a 31-province win.
 
 ## How it is done
 
-1. Open **Victory** (`GAME70001`) from the left empire rail (last button, after Technology) at any time during a campaign to read victory conditions and Great Power standings. On wide viewports (600 dp or wider) with map data loaded, standings and the political minimap appear side-by-side so you can read both without scrolling. On narrower screens they stack vertically. The panel states plainly that you win by controlling **31 or more Old World provinces**, with calendar-end and infinite-mode notes when relevant. Each Great Power row shows **how many Old World provinces they hold out of 31** with a progress bar toward that threshold. Tap a row to highlight that power's lands on the minimap; tap a province on the minimap to select its owning Great Power when applicable. A short helper under the standings header reminds you that colours match the map. Expand a row to see overall-strength totals used only if the campaign runs to the calendar end without a province-count winner. When map data is loaded, a political Old World minimap shows who holds each province with province names, capital-province borders, and town markers; hover or tap a province to see whether it is still its founding power's or was captured.
-2. Build and protect an Old World position, then take or absorb enough Old World territory to own **at least 31 provinces**. The condition is checked after all turn phases have resolved. If more than one Great Power reaches 31 in the same turn, the Great Power with the alphabetically earliest player identity wins.
-2. Do not confuse conquest with colonial growth. Minor Nation provinces in the Old World count once they are yours; Tribe provinces in the New World do not.
-3. In a standard campaign, the final full turn begins in **1800**—turn **201** under the default calendar. If no one has won by province count by its end, no further turns may be resolved.
-4. At that calendar end, a declared winner is the Great Power with the strongest overall realm: owned provinces in both worlds, regiment strength, and ships all contribute. A tie produces no declared winner.
-5. Choose **infinite mode** when creating a new campaign if you want to continue beyond the calendar cap. The calendar then advances normally after 1800, and only reaching the province win or leaving the game ends the campaign.
-6. When military victory is recorded, `OVL20001` **Victory overlay** appears over the game. It names the winner, identifies the military victory, and states the winning turn. Choose **Return to Main Menu** to leave the campaign, or **View Final State** to dismiss the overlay and inspect the finished map. Viewing the final state never re-enables orders or further turns.
+### Watching the race on the map
+
+1. On `MAP10001` **Empire overview / map area**, look at the count beside treasury and cargo. It shows how many Old World provinces you hold out of 31.
+2. If another Great Power holds **more** Old World provinces than you, that court’s name and count appear beside yours. If you lead or the counts are equal, no rival name appears.
+3. Rest on that count, or press and hold on a touch screen, to read how many years remain until the last campaign year. Tap that count to open `GAME70001` **Victory screen**. Use this glance during the campaign.
+4. After a court already owns 31 Old World provinces, that count is gone. Tap the last left-side **Victory** icon instead. That icon stays available.
+
+### Opening the Victory screen
+
+5. You can also tap the last of the left-side icons (after Technology) at any time. The top bar may print **Victory**; the screen’s title is **Victory screen**.
+6. Read the conditions. They state that you win by controlling **31 or more Old World provinces**. They also name this year, the last campaign year, how many years remain, and how many full turns remain. If you chose infinite mode at new game, a note says the calendar stop is off and no remaining-year count is shown.
+7. While the campaign is still running, there is no extra banner at the top. After a 31-province win, a banner names who won by owning 31 Old World provinces. After the calendar stop, a banner names the strongest overall realm or a tie.
+
+### Reading each court
+
+8. Each Great Power row shows how many Old World provinces they hold out of 31, with a bar filling toward 31.
+9. Tap a court to highlight that court’s lands on the small Old World map.
+10. Expand a court to see overall-strength totals used only if the campaign runs to the last year with no province-count winner.
+11. On a wide screen, standings and the small Old World map sit side by side so you can read both without scrolling. On a narrow screen they stack.
+12. The small Old World map shows who holds each province, with names, capital borders, and town marks when those details are present. Hover or tap a province to see whether it is still its founding owner’s land or was captured.
+
+### Comparing courts from the map bar
+
+13. Next to the Old World count (and news) is a toggle. New campaigns start with it off.
+14. When it is on, a floating comparison of Great Powers appears. It is not a list on the treasury row. Each court shows its Old World count out of 31.
+15. Rest on a name, or press and hold on a touch screen, to read calendar-end overall strength. That total matters only if the campaign reaches the last year with no province-count winner. Those names do not open the Victory screen.
+16. After a 31-province win, or while `OVL20001` **Victory overlay** is up, this comparison is hidden.
+
+### Taking the 31 provinces
+
+17. Build and protect an Old World position, then take or absorb enough Old World land to own **at least 31 provinces**.
+18. The condition is checked at the end of the turn, after the game has carried out everything for that turn.
+19. If two courts reach 31 on the same turn, the game picks one winner by a fixed hidden order so the result is never a coin toss. The order of names on the Victory screen does not decide that winner.
+20. Do not confuse taking Old World land with taking New World land. Minor Nation provinces in the Old World count once they are yours; Tribe provinces in the New World do not.
+
+### The calendar stop
+
+21. In a standard campaign, the last full year is **1800** — turn **201** on the usual calendar. `GAME70001` **Victory screen** and the Old World count’s rest text show how many years remain while the campaign is still running.
+22. After that last year finishes with no province-count winner, **Next turn** stays unavailable.
+23. At that calendar end, a declared winner is the Great Power with the strongest overall realm: owned provinces in both worlds, army strength, and ships all contribute. A tie produces no declared winner.
+
+### Infinite mode
+
+24. On `DLG10001` **New game leader selection**, you may turn on **Infinite mode**. Chapter 2 covers the rest of New Game.
+25. The helper under that switch says **Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.** After **Start**, Game Parameters on `GAME50001` **Game side menu** restates the same meaning when Infinite mode is **On**.
+
+### When a court wins by 31 provinces
+
+26. When you or another court win by owning 31 Old World provinces, `OVL20001` **Victory overlay** appears. It names the winner, shows **Military Victory**, and states the winning turn.
+27. Choose **Return to Main Menu** to leave the campaign, or **View Final State** to dismiss **Victory overlay** so you can inspect the finished map. You cannot choose more decrees or take another turn.
+28. Last-turn map pulses wait until you choose **View Final State**. Chapter 14 explains that sequence.
+
+### When the last year ends with no province-count winner
+
+29. When the last year ends with no province-count winner, the same `OVL20001` **Victory overlay** appears with the title **Campaign complete**.
+30. You read which court had the strongest overall realm, or that no one is declared because that total is tied.
+31. **Return to Main Menu** and **View Final State** work the same way. After you dismiss **Victory overlay**, **Next turn** stays unavailable. Last-turn map pulses wait for **View Final State** here too (Chapter 14).
+32. Open `GAME70001` **Victory screen** afterward if you want standings and the small Old World map.
 
 ## Counsel
 
 **Counsel.** Hark, my liege: thirty provinces invite ambition; the thirty-first invites every neighbour to measure the cost of letting thee keep it.
 
-**Warning.** A far-flung empire can meet the count yet fail to hold it. Keep armies, fleets, treasury, and capital connections sufficient for the provinces already won before opening another war.
+**Warning.** A far-flung empire can meet the count yet fail to hold it. Keep armies, fleets, treasury, and land still linked to the capital by road or port sufficient for the provinces already won before opening another war.
 
 **Tip.** If the calendar is near its end, compare your whole realm—not merely your Old World conquests. The declared-winner totals value provinces, land strength, and ships across both worlds, while winning by province count values only Old World province ownership.
 
 ## The other courts
 
-Rival Great Powers assess war and diplomacy through their own personalities, priorities, relations, and relative strength. Militaristic leaders may seek opportunity; traders and navigators may prefer diplomacy, trade, or alliances; defenders and tacticians may answer a threatening neighbour with force.
+Rival Great Powers choose the same kinds of decrees you do. A chosen **leader** changes how bold or cautious they are — not how you win. Traders and navigators may prefer diplomacy, trade, or alliances. Defenders and tacticians may answer a threatening neighbour with force. A warlike leader may look for a fight when the chance is good.
 
-As your realm grows, other courts have more reason to regard you as a powerful or dangerous rival. Their war planning compares relative power, relations, existing wars, invasion capacity, resources, and the risk that other Great Powers may intervene for a Minor Nation or Tribe. Formal alliances can also turn one declaration into a wider conflict.
+As your realm grows, other courts have more reason to treat you as a powerful rival. Formal **alliances** can turn a Great Power war into a wider war: allies may be asked to join (a **call to arms**). Other courts may **intervene** only when a Great Power declares war on a **Minor Nation or Tribe** that already has their embassy (a diplomatic office) or purchased land. They weigh relative strength, relations, wars already under way, whether they have enough troops — and ships, if they must cross the sea — and that intervention risk.
 
-The AI does not receive a separate secret victory rule, but a realm approaching the Old World threshold is visibly stronger and more exposed. Expect wary diplomacy, hostile coalitions, and opportunistic attacks if your expansion leaves weak borders or isolated possessions.
+Rival courts do not get a secret victory rule. They do not get an extra rule that piles onto whoever is closest to 31. A realm approaching 31 Old World provinces is simply stronger and more exposed. Expect wary diplomacy and opportunistic attacks if your expansion leaves weak borders or isolated possessions.
 
 ## Consequences
 
-- Reaching 31 Old World provinces ends the campaign immediately after that turn’s resolution; no further orders or turn advancement are available.
+- Reaching 31 Old World provinces ends the campaign at the end of that turn; you cannot choose more decrees or tap **Next turn**.
 - A province-count win takes precedence over the calendar cap if both would be reached on the same turn.
-- A calendar halt leaves the province-count win unset. It may declare an overall-strength winner for the campaign summary, or declare no one if the leading total is tied.
-- Infinite mode removes the calendar halt, not the danger of overextension. Rival courts continue to develop, fight, trade, ally, and react while you pursue the province win.
+- A calendar stop does not count as a province-count win. The **Campaign complete** title on `OVL20001` **Victory overlay** tells you whether one court led in overall strength or no one is declared.
+- Infinite mode removes the calendar stop, not the danger of stretching too far. Rival courts continue to develop, fight, trade, ally, and react while you pursue the province win. Owning 31 Old World provinces still ends the campaign.
 - A final-state view is for reflection and inspection only. It preserves the completed map but cannot resume the campaign.
 
 ## Acceptance criteria for this chapter
 
 - [ ] States that winning by province count requires a Great Power to control 31 or more Old World provinces, including Minor Nation provinces.
-- [ ] Documents the `GAME70001` Victory panel (left-rail entry, OW standings with progress bars and map-linked selection, expandable calendar-end totals, political OW minimap with origin inspect when available, conditions including infinite mode) in plain province-count language.
+- [ ] Documents `GAME70001` **Victory screen** (map-row Old World count entry and left-side icon, remaining years on conditions and on the count’s rest text, Old World standings with progress bars and tap-to-highlight lands, expandable calendar-end totals, small Old World map with hover or tap a province to see founding owner or captured, conditions including infinite mode) in plain province-count language.
 - [ ] States that New World and Tribe provinces do not count toward the military threshold.
-- [ ] Explains the default 1800 calendar cap, its turn-201 default mapping, and the declared-winner power-score outcome, including ties.
-- [ ] Explains infinite mode as a new-campaign choice that bypasses the calendar halt while retaining the province-count win.
-- [ ] Documents active `OVL20001` Victory overlay behavior and both options: Return to Main Menu and View Final State.
-- [ ] Gives endgame counsel on coalition risk, AI reactions to relative power, and overextension.
-- [ ] Distinguishes a province-count win from a calendar-ended campaign summary.
+- [ ] Explains the default 1800 calendar cap, its turn-201 default mapping, and the declared-winner overall-strength outcome, including ties.
+- [ ] Explains infinite mode as a new-campaign choice on `DLG10001` **New game leader selection** that removes the calendar stop while retaining the province-count win.
+- [ ] Documents active `OVL20001` **Victory overlay** for both military victory and calendar **Campaign complete**, including Return to Main Menu and View Final State.
+- [ ] Gives endgame counsel on alliance and intervention risk, rival reactions to relative power, and stretching too far.
+- [ ] Distinguishes a province-count win from a calendar-ended campaign.
 
 ## Sources
 
@@ -57,7 +110,10 @@ The AI does not receive a separate secret victory rule, but a realm approaching 
 - `SPEC/game/turn-time-mapping.md`
 - `SPEC/game/diplomacy.md`
 - `SPEC/ui/victory-panel.md`
+- `SPEC/ui/components/old-world-race-chip.md`
+- `SPEC/ui/empire-overview.md`
 - `SPEC/ui/victory-overlay.md`
 - `SPEC/ui/screen-registry.md`
+- `SPEC/ui/new-game-leader-selection-dialog.md`
 - `SPEC/ai/growth-stage-planner.md`
 - `SPEC/ai/ai-personalities.md`

@@ -8,11 +8,10 @@ MutableEmplacedGun emplacedGun(
   int hp, {
   double att = 2.0,
   double def = 3.0,
-}) =>
-    MutableEmplacedGun(
-      id: id,
-      maxHp: 4,
-      hp: hp,
-      attackStrength: att,
-      defenseStrength: def,
-    );
+}) => MutableEmplacedGun(
+  id: id,
+  maxHp: 4,
+  hp: hp,
+  attackStrength: att,
+  defenseStrength: def,
+);

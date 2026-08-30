@@ -42,6 +42,10 @@ abstract class MoveUnitsDialogState<W extends StatefulWidget>
   /// copy on naval target picker). Default `null`.
   String? get moveDialogCaption => null;
 
+  /// Optional extra muted caption lines under [moveDialogCaption] (Refs #4516).
+  List<String> moveDialogSupplementalCaptions(BuildContext context) =>
+      const [];
+
   /// Composes the shared `CtDialogShell` scaffold. Subclasses return this
   /// from their `build`.
   Widget buildMoveDialogScaffold(BuildContext context) {
@@ -59,6 +63,12 @@ abstract class MoveUnitsDialogState<W extends StatefulWidget>
           const SizedBox(height: CtSpacing.s),
           Text(moveDialogCaption!, style: emptyStyle),
         ],
+        ...moveDialogSupplementalCaptions(context).map(
+          (line) => Padding(
+            padding: const EdgeInsets.only(top: CtSpacing.s),
+            child: Text(line, style: emptyStyle),
+          ),
+        ),
         const SizedBox(height: CtSpacing.ml),
         if (!moveDialogHasDestinations)
           Text(moveDialogEmptyText, style: emptyStyle)

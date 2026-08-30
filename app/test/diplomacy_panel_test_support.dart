@@ -110,7 +110,7 @@ Widget wrapDiplomacyPanelAtViewport({
 }
 
 /// Canonical [CivilianUnitsPanel] host used across the three
-/// `civilian_units_panel_part*_test.dart` files and row-card chrome suites
+/// `civilian_units_panel_*_test.dart` files and row-card chrome suites
 /// (Refs #4013, #4035). Composes [buildAppShell] — callers must not redeclare
 /// an inline `MaterialApp` for this panel.
 Widget buildCivilianPanel({
@@ -122,14 +122,19 @@ Widget buildCivilianPanel({
   bool explorerOnly = false,
   bool builderOnly = false,
   bool engineerOnly = false,
+  bool railBuilderOnly = false,
   bool merchantOnly = false,
+  bool spyOnly = false,
   String? tileScopeTileKey,
   String? initialSelectedUnitId,
   String? prospectShortcutTargetTileKey,
   String? exploreShortcutTargetTileKey,
   String? buildImprovementShortcutTargetTileKey,
   String? buildRoadShortcutTargetTileKey,
+  String? buildRailShortcutTargetTileKey,
   String? purchaseLandShortcutTargetTileKey,
+  String? relocateShortcutTargetTileKey,
+  String? counterSpyShortcutTargetTileKey,
 }) {
   final resolvedBus = bus ?? AppEventBus.create();
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -154,13 +159,18 @@ Widget buildCivilianPanel({
           explorerOnly: explorerOnly,
           builderOnly: builderOnly,
           engineerOnly: engineerOnly,
+          railBuilderOnly: railBuilderOnly,
           merchantOnly: merchantOnly,
+          spyOnly: spyOnly,
           prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
               buildImprovementShortcutTargetTileKey,
           buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+          buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
           purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+          relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
+          counterSpyShortcutTargetTileKey: counterSpyShortcutTargetTileKey,
         ),
       ),
     ),

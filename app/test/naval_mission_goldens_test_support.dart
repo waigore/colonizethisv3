@@ -11,7 +11,7 @@ const navalMissionGoldenHumanId = 'gp_mission_golden';
 const navalMissionGoldenEnemyId = 'gp_enemy';
 const navalMissionGoldenSeaZone = 'sea1';
 
-const Size kNavalMissionGoldenViewport = Size(360, 520);
+const Size kNavalMissionGoldenViewport = Size(360, 800);
 
 Game buildNavalMissionMenuPeacetimeGame() =>
     buildNavalPanelNamedSeaZoneGame(humanId: navalMissionGoldenHumanId);
@@ -35,7 +35,11 @@ Game buildNavalMissionWarTargetsGame() {
           y: 0,
         ),
       ),
-      Player(id: navalMissionGoldenEnemyId, displayName: 'Spain', isHuman: false),
+      Player(
+        id: navalMissionGoldenEnemyId,
+        displayName: 'Spain',
+        isHuman: false,
+      ),
     ],
     oldWorldProvinces: const [
       Province(
@@ -118,6 +122,104 @@ MapTopology navalMissionWarTopology() {
       TopologyEdge(id1: navalMissionGoldenSeaZone, id2: 'enemy1'),
       TopologyEdge(id1: navalMissionGoldenSeaZone, id2: 'enemy2'),
     ],
+  );
+}
+
+/// Human-owned coastal province under enemy Blockade (Refs #4516).
+Game buildNavalMissionHumanOwnedBlockadedPortGame({bool capitalPort = false}) {
+  const target = 'oldWorld|enemy1';
+  return buildPanelTestGame(
+    id: capitalPort ? 'blockade-status-owned-capital' : 'blockade-status-owned',
+    players: [
+      Player(
+        id: navalMissionGoldenHumanId,
+        displayName: 'England',
+        isHuman: true,
+        capitalProvinceId: capitalPort ? target : 'oldWorld|cap1',
+      ),
+      const Player(
+        id: navalMissionGoldenEnemyId,
+        displayName: 'Spain',
+        isHuman: false,
+      ),
+    ],
+    oldWorldProvinces: [
+      Province(
+        id: target,
+        regionId: 'oldWorld',
+        ownerId: navalMissionGoldenHumanId,
+        displayName: capitalPort ? 'My Capital Port' : 'My Port',
+      ),
+    ],
+    fleets: [
+      Fleet(
+        id: 'blockader',
+        ownerId: navalMissionGoldenEnemyId,
+        regionId: 'oldWorld',
+        seaZoneId: navalMissionGoldenSeaZone,
+        mission: FleetMission.blockade,
+        targetProvinceId: target,
+        ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+      ),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: navalMissionGoldenHumanId,
+        factionId2: navalMissionGoldenEnemyId,
+        state: RelationState.atWar,
+      ),
+    ],
+    portsByProvinceSeaboard: const {
+      'oldWorld|enemy1|$navalMissionGoldenSeaZone': 'oldWorld|enemy1|0|0',
+    },
+  );
+}
+
+/// Blockade target picker where the listed enemy port is that owner's capital.
+Game buildNavalMissionCapitalPortTargetGame() {
+  const enemyCap = 'oldWorld|enemy1';
+  return buildPanelTestGame(
+    id: 'blockade-capital-extra-golden',
+    players: const [
+      Player(
+        id: navalMissionGoldenHumanId,
+        displayName: 'England',
+        isHuman: true,
+      ),
+      Player(
+        id: navalMissionGoldenEnemyId,
+        displayName: 'Spain',
+        isHuman: false,
+        capitalProvinceId: enemyCap,
+      ),
+    ],
+    oldWorldProvinces: const [
+      Province(
+        id: enemyCap,
+        regionId: 'oldWorld',
+        ownerId: navalMissionGoldenEnemyId,
+        displayName: 'Enemy Capital Port',
+      ),
+    ],
+    fleets: [
+      Fleet(
+        id: 'fleet_at_sea',
+        ownerId: navalMissionGoldenHumanId,
+        regionId: 'oldWorld',
+        seaZoneId: navalMissionGoldenSeaZone,
+        ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+      ),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: navalMissionGoldenHumanId,
+        factionId2: navalMissionGoldenEnemyId,
+        state: RelationState.atWar,
+      ),
+    ],
+    portsByProvinceSeaboard: const {
+      'oldWorld|enemy1|$navalMissionGoldenSeaZone': 'oldWorld|enemy1|0|0',
+    },
   );
 }
 

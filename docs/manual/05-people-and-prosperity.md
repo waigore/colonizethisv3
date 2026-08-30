@@ -2,76 +2,94 @@
 
 ## Purpose
 
-Labour is the quiet engine of empire. **Workers** in your capital labour pool staff Production; **civilian units** on the map explore, build, spy, trade, and lay rail. This chapter separates those two populations, teaches Recruit/Train and Disband, and shows how to raise the civilian roster from the units panel.
+**Workers** live in your capital and give **labour** — the work that runs your factories. They are not people you place on the map. The **labour pool** is how many of those workers you have in the capital. A **decree** is an action you choose on your turn. **Peasant**, **Apprentice**, **Journeyman**, and **Master** are the four worker ranks, from cheapest labour to most. **Civilian units** are people you place on the map. Empty factories, workers who **strike** (give no labour that turn for lack of food or luxury), and rivals who train Explorers and Builders while you do not, leave you short of goods and behind on the land.
 
 ## How it is done
 
 ### Worker tiers (not map units)
 
-Workers live only in the labour pool shown on `GAME20001` **Production screen**. They never appear as map tokens.
+1. On `GAME10001` **Game screen**, tap the **Production** icon on the left of the map to open `GAME20001` **Production screen**.
+2. Use the worker grid and **Labour Controls** there.
 
-| Tier | Labour / turn | Food | Luxury (all-or-nothing) |
-|------|---------------|------|-------------------------|
+Workers live only in the labour pool on `GAME20001` **Production screen**. They never appear on the map. The four ranks, from cheapest labour to most, are **Peasant**, **Apprentice**, **Journeyman**, and **Master**.
+
+| Tier | Labour / turn | Food | Luxury (trained workers) |
+|------|---------------|------|--------------------------|
 | Peasant | 1 | 1 grain **or** meat | — |
 | Apprentice | 4 | 1 grain + 1 meat | refined sugar |
 | Journeyman | 6 | 1 grain + 1 meat | cigars |
 | Master | 8 | 1 grain + 1 meat | fur hats |
 
-Higher tiers eat more and demand luxuries. Unfed or luxury-starved workers may **strike** (0 labour that turn) but remain in the pool. Consumption runs in the resolved turn **before** Production uses idle labour.
+Higher ranks eat more. Trained workers (Apprentice, Journeyman, Master) also need their luxury in full, or they give no labour that turn; they do not work “a little.” After you confirm **Next turn**, armies and fleets eat before workers do. Only workers who were fed (and, if trained, given their luxury) add labour that turn. Unfed workers, or trained workers who miss their luxury, **do not work** that turn (they stay in the pool). When food is short, Masters eat first and Peasants last. A trained worker who missed food does not take a luxury that turn.
 
-On **Production screen**, the **Labour this turn** line under the worker grid previews how many labour points will actually be available after armies, fleets, and workers eat — using food and luxuries arriving this turn from extraction, not the warehouse alone. When some workers will not work, a short reason names the main shortage (food or a luxury). Tap **Labour details** for per-tier working vs not-working counts. Respond via Trade, Allocation, Labour Controls, or Disband — the panel informs only; it does not auto-fix shortages.
+The **Labour this turn** line under the worker grid on `GAME20001` **Production** shows how much labour you will have after everyone eats. The same forecast appears on the map tab bar as `effective/full capacity` beside cargo — tap either surface for the shortage reason and forces-food gist. Until you recruit a Peasant, that map readout still shows `0/0`. It counts food and luxuries that arrive this turn, not only what you already have stored. When some workers will not work, a short reason names the main shortage (food, or a luxury). Tap **Labour details** on Production for working vs not-working counts on each rank. The line only informs; it does not buy food, change Allocation, or disband anyone for you.
 
 ### Recruit, train, and disband
 
-On `GAME20001`, use **Labour Controls**:
+On `GAME20001`, use **Labour Controls** under that labour line. Each row shows the printed cost (peasant **Fabric ×2**; trained rows **£… + Paper ×N + 1 peasant**), how much labour that worker gives, and what food or luxury they eat. If **+** will not press, rest on it to read why — treasury, materials, peasants already promised, or technology. New workers add labour on a **later** turn, not the turn you queue them.
 
-1. **Recruit peasant** or **Train** a higher tier — both queue a `RecruitWorkerOrder` for **Build/work**. There is **no** direct tier-to-tier promotion: train always consumes **one peasant** from the reserved pool.
-2. Costs (v1 catalog — treat as fixed until a ruleset ships otherwise):
+1. Open **Labour Controls** under the worker grid. Tap **+** on **Peasant** to queue **Recruit**, or **+** on **Apprentice**, **Journeyman**, or **Master** to queue **Train**. Training always consumes **one peasant**; there is no direct promotion from apprentice to journeyman or journeyman to master. After you confirm **Next turn**, the game carries it out. Tap **−** to take back the last queued hire of that rank. When a rank has queued hires, the row shows **Queued: N**. Peasants cannot be disbanded.
+2. Printed costs:
 
 | Target | Cost |
 |--------|------|
-| Peasant (Recruit) | fabric ×2 |
-| Apprentice | £200 + paper ×2 (consumes 1 peasant) |
-| Journeyman | £500 + paper ×5 (consumes 1 peasant) |
-| Master | £1000 + paper ×10 (consumes 1 peasant) |
+| Peasant (Recruit) | Fabric ×2 |
+| Apprentice | £200 + Paper ×2 (consumes 1 peasant) |
+| Journeyman | £500 + Paper ×5 (consumes 1 peasant) |
+| Master | £1000 + Paper ×10 (consumes 1 peasant) |
 
-3. **Tech gates** (both techs required): Apprentice → `apprentice_workers` + `sugar_refining`; Journeyman → `trained_journeymen` + `cigar_production`; Master → `master_artisans` + `hat_production`. Locked tiers show as locked in the panel until researched.
-4. **Peasant reservation:** available peasants = pool peasants minus pending consumes from recruit/train **and** military/naval builds. Civilian unit builds do **not** consume peasants.
-5. **Disband** a trained worker is an **immediate Orders-phase** action: that tier −1, peasants +1, **no refund**. It is not queued for Build/work.
+3. Locked trained rows need both technologies: Apprentice needs Apprentice Workers and Sugar Refining; Journeyman needs Trained Journeymen and Cigar Production; Master needs Master Artisans and Hat Production. Locked rows print **Requires:** with those names until you research them.
+4. Peasants already promised to queued worker training or to army/navy training are not free to spend again. Training a civilian (Explorer, Builder, and the rest) does **not** spend a peasant.
+5. Tap **Disband** on a trained row. A confirm names that rank, says the worker becomes a Peasant **now**, and says gold and paper spent to train them are not returned. Tap **Cancel** (or tap outside, or press Escape) to leave the pool unchanged. Tap **Disband** on the confirm to apply it at once: that rank −1, peasants +1. It is not queued for later. Peasant rows have no **Disband**.
 
 Reject reasons you may see: **Insufficient workers**, **Insufficient materials**, **Insufficient treasury**, **Required technology not unlocked**.
 
-**Timing note:** Recruits that complete in Build/work do **not** feed the same turn’s Production labour — Consumption and Production already ran earlier in that resolved turn. Plan one turn ahead.
+**Timing note:** New workers join the pool after this turn’s factories have already run, so they help **next** turn. Plan one turn ahead.
 
 ### Civilian roster and training
 
-Civilians are map units. Open `UNIT10001` **Civilian units panel** from the left empire rail, then **Train** to open `UNIT40001` **Train civilians dialog**.
+Civilians are people you place on the map. They explore, improve land, and post Spies. Workers decide how much you can make this turn; civilians are how you work the map.
 
-| Unit | Train cost (approx.) | Unlock notes |
-|------|----------------------|--------------|
-| Explorer, Builder, Engineer | £1000 + 2 paper | Available from the start |
-| Spy, Merchant, Rail Builder | £2000 + 4 paper | Spy/Merchant/Rail Builder need their starting or tech unlocks (e.g. Merchant Companies, Early Steam Engine) |
+1. On `GAME10001` **Game screen**, tap the **Civilian Units** icon on the left of the map to open `UNIT10001` **Civilian units panel**.
+2. Tap **Train** to open `UNIT40001` **Train civilians dialog**. Each row shows a short role line under the type name:
 
-Training queues a `BuildUnitOrder`. Units appear at the **capital tile** after **Build/work** resolves (after recruit/train workers in that phase). Use the panel thereafter to select units, assign work (Chapters 4 and 6), or relocate Spies.
+| Unit | Role line | Train cost | Unlock |
+|------|-----------|------------|--------|
+| Explorer | Explores provinces · Prospects minerals | £1,000 + 2 paper | Available from the start |
+| Builder | Improves tiles · Upgrades towns | £1,000 + 2 paper | Available from the start |
+| Engineer | Builds roads, ports, and forts | £1,000 + 2 paper | Available from the start |
+| Spy | Holds foreign intel · Counter-espionage at home | £2,000 + 4 paper | Available from the start |
+| Merchant | Purchases land in Minor/Tribe provinces | £2,000 + 4 paper | **Requires: Merchant Companies** |
+| Rail Builder | Upgrades roads to railroad | £2,000 + 4 paper | **Requires: Early Steam Engine** |
 
-**Spies — station and relocate.** On `UNIT10001`, an idle Spy shows **Relocate** to pick a legal foreign (or own) land tile on the map; **Assign** still offers **counter-espionage** on owned provinces only. While a Spy holds a foreign province, status reads **Holding intel**; leaving when yours is the last Spy there warns that full intel will fog after the turn ends. End-turn confirmation does **not** nag idle Spies — stationing is strategic portfolio, not wasted capacity.
+Set the **+** counts, then close the dialog (tap outside, or go back). There is no **Confirm** button. **Reset** (if shown) clears the counts. The remaining treasury and paper line updates as you change the counts. Locked rows show **Requires:** with the technology name.
+
+Training queues a civilian-unit hire. After you confirm **Next turn**, the new unit appears on your capital tile once the game has finished this turn’s building and work. Worker hires happen first, then the civilians appear. Use the panel thereafter to select units, assign work (Chapters 4 and 6), or relocate Spies.
+
+**Spies — station and relocate.** Tap a province to open `MAP20001` **Province sea-zone overlay**. In the **Civilian** section, tap **Station spy** when it is enabled, then tap **Relocate** on an idle Spy. That queues the Spy to walk to the tile you already selected, without picking again on the map. The Spy arrives after you confirm **Next turn**. You can still open `UNIT10001` and tap **Relocate** to pick any legal land tile.
+
+**Station spy** is hidden on a sea zone, on an unrevealed (`???`) tile, when you cannot act, or when your Spy is already on that tile and no other Spy can move there. It is visible but disabled when no idle Spy can take the tile, or the tile cannot be occupied (the hints distinguish those). It is enabled when at least one idle Spy can occupy the selected tile.
+
+**Assign** still offers **Counter-espionage** on owned provinces only. From an owned land province already under study, you can also tap **Counter-espionage** in the **Civilian** section of `MAP20001` **Province sea-zone overlay**, then **Assign** on an idle Spy — that posts the work without picking a tile on the map. The button says this protects the **whole realm**, not only the province you are looking at; one Spy is enough. If a Spy is already posted, or you have no idle Spy, the button stays visible but cannot be used (the hint names which). It stays hidden on a sea zone, on land you do not own, when Civilian shows `???`, or when you cannot act. An idle Spy on foreign land shows **Holding intel: {province}**. An idle Spy on land you own, with no mission, shows **Reserve**. When a Spy is set to defend at home this turn, the row shows **Counter-espionage** and hides **Relocate**. Leaving when yours is the last Spy there warns that full intel will fog after the turn ends. `DLG60001` **Next turn confirmation** does not list idle Spies — stationing is a chosen post, not wasted capacity.
+
+If at least one of your Spies still stands in a foreign province after **Next turn** finishes, that court’s last-turn news (treaties, wars, captures, research, and fights they took part in) appears under **Spy reports** on `GAME30003` **Intelligence**, opened from **Intelligence** on `GAME30001` **Diplomacy**. You do not see a rival’s secret agenda. If the last Spy left or was caught, that court is silent next turn.
 
 ## Counsel
 
 **Counsel.** Hark, my liege: peasants are coin and fabric made flesh — spend them on Masters only when food, luxuries, and paper already flow.
 
-**Tip.** Disband before a lean turn if luxuries will fail; a striking Master contributes nothing and still eats.
+**Tip.** Disband before a lean turn if luxuries will fail; a Master who does not work that turn contributes no labour and still eats.
 
-**Warning.** Military and naval training compete for the same peasant reservation as labour training. A parade of regiments can starve your Production queue of peasants even when the pool looks full.
+**Warning.** Military and naval training compete for the same promised peasants as labour training. A parade of regiments can leave your Production queue short of peasants even when the pool looks full.
 
 ## The other courts
 
-AI economies allocate production labour and may recruit peasants when cast-iron labour bottlenecks appear (`SPEC/ai/economy-planner.md`). Growth-stage planners raise worker-growth pressure when labour sits below maturity targets, which boosts fabric-related production and feedstock Builder routing (`SPEC/ai/growth-stage-planner.md`). Civilian build planners keep Explorer/Builder/Engineer floors and phase-bias the roster (colonial Explorer+Merchant; develop Engineer+Rail Builder) (`SPEC/ai/civilian-build-planner.md`). They respect the same peasant reservation rules you do.
+Rival courts assign factory labour as you do, and they follow the same peasant-sharing rule: soldiers and ships compete with trained workers for peasants. They hire peasants when they do not have enough workers to run industry. While they are still building up, they make fabric and send Builders to improve wool and cotton land. They try to keep at least some Explorers, Builders, and Engineers. Early on they lean toward Builders; while settling new lands they lean toward Explorers and Merchants; when improving the homeland they lean toward Engineers and Rail Builders.
 
 ## Consequences
 
 - Under-recruiting peasants caps Production even with rich recipes unlocked.
-- Over-training Masters without food/luxury chains creates strikes and wasted treasury.
+- Over-training Masters without food and luxury chains leaves trained workers who do not work that turn, and wasted treasury.
 - Ignoring civilian training leaves exploration and improvements to rivals who did not.
 - Same-turn expectation that new recruits staff factories leads to empty Production surprises.
 
@@ -79,9 +97,12 @@ AI economies allocate production labour and may recruit peasants when cast-iron 
 
 - [ ] Distinguishes worker pool (`GAME20001`) from civilian map units (`UNIT10001`).
 - [ ] Documents peasant→master tiers, food/luxury, recruit/train costs and tech gates.
-- [ ] Documents immediate disband (no refund) vs queued RecruitWorkerOrder.
+- [ ] Documents immediate disband (no refund) vs queued Recruit / Train (results after **Next turn**).
 - [ ] Documents peasant reservation vs military/naval builds.
 - [ ] Documents `UNIT40001` civilian train roster and capital spawn timing.
+- [ ] Documents `MAP20001` **Station spy** then `UNIT10001` **Relocate**, plus map Relocate pick and that `DLG60001` **Next turn confirmation** does not list idle Spies.
+- [x] Documents `MAP20001` Civilian **Counter-espionage** then `UNIT10001` **Assign**, that it protects the whole realm, and that one Spy is enough.
+- [ ] Documents that a Spy remaining in a foreign court yields last-turn reports on `GAME30003` **Intelligence**.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources
@@ -93,9 +114,14 @@ AI economies allocate production labour and may recruit peasants when cast-iron 
 - `SPEC/program/turn-resolution-phases.md`
 - `SPEC/program/turn-resolution-phase-details.md`
 - `SPEC/ui/production-panel.md`
+- `SPEC/ui/empire-overview.md`
 - `SPEC/ui/civilian-units-panel.md`
+- `SPEC/ui/intelligence-council.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/train-civilians-dialog.md`
 - `SPEC/ui/screen-registry.md`
+- `SPEC/ui/empire-buttons.md`
+- `SPEC/ui/next-turn-confirmation.md`
 - `SPEC/ai/economy-planner.md`
 - `SPEC/ai/growth-stage-planner.md`
 - `SPEC/ai/civilian-build-planner.md`

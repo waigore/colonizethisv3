@@ -30,6 +30,7 @@ bool gameEquals(Game game, Object other) =>
         modelMapEquals(game.hiddenAgendaByGpId, other.hiddenAgendaByGpId) &&
         modelListEquals(game.dossierEvidenceEntries, other.dossierEvidenceEntries) &&
         modelListEquals(game.diplomaticHistoryEvents, other.diplomaticHistoryEvents) &&
+        game.lastTurnIntelligenceDigest == other.lastTurnIntelligenceDigest &&
         game.globalGameSeed == other.globalGameSeed &&
         modelNullableMapOfListEquals(
           game.greatPowerColorOverride,
@@ -76,6 +77,7 @@ int gameHashCode(Game game) => Object.hash(
   Object.hash(
     Object.hashAll(game.dossierEvidenceEntries),
     Object.hashAll(game.diplomaticHistoryEvents),
+    game.lastTurnIntelligenceDigest,
   ),
   game.globalGameSeed,
   game.greatPowerColorOverride != null

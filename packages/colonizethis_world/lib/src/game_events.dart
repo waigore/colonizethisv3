@@ -1,5 +1,11 @@
 // Game events: shared event stream for game occurrences.
 // SPEC/program/game-events.md
+//
+// Kept in one library deliberately (Refs #4330): `sealed` subclasses must share
+// a Dart library for exhaustiveness. Cross-file splits would require `part` /
+// `part of` (forbidden by `repo.world_no_part_directives`) or dropping `sealed`.
+// Wave-7 dedicated ceiling is 400 (`repo.colonizethis_world_lib_file_size`);
+// other world lib files ratchet to 300 (Refs #4515).
 
 import 'package:colonizethis_models/colonizethis_models.dart' show OrderKind;
 
@@ -14,8 +20,11 @@ class CombatResultEvent extends GameEvent {
     required this.provinceId,
     required this.attackerId,
     required this.defenderId,
-    required this.winnerId,
+    required this.outcomeName,
     required this.turnNumber,
+    this.winnerId,
+    this.attackerCasualtyCount = 0,
+    this.defenderCasualtyCount = 0,
     this.casualties = const {},
   });
 
@@ -23,10 +32,22 @@ class CombatResultEvent extends GameEvent {
   final String provinceId;
   final String attackerId;
   final String defenderId;
-  final String winnerId;
+
+  /// [EngagementResult.name] for the resolved land battle (Refs #4548).
+  final String outcomeName;
+
+  /// Set for decisive outcomes; null for stalemate or mutual annihilation.
+  final String? winnerId;
   final int turnNumber;
 
-  /// Casualties by player id.
+  /// Regiment losses on the attacking side (Refs #4548).
+  final int attackerCasualtyCount;
+
+  /// Regiment losses on the defending side (Refs #4548).
+  final int defenderCasualtyCount;
+
+  /// Legacy per-faction casualty map; prefer [attackerCasualtyCount] /
+  /// [defenderCasualtyCount] for UI.
   final Map<String, int> casualties;
 }
 
@@ -58,6 +79,8 @@ class NavalCombatResultEvent extends GameEvent {
     required this.outcomeName,
     required this.turnNumber,
     this.winnerOwnerId,
+    this.side1CasualtyCount = 0,
+    this.side2CasualtyCount = 0,
     this.side1Retreated = false,
     this.side2Retreated = false,
   });
@@ -73,6 +96,12 @@ class NavalCombatResultEvent extends GameEvent {
 
   /// Set when [outcomeName] is a decisive victory for one side.
   final String? winnerOwnerId;
+
+  /// Ships sunk on side1 (starting hulls − survivors). Includes 0.
+  final int side1CasualtyCount;
+
+  /// Ships sunk on side2 (starting hulls − survivors). Includes 0.
+  final int side2CasualtyCount;
   final bool side1Retreated;
   final bool side2Retreated;
 }
@@ -291,5 +320,23 @@ class MarketTurnSummaryEvent extends GameEvent {
   final int totalSpent;
   final int totalReceived;
   final int carryForwardOrderCount;
+  final int turnNumber;
+}
+
+/// Last-turn treasury and stockpile net change for a GP (Refs #4308).
+class EconomyTurnSummaryEvent extends GameEvent {
+  const EconomyTurnSummaryEvent({
+    required this.playerId,
+    required this.treasuryDelta,
+    required this.stockpileDeltas,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final int treasuryDelta;
+
+  /// Non-zero commodity deltas keyed by canonical commodity id; stable key order
+  /// when built by [emitEconomyTurnSummaryEvents].
+  final Map<String, int> stockpileDeltas;
   final int turnNumber;
 }

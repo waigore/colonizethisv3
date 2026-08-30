@@ -28,6 +28,14 @@
   "@mainMenu_subtitleAfterVictory": {
     "description": "Subtitle shown on the main menu after the player has won their last game."
   },
+  "mainMenu_quickStart": "Quick Start",
+  "@mainMenu_quickStart": {
+    "description": "Main menu button label to begin a default campaign without opening leader selection."
+  },
+  "mainMenu_quickStartHelper": "Play as England, turn 0, random map, five AI courts.",
+  "@mainMenu_quickStartHelper": {
+    "description": "Muted helper under Quick Start explaining the default campaign (England, turn 0, random map, five AI courts)."
+  },
   "mainMenu_newGame": "New Game",
   "@mainMenu_newGame": {
     "description": "Main menu button label to start a new game."
@@ -328,6 +336,135 @@
   "@game_nextTurnConfirm_dontShowAgain": {
     "description": "Toggle label in the end-turn idle-civilian warning variant."
   },
+  "game_nextTurnConfirm_stagedSection": "Staged this turn",
+  "@game_nextTurnConfirm_stagedSection": {
+    "description": "Section header on DLG60001 listing already staged decrees."
+  },
+  "game_nextTurnConfirm_reviewDecrees": "Review decrees",
+  "@game_nextTurnConfirm_reviewDecrees": {
+    "description": "Button that expands the staged-decree list on DLG60001."
+  },
+  "game_nextTurnConfirm_hideDecrees": "Hide decrees",
+  "@game_nextTurnConfirm_hideDecrees": {
+    "description": "Button that collapses the staged-decree list on DLG60001."
+  },
+  "game_nextTurnConfirm_familySeparator": " · ",
+  "@game_nextTurnConfirm_familySeparator": {
+    "description": "Joiner between compact family summaries on DLG60001."
+  },
+  "game_nextTurnConfirm_familyCount": "{family} ({count})",
+  "@game_nextTurnConfirm_familyCount": {
+    "description": "Compact family summary with count on DLG60001.",
+    "placeholders": {
+      "family": {
+        "type": "String",
+        "description": "Player-facing family name."
+      },
+      "count": {
+        "type": "int",
+        "description": "Number of staged decrees in that family."
+      }
+    }
+  },
+  "game_nextTurnConfirm_familyCivilianWork": "Civilian work",
+  "@game_nextTurnConfirm_familyCivilianWork": {
+    "description": "Staged-decree family name for civilian work orders."
+  },
+  "game_nextTurnConfirm_familySpyRelocate": "Spy relocate",
+  "@game_nextTurnConfirm_familySpyRelocate": {
+    "description": "Staged-decree family name for Spy relocate moves."
+  },
+  "game_nextTurnConfirm_familyArmyMoves": "Army moves",
+  "@game_nextTurnConfirm_familyArmyMoves": {
+    "description": "Staged-decree family name for army moves."
+  },
+  "game_nextTurnConfirm_familyFleet": "Fleet moves and missions",
+  "@game_nextTurnConfirm_familyFleet": {
+    "description": "Staged-decree family name for fleet moves and missions."
+  },
+  "game_nextTurnConfirm_familyTraining": "Training",
+  "@game_nextTurnConfirm_familyTraining": {
+    "description": "Staged-decree family name for unit training and builds."
+  },
+  "game_nextTurnConfirm_familyLabour": "Labour recruit",
+  "@game_nextTurnConfirm_familyLabour": {
+    "description": "Staged-decree family name for labour recruit and train."
+  },
+  "game_nextTurnConfirm_familyDiplomacy": "Diplomacy",
+  "@game_nextTurnConfirm_familyDiplomacy": {
+    "description": "Staged-decree family name for diplomacy."
+  },
+  "game_nextTurnConfirm_familyTrade": "Trade",
+  "@game_nextTurnConfirm_familyTrade": {
+    "description": "Staged-decree family name for market bids and offers."
+  },
+  "game_nextTurnConfirm_familyResearch": "Research",
+  "@game_nextTurnConfirm_familyResearch": {
+    "description": "Staged-decree family name for funded research assignments."
+  },
+  "game_nextTurnConfirm_rowWork": "{unitType}: {work}",
+  "@game_nextTurnConfirm_rowWork": {
+    "description": "Plain-language civilian work row on DLG60001.",
+    "placeholders": {
+      "unitType": {"type": "String"},
+      "work": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowRelocate": "{unitType} → {place}",
+  "@game_nextTurnConfirm_rowRelocate": {
+    "description": "Plain-language Spy relocate row on DLG60001.",
+    "placeholders": {
+      "unitType": {"type": "String"},
+      "place": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowArmyMove": "{army} → {place}",
+  "@game_nextTurnConfirm_rowArmyMove": {
+    "description": "Plain-language army move row on DLG60001.",
+    "placeholders": {
+      "army": {"type": "String"},
+      "place": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowFleetMove": "{fleet} → {place}",
+  "@game_nextTurnConfirm_rowFleetMove": {
+    "description": "Plain-language fleet move row on DLG60001.",
+    "placeholders": {
+      "fleet": {"type": "String"},
+      "place": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowFleetMission": "{fleet}: {mission}",
+  "@game_nextTurnConfirm_rowFleetMission": {
+    "description": "Plain-language fleet mission row on DLG60001.",
+    "placeholders": {
+      "fleet": {"type": "String"},
+      "mission": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowTrain": "Train {name}",
+  "@game_nextTurnConfirm_rowTrain": {
+    "description": "Plain-language train/build row on DLG60001.",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowDiplomacy": "{action} — {faction}",
+  "@game_nextTurnConfirm_rowDiplomacy": {
+    "description": "Plain-language diplomacy row on DLG60001.",
+    "placeholders": {
+      "action": {"type": "String"},
+      "faction": {"type": "String"}
+    }
+  },
+  "game_nextTurnConfirm_rowResearch": "{tech} ({funding})",
+  "@game_nextTurnConfirm_rowResearch": {
+    "description": "Plain-language funded research row on DLG60001.",
+    "placeholders": {
+      "tech": {"type": "String"},
+      "funding": {"type": "String"}
+    }
+  },
   "game_turnResolutionFailedMessage": "Turn resolution failed.",
   "@game_turnResolutionFailedMessage": {
     "description": "Snackbar shown when turn resolution throws an error."
@@ -384,7 +521,7 @@
   "@map_displayOptions_title": {
     "description": "Dialog title for map display options."
   },
-  "map_displayOptions_showProvinceOverlay": "Show province overlay",
+  "map_displayOptions_showProvinceOverlay": "Show province and sea borders",
   "@map_displayOptions_showProvinceOverlay": {
     "description": "Toggle for province and sea-zone boundary strokes on the map (no ownership tint)."
   },
@@ -395,6 +532,26 @@
   "map_displayOptions_showProvinceNames": "Show province names",
   "@map_displayOptions_showProvinceNames": {
     "description": "Toggle label for showing land province names on the map."
+  },
+  "map_displayOptions_showCapitalLinkDisconnected": "Highlight land not bound to the capital",
+  "@map_displayOptions_showCapitalLinkDisconnected": {
+    "description": "Toggle for hatch on owned land tiles that will not extract to the capital (Refs #4370)."
+  },
+  "map_displayOptions_mapMarksHeading": "Map marks",
+  "@map_displayOptions_mapMarksHeading": {
+    "description": "Section heading for resource, improvement, and road information-layer toggles."
+  },
+  "map_displayOptions_showMapResources": "Show resources",
+  "@map_displayOptions_showMapResources": {
+    "description": "Toggle for commodity icons and extraction discs on the empire map."
+  },
+  "map_displayOptions_showMapImprovements": "Show improvements",
+  "@map_displayOptions_showMapImprovements": {
+    "description": "Toggle for improvement I{n} labels on the empire map."
+  },
+  "map_displayOptions_showMapRoads": "Show roads and rails",
+  "@map_displayOptions_showMapRoads": {
+    "description": "Toggle for road and rail transport sprites; disabled when improvements are off."
   },
   "common_close": "Close",
   "@common_close": {
@@ -489,6 +646,10 @@
   "@map_relocate_leaveIntel_cancel": {
     "description": "Cancel button on leave-intel Spy relocate warning."
   },
+  "map_lastTurnPlayback_skip": "Skip",
+  "@map_lastTurnPlayback_skip": {
+    "description": "Button that ends MAP10001 last-turn spatial playback without opening overlays."
+  },
   "civilian_units_relocate": "Relocate",
   "@civilian_units_relocate": {
     "description": "Relocate action for idle Spy units in the civilian units panel."
@@ -557,13 +718,13 @@
   "@shell_leaderDialog_seedHelper": {
     "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
   },
-  "shell_leaderDialog_infiniteModeLabel": "Infinite mode (no victory condition)",
+  "shell_leaderDialog_infiniteModeLabel": "Infinite mode",
   "@shell_leaderDialog_infiniteModeLabel": {
-    "description": "Toggle label for infinite campaign mode in the new-game leader dialog."
+    "description": "Toggle label for infinite campaign mode in the new-game leader dialog. Does not claim there is no victory."
   },
-  "shell_leaderDialog_infiniteModeHelper": "The game will continue indefinitely",
+  "shell_leaderDialog_infiniteModeHelper": "Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.",
   "@shell_leaderDialog_infiniteModeHelper": {
-    "description": "Helper text for infinite mode in the new-game leader dialog."
+    "description": "Always-visible helper: Infinite mode skips the 1800 calendar stop only; the 31-province win still applies. Reused on Game Parameters when On."
   },
   "shell_leaderDialog_advancedStartLabel": "Advanced start",
   "@shell_leaderDialog_advancedStartLabel": {
@@ -695,6 +856,52 @@
   "game_callToArms_submit": "Submit",
   "@game_callToArms_submit": {
     "description": "Submit all call-to-arms choices."
+  },
+  "game_callToArms_formalAllianceReason": "Formal alliance with {defender}",
+  "@game_callToArms_formalAllianceReason": {
+    "description": "Optional muted reason line under each call-to-arms prompt (Refs #4364). Speaks of formal alliance/treaty, not the informal Friendly band.",
+    "placeholders": {
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_callToArms_effectJoin": "Effect: Enter war with {aggressor} this turn. The treaty with {defender} stays.",
+  "@game_callToArms_effectJoin": {
+    "description": "First-order Join consequence under each call-to-arms row (Refs #4364).",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_callToArms_effectRefuse": "Effect: The treaty with {defender} ends. Relations with {defender} worsen (−50). Standing with other Great Powers worsens (−10).",
+  "@game_callToArms_effectRefuse": {
+    "description": "First-order Refuse consequence under each call-to-arms row (Refs #4364). Aggressor excluded from the −10 standing hit per GDD.",
+    "placeholders": {
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_ftp_title": "Favored Trading Partner",
+  "@game_ftp_title": {
+    "description": "Title when the human must Accept or Reject Favored Trading Partner offers (OVL90001, Refs #4586)."
+  },
+  "game_ftp_intro": "A rival court offers Favored Trading Partner. Accept or reject each offer. This prefers fills at the same rank; it does not change prices and does not beat First right of refusal.",
+  "@game_ftp_intro": {
+    "description": "Short explanation above incoming Favored Trading Partner rows (Refs #4586)."
+  },
+  "game_ftp_accept": "Accept",
+  "@game_ftp_accept": {
+    "description": "Accept an incoming Favored Trading Partner offer."
+  },
+  "game_ftp_reject": "Reject",
+  "@game_ftp_reject": {
+    "description": "Reject an incoming Favored Trading Partner offer."
   },
   "game_intervention_loadError": "Could not load intervention dialogue: {error}",
   "@game_intervention_loadError": {
@@ -917,6 +1124,224 @@
   "turnNews_stage_joinEmpire": "join empire",
   "@turnNews_stage_joinEmpire": {
     "description": "Overture stage label."
+  },
+  "turnNews_spiesFooter": "Your spies report {count} items — open Intelligence",
+  "@turnNews_spiesFooter": {
+    "description": "Turn news footer when last-turn spy reports exist; taps open Intelligence.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtBlock": "Your court: {clauses}",
+  "@turnNews_courtBlock": {
+    "description": "Turn news compact player-scoped court summary.",
+    "placeholders": {
+      "clauses": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_courtMore": "{count} more",
+  "@turnNews_courtMore": {
+    "description": "Turn news court block overflow families.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_openEvents": "open Events",
+  "@turnNews_openEvents": {
+    "description": "Turn news court block tap target to reveal OVL70001."
+  },
+  "turnNews_courtResearchFinished": "{tech} finished",
+  "@turnNews_courtResearchFinished": {
+    "description": "Turn news court clause for one research completion.",
+    "placeholders": {
+      "tech": {
+        "type": "String"
+      }
+    }
+  },
+  "turnNews_courtResearchFinishedMany": "{count} technologies finished",
+  "@turnNews_courtResearchFinishedMany": {
+    "description": "Turn news court clause for multiple research completions.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtResearchFinishedUnknown": "a technology finished",
+  "@turnNews_courtResearchFinishedUnknown": {
+    "description": "Turn news court clause when tech display name is unknown."
+  },
+  "turnNews_courtDecreeRefused": "a decree was refused",
+  "@turnNews_courtDecreeRefused": {
+    "description": "Turn news court clause for one rejected order."
+  },
+  "turnNews_courtDecreesRefused": "{count} decrees were refused",
+  "@turnNews_courtDecreesRefused": {
+    "description": "Turn news court clause for multiple rejected orders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtBattleFought": "a battle was fought",
+  "@turnNews_courtBattleFought": {
+    "description": "Turn news court clause for one combat outcome."
+  },
+  "turnNews_courtBattlesFought": "{count} battles were fought",
+  "@turnNews_courtBattlesFought": {
+    "description": "Turn news court clause for multiple combats.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "turnNews_courtMarket": "market and realm accounts",
+  "@turnNews_courtMarket": {
+    "description": "Turn news court clause for market or economy summary."
+  },
+  "turnNews_courtWorkFinished": "work finished",
+  "@turnNews_courtWorkFinished": {
+    "description": "Turn news court clause for one completed work order."
+  },
+  "turnNews_courtWorksFinished": "{count} works finished",
+  "@turnNews_courtWorksFinished": {
+    "description": "Turn news court clause for multiple completed work orders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "diplomacy_intelligence": "Intelligence",
+  "@diplomacy_intelligence": {
+    "description": "GAME30001 top-bar control opening the Intelligence Council."
+  },
+  "intelligence_worldHeading": "World briefing",
+  "@intelligence_worldHeading": {
+    "description": "GAME30003 section heading for public last-turn world lines."
+  },
+  "intelligence_spyHeading": "Spy reports",
+  "@intelligence_spyHeading": {
+    "description": "GAME30003 section heading for spy-gated court reports."
+  },
+  "intelligence_worldEmpty": "No major world events last turn.",
+  "@intelligence_worldEmpty": {
+    "description": "GAME30003 empty copy for the world briefing section."
+  },
+  "intelligence_spyEmpty": "No spy reports. Station a Spy in a foreign province to hear that court's news.",
+  "@intelligence_spyEmpty": {
+    "description": "GAME30003 empty copy when the human has no last-turn spy reports."
+  },
+  "intelligence_spyPrefix": "Our spy in {court} reports: {fact}",
+  "@intelligence_spyPrefix": {
+    "description": "Prefix wrapping a spy-gated court fact.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "fact": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_allianceFormed": "{a} and {b} formed a formal alliance.",
+  "@intelligence_allianceFormed": {
+    "description": "World briefing line for a last-turn formal alliance.",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_allianceBroken": "{a} and {b} broke their formal alliance.",
+  "@intelligence_allianceBroken": {
+    "description": "World briefing line for a last-turn broken formal alliance.",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyCaptureMade": "{court} captured {province} from {other}.",
+  "@intelligence_spyCaptureMade": {
+    "description": "Spy report when the court captured a province.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "province": {
+        "type": "String"
+      },
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyCaptureLost": "{court} lost {province} to {other}.",
+  "@intelligence_spyCaptureLost": {
+    "description": "Spy report when the court lost a province.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "province": {
+        "type": "String"
+      },
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyResearch": "{court} finished researching {tech}.",
+  "@intelligence_spyResearch": {
+    "description": "Spy report when the court finished a technology.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "tech": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyCombat": "{court} fought in {province}.",
+  "@intelligence_spyCombat": {
+    "description": "Spy report when the court fought a land battle.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "province": {
+        "type": "String"
+      }
+    }
+  },
+  "intelligence_spyNaval": "{court} fought at sea in {zone}.",
+  "@intelligence_spyNaval": {
+    "description": "Spy report when the court fought a naval battle.",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      },
+      "zone": {
+        "type": "String"
+      }
+    }
   },
   "province_unitStatus_idle": "idle",
   "@province_unitStatus_idle": {
@@ -1272,6 +1697,31 @@
   "@quickBattle_quickBattle": {
     "description": "Combat mode button label."
   },
+  "quickBattle_autoResolveMeaning": "Decides the battle at once.",
+  "@quickBattle_autoResolveMeaning": {
+    "description": "One-line meaning under Auto-Resolve on CMPT10001 (Refs #4438)."
+  },
+  "quickBattle_quickBattleMeaning": "You give orders in the fight.",
+  "@quickBattle_quickBattleMeaning": {
+    "description": "One-line meaning under Quick Battle on CMPT10001 (Refs #4438)."
+  },
+  "combatMode_attackersRegiments": "Attackers: {count} regiments",
+  "@combatMode_attackersRegiments": {
+    "description": "Incoming enemy force line on CMPT10001 when the human is defending (Refs #4438).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "combatMode_details": "Details",
+  "@combatMode_details": {
+    "description": "Expands regiment-type mix on CMPT10001 (Refs #4438)."
+  },
+  "combatMode_hideDetails": "Hide",
+  "@combatMode_hideDetails": {
+    "description": "Collapses regiment-type mix on CMPT10001 (Refs #4438)."
+  },
   "quickBattle_attackerWins": "{name} wins",
   "@quickBattle_attackerWins": {
     "description": "Quick battle winner line when attacker wins.",
@@ -1414,6 +1864,10 @@
   "@victory_military": {
     "description": "Victory type label."
   },
+  "victory_campaignComplete": "Campaign complete",
+  "@victory_campaignComplete": {
+    "description": "Calendar-halt OVL20001 overlay title (not military victory)."
+  },
   "victory_winnerOnTurn": "{winner} wins on turn {turn}.",
   "@victory_winnerOnTurn": {
     "description": "Victory sentence with winner and turn number.",
@@ -1445,7 +1899,35 @@
   },
   "victory_conditionsCalendarEnd": "If no one wins by province count, the campaign can halt near 1800 (turn 201 under the default calendar). The Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
   "@victory_conditionsCalendarEnd": {
-    "description": "Victory panel: calendar campaign end condition copy."
+    "description": "Victory panel: unused static calendar fallback (Refs #4597)."
+  },
+  "victory_conditionsCalendarRemaining": "This year is {currentYear}. The last campaign year is {lastYear}. {remainingYears} years remain ({remainingTurns} full turns). If no one wins by province count, the Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
+  "@victory_conditionsCalendarRemaining": {
+    "description": "Victory panel: live remaining years until the calendar halt.",
+    "placeholders": {
+      "currentYear": { "type": "int" },
+      "lastYear": { "type": "int" },
+      "remainingYears": { "type": "int" },
+      "remainingTurns": { "type": "int" }
+    }
+  },
+  "victory_conditionsCalendarLastYear": "This is the last campaign year ({lastYear}). No years remain. If no one wins by province count this turn, the Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
+  "@victory_conditionsCalendarLastYear": {
+    "description": "Victory panel: last campaign year remaining 0.",
+    "placeholders": {
+      "lastYear": { "type": "int" }
+    }
+  },
+  "victory_conditionsCalendarNoHalt": "This campaign calendar has no halt at year {stopYear}. Play continues until a province-count win or you leave the campaign.",
+  "@victory_conditionsCalendarNoHalt": {
+    "description": "Victory panel: mapping has no 1800 halt turn.",
+    "placeholders": {
+      "stopYear": { "type": "int" }
+    }
+  },
+  "victory_conditionsCalendarEnded": "The campaign has ended. Remaining years are not shown. If play stopped without a province-count winner, the Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
+  "@victory_conditionsCalendarEnded": {
+    "description": "Victory panel: calendar remaining omitted after halt or province win."
   },
   "victory_conditionsInfiniteMode": "Infinite mode is on: the calendar halt is bypassed. Only reaching the province win or leaving the campaign ends play.",
   "@victory_conditionsInfiniteMode": {
@@ -1697,10 +2179,31 @@
   },
   "moveFleet_warpLinkToRegion": "links to {region}",
   "@moveFleet_warpLinkToRegion": {
-    "description": "Suffix appended to cross-region sea-zone destinations in move fleet dialog.",
+    "description": "Suffix for cross-region warp sea destinations in move fleet dialog.",
     "placeholders": {
       "region": {
         "type": "String"
+      }
+    }
+  },
+  "moveFleet_destinationIntel_fleetsUnknown": "Fleets unknown",
+  "@moveFleet_destinationIntel_fleetsUnknown": {
+    "description": "Fogged/unknown sea-zone destination intel on Move fleet dialog (#4573)."
+  },
+  "moveFleet_destinationIntel_hostilePatrol": "Hostile patrol",
+  "@moveFleet_destinationIntel_hostilePatrol": {
+    "description": "At-war hostile fleet on Patrol in destination sea (#4573)."
+  },
+  "moveFleet_destinationIntel_hostileBlockade": "Hostile blockade",
+  "@moveFleet_destinationIntel_hostileBlockade": {
+    "description": "At-war hostile fleet on Blockade in destination sea (#4573)."
+  },
+  "moveFleet_destinationIntel_hostileFleets": "Hostile fleets: {count}",
+  "@moveFleet_destinationIntel_hostileFleets": {
+    "description": "At-war hostile fleets at sea without Patrol/Blockade (#4573).",
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },
@@ -1973,7 +2476,7 @@
   "@naval_mission_effect_defend": {
     "description": "Plain-language effect line for Defend mission row (DLG31001)."
   },
-  "naval_mission_effect_blockade": "Stronger intercept chance on fleets entering this zone, including ships leaving the target port.",
+  "naval_mission_effect_blockade": "Severs the target port's link to its capital, so goods from that province will not reach warehouses. Also gives stronger intercept chance on fleets entering this zone, including ships leaving the target port.",
   "@naval_mission_effect_blockade": {
     "description": "Plain-language effect line for Blockade mission row (DLG31001)."
   },
@@ -1981,13 +2484,45 @@
   "@naval_mission_effect_beachhead": {
     "description": "Plain-language effect line for Beachhead mission row (DLG31001)."
   },
-  "naval_mission_targetCaption_blockade": "Pressures the target port approaches with stronger interception than Patrol.",
+  "naval_mission_sail": "Sail / Move",
+  "@naval_mission_sail": {
+    "description": "DLG31001 row that opens Move fleet (DLG30001) from the mission menu (Refs #4343)."
+  },
+  "naval_mission_effect_sail": "Move this fleet to an adjacent sea zone or owned port.",
+  "@naval_mission_effect_sail": {
+    "description": "Effect line for Sail / Move row on DLG31001 (Refs #4343)."
+  },
+  "naval_mission_targetCaption_blockade": "Goods from the chosen port will not reach its owner's warehouses until the blockade ends. Stronger interception than Patrol on fleets entering this zone.",
   "@naval_mission_targetCaption_blockade": {
     "description": "Mission consequence caption on Blockade target picker (DLG31002)."
   },
-  "naval_mission_targetCaption_beachhead": "Landing site supports invasion on the following turn and expires after that turn if unused.",
+  "naval_mission_blockade_capitalExtra": "At a capital port, sea-only and overseas links are cut; land roads still reach inland tiles.",
+  "@naval_mission_blockade_capitalExtra": {
+    "description": "Extra default line on Blockade assign when the selected target is the owner's capital port (DLG31002)."
+  },
   "@naval_mission_targetCaption_beachhead": {
     "description": "Mission consequence caption on Beachhead target picker (DLG31002)."
+  },
+  "naval_mission_targetIntel_harborUnknown": "Harbor status unknown",
+  "@naval_mission_targetIntel_harborUnknown": {
+    "description": "Fogged Blockade target row when full naval/military intel is unavailable (DLG31002)."
+  },
+  "naval_mission_targetIntel_noPort": "No port",
+  "@naval_mission_targetIntel_noPort": {
+    "description": "Full-intel Blockade target row when the province has no registered seaboard port (DLG31002)."
+  },
+  "naval_mission_targetIntel_emptyHarbor": "Empty harbor",
+  "@naval_mission_targetIntel_emptyHarbor": {
+    "description": "Full-intel Blockade target row when a port is present and no hostile fleets are in port (DLG31002)."
+  },
+  "naval_mission_targetIntel_fleetsInPort": "{count} fleets in port",
+  "@naval_mission_targetIntel_fleetsInPort": {
+    "description": "Full-intel Blockade target row summarizing hostile fleets docked at the target port (DLG31002).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "naval_units_noShipsInFleet": "No ships in this fleet",
   "@naval_units_noShipsInFleet": {
@@ -2115,13 +2650,147 @@
   "@trainCivilians_title": {
     "description": "Train civilians dialog title."
   },
+  "trainCivilians_roleGistExplorer": "Explores provinces · Prospects minerals",
+  "@trainCivilians_roleGistExplorer": {
+    "description": "Muted role gist on Train Civilians Explorer row. SPEC/ui/train-civilians-dialog.md; Refs #4366."
+  },
+  "trainCivilians_roleGistBuilder": "Improves tiles · Upgrades towns",
+  "@trainCivilians_roleGistBuilder": {
+    "description": "Muted role gist on Train Civilians Builder row. Refs #4366."
+  },
+  "trainCivilians_roleGistEngineer": "Builds roads, ports, and forts",
+  "@trainCivilians_roleGistEngineer": {
+    "description": "Muted role gist on Train Civilians Engineer row. Refs #4366."
+  },
+  "trainCivilians_roleGistSpy": "Holds foreign intel · Counter-espionage at home",
+  "@trainCivilians_roleGistSpy": {
+    "description": "Muted role gist on Train Civilians Spy row. Describes post work only; must not imply idle Spies are unused capacity (UXD-002). Refs #4366."
+  },
+  "trainCivilians_roleGistMerchant": "Purchases land in Minor/Tribe provinces",
+  "@trainCivilians_roleGistMerchant": {
+    "description": "Muted role gist on Train Civilians Merchant row. Refs #4366."
+  },
+  "trainCivilians_roleGistRailBuilder": "Upgrades roads to railroad",
+  "@trainCivilians_roleGistRailBuilder": {
+    "description": "Muted role gist on Train Civilians Rail Builder row. Refs #4366."
+  },
   "trainMilitary_title": "Train Military",
   "@trainMilitary_title": {
     "description": "Train military dialog title."
   },
+  "trainMilitary_categoryLightInfantry": "Light infantry",
+  "@trainMilitary_categoryLightInfantry": {
+    "description": "Regiment category label on Train Military rows. SPEC/game/military-units.md."
+  },
+  "trainMilitary_categoryRegularInfantry": "Regular infantry",
+  "@trainMilitary_categoryRegularInfantry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryHeavyInfantry": "Heavy infantry",
+  "@trainMilitary_categoryHeavyInfantry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryBowmen": "Bowmen",
+  "@trainMilitary_categoryBowmen": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryLightCavalry": "Light cavalry",
+  "@trainMilitary_categoryLightCavalry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categorySpearCavalry": "Spear cavalry",
+  "@trainMilitary_categorySpearCavalry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryHeavyCavalry": "Heavy cavalry",
+  "@trainMilitary_categoryHeavyCavalry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryLightArtillery": "Light artillery",
+  "@trainMilitary_categoryLightArtillery": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryHeavyArtillery": "Heavy artillery",
+  "@trainMilitary_categoryHeavyArtillery": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_combatGistLightInfantry": "Melee skirmishers",
+  "@trainMilitary_combatGistLightInfantry": {
+    "description": "Combat-role gist for light infantry on Train Military rows."
+  },
+  "trainMilitary_combatGistRegularInfantry": "Melee line",
+  "@trainMilitary_combatGistRegularInfantry": {
+    "description": "Combat-role gist for regular infantry on Train Military rows."
+  },
+  "trainMilitary_combatGistHeavyInfantry": "Ranged firepower",
+  "@trainMilitary_combatGistHeavyInfantry": {
+    "description": "Combat-role gist for heavy infantry on Train Military rows."
+  },
+  "trainMilitary_combatGistBowmen": "Ranged volleys",
+  "@trainMilitary_combatGistBowmen": {
+    "description": "Combat-role gist for bowmen on Train Military rows."
+  },
+  "trainMilitary_combatGistLightCavalry": "Fast harassers",
+  "@trainMilitary_combatGistLightCavalry": {
+    "description": "Combat-role gist for light cavalry on Train Military rows."
+  },
+  "trainMilitary_combatGistSpearCavalry": "Shock cavalry",
+  "@trainMilitary_combatGistSpearCavalry": {
+    "description": "Combat-role gist for spear cavalry on Train Military rows."
+  },
+  "trainMilitary_combatGistHeavyCavalry": "Armored charge",
+  "@trainMilitary_combatGistHeavyCavalry": {
+    "description": "Combat-role gist for heavy cavalry on Train Military rows."
+  },
+  "trainMilitary_combatGistLightArtillery": "Field guns",
+  "@trainMilitary_combatGistLightArtillery": {
+    "description": "Combat-role gist for light artillery on Train Military rows."
+  },
+  "trainMilitary_combatGistHeavyArtillery": "Siege guns",
+  "@trainMilitary_combatGistHeavyArtillery": {
+    "description": "Combat-role gist for heavy artillery on Train Military rows."
+  },
+  "trainMilitary_foodUpkeepPerTurn": "{count} food / turn",
+  "@trainMilitary_foodUpkeepPerTurn": {
+    "description": "Ongoing food upkeep on Train Military rows (not paid at train time). SPEC/ui/train-military-dialog.md.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "trainNaval_title": "Train Naval",
   "@trainNaval_title": {
     "description": "Train naval dialog title."
+  },
+  "trainNaval_merchantCargoHolds": "+{count} cargo holds",
+  "@trainNaval_merchantCargoHolds": {
+    "description": "Merchant ship capability line on Train Naval rows. SPEC/ui/train-naval-dialog.md.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainNaval_warshipRoleFastInterceptor": "Fast interceptor",
+  "@trainNaval_warshipRoleFastInterceptor": {
+    "description": "Warship combat-role gist for sloop, frigate, raider. SPEC/game/tech-tree-naval.md § Notes."
+  },
+  "trainNaval_warshipRoleBattleShip": "Battle ship",
+  "@trainNaval_warshipRoleBattleShip": {
+    "description": "Warship combat-role gist for ship_of_the_line, ironclad. SPEC/game/tech-tree-naval.md § Notes."
+  },
+  "trainNaval_roleCapabilityGist": "{role} · {capability}",
+  "@trainNaval_roleCapabilityGist": {
+    "description": "Muted role and capability gist line on Train Naval rows. SPEC/ui/train-naval-dialog.md.",
+    "placeholders": {
+      "role": {
+        "type": "String"
+      },
+      "capability": {
+        "type": "String"
+      }
+    }
   },
   "trainUnits_noCapital": "No capital set — cannot train units",
   "@trainUnits_noCapital": {
@@ -2169,6 +2838,41 @@
   "trainDialog_costPeasantsTooltip": "Peasants",
   "@trainDialog_costPeasantsTooltip": {
     "description": "Tooltip shown when hovering (desktop) or tapping (mobile) the peasant worker icon in a train-dialog unit-row cost summary."
+  },
+  "trainUnits_promisedToWorkerTraining": "{count} already promised to worker training",
+  "@trainUnits_promisedToWorkerTraining": {
+    "description": "Muted Peasants gist clause when queued trained-worker hires reserve peasants (UNIT50001/UNIT60001).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainUnits_promisedToShips": "{count} already promised to ships",
+  "@trainUnits_promisedToShips": {
+    "description": "Muted Peasants gist clause when queued naval builds reserve peasants (UNIT50001).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainUnits_promisedToRegiments": "{count} already promised to regiments",
+  "@trainUnits_promisedToRegiments": {
+    "description": "Muted Peasants gist clause when queued military builds reserve peasants (UNIT60001).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainUnits_peasantsChipDetailsHeader": "Peasants already promised:",
+  "@trainUnits_peasantsChipDetailsHeader": {
+    "description": "Header line in the Peasants chip tooltip/details on Train Military/Naval."
+  },
+  "trainUnits_peasantsChipDetailsEmpty": "No peasants promised to other training.",
+  "@trainUnits_peasantsChipDetailsEmpty": {
+    "description": "Peasants chip tooltip when no other-family reservation exists."
   },
   "trainDialog_costCommodityTooltip": "{name} ({category})",
   "@trainDialog_costCommodityTooltip": {
@@ -2446,6 +3150,43 @@
       }
     }
   },
+  "development_assignPreview": "Next: {place} · {currentLevel} → {nextLevel} · {cost}",
+  "@development_assignPreview": {
+    "description": "Enabled Development Assign preview with material cost.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "currentLevel": {
+        "type": "int"
+      },
+      "nextLevel": {
+        "type": "int"
+      },
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "development_assignPreviewNoCost": "Next: {place} · {currentLevel} → {nextLevel}",
+  "@development_assignPreviewNoCost": {
+    "description": "Enabled Development Assign preview when material cost is waived empty.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "currentLevel": {
+        "type": "int"
+      },
+      "nextLevel": {
+        "type": "int"
+      }
+    }
+  },
+  "development_assignPreviewNotBoundToCapital": "not bound to the capital",
+  "@development_assignPreviewNotBoundToCapital": {
+    "description": "Capital-link clause on a disconnected Development Assign preview."
+  },
   "production_breakdown_title": "Commodity breakdown",
   "@production_breakdown_title": {
     "description": "Production commodity breakdown dialog title."
@@ -2485,6 +3226,19 @@
   "production_available": "Available",
   "@production_available": {
     "description": "Production panel subheader for available resources."
+  },
+  "production_availableSellableTooltip": "How many you can still sell after industry reservations and offers already staged. Tap to open Trade.",
+  "@production_availableSellableTooltip": {
+    "description": "Tooltip for tradeable Production Available cells: sellable headroom meaning and tap opens Trade."
+  },
+  "production_availableOpenTradeSemantic": "Open Trade for {name}",
+  "@production_availableOpenTradeSemantic": {
+    "description": "Semantics label for tapping a tradeable Available cell to open Trade Market.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "production_food": "Food",
   "@production_food": {
@@ -2541,6 +3295,14 @@
   "splitArmy_title": "Split Army",
   "@splitArmy_title": {
     "description": "Split army dialog title."
+  },
+  "splitArmy_detachTitle": "Detach a field army",
+  "@splitArmy_detachTitle": {
+    "description": "Split dialog title when detaching from the Home Army to march."
+  },
+  "splitArmy_detachConfirm": "Detach and choose destination",
+  "@splitArmy_detachConfirm": {
+    "description": "Split dialog confirm label for the map detach-then-move flow."
   },
   "technologyPanel_title": "Technology - {playerName}",
   "@technologyPanel_title": {
@@ -2786,6 +3548,27 @@
   "@technologyPanel_rpBreakdownIndustrialLabel": {
     "description": "Breakdown dialog row labelling the Industrial Funding of Research +20% military/naval bonus (Refs #3512)."
   },
+  "technologyPanel_rpBreakdownSpyInsightOne": "Spy insight — {court} already knows this (+15%)",
+  "@technologyPanel_rpBreakdownSpyInsightOne": {
+    "description": "Breakdown dialog Spy insight row when one rival court qualifies (Refs #4457).",
+    "placeholders": {
+      "court": {
+        "type": "String"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownSpyInsightMany": "Spy insight — {courts} already know this (+{percent}%)",
+  "@technologyPanel_rpBreakdownSpyInsightMany": {
+    "description": "Breakdown dialog Spy insight row when two or more rival courts qualify (Refs #4457).",
+    "placeholders": {
+      "courts": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "technologyPanel_rpBreakdownEffectiveLabel": "Effective RP this turn",
   "@technologyPanel_rpBreakdownEffectiveLabel": {
     "description": "Breakdown dialog row labelling the effective RP applied this turn (Refs #3512)."
@@ -2797,6 +3580,100 @@
   "technologyPanel_rpBreakdownDebtBlocked": "Treasury below the research debt floor — 0 RP applied this turn.",
   "@technologyPanel_rpBreakdownDebtBlocked": {
     "description": "Breakdown dialog note shown when the funding spend is debt-blocked so 0 RP is applied (Refs #3512)."
+  },
+  "technologyPanel_rpBreakdownSequentialBlocked": "Not enough gold remains after earlier research slots — 0 RP applied this turn.",
+  "@technologyPanel_rpBreakdownSequentialBlocked": {
+    "description": "Breakdown dialog note when a slot is debt-blocked because earlier slots consumed treasury this turn (Refs #4335)."
+  },
+  "technologyPanel_rpBreakdownResidualTreasury": "Treasury before this slot: £{gold}",
+  "@technologyPanel_rpBreakdownResidualTreasury": {
+    "description": "Breakdown dialog note showing residual treasury after earlier slots in the sequential walk (Refs #4335).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_researchTurnFundingSummary": "Research this turn: −£{gold} · +{rp} RP",
+  "@technologyPanel_researchTurnFundingSummary": {
+    "description": "Empire-wide research funding header when at least one slot will spend (Refs #4335).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      },
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_researchTurnFundingEmpty": "Research this turn: no spend",
+  "@technologyPanel_researchTurnFundingEmpty": {
+    "description": "Empire-wide research funding header when no slot will spend gold or apply RP (Refs #4335)."
+  },
+  "technologyPanel_goldSequentialBlockedHint": "Not enough gold left after earlier slots",
+  "@technologyPanel_goldSequentialBlockedHint": {
+    "description": "Gold row label when a slot is blocked by earlier sequential spends (Refs #4335)."
+  },
+  "technologyPanel_goldCostAfterEarlierSlots": "Would cost £{gold} if treasury allowed",
+  "@technologyPanel_goldCostAfterEarlierSlots": {
+    "description": "Secondary gold-row hint showing the nominal per-turn cost on a sequential-blocked slot (Refs #4335).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_finishCompletesNextTurn": "Completes next turn",
+  "@technologyPanel_finishCompletesNextTurn": {
+    "description": "Slot-card finish-time line when remaining RP will be covered this turn (Refs #4511)."
+  },
+  "technologyPanel_finishCompletesNextTurnWithYear": "Completes next turn ({year})",
+  "@technologyPanel_finishCompletesNextTurnWithYear": {
+    "description": "Slot-card finish-time line with calendar year when remaining RP completes this turn (Refs #4511).",
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_finishInTurns": "Finishes in {turns} turns",
+  "@technologyPanel_finishInTurns": {
+    "description": "Slot-card finish-time line for remaining RP divided by this-turn RP (Refs #4511).",
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_finishInTurnsWithYear": "Finishes in {turns} turns ({year})",
+  "@technologyPanel_finishInTurnsWithYear": {
+    "description": "Slot-card finish-time line with N turns and calendar year (Refs #4511).",
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownRemaining": "Remaining: {rp} RP",
+  "@technologyPanel_rpBreakdownRemaining": {
+    "description": "Breakdown dialog restatement of remaining research points (Refs #4511).",
+    "placeholders": {
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_rpBreakdownTurns": "About {turns} more turns at this funding",
+  "@technologyPanel_rpBreakdownTurns": {
+    "description": "Breakdown dialog restatement of implied turns at current funding (Refs #4511).",
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
   },
   "technologyPanel_rpValue": "{rp} RP",
   "@technologyPanel_rpValue": {
@@ -2880,6 +3757,56 @@
   "techTree_researchersDialogTitle": "Researched by",
   "@techTree_researchersDialogTitle": {
     "description": "Long-press modal title listing GPs that have unlocked a tech."
+  },
+  "techTree_researchThis": "Research this",
+  "@techTree_researchThis": {
+    "description": "Tree node dialog control that assigns the tech to the lowest empty research seat (Refs #4498)."
+  },
+  "techTree_replaceSeatPrompt": "Replace a research seat",
+  "@techTree_replaceSeatPrompt": {
+    "description": "Tree node dialog heading when every active seat is occupied (Refs #4498)."
+  },
+  "techTree_replaceSeatLabel": "Slot {slot} — {tech}",
+  "@techTree_replaceSeatLabel": {
+    "description": "Tree node dialog seat-replace control label (Refs #4498).",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      },
+      "tech": {
+        "type": "String"
+      }
+    }
+  },
+  "techTree_assignReasonObserveOnly": "Research seats cannot be changed while observing.",
+  "@techTree_assignReasonObserveOnly": {
+    "description": "Tree node dialog refusal when UI mutation is disabled (Refs #4498)."
+  },
+  "techTree_assignReasonAlreadyKnown": "You already know this technology.",
+  "@techTree_assignReasonAlreadyKnown": {
+    "description": "Tree node dialog refusal when the tech is unlocked (Refs #4498)."
+  },
+  "techTree_assignReasonAlreadySeated": "Already researching in Slot {slot}.",
+  "@techTree_assignReasonAlreadySeated": {
+    "description": "Tree node dialog refusal when the tech is already in a seat (Refs #4498).",
+    "placeholders": {
+      "slot": {
+        "type": "int"
+      }
+    }
+  },
+  "techTree_assignReasonWaitingOn": "Waiting on: {names}",
+  "@techTree_assignReasonWaitingOn": {
+    "description": "Tree node dialog refusal listing unmet prerequisite display names (Refs #4498).",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "techTree_assignReasonDiscovery": "Requires discovering a related resource first.",
+  "@techTree_assignReasonDiscovery": {
+    "description": "Tree node dialog refusal when a discovery tech is not yet revealed (Refs #4498)."
   },
   "mapDebug_fullVisibility": "Full visibility",
   "@mapDebug_fullVisibility": {
@@ -3045,6 +3972,61 @@
   "@provinceOverlay_tileConsulateRequiredForExploreTooltip": {
     "description": "Tooltip shown on the disabled province tile Explore/Prospect inline actions when the issuing Great Power holds no Consulate (or higher) with the owning Minor/Tribe (Refs #3753 R4b)."
   },
+  "provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip": "Establish a consulate before exploring or prospecting. Use Establish Consulate on Political.",
+  "@provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip": {
+    "description": "Narrow MAP20001 tooltip directing players from gated Explore/Prospect to Political Establish Consulate."
+  },
+  "provinceOverlay_establishConsulateAction": "Establish Consulate",
+  "@provinceOverlay_establishConsulateAction": {
+    "description": "Political shortcut label for staging a Trade Consulate overture."
+  },
+  "provinceOverlay_cancelEstablishConsulateAction": "Cancel",
+  "@provinceOverlay_cancelEstablishConsulateAction": {
+    "description": "Political shortcut label when a Trade Consulate overture is already pending."
+  },
+  "provinceOverlay_noConsulateWith": "No consulate with {owner}",
+  "@provinceOverlay_noConsulateWith": {
+    "description": "Political status line shown above the Establish Consulate shortcut.",
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_establishConsulateDisabledSemantics": "Establish Consulate unavailable: {reason}",
+  "@provinceOverlay_establishConsulateDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Establish Consulate shortcut.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_ownerStandingAtWar": "At war",
+  "@provinceOverlay_ownerStandingAtWar": {
+    "description": "MAP20001 Political standing line when human is at war with the province owner (Refs #4479)."
+  },
+  "provinceOverlay_ownerStandingAtPeace": "At peace",
+  "@provinceOverlay_ownerStandingAtPeace": {
+    "description": "MAP20001 Political standing line when human is at peace with the province owner (Refs #4479)."
+  },
+  "provinceOverlay_offerPeaceAction": "Offer Peace",
+  "@provinceOverlay_offerPeaceAction": {
+    "description": "Political shortcut label for staging offerPeace toward the province owner (Refs #4479)."
+  },
+  "provinceOverlay_cancelOfferPeaceAction": "Cancel",
+  "@provinceOverlay_cancelOfferPeaceAction": {
+    "description": "Political shortcut label when offerPeace toward the owner is already pending (Refs #4479)."
+  },
+  "provinceOverlay_offerPeaceDisabledSemantics": "Offer Peace unavailable: {reason}",
+  "@provinceOverlay_offerPeaceDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Offer Peace shortcut (Refs #4479).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
@@ -3056,6 +4038,79 @@
       "costs": {
         "type": "String"
       }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementYieldRaise": "After this work: {from} → {to} {good} if still linked",
+  "@provinceOverlay_tileBuildImprovementYieldRaise": {
+    "description": "Default-visible next-level extraction when Build improvement raises yield (Refs #4627).",
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementYieldRoadLimit": "After this work: still {n} {good} — the road is the limit",
+  "@provinceOverlay_tileBuildImprovementYieldRoadLimit": {
+    "description": "Default-visible next-level extraction when the road or path already caps yield (Refs #4627).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementYieldTownLimit": "After this work: still {n} {good} — town development is the limit",
+  "@provinceOverlay_tileBuildImprovementYieldTownLimit": {
+    "description": "Default-visible next-level extraction when town development already caps yield (Refs #4627).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementYieldDisconnected": "After this work: still none — not bound to the capital",
+  "@provinceOverlay_tileBuildImprovementYieldDisconnected": {
+    "description": "Default-visible next-level extraction when the tile is not capital-linked (Refs #4627)."
+  },
+  "provinceOverlay_tileTransportStepYieldRaise": "After this work: {from} → {to} {good} if still linked",
+  "@provinceOverlay_tileTransportStepYieldRaise": {
+    "description": "Default-visible extraction after Build road/port/rail when yield rises (Refs #4663).",
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileTransportStepYieldRoadLimit": "After this work: still {n} {good} — the road is the limit",
+  "@provinceOverlay_tileTransportStepYieldRoadLimit": {
+    "description": "Default-visible extraction when transport step does not raise yield — road cap (Refs #4663).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileTransportStepYieldTownLimit": "After this work: still {n} {good} — town development is the limit",
+  "@provinceOverlay_tileTransportStepYieldTownLimit": {
+    "description": "Default-visible extraction when transport step does not raise yield — town cap (Refs #4663).",
+    "placeholders": {
+      "n": { "type": "int" },
+      "good": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tileTransportStepYieldDisconnected": "After this work: still none — not bound to the capital until a path home exists",
+  "@provinceOverlay_tileTransportStepYieldDisconnected": {
+    "description": "Default-visible extraction when tile is not capital-linked (Refs #4663)."
+  },
+  "provinceOverlay_tileTransportStepYieldBindsCapital": "After this work: binds this tile to the capital",
+  "@provinceOverlay_tileTransportStepYieldBindsCapital": {
+    "description": "Default-visible transport step on linked tile without extractable yield (Refs #4663)."
+  },
+  "provinceOverlay_tileTransportStepPortOnCoast": "After this work: this coast gets a port",
+  "@provinceOverlay_tileTransportStepPortOnCoast": {
+    "description": "Default-visible Build port gist without cargo/capture claims (Refs #4663)."
+  },
+  "provinceOverlay_tileRoadCaption": "Road / railroad: {caption}",
+  "@provinceOverlay_tileRoadCaption": {
+    "description": "Default Tile road/rail player-language caption (Refs #4663).",
+    "placeholders": {
+      "caption": { "type": "String" }
     }
   },
   "provinceOverlay_tileBuildRoadTooltip": "Build road",
@@ -3135,6 +4190,197 @@
       }
     }
   },
+  "provinceOverlay_moveArmyAction": "Move",
+  "@provinceOverlay_moveArmyAction": {
+    "description": "MAP20001 Military Move control label (Refs #4350)."
+  },
+  "provinceOverlay_combineArmiesAction": "Combine",
+  "@provinceOverlay_combineArmiesAction": {
+    "description": "MAP20001 Military Combine control label (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesPendingMarchTooltip": "Cancel the pending march before combining these armies.",
+  "@provinceOverlay_combineArmiesPendingMarchTooltip": {
+    "description": "Disabled Combine tooltip when a selected army has a pending land move (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesConfirmTitle": "Combine armies?",
+  "@provinceOverlay_combineArmiesConfirmTitle": {
+    "description": "MAP20001 Combine confirm title (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesConfirmEffect": "They become one army.",
+  "@provinceOverlay_combineArmiesConfirmEffect": {
+    "description": "MAP20001 Combine confirm effect line (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesSurvivorHome": "Home Army keeps the combined regiments.",
+  "@provinceOverlay_combineArmiesSurvivorHome": {
+    "description": "MAP20001 Combine confirm survivor when Home Army is in the set (Refs #4610)."
+  },
+  "provinceOverlay_combineArmiesSurvivorField": "{armyName} keeps the combined regiments.",
+  "@provinceOverlay_combineArmiesSurvivorField": {
+    "description": "MAP20001 Combine confirm survivor for a field army (Refs #4610).",
+    "placeholders": {
+      "armyName": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineArmiesArmyLine": "{armyName} — {mix}",
+  "@provinceOverlay_combineArmiesArmyLine": {
+    "description": "MAP20001 Combine confirm army row (Refs #4610).",
+    "placeholders": {
+      "armyName": {"type": "String"},
+      "mix": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineArmiesEmptyMix": "no regiments",
+  "@provinceOverlay_combineArmiesEmptyMix": {
+    "description": "MAP20001 Combine confirm mix when an army has no regiments (Refs #4610)."
+  },
+  "provinceOverlay_combineFleetsAction": "Combine",
+  "@provinceOverlay_combineFleetsAction": {
+    "description": "MAP20001 Naval Combine control label (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsPendingOrderTooltip": "Cancel the pending sail or mission before combining these fleets.",
+  "@provinceOverlay_combineFleetsPendingOrderTooltip": {
+    "description": "Disabled Naval Combine tooltip when a locality fleet has a pending naval move or mission (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsConfirmTitle": "Combine fleets?",
+  "@provinceOverlay_combineFleetsConfirmTitle": {
+    "description": "MAP20001 Naval Combine confirm title (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsConfirmEffect": "They become one fleet. That fleet's mission becomes none.",
+  "@provinceOverlay_combineFleetsConfirmEffect": {
+    "description": "MAP20001 Naval Combine confirm effect line (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsSurvivorHome": "Home Fleet keeps the combined ships.",
+  "@provinceOverlay_combineFleetsSurvivorHome": {
+    "description": "MAP20001 Naval Combine confirm survivor when Home Fleet is in the set (Refs #4659)."
+  },
+  "provinceOverlay_combineFleetsSurvivorOther": "{fleetName} keeps the combined ships.",
+  "@provinceOverlay_combineFleetsSurvivorOther": {
+    "description": "MAP20001 Naval Combine confirm survivor for a non-Home fleet (Refs #4659).",
+    "placeholders": {
+      "fleetName": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineFleetsFleetLine": "{fleetName} — {mix}",
+  "@provinceOverlay_combineFleetsFleetLine": {
+    "description": "MAP20001 Naval Combine confirm fleet row (Refs #4659).",
+    "placeholders": {
+      "fleetName": {"type": "String"},
+      "mix": {"type": "String"}
+    }
+  },
+  "provinceOverlay_combineFleetsEmptyMix": "no ships",
+  "@provinceOverlay_combineFleetsEmptyMix": {
+    "description": "MAP20001 Naval Combine confirm mix when a fleet has no ships (Refs #4659)."
+  },
+  "provinceOverlay_stationSpyAction": "Station spy",
+  "@provinceOverlay_stationSpyAction": {
+    "description": "MAP20001 Civilian Station spy control label (Refs #4439)."
+  },
+  "provinceOverlay_stationSpyDisabledNoIdleSpyTooltip": "No idle Spy can relocate here.",
+  "@provinceOverlay_stationSpyDisabledNoIdleSpyTooltip": {
+    "description": "Disabled Station spy tooltip when no eligible idle Spy can relocate to the selected tile (Refs #4439)."
+  },
+  "provinceOverlay_stationSpyDisabledNotOccupiableTooltip": "This tile cannot be occupied.",
+  "@provinceOverlay_stationSpyDisabledNotOccupiableTooltip": {
+    "description": "Disabled Station spy tooltip when the selected tile is not occupiable (Refs #4439)."
+  },
+  "provinceOverlay_counterEspionageAction": "Counter-espionage",
+  "@provinceOverlay_counterEspionageAction": {
+    "description": "MAP20001 Civilian Counter-espionage control label (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageGist": "Protects the whole realm, not only this province.",
+  "@provinceOverlay_counterEspionageGist": {
+    "description": "Default-visible whole-realm gist on enabled Counter-espionage (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageOneSpyTooltip": "One Spy is enough; extra Spies do not add more.",
+  "@provinceOverlay_counterEspionageOneSpyTooltip": {
+    "description": "On-request tooltip that extra Counter-espionage Spies do not stack (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageDisabledAlreadyPostedTooltip": "A Spy is already posted for the whole realm.",
+  "@provinceOverlay_counterEspionageDisabledAlreadyPostedTooltip": {
+    "description": "Disabled Counter-espionage tooltip when a Spy is already on counter_spy (Refs #4528)."
+  },
+  "provinceOverlay_counterEspionageDisabledNoIdleSpyTooltip": "No idle Spy can take this post.",
+  "@provinceOverlay_counterEspionageDisabledNoIdleSpyTooltip": {
+    "description": "Disabled Counter-espionage tooltip when no eligible idle Spy exists (Refs #4528)."
+  },
+  "provinceOverlay_invadeArmyAction": "Invade {provinceName}",
+  "@provinceOverlay_invadeArmyAction": {
+    "description": "MAP20001 Military Invade control label (Refs #4350).",
+    "placeholders": {
+      "provinceName": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_moveArmyDisabledHomeArmyTooltip": "The Home Army cannot leave the capital. Split a field army first.",
+  "@provinceOverlay_moveArmyDisabledHomeArmyTooltip": {
+    "description": "Disabled Move tooltip when only Home Army is present (Refs #4350)."
+  },
+  "provinceOverlay_moveArmyDisabledNoDestinationsTooltip": "No legal destinations for field armies stationed here.",
+  "@provinceOverlay_moveArmyDisabledNoDestinationsTooltip": {
+    "description": "Disabled Move tooltip when cache has no destinations (Refs #4350)."
+  },
+  "provinceOverlay_invadeArmyDisabledCannotReachTooltip": "No field army can reach this province this turn.",
+  "@provinceOverlay_invadeArmyDisabledCannotReachTooltip": {
+    "description": "Disabled Invade tooltip when province missing from army-move cache (Refs #4350)."
+  },
+  "provinceOverlay_blockadeAction": "Blockade",
+  "@provinceOverlay_blockadeAction": {
+    "description": "MAP20001 Naval Blockade control label (Refs #4413)."
+  },
+  "provinceOverlay_patrolAction": "Patrol",
+  "@provinceOverlay_patrolAction": {
+    "description": "MAP20001 sea-zone Naval Patrol control label (Refs #4605)."
+  },
+  "provinceOverlay_defendAction": "Defend",
+  "@provinceOverlay_defendAction": {
+    "description": "MAP20001 sea-zone Naval Defend control label (Refs #4605)."
+  },
+  "provinceOverlay_beachheadAction": "Beachhead",
+  "@provinceOverlay_beachheadAction": {
+    "description": "MAP20001 Naval Beachhead control label (Refs #4413). Does not imply capture this turn."
+  },
+  "provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip": "A fleet must be at sea beside this coast. Fleets in port cannot take missions.",
+  "@provinceOverlay_blockadeBeachheadDisabledNotAtSeaTooltip": {
+    "description": "Disabled Blockade/Beachhead tooltip when no adjacent at-sea fleet (Refs #4413)."
+  },
+  "provinceOverlay_underBlockade": "Under blockade — this port is cut off from its capital; goods here will not reach warehouses.",
+  "@provinceOverlay_underBlockade": {
+    "description": "MAP20001 Naval section status when the human-owned province port is blockaded (Refs #4516)."
+  },
+  "provinceOverlay_underBlockadeCapital": "Under blockade — capital port severed; sea-only and overseas links are cut while land roads remain.",
+  "@provinceOverlay_underBlockadeCapital": {
+    "description": "MAP20001 Naval section status when the human-owned capital port is blockaded (Refs #4516)."
+  },
+  "provinceOverlay_detachAndSailAction": "Detach and sail",
+  "@provinceOverlay_detachAndSailAction": {
+    "description": "MAP20001 Naval control to split a squadron from the Home Fleet and undock (Refs #4448)."
+  },
+  "provinceOverlay_detachAndSailTooltip": "Detach a squadron from the Home Fleet, then choose an adjacent sea.",
+  "@provinceOverlay_detachAndSailTooltip": {
+    "description": "Enabled Detach and sail tooltip (Refs #4448)."
+  },
+  "provinceOverlay_transferToHomeFleetAction": "Transfer to Home Fleet",
+  "@provinceOverlay_transferToHomeFleetAction": {
+    "description": "MAP20001 Naval control to move hulls into the Home Fleet (Refs #4625)."
+  },
+  "provinceOverlay_transferToHomeFleetTooltip": "Move hulls into the Home Fleet so cargo holds are available this turn.",
+  "@provinceOverlay_transferToHomeFleetTooltip": {
+    "description": "Enabled Transfer to Home Fleet tooltip on MAP20001 (Refs #4625)."
+  },
+  "provinceOverlay_transferToHomeFleetDisabledTooltip": "No sea-going fleet here can join the Home Fleet now.",
+  "@provinceOverlay_transferToHomeFleetDisabledTooltip": {
+    "description": "Disabled Transfer to Home Fleet tooltip on MAP20001 (Refs #4625)."
+  },
+  "inPortFleetMarker_chooseActionTitle": "Choose an action",
+  "@inPortFleetMarker_chooseActionTitle": {
+    "description": "DLG31004 title when a capital in-port marker offers Sail/Move and Transfer (Refs #4625)."
+  },
+  "provinceOverlay_selectArmyTitle": "Select army",
+  "@provinceOverlay_selectArmyTitle": {
+    "description": "DLG20002 overlay army picker title (Refs #4350)."
+  },
   "provinceOverlay_tileBuildFortTooltip": "Build fort",
   "@provinceOverlay_tileBuildFortTooltip": {
     "description": "Tooltip for enabled build-fort shortcut on town tile (Refs #4280)."
@@ -3165,6 +4411,97 @@
       }
     }
   },
+  "provinceOverlay_tileBuildFortPayoffGist": "After this work: {fromLabel} → {toLabel} · Takes {turns, plural, one {1 turn} other {{turns} turns}}",
+  "@provinceOverlay_tileBuildFortPayoffGist": {
+    "description": "Default-visible Build fort payoff: current and next siege posture plus work duration (Refs #4668).",
+    "placeholders": {
+      "fromLabel": {
+        "type": "String"
+      },
+      "toLabel": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildPortTooltip": "Build port",
+  "@provinceOverlay_tileBuildPortTooltip": {
+    "description": "MAP20001 Tile Build port shortcut tooltip when enabled without cost preview"
+  },
+  "provinceOverlay_tileBuildPortTooltipWithCost": "Build port ({costs})",
+  "@provinceOverlay_tileBuildPortTooltipWithCost": {
+    "description": "MAP20001 Tile Build port shortcut tooltip with material cost",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildPortDisabledNoEngineerTooltip": "No Engineer available to build port",
+  "@provinceOverlay_tileBuildPortDisabledNoEngineerTooltip": {
+    "description": "MAP20001 Tile Build port disabled: no Engineer units"
+  },
+  "provinceOverlay_tileBuildPortDisabledTooltip": "No Engineer can assign port work here this turn",
+  "@provinceOverlay_tileBuildPortDisabledTooltip": {
+    "description": "MAP20001 Tile Build port disabled: not assignable this turn"
+  },
+  "provinceOverlay_tileBuildPortDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildPortDisabledMaterialsTooltip": {
+    "description": "MAP20001 Tile Build port disabled for materials/treasury shortfall",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRailroadTooltip": "Build railroad",
+  "@provinceOverlay_tileBuildRailroadTooltip": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip when enabled without cost preview"
+  },
+  "provinceOverlay_tileBuildRailroadTooltipWithCost": "Build railroad ({costs})",
+  "@provinceOverlay_tileBuildRailroadTooltipWithCost": {
+    "description": "MAP20001 Tile Build railroad shortcut tooltip with material cost",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": "No Rail Builder available to build railroad",
+  "@provinceOverlay_tileBuildRailroadDisabledNoRailBuilderTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: no Rail Builder units"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledTooltip": "No Rail Builder can assign railroad work here this turn",
+  "@provinceOverlay_tileBuildRailroadDisabledTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled: not assignable this turn"
+  },
+  "provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildRailroadDisabledMaterialsTooltip": {
+    "description": "MAP20001 Tile Build railroad disabled for materials/treasury shortfall",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tilePortStatusNone": "Port: None",
+  "@provinceOverlay_tilePortStatusNone": {
+    "description": "MAP20001 Tile plain-language port status when province has no seaboard port"
+  },
+  "provinceOverlay_tilePortStatusPresent": "Port: Present",
+  "@provinceOverlay_tilePortStatusPresent": {
+    "description": "MAP20001 Tile plain-language port status when province has a seaboard port"
+  },
+  "provinceOverlay_tileDetailsAction": "Tile details",
+  "@provinceOverlay_tileDetailsAction": {
+    "description": "MAP20001 named affordance opening connectivity/port teaching helper (Refs #4369)"
+  },
+  "provinceOverlay_tileDetailsTitle": "Tile details",
+  "@provinceOverlay_tileDetailsTitle": {
+    "description": "MAP20001 Tile details helper dialog title (Refs #4369)"
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",
@@ -3194,6 +4531,10 @@
   "provinceOverlay_tileCapitalLinkNotConnected": "Capital link: Not connected — will not extract",
   "@provinceOverlay_tileCapitalLinkNotConnected": {
     "description": "Tile section capital-link row when the selected human-owned tile is not capital-connected (Refs #4149)."
+  },
+  "provinceOverlay_tileCapitalLinkCutByBlockade": "Cause: this port is under blockade.",
+  "@provinceOverlay_tileCapitalLinkCutByBlockade": {
+    "description": "Tile details teaching line when an owned disconnected tile is cut because the province port is blockaded (Refs #4516)."
   },
   "provinceOverlay_tileExtractionFromTile": "Extraction from this tile: {effective} of {full}",
   "@provinceOverlay_tileExtractionFromTile": {
@@ -3311,6 +4652,53 @@
   "provinceOverlay_ownerUnclaimed": "Unclaimed",
   "@provinceOverlay_ownerUnclaimed": {
     "description": "Political section owner display name when a province/tile is unowned."
+  },
+  "provinceOverlay_sight": "Sight: {phrase}",
+  "@provinceOverlay_sight": {
+    "description": "Political and hover Sight row (Refs #4406).",
+    "placeholders": {
+      "phrase": {
+        "type": "String"
+      }
+    }
+  },
+  "mapSight_fullyVisible": "Fully visible",
+  "@mapSight_fullyVisible": {
+    "description": "Sight phrase for TileVisibility.visible (Refs #4406)."
+  },
+  "mapSight_foggedTerrainOnly": "Fogged — terrain only",
+  "@mapSight_foggedTerrainOnly": {
+    "description": "Sight phrase for TileVisibility.fogged (Refs #4406)."
+  },
+  "mapSight_unknownNoIntel": "Unknown — no intel yet",
+  "@mapSight_unknownNoIntel": {
+    "description": "Sight phrase for TileVisibility.unrevealed (Refs #4406)."
+  },
+  "mapHover_place": "Place: {name}",
+  "@mapHover_place": {
+    "description": "MAP10001 hover readout place line (Refs #4406).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mapHover_seaZoneIdentity": "Sea zone",
+  "@mapHover_seaZoneIdentity": {
+    "description": "MAP10001 hover identity line for sea cells (Refs #4406)."
+  },
+  "mapHover_warpPassage": "This water is the passage to the other world",
+  "@mapHover_warpPassage": {
+    "description": "MAP10001 hover extra line for warp sea (Refs #4406)."
+  },
+  "mapHover_semantics": "{summary}",
+  "@mapHover_semantics": {
+    "description": "Combined semantics for the MAP10001 owner/sight hover readout (Refs #4406).",
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
   },
   "provinceOverlay_region": "Region: {region}",
   "@provinceOverlay_region": {
@@ -3497,9 +4885,42 @@
   "@provinceOverlay_titleSeaZone": {
     "description": "Province overlay header title shown above the tab strip for a sea zone."
   },
-  "mapCorner_tooltipBaseLayer": "Base layer: terrain / +resources / +improvements",
+  "mapCorner_tooltipBaseLayer": "Map marks: resources, improvements, and roads",
   "@mapCorner_tooltipBaseLayer": {
-    "description": "Tooltip for cycling map base layer display."
+    "description": "Fallback tooltip for cycling map information layers (full-detail preset)."
+  },
+  "mapCorner_tooltipMapMarks": "Map marks: {combination}",
+  "@mapCorner_tooltipMapMarks": {
+    "description": "Tooltip naming the current map information-layer combination.",
+    "placeholders": {
+      "combination": {
+        "type": "String"
+      }
+    }
+  },
+  "mapCorner_mapMarks_terrainOnly": "terrain only",
+  "@mapCorner_mapMarks_terrainOnly": {
+    "description": "Map marks combination: all information layers off."
+  },
+  "mapCorner_mapMarks_resources": "resources",
+  "@mapCorner_mapMarks_resources": {
+    "description": "Map marks combination: resource icons only."
+  },
+  "mapCorner_mapMarks_resourcesAndImprovements": "resources and improvements",
+  "@mapCorner_mapMarks_resourcesAndImprovements": {
+    "description": "Map marks combination: resources and improvement labels."
+  },
+  "mapCorner_mapMarks_full": "resources, improvements, and roads",
+  "@mapCorner_mapMarks_full": {
+    "description": "Map marks combination: full detail."
+  },
+  "mapCorner_mapMarks_improvements": "improvements",
+  "@mapCorner_mapMarks_improvements": {
+    "description": "Map marks combination: improvement labels without resources."
+  },
+  "mapCorner_mapMarks_improvementsAndRoads": "improvements and roads",
+  "@mapCorner_mapMarks_improvementsAndRoads": {
+    "description": "Map marks combination: improvements and roads without resources."
   },
   "mapCorner_tooltipCenterCapital": "Center on capital",
   "@mapCorner_tooltipCenterCapital": {
@@ -3508,6 +4929,54 @@
   "mapCorner_tooltipMapDisplayOptions": "Map display options",
   "@mapCorner_tooltipMapDisplayOptions": {
     "description": "Tooltip for opening map display options."
+  },
+  "mapExtractionDisc_legendGold": "Reaches capital",
+  "@mapExtractionDisc_legendGold": {
+    "description": "Compact MAP10001 legend label for gold extraction discs (Refs #4367)."
+  },
+  "mapExtractionDisc_legendBrown": "Blocked — will not extract",
+  "@mapExtractionDisc_legendBrown": {
+    "description": "Compact MAP10001 legend label for brown extraction discs (Refs #4367)."
+  },
+  "mapExtractionDisc_legendSemantics": "Extraction disc colours",
+  "@mapExtractionDisc_legendSemantics": {
+    "description": "Semantics label for the extraction-disc legend control (Refs #4367)."
+  },
+  "mapExtractionDisc_detailsGold": "Gold: yield that reaches your capital this turn.",
+  "@mapExtractionDisc_detailsGold": {
+    "description": "Extraction-disc legend popover gold meaning (Refs #4367)."
+  },
+  "mapExtractionDisc_detailsBrown": "Brown: improved yield that does not reach the stockpile (no capital link, or the road/port/town path is capped).",
+  "@mapExtractionDisc_detailsBrown": {
+    "description": "Extraction-disc legend popover brown meaning (Refs #4367)."
+  },
+  "mapExtractionDisc_detailsCounsel": "Restore roads, towns, or ports toward your capital before treating a brown-disc tile as productive.",
+  "@mapExtractionDisc_detailsCounsel": {
+    "description": "Counsel line in the extraction-disc legend popover (Refs #4367)."
+  },
+  "mapImprovementHeadroom_legendHeadroom": "Can still raise",
+  "@mapImprovementHeadroom_legendHeadroom": {
+    "description": "Compact MAP10001 legend label for improvement marks with remaining headroom (Refs #4408)."
+  },
+  "mapImprovementHeadroom_legendAtCap": "At this court's limit",
+  "@mapImprovementHeadroom_legendAtCap": {
+    "description": "Compact MAP10001 legend label for improvement marks already at the tech/terrain cap (Refs #4408)."
+  },
+  "mapImprovementHeadroom_legendSemantics": "Improvement level versus this court's extraction limit",
+  "@mapImprovementHeadroom_legendSemantics": {
+    "description": "Semantics label for the improvement-headroom legend control (Refs #4408)."
+  },
+  "mapImprovementHeadroom_detailsMeaning": "The corner mark is improvement level versus what this court can extract now (for example 1 of 1 or 1 of 2).",
+  "@mapImprovementHeadroom_detailsMeaning": {
+    "description": "Improvement-headroom legend popover meaning (Refs #4408)."
+  },
+  "mapImprovementHeadroom_detailsMuted": "Muted marks are already at the current limit; raising them further wastes materials.",
+  "@mapImprovementHeadroom_detailsMuted": {
+    "description": "Improvement-headroom legend popover muted-at-cap meaning (Refs #4408)."
+  },
+  "mapImprovementHeadroom_detailsCounsel": "Empty farms stay on Development and the province overlay — the map only marks tiles that already have an improvement.",
+  "@mapImprovementHeadroom_detailsCounsel": {
+    "description": "Counsel line in the improvement-headroom legend popover (Refs #4408)."
   },
   "mapControls_cargoHold": "{used}/{capacity}",
   "@mapControls_cargoHold": {
@@ -3576,9 +5045,282 @@
   "@mapControls_cargoHold_details_counsel": {
     "description": "Counsel line in the cargo details popover."
   },
+  "mapControls_treasury_details_current": "Treasury: {amount}",
+  "@mapControls_treasury_details_current": {
+    "description": "Current treasury row in the map gold details popover (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_forecast": "Next-turn forecast: {delta}",
+  "@mapControls_treasury_details_forecast": {
+    "description": "Signed Next-turn forecast row in the map gold details popover (Refs #4560).",
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_committedHeading": "Already committed",
+  "@mapControls_treasury_details_committedHeading": {
+    "description": "Heading above non-zero committed gold lines (Refs #4560)."
+  },
+  "mapControls_treasury_details_line_research": "Research funding: £{amount}",
+  "@mapControls_treasury_details_line_research": {
+    "description": "Committed research spend line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_marketBids": "Market bids: £{amount}",
+  "@mapControls_treasury_details_line_marketBids": {
+    "description": "Committed staged market bid spend line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_grantAid": "Grant aid: £{amount}",
+  "@mapControls_treasury_details_line_grantAid": {
+    "description": "Committed grant-aid spend line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_overtures": "Diplomatic overtures: £{amount}",
+  "@mapControls_treasury_details_line_overtures": {
+    "description": "Committed overture treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_recruitWorkers": "Recruit and train workers: £{amount}",
+  "@mapControls_treasury_details_line_recruitWorkers": {
+    "description": "Committed recruit/train worker treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_trainUnits": "Train units: £{amount}",
+  "@mapControls_treasury_details_line_trainUnits": {
+    "description": "Committed build-unit treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_line_purchaseLand": "Purchase land: £{amount}",
+  "@mapControls_treasury_details_line_purchaseLand": {
+    "description": "Committed purchase-land treasury line (Refs #4560).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_treasury_details_formatExact": "Exact",
+  "@mapControls_treasury_details_formatExact": {
+    "description": "Exact number format toggle in the treasury details popover (Refs #4560)."
+  },
+  "mapControls_treasury_details_formatCompact": "Compact",
+  "@mapControls_treasury_details_formatCompact": {
+    "description": "Compact number format toggle in the treasury details popover (Refs #4560)."
+  },
+  "mapControls_treasury_details_counsel": "The signed forecast also includes extraction, riches converting to gold, market fills, and the rest of Next turn — those are not listed here.",
+  "@mapControls_treasury_details_counsel": {
+    "description": "Counsel line explaining non-itemized forecast effects (Refs #4560)."
+  },
+  "mapControls_labourFeeding": "{effective}/{capacity}",
+  "@mapControls_labourFeeding": {
+    "description": "Map tab-bar labour/feeding indicator fraction (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_labourFeeding_tooltip": "Labour this turn: {effective} of {capacity}",
+  "@mapControls_labourFeeding_tooltip": {
+    "description": "Tooltip for the map labour/feeding indicator (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_labourFeeding_semanticsLabel": "Labour this turn: {effective} of {capacity}. Tap for details.",
+  "@mapControls_labourFeeding_semanticsLabel": {
+    "description": "Semantics label for the map labour/feeding indicator (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_labourFeeding_details_labour": "Labour this turn: {effective} of {capacity}",
+  "@mapControls_labourFeeding_details_labour": {
+    "description": "Primary labour line in the map labour/feeding details popover (Refs #4506).",
+    "placeholders": {
+      "effective": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_labourFeeding_details_emptyPool": "No workers trained yet",
+  "@mapControls_labourFeeding_details_emptyPool": {
+    "description": "Empty worker-pool line in the map labour/feeding details popover (Refs #4506)."
+  },
   "mapControls_playersBarToggle": "Players bar",
   "@mapControls_playersBarToggle": {
     "description": "Tooltip for the in-game players bar show/hide toggle on the tab bar."
+  },
+  "mapControls_oldWorldRace": "{count} / {threshold}",
+  "@mapControls_oldWorldRace": {
+    "description": "Wide tab-bar Old World race chip fraction (Refs #4451).",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_compact": "{count}/{threshold}",
+  "@mapControls_oldWorldRace_compact": {
+    "description": "Narrow tab-bar Old World race chip fraction (Refs #4451).",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_rivalCue": " · {name} {count} / {threshold}",
+  "@mapControls_oldWorldRace_rivalCue": {
+    "description": "Wide rival-leader cue on the Old World race chip (Refs #4451).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_rivalCueCompact": " · {name} {count}",
+  "@mapControls_oldWorldRace_rivalCueCompact": {
+    "description": "Narrow rival-leader cue on the Old World race chip (Refs #4451).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_tooltip": "Old World provinces toward the 31-province win. Tap for full standings.",
+  "@mapControls_oldWorldRace_tooltip": {
+    "description": "Hover tooltip for the tab-bar Old World race chip when remaining years do not apply."
+  },
+  "mapControls_oldWorldRace_tooltipRemaining": "Old World provinces toward the 31-province win. {remainingYears} years remain until {lastYear}. Tap for full standings.",
+  "@mapControls_oldWorldRace_tooltipRemaining": {
+    "description": "Race-chip tooltip with remaining campaign years (Refs #4597).",
+    "placeholders": {
+      "remainingYears": { "type": "int" },
+      "lastYear": { "type": "int" }
+    }
+  },
+  "mapControls_oldWorldRace_tooltipLastYear": "Old World provinces toward the 31-province win. This is the last campaign year ({lastYear}). Tap for full standings.",
+  "@mapControls_oldWorldRace_tooltipLastYear": {
+    "description": "Race-chip tooltip on the last campaign year.",
+    "placeholders": {
+      "lastYear": { "type": "int" }
+    }
+  },
+  "mapControls_oldWorldRace_yearsRemain": "{remainingYears} years remain until {lastYear}.",
+  "@mapControls_oldWorldRace_yearsRemain": {
+    "description": "Semantics clause for remaining campaign years on the race chip.",
+    "placeholders": {
+      "remainingYears": { "type": "int" },
+      "lastYear": { "type": "int" }
+    }
+  },
+  "mapControls_oldWorldRace_lastYearClause": "This is the last campaign year ({lastYear}).",
+  "@mapControls_oldWorldRace_lastYearClause": {
+    "description": "Semantics clause for last campaign year on the race chip.",
+    "placeholders": {
+      "lastYear": { "type": "int" }
+    }
+  },
+  "mapControls_oldWorldRace_semanticsLabel": "Old World province race: {count} of {threshold}. Tap to open Victory.",
+  "@mapControls_oldWorldRace_semanticsLabel": {
+    "description": "Semantics for the Old World race chip when the focus court is not behind.",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_oldWorldRace_semanticsWithRival": "Old World province race: {count} of {threshold}. {name} leads with {rivalCount} of {threshold}. Tap to open Victory.",
+  "@mapControls_oldWorldRace_semanticsWithRival": {
+    "description": "Semantics for the Old World race chip when a rival leads (Refs #4451).",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "rivalCount": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_playersBar_calendarStrengthTooltip": "Calendar-end strength: {score}. Used only if the calendar ends with no province-count winner.",
+  "@mapControls_playersBar_calendarStrengthTooltip": {
+    "description": "Players-bar chip tooltip for calendar-end overall strength (Refs #4451).",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
   },
   "common_percent": "{value}%",
   "@common_percent": {
@@ -3644,6 +5386,15 @@
   "diplomacy_detail_currentRelation": "Current relation",
   "@diplomacy_detail_currentRelation": {
     "description": "Label above current diplomatic relation summary."
+  },
+  "diplomacy_detail_formalAllies": "Formal allies: {names}",
+  "@diplomacy_detail_formalAllies": {
+    "description": "GAME30002 CURRENT RELATION line listing other GP display names with a persisted formal alliance with the viewed court.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
   },
   "diplomacy_detail_noDossier": "No dossier evidence yet.",
   "@diplomacy_detail_noDossier": {
@@ -3992,6 +5743,40 @@
   "@production_labourDisband": {
     "description": "Visible label for the Disband button on trained-tier rows."
   },
+  "production_workerSingularPeasant": "Peasant",
+  "@production_workerSingularPeasant": {
+    "description": "Singular Peasant rank name in Disband confirm copy."
+  },
+  "production_workerSingularApprentice": "Apprentice",
+  "@production_workerSingularApprentice": {
+    "description": "Singular Apprentice rank name in Disband confirm copy."
+  },
+  "production_workerSingularJourneyman": "Journeyman",
+  "@production_workerSingularJourneyman": {
+    "description": "Singular Journeyman rank name in Disband confirm copy."
+  },
+  "production_workerSingularMaster": "Master",
+  "@production_workerSingularMaster": {
+    "description": "Singular Master rank name in Disband confirm copy."
+  },
+  "production_labourDisbandConfirmTitle": "Disband {tier}?",
+  "@production_labourDisbandConfirmTitle": {
+    "description": "Title of the Labour Controls Disband confirm dialog.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDisbandConfirmBody": "Effect: This {tier} becomes a Peasant now.\nCost: Gold and paper spent to train them are not returned.\nWhen: Immediately, not after Next turn.",
+  "@production_labourDisbandConfirmBody": {
+    "description": "Disband confirm body: effect, no-refund cost, and immediate timing.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "production_labourTierUnlocked": "(unlocked)",
   "@production_labourTierUnlocked": {
     "description": "Parenthetical suffix on a Labour Controls tier label when every required tech is unlocked for the viewed player (peasant always renders this)."
@@ -4019,6 +5804,80 @@
   "production_labourControlsSectionLabel": "Labour Controls",
   "@production_labourControlsSectionLabel": {
     "description": "Title of the Labour Controls subsection in the Production panel Available subpanel."
+  },
+  "production_labourCostMaterial": "{name} ×{quantity}",
+  "@production_labourCostMaterial": {
+    "description": "One material cost fragment on a Labour Controls row (commodity display name and catalog quantity).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourCostPeasantConsume": "1 peasant",
+  "@production_labourCostPeasantConsume": {
+    "description": "Peasant-consume fragment on a trained-tier Labour Controls cost gist."
+  },
+  "production_labourUpkeepLabour": "{n} labour / turn",
+  "@production_labourUpkeepLabour": {
+    "description": "Labour-per-turn fragment of a Labour Controls upkeep gist.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourUpkeepFoodOr": "{a} or {b}",
+  "@production_labourUpkeepFoodOr": {
+    "description": "Peasant food-upkeep fragment (one food unit: grain or meat).",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourUpkeepFoodAnd": "{a} + {b}",
+  "@production_labourUpkeepFoodAnd": {
+    "description": "Trained-tier food-upkeep fragment (two food units: grain + meat).",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourRequires": "Requires: {names}",
+  "@production_labourRequires": {
+    "description": "Tech-lock gist on a Labour Controls row listing catalog tech display names.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourStaffsNextProduction": "New workers staff next Production",
+  "@production_labourStaffsNextProduction": {
+    "description": "Staffing-timing clause for an enabled Labour Controls + tooltip."
+  },
+  "production_labourAppendEnabledTooltip": "{action}. {timing}",
+  "@production_labourAppendEnabledTooltip": {
+    "description": "Enabled + tooltip: recruit/train action plus next-Production staffing note.",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "timing": {
+        "type": "String"
+      }
+    }
   },
   "production_workerCount": "{name}: {count}",
   "@production_workerCount": {
@@ -4223,6 +6082,26 @@
   "@splitFleet_confirm": {
     "description": "Confirm button label for split fleet dialog."
   },
+  "splitFleet_detachTitle": "Detach a squadron",
+  "@splitFleet_detachTitle": {
+    "description": "Split dialog title when detaching from the Home Fleet to sail (Refs #4448)."
+  },
+  "splitFleet_detachConfirm": "Detach and choose destination",
+  "@splitFleet_detachConfirm": {
+    "description": "Split dialog confirm label for Home Fleet detach-then-sail (Refs #4448)."
+  },
+  "splitFleet_homeCargoConsequence": "Cargo holds remaining after this split: {remaining} (overseas load this turn: {used}).",
+  "@splitFleet_homeCargoConsequence": {
+    "description": "Live Home Fleet cargo-hold consequence on split (Refs #4448).",
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      }
+    }
+  },
   "splitFleet_totalShips": "Total: {total} ships",
   "@splitFleet_totalShips": {
     "description": "Footer total ship count in split fleet transfer list.",
@@ -4248,6 +6127,18 @@
   "naval_transferToHome_confirm": "Transfer",
   "@naval_transferToHome_confirm": {
     "description": "Primary action label for transfer-to-home dialog (#2867 R12)."
+  },
+  "naval_transferToHome_homeCargoConsequence": "Cargo holds remaining after this transfer: {remaining} (overseas load this turn: {used}).",
+  "@naval_transferToHome_homeCargoConsequence": {
+    "description": "Live Home Fleet cargo-hold consequence on transfer into Home Fleet (Refs #4544).",
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "used": {
+        "type": "String"
+      }
+    }
   },
   "diplomacy_section_greatPowers": "Great Powers",
   "@diplomacy_section_greatPowers": {
@@ -5335,6 +7226,142 @@
   "@tradeCounsel_reason_speculativeInventory_brief": {
     "description": "Brief trade counsel reason for F10 speculative bids."
   },
+  "militaryCounsel_tabMilitary": "Military",
+  "@militaryCounsel_tabMilitary": {
+    "description": "Counsel screen Military tab label."
+  },
+  "militaryCounsel_empty": "No pressing military advice this turn.",
+  "@militaryCounsel_empty": {
+    "description": "Counsel Military tab empty state."
+  },
+  "militaryCounsel_action_agree": "Agree",
+  "@militaryCounsel_action_agree": {
+    "description": "Stages one military counsel recommendation."
+  },
+  "militaryCounsel_trainAgreeFailed": "Cannot raise those units right now — check treasury, stockpile, peasants, and queued orders.",
+  "@militaryCounsel_trainAgreeFailed": {
+    "description": "Shown when military train Agree fails re-validation."
+  },
+  "militaryCounsel_invadeAgreeFailed": "Cannot stage that invasion right now — check army, destination, and diplomacy.",
+  "@militaryCounsel_invadeAgreeFailed": {
+    "description": "Shown when military invade Agree fails validation."
+  },
+  "militaryCounsel_title_train": "Raise units",
+  "@militaryCounsel_title_train": {
+    "description": "Fallback military train counsel card title."
+  },
+  "militaryCounsel_title_trainUnit": "Raise {unit} × {count}",
+  "@militaryCounsel_title_trainUnit": {
+    "description": "Military train counsel card title.",
+    "placeholders": {
+      "unit": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "militaryCounsel_title_invade": "Invade province",
+  "@militaryCounsel_title_invade": {
+    "description": "Fallback military invade counsel card title."
+  },
+  "militaryCounsel_title_invadeArmy": "Invade with {army} → {province}",
+  "@militaryCounsel_title_invadeArmy": {
+    "description": "Military invade counsel card title with army id.",
+    "placeholders": {
+      "army": { "type": "String" },
+      "province": { "type": "String" }
+    }
+  },
+  "militaryCounsel_ownerLine": "Owner: {owner}",
+  "@militaryCounsel_ownerLine": {
+    "description": "Owner line on invade counsel cards.",
+    "placeholders": {
+      "owner": { "type": "String" }
+    }
+  },
+  "militaryCounsel_cost_noMaterials": "no extra materials",
+  "@militaryCounsel_cost_noMaterials": {
+    "description": "Train counsel cost line when no material inputs."
+  },
+  "militaryCounsel_costSummary": "Cost: {treasury} treasury; {materials}; {peasants} peasants",
+  "@militaryCounsel_costSummary": {
+    "description": "Train counsel affordability summary.",
+    "placeholders": {
+      "treasury": { "type": "int" },
+      "materials": { "type": "String" },
+      "peasants": { "type": "int" }
+    }
+  },
+  "militaryCounsel_reason_affordableTrain_brief": "Affordable this turn — the planner would raise these units now.",
+  "@militaryCounsel_reason_affordableTrain_brief": {
+    "description": "Brief military counsel reason for train recommendations."
+  },
+  "militaryCounsel_reason_atWarInvasion_brief": "Already at war — a field army can march on this province.",
+  "@militaryCounsel_reason_atWarInvasion_brief": {
+    "description": "Brief military counsel reason for at-war invasions."
+  },
+  "militaryCounsel_reason_declareWarInvasion_brief": "Invasion target — confirm war before the army marches.",
+  "@militaryCounsel_reason_declareWarInvasion_brief": {
+    "description": "Brief military counsel reason for declare-war invasions."
+  },
+  "militaryCounsel_trainStarSemantic": "Military counsel: {brief}",
+  "@militaryCounsel_trainStarSemantic": {
+    "description": "Accessibility label for Train Military dialog counsel star.",
+    "placeholders": {
+      "brief": {
+        "type": "String"
+      }
+    }
+  },
+  "developmentCounsel_tabDevelopment": "Development",
+  "@developmentCounsel_tabDevelopment": {
+    "description": "Counsel screen Development tab label."
+  },
+  "developmentCounsel_empty": "No pressing development advice this turn.",
+  "@developmentCounsel_empty": {
+    "description": "Counsel Development tab empty state."
+  },
+  "developmentCounsel_action_agree": "Agree",
+  "@developmentCounsel_action_agree": {
+    "description": "Stages one development counsel recommendation."
+  },
+  "developmentCounsel_agreeFailed": "Cannot stage that port work right now — check Engineer availability, materials, and the target tile.",
+  "@developmentCounsel_agreeFailed": {
+    "description": "Shown when development Build port Agree fails re-validation."
+  },
+  "developmentCounsel_title_buildPort": "Build port",
+  "@developmentCounsel_title_buildPort": {
+    "description": "Fallback development Build port counsel card title."
+  },
+  "developmentCounsel_title_buildPortAt": "Build port · {location}",
+  "@developmentCounsel_title_buildPortAt": {
+    "description": "Development Build port counsel card title with province/tile location.",
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "developmentCounsel_reason_coastalPort_brief": "A seaboard port would serve this coast.",
+  "@developmentCounsel_reason_coastalPort_brief": {
+    "description": "Brief development counsel reason for baseline coastal ports."
+  },
+  "developmentCounsel_reason_resourceCoast_brief": "Resource coast — a port would move extraction overseas.",
+  "@developmentCounsel_reason_resourceCoast_brief": {
+    "description": "Brief development counsel reason for resource-coast ports."
+  },
+  "developmentCounsel_reason_newWorldCoast_brief": "New World coast — a port opens overseas linkage.",
+  "@developmentCounsel_reason_newWorldCoast_brief": {
+    "description": "Brief development counsel reason for New World coastal ports."
+  },
+  "developmentCounsel_reason_overseasLinkage_brief": "Overseas linkage — a port would reconnect unlinked development.",
+  "@developmentCounsel_reason_overseasLinkage_brief": {
+    "description": "Brief development counsel reason for overseas-linkage ports."
+  },
+  "development_counsel": "Counsel",
+  "@development_counsel": {
+    "description": "Development panel header button opening Development Counsel."
+  },
+  "military_units_counsel": "Counsel",
+  "@military_units_counsel": {
+    "description": "Military Units panel header button opening Military Counsel."
+  },
   "tradeMarket_counsel": "Counsel",
   "@tradeMarket_counsel": {
     "description": "Trade Market header button opening Trade Counsel."
@@ -5353,6 +7380,22 @@
   "tradeMarket_firstRightTooltip": "You hold first right on goods from this purchased tile. Your bids clear before rivals, and you earn overseas profit when another power buys here.",
   "@tradeMarket_firstRightTooltip": {
     "description": "On-request help for the Market first-right chip."
+  },
+  "tradeMarket_lastMarketChip": "Last market",
+  "@tradeMarket_lastMarketChip": {
+    "description": "Compact chip on Market rows with non-zero last-turn world volume (Refs #4653)."
+  },
+  "tradeMarket_lastMarketTooltip": "Last market: {bought} bought · {sold} sold worldwide. This is not your staged Bid or Offer.",
+  "@tradeMarket_lastMarketTooltip": {
+    "description": "On-request worldwide last-turn volume; must not use bids/offers for world volume (Refs #4653).",
+    "placeholders": {
+      "bought": { "type": "int" },
+      "sold": { "type": "int" }
+    }
+  },
+  "tradeMarket_priceMovedTooltip": "Last market moved this price. This turn's deals use the price shown.",
+  "@tradeMarket_priceMovedTooltip": {
+    "description": "Tooltip on Market price cluster when a last-turn coin delta is shown (Refs #4345)."
   },
   "tradeDealBook_matchTagFirstRight": "First right",
   "@tradeDealBook_matchTagFirstRight": {
@@ -5375,6 +7418,96 @@
       "amount": {"type": "int"}
     }
   },
+  "tradeDealBook_unfilledHeading": "Still open",
+  "@tradeDealBook_unfilledHeading": {
+    "description": "Deal Book leftover-order section heading (Refs #4414)."
+  },
+  "tradeDealBook_unfilledEmpty": "None still open.",
+  "@tradeDealBook_unfilledEmpty": {
+    "description": "Deal Book leftover-section empty line when the panel has fills but no leftovers (Refs #4414)."
+  },
+  "tradeDealBook_filledRow": "{commodity} — {quantity} at £{unitPrice} = £{notional}",
+  "@tradeDealBook_filledRow": {
+    "description": "Deal Book filled buy/sale row in player language (Refs #4414).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"},
+      "unitPrice": {"type": "int"},
+      "notional": {"type": "int"}
+    }
+  },
+  "tradeDealBook_unfilledRow": "{commodity} — {quantity}",
+  "@tradeDealBook_unfilledRow": {
+    "description": "Deal Book leftover order row; no priority on the default surface (Refs #4414).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"}
+    }
+  },
+  "tradeDealBook_totalsLine": "{label}: £{amount}",
+  "@tradeDealBook_totalsLine": {
+    "description": "Deal Book panel totals with treasury mark (Refs #4414).",
+    "placeholders": {
+      "label": {"type": "String"},
+      "amount": {"type": "int"}
+    }
+  },
+  "tradeDealBook_didNotStayOpenHeading": "Did not stay open",
+  "@tradeDealBook_didNotStayOpenHeading": {
+    "description": "Deal Book subsection for dropped carry-forwards (Refs #4500)."
+  },
+  "tradeDealBook_reasonTreasuryShort": "Treasury ran short — leftover stays open",
+  "@tradeDealBook_reasonTreasuryShort": {
+    "description": "Still open bid reason when treasury truncated the fill (Refs #4500)."
+  },
+  "tradeDealBook_reasonNoMatchingSales": "No matching sales last turn",
+  "@tradeDealBook_reasonNoMatchingSales": {
+    "description": "Still open bid fallback when last-turn offers were zero (Refs #4500)."
+  },
+  "tradeDealBook_reasonNoMatchingBuys": "No matching buys last turn",
+  "@tradeDealBook_reasonNoMatchingBuys": {
+    "description": "Still open offer fallback when last-turn bids were zero (Refs #4500)."
+  },
+  "tradeDealBook_droppedBidRow": "{commodity} — {quantity} — leftover cargo no longer covered this bid",
+  "@tradeDealBook_droppedBidRow": {
+    "description": "Did not stay open row for cargo-dropped bid (Refs #4500).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"}
+    }
+  },
+  "tradeDealBook_droppedOfferRow": "{commodity} — {quantity} — stores no longer covered this sale",
+  "@tradeDealBook_droppedOfferRow": {
+    "description": "Did not stay open row for stockpile-dropped offer (Refs #4500).",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"}
+    }
+  },
+  "tradeDealBook_detailsAffordance": "Details",
+  "@tradeDealBook_detailsAffordance": {
+    "description": "Tap/long-press affordance for leftover reason next-step (Refs #4500)."
+  },
+  "tradeDealBook_detailFreeTreasury": "Free treasury by canceling other bids or waiting for income.",
+  "@tradeDealBook_detailFreeTreasury": {
+    "description": "On-request next step for treasury-short leftover bid (Refs #4500)."
+  },
+  "tradeDealBook_detailAddCargo": "Add cargo to your home fleet or reduce bid quantity.",
+  "@tradeDealBook_detailAddCargo": {
+    "description": "On-request next step for cargo-dropped bid (Refs #4500)."
+  },
+  "tradeDealBook_detailKeepStock": "Keep enough stock in your warehouses to cover leftover sales.",
+  "@tradeDealBook_detailKeepStock": {
+    "description": "On-request next step for stockpile-dropped offer (Refs #4500)."
+  },
+  "tradeDealBook_detailNoMatchingSales": "Wait for rivals to offer this good, or raise your bid price next turn.",
+  "@tradeDealBook_detailNoMatchingSales": {
+    "description": "On-request next step when no sales matched a leftover bid (Refs #4500)."
+  },
+  "tradeDealBook_detailNoMatchingBuys": "Wait for rivals to bid on this good, or lower your offer price next turn.",
+  "@tradeDealBook_detailNoMatchingBuys": {
+    "description": "On-request next step when no buys matched a leftover offer (Refs #4500)."
+  },
   "eventFeed_overseasProfitCredited": "Overseas profit credited: £{amount} from {count} rival purchase(s). Tap to open Deal Book.",
   "@eventFeed_overseasProfitCredited": {
     "description": "Player turn event feed line when overseas profit treasury was credited.",
@@ -5382,5 +7515,69 @@
       "amount": {"type": "int"},
       "count": {"type": "int"}
     }
+  },
+  "tileRadial_explore": "Explore",
+  "@tileRadial_explore": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Explore (Refs #4440)."
+  },
+  "tileRadial_prospect": "Prospect",
+  "@tileRadial_prospect": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Prospect (Refs #4440)."
+  },
+  "tileRadial_buildImprovement": "Build improvement",
+  "@tileRadial_buildImprovement": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build improvement (Refs #4440)."
+  },
+  "tileRadial_buildRoad": "Build road",
+  "@tileRadial_buildRoad": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build road (Refs #4570)."
+  },
+  "tileRadial_purchaseLand": "Purchase land",
+  "@tileRadial_purchaseLand": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Purchase land (Refs #4570)."
+  },
+  "provinceOverlay_tilePurchaseLandPayoffTradeable": "{good} still sells as {court}’s. After this work you get first bid on that sale, and gold when other courts buy it. The land stays theirs.",
+  "@provinceOverlay_tilePurchaseLandPayoffTradeable": {
+    "description": "Default-visible Purchase land payoff on tradeable tiles (Refs #4630).",
+    "placeholders": {
+      "good": { "type": "String" },
+      "court": { "type": "String" }
+    }
+  },
+  "provinceOverlay_tilePurchaseLandPayoffRiches": "{good} from this tile will go to your treasury after this work. The land stays {court}’s.",
+  "@provinceOverlay_tilePurchaseLandPayoffRiches": {
+    "description": "Default-visible Purchase land payoff on riches tiles (Refs #4630).",
+    "placeholders": {
+      "good": { "type": "String" },
+      "court": { "type": "String" }
+    }
+  },
+  "tileRadial_upgradeTown": "Upgrade town",
+  "@tileRadial_upgradeTown": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Upgrade town (Refs #4570)."
+  },
+  "tileRadial_buildPort": "Build port",
+  "@tileRadial_buildPort": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build port (Refs #4570)."
+  },
+  "tileRadial_buildRailroad": "Build railroad",
+  "@tileRadial_buildRailroad": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build railroad (Refs #4570)."
+  },
+  "tileRadial_buildFort": "Build fort",
+  "@tileRadial_buildFort": {
+    "description": "MAP30001 / MAP30002 catalog wedge label for Build fort (Refs #4570)."
+  },
+  "tileRadial_more": "More",
+  "@tileRadial_more": {
+    "description": "MAP30001 More spoke label (Refs #4440)."
+  },
+  "tileRadial_moreTitle": "More tile actions",
+  "@tileRadial_moreTitle": {
+    "description": "MAP30002 dialog title (Refs #4440)."
+  },
+  "tileRadial_provinceDetails": "Province details",
+  "@tileRadial_provinceDetails": {
+    "description": "MAP30002 first row; opens MAP20001 (Refs #4440)."
   }
 }

@@ -36,24 +36,85 @@ GameSetupConfig _tinyConfig() => GameSetupConfig(
 void main() {
   suppressLogsForTests();
 
-  late Directory dir;
-  late Box<dynamic> box;
-
-  setUp(() async {
-    dir = await Directory.systemTemp.createTemp('ct_home_fleet_cargo_');
-    Hive.init(dir.path);
-    box = await Hive.openBox<dynamic>(HiveBoxNames.games);
-  });
-
-  tearDown(() async {
-    await box.close();
-    await Hive.close();
-    await dir.delete(recursive: true);
-  });
-
   test(
-    'homeFleetCargoSummaryProvider matches extraction overseas sum and home fleet capacity',
+    'provider returns empty summary when currentGame is null without Hive',
     () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final summary = container.read(homeFleetCargoSummaryProvider);
+      expect(summary.used, 0);
+      expect(summary.capacity, 0);
+      expect(summary.notDefined, isFalse);
+      expect(summary.isCargoUsedReliable, isTrue);
+    },
+  );
+
+  group('with Hive games box', () {
+    late Directory dir;
+    late Box<dynamic> box;
+
+    setUp(() async {
+      dir = await Directory.systemTemp.createTemp('ct_home_fleet_cargo_');
+      Hive.init(dir.path);
+      box = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    });
+
+    tearDown(() async {
+      await box.close();
+      await Hive.close();
+      await dir.delete(recursive: true);
+    });
+
+    test(
+      'homeFleetCargoSummaryProvider matches extraction overseas sum and home fleet capacity',
+      () {
+        final container = ProviderContainer(
+          overrides: [gamesBoxProvider.overrideWith((ref) => box)],
+        );
+        addTearDown(container.dispose);
+
+        final service = container.read(gameServiceProvider);
+        final game = service.createNewGame(
+          id: 'cargo_summary',
+          config: _tinyConfig(),
+        );
+        container.read(currentGameProvider.notifier).setGame(game);
+
+        final summary = container.read(homeFleetCargoSummaryProvider);
+        final humanPlayer =
+            game.players.where((p) => p.isHuman).firstOrNull ??
+            game.players.first;
+        final mapData = service.getMapData(game.id)!;
+        final connectivity = resolveConnectivity(
+          game: game,
+          tileMapByRegion: mapData.tileMapByRegion,
+          topology: mapData.combinedTopology,
+        );
+        final extraction = computeExtraction(
+          game: game,
+          tileMapByRegion: mapData.tileMapByRegion,
+          connectivityResult: connectivity,
+          techCapForPlayer: (playerId) {
+            final player = game.playerById(playerId);
+            return extractionCapForUnlocked(player?.techUnlocked);
+          },
+        );
+        final expectedUsed =
+            extraction[humanPlayer.id]?.overseas.values.fold<int>(
+              0,
+              (sum, value) => sum + value,
+            ) ??
+            0;
+        final expectedCapacity = _homeFleetCapacity(game, humanPlayer.id);
+
+        expect(summary.used, expectedUsed);
+        expect(summary.capacity, expectedCapacity);
+        expect(summary.isCargoUsedReliable, isTrue);
+      },
+    );
+
+    test('provider uses 0 used when map data is unavailable', () {
       final container = ProviderContainer(
         overrides: [gamesBoxProvider.overrideWith((ref) => box)],
       );
@@ -61,101 +122,58 @@ void main() {
 
       final service = container.read(gameServiceProvider);
       final game = service.createNewGame(
-        id: 'cargo_summary',
+        id: 'cargo_no_map',
         config: _tinyConfig(),
       );
-      container.read(currentGameProvider.notifier).setGame(game);
+      final gameWithoutCachedMap = game.copyWith(id: '${game.id}_missing_map');
+      container
+          .read(currentGameProvider.notifier)
+          .setGame(gameWithoutCachedMap);
 
       final summary = container.read(homeFleetCargoSummaryProvider);
       final humanPlayer =
-          game.players.where((p) => p.isHuman).firstOrNull ??
-          game.players.first;
-      final mapData = service.getMapData(game.id)!;
-      final connectivity = resolveConnectivity(
-        game: game,
-        tileMapByRegion: mapData.tileMapByRegion,
-        topology: mapData.combinedTopology,
-      );
-      final extraction = computeExtraction(
-        game: game,
-        tileMapByRegion: mapData.tileMapByRegion,
-        connectivityResult: connectivity,
-        techCapForPlayer: (playerId) {
-          final player = game.playerById(playerId);
-          return extractionCapForUnlocked(player?.techUnlocked);
-        },
-      );
-      final expectedUsed =
-          extraction[humanPlayer.id]?.overseas.values.fold<int>(
-            0,
-            (sum, value) => sum + value,
-          ) ??
-          0;
-      final expectedCapacity = _homeFleetCapacity(game, humanPlayer.id);
-
-      expect(summary.used, expectedUsed);
-      expect(summary.capacity, expectedCapacity);
-      expect(summary.isCargoUsedReliable, isTrue);
-    },
-  );
-
-  test('provider uses 0 used when map data is unavailable', () {
-    final container = ProviderContainer(
-      overrides: [gamesBoxProvider.overrideWith((ref) => box)],
-    );
-    addTearDown(container.dispose);
-
-    final service = container.read(gameServiceProvider);
-    final game = service.createNewGame(
-      id: 'cargo_no_map',
-      config: _tinyConfig(),
-    );
-    final gameWithoutCachedMap = game.copyWith(id: '${game.id}_missing_map');
-    container.read(currentGameProvider.notifier).setGame(gameWithoutCachedMap);
-
-    final summary = container.read(homeFleetCargoSummaryProvider);
-    final humanPlayer =
-        gameWithoutCachedMap.players.where((p) => p.isHuman).firstOrNull ??
-        gameWithoutCachedMap.players.first;
-    expect(summary.used, 0);
-    expect(
-      summary.capacity,
-      _homeFleetCapacity(gameWithoutCachedMap, humanPlayer.id),
-    );
-    expect(summary.isCargoUsedReliable, isTrue);
-  });
-
-  test(
-    'provider marks cargo used unreliable and logs when map load throws',
-    () {
-      final adapter = GameSaveAdapter();
-      final container = ProviderContainer(
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => box),
-          gameSaveAdapterProvider.overrideWith((ref) => adapter),
-          gameServiceProvider.overrideWith(
-            (ref) => _ThrowingMapGameService(box, adapter),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final realService = GameService(box, adapter);
-      final game = realService.createNewGame(
-        id: 'cargo_throw',
-        config: _tinyConfig(),
-      );
-      container.read(currentGameProvider.notifier).setGame(game);
-
-      final summary = container.read(homeFleetCargoSummaryProvider);
-      final humanPlayer =
-          game.players.where((p) => p.isHuman).firstOrNull ??
-          game.players.first;
+          gameWithoutCachedMap.players.where((p) => p.isHuman).firstOrNull ??
+          gameWithoutCachedMap.players.first;
       expect(summary.used, 0);
-      expect(summary.capacity, _homeFleetCapacity(game, humanPlayer.id));
-      expect(summary.isCargoUsedReliable, isFalse);
-    },
-  );
+      expect(
+        summary.capacity,
+        _homeFleetCapacity(gameWithoutCachedMap, humanPlayer.id),
+      );
+      expect(summary.isCargoUsedReliable, isTrue);
+    });
+
+    test(
+      'provider marks cargo used unreliable and logs when map load throws',
+      () {
+        final adapter = GameSaveAdapter();
+        final container = ProviderContainer(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => box),
+            gameSaveAdapterProvider.overrideWith((ref) => adapter),
+            gameServiceProvider.overrideWith(
+              (ref) => _ThrowingMapGameService(box, adapter),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final realService = GameService(box, adapter);
+        final game = realService.createNewGame(
+          id: 'cargo_throw',
+          config: _tinyConfig(),
+        );
+        container.read(currentGameProvider.notifier).setGame(game);
+
+        final summary = container.read(homeFleetCargoSummaryProvider);
+        final humanPlayer =
+            game.players.where((p) => p.isHuman).firstOrNull ??
+            game.players.first;
+        expect(summary.used, 0);
+        expect(summary.capacity, _homeFleetCapacity(game, humanPlayer.id));
+        expect(summary.isCargoUsedReliable, isFalse);
+      },
+    );
+  });
 }
 
 int _homeFleetCapacity(Game game, String playerId) {

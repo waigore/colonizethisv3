@@ -3,30 +3,39 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        PlayerView,
-        ProvinceImprovableCommodityCount,
-        ProvinceTileCapitalLinkPreview,
-        VisibilityLevel,
-        buildPlayerView;
+    show PlayerView, ProvinceImprovableCommodityCount, buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay,
-        sampleProvinceIdForOverlay,
-        sampleTileKeyForProvinceOverlay;
+    show demoHumanPlayerViewForOverlay, demoRegionForOverlay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 import 'app_shell_harness.dart';
+
+/// Empty 1×1 region used by MAP20001 shortcut callback tests.
+RegionMapViewData emptyProvinceOverlayRegion({String regionId = 'oldWorld'}) {
+  return RegionMapViewData(
+    regionId: regionId,
+    width: 1,
+    height: 1,
+    cellSize: 16,
+    cells: const [],
+    capitalMarkers: const [],
+    portMarkers: const [],
+    factionColors: const {},
+    greatPowerFactionIds: const {},
+    terrainColors: const {},
+    provincePoliticalOwnerByPrefixedProvinceId: const {},
+  );
+}
 
 /// Returns a province id (`regionId|localId`) owned by [ownerId] in the demo
 /// Old World. Province ids in the debug-init game are already prefixed.
@@ -89,8 +98,21 @@ Widget buildProvinceOverlayDarkThemeShell({
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
-  bool buildImprovementActionHasBuilderUnits = false,
+  bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
+  bool showEstablishConsulateControl = false,
+  bool establishConsulateEnabled = false,
+  bool establishConsulatePending = false,
+  String? establishConsulateRejectionReason,
+  VoidCallback? onEstablishConsulateTap,
+  bool showOwnerStanding = false,
+  bool ownerStandingAtWar = false,
+  bool showOwnerAllianceBadge = false,
+  bool showOfferPeaceControl = false,
+  bool offerPeaceEnabled = false,
+  bool offerPeacePending = false,
+  String? offerPeaceRejectionReason,
+  VoidCallback? onOfferPeaceTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
@@ -98,6 +120,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   ProvinceTileConnectivityDisplay? tileConnectivity,
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
   ThemeData? shellTheme,
+  Size? viewport,
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -110,16 +133,46 @@ Widget buildProvinceOverlayDarkThemeShell({
     onClose: onClose,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
-    showProspectActionIcon: showProspectActionIcon,
-    prospectActionEnabled: prospectActionEnabled,
-    onProspectWithExplorerTap: onProspectWithExplorerTap,
-    showExploreActionIcon: showExploreActionIcon,
-    exploreActionEnabled: exploreActionEnabled,
-    onExploreWithExplorerTap: onExploreWithExplorerTap,
-    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-    buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
-    onBuildImprovementTap: onBuildImprovementTap,
+    civilianInlineActions: provinceOverlayInlineActions(
+      explore: (
+        showIcon: showExploreActionIcon,
+        enabled: exploreActionEnabled,
+        hasMatchingUnits: exploreActionEnabled,
+      ),
+      prospect: (
+        showIcon: showProspectActionIcon,
+        enabled: prospectActionEnabled,
+        hasMatchingUnits: prospectActionEnabled,
+      ),
+      buildImprovement: (
+        showIcon: showBuildImprovementActionIcon,
+        enabled: buildImprovementActionEnabled,
+        hasMatchingUnits: buildImprovementActionHasMatchingUnits,
+      ),
+    ),
+    inlineActionCallbacks: (
+      onExploreWithExplorerTap: onExploreWithExplorerTap,
+      onProspectWithExplorerTap: onProspectWithExplorerTap,
+      onBuildImprovementTap: onBuildImprovementTap,
+      onBuildRoadTap: null,
+      onBuildFortTap: null,
+      onBuildPortTap: null,
+      onBuildRailroadTap: null,
+      onPurchaseLandTap: null,
+    ),
+    showEstablishConsulateControl: showEstablishConsulateControl,
+    establishConsulateEnabled: establishConsulateEnabled,
+    establishConsulatePending: establishConsulatePending,
+    establishConsulateRejectionReason: establishConsulateRejectionReason,
+    onEstablishConsulateTap: onEstablishConsulateTap,
+    showOwnerStanding: showOwnerStanding,
+    ownerStandingAtWar: ownerStandingAtWar,
+    showOwnerAllianceBadge: showOwnerAllianceBadge,
+    showOfferPeaceControl: showOfferPeaceControl,
+    offerPeaceEnabled: offerPeaceEnabled,
+    offerPeacePending: offerPeacePending,
+    offerPeaceRejectionReason: offerPeaceRejectionReason,
+    onOfferPeaceTap: onOfferPeaceTap,
     omniscientDetail: omniscientDetail,
     townProductionBonusByCommodity: townProductionBonusByCommodity,
     extractionSnapshot: extractionSnapshot,
@@ -134,6 +187,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   // Optional [shellTheme] is a documented buildAppShell specialization
   // (same l10n wiring; no inline MaterialApp).
   return buildAppShell(
+    viewport: viewport,
     theme: shellTheme,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -163,8 +217,21 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
-  bool buildImprovementActionHasBuilderUnits = false,
+  bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
+  bool showEstablishConsulateControl = false,
+  bool establishConsulateEnabled = false,
+  bool establishConsulatePending = false,
+  String? establishConsulateRejectionReason,
+  VoidCallback? onEstablishConsulateTap,
+  bool showOwnerStanding = false,
+  bool ownerStandingAtWar = false,
+  bool showOwnerAllianceBadge = false,
+  bool showOfferPeaceControl = false,
+  bool offerPeaceEnabled = false,
+  bool offerPeacePending = false,
+  String? offerPeaceRejectionReason,
+  VoidCallback? onOfferPeaceTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
@@ -172,6 +239,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   ProvinceTileConnectivityDisplay? tileConnectivity,
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
   ThemeData? shellTheme,
+  Size? viewport,
 }) async {
   await tester.pumpWidget(
     buildProvinceOverlayDarkThemeShell(
@@ -194,157 +262,31 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       onExploreWithExplorerTap: onExploreWithExplorerTap,
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
-      buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+      buildImprovementActionHasMatchingUnits:
+          buildImprovementActionHasMatchingUnits,
       onBuildImprovementTap: onBuildImprovementTap,
+      showEstablishConsulateControl: showEstablishConsulateControl,
+      establishConsulateEnabled: establishConsulateEnabled,
+      establishConsulatePending: establishConsulatePending,
+      establishConsulateRejectionReason: establishConsulateRejectionReason,
+      onEstablishConsulateTap: onEstablishConsulateTap,
+      showOwnerStanding: showOwnerStanding,
+      ownerStandingAtWar: ownerStandingAtWar,
+      showOwnerAllianceBadge: showOwnerAllianceBadge,
+      showOfferPeaceControl: showOfferPeaceControl,
+      offerPeaceEnabled: offerPeaceEnabled,
+      offerPeacePending: offerPeacePending,
+      offerPeaceRejectionReason: offerPeaceRejectionReason,
+      onOfferPeaceTap: onOfferPeaceTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
       tileConnectivity: tileConnectivity,
       shellTheme: shellTheme,
+      viewport: viewport,
     ),
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 16));
-}
-
-/// Overlay with the demo fixture player view and a revealed sample land tile.
-Widget buildProvinceOverlayWithRevealedDemoTile({int roadLevel = 0}) {
-  final base = demoGameForOverlay;
-  final tileKey = sampleTileKeyForProvinceOverlay;
-  final game = roadLevel == 0
-      ? base
-      : gameWithRoadLevelOnTile(
-          base: base,
-          tileKey: tileKey,
-          roadLevel: roadLevel,
-        );
-  return buildProvinceOverlayDarkThemeShell(
-    game: game,
-    displayId: provinceIdFromTileKey(tileKey),
-    selectedTileKey: tileKey,
-    playerView: demoOverlayPlayerView(base),
-  );
-}
-
-/// Overlay with demo fixture, full player view, and configurable road level.
-Widget buildProvinceOverlayWithRoadLevelFullPlayerView({
-  required int roadLevel,
-}) {
-  final base = demoGameForOverlay;
-  final tileKey = sampleTileKeyForProvinceOverlay;
-  final game = gameWithRoadLevelOnTile(
-    base: base,
-    tileKey: tileKey,
-    roadLevel: roadLevel,
-  );
-  return buildProvinceOverlayDarkThemeShell(
-    game: game,
-    displayId: provinceIdFromTileKey(tileKey),
-    selectedTileKey: tileKey,
-    playerView: demoOverlayPlayerView(base),
-  );
-}
-
-/// Overlay with demo fixture, demo player view, and optional inline action icons.
-Widget buildProvinceOverlayWithRoadLevelDemoFixture({
-  required int roadLevel,
-  bool showExploreActionIcon = false,
-  bool exploreActionEnabled = false,
-  bool showProspectActionIcon = false,
-  bool prospectActionEnabled = false,
-  bool showBuildImprovementActionIcon = false,
-  bool buildImprovementActionEnabled = false,
-}) {
-  final base = demoGameForOverlay;
-  final tileKey = sampleTileKeyForProvinceOverlay;
-  final game = gameWithRoadLevelOnTile(
-    base: base,
-    tileKey: tileKey,
-    roadLevel: roadLevel,
-  );
-  return buildProvinceOverlayDarkThemeShell(
-    game: game,
-    displayId: sampleProvinceIdForOverlay,
-    selectedTileKey: tileKey,
-    showExploreActionIcon: showExploreActionIcon,
-    exploreActionEnabled: exploreActionEnabled,
-    onExploreWithExplorerTap: () {},
-    showProspectActionIcon: showProspectActionIcon,
-    prospectActionEnabled: prospectActionEnabled,
-    onProspectWithExplorerTap: () {},
-    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-    buildImprovementActionEnabled: buildImprovementActionEnabled,
-    onBuildImprovementTap: () {},
-  );
-}
-
-/// Overlay with a province-context display id and a sea-cell selected tile.
-/// Returns `null` when the demo fixture cannot supply the port-harbor case.
-Widget? buildProvinceOverlayWithSeaCellAtLandProvince() {
-  final base = demoGameForOverlay;
-  final region = demoRegionForOverlay;
-  final humanPlayerId = base.players.first.id;
-  final playerView = demoOverlayPlayerView(base);
-
-  String? landDisplayId;
-  for (final cell in region.cells) {
-    if (!cell.isSea) {
-      landDisplayId = '${region.regionId}|${cell.regionCellId}';
-      break;
-    }
-  }
-
-  String? seaTileKey;
-  for (final cell in region.cells) {
-    if (!cell.isSea) continue;
-    if (cell.visibility == TileVisibility.unrevealed) continue;
-    final candidate =
-        '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
-    if (playerView.visibilityForTile(candidate) != VisibilityLevel.unknown) {
-      seaTileKey = candidate;
-      break;
-    }
-  }
-  if (landDisplayId == null || seaTileKey == null) return null;
-
-  return buildProvinceOverlayDarkThemeShell(
-    game: base,
-    displayId: landDisplayId,
-    selectedTileKey: seaTileKey,
-    playerView: playerView,
-  );
-}
-
-/// Searches the demo region for a revealed land tile with no resource.
-({String displayId, String tileKey})? findRevealedLandTileWithoutResource() {
-  final game = demoGameForOverlay;
-  final region = demoRegionForOverlay;
-  final playerView = demoOverlayPlayerView(game);
-  final resourceByTile = game.worldState.resourceByTileKey;
-  for (final cell in region.cells) {
-    if (cell.isSea) continue;
-    if (cell.resourceId != null) continue;
-    final tk = '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
-    if (resourceByTile[tk] != null) continue;
-    if (playerView.visibilityForTile(tk) != VisibilityLevel.fullyVisible) {
-      continue;
-    }
-    final displayId = '${region.regionId}|${cell.regionCellId}';
-    return (displayId: displayId, tileKey: tk);
-  }
-  return null;
-}
-
-/// Overlay with a revealed land tile that has no visible resource.
-Widget? buildProvinceOverlayWithRevealedNoResourceTile() {
-  final pick = findRevealedLandTileWithoutResource();
-  if (pick == null) return null;
-  final game = demoGameForOverlay;
-  return buildProvinceOverlayDarkThemeShell(
-    game: game,
-    displayId: pick.displayId,
-    selectedTileKey: pick.tileKey,
-    playerView: demoOverlayPlayerView(game),
-  );
 }

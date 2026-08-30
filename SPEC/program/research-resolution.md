@@ -32,6 +32,7 @@ Techs that require the player to have found a resource on the map carry **discov
 - **Downstream:** Updated `techUnlocked` drives extraction caps, unit availability, diplomatic options.
 - **Order merge:** Human and AI research orders merged per [order-engine.md](order-engine.md) precedence.
 - **Discovery enforcement:** The Research phase resolver (`packages/colonizethis_logic`, e.g. `research_resolver.dart`) applies the discovery gate when validating slot assignments. **Research eligibility** for UI, AI order suggestions, and similar callers uses `researchableTechIds` in `packages/colonizethis_data` with a `hasDiscoveredResource` callback backed by game visibility/prospection (e.g. `hasRevealedResourceForPlayer` in `packages/colonizethis_logic`).
+- **UI slot preview:** `GAME40001` Slots turn preview must apply the same spy RP boost as this phase (`spyResearchBoostGpCountForTech` then `applySpyResearchBoostToPoints` on the industrial-adjusted points). Preview uses **current** spy presence; a same-turn spy kill can make live RP slightly lower (same class as other previews).
 
 ## Slot occupancy persistence
 
@@ -54,7 +55,8 @@ Slot→tech occupancy is persisted as `Player.researchSlotAssignments` (slot ind
 - **One order per slot:** At most one research order per slot index per player; if multiple exist, last in merged list wins; no double spend or dual progress for that slot.
 - **Validation:** Prerequisites, slot limits, treasury **including the research debt floor** (−`maxDebt` .. +∞), and catalog membership are checked; invalid slots are rejected or skipped before spending.
 - **Discovery techs:** Given a tech has non-empty `discoveryResourceIds` per [tech-tree-new-world.md](../game/tech-tree-new-world.md), when the System validates research for that tech in the Research phase, then the System applies progress only if the player meets the revealed (and if required, prospected) tile rules per [tech-tree.md](../game/tech-tree.md). Given such a tech, when the UI or suggestion layer lists researchable techs for a player, then the System includes that tech only under the same discovery conditions (via `researchableTechIds` and player visibility/prospection state).
-- **Spend and progress:** Research spending is deducted from treasury; funding level maps to research points per GDD presets; progress is added to the slot's tech.
+- **Spend and progress:** Research spending is deducted from treasury; funding level maps to research points per GDD presets, then the spy RP boost in [research-state.md](../game/research-state.md) § Spy RP boost; progress is added to the slot's tech.
+- **UI preview includes spy boost:** Given a funded research slot whose assigned tech is unlocked by a rival Great Power that currently has one of the researching player's Spies in that rival's territory, when `GAME40001` Slots computes the turn preview, then anticipated RP equals `applySpyResearchBoostToPoints` on `effectiveResearchPointsForTechAllocation` using `spyResearchBoostGpCountForTech` (same helpers as this phase).
 - **Completion:** When progress ≥ tech cost, tech is marked unlocked, slot progress cleared, and derived state (extraction cap, military level) updated.
 - **Persistence:** Updated `techUnlocked`, research progress, and treasury are persisted; clearing a slot loses all progress for that tech (no partial save).
 

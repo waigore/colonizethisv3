@@ -7,7 +7,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart'
         PurchasedTileIndex;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import '../trade_order_factory.dart';
-import 'deal_matcher_expectations.dart';
+import 'deal_matcher_scenario.dart';
 TradeOrder matcherOffer(String commodityId, int quantity, {int priority = 1, String? originTileKey}) => testOffer(commodityId, quantity, priority: priority, originTileKey: originTileKey);
 TradeOrder matcherBid(String commodityId, int quantity, {int priority = 1}) => testBid(commodityId, quantity, priority: priority);
 const int _kDefaultMatcherTestTreasuryBudget = 1 << 30;

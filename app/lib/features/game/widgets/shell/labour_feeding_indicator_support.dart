@@ -1,0 +1,210 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_icon_action.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../production/force_feeding_readiness_labels.dart';
+import '../production/labour_readiness_labels.dart';
+import 'chrome_anchored_popover.dart';
+
+/// Stable key for widget tests that open the labour/feeding details popover.
+const Key kLabourFeedingDetailsPanelKey = Key('labour_feeding_details_panel');
+
+/// Resolves the numeric `effective/full` colour tier for the tab-bar labour
+/// indicator per `SPEC/ui/empire-overview.md` § Labour and feeding indicator.
+Color labourFeedingNumericColor({
+  required LabourReadinessSnapshot labourReadiness,
+  required ForceFeedingSnapshot forcesFeeding,
+  required bool notDefined,
+}) {
+  if (notDefined) {
+    return EditorialMonoclePalette.muted;
+  }
+  if (forcesFeeding.hasAnyForces && !forcesFeeding.isFullyFed) {
+    return EditorialMonoclePalette.danger;
+  }
+  if (labourReadiness.effectiveLabour == 0 &&
+      labourReadiness.fullCapacity > 0) {
+    return EditorialMonoclePalette.danger;
+  }
+  if (!labourReadiness.isFullCapacity) {
+    return EditorialMonoclePalette.accent;
+  }
+  return EditorialMonoclePalette.muted;
+}
+
+/// Opens a dismissible floating panel anchored below the labour indicator.
+Future<void> showLabourFeedingDetailsPopover({
+  required BuildContext context,
+  required GlobalKey anchorKey,
+  required double chromeBottomY,
+  required AppLocalizations l10n,
+  required LabourReadinessSnapshot labourReadiness,
+  required ForceFeedingSnapshot forcesFeeding,
+}) {
+  return showChromeAnchoredPopover(
+    context: context,
+    anchorKey: anchorKey,
+    chromeBottomY: chromeBottomY,
+    placement: ChromeAnchoredPopoverPlacement.rightAlignBelow,
+    panelBuilder: (VoidCallback dismiss, VoidCallback _) {
+      return LabourFeedingDetailsPanel(
+        l10n: l10n,
+        labourReadiness: labourReadiness,
+        forcesFeeding: forcesFeeding,
+        onClose: dismiss,
+      );
+    },
+  );
+}
+
+/// Plain-language labour and feeding breakdown surfaced on player tap.
+class LabourFeedingDetailsPanel extends StatelessWidget {
+  const LabourFeedingDetailsPanel({
+    super.key,
+    required this.l10n,
+    required this.labourReadiness,
+    required this.forcesFeeding,
+    required this.onClose,
+  });
+
+  final AppLocalizations l10n;
+  final LabourReadinessSnapshot labourReadiness;
+  final ForceFeedingSnapshot forcesFeeding;
+  final VoidCallback onClose;
+
+  static const Key closeButtonKey = Key('labour_feeding_details_close');
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle rowStyle = _labourFeedingDetailsRowStyle(context);
+    final TextStyle counselStyle = rowStyle.copyWith(
+      color: EditorialMonoclePalette.muted,
+      fontStyle: FontStyle.italic,
+    );
+
+    return DecoratedBox(
+      key: kLabourFeedingDetailsPanelKey,
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.surface,
+        border: Border.all(color: EditorialMonoclePalette.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(CtSpacing.m),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: _LabourFeedingDetailsRows(
+                    l10n: l10n,
+                    labourReadiness: labourReadiness,
+                    forcesFeeding: forcesFeeding,
+                    rowStyle: rowStyle,
+                  ),
+                ),
+                CtIconAction(
+                  key: closeButtonKey,
+                  icon: Icons.close,
+                  tooltip: l10n.common_close,
+                  semanticLabel: l10n.common_close,
+                  onPressed: onClose,
+                ),
+              ],
+            ),
+            const SizedBox(height: CtSpacing.s),
+            Text(
+              l10n.production_forcesFoodDetailsPriority,
+              style: counselStyle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+TextStyle _labourFeedingDetailsRowStyle(BuildContext context) {
+  final ThemeData theme = Theme.of(context);
+  return (theme.textTheme.bodySmall ?? const TextStyle()).copyWith(
+    color: EditorialMonoclePalette.fg,
+    fontSize: 11,
+    height: 1.3,
+  );
+}
+
+class _LabourFeedingDetailsRows extends StatelessWidget {
+  const _LabourFeedingDetailsRows({
+    required this.l10n,
+    required this.labourReadiness,
+    required this.forcesFeeding,
+    required this.rowStyle,
+  });
+
+  final AppLocalizations l10n;
+  final LabourReadinessSnapshot labourReadiness;
+  final ForceFeedingSnapshot forcesFeeding;
+  final TextStyle rowStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[
+      Text(
+        l10n.mapControls_labourFeeding_details_labour(
+          '${labourReadiness.effectiveLabour}',
+          '${labourReadiness.fullCapacity}',
+        ),
+        style: rowStyle,
+      ),
+    ];
+
+    if (labourReadiness.fullCapacity == 0) {
+      rows
+        ..add(const SizedBox(height: 4))
+        ..add(
+          Text(
+            l10n.mapControls_labourFeeding_details_emptyPool,
+            style: rowStyle,
+          ),
+        );
+    } else if (!labourReadiness.isFullCapacity &&
+        labourReadiness.primaryCauseKind != null) {
+      rows
+        ..add(const SizedBox(height: 4))
+        ..add(
+          Text(
+            labourReadinessPrimaryReasonText(l10n, labourReadiness),
+            style: rowStyle,
+          ),
+        );
+    }
+
+    if (forcesFeeding.hasLandForces) {
+      rows
+        ..add(const SizedBox(height: 4))
+        ..add(
+          Text(
+            landForceFeedingDefaultLine(l10n, forcesFeeding),
+            style: rowStyle,
+          ),
+        );
+    }
+    if (forcesFeeding.hasNavalForces) {
+      rows
+        ..add(const SizedBox(height: 4))
+        ..add(
+          Text(
+            navalForceFeedingDefaultLine(l10n, forcesFeeding),
+            style: rowStyle,
+          ),
+        );
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
+  }
+}

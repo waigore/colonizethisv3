@@ -3,6 +3,8 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/full_ai_planner_test_support.dart';
+
 /// Pins Must-have #7 determinism AC from issue #2509:
 ///
 ///   Given identical Game state and the same turn-seed bundle inputs, when
@@ -25,7 +27,7 @@ void main() {
 
   group('generateOrdersForPlayerFullAI determinism (Refs #2509 Must-have #7)', () {
     test('repeated calls with identical game state yield identical orders', () {
-      final game = _scenarioGame();
+      final game = fullAiPlannerDeterminismScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
 
       final r1 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
@@ -37,12 +39,12 @@ void main() {
         reason: 'Full AI orders must be deterministic for identical Game state '
             'and turn-seed bundle inputs.',
       );
-      _expectEconomyPlansEqual(r1.economyPlan, r2.economyPlan);
+      expectFullAiEconomyPlansEqual(r1.economyPlan, r2.economyPlan);
     });
 
     test('repeated calls preserve order list ordering (not just set membership)',
         () {
-      final game = _scenarioGame();
+      final game = fullAiPlannerDeterminismScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
 
       final r1 = generateOrdersForPlayerFullAI(game, topology, 'gp1');
@@ -71,7 +73,7 @@ void main() {
     test(
         'aggregate orders and per-player economy plans match across two runs',
         () {
-      final game = _scenarioGame();
+      final game = fullAiPlannerDeterminismScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
 
       final r1 = generateOrdersForGameFullAI(game, topology);
@@ -86,71 +88,8 @@ void main() {
         final other = r2.economyPlansByPlayerId[entry.key];
         expect(other, isNotNull,
             reason: 'player ${entry.key} missing economy plan in run 2');
-        _expectEconomyPlansEqual(entry.value, other!);
+        expectFullAiEconomyPlansEqual(entry.value, other!);
       }
     });
   });
-}
-
-void _expectEconomyPlansEqual(EconomyPlan a, EconomyPlan b) {
-  expect(a.cargoPreference, b.cargoPreference,
-      reason: 'cargoPreference must be deterministic');
-  expect(
-    a.productionAssignments.length,
-    b.productionAssignments.length,
-    reason: 'productionAssignments count must be deterministic',
-  );
-  for (var i = 0; i < a.productionAssignments.length; i++) {
-    expect(
-      a.productionAssignments[i].recipeId,
-      b.productionAssignments[i].recipeId,
-      reason: 'recipeId at index $i must be deterministic',
-    );
-    expect(
-      a.productionAssignments[i].assignedLabour,
-      b.productionAssignments[i].assignedLabour,
-      reason: 'assignedLabour at index $i must be deterministic',
-    );
-  }
-  expect(a.tradeOrders, b.tradeOrders,
-      reason: 'tradeOrders must be deterministic');
-}
-
-/// Constructs a small but non-trivial Game state for the Full AI determinism
-/// pin. Exercises multiple sub-planners (economy with workerPool + stockpile,
-/// diplomacy with a pre-existing relation, civilian work in an owned home
-/// province) so an empty-orders trivial pass cannot mask sub-planner
-/// nondeterminism.
-Game _scenarioGame() {
-  return Game(
-    id: 'g-full-ai-determinism',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
-      oldWorld: const RegionData(provinces: [], units: []),
-      newWorld: const RegionData(provinces: [], units: []),
-    ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'England',
-        isHuman: false,
-        leaderKey: 'victoria',
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 20)
-            .applyDelta(CommodityCatalog.timber.id, 20)
-            .applyDelta(CommodityCatalog.iron.id, 20)
-            .applyDelta(CommodityCatalog.coal.id, 10),
-        workerPool: const WorkerPool(peasants: 12),
-      ),
-      const Player(
-        id: 'gp2',
-        displayName: 'France',
-        isHuman: false,
-        leaderKey: 'napoleon',
-      ),
-    ],
-    aiControlByGpId: const {'gp1': true, 'gp2': true},
-    hiddenAgendaByGpId: const {'gp1': 'peacemaker', 'gp2': 'warmonger'},
-    globalGameSeed: 42,
-  );
 }

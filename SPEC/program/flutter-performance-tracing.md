@@ -1,12 +1,14 @@
-# Flutter performance tracing (new-game → game screen)
+# Flutter performance tracing
 
-**Scope:** Optional instrumentation to attribute wall time after **New Game** completes until the **game screen** is interactable (GitHub #1710). Complements manual **profile/release** DevTools sessions; does not replace them.
+**Scope:** Optional instrumentation to attribute wall time for (1) **New Game** → game screen interactable (GitHub #1710) and (2) **Development panel** open-path sync work (GitHub #4175 Slice E). Complements manual **profile/release** DevTools sessions; does not replace them.
 
 ---
 
 ## Timeline (Dart DevTools → Performance)
 
 Markers use prefix **`CtAppPerf.`** (filter in the timeline).
+
+### New-game → game screen
 
 | Marker | When |
 |--------|------|
@@ -18,6 +20,20 @@ Markers use prefix **`CtAppPerf.`** (filter in the timeline).
 | `CtAppPerf.intro.asset_load.begin` / `end` | Before/after loading the intro Yarn asset string. |
 | `CtAppPerf.intro.dialogue_begin` | Immediately before `DialogueRunner.startDialogue`. |
 | `CtAppPerf.intro.first_line` | First `onStateChanged` callback where `line != null`. |
+
+### Development panel open path (Slice E)
+
+| Marker | When |
+|--------|------|
+| `CtAppPerf.development.readModelReady` | Post-frame gate flips so overview/list may build (instant). |
+| `CtAppPerf.developmentPanel.connectivity` | Sync `resolveDevelopmentPanelConnectivity` in provider. |
+| `CtAppPerf.developmentPanel.staticContext` | Sync `buildPlayerView` + display-name maps in provider. |
+| `CtAppPerf.developmentPanel.sharedContext` | Sync idle/connectivity slice from draft orders. |
+| `CtAppPerf.developmentPanel.regionScopes.<regionId>` | Sync improvable scopes + extraction for one region. |
+| `CtAppPerf.developmentPanel.regionModel.<regionId>` | Sync compose of scopes + assigned civilians for one region. |
+| `CtAppPerf.developmentPanel.assignRowCache.<regionId>` | Sync assign-affordance cache for one region tab. |
+
+Filter `CtAppPerf.development` to isolate panel-open slices. Lazy OW-only open should show Old World `regionScopes` / `regionModel` before any New World counterparts.
 
 ---
 
@@ -39,6 +55,8 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 
 ## Acceptance criteria
 
-- Given the developer records a **profile** or **release** timeline while starting a new game, when they filter the Dart timeline by `CtAppPerf`, then the timeline shows the markers in the table above in a plausible order (setup phases before `navigate.game`, then `mapViewDataProvider.build`, then intro markers as applicable).
+- Given the developer records a **profile** or **release** timeline while starting a new game, when they filter the Dart timeline by `CtAppPerf`, then the timeline shows the new-game markers in the table above in a plausible order (setup phases before `navigate.game`, then `mapViewDataProvider.build`, then intro markers as applicable).
 
 - Given the app logger is configured at **info** for the app package, when a new game is created and the game-start intro runs, then log output includes `newGameAsync phase` lines with `step=` `0` through `4` and `game_intro` lines through `first_line_shown` on the success path.
+
+- Given the developer records a **profile** or **release** timeline while opening Development (`GAME80001`) from the empire rail, when they filter by `CtAppPerf.development`, then the timeline shows `development.readModelReady` and at least the Old World `connectivity` / `staticContext` / `regionScopes` / `regionModel` sync slices before any New World `regionScopes` / `regionModel` slices on first open.

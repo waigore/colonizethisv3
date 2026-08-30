@@ -1,0 +1,180 @@
+// Scenario tables and pump helpers for `province_overlay_tile_capital_link_test.dart`
+// (Refs #4305 — keeps fixtures module ≤500 physical lines).
+
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show ConnectivityResult;
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'province_overlay_tile_capital_link_test_fixtures.dart';
+
+typedef TileCapitalLinkPreviewCase = ({
+  String name,
+  Game Function() buildGame,
+  String provinceId,
+  String selectedTileKey,
+  bool isSeaZoneContext,
+  bool tileIsSea,
+  bool tileRevealed,
+  ConnectivityResult? connectivityForHuman,
+  bool expectNull,
+  bool? capitalConnected,
+  bool? showExtractionRow,
+  int? extractionEffective,
+  int? extractionFull,
+  bool? effectiveLessThanFull,
+});
+
+List<TileCapitalLinkPreviewCase> tileCapitalLinkPreviewCases() => [
+  (
+    name: 'disconnected improved tile reports 0 of F',
+    buildGame: () =>
+        tileCapitalLinkGame(remoteImprovementLevel: 3, remoteRoadLevel: 0),
+    provinceId: kTileCapitalLinkRemoteProvinceId,
+    selectedTileKey: kTileCapitalLinkRemoteTile,
+    isSeaZoneContext: false,
+    tileIsSea: false,
+    tileRevealed: true,
+    connectivityForHuman: const ConnectivityResult(
+      connected: {kTileCapitalLinkCapitalTile},
+    ),
+    expectNull: false,
+    capitalConnected: false,
+    showExtractionRow: true,
+    extractionEffective: 0,
+    extractionFull: 3,
+    effectiveLessThanFull: null,
+  ),
+  (
+    name: 'connected capital tile reports E equals F',
+    buildGame: () =>
+        tileCapitalLinkGame(remoteImprovementLevel: 2, remoteRoadLevel: 4),
+    provinceId: kTileCapitalLinkProvinceId,
+    selectedTileKey: kTileCapitalLinkCapitalTile,
+    isSeaZoneContext: false,
+    tileIsSea: false,
+    tileRevealed: true,
+    connectivityForHuman: const ConnectivityResult(
+      connected: {kTileCapitalLinkCapitalTile},
+      pathTransportCap: {kTileCapitalLinkCapitalTile: 4},
+      connectedByRoadRule: {kTileCapitalLinkCapitalTile},
+    ),
+    expectNull: false,
+    capitalConnected: true,
+    showExtractionRow: true,
+    extractionEffective: null,
+    extractionFull: 1,
+    effectiveLessThanFull: false,
+  ),
+  (
+    name: 'path-capped connected tile reports E less than F',
+    buildGame: tileCapitalLinkPathCappedGame,
+    provinceId: kTileCapitalLinkProvinceId,
+    selectedTileKey: kTileCapitalLinkCapitalTile,
+    isSeaZoneContext: false,
+    tileIsSea: false,
+    tileRevealed: true,
+    connectivityForHuman: const ConnectivityResult(
+      connected: {kTileCapitalLinkCapitalTile},
+      pathTransportCap: {kTileCapitalLinkCapitalTile: 1},
+      connectedByRoadRule: {kTileCapitalLinkCapitalTile},
+    ),
+    expectNull: false,
+    capitalConnected: true,
+    showExtractionRow: true,
+    extractionEffective: 1,
+    extractionFull: 3,
+    effectiveLessThanFull: true,
+  ),
+  (
+    name: 'unimproved disconnected tile omits extraction row',
+    buildGame: () =>
+        tileCapitalLinkGame(remoteImprovementLevel: 0, remoteRoadLevel: 0),
+    provinceId: kTileCapitalLinkRemoteProvinceId,
+    selectedTileKey: kTileCapitalLinkRemoteTile,
+    isSeaZoneContext: false,
+    tileIsSea: false,
+    tileRevealed: true,
+    connectivityForHuman: const ConnectivityResult(
+      connected: {kTileCapitalLinkCapitalTile},
+    ),
+    expectNull: false,
+    capitalConnected: false,
+    showExtractionRow: false,
+    extractionEffective: null,
+    extractionFull: null,
+    effectiveLessThanFull: null,
+  ),
+  (
+    name: 'returns null for sea-zone context',
+    buildGame: () =>
+        tileCapitalLinkGame(remoteImprovementLevel: 3, remoteRoadLevel: 0),
+    provinceId: kTileCapitalLinkRemoteProvinceId,
+    selectedTileKey: kTileCapitalLinkRemoteTile,
+    isSeaZoneContext: true,
+    tileIsSea: false,
+    tileRevealed: true,
+    connectivityForHuman: const ConnectivityResult(
+      connected: {kTileCapitalLinkCapitalTile},
+    ),
+    expectNull: true,
+    capitalConnected: null,
+    showExtractionRow: null,
+    extractionEffective: null,
+    extractionFull: null,
+    effectiveLessThanFull: null,
+  ),
+  (
+    name: 'returns null for unrevealed tile',
+    buildGame: () =>
+        tileCapitalLinkGame(remoteImprovementLevel: 3, remoteRoadLevel: 0),
+    provinceId: kTileCapitalLinkRemoteProvinceId,
+    selectedTileKey: kTileCapitalLinkRemoteTile,
+    isSeaZoneContext: false,
+    tileIsSea: false,
+    tileRevealed: false,
+    connectivityForHuman: const ConnectivityResult(
+      connected: {kTileCapitalLinkCapitalTile},
+    ),
+    expectNull: true,
+    capitalConnected: null,
+    showExtractionRow: null,
+    extractionEffective: null,
+    extractionFull: null,
+    effectiveLessThanFull: null,
+  ),
+  (
+    name: 'returns null for sea tile',
+    buildGame: () =>
+        tileCapitalLinkGame(remoteImprovementLevel: 3, remoteRoadLevel: 0),
+    provinceId: kTileCapitalLinkRemoteProvinceId,
+    selectedTileKey: kTileCapitalLinkRemoteTile,
+    isSeaZoneContext: false,
+    tileIsSea: true,
+    tileRevealed: true,
+    connectivityForHuman: const ConnectivityResult(
+      connected: {kTileCapitalLinkCapitalTile},
+    ),
+    expectNull: true,
+    capitalConnected: null,
+    showExtractionRow: null,
+    extractionEffective: null,
+    extractionFull: null,
+    effectiveLessThanFull: null,
+  ),
+  (
+    name: 'returns null for foreign-owned province',
+    buildGame: tileCapitalLinkForeignRemoteGame,
+    provinceId: kTileCapitalLinkRemoteProvinceId,
+    selectedTileKey: kTileCapitalLinkRemoteTile,
+    isSeaZoneContext: false,
+    tileIsSea: false,
+    tileRevealed: true,
+    connectivityForHuman: null,
+    expectNull: true,
+    capitalConnected: null,
+    showExtractionRow: null,
+    extractionEffective: null,
+    extractionFull: null,
+    effectiveLessThanFull: null,
+  ),
+];

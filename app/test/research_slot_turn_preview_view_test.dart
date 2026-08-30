@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_preview.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view_breakdown.dart';
 
 import 'app_shell_harness.dart';
 
@@ -48,13 +49,14 @@ Future<void> _pumpView(
   WidgetTester tester,
   ResearchSlotTurnPreview preview, {
   int slotIndex = 0,
+  double width = 360,
 }) async {
   await pumpAppShell(
     tester,
     settle: true,
     child: Scaffold(
       body: SizedBox(
-        width: 360,
+        width: width,
         child: ResearchSlotTurnPreviewView(
           slotIndex: slotIndex,
           preview: preview,
@@ -116,6 +118,53 @@ void main() {
       // The gold row still renders (greyed, no-spend) so the cost is visible.
       expect(
         find.byKey(ResearchSlotTurnPreviewView.goldRowKey(0)),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'positive: sequential-blocked gold row opens breakdown with residual treasury',
+    (WidgetTester tester) async {
+      final slotsPreview = computeResearchSlotsTurnPreview(
+        player: _player(treasury: 200),
+        occupiedSlots: [
+          ResearchSlotPreviewInput(
+            slotIndex: 0,
+            tech: _tech(),
+            committedProgress: 0,
+            funding: ResearchFundingLevel.medium,
+          ),
+          ResearchSlotPreviewInput(
+            slotIndex: 1,
+            tech: _tech(),
+            committedProgress: 0,
+            funding: ResearchFundingLevel.medium,
+          ),
+        ],
+      );
+      final preview = slotsPreview.bySlotIndex[1]!;
+      expect(preview.sequentialBlocked, isTrue);
+
+      await _pumpView(tester, preview, slotIndex: 1, width: 480);
+
+      expect(
+        find.text('Not enough gold left after earlier slots'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(ResearchSlotTurnPreviewView.goldRowKey(1)));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ResearchFundingBreakdownDialog), findsOneWidget);
+      expect(
+        find.text(
+          'Not enough gold remains after earlier research slots — 0 RP applied this turn.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Treasury before this slot:'),
         findsOneWidget,
       );
     },

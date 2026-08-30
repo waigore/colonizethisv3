@@ -63,6 +63,21 @@ class DevelopmentAssignedCivilianRow {
   final int? totalTurns;
 }
 
+/// Order-independent region slice: scopes and land extraction (Slice E).
+class DevelopmentPanelRegionScopes {
+  const DevelopmentPanelRegionScopes({
+    required this.regionId,
+    required this.ownedScopes,
+    required this.purchasedScopes,
+    required this.landExtractionByCommodity,
+  });
+
+  final String regionId;
+  final List<DevelopmentPanelScopeRow> ownedScopes;
+  final List<DevelopmentPanelScopeRow> purchasedScopes;
+  final Map<String, int> landExtractionByCommodity;
+}
+
 /// Per-region Development panel projection.
 class DevelopmentPanelRegionModel {
   const DevelopmentPanelRegionModel({
@@ -89,11 +104,26 @@ class DevelopmentPanelModel {
   const DevelopmentPanelModel({
     required this.oldWorld,
     required this.newWorld,
+    required this.connectedTileKeys,
   });
 
   final DevelopmentPanelRegionModel oldWorld;
   final DevelopmentPanelRegionModel newWorld;
 
+  /// Capital-connected tile keys for the human player (single connectivity pass).
+  final Set<String> connectedTileKeys;
+
   DevelopmentPanelRegionModel forRegion(String regionId) =>
       regionId == kRegionNewWorld ? newWorld : oldWorld;
 }
+
+/// Placeholder before a lazy region tab is first selected (Slice E).
+DevelopmentPanelRegionModel emptyDevelopmentPanelRegionModel(String regionId) =>
+    DevelopmentPanelRegionModel(
+      regionId: regionId,
+      ownedScopes: const [],
+      purchasedScopes: const [],
+      landExtractionByCommodity: const {},
+      idleBuilderCount: 0,
+      idleEngineerCount: 0,
+    );

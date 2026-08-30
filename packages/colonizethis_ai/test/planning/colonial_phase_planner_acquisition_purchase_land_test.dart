@@ -3,8 +3,10 @@
 
 import 'colonial_phase_planner_acquisition_purchase_land_guard_cases.dart';
 import 'colonial_phase_planner_acquisition_purchase_land_happy_path_cases.dart';
+import 'colonial_phase_planner_acquisition_purchase_land_precedence_cases.dart';
 
 void main() {
   registerColonialAcquisitionPurchaseLandGuardCases();
   registerColonialAcquisitionPurchaseLandHappyPathCases();
+  registerColonialAcquisitionPurchaseLandPrecedenceCases();
 }

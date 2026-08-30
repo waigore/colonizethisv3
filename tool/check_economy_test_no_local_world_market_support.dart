@@ -11,9 +11,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// `colonizethis_economy_test_support` (Refs #3823, #3831).
 const String _economyTestPathPrefix = 'packages/colonizethis_economy/test/';
 
-final RegExp _forbiddenSupportBasename = RegExp(
-  r'^(world_market_.*|first_right_.*|resource_extractor_.*|non_gp_extraction)_test_support\.dart$',
-);
+final RegExp _forbiddenSupportBasename = RegExp(r'^.*_test_support\.dart$');
 
 bool economyTestNoLocalWorldMarketSupportPathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
@@ -23,7 +21,7 @@ bool economyTestNoLocalWorldMarketSupportPathInScope(String slashPath) {
 String? economyTestLocalWorldMarketSupportViolationReason(String fileName) {
   if (_forbiddenSupportBasename.hasMatch(fileName)) {
     return 'package-local `$fileName` must live in '
-        '`colonizethis_economy_test_support` instead (Refs #3823)';
+        '`colonizethis_economy_test_support` instead (Refs #3823, #4631)';
   }
   return null;
 }

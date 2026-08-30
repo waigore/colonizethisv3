@@ -11,8 +11,8 @@ environment:
 dependencies:
   colonizethis_combat:
   colonizethis_data:
-  colonizethis_logic:
   colonizethis_models:
+  colonizethis_orders:
   colonizethis_test:
   colonizethis_world:
 

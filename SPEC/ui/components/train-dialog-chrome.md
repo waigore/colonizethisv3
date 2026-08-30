@@ -8,7 +8,7 @@ This composite is **not** a screen and has **no** stable screen ID; consumers ar
 
 ## Purpose
 
-Consolidates the chrome (title, locked-name line, boxed resource bar + deficit hint, resource chip, inline cost segment, row surface, locked hint, stepper, brass divider) shared by the train-at-capital dialogs so each composes only its body inside one [`CtDialogShell`](../pixel-art-ui-catalog.md). The dark editorial-monocle contract (no Material `IconButton` / `Divider`, no raw `Colors.*`) lives in one file. Per #3568 parity the dialogs use a **centered title with no `×` dismiss** and **no brass section dividers** (dismiss via scrim / back; orders apply on close).
+Shared train-at-capital chrome (header, resource bar/chip, row surface, locked hint, stepper, inline cost, brass divider) so each dialog only composes its body inside one [`CtDialogShell`](../pixel-art-ui-catalog.md). Dark editorial-monocle only (no Material `IconButton`/`Divider`, no raw `Colors.*`). Per #3568: **centered title, no `×`**, **no brass section dividers** (scrim/back dismiss; orders apply on close).
 
 ---
 
@@ -26,7 +26,7 @@ Consolidates the chrome (title, locked-name line, boxed resource bar + deficit h
 
 `TrainDialogResourceBar` — `entries` inside a `TrainDialogResourceBarBox` as `Wrap(spacing 16, runSpacing 4, spaceAround)`; each entry is a muted label + **monospace bold** value (`w700`, `tabularFigures`, `fg`). Treasury is `£` + comma-grouped (`£5,000`). Optional `deficitHint` renders below in `bodySmall` `danger`.
 
-`TrainDialogResourceChip` — single `child` in a 4 dp-radius `BoxDecoration` (`CtGradients.rowGradient` + 1 dp `accentDim` border); content in `DefaultTextStyle.merge(color: fg)`.
+`TrainDialogResourceChip` — single `child` in a 4 dp-radius `BoxDecoration` (`CtGradients.rowGradient` + 1 dp `accentDim` border); content in `DefaultTextStyle.merge(color: fg)`. `UNIT50001` / `UNIT60001` may add a muted Peasants promised gist and chip tooltip (see those screen specs).
 
 `TrainDialogUnitRowSurface` — single `child` in `CtGradients.rowGradient` + 1 dp `accentDim` border. Optional `margin` defaults to `EdgeInsets.only(bottom: 6)`.
 
@@ -62,11 +62,11 @@ Consumers may omit the resource bar.
 
 ## Behavior
 
-1. **Stateless surfaces.** Every chrome widget is a `StatelessWidget`; affordance recomputation and stepper mutation belong to the host dialog state. `Reset` and steppers use `CtNinePatchButton`, never Material `IconButton`.
-2. **Header / dismiss.** `TrainDialogHeader` is a centered title with no dismiss control; the host dismisses via scrim/back and applies orders on close via `PopScope` (#3568 parity).
-3. **No section dividers.** `TrainDialogSectionDivider` paints `CtBrassDivider` (never Material `Divider`) but is not placed between sections (#3568 parity); plain `SizedBox` gaps are used.
-4. **Row styling.** `TrainDialogResourceBar` / `TrainDialogResourceChip` / `TrainDialogUnitRowSurface` use muted labels + monospace bold `--fg` values, `£`+comma treasury, `CtGradients.rowGradient`, and `kTrainDialogLockedOpacity` when tech-locked; locked names use the `TrainDialogUnitNameLine` 🔒 prefix.
-5. **Inline cost tooltips.** `TrainDialogInlineCost` wraps each `icon + number` in a tap/hover `Tooltip` with a `>= 44` dp touch region; content: [`resource-icon-tooltip.md`](resource-icon-tooltip.md).
+1. **Stateless surfaces.** Chrome widgets are `StatelessWidget`s; host state owns affordances and stepper mutation. `Reset`/steppers use `CtNinePatchButton`, never Material `IconButton`.
+2. **Header / dismiss.** Centered title, no dismiss control; host closes via scrim/back and applies orders on close via `PopScope` (#3568).
+3. **No section dividers.** `TrainDialogSectionDivider` paints `CtBrassDivider` (never Material `Divider`) but is unused between sections (#3568); plain `SizedBox` gaps instead.
+4. **Row styling.** Resource bar/chip and row surface: muted labels + monospace bold `--fg`, `£`+comma treasury, `CtGradients.rowGradient`, `kTrainDialogLockedOpacity` when locked; locked names use the 🔒 prefix.
+5. **Inline cost tooltips.** `TrainDialogInlineCost` wraps `icon + number` in a tap/hover `Tooltip` with a `>= 44` dp target; content: [`resource-icon-tooltip.md`](resource-icon-tooltip.md).
 
 ---
 

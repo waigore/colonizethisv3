@@ -2,6 +2,157 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
+  String mapControls_treasury_details_current(String amount) {
+    return 'Treasury: $amount';
+  }
+
+  @override
+  String mapControls_treasury_details_forecast(String delta) {
+    return 'Next-turn forecast: $delta';
+  }
+
+  @override
+  String get mapControls_treasury_details_committedHeading =>
+      'Already committed';
+
+  @override
+  String mapControls_treasury_details_line_research(String amount) {
+    return 'Research funding: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_marketBids(String amount) {
+    return 'Market bids: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_grantAid(String amount) {
+    return 'Grant aid: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_overtures(String amount) {
+    return 'Diplomatic overtures: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_recruitWorkers(String amount) {
+    return 'Recruit and train workers: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_trainUnits(String amount) {
+    return 'Train units: £$amount';
+  }
+
+  @override
+  String mapControls_treasury_details_line_purchaseLand(String amount) {
+    return 'Purchase land: £$amount';
+  }
+
+  @override
+  String get mapControls_treasury_details_formatExact => 'Exact';
+
+  @override
+  String get mapControls_treasury_details_formatCompact => 'Compact';
+
+  @override
+  String get mapControls_treasury_details_counsel =>
+      'The signed forecast also includes extraction, riches converting to gold, market fills, and the rest of Next turn — those are not listed here.';
+
+  @override
+  String naval_transferToHome_homeCargoConsequence(int remaining, String used) {
+    return 'Cargo holds remaining after this transfer: $remaining (overseas load this turn: $used).';
+  }
+
+  @override
+  String get techEffectSummary_heavy_artillery_0 =>
+      'Improves: Royal Artillery regiment upgrade path';
+
+  @override
+  String get techEffectSummary_heavy_artillery_1 =>
+      'Prerequisite for: High Grade Steel and Emplaced Siege Guns';
+
+  @override
+  String get techEffectSummary_heavy_emplaced_artillery_0 =>
+      'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)';
+
+  @override
+  String get techEffectSummary_heavy_emplaced_artillery_1 =>
+      'Prerequisite for: Emplaced Siege Guns';
+
+  @override
+  String get techEffectSummary_high_grade_steel_0 =>
+      'Improves: Heavy Artillery regiment upgrade path';
+
+  @override
+  String get techEffectSummary_horse_artillery_0 =>
+      'Prerequisite for: Light Artillery Tactics';
+
+  @override
+  String get techEffectSummary_hussars_0 =>
+      'Improves: Cossacks regiment upgrade path';
+
+  @override
+  String get techEffectSummary_hussars_1 => 'Prerequisite for: Scouting';
+
+  @override
+  String get techEffectSummary_improved_cavalry_tactics_0 =>
+      'Prerequisite for: Hussars and Improved Cavalry Weapons';
+
+  @override
+  String get techEffectSummary_improved_cavalry_weapons_0 =>
+      'Improves: Harquebusiers regiment upgrade path';
+
+  @override
+  String get techEffectSummary_improved_cavalry_weapons_1 =>
+      'Prerequisite for: Repeating Cavalry Carbine';
+
+  @override
+  String get techEffectSummary_improved_food_preservation_0 =>
+      'Improves: Spices extraction cap to 4';
+
+  @override
+  String get techEffectSummary_improved_food_preservation_1 =>
+      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
+
+  @override
+  String get techEffectSummary_improved_infantry_tactics_0 =>
+      'Improves: General cap floor to at least 3 (or National Bureaucracy)';
+
+  @override
+  String get techEffectSummary_improved_infantry_tactics_1 =>
+      'Unlocks: Early Rifles (with Crucible Process)';
+
+  @override
+  String get techEffectSummary_improved_iron_weapons_0 =>
+      'Unlocks: Bayonet (with Crucible Process)';
+
+  @override
+  String get techEffectSummary_improved_sail_design_0 =>
+      'Unlocks: Advanced Hull Design path (University + Privateering)';
+
+  @override
+  String get techEffectSummary_improved_sea_routes_0 =>
+      'Improves: Spices extraction cap to 2';
+
+  @override
+  String get techEffectSummary_improved_sea_routes_1 =>
+      'Unlocks: Large Spice Plantations';
+
+  @override
+  String get techEffectSummary_improved_trapping_techniques_0 =>
+      'Improves: Furs extraction cap to 2';
+
+  @override
+  String get techEffectSummary_improved_trapping_techniques_1 =>
+      'Unlocks: Riverboats';
+
+  @override
+  String get techEffectSummary_industrial_funding_of_research_0 =>
+      'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)';
+
+  @override
   String get techEffectSummary_industrial_funding_of_research_1 =>
       'Improves: +20% effective RP (floor) for military and naval category research allocations';
 
@@ -553,4 +704,136 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
 
   @override
   String get mapTheme_provinceLabel_default => 'Default';
+
+  @override
+  String get technologyPanel_rpBreakdownSequentialBlocked =>
+      'Not enough gold remains after earlier research slots \u2014 0 RP applied this turn.';
+
+  @override
+  String technologyPanel_rpBreakdownResidualTreasury(int gold) {
+    return 'Treasury before this slot: \u00a3$gold';
+  }
+
+  @override
+  String technologyPanel_researchTurnFundingSummary(int gold, int rp) {
+    return 'Research this turn: \u2212\u00a3$gold \u00b7 +$rp RP';
+  }
+
+  @override
+  String get technologyPanel_researchTurnFundingEmpty =>
+      'Research this turn: no spend';
+
+  @override
+  String get technologyPanel_goldSequentialBlockedHint =>
+      'Not enough gold left after earlier slots';
+
+  @override
+  String technologyPanel_goldCostAfterEarlierSlots(int gold) {
+    return 'Would cost \u00a3$gold if treasury allowed';
+  }
+
+  @override
+  String get provinceOverlay_ownerStandingAtWar => 'At war';
+
+  @override
+  String get provinceOverlay_ownerStandingAtPeace => 'At peace';
+
+  @override
+  String get provinceOverlay_offerPeaceAction => 'Offer Peace';
+
+  @override
+  String get provinceOverlay_cancelOfferPeaceAction => 'Cancel';
+
+  @override
+  String provinceOverlay_offerPeaceDisabledSemantics(String reason) {
+    return 'Offer Peace unavailable: $reason';
+  }
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownTooltip => 'Upgrade town';
+
+  @override
+  String provinceOverlay_politicalUpgradeTownTooltipWithCost(String costs) {
+    return 'Upgrade town ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownDisabledTooltip =>
+      'Cannot upgrade town on this province now.';
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownDisabledNoBuilderTooltip =>
+      'No idle Builder available to upgrade town.';
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownDisabledTechTooltip =>
+      'National Bureaucracy required to upgrade towns.';
+
+  @override
+  String provinceOverlay_politicalUpgradeTownDisabledMaterialsTooltip(
+    String shortfall,
+  ) {
+    return 'Cannot upgrade town: $shortfall';
+  }
+
+  @override
+  String get technologyPanel_finishCompletesNextTurn => 'Completes next turn';
+
+  @override
+  String technologyPanel_finishCompletesNextTurnWithYear(int year) {
+    return 'Completes next turn ($year)';
+  }
+
+  @override
+  String technologyPanel_finishInTurns(int turns) {
+    return 'Finishes in $turns turns';
+  }
+
+  @override
+  String technologyPanel_finishInTurnsWithYear(int turns, int year) {
+    return 'Finishes in $turns turns ($year)';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownRemaining(int rp) {
+    return 'Remaining: $rp RP';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownTurns(int turns) {
+    return 'About $turns more turns at this funding';
+  }
+
+  @override
+  String get production_workerSingularPeasant => 'Peasant';
+
+  @override
+  String get production_workerSingularApprentice => 'Apprentice';
+
+  @override
+  String get production_workerSingularJourneyman => 'Journeyman';
+
+  @override
+  String get production_workerSingularMaster => 'Master';
+
+  @override
+  String production_labourDisbandConfirmTitle(String tier) {
+    return 'Disband $tier?';
+  }
+
+  @override
+  String production_labourDisbandConfirmBody(String tier) {
+    return 'Effect: This $tier becomes a Peasant now.\n'
+        'Cost: Gold and paper spent to train them are not returned.\n'
+        'When: Immediately, not after Next turn.';
+  }
+
+  @override
+  String get provinceOverlay_extractionPartialReason =>
+      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
+
+  @override
+  String provinceOverlay_availableTileCount(int count, String name) {
+    return '$count $name';
+  }
 }

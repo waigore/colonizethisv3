@@ -4,9 +4,11 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' show CommodityId, Game;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show CommodityId, Game;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'capital_tile_grain_bonus.dart';
 import 'commodity_totals.dart';
 import 'development_panel_model.dart';
 import 'development_panel_visibility.dart';
@@ -52,8 +54,7 @@ List<DevelopmentPanelScopeRow> buildDevelopmentPurchasedScopes({
       DevelopmentPanelScopeRow(
         scopeKey: 'purchased:$provinceId',
         provinceId: provinceId,
-        displayName:
-            provinceDisplayNamesById[provinceId] ?? provinceId,
+        displayName: provinceDisplayNamesById[provinceId] ?? provinceId,
         provinceOwnerId: ownerId,
         provinceOwnerDisplayName: ownerId == null
             ? null
@@ -71,17 +72,16 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsFromCounts(
   PlayerView? playerView,
 }) {
   final rows = <DevelopmentImprovableCommodityRow>[];
-  for (final commodity in CommodityCatalog.all) {
-    final entry = counts[commodity.id];
-    if (entry == null || entry.count <= 0) continue;
-    var tileKeys = entry.tileKeys;
+  for (final entry in counts.entries) {
+    if (entry.value.count <= 0) continue;
+    var tileKeys = entry.value.tileKeys;
     if (playerView != null) {
       tileKeys = developmentFilterVisibilityKnownTileKeys(playerView, tileKeys);
     }
     if (tileKeys.isEmpty) continue;
     rows.add(
       DevelopmentImprovableCommodityRow(
-        commodityId: commodity.id,
+        commodityId: entry.key,
         tileKeys: List<String>.from(tileKeys),
       ),
     );
@@ -130,9 +130,9 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsForTileKeys({
   }
 
   final rows = <DevelopmentImprovableCommodityRow>[];
-  for (final commodity in CommodityCatalog.all) {
-    final keys = acc[commodity.id];
-    if (keys == null || keys.isEmpty) continue;
+  for (final entry in acc.entries) {
+    final keys = entry.value;
+    if (keys.isEmpty) continue;
     var filteredKeys = keys;
     if (playerView != null) {
       filteredKeys = developmentFilterVisibilityKnownTileKeys(playerView, keys);
@@ -141,7 +141,7 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsForTileKeys({
     filteredKeys.sort();
     rows.add(
       DevelopmentImprovableCommodityRow(
-        commodityId: commodity.id,
+        commodityId: entry.key,
         tileKeys: List<String>.from(filteredKeys),
       ),
     );
@@ -187,11 +187,9 @@ Map<String, int> developmentExtractionProjectionForRegion({
     addUnits(totals, contribution.commodityId, contribution.units);
   }
 
-  final capBonus = game.capitalTileGrainBonusPerTurn;
+  final capBonus = capitalTileGrainBonusForPlayer(game: game, player: player);
   final capitalRegionId = player.capitalTile?.regionId;
-  if (regionId == capitalRegionId &&
-      player.capitalTile != null &&
-      capBonus > 0) {
+  if (regionId == capitalRegionId && capBonus != null) {
     addUnits(totals, CommodityCatalog.grain.id, capBonus);
   }
 

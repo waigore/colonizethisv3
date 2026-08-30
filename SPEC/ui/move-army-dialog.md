@@ -11,7 +11,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `MoveArmyDialog` | `StatefulWidget` | `army` (`Army`), `game` (`Game`), `humanPlayerId` (`String`), `bus` (`AppEventBus`), `topology` (`MapTopology`), `draftOrders` (`Orders`), `playerView` (`PlayerView?`, optional) | Local `showDialog` modal opened from `MilitaryUnitsPanel` army row Move action. Emits move + optional declare-war on confirm. |
+| `MoveArmyDialog` | `StatefulWidget` | `army` (`Army`), `game` (`Game`), `humanPlayerId` (`String`), `bus` (`AppEventBus`), `topology` (`MapTopology`), `draftOrders` (`Orders`), `playerView` (`PlayerView?`, optional), `initialDestinationProvinceId` (`String?`, optional) | Local `showDialog` modal from `MilitaryUnitsPanel` Move or `MAP20001` overlay Move/Invade flow. Emits move + optional declare-war on confirm. |
 
 Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart`. Wrapped in a `CtDialogShell` (dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient). The legacy Material `AlertDialog` / `DropdownButtonFormField` / `TextButton` chrome is forbidden (regression guard) per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban.
 
@@ -52,15 +52,15 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart
 - Body: `CtDialogShell` body is a `Column(mainAxisSize: min)` with up to two sections separated by a 12 dp gap when both render. Section headers use `CtSectionLabel` (post-#2859 S10) carrying `moveArmy_groupYourProvinces` and `moveArmy_groupInvasionTargets`.
 - Rows: each destination renders as a shared `MoveDialogDestinationRow` ([`components/move-units-dialog-base.md`](components/move-units-dialog-base.md)) — a tappable `GestureDetector` over a `Container` painted with a 1 px `EditorialMonoclePalette.border` outline; the selected row uses a 2 px `EditorialMonoclePalette.accent` outline and a filled `--accent` dot in its leading radio slot. Row title is `entry.provinceLabel`. **Invasion-section rows** append fog-respecting military intel below the title when `playerView` is supplied (#4216): full military intel (same gate as `MAP20001` Military / `provincePanelShowsFullTileDerivedIntel`) shows `moveArmy_defendersRegiments`, `moveArmy_unopposedCapture`, or fort labels (`moveArmy_fortOpenField` / `moveArmy_fortWoodSiege` / `moveArmy_fortStoneSiege` / `moveArmy_fortModernSiege`); without full intel shows `moveArmy_defendersUnknown`. Selected invasion rows additionally show regiment-type breakdown lines (own army + known defenders) using `provinceOverlay_indentedCount` with `regimentTypeDisplayLabel` names. Owned-province rows never show invasion intel lines. Invasion-section rows with `requiresDeclareWarOnConfirm == true` append `moveArmy_declareWarOnTrigger(ownerLabel)` in `--danger` italic body style per #2867 R8 — the trigger label is derived from `theme.textTheme.bodySmall.copyWith(color: --danger, fontStyle: italic, fontWeight: w600)` and MUST inherit the body font stack so italic glyphs render (the editorial-monocle display family `editorialMonocleDisplayFontFamily` = `Cinzel` is display-only and has no italic variant, so widgets MUST NOT pin the trigger label to that family). The trigger label renders **below** the destination title inside the same outlined row container (the row body is a `Row` of [radio dot, `SizedBox(width: 10)`, `Expanded(Column([title, intel lines, trigger]))`]) so the trigger never has to fit on the same physical line as the title at narrow widths (Refs #2870 S8/S10). No `RadioListTile` / Material `Radio` widgets appear in the rendered tree.
 - Action row: two `CtNinePatchButton`s — Confirm (primary) and Cancel (secondary) — laid out inside a trailing **`Wrap(alignment: end, spacing: 8, runSpacing: 8)`** so the buttons flow onto a second run rather than overflowing the `CtDialogShell` content column at narrow viewports (Refs #2870 S8/S10). Confirm is disabled (`onPressed: null`) until `_selected != null`; Cancel is always enabled. The war-confirmation sub-dialog (Invade-confirm variant) uses the same `Wrap` for its Cancel / `moveArmy_declareWarAndMove` action row.
-- Initial selection: first destination in `armyMovePickerDestinations` order (player-owned group is emitted first).
+- Initial selection: when `initialDestinationProvinceId` is non-null and that id appears in the destination list, select that entry; otherwise first destination in `armyMovePickerDestinations` order (player-owned group is emitted first). Overlay **Invade** always passes this province id so Confirm does not default to the first owned row.
 - Sort order within each section follows `armyMovePickerDestinations` source order.
 
 ---
 
 ## Trigger conditions
 
-- Opened from `MilitaryUnitsPanel` non-Home army row **Move** action; **Home Army** never shows Move and cannot open this dialog.
-- The panel passes the current `currentOrders` as `draftOrders` and optionally a cached `playerView` so the dialog reuses an `IncrementalCandidateValidator` per [order-suggestions.md](../program/order-suggestions.md) instead of rebuilding per probe.
+- Opened from `MilitaryUnitsPanel` non-Home army row **Move** action, from `MAP20001` Military **Move** / **Invade** via overlay-local `showDialog` / `showOverlayArmyMoveFlow` (optional multi-army picker `DLG20002` first), from a `MAP10001` army stack marker tap (`OpenArmyStackMarkerEvent` → field-only ids when those armies have cached destinations), or after a confirmed Home Army split on the detach-then-move path (new army id from `LandArmiesUpdatedEvent.game`; Invade preselects the viewed province). **Home Army** never shows Move and cannot be the `DLG20001` target.
+- The panel or overlay passes the current `currentOrders` as `draftOrders` and optionally a cached `playerView` so the dialog reuses an `IncrementalCandidateValidator` per [order-suggestions.md](../program/order-suggestions.md) instead of rebuilding per probe.
 - Destination probing calls `armyMovePickerDestinations` exactly as `MilitaryUnitsPanel` does, so the dialog never offers a destination that the order engine would reject for the current `(game, topology, playerView, draftOrders)`.
 
 ---
@@ -72,7 +72,7 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart
 | Empty | `armyMovePickerDestinations` returns `[]` | No destination rows; `moveArmy_noValidDestinations`; Confirm disabled. |
 | Owned-only | All destinations have `isPlayerOwned == true` | Only `Your provinces` section. Confirm enabled when a row is selected. |
 | Mixed groups | Destinations include both player-owned and other-owned entries | Both sections render with a 12 dp spacer. |
-| Invade-confirm | Selected entry has `requiresDeclareWarOnConfirm == true` | Tapping `Confirm` opens a destructive-flow sub-dialog inside a `CtDialogShell` framed with a **1px `--danger` border** (per issue #2867 R9) — title `moveArmy_invadeProvinceTitle` (`Declare war?`) and body `moveArmy_invadeProvinceBody(<ownerLabel>)`. Actions are pixel-art `CtNinePatchButton`s: secondary `common_cancel` (default brass styling) and danger-primary `moveArmy_declareWarAndMove` (`dangerVariant: true`). No Material `AlertDialog` / `TextButton` chrome. |
+| Invade-confirm | Selected entry has `requiresDeclareWarOnConfirm == true` | Tapping `Confirm` opens a destructive-flow sub-dialog inside a `CtDialogShell` framed with a **1px `--danger` border** (per issue #2867 R9) — title `moveArmy_invadeProvinceTitle` (`Declare war?`) and body `moveArmy_invadeProvinceBody(<ownerLabel>)` plus the same third-party Effect lines as `GAME30001` Declare War confirm (`declareWarThirdPartyPreviewLines` / `invadeProvinceDeclareWarBody`, Refs #4409). Actions are pixel-art `CtNinePatchButton`s: secondary `common_cancel` (default brass styling) and danger-primary `moveArmy_declareWarAndMove` (`dangerVariant: true`). No Material `AlertDialog` / `TextButton` chrome. |
 | Draft / view refresh | `draftOrders`, `game`, `army`, or `playerView` changed (`didUpdateWidget`) | Validator and cached destinations rebuild; `_selected` is cleared if the prior selection is no longer offered (falls back to first entry or `null`). |
 
 The dialog **does not** mutate game state. All state changes flow through the bus event and turn-resolution pipeline.
@@ -86,6 +86,7 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 | Source | Condition | Result |
 |--------|-----------|--------|
 | `MilitaryUnitsPanel` Move action | Non-Home army row; at least one valid destination from `armyMovePickerDestinations` | `showDialog` mounts `MoveArmyDialog` with `draftOrders` and optional `playerView`. |
+| `MAP20001` Move / Invade | Eligible non-Home field army (after optional `DLG20002`) | `showMoveArmyDialog` / flow mounts `MoveArmyDialog`; Invade passes `initialDestinationProvinceId` = viewed province. |
 | — | Home Army row | Move action hidden; dialog never opens. |
 
 ### User actions → outcomes
@@ -114,6 +115,8 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 
 - Given a non-Home army with at least one player-owned destination, when `MoveArmyDialog` is opened, then the UI layer renders exactly one `MoveArmyDialog` widget inside a `CtDialogShell`, shows a `CtSectionLabel` for `moveArmy_groupYourProvinces`, and pre-selects the first destination row so Confirm is enabled.
 
+- Given `MoveArmyDialog` is opened with `initialDestinationProvinceId` equal to an invasion destination that appears in `armyMovePickerDestinations`, when the dialog builds, then the UI layer selects that province id (not the first owned destination).
+
 - Given the destination list includes both player-owned and other-owned entries, when `MoveArmyDialog` builds, then the UI layer shows both `moveArmy_groupYourProvinces` and `moveArmy_groupInvasionTargets` section headers (via `CtSectionLabel`) and no `DropdownButtonFormField<String>` is rendered.
 
 - Given the selected destination has `requiresDeclareWarOnConfirm == false`, when the user taps Confirm, then the UI layer emits exactly one `ArmyMoveRequestedEvent` on the supplied bus with `moveOrder.armyId` equal to `widget.army.id`, `moveOrder.destinationProvinceId` equal to the selected `fullProvinceId`, and `declareWarTargetFactionId == null`, and the dialog is removed from the widget tree.
@@ -122,7 +125,8 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 
 - Given the selected destination has `requiresDeclareWarOnConfirm == true` and the user taps `common_cancel` in the secondary dialog, when the system processes the gesture, then no `ArmyMoveRequestedEvent` is emitted and `MoveArmyDialog` remains mounted.
 
-- Given the selected destination has `requiresDeclareWarOnConfirm == true` and the user taps `Confirm`, when the war-confirmation sub-dialog is mounted, then the sub-dialog renders inside a `CtDialogShell` with `borderColor` resolving to `EditorialMonoclePalette.danger` and `borderWidth` equal to `CtDialogShell.dangerBorderWidth` (1px), and the title text reads `moveArmy_invadeProvinceTitle` (`Declare war?`). No Material `AlertDialog` widget is rendered as part of the sub-dialog (per issue #2867 R9 and `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban).
+- Given the selected destination has `requiresDeclareWarOnConfirm == true` and the user taps `Confirm`, when the war-confirmation sub-dialog is mounted, then the sub-dialog renders inside a `CtDialogShell` with `borderColor` resolving to `EditorialMonoclePalette.danger` and `borderWidth` equal to `CtDialogShell.dangerBorderWidth` (1px), and the title text reads `moveArmy_invadeProvinceTitle` (`Declare war?`). No Material `AlertDialog` widget is rendered as part of the sub-dialog (per issue #2867 R9 and `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban). When the destination owner has a qualifying third-party court, the body also includes the same Effect line(s) as the `GAME30001` Declare War confirm (Refs #4409).
+- Given the `Declare war?` sub-dialog is mounted under `AppThemes.editorialMonocle` for a Spain-owned invasion whose persisted formal ally is France, when `app/test/diplomacy_declare_war_third_party_goldens_test.dart` captures the keyed `CtDialogShell`, then the UI layer matches `app/test/goldens/move_army_declare_war_named_ally.png` and the body includes the same France Effect line as GAME30001 (Refs #4409).
 
 - Given the war-confirmation sub-dialog is mounted, when its action buttons are inspected, then the primary action labelled `moveArmy_declareWarAndMove` is a `CtNinePatchButton` with `dangerVariant: true`, the secondary action labelled `common_cancel` is a `CtNinePatchButton` with `dangerVariant: false`, and neither action uses a Material `TextButton`.
 
@@ -170,4 +174,4 @@ Catalog folder: **Move Army Dialog** (registered in `widgetbook_host/lib/catalog
 4. **Invasion vs generals — balanced (#4233):** Two generals, one staged invasion in `draftOrders`; select **Rival City** to show `Invasions this turn: 2 · Generals: 2`.
 5. **Invasion vs generals — over capacity warn (#4233):** One general, one staged invasion; select **Rival City** to show the soft over-capacity warning while Confirm stays enabled.
 
-Automated widget tests: `app/test/move_dialogs_specs_part1_test.dart` (army pins; fleet pins in `move_dialogs_specs_part2_test.dart`); invasion intel pins in `app/test/move_army_invasion_intel_test.dart` (#4216).
+Automated widget tests: `app/test/move_dialogs_specs_army_test.dart` (army pins; fleet pins in `move_dialogs_specs_fleet_test.dart`); invasion intel pins in `app/test/move_army_invasion_intel_test.dart` (#4216).

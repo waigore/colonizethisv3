@@ -13,8 +13,12 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckEconomySourceFileSize', () {
-    test('passes on current repo tree under phase-8 ceiling', () {
+    test('passes on current repo tree under phase-9 ceiling', () {
       expect(runCheckEconomySourceFileSize('.'), 0);
+    });
+
+    test('pins economySourceFileSizeCeiling at 250', () {
+      expect(economySourceFileSizeCeiling, 250);
     });
 
     test('fails when an economy lib file exceeds the ceiling', () {

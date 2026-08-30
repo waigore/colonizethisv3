@@ -24,20 +24,8 @@ void registerDiplomacyVictoryEndgameTests() {
           );
 
           const ow = kRegionOldWorld;
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                ],
-              ),
-              newWorld: const RegionData(),
-            ),
+          final game = turnTestOwGame(
+            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
             players: [
               const Player(
                 id: 'p1',
@@ -51,7 +39,6 @@ void registerDiplomacyVictoryEndgameTests() {
             minorNations: const [
               MinorNation(id: 'minor1', displayName: 'Minor 1'),
             ],
-            overtureStates: const [],
           );
 
           // Create OrderEngine with initial diplomatic orders.
@@ -104,20 +91,8 @@ void registerDiplomacyVictoryEndgameTests() {
           );
 
           const ow = kRegionOldWorld;
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                ],
-              ),
-              newWorld: const RegionData(),
-            ),
+          final game = turnTestOwGame(
+            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
             players: const [
               Player(
                 id: 'p1',
@@ -129,7 +104,6 @@ void registerDiplomacyVictoryEndgameTests() {
             minorNations: const [
               MinorNation(id: 'minor1', displayName: 'Minor 1'),
             ],
-            overtureStates: const [],
           );
 
           // Create OrderEngine with human diplomatic orders.

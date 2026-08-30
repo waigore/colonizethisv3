@@ -71,7 +71,7 @@ Padding(bottom: CtSpacing.xs)
 
 - `app/test/units_entity_card_test.dart` — collapsed/expanded chrome and the transparent `ExpansionTile`.
 - `app/test/military_units_panel_part1_test.dart` — army rows mount no `CtNinePatchButton` chrome.
-- `app/test/naval_units_panel_mockup_fidelity_test.dart` — fleet rows render one `UnitsEntityCard` each, host the dense action row chrome-less, and lay out without `RenderFlex` overflow (issue #3514 AC-6 naval migration).
+- `app/test/naval_units_panel_combine_and_mockup_test.dart` — fleet rows render one `UnitsEntityCard` each, host the dense action row chrome-less, and lay out without `RenderFlex` overflow (issue #3514 AC-6 naval migration).
 
 ---
 

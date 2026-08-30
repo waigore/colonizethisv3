@@ -1,13 +1,11 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-
-List<RunnableScenario>
-quickBattleResolverApplySpyScenarios() => [
+List<RunnableScenario> quickBattleResolverApplySpyScenarios() => [
   RunnableScenario(
     scenarioId: 'qbras-old-world-clear',
     label: 'quick battle conquest clears Spy timer for new owner province',

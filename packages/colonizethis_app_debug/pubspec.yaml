@@ -14,6 +14,8 @@ dependencies:
   colonizethis_models:
 
 dev_dependencies:
+  colonizethis_test:
+  test: ^1.25.0
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
   custom_lint: 0.8.1

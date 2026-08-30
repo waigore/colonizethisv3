@@ -35,10 +35,7 @@ class MoveArmyDialogState extends MoveUnitsDialogState<MoveArmyDialog>
   void initState() {
     super.initState();
     syncSharedValidatorAndDestinations();
-    final entries = destinationEntries();
-    if (entries.isNotEmpty) {
-      armySelectedDestination = entries.first.fullProvinceId;
-    }
+    armySelectedDestination = _initialDestinationId(destinationEntries());
   }
 
   @override
@@ -47,7 +44,9 @@ class MoveArmyDialogState extends MoveUnitsDialogState<MoveArmyDialog>
     if (oldWidget.draftOrders != widget.draftOrders ||
         oldWidget.game != widget.game ||
         oldWidget.army != widget.army ||
-        oldWidget.playerView != widget.playerView) {
+        oldWidget.playerView != widget.playerView ||
+        oldWidget.initialDestinationProvinceId !=
+            widget.initialDestinationProvinceId) {
       syncSharedValidatorAndDestinations(
         rebuildValidator:
             oldWidget.game != widget.game ||
@@ -56,10 +55,19 @@ class MoveArmyDialogState extends MoveUnitsDialogState<MoveArmyDialog>
       final entries = destinationEntries();
       if (armySelectedDestination == null ||
           !entries.any((e) => e.fullProvinceId == armySelectedDestination)) {
-        armySelectedDestination =
-            entries.isEmpty ? null : entries.first.fullProvinceId;
+        armySelectedDestination = _initialDestinationId(entries);
       }
     }
+  }
+
+  String? _initialDestinationId(List<ArmyMovePickerDestination> entries) {
+    if (entries.isEmpty) return null;
+    final preferred = widget.initialDestinationProvinceId;
+    if (preferred != null &&
+        entries.any((e) => e.fullProvinceId == preferred)) {
+      return preferred;
+    }
+    return entries.first.fullProvinceId;
   }
 
   @override

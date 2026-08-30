@@ -34,7 +34,7 @@ final humanDraftProjectedRegionProvider =
       final humanPlayerId = shell.mapPlayerIdFor(game);
       final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
 
-      return GameMapAreaStateLogic.projectHumanDraftMarkersForRegion(
+      return GameMapAreaStateLogicDraftProjection.projectHumanDraftMarkersForRegion(
         baseRegion: _baseRegionForId(mapView, regionId),
         game: game,
         orders: orders,

@@ -134,17 +134,13 @@ List<WidgetbookNode> get gameTabBarDirectories => [
       ),
       WidgetbookUseCase(
         name: 'News toggle — unread badge',
-        builder: (context) => _gameTabBarStoryFrame(
-          unreadBadgeCount: 5,
-          showFeed: false,
-        ),
+        builder: (context) =>
+            _gameTabBarStoryFrame(unreadBadgeCount: 5, showFeed: false),
       ),
       WidgetbookUseCase(
         name: 'News toggle — feed open (no badge)',
-        builder: (context) => _gameTabBarStoryFrame(
-          unreadBadgeCount: 0,
-          showFeed: true,
-        ),
+        builder: (context) =>
+            _gameTabBarStoryFrame(unreadBadgeCount: 0, showFeed: true),
       ),
       WidgetbookUseCase(
         name: 'Players bar toggle — on (active accent)',
@@ -154,6 +150,8 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         name: 'Players bar toggle — off (dim)',
         builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
       ),
+      ..._oldWorldRaceTabBarStories,
+      ..._labourFeedingTabBarStories,
       WidgetbookUseCase(
         name: 'Cargo — tight (accent numeric)',
         builder: (context) => _gameTabBarStoryFrame(
@@ -196,9 +194,227 @@ List<WidgetbookNode> get gameTabBarDirectories => [
           ),
         ),
       ),
+      ..._treasuryDetailsTabBarStories,
+      WidgetbookUseCase(
+        name: 'Extraction disc legend — wide',
+        builder: (context) {
+          final GlobalKey anchor = GlobalKey();
+          return widgetbookEditorialMonocleApp(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+            child: Center(
+              child: ExtractionDiscLegend(
+                key: anchor,
+                narrow: false,
+                anchorKey: anchor,
+                chromeBottomY: 0,
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Extraction disc legend — narrow chip',
+        builder: (context) {
+          final GlobalKey anchor = GlobalKey();
+          return widgetbookEditorialMonocleApp(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+            child: Center(
+              child: ExtractionDiscLegend(
+                key: anchor,
+                narrow: true,
+                anchorKey: anchor,
+                chromeBottomY: 0,
+              ),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Extraction disc legend — details panel',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+          child: Builder(
+            builder: (BuildContext ctx) {
+              final l10n = appL10n(ctx);
+              return Center(
+                child: SizedBox(
+                  width: 280,
+                  child: ExtractionDiscLegendPanel(l10n: l10n, onClose: () {}),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     ],
   ),
 ];
+
+/// MAP10001 extraction-disc legend chrome, including hidden variants
+/// (terrain only / global observe) required by Refs #4367 AC7.
+List<WidgetbookNode> get extractionDiscLegendDirectories => [
+  WidgetbookFolder(
+    name: 'Extraction disc legend',
+    children: [
+      WidgetbookUseCase(
+        name: 'Visible — legend above corner controls',
+        builder: (context) => _extractionDiscLegendChromeStory(
+          flags: MapBaseLayerFlags.fullDetail,
+          viewingPlayerId: 'gp_player',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Hidden — terrain only',
+        builder: (context) => _extractionDiscLegendChromeStory(
+          flags: MapBaseLayerFlags.terrainOnly,
+          viewingPlayerId: 'gp_player',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Hidden — global observe',
+        builder: (context) => _extractionDiscLegendChromeStory(
+          flags: MapBaseLayerFlags.fullDetail,
+          viewingPlayerId: null,
+        ),
+      ),
+    ],
+  ),
+];
+
+/// MAP10001 owner/sight hover readout variants (Refs #4406).
+List<WidgetbookNode> get mapTileHoverReadoutDirectories => [
+  WidgetbookFolder(
+    name: 'Map tile hover readout',
+    children: [
+      WidgetbookUseCase(
+        name: 'Fully visible owned land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Wessex',
+          identity: 'Owner: England',
+          sight: 'Fully visible',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Fogged rival land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Normandy',
+          identity: 'Owner: France',
+          sight: 'Fogged — terrain only',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Unrevealed land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Virginia',
+          identity: 'Owner: Spain',
+          sight: 'Unknown — no intel yet',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Unclaimed land',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Wilderness',
+          identity: 'Owner: Unclaimed',
+          sight: 'Fully visible',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Sea zone',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Mid-Atlantic',
+          identity: 'Sea zone',
+          sight: 'Fully visible',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Warp sea',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Azores Passage',
+          identity: 'Sea zone',
+          sight: 'Fully visible',
+          warp: 'This water is the passage to the other world',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: '320 dp narrow',
+        builder: (context) => _mapTileHoverReadoutStory(
+          place: 'Wessex',
+          identity: 'Owner: England',
+          sight: 'Fully visible',
+          viewportWidth: 320,
+        ),
+      ),
+    ],
+  ),
+];
+
+Widget _mapTileHoverReadoutStory({
+  required String place,
+  required String identity,
+  required String sight,
+  String? warp,
+  double viewportWidth = 400,
+}) {
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: SizedBox(
+      width: viewportWidth,
+      child: MapTileHoverReadout(
+        copy: MapTileHoverReadoutCopy(
+          placeLine: 'Place: $place',
+          identityLine: identity,
+          sightLine: 'Sight: $sight',
+          warpLine: warp,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _extractionDiscLegendChromeStory({
+  required MapBaseLayerFlags flags,
+  required String? viewingPlayerId,
+}) {
+  final GlobalKey anchor = GlobalKey();
+  return _gameMapCornerControlsStoryFrame(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (shouldShowExtractionDiscLegend(
+          flags: flags,
+          viewingPlayerId: viewingPlayerId,
+        )) ...[
+          ExtractionDiscLegend(
+            key: anchor,
+            narrow: false,
+            anchorKey: anchor,
+            chromeBottomY: 0,
+          ),
+          const SizedBox(height: 4),
+        ],
+        GameMapCornerControls(
+          onCycleBaseLayerDisplayMode: () {},
+          onCenterOnHomeCapital: () {},
+          onOpenMapDisplayOptions: () {},
+          homeToCapitalEnabled: viewingPlayerId != null,
+          mapBaseLayerFlags: flags,
+        ),
+      ],
+    ),
+  );
+}
 
 /// Standalone players-bar toggle chrome. SPEC/ui/empire-overview.md § Players
 /// bar toggle (issue #3898). Mirrors the 28 × 22 dp bordered surface beside
@@ -213,7 +429,8 @@ List<WidgetbookNode> get playersBarToggleDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Off — dim glyph',
-        builder: (context) => _playersBarToggleStoryFrame(showPlayersBar: false),
+        builder: (context) =>
+            _playersBarToggleStoryFrame(showPlayersBar: false),
       ),
     ],
   ),
@@ -298,6 +515,38 @@ List<WidgetbookNode> get gameMapOptionsDialogDirectories => [
             showProvinceOverlay: false,
             showProvinceOwnershipTint: false,
             showProvinceNamesLayer: false,
+            showMapResources: false,
+            showMapImprovements: false,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Resources only',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapResources: true,
+            showMapImprovements: false,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Improvements without resources',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapResources: false,
+            showMapImprovements: true,
+            showMapRoads: false,
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Roads disabled when improvements off',
+        builder: (context) => _gameMapOptionsDialogStoryFrame(
+          initialState: const MapViewState(
+            showMapImprovements: false,
+            showMapRoads: false,
           ),
         ),
       ),
@@ -335,12 +584,19 @@ Widget _gameTabBarStoryFrame({
   int regionIndex = 0,
   int treasury = 12345,
   int? treasuryDelta,
+  bool treasuryNotDefined = false,
   int unreadBadgeCount = 0,
   bool showFeed = false,
   bool showPlayersBar = true,
   int cargoUsed = 3,
   int cargoCapacity = 12,
   String cargoHoldLabel = '3/12',
+  OldWorldRaceSnapshot? oldWorldRace,
+  bool oldWorldRaceNarrow = false,
+  bool showLabourFeedingIndicator = false,
+  String labourFeedingLabel = '—',
+  LabourReadinessSnapshot? labourReadiness,
+  ForceFeedingSnapshot? forcesFeeding,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -357,12 +613,19 @@ Widget _gameTabBarStoryFrame({
               regionIndex: regionIndex,
               treasury: treasury,
               treasuryDelta: treasuryDelta,
+              treasuryNotDefined: treasuryNotDefined,
               unreadBadgeCount: unreadBadgeCount,
               showFeed: showFeed,
               showPlayersBar: showPlayersBar,
               cargoUsed: cargoUsed,
               cargoCapacity: cargoCapacity,
               cargoHoldLabel: cargoHoldLabel,
+              oldWorldRace: oldWorldRace,
+              oldWorldRaceNarrow: oldWorldRaceNarrow,
+              showLabourFeedingIndicator: showLabourFeedingIndicator,
+              labourFeedingLabel: labourFeedingLabel,
+              labourReadiness: labourReadiness,
+              forcesFeeding: forcesFeeding,
             ),
           ],
         ),
@@ -376,23 +639,37 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.regionIndex,
     required this.treasury,
     required this.treasuryDelta,
+    this.treasuryNotDefined = false,
     required this.unreadBadgeCount,
     required this.showFeed,
     required this.showPlayersBar,
     required this.cargoUsed,
     required this.cargoCapacity,
     required this.cargoHoldLabel,
+    this.oldWorldRace,
+    this.oldWorldRaceNarrow = false,
+    this.showLabourFeedingIndicator = false,
+    this.labourFeedingLabel = '—',
+    this.labourReadiness,
+    this.forcesFeeding,
   });
 
   final int regionIndex;
   final int treasury;
   final int? treasuryDelta;
+  final bool treasuryNotDefined;
   final int unreadBadgeCount;
   final bool showFeed;
   final bool showPlayersBar;
   final int cargoUsed;
   final int cargoCapacity;
   final String cargoHoldLabel;
+  final OldWorldRaceSnapshot? oldWorldRace;
+  final bool oldWorldRaceNarrow;
+  final bool showLabourFeedingIndicator;
+  final String labourFeedingLabel;
+  final LabourReadinessSnapshot? labourReadiness;
+  final ForceFeedingSnapshot? forcesFeeding;
 
   @override
   State<_GameTabBarStoryShell> createState() => _GameTabBarStoryShellState();
@@ -415,12 +692,19 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       newWorldLabel: 'New World',
       treasury: widget.treasury,
       treasuryDelta: widget.treasuryDelta,
-      treasuryNotDefined: false,
+      treasuryNotDefined: widget.treasuryNotDefined,
       cargoUsed: widget.cargoUsed,
       cargoCapacity: widget.cargoCapacity,
       cargoNotDefined: false,
       isCargoUsedReliable: true,
       cargoHoldLabel: widget.cargoHoldLabel,
+      showLabourFeedingIndicator: widget.showLabourFeedingIndicator,
+      labourFeedingLabel: widget.labourFeedingLabel,
+      labourReadiness: widget.labourReadiness,
+      forcesFeeding: widget.forcesFeeding,
+      oldWorldRace: widget.oldWorldRace,
+      onOldWorldRaceTap: widget.oldWorldRace == null ? null : () {},
+      oldWorldRaceNarrow: widget.oldWorldRaceNarrow,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -470,15 +754,7 @@ Widget _gameMapCornerControlsStoryFrame({required Widget child}) {
     child: SizedBox(
       width: 320,
       height: 220,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 8,
-            bottom: 8,
-            child: child,
-          ),
-        ],
-      ),
+      child: Stack(children: [Positioned(left: 8, bottom: 8, child: child)]),
     ),
   );
 }
@@ -506,13 +782,7 @@ Widget _gameMapCornerControlsNarrowStoryFrame({
           width: viewportWidth,
           height: 640,
           child: Stack(
-            children: [
-              Positioned(
-                left: 2,
-                bottom: 2,
-                child: child,
-              ),
-            ],
+            children: [Positioned(left: 2, bottom: 2, child: child)],
           ),
         ),
       ),
@@ -594,9 +864,8 @@ List<WidgetbookNode> get gameMapEmpireLeftRailDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Wide — debug console enabled (7 icons)',
-        builder: (context) => _gameMapEmpireLeftRailStoryFrame(
-          debugConsoleEnabled: true,
-        ),
+        builder: (context) =>
+            _gameMapEmpireLeftRailStoryFrame(debugConsoleEnabled: true),
       ),
       WidgetbookUseCase(
         name: 'Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed',
@@ -625,10 +894,8 @@ List<WidgetbookNode> get gameRegionMinimapDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Narrow — 90 × 70 dp grid (issue #2870 S3)',
-        builder: (context) => _gameRegionMinimapStoryFrame(
-          visible: true,
-          narrow: true,
-        ),
+        builder: (context) =>
+            _gameRegionMinimapStoryFrame(visible: true, narrow: true),
       ),
     ],
   ),
@@ -642,15 +909,13 @@ List<WidgetbookNode> get gameMapProvinceDetailSidePanelDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Open — wide layout panel visible',
-        builder: (context) => _gameMapProvinceDetailSidePanelProviderScope(
-          initialOpen: true,
-        ),
+        builder: (context) =>
+            _gameMapProvinceDetailSidePanelProviderScope(initialOpen: true),
       ),
       WidgetbookUseCase(
         name: 'Closed — panel collapsed',
-        builder: (context) => _gameMapProvinceDetailSidePanelProviderScope(
-          initialOpen: false,
-        ),
+        builder: (context) =>
+            _gameMapProvinceDetailSidePanelProviderScope(initialOpen: false),
       ),
     ],
   ),
@@ -767,9 +1032,10 @@ RegionMapViewportSnapshot _storyMinimapViewportSnapshot(
   // 1.6 × beyond the fit so the white rectangle reads as a window inside
   // the minimap grid rather than spanning the whole panel.
   final fitMapZoom =
-      viewportWidthLogical / mapWidthWorld < viewportHeightLogical / mapHeightWorld
-          ? viewportWidthLogical / mapWidthWorld
-          : viewportHeightLogical / mapHeightWorld;
+      viewportWidthLogical / mapWidthWorld <
+          viewportHeightLogical / mapHeightWorld
+      ? viewportWidthLogical / mapWidthWorld
+      : viewportHeightLogical / mapHeightWorld;
   return RegionMapViewportSnapshot(
     regionId: region.regionId,
     cellSizePx: cellSize,

@@ -1,19 +1,23 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-
+import '../../../../providers/game_service_provider.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_selection.dart';
+import 'game_map_area_last_turn_playback.dart';
 
 /// App-event-bus handlers for [GameMapArea]: filtering combat/diplomacy/
 /// discovery/overture events to the viewing player and buffering them for the
 /// turn-event feed, plus the turn-resolution-complete flush (Refs #3699 Theme
 /// 3).
 mixin GameMapAreaEvents
-    on ConsumerState<GameMapArea>, GameMapAreaStateBase, GameMapAreaSelection {
+    on
+        ConsumerState<GameMapArea>,
+        GameMapAreaStateBase,
+        GameMapAreaSelection,
+        GameMapAreaLastTurnPlayback {
   void onTurnResolutionCompleteEvent(
     ct_models.TurnResolutionCompleteEvent event,
   ) {
@@ -21,17 +25,29 @@ mixin GameMapAreaEvents
       return;
     }
     setState(() {
-      refreshWorkTargetSelectionCache(widget.game);
+      refreshMapSuggestionCaches(widget.game);
       resolvedPlayerTurnEvents = List<ct_models.GameToUIEvent>.from(
         pendingPlayerTurnEvents,
       );
       pendingPlayerTurnEvents.clear();
     });
+    // Event emits before provider apply; load saved game for overlay/news
+    // gates (same source as GameToUIBusListener news omit).
+    final loaded = ref.read(gameServiceProvider).loadGame(event.gameId);
+    final overlayWillShow =
+        loaded?.victory != null || (loaded?.calendarCampaignHalted ?? false);
+    final newsDialogWillShow =
+        event.turnNumber >= 1 &&
+        event.turnNewsDigest != null &&
+        loaded?.victory == null;
+    armLastTurnPlaybackAfterResolution(
+      newsDialogWillShow: newsDialogWillShow,
+      overlayWillShow: overlayWillShow,
+    );
   }
 
   void onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
-    if (event.attackerId != mapPlayerId &&
-        event.defenderId != mapPlayerId) {
+    if (event.attackerId != mapPlayerId && event.defenderId != mapPlayerId) {
       return;
     }
     pendingPlayerTurnEvents.add(event);
@@ -92,10 +108,20 @@ mixin GameMapAreaEvents
     pendingPlayerTurnEvents.add(event);
   }
 
-  void onAppMarketTurnSummaryEvent(
-    ct_models.AppMarketTurnSummaryEvent event,
+  void onAppMarketTurnSummaryEvent(ct_models.AppMarketTurnSummaryEvent event) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
+  }
+
+  void onAppEconomyTurnSummaryEvent(
+    ct_models.AppEconomyTurnSummaryEvent event,
   ) {
     if (event.playerId != mapPlayerId) {
+      return;
+    }
+    if (event.treasuryDelta == 0 && event.stockpileDeltas.isEmpty) {
       return;
     }
     pendingPlayerTurnEvents.add(event);

@@ -6,8 +6,10 @@ import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 import 'region_map_component_render_core_land_sea.dart';
 import 'region_map_component_render_core_overlays.dart';
+import 'region_map_component_render_markers_army.dart';
 import 'region_map_component_render_markers_selection.dart';
 import 'region_map_component_render_markers_settlements.dart';
+import 'region_map_component_render_markers_settlements_warp.dart';
 import 'region_map_component_render_markers_units.dart';
 import 'region_map_component_render_player_territory_outline.dart';
 import 'region_map_component_render_political.dart';
@@ -20,6 +22,9 @@ extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     paintTiles(canvas);
     if (showProvinceOwnershipTint) {
       paintGreatPowerLandOwnershipTint(canvas);
+    }
+    if (showCapitalLinkDisconnectedHighlight) {
+      paintCapitalLinkDisconnectedHighlight(canvas);
     }
     paintOverlay(canvas);
     if (showProvinceOverlay) {
@@ -42,6 +47,7 @@ extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     paintTowns(canvas);
     paintWarpZones(canvas);
     paintCivilianTileMarkers(canvas);
+    paintArmyTileMarkers(canvas);
     paintFleetTileMarkers(canvas);
     if (session.hoveredTileX != null && session.hoveredTileY != null) {
       paintSelector(canvas);
@@ -57,6 +63,9 @@ extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     }
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {
       paintValidTilesGlow(canvas);
+    }
+    if (lastTurnPulseTileKey != null) {
+      paintLastTurnPulse(canvas);
     }
   }
 }
@@ -206,10 +215,12 @@ extension CtRegionMapRenderCoreBaseTilesHelpers on CtRegionMapComponent {
     canvas.drawImageRect(tileset.image, srcRect, dstRect, Paint());
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.fogged) {
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.fogged) {
       canvas.drawRect(
         dstRect,
-        Paint()..color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
+        Paint()
+          ..color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
       );
     }
     return true;

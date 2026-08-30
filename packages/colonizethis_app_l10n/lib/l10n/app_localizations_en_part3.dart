@@ -219,6 +219,17 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'before rivals, and you earn overseas profit when another power buys here.';
 
   @override
+  String get tradeMarket_lastMarketChip => 'Last market';
+
+  @override
+  String tradeMarket_lastMarketTooltip(int bought, int sold) =>
+      'Last market: $bought bought · $sold sold worldwide. This is not your staged Bid or Offer.';
+
+  @override
+  String get tradeMarket_priceMovedTooltip =>
+      "Last market moved this price. This turn's deals use the price shown.";
+
+  @override
   String get tradeDealBook_matchTagFirstRight => 'First right';
 
   @override
@@ -232,8 +243,7 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
     String commodity,
     int quantity,
     int amount,
-  ) =>
-      '$commodity × $quantity — £$amount credited';
+  ) => '$commodity × $quantity — £$amount credited';
 
   @override
   String eventFeed_overseasProfitCredited(int amount, int count) =>
@@ -242,6 +252,15 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get production_available => 'Available';
+
+  @override
+  String get production_availableSellableTooltip =>
+      'How many you can still sell after industry reservations and offers '
+      'already staged. Tap to open Trade.';
+
+  @override
+  String production_availableOpenTradeSemantic(String name) =>
+      'Open Trade for $name';
 
   @override
   String get production_food => 'Food';
@@ -438,6 +457,16 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Industrial Funding +20%';
 
   @override
+  String technologyPanel_rpBreakdownSpyInsightOne(String court) {
+    return 'Spy insight \u2014 $court already knows this (+15%)';
+  }
+
+  @override
+  String technologyPanel_rpBreakdownSpyInsightMany(String courts, int percent) {
+    return 'Spy insight \u2014 $courts already know this (+$percent%)';
+  }
+
+  @override
   String get technologyPanel_rpBreakdownEffectiveLabel =>
       'Effective RP this turn';
 
@@ -502,6 +531,35 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get techTree_researchersDialogTitle => 'Researched by';
+
+  @override
+  String get techTree_researchThis => 'Research this';
+
+  @override
+  String get techTree_replaceSeatPrompt => 'Replace a research seat';
+
+  @override
+  String techTree_replaceSeatLabel(int slot, String tech) =>
+      'Slot $slot — $tech';
+
+  @override
+  String get techTree_assignReasonObserveOnly =>
+      'Research seats cannot be changed while observing.';
+
+  @override
+  String get techTree_assignReasonAlreadyKnown =>
+      'You already know this technology.';
+
+  @override
+  String techTree_assignReasonAlreadySeated(int slot) =>
+      'Already researching in Slot $slot.';
+
+  @override
+  String techTree_assignReasonWaitingOn(String names) => 'Waiting on: $names';
+
+  @override
+  String get techTree_assignReasonDiscovery =>
+      'Requires discovering a related resource first.';
 
   @override
   String get mapDebug_fullVisibility => 'Full visibility';
@@ -620,12 +678,46 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Establish a consulate before exploring or prospecting';
 
   @override
+  String get provinceOverlay_tileConsulateRequiredForExploreNarrowTooltip =>
+      'Establish a consulate before exploring or prospecting. '
+      'Use Establish Consulate on Political.';
+
+  @override
   String get provinceOverlay_tileBuildImprovementTooltip => 'Build improvement';
 
   @override
   String provinceOverlay_tileBuildImprovementTooltipWithCost(String costs) {
     return 'Build improvement ($costs)';
   }
+
+  @override
+  String provinceOverlay_tileBuildImprovementYieldRaise(
+    int from,
+    int to,
+    String good,
+  ) {
+    return 'After this work: $from → $to $good if still linked';
+  }
+
+  @override
+  String provinceOverlay_tileBuildImprovementYieldRoadLimit(
+    int n,
+    String good,
+  ) {
+    return 'After this work: still $n $good — the road is the limit';
+  }
+
+  @override
+  String provinceOverlay_tileBuildImprovementYieldTownLimit(
+    int n,
+    String good,
+  ) {
+    return 'After this work: still $n $good — town development is the limit';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildImprovementYieldDisconnected =>
+      'After this work: still none — not bound to the capital';
 
   @override
   String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip =>
@@ -699,6 +791,16 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_tileBuildFortPayoffGist(
+    String fromLabel,
+    String toLabel,
+    int turns,
+  ) {
+    final duration = turns == 1 ? '1 turn' : '$turns turns';
+    return 'After this work: $fromLabel → $toLabel · Takes $duration';
+  }
+
+  @override
   String get provinceOverlay_tilePurchaseLandTooltip => 'Purchase land';
 
   @override
@@ -717,6 +819,24 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount) {
     return 'Short: treasury ×$amount';
+  }
+
+  @override
+  String provinceOverlay_tilePurchaseLandPayoffTradeable(
+    String good,
+    String court,
+  ) {
+    return '$good still sells as $court’s. After this work you get first bid '
+        'on that sale, and gold when other courts buy it. The land stays theirs.';
+  }
+
+  @override
+  String provinceOverlay_tilePurchaseLandPayoffRiches(
+    String good,
+    String court,
+  ) {
+    return '$good from this tile will go to your treasury after this work. '
+        'The land stays $court’s.';
   }
 
   @override
@@ -835,157 +955,42 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
-  String provinceOverlay_indentedCount(String label, int count) {
-    return '  $label: $count';
+  String provinceOverlay_townDevelopmentOfMax(int level, int max) {
+    return 'Town development: $level of $max';
   }
 
   @override
-  String provinceOverlay_unitTarget(String type, String target) {
-    return '$type: $target';
+  String get provinceOverlay_townDevelopmentGistMax =>
+      'Fully developed; manufacturing bonus at maximum.';
+
+  @override
+  String get provinceOverlay_townDevelopmentGistBonusActiveNextAt4 =>
+      'Town manufacturing bonus active; next bonus at level 4.';
+
+  @override
+  String get provinceOverlay_townDevelopmentGistNextAt4 =>
+      'Next manufacturing bonus at level 4.';
+
+  @override
+  String get provinceOverlay_townDevelopmentGistNextAt2 =>
+      'Next manufacturing bonus at level 2.';
+
+  @override
+  String get provinceOverlay_upgradeTownAction => 'Upgrade town';
+
+  @override
+  String get provinceOverlay_establishConsulateAction => 'Establish Consulate';
+
+  @override
+  String get provinceOverlay_cancelEstablishConsulateAction => 'Cancel';
+
+  @override
+  String provinceOverlay_noConsulateWith(String owner) {
+    return 'No consulate with $owner';
   }
 
   @override
-  String provinceOverlay_foreignUnitStatus(
-    String owner,
-    String type,
-    String status,
-  ) {
-    return '$owner — $type: $status';
+  String provinceOverlay_establishConsulateDisabledSemantics(String reason) {
+    return 'Establish Consulate unavailable: $reason';
   }
-
-  @override
-  String provinceOverlay_fleetSummary(
-    String owner,
-    String fleetLabel,
-    String shipParts,
-  ) {
-    return '$owner — $fleetLabel: $shipParts';
-  }
-
-  @override
-  String get provinceOverlay_sectionPolitical => 'Political';
-
-  @override
-  String get provinceOverlay_sectionTile => 'Tile';
-
-  @override
-  String get provinceOverlay_sectionEconomic => 'Economic';
-
-  @override
-  String get provinceOverlay_townProductionHeading => 'Town production';
-
-  @override
-  String provinceOverlay_townProductionQuantity(int quantity) {
-    return '+$quantity';
-  }
-
-  @override
-  String get provinceOverlay_extractionHeading => 'Extraction';
-
-  @override
-  String get provinceOverlay_availableHeading => 'Available';
-
-  @override
-  String provinceOverlay_extractionQuantity(int quantity, String name) {
-    return '$quantity $name';
-  }
-
-  @override
-  String provinceOverlay_extractionQuantityPartial(
-    int effective,
-    int full,
-    String name,
-  ) {
-    return '$effective ($full) $name';
-  }
-
-  @override
-  String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
-    return ' (incl. +$bonus capital grain bonus)';
-  }
-
-  @override
-  String get provinceOverlay_extractionPartialReason =>
-      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
-
-  @override
-  String provinceOverlay_availableTileCount(int count, String name) {
-    return '$count $name';
-  }
-
-  @override
-  String get provinceOverlay_sectionMilitary => 'Military';
-
-  @override
-  String get provinceOverlay_sectionCivilian => 'Civilian';
-
-  @override
-  String get provinceOverlay_sectionNaval => 'Naval';
-
-  @override
-  String get provinceOverlay_titleProvince => 'Province';
-
-  @override
-  String get provinceOverlay_titleSeaZone => 'Sea zone';
-
-  @override
-  String get mapCorner_tooltipBaseLayer =>
-      'Base layer: terrain / +resources / +improvements';
-
-  @override
-  String get mapCorner_tooltipCenterCapital => 'Center on capital';
-
-  @override
-  String get mapCorner_tooltipMapDisplayOptions => 'Map display options';
-
-  @override
-  String mapControls_cargoHold(String used, String capacity) {
-    return '$used/$capacity';
-  }
-
-  @override
-  String mapControls_cargoHold_tooltip(String used, String capacity) {
-    return 'Cargo: $used overseas of $capacity Home Fleet holds';
-  }
-
-  @override
-  String mapControls_cargoHold_semanticsLabel(String used, String capacity) {
-    return 'Cargo hold: $used overseas, $capacity Home Fleet holds';
-  }
-
-  @override
-  String mapControls_cargoHold_details_overseas(String used) {
-    return 'Overseas extraction: $used';
-  }
-
-  @override
-  String mapControls_cargoHold_details_capacity(String capacity) {
-    return 'Home Fleet holds: $capacity';
-  }
-
-  @override
-  String mapControls_cargoHold_details_free(String free) {
-    return 'Free for trade bids: $free';
-  }
-
-  @override
-  String get mapControls_cargoHold_details_counsel =>
-      'Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.';
-
-  @override
-  String get mapControls_playersBarToggle => 'Players bar';
-
-  @override
-  String common_percent(int value) {
-    return '$value%';
-  }
-
-  @override
-  String get regionMinimap_mapZoom => 'Map zoom';
-
-  @override
-  String regionMinimap_zoomSemanticsValue(int pct) {
-    return '$pct percent';
-  }
-
 }

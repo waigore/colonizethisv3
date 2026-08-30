@@ -1,9 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 void main() {
   group('WorldState mapBothRegions', () {

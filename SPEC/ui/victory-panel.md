@@ -14,38 +14,15 @@
 ## Trigger conditions
 
 - Left-rail **Victory** button (`kEmpireVictoryButtonKey`), always **last** among core empire buttons (after Technology).
+- `MAP10001` tab-bar **Old World race chip** (same `NavigateToRouteEvent` payload as the left-rail button). See [old-world-race-chip.md](components/old-world-race-chip.md).
 - `NavigateToRouteEvent(Routes.victory, {game, humanPlayerId})` from bus wiring on `GameScreen`.
 - Route path: `/game/victory`.
 
 ## Layout / wireframe
 
-### Narrow (`< kNarrowBreakpoint`, 600 dp)
+Narrow (`< 600` dp): `CtDarkScaffold` → `CtTopBar` (← Map) → scroll: optional end-state banner, conditions, stacked standings then minimap.
 
-```
-CtDarkScaffold
-  CtTopBar (← Map, victory icon, "Victory")
-  SingleChildScrollView (compact padding)
-    [optional] end-state banner
-    conditions card
-    Column
-      standings card
-      political minimap card (when map data available)
-```
-
-### Wide (`≥ kNarrowBreakpoint`, 600 dp, map data available)
-
-```
-CtDarkScaffold
-  CtTopBar
-  SingleChildScrollView (compact padding)
-    [optional] end-state banner
-    conditions card
-    Row (standings left, minimap right, equal flex)
-      standings card
-      political minimap card
-```
-
-When map data is unavailable, standings render full width at all breakpoints.
+Wide (`≥ 600` dp + map data): same header/conditions; standings and minimap in one equal-flex row. Without map data, standings are full width.
 
 ## Behavior
 
@@ -54,6 +31,7 @@ When map data is unavailable, standings render full width at all breakpoints.
 | Source | Condition | Result |
 |--------|-----------|--------|
 | Left rail Victory | always (non-debug seventh button) | `NavigateToRouteEvent` → `VictoryScreen` |
+| Tab-bar Old World race chip | `Game.victory == null` | Same `NavigateToRouteEvent(Routes.victory, {game, humanPlayerId})` |
 | Observe mode | global observe without player | `ObserveModeNotDefinedPanel` via shell guard |
 
 ### User actions
@@ -70,52 +48,50 @@ When map data is unavailable, standings render full width at all breakpoints.
 - On first build, `selectedPlayerId` is the human Great Power (`humanPlayerId` route arg).
 - Minimap de-emphasizes non-selected owners; selected faction provinces render at full ownership colour.
 
+### Conditions calendar remaining
+
+Province-count line first. Live `gdd01` countdown: current year, last year 1800, remaining years, remaining full turns (`capTurn − current`). Cap turn: remaining 0, never negative. Omit countdown for infinite mode (keep bypass), halt/`victory`, or no 1800 turn on the mapping.
+
 ### Standings progress
 
-- Each GP row shows `{count} / {threshold} Old World provinces` and a progress bar scaled 0…threshold (fill caps at full when count ≥ threshold).
-- Standings sort by OW count descending, display-name ascending on ties (unchanged ranking key).
+- GP rows show `{count} / {threshold}` with a 0…threshold bar (caps at full at/above threshold). Sort: OW count desc, display-name asc.
 
 ### Selection linkage
 
-- **Standings → map:** row body selects GP; expand chevron toggles breakdown only.
-- **Map → standings:** GP-owned province tap selects that GP row while retaining inspect text.
-- **Minor / unowned:** inspect still works; last GP selection is retained.
-- **Narrow layout:** selection is stateful in `VictoryScreenBody` and applies to both stacked standings and minimap when scrolled.
+Row body selects GP (map highlight). Chevron toggles breakdown only. GP-owned minimap tap selects that GP. Minor/unowned inspect keeps last GP. Narrow: one `VictoryScreenBody` selection for stacked cards.
 
 ## Political minimap
 
-- **Scope:** Old World only; one cell per map tile painted with owning faction colour from `factionOwnershipColorMapForOldWorld` (minor nations use grey palette entries).
-- **Data:** Built from persisted tile map + topology via `buildVictoryOldWorldMapViewData`; section hidden when map data is unavailable (e.g. lightweight widget-test fixtures).
-- **Annotations:** Each land province shows its display name at the tile-centroid (ellipsized when the footprint is small). Provinces containing a faction's **current** capital (`capitalMarkers`) render a bright province-outline border. Each province town (`townMarkers` from `Province.townTileKey`) renders a simplified editorial-monocle marker dot.
-- **Inspect:** Hover (pointer) or tap selects a land province and shows whether it is still the **founding** owner's province or was **captured**, naming the founding owner when `Province.originalOwnerId` is present; legacy saves without origin show **founding owner unknown** copy (no invented capture history).
+Old World only; tile cells from `buildVictoryOldWorldMapViewData`; hidden without map data. Owner colour / minor grey. Labels at centroids (ellipsize); capital outline; town dots. Hover/tap: founding vs captured via `originalOwnerId`, or founding-owner-unknown (no invented history).
 
 ## States and variants
 
-| ID | Variant | Trigger | Render difference |
-|----|---------|---------|-------------------|
-| `GAME70001` | default | mid-campaign | conditions + standings; no end-state banner |
-| `GAME70001` | military complete | `Game.victory != null` | end-state banner names province-count winner in plain language |
-| `GAME70001` | calendar halt | `calendarCampaignHalted` | end-state banner names declared overall-strength winner or tie |
-| `GAME70001` | infinite mode | `Game.infiniteMode` | conditions include infinite bypass line |
-| `GAME70001a` | wide side-by-side | viewport ≥ 600 dp + map data | standings and minimap in one row below conditions |
-| `GAME70001b` | annotated minimap | map data with naming / capitals / towns | province labels, capital borders, town dots on minimap |
-| `GAME70001c` | rival GP selected | non-human GP selected on standings / minimap | selected faction highlighted; human row emphasized but not selected |
+`GAME70001` default mid-campaign; military complete (`victory`); calendar halt; infinite bypass. `GAME70001a` wide side-by-side; `GAME70001b` annotated minimap; `GAME70001c` rival GP selected.
 
 ## Acceptance criteria
 
-- **Given** the map shell is visible, **when** the player inspects the left rail, **then** a Victory control is present as the **last** core empire button and opens `GAME70001` with `← Map` return.
-- **Given** the Victory panel is open, **when** the conditions section renders, **then** winning by controlling **31 or more Old World provinces** is stated in plain language (no “military victory” type label), calendar-end rules are stated in plain language, and infinite-mode bypass copy appears when `infiniteMode` is true.
-- **Given** multiple Great Powers, **when** standings render, **then** only GPs appear sorted by OW count descending with display-name tie-break, each showing OW progress (`count / threshold Old World provinces`) with a progress bar, and the human row is emphasized; on open the human GP is selected by default.
-- **Given** a GP row is collapsed, **when** shown, **then** calendar-end comparison totals are hidden; **when** the expand chevron is used, **then** province / regiment / ship component totals and an overall strength total appear with copy explaining they matter only for calendar-end comparison, not the Old World province race; **when** the row body is tapped, **then** map selection updates without requiring expand. No weighted `× weight =` formula lines appear.
-- **Given** a GP is selected on standings or minimap, **when** the minimap renders, **then** that faction's Old World provinces are shown at full colour and other owners are de-emphasized.
-- **Given** a GP-owned province is tapped on the minimap, **when** inspect runs, **then** that GP's standings row is selected and inspect text still appears.
-- **Given** standings section renders, **when** the header area is shown, **then** helper copy explains colour/map linkage.
-- **Given** the political minimap is shown, **when** Old World provinces render, **then** each province uses the owning GP's colour and Minor-owned provinces use grey, in chrome consistent with the editorial-monocle L&F.
-- **Given** `originalOwnerId` is present, **when** the player hovers or taps a province on the political minimap, **then** the UI states whether it is still the founding owner's province or was captured, naming the founding owner; **given** legacy data without origin, **when** inspect is used, **then** the UI shows founding-owner-unknown copy without inventing capture history.
-- **Given** `GAME70001` mid-campaign or end-state variants, **when** the player reads default-visible and expanded copy, **then** the string “military victory” (any casing) does not appear in player-facing Victory panel UI.
-- **Given** viewport width is at least `kNarrowBreakpoint` (600 dp) and map data is available, **when** the Victory panel renders, **then** Great Power standings and the political minimap appear side-by-side below the conditions block with compact section spacing.
-- **Given** viewport width is below 600 dp, **when** the Victory panel renders, **then** conditions, standings, and minimap remain stacked vertically in that order.
-- **Given** the political minimap is shown with naming data, **when** Old World land provinces render, **then** each province's display name appears at its centroid (readable or ellipsized when the footprint is small), capital provinces are outlined, and town markers appear at each `townTileKey`.
+- **Given** the map shell is visible, **when** the player inspects the left rail, **then** a Victory control is the **last** core empire button and opens `GAME70001` with `← Map`.
+- **Given** conditions render, **when** shown, **then** the UI layer states a 31+ Old World province win in plain language (no “military victory” type label) and calendar-end rules; infinite bypass appears when `infiniteMode` is true.
+- **Given** `gdd01` at turn 42 (year 1582), **when** conditions render, **then** the UI layer names year 1582, last year 1800, remaining years 218, remaining full turns 159, and does not use “near 1800 (turn 201)” as the only calendar sentence. Tests: `app/test/victory_panel_goldens_test.dart`, `app/test/campaign_calendar_clock_test.dart`.
+- **Given** `infiniteMode`, **when** conditions render, **then** the UI layer omits remaining-years countdown and keeps the bypass line.
+- **Given** cap turn 201 / year 1800 and not halted, **when** conditions render, **then** the UI layer states last campaign year with remaining 0.
+- **Given** halt or `victory != null`, **when** conditions render, **then** the UI layer shows no positive remaining countdown.
+- **Given** no 1800 start turn on the mapping, **when** conditions render, **then** the UI layer invents no halt countdown.
+- **Given** multiple GPs, **when** standings render, **then** GPs sort by OW count desc / name asc, each `count / threshold`, human row emphasized, human selected on open.
+- **Given** a collapsed GP row, **when** shown, **then** calendar-end totals are hidden; **when** expand is used, **then** province / regiment / ship totals and overall strength appear as calendar-end only (no `× weight =`); row-body tap selects the map without expand.
+- **Given** a GP selected, **when** the minimap renders, **then** that faction is full colour and others de-emphasized.
+- **Given** a GP-owned province tap, **when** inspect runs, **then** that GP row is selected and inspect text remains.
+- **Given** standings header, **when** shown, **then** helper copy explains colour/map linkage.
+- **Given** the minimap, **when** OW provinces render, **then** GP colour / minor grey match editorial-monocle chrome.
+- **Given** `originalOwnerId`, **when** hover/tap, **then** founding vs captured is named; without origin, founding-owner-unknown (no invented history).
+- **Given** mid-campaign or end-state, **when** copy is read, **then** “military victory” does not appear.
+- **Given** width ≥ 600 dp and map data, **when** rendered, **then** standings and minimap are side-by-side below conditions.
+- **Given** width < 600 dp, **when** rendered, **then** conditions, standings, minimap stack in that order.
+- **Given** naming data, **when** OW land renders, **then** names at centroids (ellipsize), capital outlines, and town markers at `townTileKey`.
+
+## Widgetbook
+
+**Victory Screen** (`catalog_data_screens.dart`): default remaining; mobile wrap; wide `GAME70001a`; infinite (no countdown); last year remaining 0; rival `GAME70001c`; annotated minimap `GAME70001b`.
 
 ## References
 
@@ -124,4 +100,4 @@ When map data is unavailable, standings render full width at all breakpoints.
 - `SPEC/game/diplomacy.md` § Great Power power score
 - `SPEC/ui/empire-buttons.md`
 - `SPEC/ui/mobile-adaptation.md`
-- `SPEC/ui/victory-overlay.md` (`OVL20001` post-military overlay unchanged)
+- `SPEC/ui/victory-overlay.md` (`OVL20001` military + calendar-complete variants)

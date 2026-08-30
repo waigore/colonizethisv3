@@ -35,26 +35,21 @@ int runCheckTechIdConstants(
   final requested = incrementalRelativeDartPaths ?? const <String>[];
   final candidateFiles = _collectCandidateFiles(root, requested);
 
-  final violations = <_Violation>[];
+  final violations = <TechIdConstantViolation>[];
   for (final file in candidateFiles) {
     final relPath = p.normalize(p.relative(file.path, from: root));
     if (repoLintIdentifierLiteralShouldSkipFile(relPath, _excludedPaths)) {
       continue;
     }
     final source = file.readAsStringSync();
-    final parsed = parseString(
-      content: source,
-      path: file.path,
-      throwIfDiagnostics: false,
+    violations.addAll(
+      findTechIdConstantViolations(
+        relativePath: relPath,
+        source: source,
+        techIds: techIds,
+        constantNameByTechId: constantNameByTechId,
+      ),
     );
-    final visitor = _TechIdLiteralVisitor(
-      path: relPath,
-      unit: parsed.unit,
-      techIds: techIds,
-      constantNameByTechId: constantNameByTechId,
-    );
-    parsed.unit.visitChildren(visitor);
-    violations.addAll(visitor.violations);
   }
 
   if (violations.isEmpty) {
@@ -85,6 +80,45 @@ void main(List<String> args) {
           : parsedArgs.files,
     ),
   );
+}
+
+/// Extraction-cap table libraries (Refs #4626 AC5): top-level map keys that
+/// match catalog tech ids are treated as executable literals.
+bool isTechExtractionCapsLibPath(String relativePath) {
+  final normalized = p.posix.normalize(relativePath.replaceAll(r'\', '/'));
+  const prefix = 'packages/colonizethis_data/lib/src/';
+  if (!normalized.startsWith(prefix)) {
+    return false;
+  }
+  final name = p.basename(normalized);
+  return name.startsWith('tech_extraction_caps') && name.endsWith('.dart');
+}
+
+List<TechIdConstantViolation> findTechIdConstantViolations({
+  required String relativePath,
+  required String source,
+  required Set<String> techIds,
+  required Map<String, String> constantNameByTechId,
+}) {
+  if (!relativePath.endsWith('.dart')) {
+    return const [];
+  }
+  if (repoLintIdentifierLiteralShouldSkipFile(relativePath, _excludedPaths)) {
+    return const [];
+  }
+  final parsed = parseString(
+    content: source,
+    path: relativePath,
+    throwIfDiagnostics: false,
+  );
+  final visitor = _TechIdLiteralVisitor(
+    path: relativePath,
+    unit: parsed.unit,
+    techIds: techIds,
+    constantNameByTechId: constantNameByTechId,
+  );
+  parsed.unit.visitChildren(visitor);
+  return visitor.violations;
 }
 
 _ParsedArgs _parseArgs(List<String> args) {
@@ -172,7 +206,7 @@ class _TechIdLiteralVisitor extends RecursiveAstVisitor<void> {
   final CompilationUnit unit;
   final Set<String> techIds;
   final Map<String, String> constantNameByTechId;
-  final List<_Violation> violations = <_Violation>[];
+  final List<TechIdConstantViolation> violations = <TechIdConstantViolation>[];
 
   @override
   void visitSimpleStringLiteral(SimpleStringLiteral node) {
@@ -189,7 +223,7 @@ class _TechIdLiteralVisitor extends RecursiveAstVisitor<void> {
         ? 'Use a kTechId* constant from colonizethis_data.'
         : 'Use $suggestedConstant from colonizethis_data.';
     violations.add(
-      _Violation(
+      TechIdConstantViolation(
         path: path,
         line: location.lineNumber,
         column: location.columnNumber,
@@ -211,16 +245,21 @@ class _TechIdLiteralVisitor extends RecursiveAstVisitor<void> {
         return true;
       }
       if (cursor is TopLevelVariableDeclaration || cursor is FieldDeclaration) {
-        return false;
+        return isTechExtractionCapsLibPath(path) && _isMapKeyLiteral(node);
       }
       cursor = cursor.parent;
     }
     return false;
   }
+
+  bool _isMapKeyLiteral(AstNode node) {
+    final parent = node.parent;
+    return parent is MapLiteralEntry && identical(parent.key, node);
+  }
 }
 
-class _Violation {
-  const _Violation({
+class TechIdConstantViolation {
+  const TechIdConstantViolation({
     required this.path,
     required this.line,
     required this.column,

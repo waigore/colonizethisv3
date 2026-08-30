@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -8,12 +7,24 @@ import '../../../../config/constants.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import '../../flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
+import '../../flame/map_state/province_action_state_calculator.dart';
+import '../../flame/map_state/province_detach_and_sail_overlay_controls.dart'
+    show ProvinceDetachAndSailOverlayControls;
+import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
+    show ProvinceTransferToHomeFleetOverlayControls;
+import '../../flame/map_state/province_naval_combine_overlay_controls.dart'
+    show ProvinceNavalCombineOverlayControls;
+import '../../flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
 import 'province_sea_zone_detail_overlay_chrome.dart';
 import 'province_sea_zone_detail_overlay_province_content.dart';
 import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].
@@ -30,28 +41,45 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.draftOrders = const Orders(),
     this.onHighlightTile,
     this.onClose,
-    this.showProspectActionIcon = false,
-    this.prospectActionEnabled = false,
-    this.onProspectWithExplorerTap,
-    this.showExploreActionIcon = false,
-    this.exploreActionEnabled = false,
-    this.onExploreWithExplorerTap,
-    this.showBuildImprovementActionIcon = false,
-    this.buildImprovementActionEnabled = false,
-    this.buildImprovementActionHasBuilderUnits = false,
-    this.onBuildImprovementTap,
-    this.showBuildRoadActionIcon = false,
-    this.buildRoadActionEnabled = false,
-    this.buildRoadActionHasEngineerUnits = false,
-    this.onBuildRoadTap,
-    this.showBuildFortActionIcon = false,
-    this.buildFortActionEnabled = false,
-    this.buildFortActionHasEngineerUnits = false,
-    this.onBuildFortTap,
-    this.showPurchaseLandActionIcon = false,
-    this.purchaseLandActionEnabled = false,
-    this.purchaseLandActionHasMerchantUnits = false,
-    this.onPurchaseLandTap,
+    this.civilianInlineActions = kHiddenProvinceActionStates,
+    this.inlineActionCallbacks = kEmptyProvinceInlineActionCallbacks,
+    this.showUpgradeTownControl = false,
+    this.upgradeTownEnabled = false,
+    this.upgradeTownHasBuilderUnits = false,
+    this.upgradeTownTargetTileKey,
+    this.onUpgradeTownTap,
+    this.showMoveArmyControl = false,
+    this.moveArmyEnabled = false,
+    this.moveArmyTooltip = '',
+    this.onMoveArmyTap,
+    this.showInvadeArmyControl = false,
+    this.invadeArmyEnabled = false,
+    this.invadeArmyTooltip = '',
+    this.onInvadeArmyTap,
+    this.showCombineArmiesControl = false,
+    this.combineArmiesEnabled = false,
+    this.combineArmiesTooltip = '',
+    this.onCombineArmiesTap,
+    this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
+    this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
+    this.transferToHomeFleet = ProvinceTransferToHomeFleetOverlayControls.hidden,
+    this.navalCombine = ProvinceNavalCombineOverlayControls.hidden,
+    this.blockadeStatus = ProvinceBlockadeStatus.none,
+    this.stationSpy = kProvinceOverlayStationSpyHidden,
+    this.counterEspionage = kProvinceOverlayCounterEspionageHidden,
+    this.showEstablishConsulateControl = false,
+    this.establishConsulateEnabled = false,
+    this.establishConsulatePending = false,
+    this.establishConsulateRejectionReason,
+    this.onEstablishConsulateTap,
+    this.showOwnerStanding = false,
+    this.ownerStandingAtWar = false,
+    this.showOwnerAllianceBadge = false,
+    this.showOfferPeaceControl = false,
+    this.offerPeaceEnabled = false,
+    this.offerPeacePending = false,
+    this.offerPeaceRejectionReason,
+    this.onOfferPeaceTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
@@ -70,28 +98,45 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final void Function(String? tileKey)? onHighlightTile;
   final void Function(Iterable<String>? tileKeys)? onHighlightTiles;
   final VoidCallback? onClose;
-  final bool showProspectActionIcon;
-  final bool prospectActionEnabled;
-  final VoidCallback? onProspectWithExplorerTap;
-  final bool showExploreActionIcon;
-  final bool exploreActionEnabled;
-  final VoidCallback? onExploreWithExplorerTap;
-  final bool showBuildImprovementActionIcon;
-  final bool buildImprovementActionEnabled;
-  final bool buildImprovementActionHasBuilderUnits;
-  final VoidCallback? onBuildImprovementTap;
-  final bool showBuildRoadActionIcon;
-  final bool buildRoadActionEnabled;
-  final bool buildRoadActionHasEngineerUnits;
-  final VoidCallback? onBuildRoadTap;
-  final bool showBuildFortActionIcon;
-  final bool buildFortActionEnabled;
-  final bool buildFortActionHasEngineerUnits;
-  final VoidCallback? onBuildFortTap;
-  final bool showPurchaseLandActionIcon;
-  final bool purchaseLandActionEnabled;
-  final bool purchaseLandActionHasMerchantUnits;
-  final VoidCallback? onPurchaseLandTap;
+  final ProvinceActionStates civilianInlineActions;
+  final ProvinceInlineActionCallbacks inlineActionCallbacks;
+  final bool showUpgradeTownControl;
+  final bool upgradeTownEnabled;
+  final bool upgradeTownHasBuilderUnits;
+  final String? upgradeTownTargetTileKey;
+  final VoidCallback? onUpgradeTownTap;
+  final bool showMoveArmyControl;
+  final bool moveArmyEnabled;
+  final String moveArmyTooltip;
+  final VoidCallback? onMoveArmyTap;
+  final bool showInvadeArmyControl;
+  final bool invadeArmyEnabled;
+  final String invadeArmyTooltip;
+  final VoidCallback? onInvadeArmyTap;
+  final bool showCombineArmiesControl;
+  final bool combineArmiesEnabled;
+  final String combineArmiesTooltip;
+  final VoidCallback? onCombineArmiesTap;
+  final ProvinceNavalMissionOverlayControls navalMission;
+  final ProvinceDetachAndSailOverlayControls detachAndSail;
+  final ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet;
+  final ProvinceNavalCombineOverlayControls navalCombine;
+  final ProvinceBlockadeStatus blockadeStatus;
+  final ProvinceOverlayStationSpyProps stationSpy;
+  final ProvinceOverlayCounterEspionageProps counterEspionage;
+  final bool showEstablishConsulateControl;
+  final bool establishConsulateEnabled;
+  final bool establishConsulatePending;
+  final String? establishConsulateRejectionReason;
+  final VoidCallback? onEstablishConsulateTap;
+  final bool showOwnerStanding;
+  final bool ownerStandingAtWar;
+  final bool showOwnerAllianceBadge;
+  final bool showOfferPeaceControl;
+  final bool offerPeaceEnabled;
+  final bool offerPeacePending;
+  final String? offerPeaceRejectionReason;
+  final VoidCallback? onOfferPeaceTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
@@ -101,14 +146,17 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
-    final content = resolveOverlayContent(context);
+    final content = resolveOverlayContent(context, isNarrow: isNarrow);
     return LayoutBuilder(
       builder: (context, constraints) =>
           buildResponsivePanel(context, constraints, isNarrow, content),
     );
   }
 
-  OverlayContent resolveOverlayContent(BuildContext context) {
+  OverlayContent resolveOverlayContent(
+    BuildContext context, {
+    required bool isNarrow,
+  }) {
     final l10n = appL10n(context);
     if (isProvinceSeaZoneOverlaySeaZone(region, displayId)) {
       return seaZoneContent(
@@ -118,6 +166,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
         seaZoneId: displayId,
         humanPlayerId: humanPlayerId,
         draftOrders: draftOrders,
+        selectedTileKey: selectedTileKey,
+        navalMission: navalMission,
+        transferToHomeFleet: transferToHomeFleet,
+        navalCombine: navalCombine,
       );
     }
     return provinceContent(
@@ -131,28 +183,46 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       draftOrders: draftOrders,
       selectedTileKey: selectedTileKey,
       onHighlightTile: onHighlightTile,
-      showProspectActionIcon: showProspectActionIcon,
-      prospectActionEnabled: prospectActionEnabled,
-      onProspectWithExplorerTap: onProspectWithExplorerTap,
-      showExploreActionIcon: showExploreActionIcon,
-      exploreActionEnabled: exploreActionEnabled,
-      onExploreWithExplorerTap: onExploreWithExplorerTap,
-      showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-      buildImprovementActionEnabled: buildImprovementActionEnabled,
-      buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
-      onBuildImprovementTap: onBuildImprovementTap,
-      showBuildRoadActionIcon: showBuildRoadActionIcon,
-      buildRoadActionEnabled: buildRoadActionEnabled,
-      buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
-      onBuildRoadTap: onBuildRoadTap,
-      showBuildFortActionIcon: showBuildFortActionIcon,
-      buildFortActionEnabled: buildFortActionEnabled,
-      buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
-      onBuildFortTap: onBuildFortTap,
-      showPurchaseLandActionIcon: showPurchaseLandActionIcon,
-      purchaseLandActionEnabled: purchaseLandActionEnabled,
-      purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
-      onPurchaseLandTap: onPurchaseLandTap,
+      civilianInlineActions: civilianInlineActions,
+      inlineActionCallbacks: inlineActionCallbacks,
+      showUpgradeTownControl: showUpgradeTownControl,
+      upgradeTownEnabled: upgradeTownEnabled,
+      upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,
+      upgradeTownTargetTileKey: upgradeTownTargetTileKey,
+      onUpgradeTownTap: onUpgradeTownTap,
+      showMoveArmyControl: showMoveArmyControl,
+      moveArmyEnabled: moveArmyEnabled,
+      moveArmyTooltip: moveArmyTooltip,
+      onMoveArmyTap: onMoveArmyTap,
+      showInvadeArmyControl: showInvadeArmyControl,
+      invadeArmyEnabled: invadeArmyEnabled,
+      invadeArmyTooltip: invadeArmyTooltip,
+      onInvadeArmyTap: onInvadeArmyTap,
+      showCombineArmiesControl: showCombineArmiesControl,
+      combineArmiesEnabled: combineArmiesEnabled,
+      combineArmiesTooltip: combineArmiesTooltip,
+      onCombineArmiesTap: onCombineArmiesTap,
+      navalMission: navalMission,
+      detachAndSail: detachAndSail,
+      transferToHomeFleet: transferToHomeFleet,
+      navalCombine: navalCombine,
+      blockadeStatus: blockadeStatus,
+      stationSpy: stationSpy,
+      counterEspionage: counterEspionage,
+      showEstablishConsulateControl: showEstablishConsulateControl,
+      establishConsulateEnabled: establishConsulateEnabled,
+      establishConsulatePending: establishConsulatePending,
+      establishConsulateRejectionReason: establishConsulateRejectionReason,
+      onEstablishConsulateTap: onEstablishConsulateTap,
+      showOwnerStanding: showOwnerStanding,
+      ownerStandingAtWar: ownerStandingAtWar,
+      showOwnerAllianceBadge: showOwnerAllianceBadge,
+      showOfferPeaceControl: showOfferPeaceControl,
+      offerPeaceEnabled: offerPeaceEnabled,
+      offerPeacePending: offerPeacePending,
+      offerPeaceRejectionReason: offerPeaceRejectionReason,
+      onOfferPeaceTap: onOfferPeaceTap,
+      isNarrow: isNarrow,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,

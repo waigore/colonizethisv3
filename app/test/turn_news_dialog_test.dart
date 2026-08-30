@@ -137,4 +137,44 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'Given spy reports When dialog built Then footer opens Intelligence',
+    (WidgetTester tester) async {
+      var opened = false;
+      await tester.pumpWidget(
+        wrapWithL10n(
+          TurnNewsDialog(
+            game: baseGame,
+            digest: const TurnNewsDigest(resolvedTurnNumber: 1, lines: []),
+            newTurnNumber: 2,
+            spyReportCount: 2,
+            onOpenIntelligence: () => opened = true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final footer = find.text('Your spies report 2 items — open Intelligence');
+      expect(footer, findsOneWidget);
+      await tester.tap(footer);
+      await tester.pump();
+      expect(opened, isTrue);
+    },
+  );
+
+  testWidgets('Given no spy reports When dialog built Then footer absent', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      wrapWithL10n(
+        TurnNewsDialog(
+          game: baseGame,
+          digest: const TurnNewsDigest(resolvedTurnNumber: 1, lines: []),
+          newTurnNumber: 2,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('open Intelligence'), findsNothing);
+  });
 }

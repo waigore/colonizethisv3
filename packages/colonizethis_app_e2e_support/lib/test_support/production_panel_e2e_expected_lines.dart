@@ -7,173 +7,13 @@
 // Expected plain-text lines for ProductionPanel (wide layout ≥ kNarrowBreakpoint).
 // Mirrors app/lib/features/game/widgets/production/production_panel.dart for e2e.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/widgets/production/production_recipe_affordance.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
-
-Set<String> _inputCommodityIds() {
-  final inputIds = <String>{};
-  for (final recipe in ProductionRecipesCatalog.all) {
-    inputIds.addAll(recipe.inputQuantities.keys);
-  }
-  return inputIds;
-}
-
-String _workerDisplayName(String workerType, AppLocalizations l10n) {
-  switch (workerType) {
-    case 'peasant':
-      return l10n.production_workers_peasants;
-    case 'apprentice':
-      return l10n.production_workers_apprentices;
-    case 'journeyman':
-      return l10n.production_workers_journeymen;
-    case 'master':
-      return l10n.production_workers_masters;
-    default:
-      return workerType;
-  }
-}
-
-void _addAvailableTexts(
-  List<String> out,
-  CtE2eProductionPanelSnapshot snap,
-  AppLocalizations l10n,
-  int effectiveLabour,
-) {
-  final player = snap.player;
-  final netChanges = snap.netDeltasByCommodity;
-  final inputCommodityIds = _inputCommodityIds();
-
-  final rawMaterials = CommodityCatalog.all
-      .where(
-        (c) =>
-            c.category == CommodityCategory.rawMaterial &&
-            inputCommodityIds.contains(c.id),
-      )
-      .toList();
-  final manufactured = CommodityCatalog.all
-      .where((c) => c.category == CommodityCategory.manufactured)
-      .toList();
-  final availableFood = CommodityCatalog.all
-      .where((c) => c.category == CommodityCategory.food)
-      .toList();
-
-  out.add(l10n.production_available);
-  out.add(l10n.production_breakdown);
-
-  void addCommodityCellTexts(Commodity c) {
-    final name = c.displayName ?? c.id;
-    final qty = player.stockpile.quantityOf(c.id);
-    final change = netChanges[c.id] ?? 0;
-    out.add(name);
-    out.add(CtResourceCell.formatQuantity(qty));
-    if (change != 0) {
-      out.add(CtResourceCell.formattedDeltaText(change)!);
-    }
-  }
-
-  void addWorkerCellTexts(String workerType, int count) {
-    out.add(_workerDisplayName(workerType, l10n));
-    out.add(CtResourceCell.formatQuantity(count));
-  }
-
-  if (availableFood.isNotEmpty) {
-    out.add(l10n.production_food.toUpperCase());
-    for (final c in availableFood) {
-      addCommodityCellTexts(c);
-    }
-  }
-
-  out.add(l10n.production_rawMaterials.toUpperCase());
-  for (final c in rawMaterials) {
-    addCommodityCellTexts(c);
-  }
-
-  if (manufactured.isNotEmpty) {
-    out.add(l10n.production_manufactured.toUpperCase());
-    for (final c in manufactured) {
-      addCommodityCellTexts(c);
-    }
-  }
-
-  out.add(l10n.production_workers.toUpperCase());
-  addWorkerCellTexts('peasant', player.workerPool.peasants);
-  addWorkerCellTexts('apprentice', player.workerPool.apprentices);
-  addWorkerCellTexts('journeyman', player.workerPool.journeymen);
-  addWorkerCellTexts('master', player.workerPool.masters);
-  out.add(l10n.production_labourThisTurn(effectiveLabour));
-}
-
-String _recipeLabelText(ProductionRecipe recipe) {
-  final outputCommodity = CommodityCatalog.byId[recipe.outputCommodityId];
-  final outputName = outputCommodity?.displayName ?? recipe.outputCommodityId;
-  final inputParts = recipe.inputQuantities.entries
-      .map((e) {
-        final comm = CommodityCatalog.byId[e.key];
-        final name = comm?.displayName ?? e.key;
-        return '$name ×${e.value}';
-      })
-      .join(', ');
-  return '$outputName ($inputParts)';
-}
-
-void _addAllocationTexts(
-  List<String> out,
-  CtE2eProductionPanelSnapshot snap,
-  AppLocalizations l10n,
-  int effectiveLabour,
-) {
-  final player = snap.player;
-  final desiredOutputByRecipe = snap.desiredOutputByRecipe;
-
-  var totalRequiredLabour = 0;
-  for (final e in desiredOutputByRecipe.entries) {
-    final recipe = ProductionRecipesCatalog.byId[e.key];
-    if (recipe == null) continue;
-    totalRequiredLabour += e.value * recipe.labourPerOutput;
-  }
-  final labourInsufficient = totalRequiredLabour > effectiveLabour;
-
-  out.add(l10n.production_allocation);
-  out.add(l10n.common_reset);
-
-  for (final recipe in ProductionRecipesCatalog.all) {
-    final desired = desiredOutputByRecipe[recipe.id] ?? 0;
-    final locked = !ProductionRecipesCatalog.isRecipeAvailableForPlayer(
-      recipe,
-      player.techUnlocked,
-    );
-    final affordance = computeRecipeAffordance(
-      recipe: recipe,
-      stockpile: player.stockpile,
-      desiredOutputByRecipe: desiredOutputByRecipe,
-      effectiveLabour: effectiveLabour,
-    );
-    // A locked (tech-gated) recipe forces maxAchievable to 0 and renders the
-    // localized (locked) marker as a separate Text after the recipe label,
-    // mirroring ProductionAllocationRow / _AllocationSubpanel._buildRecipeLabel.
-    final maxAchievable = locked ? 0 : affordance.maxDesiredOutput;
-
-    out.add(_recipeLabelText(recipe));
-    if (locked) {
-      out.add(l10n.production_recipeLocked);
-    }
-    out.add(
-      l10n.production_recipeAffordance(maxAchievable, affordance.limitingLabel),
-    );
-    out.add(desired.toString());
-  }
-
-  out.add(l10n.production_totalLabour(totalRequiredLabour, effectiveLabour));
-  if (labourInsufficient) {
-    out.add(l10n.production_labourInsufficient);
-  }
-}
+import 'production_panel_e2e_expected_lines_allocation.dart';
+import 'production_panel_e2e_expected_lines_available.dart';
 
 String _labourTierDisplayName(WorkerTier tier, AppLocalizations l10n) {
   switch (tier) {
@@ -193,13 +33,10 @@ String _labourTierDisplayName(WorkerTier tier, AppLocalizations l10n) {
 /// `_buildWorkerSection`, gated on a non-null `currentOrders`). Mirrors the
 /// `CtSectionLabel` header plus one [ProductionLabourSection] row per tier.
 ///
-/// Per-row order matches `_ProductionLabourTierRow.build`: the tier label, an
-/// optional `Queued: N` segment (only when `queuedCount > 0`), then — when
-/// [canEdit] is true — the `Disband` label. The Disband label is emitted for
-/// every tier: trained tiers render a real [CtDangerTextButton] and the
-/// peasant row reserves an opacity-0 [CtDangerTextButton] placeholder that the
-/// pre-order text collector still visits. `CtSectionLabel` upper-cases its
-/// text, matching the other section headers in this mirror.
+/// Per-row order matches `ProductionLabourTierRow.build`: the tier name,
+/// upkeep gist, optional `Requires:` gist, optional `Queued: N`, then —
+/// when [canEdit] is true — the `Disband` label. Cost gist uses `Text.rich`
+/// (`data == null`) so the pre-order [Text] collector skips it.
 List<String> productionLabourControlsExpectedTexts({
   required Player player,
   required Orders currentOrders,
@@ -215,10 +52,16 @@ List<String> productionLabourControlsExpectedTexts({
   );
   for (final row in rows) {
     final tierName = _labourTierDisplayName(row.tier, l10n);
-    final state = row.techUnlocked
-        ? l10n.production_labourTierUnlocked
-        : l10n.production_labourTierLocked;
-    out.add(l10n.production_labourTierLabel(tierName, state));
+    out.add(tierName);
+    out.add(labourUpkeepGist(tier: row.tier, l10n: l10n));
+    final requires = labourRequiresGist(
+      tier: row.tier,
+      techUnlocked: row.techUnlocked,
+      l10n: l10n,
+    );
+    if (requires != null) {
+      out.add(requires);
+    }
     if (row.queuedCount > 0) {
       out.add(l10n.production_labourQueued(row.queuedCount));
     }
@@ -258,7 +101,7 @@ List<String> productionPanelWideExpectedTexts(
   final effectiveLabour = labourReadiness.effectiveLabour;
 
   final out = <String>[];
-  _addAvailableTexts(out, snap, l10n, effectiveLabour);
+  addProductionPanelAvailableTexts(out, snap, l10n, effectiveLabour);
   out.addAll(
     productionLabourControlsExpectedTexts(
       player: snap.player,
@@ -267,6 +110,6 @@ List<String> productionPanelWideExpectedTexts(
       l10n: l10n,
     ),
   );
-  _addAllocationTexts(out, snap, l10n, effectiveLabour);
+  addProductionPanelAllocationTexts(out, snap, l10n, effectiveLabour);
   return out;
 }

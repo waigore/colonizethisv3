@@ -4,10 +4,12 @@
 
 import 'treasury_planner_core_budget_cases.dart';
 import 'treasury_planner_core_reserve_cases.dart';
+import 'treasury_planner_core_reserve_tail_cases.dart';
 import 'treasury_planner_lock_recovery_seller_cases.dart';
 
 void main() {
   registerTreasuryPlannerCoreBudgetCases();
   registerTreasuryPlannerCoreReserveCases();
+  registerTreasuryPlannerCoreReserveTailCases();
   registerTreasuryPlannerLockRecoverySellerCases();
 }

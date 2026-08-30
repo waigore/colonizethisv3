@@ -13,8 +13,8 @@ import 'core.dart';
 /// `technology_panel_choose_tech_dialog_test`,
 /// `technology_panel_interaction_test`).
 ///
-/// `TechnologyPanel` reads only `game.players` — its `player` argument and the
-/// `game.copyWith(players: …)` overrides each suite applies. Research slots,
+/// `TechnologyPanel` reads `game.players` plus current spy presence on
+/// `game.worldState` for slot spy-insight RP (Refs #4457). Research slots,
 /// researched chips, and the choose-tech options derive from `player` tech state
 /// plus the static `techCatalog`; no generated map/topology data is consumed.
 ///

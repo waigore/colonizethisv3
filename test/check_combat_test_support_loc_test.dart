@@ -26,6 +26,9 @@ void main() {
   });
 
   group('runCheckCombatTestSupportLoc', () {
+    test('combatTestSupportLocCeiling is pinned at wave-2 target', () {
+      expect(combatTestSupportLocCeiling, 6997);
+    });
     test('passes on current repo tree under ratchet ceiling', () {
       expect(runCheckCombatTestSupportLoc('.'), 0);
     });

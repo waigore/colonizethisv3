@@ -5,18 +5,20 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 400;
+/// Wave-4 models test physical-line ceiling (Refs #4571).
+const int modelsTestPhysicalFileSizeCeiling = 250;
 
 const _modelsTestsRelativePath = 'packages/colonizethis_models/test';
 
 /// PR-blocking structural check: files under
-/// `packages/colonizethis_models/test/**` must stay at or below 400 physical
-/// lines (Refs #4068 Slice D).
+/// `packages/colonizethis_models/test/**` must stay at or below 250 physical
+/// lines (Refs #4068 Slice D, #4571).
 int runCheckModelsTestFileSize(
   String repoRoot, {
   Iterable<String>? targetFiles,
   void Function(String line)? info,
   void Function(String line)? err,
+  int ceiling = modelsTestPhysicalFileSizeCeiling,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
@@ -41,11 +43,11 @@ int runCheckModelsTestFileSize(
     final physicalLines = const LineSplitter()
         .convert(file.readAsStringSync())
         .length;
-    if (physicalLines <= _maxPhysicalLines) {
+    if (physicalLines <= ceiling) {
       continue;
     }
     violations.add(
-      '$relativePath ($physicalLines physical lines > $_maxPhysicalLines)',
+      '$relativePath ($physicalLines physical lines > $ceiling)',
     );
   }
 

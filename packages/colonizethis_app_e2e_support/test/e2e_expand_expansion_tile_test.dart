@@ -10,32 +10,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
-  testWidgets('e2eExpandEachExpansionTileOnce returns immediately when no tiles', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-    final sw = Stopwatch()..start();
-    await e2eExpandEachExpansionTileOnce(tester);
-    expect(
-      sw.elapsed < const Duration(milliseconds: 100),
-      isTrue,
-      reason:
-          'No-tile calls must short-circuit before pumping any frame so the '
-          'helper does not amplify caller cost when nothing needs expanding.',
-    );
-  });
+  testWidgets(
+    'e2eExpandEachExpansionTileOnce returns immediately when no tiles',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(wrapE2eApp(SizedBox()));
+      final sw = Stopwatch()..start();
+      await e2eExpandEachExpansionTileOnce(tester);
+      expect(
+        sw.elapsed < const Duration(milliseconds: 100),
+        isTrue,
+        reason:
+            'No-tile calls must short-circuit before pumping any frame so the '
+            'helper does not amplify caller cost when nothing needs expanding.',
+      );
+    },
+  );
 
-  testWidgets('e2eExpansionTileIsExpanded reflects collapsed and expanded state', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ListView(
+  testWidgets(
+    'e2eExpansionTileIsExpanded reflects collapsed and expanded state',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        wrapE2eScaffold(
+          ListView(
             children: const [
               ExpansionTile(
                 title: Text('Fleet 1'),
@@ -49,36 +50,35 @@ void main() {
             ],
           ),
         ),
-      ),
-    );
-    final tiles = find.byType(ExpansionTile).evaluate().toList();
-    expect(tiles.length, 2);
-    expect(
-      e2eExpansionTileIsExpanded(tiles[0]),
-      isFalse,
-      reason: 'Collapsed tile RotationTransition.turns must read < 0.4.',
-    );
-    expect(
-      e2eExpansionTileIsExpanded(tiles[1]),
-      isTrue,
-      reason: 'Initially expanded tile RotationTransition.turns must read >= 0.4.',
-    );
-  });
+      );
+      final tiles = find.byType(ExpansionTile).evaluate().toList();
+      expect(tiles.length, 2);
+      expect(
+        e2eExpansionTileIsExpanded(tiles[0]),
+        isFalse,
+        reason: 'Collapsed tile RotationTransition.turns must read < 0.4.',
+      );
+      expect(
+        e2eExpansionTileIsExpanded(tiles[1]),
+        isTrue,
+        reason:
+            'Initially expanded tile RotationTransition.turns must read >= 0.4.',
+      );
+    },
+  );
 
   testWidgets('e2eExpandEachExpansionTileOnce expands a single collapsed tile', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ListView(
-            children: const [
-              ExpansionTile(
-                title: Text('Fleet 1'),
-                children: [ListTile(title: Text('child-1'))],
-              ),
-            ],
-          ),
+      wrapE2eScaffold(
+        ListView(
+          children: const [
+            ExpansionTile(
+              title: Text('Fleet 1'),
+              children: [ListTile(title: Text('child-1'))],
+            ),
+          ],
         ),
       ),
     );
@@ -123,24 +123,22 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ListView(
-            children: const [
-              ExpansionTile(
-                title: Text('Fleet 1'),
-                children: [ListTile(title: Text('child-1'))],
-              ),
-              ExpansionTile(
-                title: Text('Fleet 2'),
-                children: [ListTile(title: Text('child-2'))],
-              ),
-              ExpansionTile(
-                title: Text('Fleet 3'),
-                children: [ListTile(title: Text('child-3'))],
-              ),
-            ],
-          ),
+      wrapE2eScaffold(
+        ListView(
+          children: const [
+            ExpansionTile(
+              title: Text('Fleet 1'),
+              children: [ListTile(title: Text('child-1'))],
+            ),
+            ExpansionTile(
+              title: Text('Fleet 2'),
+              children: [ListTile(title: Text('child-2'))],
+            ),
+            ExpansionTile(
+              title: Text('Fleet 3'),
+              children: [ListTile(title: Text('child-3'))],
+            ),
+          ],
         ),
       ),
     );
@@ -168,22 +166,20 @@ void main() {
     'e2eExpandEachExpansionTileOnce no-ops when every tile is already expanded',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ListView(
-              children: const [
-                ExpansionTile(
-                  title: Text('Fleet 1'),
-                  initiallyExpanded: true,
-                  children: [ListTile(title: Text('child-1'))],
-                ),
-                ExpansionTile(
-                  title: Text('Fleet 2'),
-                  initiallyExpanded: true,
-                  children: [ListTile(title: Text('child-2'))],
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          ListView(
+            children: const [
+              ExpansionTile(
+                title: Text('Fleet 1'),
+                initiallyExpanded: true,
+                children: [ListTile(title: Text('child-1'))],
+              ),
+              ExpansionTile(
+                title: Text('Fleet 2'),
+                initiallyExpanded: true,
+                children: [ListTile(title: Text('child-2'))],
+              ),
+            ],
           ),
         ),
       );
@@ -222,21 +218,19 @@ void main() {
     'e2eExpandEachExpansionTileOnce expands only collapsed tiles in a mixed list',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ListView(
-              children: const [
-                ExpansionTile(
-                  title: Text('Already open'),
-                  initiallyExpanded: true,
-                  children: [ListTile(title: Text('open-child'))],
-                ),
-                ExpansionTile(
-                  title: Text('Closed one'),
-                  children: [ListTile(title: Text('closed-child'))],
-                ),
-              ],
-            ),
+        wrapE2eScaffold(
+          ListView(
+            children: const [
+              ExpansionTile(
+                title: Text('Already open'),
+                initiallyExpanded: true,
+                children: [ListTile(title: Text('open-child'))],
+              ),
+              ExpansionTile(
+                title: Text('Closed one'),
+                children: [ListTile(title: Text('closed-child'))],
+              ),
+            ],
           ),
         ),
       );

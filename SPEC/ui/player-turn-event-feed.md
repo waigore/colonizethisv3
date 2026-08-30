@@ -20,7 +20,7 @@
 
 ## Data contract (v1 slice)
 
-- Source: forwarded app game events (`AppCombatResultEvent`, `AppGeneralMedalGainedEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppMarketTurnSummaryEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
+- Source: forwarded app game events (`AppCombatResultEvent`, `AppGeneralMedalGainedEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppMarketTurnSummaryEvent`, `AppEconomyTurnSummaryEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
 - Human-player filter:
   - Combat/naval when human id is a participating side id.
   - General medal gain when event `playerId` equals human id (Refs #4234).
@@ -30,10 +30,20 @@
   - Work-order/province/sea discovery when event `playerId` equals human id.
   - Overseas profit when event `playerId` equals human id and `totalTreasuryCredit > 0` (Refs #4226).
   - Market turn summary when event `playerId` equals human id and at least one of `totalSpent > 0`, `totalReceived > 0`, or `carryForwardOrderCount > 0` (Refs #4270).
+  - Economy turn summary when event `playerId` equals human id and at least one of `treasuryDelta != 0` or a non-empty `stockpileDeltas` map (Refs #4308).
   - Overture advanced when human id equals offerer GP id or target faction id.
 - Formatting lives in Flutter UI; logic payloads remain ids.
-- Turn-batch ordering (v1): within a committed turn batch, `AppOverseasProfitCreditedEvent` and `AppMarketTurnSummaryEvent` rows append after `AppWorkOrderCompletedEvent` entries and before `AppPlayerProvinceDiscoveredEvent` / `AppPlayerSeaZoneDiscoveredEvent` rows (Refs #4226, #4270).
+- Land combat rows (`AppCombatResultEvent`, Refs #4548): one line per resolved land battle the human fought. Copy names the province, states the handbook outcome (`Attacker victory`, `Defender holds`, `Stalemate`, `Both armies destroyed`) from `outcomeName`, and shows both sides' regiment-loss counts (including `0`). Never use `{winner} defeated {defeated}` as the sole result; never show raw unit ids or resolver enum names. Tap still opens `MAP20001` on the battle province.
+- Naval combat rows (`AppNavalCombatResultEvent`, Refs #4558): one line per resolved sea battle the human fought. Copy names the sea zone, states the handbook outcome (`Attacker victory`, `Defender holds`, `Stalemate`, `Both fleets destroyed`) from `outcomeName` (`side1Victory` / `side2Victory` / `stalemate` / `mutualDestruction`; unrecognized values → **Naval battle resolved**), names both courts, shows both sides' ship-loss counts from `side1CasualtyCount` / `side2CasualtyCount` (including `0`), and appends a `{court} retreated` clause when the matching retreat flag is true. Never print raw `NavalBattleOutcome` names. Tap still opens the sea-zone overlay when the anchor resolves.
+- Turn-batch ordering (v1): within a committed turn batch, `AppOverseasProfitCreditedEvent`, `AppMarketTurnSummaryEvent`, and `AppEconomyTurnSummaryEvent` rows append after `AppWorkOrderCompletedEvent` entries and before `AppPlayerProvinceDiscoveredEvent` / `AppPlayerSeaZoneDiscoveredEvent` rows (Refs #4226, #4270, #4308).
 - Diplomacy formatting (v1.1 slice): known `changeType` values render concrete outcome copy (`declare_war`, `peace`, `alliance`, `break_alliance`), with a safe generic fallback for unknown values.
+- **Spy-gated digest lines (Refs #4476):** After the human-filtered GameToUI batch, append last-turn spy-report facts from `Game.lastTurnIntelligenceDigest` for the human observer (not public world gazette lines). Each row uses the same **Our spy in {court} reports:** prefix as `GAME30003`. Tap opens `GAME30003` (or `GAME30002` for that court). Third-party research/combat/diplomacy stay **out** of the feed unless a Spy is posted in that court.
+
+---
+
+## Last-turn map playback (Refs #4486)
+
+After `DLG50001` closes (or `OVL20001` **View final state** when that overlay mounts for military victory or calendar-complete), `MAP10001` may autoplay up to `kLastTurnPlaybackCap` spatial beats from the same human-filtered batch (camera + pulse + caption). Closing news while `OVL20001` is still visible does not start playback. The feed remains the on-request full catalog; playback never auto-opens overlays. Contract: [map-widget.md](map-widget.md) § Last-turn spatial playback.
 
 ---
 
@@ -50,6 +60,7 @@
 - Order-rejected lines use plain-language reason copy. When `orderKind` is present on `AppOrderRejectedEvent`, the row shows a trailing chevron and opens the owning panel or screen: work and recruit-worker → `UNIT10001` **Civilian units**; move and army-move → military units panel; naval move and naval mission → naval units panel; build-unit → `GAME20001` **Production**; trade → `GAME60001` **Trade**; research → `GAME40001` **Technology**; diplomacy → `GAME30001` **Diplomacy** list (requires resolvable topology). When topology cannot be resolved for diplomacy rejections, the row is non-tappable.
 - Overseas-profit lines (`AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0` for the human) show plain-language copy (`Overseas profit credited: £<amount> from <count> rival purchase(s). Tap to open Deal Book.`), a trailing chevron link affordance, and open `GAME60001` **Trade** with the Deal Book tab foregrounded via `NavigateToRouteEvent(Routes.trade, {'game': game, 'humanPlayerId': humanPlayerId, 'initialTabIndex': 1})` (Refs #4226).
 - Market-summary lines (`AppMarketTurnSummaryEvent` for the human with last-turn fills and/or carry-forwards) show at most one totals-first row (e.g. `Market: bought £240 · sold £160`, `Market: bought £240 · sold £160 · 2 orders carried`, or `Market: 2 orders carried forward`), a trailing chevron link affordance, and open `GAME60001` **Trade** with the Deal Book tab foregrounded via the same `NavigateToRouteEvent` shape as overseas-profit rows (Refs #4270).
+- Realm economy-summary lines (`AppEconomyTurnSummaryEvent` for the human with last-turn treasury and/or stockpile net change) show at most one plain-language row (e.g. `Realm: treasury +£200 · Grain −10`), a trailing chevron link affordance, and open `GAME20001` **Production** via `NavigateToRouteEvent(Routes.production, {'game': game, 'humanPlayerId': humanPlayerId})` (same args as the empire left-rail Production button; Refs #4308). Top stockpile movers are the largest absolute deltas (up to three commodity display names); additional movers collapse to `+N more`.
 - Other lines are non-tappable in v1.
 - Fallback: if no valid map anchor can be resolved for a tappable row, the counterpart faction cannot be resolved, the completing civilian unit no longer exists, or the research event tech id is absent from the catalog, render it non-tappable with safe copy and keep app stable.
 
@@ -79,6 +90,21 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - The toggle surface is **28 × 22 dp** filled with `EditorialMonoclePalette.bgDeep` behind a **1 dp** border. The border resolves to `EditorialMonoclePalette.border` in the default (closed) state and lifts to `EditorialMonoclePalette.accentDim` on hover and while the feed is open (mockup `.news-toggle:hover` / `.news-toggle.active`).
 - The newspaper glyph is a **14 × 14 dp** monochrome vector (`NewspaperGlyph`, a `CustomPaint`; **not** a Material `Icons.newspaper` at 20 dp), tinted via a single `currentColor`-style colour: `EditorialMonoclePalette.accentDim` closed, `EditorialMonoclePalette.accentBright` on hover, and `EditorialMonoclePalette.accent` while the feed is open (so the open state reads as "lit").
 - Unread-count badge background resolves to `EditorialMonoclePalette.danger` at 0.95 alpha; badge text resolves to `EditorialMonoclePalette.bg`. The badge sits at the mockup `.news-badge` position (`top: -4`, `right: -6`). The pill renders 99+ overflow and never falls back to `Colors.redAccent` / `Colors.white`.
+
+---
+
+## Widgetbook
+
+**Folder:** `Player Turn Event Feed Card` → `widgetbook_host/lib/catalogs/catalog_event_feed.dart`.
+
+| Use case | Proves |
+|----------|--------|
+| Research complete — tappable link to Technology | Chevron + tappable research row |
+| Diplomacy declare war — tappable link to detail | Chevron + tappable diplomacy row |
+| Land combat — outcome variants (Refs #4548) | Attacker victory, defender holds, stalemate, both armies destroyed copy with regiment-loss counts |
+| Naval combat — outcome variants (Refs #4558) | Attacker victory, defender holds, stalemate, both fleets destroyed copy with ship-loss counts and retreat clause |
+| Market summary — tappable link to Deal Book | Market totals row |
+| Populated / Empty / Mobile / Narrow variants | Card chrome and width contracts |
 
 ---
 
@@ -114,7 +140,19 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given a human `AppMarketTurnSummaryEvent` row, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.trade` with `initialTabIndex: 1` so `GAME60001` foregrounds the Deal Book tab (Refs #4270).
 - Given an `AppMarketTurnSummaryEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4270).
 - Given both overseas-profit and market-summary events for the human in the same turn batch, when the feed renders, then both rows appear as separate lines (not merged; Refs #4270).
-- Given a human `AppGeneralMedalGainedEvent` after a land battle win, when the feed renders after turn commit, then the row shows plain-language copy that a general earned a medal with the new count (e.g. `Victory at {province}: a general earned a medal (now N).`) and uses the word **general**, not "commander" (Refs #4234).
+- Given a human `AppEconomyTurnSummaryEvent` with `treasuryDelta != 0` and/or non-empty `stockpileDeltas`, when the feed renders after turn commit, then exactly one Realm economy-summary row appears with signed treasury and commodity display names (never raw commodity ids) and a trailing chevron (Refs #4308).
+- Given a human `AppEconomyTurnSummaryEvent` row, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.production` with the same route args as the empire left-rail Production button (Refs #4308).
+- Given an `AppEconomyTurnSummaryEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4308).
+- Given a human `AppCombatResultEvent` after a land battle the human fought, when the feed renders after turn commit, then the row names the province, states the handbook outcome in plain language, and shows both sides' regiment-loss counts including zero (Refs #4548).
+- Given a stalemate or mutual-annihilation land battle the human fought, when the Combat phase completes and the feed commits, then the row appears (not silent) and does not falsely claim one side defeated the other (Refs #4548).
+- Given a tappable land-combat row whose province anchor resolves, when the user taps it, then the app emits `LocateMapTileEvent` and `OpenMapTileDetailEvent` for that province (unchanged from v1; Refs #4548).
+- Given `OVL70001` land-combat rows under `AppThemes.editorialMonocle` for attacker victory, defender holds, stalemate, and both armies destroyed (including a 320 dp wrap), when `app/test/player_turn_event_feed_land_combat_goldens_test.dart` captures each keyed `RepaintBoundary`, then each `matchesGoldenFile` baseline under `app/test/goldens/player_turn_event_feed_land_combat_*.png` matches the committed PNG (Refs #4548).
+- Given a human `AppNavalCombatResultEvent` after a sea battle the human fought with `outcomeName` `side1Victory`, when the feed renders after turn commit, then the row names the sea, states **Attacker victory**, names both courts, and shows both sides' ship-loss counts including zero (Refs #4558).
+- Given `side2Victory`, `stalemate`, or `mutualDestruction`, when the feed renders, then the outcome label is **Defender holds**, **Stalemate**, or **Both fleets destroyed** respectively (Refs #4558).
+- Given an unrecognized `outcomeName` on `AppNavalCombatResultEvent`, when the mapper builds the feed or playback line, then the outcome label is **Naval battle resolved** and the raw `outcomeName` does not appear (Refs #4558).
+- Given `side1Retreated` or `side2Retreated` is true, when the feed (and matching last-turn playback caption) render, then the copy names which court retreated in player language (Refs #4558).
+- Given `OVL70001` naval-combat rows under `AppThemes.editorialMonocle` for attacker victory, defender holds, stalemate, and both fleets destroyed (including a retreat clause and a 320 dp wrap), when `app/test/player_turn_event_feed_naval_combat_goldens_test.dart` captures each keyed `RepaintBoundary`, then each `matchesGoldenFile` baseline under `app/test/goldens/player_turn_event_feed_naval_combat_*.png` matches the committed PNG (Refs #4558).
+- Given an `AppGeneralMedalGainedEvent` after a land battle win, when the feed renders after turn commit, then the row shows plain-language copy that a general earned a medal with the new count (e.g. `Victory at {province}: a general earned a medal (now N).`) and uses the word **general**, not "commander" (Refs #4234).
 - Given an `AppGeneralMedalGainedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4234).
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).
 - Given The Player toggles `showPlayerTurnEventsFeed` and saves the game, when the game is loaded, then `mapViewState.showPlayerTurnEventsFeed` restores with the same value.

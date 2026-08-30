@@ -6,7 +6,8 @@ import 'ct_region_map.dart';
 import 'ct_region_map_state_handlers.dart';
 import 'ct_region_map_viewport.dart';
 
-class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin {
+class CtRegionMapState extends State<CtRegionMap>
+    with CtRegionMapViewportMixin {
   late CtRegionMapGame game;
   final SubscriptionTracker subscriptions = SubscriptionTracker();
   double _scaleGestureStartMultiplier = 1.0;
@@ -30,6 +31,7 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
 
   @override
   void dispose() {
+    cancelTileRadialHoldTimer();
     subscriptions.cancelAll();
     super.dispose();
   }
@@ -43,9 +45,13 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         widget.showProvinceOwnershipTint !=
             oldWidget.showProvinceOwnershipTint ||
         widget.showProvinceNamesLayer != oldWidget.showProvinceNamesLayer ||
+        widget.showCapitalLinkDisconnectedHighlight !=
+            oldWidget.showCapitalLinkDisconnectedHighlight ||
         widget.visibilityMode != oldWidget.visibilityMode ||
+        widget.mapBaseLayerFlags != oldWidget.mapBaseLayerFlags ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
+        widget.lastTurnPulseTileKey != oldWidget.lastTurnPulseTileKey ||
         widget.onCivilianTileStateChanged !=
             oldWidget.onCivilianTileStateChanged ||
         widget.onCivilianTileSelectionCleared !=
@@ -60,18 +66,27 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled ||
         widget.playerViewForResources != oldWidget.playerViewForResources ||
-        widget.showPlayerTerritoryOutline != oldWidget.showPlayerTerritoryOutline ||
+        widget.showPlayerTerritoryOutline !=
+            oldWidget.showPlayerTerritoryOutline ||
         widget.playerTerritoryTileKeys != oldWidget.playerTerritoryTileKeys ||
         widget.onViewportSnapshotChanged !=
             oldWidget.onViewportSnapshotChanged ||
-        widget.zoomMultiplier != oldWidget.zoomMultiplier) {
+        widget.zoomMultiplier != oldWidget.zoomMultiplier ||
+        widget.onMapTileSecondaryForRadial !=
+            oldWidget.onMapTileSecondaryForRadial) {
       game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
         showProvinceOverlay: widget.showProvinceOverlay,
         showProvinceOwnershipTint: widget.showProvinceOwnershipTint,
         showProvinceNamesLayer: widget.showProvinceNamesLayer,
+        showCapitalLinkDisconnectedHighlight:
+            widget.showCapitalLinkDisconnectedHighlight,
         visibilityMode: widget.visibilityMode,
+        mapBaseLayerFlags: resolveMapBaseLayerFlags(
+          flags: widget.mapBaseLayerFlags,
+          mode: widget.baseLayerDisplayMode,
+        ),
         baseLayerDisplayMode:
             widget.baseLayerDisplayMode ??
             BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
@@ -88,6 +103,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         validTileKeys: widget.validTileKeys,
         clearValidTileKeys:
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
+        lastTurnPulseTileKey: widget.lastTurnPulseTileKey,
+        clearLastTurnPulseTileKey: widget.lastTurnPulseTileKey == null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
         onCivilianTileTapped: (tileKey) =>
@@ -99,12 +116,15 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
               fleetIds,
               markerTileKey,
             ),
+        onArmyMarkerTapped: (marker) =>
+            handleCtRegionMapArmyMarkerTapped(this, marker),
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
         zoomMultiplier: widget.zoomMultiplier,
         showPlayerTerritoryOutline: widget.showPlayerTerritoryOutline,
         playerTerritoryTileKeys: widget.playerTerritoryTileKeys,
+        onMapTileSecondaryForRadial: widget.onMapTileSecondaryForRadial,
       );
     }
     if (widget.bus != oldWidget.bus) {

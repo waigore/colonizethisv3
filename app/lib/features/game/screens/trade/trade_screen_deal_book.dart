@@ -19,16 +19,17 @@
 /// `Row`.
 library;
 
-
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../../../widgets/ct_section_label.dart';
-import '../../widgets/production/commodity_ui_helpers.dart';
 import 'trade_screen_contract_deal_book.dart';
+import 'trade_screen_deal_book_data.dart';
+import 'trade_screen_deal_book_overseas.dart';
 import 'trade_screen_deal_book_panel.dart';
+
+export 'trade_screen_deal_book_data.dart';
 
 class DealBookTabContent extends StatelessWidget {
   const DealBookTabContent({
@@ -49,7 +50,7 @@ class DealBookTabContent extends StatelessWidget {
     );
     final List<OverseasProfitCreditRecord> overseasProfitRecords =
         game.worldMarketState.lastTurnOverseasProfitCreditsByGpId[playerId] ??
-            const <OverseasProfitCreditRecord>[];
+        const <OverseasProfitCreditRecord>[];
     return Container(
       key: TradeScreenDealBookKeys.dealBookContentKey,
       alignment: Alignment.topLeft,
@@ -58,13 +59,14 @@ class DealBookTabContent extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           if (overseasProfitRecords.isNotEmpty)
-            _OverseasProfitLedgerSection(
+            DealBookOverseasProfitLedgerSection(
               records: overseasProfitRecords,
               l10n: l10n,
             ),
           LayoutBuilder(
             builder: (context, constraints) {
-              final bool wide = constraints.maxWidth >=
+              final bool wide =
+                  constraints.maxWidth >=
                   TradeScreenDealBookKeys.dealBookTwoPanelMinWidth;
               return _layoutPanels(
                 bidsPanel: _buildBidsPanel(data, l10n),
@@ -84,7 +86,8 @@ class DealBookTabContent extends StatelessWidget {
       panelTitle: TradeScreenDealBookKeys.dealBookBidsPanelTitle,
       side: TradeScreenDealBookKeys.dealBookSideBids,
       filledRows: data.filledBids,
-      unfilledRows: data.unfilledBids,
+      stillOpenRows: data.bidReasonData.stillOpenRows,
+      didNotStayOpenRows: data.bidReasonData.didNotStayOpenRows,
       totalsKey: TradeScreenDealBookKeys.dealBookBidsTotalsKey,
       emptyKey: TradeScreenDealBookKeys.dealBookBidsEmptyKey,
       totalsLabel: TradeScreenDealBookKeys.dealBookTotalSpentLabel,
@@ -95,13 +98,17 @@ class DealBookTabContent extends StatelessWidget {
     );
   }
 
-  DealBookPanel _buildOffersPanel(DealBookViewData data, AppLocalizations l10n) {
+  DealBookPanel _buildOffersPanel(
+    DealBookViewData data,
+    AppLocalizations l10n,
+  ) {
     return DealBookPanel(
       key: TradeScreenDealBookKeys.dealBookOffersPanelKey,
       panelTitle: TradeScreenDealBookKeys.dealBookOffersPanelTitle,
       side: TradeScreenDealBookKeys.dealBookSideOffers,
       filledRows: data.filledOffers,
-      unfilledRows: data.unfilledOffers,
+      stillOpenRows: data.offerReasonData.stillOpenRows,
+      didNotStayOpenRows: data.offerReasonData.didNotStayOpenRows,
       totalsKey: TradeScreenDealBookKeys.dealBookOffersTotalsKey,
       emptyKey: TradeScreenDealBookKeys.dealBookOffersEmptyKey,
       totalsLabel: TradeScreenDealBookKeys.dealBookTotalReceivedLabel,
@@ -130,107 +137,7 @@ class DealBookTabContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        bidsPanel,
-        const SizedBox(height: 12),
-        offersPanel,
-      ],
-    );
-  }
-}
-
-/// Pure value object built from `WorldMarketState` for the player's
-/// Deal Book view. Holds the four per-side row lists (filled / unfilled
-/// for bids and offers) and the two treasury totals. Pulled out so the
-/// rendering widget tree stays declarative and unit-testable.
-class DealBookViewData {
-  const DealBookViewData({
-    required this.filledBids,
-    required this.filledOffers,
-    required this.unfilledBids,
-    required this.unfilledOffers,
-    required this.totalSpent,
-    required this.totalReceived,
-  });
-
-  factory DealBookViewData.build({
-    required WorldMarketState worldMarket,
-    required String playerId,
-  }) {
-    final List<FilledDeal> bids = <FilledDeal>[];
-    final List<FilledDeal> offers = <FilledDeal>[];
-    for (final MarketActivity activity in worldMarket.lastTurnActivity.values) {
-      for (final FilledDeal deal in activity.deals) {
-        if (deal.buyerFactionId == playerId) bids.add(deal);
-        if (deal.sellerFactionId == playerId) offers.add(deal);
-      }
-    }
-    int spent = 0;
-    for (final FilledDeal deal in bids) {
-      spent += deal.quantity * deal.pricePerUnit.floor();
-    }
-    int received = 0;
-    for (final FilledDeal deal in offers) {
-      received += deal.quantity * deal.pricePerUnit.floor();
-    }
-    return DealBookViewData(
-      filledBids: List<FilledDeal>.unmodifiable(bids),
-      filledOffers: List<FilledDeal>.unmodifiable(offers),
-      unfilledBids:
-          worldMarket.carryForwardBidsByFactionId[playerId] ??
-              const <TradeOrder>[],
-      unfilledOffers:
-          worldMarket.carryForwardOffersByFactionId[playerId] ??
-              const <TradeOrder>[],
-      totalSpent: spent,
-      totalReceived: received,
-    );
-  }
-
-  final List<FilledDeal> filledBids;
-  final List<FilledDeal> filledOffers;
-  final List<TradeOrder> unfilledBids;
-  final List<TradeOrder> unfilledOffers;
-  final int totalSpent;
-  final int totalReceived;
-}
-
-class _OverseasProfitLedgerSection extends StatelessWidget {
-  const _OverseasProfitLedgerSection({
-    required this.records,
-    required this.l10n,
-  });
-
-  final List<OverseasProfitCreditRecord> records;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle rowStyle =
-        (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12));
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          CtSectionLabel(l10n.tradeDealBook_overseasProfitHeading),
-          const SizedBox(height: 4),
-          for (int i = 0; i < records.length; i++)
-            Padding(
-              padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
-              child: Text(
-                l10n.tradeDealBook_overseasProfitRow(
-                  commodityDisplayName(l10n, records[i].commodityId),
-                  records[i].quantity,
-                  records[i].profitTreasury,
-                ),
-                key: TradeScreenDealBookKeys.dealBookOverseasProfitRowKey(i),
-                style: rowStyle,
-              ),
-            ),
-        ],
-      ),
+      children: <Widget>[bidsPanel, const SizedBox(height: 12), offersPanel],
     );
   }
 }

@@ -1,11 +1,17 @@
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:flutter/material.dart';
 
 import 'game_tab_bar_state.dart';
+import 'old_world_race_snapshot.dart';
+import 'treasury_committed_spend.dart';
 
 export 'game_tab_bar_state.dart' show GameTabBarState;
+export 'old_world_race_snapshot.dart' show OldWorldRaceSnapshot;
+export 'treasury_committed_spend.dart'
+    show TreasuryCommittedSpendLine, TreasuryCommittedSpendFamily;
 
 /// In-game shell tab bar: 34 px dark editorial-monocle chrome with region
-/// tabs, treasury + cargo indicators, and a trailing news-toggle slot.
+/// tabs, treasury, cargo, labour/feeding, Old World race chip, and trailing toggles.
 ///
 /// SPEC: `SPEC/ui/empire-overview.md` § Region tabs / § Tab bar chrome,
 /// mockup `SPEC/ui/mockups/GAME10001-game-screen.html` (`.tabbar`,
@@ -23,13 +29,22 @@ class GameTabBar extends StatefulWidget {
     required this.treasury,
     required this.treasuryDelta,
     required this.treasuryNotDefined,
+    this.treasuryCommittedLines = const <TreasuryCommittedSpendLine>[],
     required this.cargoUsed,
     required this.cargoCapacity,
     required this.cargoNotDefined,
     required this.isCargoUsedReliable,
     required this.cargoHoldLabel,
+    this.labourFeedingLabel = '—',
+    this.labourFeedingNotDefined = false,
+    this.showLabourFeedingIndicator = false,
+    this.labourReadiness,
+    this.forcesFeeding,
     required this.trailing,
     this.treasuryObserveLabel,
+    this.oldWorldRace,
+    this.onOldWorldRaceTap,
+    this.oldWorldRaceNarrow = false,
   });
 
   final int regionIndex;
@@ -39,13 +54,22 @@ class GameTabBar extends StatefulWidget {
   final int treasury;
   final int? treasuryDelta;
   final bool treasuryNotDefined;
+  final List<TreasuryCommittedSpendLine> treasuryCommittedLines;
   final String? treasuryObserveLabel;
   final int cargoUsed;
   final int cargoCapacity;
   final bool cargoNotDefined;
   final bool isCargoUsedReliable;
   final String cargoHoldLabel;
+  final String labourFeedingLabel;
+  final bool labourFeedingNotDefined;
+  final bool showLabourFeedingIndicator;
+  final LabourReadinessSnapshot? labourReadiness;
+  final ForceFeedingSnapshot? forcesFeeding;
   final Widget trailing;
+  final OldWorldRaceSnapshot? oldWorldRace;
+  final VoidCallback? onOldWorldRaceTap;
+  final bool oldWorldRaceNarrow;
 
   /// Fixed bar height (issue #2861 R2 / mockup `--tabbar-h: 34px`).
   static const double height = 34;

@@ -32,34 +32,11 @@ export 'package:colonizethis_combat/colonizethis_combat.dart';
 // Economy
 export 'package:colonizethis_economy/colonizethis_economy.dart';
 
-// Orders (Refs #3290 — colonizethis_orders package; re-exported for backward compat)
+// Orders (Refs #3290 — colonizethis_orders package; re-exported for backward
+// compat). Domain barrel already publishes civilian_projected_tile,
+// per_player_work_target_selection_cache, order_suggestion, and unit_type_helpers
+// (Refs #4660 contract barrel SoT).
 export 'package:colonizethis_orders/colonizethis_orders.dart';
-export 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart';
-// `validators/work_order_cost_calculator.dart` is now published by the
-// `colonizethis_orders` barrel (Refs #3393 Phase 1 `turn → orders` slice), so it
-// is re-exported transitively above; the prior deep re-export here was redundant.
-export 'package:colonizethis_orders/src/orders/order_suggestion.dart'
-    show
-        AvailableWorkTargetsForUnit,
-        getAvailableWorkTargetsForUnit,
-        getValidWorkOrderTileKeys,
-        getValidWorkOrderTileKeysWithVisibility,
-        incrementalCandidateValidatorBuildCountForTests,
-        orderSuggestionWorkOrderAcceptanceProbeCountForTests,
-        resetIncrementalCandidateValidatorBuildCountForTests,
-        setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
-export 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
-export 'package:colonizethis_orders/src/orders/unit_type_helpers.dart'
-    show devExclusiveReservedTileKeysForPlayer;
 
-// Diplomacy
-export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_confirm_preview.dart';
-export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
-export 'package:colonizethis_diplomacy/src/diplomacy/break_alliance_resolver.dart'
-    show applyVoluntaryAllianceBreak;
-export 'package:colonizethis_diplomacy/src/diplomacy/alliance_break_cooldown.dart'
-    show isAllianceBreakCooldownActive, kAllianceBreakCooldownRejectionReason;
-
-// Dossier (evidence rules, event dialogue)
-export 'package:colonizethis_diplomacy/src/dossier/evidence_rules.dart';
-export 'package:colonizethis_diplomacy/src/dossier/event_dialogue.dart';
+// Diplomacy + dossier (Refs #4660 — barrel SoT; was deep `src/` re-exports).
+export 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';

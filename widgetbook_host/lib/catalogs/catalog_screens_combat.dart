@@ -6,50 +6,14 @@ List<WidgetbookNode> get trainMilitaryDialogDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Standalone',
-        builder: (context) {
-          final result = loadSeed42InitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players
-                    .firstWhere(
-                      (p) => p.isHuman,
-                      orElse: () => game.players.first,
-                    )
-                    .id
-              : game.players.first.id;
-          final player = game.playerById(humanPlayerId) ?? game.players.first;
-          final richGame = game.copyWith(
-            players: [
-              player.copyWith(
-                treasury: 10000,
-                workerPool: player.workerPool.copyWith(peasants: 20),
-                stockpile: player.stockpile.merge(
-                  const Stockpile(
-                    quantities: {
-                      'fabric': 50,
-                      'castIron': 50,
-                      'lumber': 50,
-                      'horses': 50,
-                      'steel': 50,
-                      'bronze': 50,
-                    },
-                  ),
-                ),
-              ),
-              ...game.players.where((p) => p.id != humanPlayerId),
-            ],
-          );
-          return widgetbookEditorialMonocleApp(
-            child: Center(
-              child: TrainMilitaryDialog(
-                game: richGame,
-                humanPlayerId: humanPlayerId,
-                currentOrders: const Orders(),
-                bus: AppEventBus.create(),
-              ),
-            ),
-          );
-        },
+        builder: (context) => _trainMilitaryStory(currentOrders: const Orders()),
+      ),
+      WidgetbookUseCase(
+        name: 'Reserved peasants',
+        builder: (context) => _trainMilitaryStory(
+          currentOrders: _trainReservedWorkerOrders(count: 3),
+          peasants: 8,
+        ),
       ),
     ],
   ),
@@ -62,52 +26,122 @@ List<WidgetbookNode> get trainNavalDialogDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Standalone',
-        builder: (context) {
-          final result = loadSeed42InitGameResult();
-          final game = result.game;
-          final humanPlayerId = game.players.isNotEmpty
-              ? game.players
-                    .firstWhere(
-                      (p) => p.isHuman,
-                      orElse: () => game.players.first,
-                    )
-                    .id
-              : game.players.first.id;
-          final player = game.playerById(humanPlayerId) ?? game.players.first;
-          final richGame = game.copyWith(
-            players: [
-              player.copyWith(
-                treasury: 50000,
-                workerPool: player.workerPool.copyWith(peasants: 20),
-                stockpile: player.stockpile.merge(
-                  const Stockpile(
-                    quantities: {
-                      'lumber': 50,
-                      'fabric': 50,
-                      'castIron': 50,
-                      'coal': 50,
-                    },
-                  ),
-                ),
-              ),
-              ...game.players.where((p) => p.id != humanPlayerId),
-            ],
-          );
-          return widgetbookEditorialMonocleApp(
-            child: Center(
-              child: TrainNavalDialog(
-                game: richGame,
-                humanPlayerId: humanPlayerId,
-                currentOrders: const Orders(),
-                bus: AppEventBus.create(),
-              ),
-            ),
-          );
-        },
+        builder: (context) => _trainNavalStory(currentOrders: const Orders()),
+      ),
+      WidgetbookUseCase(
+        name: 'Reserved peasants',
+        builder: (context) => _trainNavalStory(
+          currentOrders: _trainReservedWorkerOrders(count: 3),
+          peasants: 8,
+        ),
       ),
     ],
   ),
 ];
+
+Orders _trainReservedWorkerOrders({required int count}) {
+  final result = loadSeed42InitGameResult();
+  final game = result.game;
+  final humanPlayerId = game.players
+      .firstWhere((p) => p.isHuman, orElse: () => game.players.first)
+      .id;
+  return Orders(
+    recruitWorkerOrdersByPlayerId: {
+      humanPlayerId: List<RecruitWorkerOrder>.generate(
+        count,
+        (_) => const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+      ),
+    },
+  );
+}
+
+Widget _trainMilitaryStory({
+  required Orders currentOrders,
+  int peasants = 20,
+}) {
+  final result = loadSeed42InitGameResult();
+  final game = result.game;
+  final humanPlayerId = game.players.isNotEmpty
+      ? game.players
+            .firstWhere((p) => p.isHuman, orElse: () => game.players.first)
+            .id
+      : game.players.first.id;
+  final player = game.playerById(humanPlayerId) ?? game.players.first;
+  final richGame = game.copyWith(
+    players: [
+      player.copyWith(
+        treasury: 10000,
+        workerPool: player.workerPool.copyWith(peasants: peasants),
+        stockpile: player.stockpile.merge(
+          const Stockpile(
+            quantities: {
+              'fabric': 50,
+              'castIron': 50,
+              'lumber': 50,
+              'horses': 50,
+              'steel': 50,
+              'bronze': 50,
+            },
+          ),
+        ),
+      ),
+      ...game.players.where((p) => p.id != humanPlayerId),
+    ],
+  );
+  return widgetbookEditorialMonocleApp(
+    child: Center(
+      child: TrainMilitaryDialog(
+        game: richGame,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        bus: AppEventBus.create(),
+      ),
+    ),
+  );
+}
+
+Widget _trainNavalStory({
+  required Orders currentOrders,
+  int peasants = 20,
+}) {
+  final result = loadSeed42InitGameResult();
+  final game = result.game;
+  final humanPlayerId = game.players.isNotEmpty
+      ? game.players
+            .firstWhere((p) => p.isHuman, orElse: () => game.players.first)
+            .id
+      : game.players.first.id;
+  final player = game.playerById(humanPlayerId) ?? game.players.first;
+  final richGame = game.copyWith(
+    players: [
+      player.copyWith(
+        treasury: 50000,
+        workerPool: player.workerPool.copyWith(peasants: peasants),
+        stockpile: player.stockpile.merge(
+          const Stockpile(
+            quantities: {
+              'lumber': 50,
+              'fabric': 50,
+              'castIron': 50,
+              'coal': 50,
+            },
+          ),
+        ),
+      ),
+      ...game.players.where((p) => p.id != humanPlayerId),
+    ],
+  );
+  return widgetbookEditorialMonocleApp(
+    child: Center(
+      child: TrainNavalDialog(
+        game: richGame,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        bus: AppEventBus.create(),
+      ),
+    ),
+  );
+}
 
 /// Naval Units Panel + map in tandem. SPEC/ui/naval-units-panel.md.
 class NavalPanelWithMapStory extends StatefulWidget {
@@ -528,9 +562,99 @@ List<WidgetbookNode> get victoryUiDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        name: 'Victory panel — calendar complete (declared winner)',
+        builder: (context) {
+          final game = _calendarCompleteDeclaredWinnerGame();
+          return _victoryStoryFrame(
+            VictoryPanel(
+              game: game,
+              bus: AppEventBus.create(),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Victory panel — calendar complete (tie)',
+        builder: (context) {
+          final game = _calendarCompleteTieGame();
+          return _victoryStoryFrame(
+            VictoryPanel(
+              game: game,
+              bus: AppEventBus.create(),
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Victory overlay — calendar complete (320 dp)',
+        builder: (context) {
+          final game = _calendarCompleteDeclaredWinnerGame();
+          return _victoryStoryFrame(
+            SizedBox(
+              width: 320,
+              height: 640,
+              child: Stack(
+                children: [
+                  ColoredBox(color: EditorialMonoclePalette.bgDeep),
+                  VictoryOverlay(
+                    game: game,
+                    bus: AppEventBus.create(),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     ],
   ),
 ];
+
+Game _calendarCompleteDeclaredWinnerGame() {
+  final base = loadSeed42InitGameResult().game;
+  final leaderId = base.players.first.id;
+  final ow = base.worldState.oldWorld;
+  final provinces = ow.provinces
+      .map((p) => p.copyWith(ownerId: leaderId))
+      .toList();
+  return base.copyWith(
+    calendarCampaignHalted: true,
+    worldState: base.worldState.copyWith(
+      oldWorld: RegionData(provinces: provinces, units: ow.units),
+      fleets: const [],
+      armies: const [],
+    ),
+  );
+}
+
+Game _calendarCompleteTieGame() {
+  final base = loadSeed42InitGameResult().game;
+  final ow = base.worldState.oldWorld;
+  // Drop GP ownership so all Great Powers score 0 (tied / no declared winner).
+  final provinces = ow.provinces
+      .map(
+        (p) => Province(
+          id: p.id,
+          regionId: p.regionId,
+          displayName: p.displayName,
+          fortLevel: p.fortLevel,
+          terrain: p.terrain,
+          townTileKey: p.townTileKey,
+          townDevelopmentLevel: p.townDevelopmentLevel,
+          originalOwnerId: p.originalOwnerId,
+        ),
+      )
+      .toList();
+  return base.copyWith(
+    calendarCampaignHalted: true,
+    worldState: base.worldState.copyWith(
+      oldWorld: RegionData(provinces: provinces, units: ow.units),
+      fleets: const [],
+      armies: const [],
+    ),
+  );
+}
 
 /// Players bar stories. SPEC/ui/empire-overview.md § Players bar
 /// (issue #2861 S6, #3898 power scores + emphasis). Renders the floating
@@ -559,7 +683,7 @@ List<WidgetbookNode> get playersBarDirectories => [
         },
       ),
       WidgetbookUseCase(
-        name: 'Human GP highlighted — power scores',
+        name: 'Human GP highlighted — Old World N / 31',
         builder: (context) {
           final result = loadSeed42InitGameResult();
           final game = result.game;

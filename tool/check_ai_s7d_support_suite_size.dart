@@ -7,8 +7,9 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Soft physical-line ceiling for S7D support modules (Refs #3997 / #4079 /
 /// #4104). Phase-8 was 800; Phase-9 Slice D tightened to 650; Phase-10
 /// Slice C densify ratchets to 600 (Refs #4104); Phase-11 Slice C →550 (#4239);
-/// Phase-12 Slice D →500 (Refs #4291).
-const int aiS7dSupportSuitePhysicalLineCeiling = 500;
+/// Phase-12 Slice D →500 (Refs #4291); Phase-13 Slice A →450 (Refs #4310);
+/// Phase-14 Slice B →400 (Refs #4365); Phase-16 Slice E →300 (Refs #4602).
+const int aiS7dSupportSuitePhysicalLineCeiling = 250;
 
 /// Repo-relative path prefix for S7D support modules.
 const String _aiS7dSupportPathPrefix =
@@ -25,10 +26,7 @@ bool aiS7dSupportSuiteSizePathInScope(String slashPath) {
 
 /// Returns a violation reason when an in-scope S7D support module exceeds
 /// the soft ceiling.
-String? aiS7dSupportSuiteSizeViolationReason(
-  String slashPath,
-  String content,
-) {
+String? aiS7dSupportSuiteSizeViolationReason(String slashPath, String content) {
   final normalized = slashPath.replaceAll('\\', '/');
   if (!aiS7dSupportSuiteSizePathInScope(normalized)) {
     return null;
@@ -63,14 +61,10 @@ int runCheckAiS7dSupportSuiteSize(
   }
 
   if (violations.isEmpty) {
-    logI(
-      'check_ai_s7d_support_suite_size: no oversize S7D support modules.',
-    );
+    logI('check_ai_s7d_support_suite_size: no oversize S7D support modules.');
     return 0;
   }
-  logE(
-    'check_ai_s7d_support_suite_size: ${violations.length} violation(s):',
-  );
+  logE('check_ai_s7d_support_suite_size: ${violations.length} violation(s):');
   for (final violation in violations) {
     logE(' - $violation');
   }

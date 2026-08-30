@@ -70,7 +70,7 @@ Map<String, Map<String, String>> applyFogDecay(
   }
 
   final provincesWithExplorerByPlayer = <String, Set<String>>{};
-  for (final u in allUnitsFromWorld(game.worldState)) {
+  for (final u in game.worldState.allUnitsById.values) {
     if (explorerTypes.contains(u.type.toLowerCase())) {
       provincesWithExplorerByPlayer
           .putIfAbsent(u.ownerId, () => <String>{})

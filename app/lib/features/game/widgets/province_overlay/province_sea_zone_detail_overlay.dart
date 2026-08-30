@@ -11,10 +11,14 @@ export 'province_sea_zone_detail_overlay_designation.dart'
 export 'province_sea_zone_detail_overlay_sections_economic_labels.dart'
     show provinceOverlayImprovementNameForResource;
 export 'province_sea_zone_detail_overlay_sections_political.dart'
-    show provinceOverlayOwnerName, provinceOverlayRegionLabel;
+    show
+        provinceOverlayOwnerName,
+        provinceOverlayRegionLabel,
+        buildPoliticalSection;
 export 'province_sea_zone_detail_overlay_tile_section_labels.dart'
     show
         kProvinceOverlayTileInlineActionDisabledAlpha,
+        roadRailDefaultCaptionLine,
         roadRailSupplementaryLabel,
         roadRailTileDetailLinesForTests,
         roadRailTransportLevelPrimaryLine,

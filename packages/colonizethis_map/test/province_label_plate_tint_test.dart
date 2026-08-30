@@ -1,240 +1,98 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'support/province_label_plate_tint_fixtures.dart';
 
 void main() {
   group('resolveProvinceLabelPlateTintRgb', () {
     test('returns GP rgb when political owner is GP and all cells match', () {
-      const pid = 'oldWorld|p1';
-      final region = RegionMapViewData(
-        regionId: 'oldWorld',
+      final region = plateTintRegion(
+        cells: [plateTintLandCell(x: 0, ownerFactionId: 'gp1')],
         width: 1,
-        height: 1,
-        cellSize: 16,
-        cells: [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            ownerFactionId: 'gp1',
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {'gp1': (200, 10, 20)},
         greatPowerFactionIds: {'gp1'},
-        terrainColors: const {},
-        provincePoliticalOwnerByPrefixedProvinceId: {pid: 'gp1'},
+        factionColors: const {'gp1': (200, 10, 20)},
+        politicalOwner: {kPlateTintPid: 'gp1'},
       );
-      final rgb = resolveProvinceLabelPlateTintRgb(
-        prefixedProvinceId: pid,
-        qualifyingLandCells: region.cells,
-        region: region,
-        honorUnrevealedTiles: false,
-      );
-      expect(rgb, (200, 10, 20));
+      expect(resolvePlateTint(region: region).$1, (200, 10, 20));
     });
 
     test(
       'returns null for Minor province even if tiles show GP (purchased land)',
       () {
-        const pid = 'oldWorld|p1';
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
+        final region = plateTintRegion(
+          cells: [plateTintLandCell(x: 0, ownerFactionId: 'gp1')],
           width: 1,
-          height: 1,
-          cellSize: 16,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              ownerFactionId: 'gp1',
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          factionColors: const {'gp1': (200, 10, 20)},
           greatPowerFactionIds: {'gp1'},
-          terrainColors: const {},
-          provincePoliticalOwnerByPrefixedProvinceId: {pid: 'minor1'},
+          factionColors: const {'gp1': (200, 10, 20)},
+          politicalOwner: {kPlateTintPid: 'minor1'},
         );
-        final rgb = resolveProvinceLabelPlateTintRgb(
-          prefixedProvinceId: pid,
-          qualifyingLandCells: region.cells,
-          region: region,
-          honorUnrevealedTiles: false,
-        );
-        expect(rgb, isNull);
+        expect(resolvePlateTint(region: region).$1, isNull);
       },
     );
 
     test('returns null when political GP but a cell owner disagrees', () {
-      const pid = 'oldWorld|p1';
-      final region = RegionMapViewData(
-        regionId: 'oldWorld',
-        width: 2,
-        height: 1,
-        cellSize: 16,
+      final region = plateTintRegion(
         cells: [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            ownerFactionId: 'gp1',
-          ),
-          CellViewData(
-            x: 1,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            ownerFactionId: 'gp2',
-          ),
+          plateTintLandCell(x: 0, ownerFactionId: 'gp1'),
+          plateTintLandCell(x: 1, ownerFactionId: 'gp2'),
         ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {'gp1': (1, 2, 3), 'gp2': (4, 5, 6)},
+        width: 2,
         greatPowerFactionIds: {'gp1', 'gp2'},
-        terrainColors: const {},
-        provincePoliticalOwnerByPrefixedProvinceId: {pid: 'gp1'},
+        factionColors: const {'gp1': (1, 2, 3), 'gp2': (4, 5, 6)},
+        politicalOwner: {kPlateTintPid: 'gp1'},
       );
-      final rgb = resolveProvinceLabelPlateTintRgb(
-        prefixedProvinceId: pid,
-        qualifyingLandCells: region.cells,
-        region: region,
-        honorUnrevealedTiles: false,
-      );
-      expect(rgb, isNull);
+      expect(resolvePlateTint(region: region).$1, isNull);
     });
 
     test('returns null when political owner unowned', () {
-      const pid = 'oldWorld|p1';
-      final region = RegionMapViewData(
-        regionId: 'oldWorld',
+      final region = plateTintRegion(
+        cells: [plateTintLandCell(x: 0)],
         width: 1,
-        height: 1,
-        cellSize: 16,
-        cells: [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            ownerFactionId: null,
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {'gp1': (1, 2, 3)},
         greatPowerFactionIds: {'gp1'},
-        terrainColors: const {},
-        provincePoliticalOwnerByPrefixedProvinceId: {pid: null},
+        factionColors: const {'gp1': (1, 2, 3)},
+        politicalOwner: {kPlateTintPid: null},
       );
-      final rgb = resolveProvinceLabelPlateTintRgb(
-        prefixedProvinceId: pid,
-        qualifyingLandCells: region.cells,
-        region: region,
-        honorUnrevealedTiles: false,
-      );
-      expect(rgb, isNull);
+      expect(resolvePlateTint(region: region).$1, isNull);
     });
 
     test('returns null when GP owner but factionColors missing entry', () {
-      const pid = 'oldWorld|p1';
-      final region = RegionMapViewData(
-        regionId: 'oldWorld',
+      final region = plateTintRegion(
+        cells: [plateTintLandCell(x: 0, ownerFactionId: 'gp1')],
         width: 1,
-        height: 1,
-        cellSize: 16,
-        cells: [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            ownerFactionId: 'gp1',
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {},
         greatPowerFactionIds: {'gp1'},
-        terrainColors: const {},
-        provincePoliticalOwnerByPrefixedProvinceId: {pid: 'gp1'},
+        politicalOwner: {kPlateTintPid: 'gp1'},
       );
-      final rgb = resolveProvinceLabelPlateTintRgb(
-        prefixedProvinceId: pid,
-        qualifyingLandCells: region.cells,
-        region: region,
-        honorUnrevealedTiles: false,
-      );
-      expect(rgb, isNull);
+      expect(resolvePlateTint(region: region).$1, isNull);
     });
 
     test('excludes unrevealed cells when honorUnrevealedTiles', () {
-      const pid = 'oldWorld|p1';
-      final region = RegionMapViewData(
-        regionId: 'oldWorld',
-        width: 1,
-        height: 1,
-        cellSize: 16,
+      final region = plateTintRegion(
         cells: [
-          CellViewData(
+          plateTintLandCell(
             x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
             ownerFactionId: 'gp1',
             visibility: TileVisibility.unrevealed,
           ),
         ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {'gp1': (1, 2, 3)},
+        width: 1,
         greatPowerFactionIds: {'gp1'},
-        terrainColors: const {},
-        provincePoliticalOwnerByPrefixedProvinceId: {pid: 'gp1'},
+        factionColors: const {'gp1': (1, 2, 3)},
+        politicalOwner: {kPlateTintPid: 'gp1'},
       );
-      final rgb = resolveProvinceLabelPlateTintRgb(
-        prefixedProvinceId: pid,
-        qualifyingLandCells: region.cells,
-        region: region,
-        honorUnrevealedTiles: true,
+      expect(
+        resolvePlateTint(region: region, honorUnrevealedTiles: true).$1,
+        isNull,
       );
-      expect(rgb, isNull);
     });
 
     test('fallback when political map lacks key: all same GP cells', () {
-      const pid = 'oldWorld|p1';
-      final region = RegionMapViewData(
-        regionId: 'oldWorld',
+      final region = plateTintRegion(
+        cells: [plateTintLandCell(x: 0, ownerFactionId: 'gp1')],
         width: 1,
-        height: 1,
-        cellSize: 16,
-        cells: [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            ownerFactionId: 'gp1',
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {'gp1': (50, 60, 70)},
         greatPowerFactionIds: {'gp1'},
-        terrainColors: const {},
+        factionColors: const {'gp1': (50, 60, 70)},
       );
-      final rgb = resolveProvinceLabelPlateTintRgb(
-        prefixedProvinceId: pid,
-        qualifyingLandCells: region.cells,
-        region: region,
-        honorUnrevealedTiles: false,
-      );
-      expect(rgb, (50, 60, 70));
+      expect(resolvePlateTint(region: region).$1, (50, 60, 70));
     });
   });
 }
