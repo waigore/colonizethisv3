@@ -45,6 +45,7 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - `developmentPanelConnectivityProvider` memoizes `resolveConnectivity` separately from draft orders so assign/cancel live updates recompute idle counts without re-running connectivity scans.
 - `developmentPanelAssignRowStateCacheProvider` uses **lazy** `rowStateFor` resolution (visible rows first; material-shortage scan deferred post-frame) so first-frame open does not resolve every improvable commodity; highlight-only tab rebuilds reuse cached row states (Refs #4687 Slice B).
 - Development panel projection providers use **`autoDispose`** so cached maps release when `GAME80001` pops (Refs #4687 Slice B).
+- **`developmentPanelSessionCacheProvider`** retains order-independent connectivity/scopes and order-dependent shared/assign caches across same-turn re-entry when game, draft orders, and fog revision are unchanged; `autoDispose` panel providers read through this session cache (Refs #4687 Slice C).
 - `DevelopmentPanelScopeList` uses **`ListView.builder`** so province scope cards build on demand (Refs #4687 Slice B).
 - `DevelopmentPanelMapPanel.didUpdateWidget` skips visibility digest work on highlight-only rebuilds (Refs #4687 Slice B).
 - `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
@@ -90,6 +91,7 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
 - Given a Builder with pending improve and an Engineer with in-progress road work in region R, when assigned civilians build for R, then both units appear sorted by unit id with correct `workTarget` and `targetTileKey`.
 - Given `GAME80001` is mounted over the live game map, when the shell map Flame engine is inspected, then it is paused (`enginePaused`) until the panel route pops.
 - Given the player pops `GAME80001`, when the shell map renders again, then its Flame engine is resumed and reflects the current game and draft-order revision.
+- Given connectivity/scopes are already computed and game, draft orders, and fog have not changed, when the player re-opens `GAME80001` in the same turn, then panel providers reuse `developmentPanelSessionCacheProvider` entries (same object identity for connectivity and region scopes in tests) so re-open avoids redundant scans.
 - Given the panel region map widget is disposed, when Flame engine state is inspected in tests, then the panel map engine is paused and no live ticker remains on a disposed panel map.
 
 ## Assign selection (Slice B)

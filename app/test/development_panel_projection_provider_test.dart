@@ -283,6 +283,58 @@ void main() {
   );
 
   test(
+    'developmentPanelConnectivityProvider reuses session cache after autoDispose teardown (Refs #4687 Slice C)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      final listener = container.listen(
+        developmentPanelConnectivityProvider,
+        (_, __) {},
+      );
+      final connectivityFirst = container.read(
+        developmentPanelConnectivityProvider,
+      );
+      expect(connectivityFirst, isNotNull);
+
+      listener.close();
+      final connectivitySecond = container.read(
+        developmentPanelConnectivityProvider,
+      );
+      expect(identical(connectivityFirst, connectivitySecond), isTrue);
+    },
+  );
+
+  test(
+    'developmentPanelRegionScopesProvider reuses session cache after autoDispose teardown (Refs #4687 Slice C)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      final listener = container.listen(
+        developmentPanelRegionScopesProvider(kRegionOldWorld),
+        (_, __) {},
+      );
+      final scopesFirst = container.read(
+        developmentPanelRegionScopesProvider(kRegionOldWorld),
+      );
+      expect(scopesFirst, isNotNull);
+
+      listener.close();
+      final scopesSecond = container.read(
+        developmentPanelRegionScopesProvider(kRegionOldWorld),
+      );
+      expect(identical(scopesFirst, scopesSecond), isTrue);
+    },
+  );
+
+  test(
     'developmentPanelAssignRowStateCacheProvider lazy cache starts empty (Refs #4687 Slice B)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
