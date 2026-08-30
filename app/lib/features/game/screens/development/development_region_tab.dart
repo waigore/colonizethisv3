@@ -5,9 +5,10 @@ import 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         DevelopmentAssignRowState,
         DevelopmentImproveAssignCandidate,
-        developmentPanelAssignRowStateKey;
+        developmentPanelMaterialShortageCommodityIds;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
@@ -59,6 +60,65 @@ class DevelopmentRegionTab extends ConsumerStatefulWidget {
 class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
   Set<String>? _highlightTileKeys;
   String? _selectedHighlightTileKey;
+  Set<String> _materialShortageCommodityIds = const {};
+  Object? _shortageScanKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleMaterialShortageScan();
+  }
+
+  @override
+  void didUpdateWidget(covariant DevelopmentRegionTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final scanKey = (
+      widget.regionId,
+      widget.game,
+      widget.currentOrders,
+      widget.regionModel,
+      widget.connectedTileKeys,
+    );
+    if (_shortageScanKey != scanKey) {
+      _scheduleMaterialShortageScan();
+    }
+  }
+
+  void _scheduleMaterialShortageScan() {
+    _shortageScanKey = (
+      widget.regionId,
+      widget.game,
+      widget.currentOrders,
+      widget.regionModel,
+      widget.connectedTileKeys,
+    );
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final shortages = developmentPanelMaterialShortageCommodityIds(
+        game: widget.game,
+        playerId: widget.humanPlayerId,
+        currentOrders: widget.currentOrders,
+        topology: widget.topology,
+        tileMapByRegion: widget.tileMapByRegion,
+        improvableRows: _improvableRowsForShortageScan(),
+        connectedTileKeys: widget.connectedTileKeys,
+      );
+      if (!mounted) return;
+      setState(() => _materialShortageCommodityIds = shortages);
+    });
+  }
+
+  Iterable<({String commodityId, Set<String> tileKeys})>
+  _improvableRowsForShortageScan() sync* {
+    for (final scope in [
+      ...widget.regionModel.ownedScopes,
+      ...widget.regionModel.purchasedScopes,
+    ]) {
+      for (final row in scope.improvableCommodities) {
+        yield (commodityId: row.commodityId, tileKeys: row.tileKeys.toSet());
+      }
+    }
+  }
 
   DevelopmentAssignRowState _assignRowStateFor(
     String scopeKey,
@@ -73,22 +133,13 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
     final cache = ref.read(
       developmentPanelAssignRowStateCacheProvider(widget.regionId),
     );
-    return cache.byScopeCommodityKey[developmentPanelAssignRowStateKey(
-          scopeKey,
-          commodityId,
-        )] ??
-        const DevelopmentAssignRowState(
-          enabled: false,
-          disabledReason: 'No valid tile',
-        );
+    return cache.rowStateFor(scopeKey, commodityId);
   }
 
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= kNarrowBreakpoint;
-    final assignCache = ref.watch(
-      developmentPanelAssignRowStateCacheProvider(widget.regionId),
-    );
+    ref.watch(developmentPanelAssignRowStateCacheProvider(widget.regionId));
     final list = DevelopmentPanelScopeList(
       key: DevelopmentPanelKeys.scopeListKey,
       regionModel: widget.regionModel,
@@ -129,8 +180,7 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
         DevelopmentPanelOverview(
           key: DevelopmentPanelKeys.overviewKey,
           regionModel: widget.regionModel,
-          materialShortageCommodityIds:
-              assignCache.materialShortageCommodityIds,
+          materialShortageCommodityIds: _materialShortageCommodityIds,
           provinceDisplayNamesById: widget.provinceDisplayNamesById,
           game: widget.game,
           humanPlayerId: widget.humanPlayerId,

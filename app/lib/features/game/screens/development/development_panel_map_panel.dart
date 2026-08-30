@@ -52,6 +52,12 @@ class _DevelopmentPanelMapPanelState
   @override
   void didUpdateWidget(covariant DevelopmentPanelMapPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.game == widget.game &&
+        oldWidget.humanPlayerId == widget.humanPlayerId &&
+        oldWidget.regionId == widget.regionId &&
+        identical(oldWidget.playerView, widget.playerView)) {
+      return;
+    }
     final cacheKey = developmentPanelMapSnapshotCacheKey(
       game: widget.game,
       humanPlayerId: widget.humanPlayerId,

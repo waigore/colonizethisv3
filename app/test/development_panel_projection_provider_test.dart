@@ -241,6 +241,7 @@ void main() {
       );
 
       expect(identical(first, second), isTrue);
+      first.rowStateFor('oldWorld|p1', 'grain');
       expect(first.byScopeCommodityKey, isNotEmpty);
     },
   );
@@ -282,7 +283,7 @@ void main() {
   );
 
   test(
-    'developmentPanelAssignRowStateCacheProvider exposes material shortages (Refs #4175 Slice E)',
+    'developmentPanelAssignRowStateCacheProvider lazy cache starts empty (Refs #4687 Slice B)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
@@ -293,12 +294,13 @@ void main() {
       final cache = container.read(
         developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
+      expect(cache.byScopeCommodityKey, isEmpty);
       expect(cache.materialShortageCommodityIds, isEmpty);
     },
   );
 
   test(
-    'developmentPanelAssignRowStateCacheProvider material shortages invalidate on orders (Refs #4175 Slice E)',
+    'developmentPanelAssignRowStateCacheProvider invalidates on draft orders (Refs #4687 Slice B)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final ordersNotifier = CurrentOrdersNotifier(const Orders());
@@ -313,7 +315,7 @@ void main() {
       final before = container.read(
         developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
-      expect(before.materialShortageCommodityIds, isEmpty);
+      before.rowStateFor('oldWorld|p1', 'grain');
 
       ordersNotifier.state = Orders(
         workOrdersByPlayerId: {

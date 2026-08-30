@@ -43,7 +43,10 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - `developmentPanelRegionScopesProvider` memoizes improvable scope rows and land extraction per region; invalidates on game/map/shell changes only (not draft orders).
 - `developmentPanelRegionModelProvider` composes cached scopes with order-dependent idle counts and assigned civilians.
 - `developmentPanelConnectivityProvider` memoizes `resolveConnectivity` separately from draft orders so assign/cancel live updates recompute idle counts without re-running connectivity scans.
-- `developmentPanelAssignRowStateCacheProvider` memoizes per-scope assign affordance (`resolveDevelopmentAssignRowState`) and per-region material-shortage commodity ids so highlight-only tab rebuilds do not re-scan assign affordance for every improvable row.
+- `developmentPanelAssignRowStateCacheProvider` uses **lazy** `rowStateFor` resolution (visible rows first; material-shortage scan deferred post-frame) so first-frame open does not resolve every improvable commodity; highlight-only tab rebuilds reuse cached row states (Refs #4687 Slice B).
+- Development panel projection providers use **`autoDispose`** so cached maps release when `GAME80001` pops (Refs #4687 Slice B).
+- `DevelopmentPanelScopeList` uses **`ListView.builder`** so province scope cards build on demand (Refs #4687 Slice B).
+- `DevelopmentPanelMapPanel.didUpdateWidget` skips visibility digest work on highlight-only rebuilds (Refs #4687 Slice B).
 - `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
 
 Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs. Connectivity (`developmentPanelConnectivityProvider`) invalidates on game/map revision only — not on draft-order churn.

@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         DevelopmentPanelAssignRowStateCache,
+        buildLazyDevelopmentPanelAssignRowStateCache,
         buildDevelopmentPanelAssignRowStateCache;
 import 'package:colonizethis_world/colonizethis_world.dart'
     show ConnectivityResult, PlayerView, allProvinces, buildPlayerView;
@@ -51,7 +52,7 @@ typedef DevelopmentPanelStaticContext = ({
 
 /// Connectivity map — invalidates on game/map changes only (not draft orders).
 final developmentPanelConnectivityProvider =
-    Provider<Map<String, ConnectivityResult>?>((ref) {
+    Provider.autoDispose<Map<String, ConnectivityResult>?>((ref) {
       final game = ref.watch(currentGameProvider);
       final mapData = game == null
           ? null
@@ -75,7 +76,7 @@ final developmentPanelConnectivityProvider =
 /// [PlayerView], display-name maps, and map topology — invalidates on game/map/shell
 /// changes only (not draft orders).
 final developmentPanelStaticContextProvider =
-    Provider<DevelopmentPanelStaticContext?>((ref) {
+    Provider.autoDispose<DevelopmentPanelStaticContext?>((ref) {
       final game = ref.watch(currentGameProvider);
       final mapData = game == null
           ? null
@@ -106,7 +107,7 @@ final developmentPanelStaticContextProvider =
 
 /// Idle counts and connectivity slice — invalidates when draft orders change.
 final developmentPanelSharedContextProvider =
-    Provider<DevelopmentPanelBuildContext?>((ref) {
+    Provider.autoDispose<DevelopmentPanelBuildContext?>((ref) {
       final staticContext = ref.watch(developmentPanelStaticContextProvider);
       final connectivity = ref.watch(developmentPanelConnectivityProvider);
       if (staticContext == null || connectivity == null) return null;
@@ -124,7 +125,7 @@ final developmentPanelSharedContextProvider =
 
 /// Combined projection for panel consumers.
 final developmentPanelProjectionProvider =
-    Provider<DevelopmentPanelProjection?>((ref) {
+    Provider.autoDispose<DevelopmentPanelProjection?>((ref) {
       final staticContext = ref.watch(developmentPanelStaticContextProvider);
       final shared = ref.watch(developmentPanelSharedContextProvider);
       if (staticContext == null || shared == null) return null;
@@ -142,7 +143,10 @@ final developmentPanelProjectionProvider =
 
 /// Per-region scopes + extraction — invalidates on game/map/shell only (Slice E).
 final developmentPanelRegionScopesProvider =
-    Provider.family<DevelopmentPanelRegionScopes?, String>((ref, regionId) {
+    Provider.autoDispose.family<DevelopmentPanelRegionScopes?, String>((
+      ref,
+      regionId,
+    ) {
       final ctx = ref.watch(developmentPanelStaticContextProvider);
       final connectivity = ref.watch(developmentPanelConnectivityProvider);
       if (ctx == null || connectivity == null) return null;
@@ -163,7 +167,10 @@ final developmentPanelRegionScopesProvider =
 
 /// Per-region read model; invalidates when static inputs, shared context, or orders change.
 final developmentPanelRegionModelProvider =
-    Provider.family<DevelopmentPanelRegionModel?, String>((ref, regionId) {
+    Provider.autoDispose.family<DevelopmentPanelRegionModel?, String>((
+      ref,
+      regionId,
+    ) {
       final scopes = ref.watch(developmentPanelRegionScopesProvider(regionId));
       final shared = ref.watch(developmentPanelSharedContextProvider);
       final ctx = ref.watch(developmentPanelStaticContextProvider);
@@ -180,9 +187,9 @@ final developmentPanelRegionModelProvider =
       );
     });
 
-/// Per-scope assign affordance + material-shortage flags for one region tab.
+/// Per-scope assign affordance; lazy per-row resolution (Refs #4687 Slice B).
 final developmentPanelAssignRowStateCacheProvider =
-    Provider.family<DevelopmentPanelAssignRowStateCache, String>((
+    Provider.autoDispose.family<DevelopmentPanelAssignRowStateCache, String>((
       ref,
       regionId,
     ) {
@@ -194,7 +201,7 @@ final developmentPanelAssignRowStateCacheProvider =
       }
       return ctAppPerfSync(
         'developmentPanel.assignRowCache.$regionId',
-        () => buildDevelopmentPanelAssignRowStateCache(
+        () => buildLazyDevelopmentPanelAssignRowStateCache(
           ownedScopes: scopes.ownedScopes,
           purchasedScopes: scopes.purchasedScopes,
           game: ctx.game,
