@@ -1671,6 +1671,9 @@ abstract class AppLocalizations {
   /// Spy status when idle in a foreign province holding presence intel.
   String civilian_units_spyStatus_holdingIntel(String province);
 
+  /// Spy status when idle in a rival Great Power province (Refs #4679).
+  String civilian_units_spyStatus_holdingIntelMaySpeedResearch(String province);
+
   /// Spy status when assigned or working counter-spy.
   String get civilian_units_spyStatus_counterEspionage;
 
@@ -2901,6 +2904,12 @@ abstract class AppLocalizations {
 
   /// Disabled Station spy — selected tile not occupiable. Refs #4439.
   String get provinceOverlay_stationSpyDisabledNotOccupiableTooltip;
+
+  /// Default-visible gist for rival-GP spy station/relocate (Refs #4679).
+  String get spyResearchInsight_maySpeedResearchGist;
+
+  /// Gist when human already has a Spy in that rival GP court (Refs #4679).
+  String get spyResearchInsight_alreadyGrantsInsightGist;
 
   /// MAP20001 Civilian Counter-espionage control label. Refs #4528.
   String get provinceOverlay_counterEspionageAction;

@@ -38,12 +38,29 @@ List<WidgetbookUseCase> get provinceOverlayStationSpyUseCases => [
       width: 320,
     ),
   ),
+  WidgetbookUseCase(
+    name: 'Standalone — Civilian Station spy rival GP gist',
+    builder: (context) => _provinceOverlayStationSpyStory(
+      showControl: true,
+      enabled: true,
+      gist: 'May speed research if this court already knows a technology you are studying.',
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Civilian Station spy already insight gist',
+    builder: (context) => _provinceOverlayStationSpyStory(
+      showControl: true,
+      enabled: true,
+      gist: 'This court already grants spy insight.',
+    ),
+  ),
 ];
 
 Widget _provinceOverlayStationSpyStory({
   required bool showControl,
   required bool enabled,
   String tooltip = 'Station spy',
+  String gist = '',
   double width = 640,
 }) {
   final game = demoGameForOverlay;
@@ -63,6 +80,7 @@ Widget _provinceOverlayStationSpyStory({
         showControl: showControl,
         enabled: enabled,
         tooltip: tooltip,
+        gist: gist,
         onTap: () {},
       ),
       onClose: () {},

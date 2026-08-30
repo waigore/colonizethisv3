@@ -663,6 +663,15 @@
       }
     }
   },
+  "civilian_units_spyStatus_holdingIntelMaySpeedResearch": "Holding intel: {province} — may speed research",
+  "@civilian_units_spyStatus_holdingIntelMaySpeedResearch": {
+    "description": "Spy status when idle in a rival Great Power province (Refs #4679).",
+    "placeholders": {
+      "province": {
+        "type": "String"
+      }
+    }
+  },
   "civilian_units_spyStatus_counterEspionage": "Counter-espionage",
   "@civilian_units_spyStatus_counterEspionage": {
     "description": "Spy status when assigned or working counter-spy."
@@ -4283,6 +4292,14 @@
   "provinceOverlay_stationSpyDisabledNotOccupiableTooltip": "This tile cannot be occupied.",
   "@provinceOverlay_stationSpyDisabledNotOccupiableTooltip": {
     "description": "Disabled Station spy tooltip when the selected tile is not occupiable (Refs #4439)."
+  },
+  "spyResearchInsight_maySpeedResearchGist": "May speed research if this court already knows a technology you are studying.",
+  "@spyResearchInsight_maySpeedResearchGist": {
+    "description": "Default-visible gist for rival-GP spy station/relocate (Refs #4679)."
+  },
+  "spyResearchInsight_alreadyGrantsInsightGist": "This court already grants spy insight.",
+  "@spyResearchInsight_alreadyGrantsInsightGist": {
+    "description": "Gist when human already has a Spy in that rival GP court (Refs #4679)."
   },
   "provinceOverlay_counterEspionageAction": "Counter-espionage",
   "@provinceOverlay_counterEspionageAction": {

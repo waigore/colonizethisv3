@@ -15,6 +15,8 @@ import 'build_improvement_next_yield_copy.dart';
 import 'build_improvement_next_yield_gist_line.dart';
 import 'purchase_land_payoff_copy.dart';
 import 'purchase_land_payoff_gist_line.dart';
+import 'spy_research_insight_copy.dart';
+import 'spy_research_insight_gist_line.dart';
 import 'transport_step_yield_copy.dart';
 import 'transport_step_yield_gist_line.dart';
 
@@ -98,6 +100,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
   required Widget assigned,
   required AppLocalizations l10n,
   required Game game,
+  required Orders currentOrders,
   required String humanPlayerId,
   required bool readOnly,
   GameMapData? mapData,
@@ -107,6 +110,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
   String? buildPortShortcutTargetTileKey,
   String? buildRailShortcutTargetTileKey,
   String? buildFortShortcutTargetTileKey,
+  String? relocateShortcutTargetTileKey,
 }) {
   if (readOnly) return assigned;
   final gist =
@@ -172,10 +176,22 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
           canMutateViaUi: !readOnly,
         )
       : null;
+  final spyRelocateGist =
+      (relocateShortcutTargetTileKey != null &&
+          relocateShortcutTargetTileKey.isNotEmpty)
+      ? spyResearchInsightGistTextForTile(
+          l10n: l10n,
+          game: game,
+          orders: currentOrders,
+          humanPlayerId: humanPlayerId,
+          tileKey: relocateShortcutTargetTileKey,
+        )
+      : null;
   if (gist == null &&
       payoff == null &&
       transportGist == null &&
-      buildFortGist == null) {
+      buildFortGist == null &&
+      spyRelocateGist == null) {
     return assigned;
   }
   return Column(
@@ -187,6 +203,8 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
       if (payoff != null) PurchaseLandPayoffGistLine(text: payoff.gist),
       if (transportGist != null) TransportStepYieldGistLine(text: transportGist),
       if (buildFortGist != null) BuildFortPayoffGistLine(text: buildFortGist),
+      if (spyRelocateGist != null)
+        SpyResearchInsightGistLine(text: spyRelocateGist),
     ],
   );
 }

@@ -388,6 +388,14 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'This tile cannot be occupied.';
 
   @override
+  String get spyResearchInsight_maySpeedResearchGist =>
+      'May speed research if this court already knows a technology you are studying.';
+
+  @override
+  String get spyResearchInsight_alreadyGrantsInsightGist =>
+      'This court already grants spy insight.';
+
+  @override
   String get provinceOverlay_counterEspionageAction => 'Counter-espionage';
 
   @override

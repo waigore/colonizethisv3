@@ -38,6 +38,7 @@ Widget buildCivilianSectionFiltered({
     tooltip: stationSpy.tooltip,
     enabled: stationSpy.enabled,
     onTap: stationSpy.onTap,
+    gist: stationSpy.gist,
   );
   final counterEspionageButton = buildProvinceOverlayCivilianShortcutControl(
     showControl: counterEspionage.showControl,

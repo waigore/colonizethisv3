@@ -142,6 +142,7 @@ typedef ProvinceOverlayStationSpyProps = ({
   bool showControl,
   bool enabled,
   String tooltip,
+  String gist,
   VoidCallback? onTap,
 });
 
@@ -149,6 +150,7 @@ const ProvinceOverlayStationSpyProps kProvinceOverlayStationSpyHidden = (
   showControl: false,
   enabled: false,
   tooltip: '',
+  gist: '',
   onTap: null,
 );
 

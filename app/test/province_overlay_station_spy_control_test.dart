@@ -39,6 +39,7 @@ Widget _overlay({
           showControl: showControl,
           enabled: enabled,
           tooltip: tooltip,
+          gist: '',
           onTap: onTap,
         ),
       ),

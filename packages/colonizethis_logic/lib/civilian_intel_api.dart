@@ -4,3 +4,4 @@ library;
 export 'src/civilians/civilians_missing_work_orders.dart'
     show CivilianMissingWorkOrderEntry, findCiviliansMissingWorkOrders;
 export 'src/civilians/spy_relocate_intel.dart';
+export 'src/civilians/spy_research_insight.dart';

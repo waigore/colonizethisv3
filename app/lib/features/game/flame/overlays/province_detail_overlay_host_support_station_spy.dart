@@ -8,6 +8,7 @@ import '../map_state/province_station_spy_action_state.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_tile_section_label_text.dart'
     show tryParseProvinceOverlayTileCoords;
+import '../../widgets/units/civilian/spy_research_insight_copy.dart';
 
 /// MAP20001 Civilian **Station spy** props for both overlay hosts (Refs #4439).
 ProvinceOverlayStationSpyProps buildProvinceStationSpyOverlayProps({
@@ -75,10 +76,21 @@ ProvinceOverlayStationSpyProps buildProvinceStationSpyOverlayProps({
     null => l10n.provinceOverlay_stationSpyAction,
   };
   final tileKey = selectedTileKey;
+  final gist = tileKey == null
+      ? ''
+      : spyResearchInsightGistTextForTile(
+              l10n: l10n,
+              game: game,
+              orders: draftOrders,
+              humanPlayerId: humanPlayerId,
+              tileKey: tileKey,
+            ) ??
+            '';
   return (
     showControl: true,
     enabled: resolved.enabled,
     tooltip: tooltip,
+    gist: gist,
     onTap: !resolved.enabled || tileKey == null
         ? null
         : () {
