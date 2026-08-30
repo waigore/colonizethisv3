@@ -130,7 +130,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 Build fort siege payoff gist (Refs #4668; measured 92_433).
 // raised for MAP20001 lazy narrow tabs + open tracing (Refs #4690; measured 92_502).
 // raised for spy research insight gist at station commit (Refs #4679; measured 92_574).
-const _maxMainLines = 92600;
+// raised for combined #4690+#4679 merge headroom (measured 92_629).
+const _maxMainLines = 92700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
