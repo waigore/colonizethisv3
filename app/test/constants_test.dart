@@ -27,6 +27,7 @@ void main() {
     expect(RoutePaths.production, '/game/production');
     expect(RoutePaths.diplomacy, '/game/diplomacy');
     expect(RoutePaths.diplomacyDetail, '/game/diplomacy/detail');
+    expect(RoutePaths.intelligence, '/game/diplomacy/intelligence');
     expect(RoutePaths.technology, '/game/technology');
   });
 }

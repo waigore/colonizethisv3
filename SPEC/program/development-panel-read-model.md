@@ -28,6 +28,43 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 
 `buildDevelopmentAssignedCiviliansForRegion` scans `oldWorld.units` / `newWorld.units` for `kUnitTypeBuilder` and `kUnitTypeEngineer` owned by the player in the active region. Include a unit when it has a pending `WorkOrder` in `currentOrders` for that unit id, or `status == working` with non-null `currentWork`. Pending takes precedence over in-progress when both exist.
 
+## Open-path performance (Slice E)
+
+- `buildDevelopmentPanelBuildContext` performs a single `resolveConnectivity` pass and exposes `connectedTileKeys` for assign affordance (no duplicate connectivity resolution on panel open).
+- `buildDevelopmentPanelRegionModel` builds one region slice at a time; `DevelopmentScreenBody` builds only visited region tabs (Old World on first open; New World on first tab selection).
+- `DevelopmentScreenBody` builds `PlayerView` once per frame and passes it to the read model and each region map panel (no per-map `buildPlayerView`).
+- Region tabs use `CtTabStrip.lazyTabBodies` so the inactive region tab (including its map) is not built until first selection.
+- Panel maps call `buildInitGameMapRegionViewData` for the active region only (not full dual-region `buildInitGameMapViewData`).
+- `DevelopmentPanelMapPanel` caches `DevelopmentPanelMapSnapshot` (region view data + territory outline keys) across highlight-only rebuilds; invalidates when game turn, region, player, or per-region visibility digest changes.
+- First map paint is deferred to the frame after panel mount so overview/list can paint first (post-frame `mapReady` gate).
+- `DevelopmentScreenBody` defers read-model projection (`buildPlayerView`, `buildDevelopmentPanelBuildContext`, per-region models) to the frame after mount so the tab strip can paint before connectivity and improvable scans run (post-frame `readModelReady` gate).
+- `developmentPanelStaticContextProvider` memoizes [PlayerView] and display-name maps across draft-order churn; invalidates on game, map data, or shell player context change only.
+- `developmentPanelSharedContextProvider` memoizes idle counts and connectivity slice; invalidates when draft orders change.
+- `developmentPanelRegionScopesProvider` memoizes improvable scope rows and land extraction per region; invalidates on game/map/shell changes only (not draft orders).
+- `developmentPanelRegionModelProvider` composes cached scopes with order-dependent idle counts and assigned civilians.
+- `developmentPanelConnectivityProvider` memoizes `resolveConnectivity` separately from draft orders so assign/cancel live updates recompute idle counts without re-running connectivity scans.
+- `developmentPanelAssignRowStateCacheProvider` memoizes per-scope assign affordance (`resolveDevelopmentAssignRowState`) and per-region material-shortage commodity ids so highlight-only tab rebuilds do not re-scan assign affordance for every improvable row.
+- `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
+
+Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs. Connectivity (`developmentPanelConnectivityProvider`) invalidates on game/map revision only — not on draft-order churn.
+
+### Profiling summary (Slice E)
+
+Representative fixture: dual-region save with two OW provinces (four improvable tiles) plus an amplified NW region (ten provinces × four tiles) so monolithic dual-region cost dominates and the lazy OW-only win stays ≥25% on shared CI runners (`development_panel_open_path_timing_test.dart`; median of three 50-iteration samples).
+
+| Hotspot (pre–Slice E) | Mitigation | Measurable effect |
+|----------------------|------------|-------------------|
+| Eager dual-region `buildDevelopmentPanelModel` on open | Per-region `buildDevelopmentPanelRegionModel` + visited-tab gate | Lazy OW-only build ≥25% faster than monolithic dual-region on timing fixture (50 iterations; `development_panel_open_path_timing_test.dart` reports µs and % in failure reason) |
+| Duplicate `resolveConnectivity` on order churn | `developmentPanelConnectivityProvider` + `buildDevelopmentPanelBuildContextFromConnectivity` | Connectivity map identity stable across order-only updates (provider + unit tests) |
+| Duplicate `buildPlayerView` (screen + map) | Single `playerView` on `DevelopmentPanelStaticContext` | Eliminated per-map rebuild; [PlayerView] identity stable across order-only updates |
+| `IndexedStack` mounting both region maps | `CtTabStrip.lazyTabBodies` + `_visitedRegionIds` | NW map absent until first tab visit (`development_panel_lazy_open_test.dart`) |
+| Synchronous read model on first frame | Post-frame `readModelReady` gate | Tab strip paints before connectivity/improvable scans |
+| Per-row material shortage scan on highlight rebuild | `developmentPanelAssignRowStateCacheProvider` + derived shortage set | Show-tile highlight `setState` does not re-run assign affordance per row (`development_panel_projection_rebuild_guard_test.dart`) |
+| Full improvable scope scan on assign/cancel draft churn | `developmentPanelRegionScopesProvider` order-independent memoization | Scope rows and extraction projection identity stable across order-only updates (provider unit test) |
+| Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + snapshot cache | Map defers one frame; highlight-only rebuilds reuse snapshot |
+
+DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/program/flutter-performance-tracing.md` § Development panel open path). Timing tests below remain the CI profiling anchor for AC2 (measurable µs reduction on read-model build path). **AC1 peer parity:** lazy Old World read-model open path must stay within **2×** the `ProductionScreenBody` synchronous prep surrogate on the same representative fixture (`development_panel_open_path_timing_test.dart`).
+
 ## Acceptance criteria
 
 - Given owned province P with three improvable grain tiles, when the read model builds, then P’s owned scope lists grain count 3 with sorted tile keys.
@@ -47,6 +84,7 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
   - When `tileMapByRegion` is absent: capital-connected first, then lower `improvementLevel`, then stable tile key.
 - Materials: affordability uses stockpile after deducting other pending material work orders via `replayPendingWorkResourceProjection` in `work_order_affordance_projection.dart` (same replay order as MAP assign previews and economy preview).
 - Disconnected targets: Assign enabled when improve is otherwise valid; warn dialog on commit (Slice C).
+- Assign preview (Refs #4472): candidate also carries `currentImprovementLevel` and `materialCosts` from `previewWorkOrderAffordAtTile`, cached once with row state. UI: [development-assign-row.md](../ui/components/development-assign-row.md).
 
 ## Road first (Slice C)
 

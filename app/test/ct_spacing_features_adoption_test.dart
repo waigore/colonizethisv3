@@ -4,6 +4,8 @@ import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'ct_spacing_features_adoption_files.dart';
+
 /// Pinning tests for `CtSpacing` adoption in `app/lib/features/**.dart`
 /// (Refs #2914 S5 follow-up to PR #3085, which restricted scope to the
 /// Ct-* widget defaults). This slice adopts `CtSpacing.{m,ml,l,xl,xxl}` in
@@ -23,7 +25,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// `EdgeInsets.symmetric` surface.
 ///
 /// Adoption rule (this slice):
-/// * Every file listed in `_migratedFeatureFiles` MUST import
+/// * Every file listed in `ctSpacingMigratedFeatureFiles` MUST import
 ///   `package:colonizethis_app/widgets/ct_spacing.dart` (relatively or by
 ///   package URI), declare at least one `CtSpacing.<token>` reference,
 ///   and MUST NOT contain a raw `EdgeInsets.all({8,12,16,20,24})` literal
@@ -45,7 +47,7 @@ void main() {
       // therefore depends on the SPEC-pinned values 8 / 12 / 16 / 20 /
       // 24 mapping cleanly to `m` / `ml` / `l` / `xl` / `xxl`. If a
       // future SPEC change re-points one of these tokens, every site in
-      // `_migratedFeatureFiles` shifts together — that is by design, but
+      // `ctSpacingMigratedFeatureFiles` shifts together — that is by design, but
       // it MUST be a deliberate SPEC change and not an accidental
       // refactor; this test pins the contract at the slice boundary.
       expect(CtSpacing.m, 8);
@@ -55,7 +57,7 @@ void main() {
       expect(CtSpacing.xxl, 24);
     });
 
-    for (final relPath in _migratedFeatureFiles) {
+    for (final relPath in ctSpacingMigratedFeatureFiles) {
       group(relPath, () {
         late final String source;
 
@@ -71,45 +73,49 @@ void main() {
           source = file.readAsStringSync();
         });
 
-        test('imports CtSpacing (or is a `part of` whose parent imports it)',
-            () {
-          // `part of` files inherit imports from the parent library, so
-          // they can use `CtSpacing.<token>` without their own import
-          // directive (Dart 3 part-of contract). For those files, this
-          // test asserts the parent library imports `ct_spacing.dart`
-          // instead of the part file itself.
-          final partOfMatch = RegExp(r"^\s*part of '([^']+)';", multiLine: true)
-              .firstMatch(source);
-          final String fileToCheck;
-          final String sourceToCheck;
-          if (partOfMatch != null) {
-            final parentRel = partOfMatch.group(1)!;
-            // `part of '../foo.dart';` is resolved relative to the
-            // part file's directory; for this slice the only `part of`
-            // file uses a same-directory parent so `dirname + parentRel`
-            // yields the parent library file path.
-            final dir = File(relPath).parent.path;
-            fileToCheck = '$dir/$parentRel';
-            sourceToCheck = File(fileToCheck).readAsStringSync();
-          } else {
-            fileToCheck = relPath;
-            sourceToCheck = source;
-          }
-          final hasImport =
-              sourceToCheck.contains("widgets/ct_spacing.dart") ||
-              sourceToCheck.contains(
-                "package:colonizethis_app/widgets/ct_spacing.dart",
-              );
-          expect(
-            hasImport,
-            isTrue,
-            reason:
-                '$fileToCheck must import `widgets/ct_spacing.dart` '
-                '(relative or by package URI) so the migrated '
-                '`EdgeInsets.all` callsites in $relPath can reference '
-                '`CtSpacing.<token>` constants.',
-          );
-        });
+        test(
+          'imports CtSpacing (or is a `part of` whose parent imports it)',
+          () {
+            // `part of` files inherit imports from the parent library, so
+            // they can use `CtSpacing.<token>` without their own import
+            // directive (Dart 3 part-of contract). For those files, this
+            // test asserts the parent library imports `ct_spacing.dart`
+            // instead of the part file itself.
+            final partOfMatch = RegExp(
+              r"^\s*part of '([^']+)';",
+              multiLine: true,
+            ).firstMatch(source);
+            final String fileToCheck;
+            final String sourceToCheck;
+            if (partOfMatch != null) {
+              final parentRel = partOfMatch.group(1)!;
+              // `part of '../foo.dart';` is resolved relative to the
+              // part file's directory; for this slice the only `part of`
+              // file uses a same-directory parent so `dirname + parentRel`
+              // yields the parent library file path.
+              final dir = File(relPath).parent.path;
+              fileToCheck = '$dir/$parentRel';
+              sourceToCheck = File(fileToCheck).readAsStringSync();
+            } else {
+              fileToCheck = relPath;
+              sourceToCheck = source;
+            }
+            final hasImport =
+                sourceToCheck.contains("widgets/ct_spacing.dart") ||
+                sourceToCheck.contains(
+                  "package:colonizethis_app/widgets/ct_spacing.dart",
+                );
+            expect(
+              hasImport,
+              isTrue,
+              reason:
+                  '$fileToCheck must import `widgets/ct_spacing.dart` '
+                  '(relative or by package URI) so the migrated '
+                  '`EdgeInsets.all` callsites in $relPath can reference '
+                  '`CtSpacing.<token>` constants.',
+            );
+          },
+        );
 
         test('declares at least one CtSpacing.<token> reference', () {
           // Library files may delegate the actual `CtSpacing.<token>`
@@ -119,10 +125,7 @@ void main() {
           final tokenRegex = RegExp(r'CtSpacing\.(xs|s|m|ml|l|xl|xxl)\b');
           bool hasTokenReference = tokenRegex.hasMatch(source);
           if (!hasTokenReference) {
-            final partRegex = RegExp(
-              r"^\s*part\s+'([^']+)';",
-              multiLine: true,
-            );
+            final partRegex = RegExp(r"^\s*part\s+'([^']+)';", multiLine: true);
             final dir = File(relPath).parent.path;
             for (final m in partRegex.allMatches(source)) {
               final partRel = m.group(1)!;
@@ -147,8 +150,7 @@ void main() {
           );
         });
 
-        test(
-            'no raw EdgeInsets.all(N) for N in the migrated token set '
+        test('no raw EdgeInsets.all(N) for N in the migrated token set '
             '({8, 12, 16, 20, 24})', () {
           // Pattern matches `EdgeInsets.all(8)`, `EdgeInsets.all(12.0)`,
           // and similar literal forms. Whitespace inside the parentheses
@@ -176,8 +178,7 @@ void main() {
           );
         });
 
-        test(
-            'no raw EdgeInsets.symmetric named arg for N in the migrated '
+        test('no raw EdgeInsets.symmetric named arg for N in the migrated '
             'token set ({8, 12, 16, 20, 24})', () {
           // Pattern matches a `horizontal:` or `vertical:` named arg with
           // a raw literal value from the migrated token set inside any
@@ -253,243 +254,4 @@ void main() {
       });
     }
   });
-
-  group('CtSpacing SizedBox gap adoption (Refs #2914 S5 follow-up)', () {
-    // Visible-layout-preserving guard: a `SizedBox(height: N)` /
-    // `SizedBox(width: N)` spacer migrates to `SizedBox(height:
-    // CtSpacing.<token>)` only when `N` equals the token's logical px, so
-    // the physical gap is unchanged. This pins the contract at the slice
-    // boundary (matching the `EdgeInsets.all` guard above).
-    test('CtSpacing tokens preserve the migrated SizedBox gap sizes', () {
-      expect(CtSpacing.xs, 2);
-      expect(CtSpacing.s, 6);
-      expect(CtSpacing.m, 8);
-      expect(CtSpacing.ml, 12);
-      expect(CtSpacing.l, 16);
-      expect(CtSpacing.xl, 20);
-      expect(CtSpacing.xxl, 24);
-    });
-
-    test(
-      'the SizedBox gap detector flags raw token literals but not '
-      'migrated or out-of-scale forms',
-      () {
-        final rawGap = RegExp(
-          r'SizedBox\(\s*(?:height|width):\s*'
-          r'(?:2|6|8|12|16|20|24)(?:\.0)?\s*\)',
-        );
-        // Positive: every in-scale token literal is detected.
-        expect(rawGap.hasMatch('const SizedBox(height: 12)'), isTrue);
-        expect(rawGap.hasMatch('const SizedBox(width: 6)'), isTrue);
-        expect(rawGap.hasMatch('SizedBox(height: 16.0)'), isTrue);
-        // Negative: migrated token references are not flagged.
-        expect(
-          rawGap.hasMatch('const SizedBox(height: CtSpacing.ml)'),
-          isFalse,
-        );
-        // Negative: out-of-scale magnitudes remain legitimate overrides.
-        expect(rawGap.hasMatch('const SizedBox(height: 4)'), isFalse);
-        expect(rawGap.hasMatch('const SizedBox(width: 10)'), isFalse);
-        expect(rawGap.hasMatch('const SizedBox(height: 14)'), isFalse);
-      },
-    );
-
-    for (final relPath in _sizedBoxMigratedFiles) {
-      test(
-        '$relPath has no raw SizedBox(height|width: N) for N in the '
-        'migrated token set ({2, 6, 8, 12, 16, 20, 24})',
-        () {
-          final file = File(relPath);
-          expect(
-            file.existsSync(),
-            isTrue,
-            reason:
-                'SizedBox-migrated feature file $relPath must exist; test '
-                'was launched from ${Directory.current.path}.',
-          );
-          // Single-dimension `SizedBox(height: N)` / `SizedBox(width: N)`
-          // gap spacers. Out-of-scale literals (`4`, `10`, `14`) are
-          // intentionally NOT matched per `SPEC/ui/pixel-art-ui-catalog.md`
-          // § Spacing tokens (they remain per-component overrides). Comment
-          // lines are ignored so dartdoc can name the banned forms.
-          final rawGap = RegExp(
-            r'SizedBox\(\s*(?:height|width):\s*'
-            r'(?:2|6|8|12|16|20|24)(?:\.0)?\s*\)',
-          );
-          final lines = file.readAsStringSync().split('\n');
-          final bad = <String>[];
-          for (var i = 0; i < lines.length; i++) {
-            final raw = lines[i];
-            if (raw.trimLeft().startsWith('//')) continue;
-            if (rawGap.hasMatch(raw)) {
-              bad.add('  L${i + 1}: ${raw.trim()}');
-            }
-          }
-          expect(
-            bad,
-            isEmpty,
-            reason:
-                'Found ${bad.length} raw `SizedBox(height|width: N)` gap'
-                '${bad.length == 1 ? '' : 's'} in $relPath for '
-                'N ∈ {2, 6, 8, 12, 16, 20, 24}:\n'
-                '${bad.join('\n')}\n'
-                'Replace each token-set literal with `CtSpacing.<token>`: '
-                '2 → CtSpacing.xs, 6 → CtSpacing.s, 8 → CtSpacing.m, '
-                '12 → CtSpacing.ml, 16 → CtSpacing.l, 20 → CtSpacing.xl, '
-                '24 → CtSpacing.xxl. Out-of-scale literals (e.g. `4`, '
-                '`10`, `14`) may remain per SPEC § Spacing tokens.',
-          );
-        },
-      );
-    }
-  });
 }
-
-/// Dialogue-overlay feature files migrated to `CtSpacing` for
-/// single-dimension `SizedBox(height|width: N)` gap spacers in the Refs
-/// #2914 S5 follow-up slice (extends the `EdgeInsets.all` / `symmetric`
-/// adoption above to the `SizedBox` gap surface named in
-/// `SPEC/ui/pixel-art-ui-catalog.md` § Spacing tokens and
-/// `app/lib/widgets/ct_spacing.dart`). Each file already appears in
-/// `_migratedFeatureFiles`, so the `ct_spacing.dart` import and
-/// `CtSpacing.<token>` reference invariants are covered there; this list
-/// adds only the no-raw-`SizedBox`-token-gap invariant.
-const List<String> _sizedBoxMigratedFiles = <String>[
-  // game_start_intro_overlay.dart is a de-parted barrel (Refs #4117); build mixin
-  // owns the SizedBox gap spacers.
-  'lib/features/game/widgets/dialogue/game_start_intro_overlay_build.dart',
-  'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
-  // intervention_dialogue_overlay.dart is a de-parted barrel; state module owns
-  // the SizedBox gap spacers.
-  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay_state.dart',
-  // overture_dialogue_overlay.dart is a de-parted barrel; state module owns the
-  // SizedBox gap spacers.
-  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_state.dart',
-  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
-  'lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
-];
-
-/// Feature files migrated to `CtSpacing` for `EdgeInsets.all(N)` and
-/// `EdgeInsets.symmetric(horizontal|vertical: N)` callsites in the Refs
-/// #2914 S5 follow-up slice. Paths are relative to the `app/` package
-/// root (the working directory for `flutter test app/...`).
-///
-/// Adding a feature file to this list MUST be paired with the four
-/// invariants verified above: import in place, at least one
-/// `CtSpacing.<token>` reference, no raw `EdgeInsets.all(N)` for
-/// `N ∈ {8, 12, 16, 20, 24}`, and no raw `EdgeInsets.symmetric` named
-/// arg literal for the same token set.
-const List<String> _migratedFeatureFiles = <String>[
-  'lib/features/game/widgets/combat/quick_battle_deployment_view.dart',
-  // game_start_intro_overlay.dart is a de-parted barrel (Refs #4117); build mixin
-  // owns the migrated insets.
-  'lib/features/game/widgets/dialogue/game_start_intro_overlay_build.dart',
-  'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
-  // intervention_dialogue_overlay.dart is a de-parted barrel; shell + state
-  // modules own the migrated insets.
-  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay_shell.dart',
-  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay_state.dart',
-  // overture_dialogue_overlay.dart is a de-parted barrel; state module owns the
-  // migrated insets.
-  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_state.dart',
-  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
-  // CtSpacing callsites moved to the extracted selection-prompt widget.
-  'lib/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart',
-  // game_side_menu.dart is a de-parted barrel; panel module owns the inset.
-  'lib/features/game/flame/controls/game_side_menu_panel.dart',
-  'lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
-  // victory_overlay.dart is a de-parted barrel; panel module owns the inset.
-  'lib/features/game/flame/overlays/victory_overlay_panel.dart',
-  // diplomacy_detail_screen.dart is a de-parted barrel; sections module owns the
-  // symmetric padding.
-  'lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_sections.dart',
-  // technology_screen.dart is a de-parted barrel; body module owns the inset.
-  'lib/features/game/screens/technology/technology_screen_body.dart',
-  // trade_screen.dart is a de-parted barrel (Refs #4117); token callsites live
-  // in the tabs body module.
-  'lib/features/game/screens/trade/trade_screen_tabs_body.dart',
-  'lib/features/game/screens/trade/trade_screen_deal_book_panel.dart',
-  // civilian_units_panel.dart is a de-parted barrel; unit-row actions module
-  // owns the token-eligible insets.
-  'lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
-  // diplomacy_dialogs.dart is a de-parted barrel; grant/subsidy stepper owns the
-  // symmetric padding.
-  'lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_chrome_stepper.dart',
-  // diplomacy_panel.dart is a de-parted barrel (Refs #4117); list body owns the
-  // panel-wide symmetric padding.
-  'lib/features/game/widgets/diplomacy/diplomacy_panel_body.dart',
-  // diplomacy_panel_chrome_badges.dart split: section header keeps CtSpacing;
-  // relation/alliance badge chips use fixed 5×1 px padding (out of token set).
-  'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_section_header.dart',
-  'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_standing.dart',
-  'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
-  'lib/features/game/widgets/panels/fleet_expansion_tile.dart',
-  // game_tab_bar.dart is a de-parted barrel; indicators module owns the symmetric
-  // padding.
-  'lib/features/game/widgets/shell/game_tab_bar_indicators.dart',
-  // military_units_panel.dart is a de-parted barrel; detail-rows module owns the
-  // token-eligible insets.
-  'lib/features/game/widgets/units/military/military_units_panel_support_detail_rows.dart',
-  // move_army_dialog.dart is a de-parted barrel; shared row scaffold owns the
-  // token-eligible symmetric padding.
-  'lib/features/game/widgets/unit_orders/move_units_dialog_base_row.dart',
-  'lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
-  // naval_units_panel.dart dropped from the adoption list: #3523 replaced its
-  // only CtSpacing callsite (the header button's vertical: CtSpacing.s padding)
-  // with CtActionTextButton pills, leaving only an out-of-scale
-  // `SizedBox(width: 4)` gap (a legitimate override per SPEC § Spacing tokens,
-  // kept raw in the sibling military_units_panel.dart). With no token-eligible
-  // spacing left, the import/token-reference invariants no longer apply.
-  'lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart',
-  'lib/features/game/widgets/panels/pause_menu_panel.dart',
-  'lib/features/game/widgets/production/production_allocation_row_chrome.dart',
-  // production_commodity_breakdown_dialog.dart is a de-parted barrel; table cells
-  // module owns the token-eligible inset.
-  'lib/features/game/widgets/production/production_commodity_breakdown_dialog_table_cells.dart',
-  // production_panel.dart is a de-parted barrel; layout helpers own the body
-  // padding.
-  'lib/features/game/widgets/production/production_panel_layouts.dart',
-  // province_sea_zone_detail_overlay.dart is a de-parted barrel (Refs #4117);
-  // header chrome and section stack helpers own the migrated insets.
-  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_chrome.dart',
-  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart',
-  // split_army_dialog.dart / split_fleet_dialog.dart dropped from the adoption
-  // list: #3594 (PR #3600) extracted the shared SplitEntityDialog base, which
-  // now owns the `Padding(EdgeInsets.all(CtSpacing.l))` body. Both dialogs
-  // delegate their scaffold to that base and no longer contain any
-  // token-eligible `EdgeInsets`/`SizedBox` spacing, so the import and
-  // token-reference invariants moved to split_entity_dialog.dart below.
-  'lib/features/game/widgets/unit_orders/split_entity_dialog.dart',
-  'lib/features/game/widgets/technology/tech_tree_widget.dart',
-  'lib/features/game/widgets/technology/technology_panel.dart',
-  // technology_panel_orders.dart is a de-parted barrel; choose-tech rows own the
-  // token-eligible insets.
-  'lib/features/game/widgets/technology/technology_panel_choose_tech_dialog_rows.dart',
-  // train_civilians_dialog.dart / train_military_dialog.dart dropped from the
-  // adoption list: #3594 extracted the shared TrainDialogBase state, which now
-  // owns the `EdgeInsets.fromLTRB(CtSpacing.l, CtSpacing.ml, ...)`
-  // PopScope/CtDialogShell scaffold. Both dialogs (and the sibling
-  // train_naval_dialog.dart, which was never token-eligible) delegate that
-  // wrapper to the base and no longer contain token-eligible
-  // `EdgeInsets`/`CtSpacing` spacing, so the import and token-reference
-  // invariants moved to train_dialog_base_state.dart below.
-  'lib/features/game/widgets/train/train_dialog_base_state.dart',
-  'lib/features/game/widgets/train/train_dialog_chrome.dart',
-  'lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart',
-  'lib/features/game/widgets/dialogs/turn_news_dialog.dart',
-  'lib/features/game/widgets/units/shared/location_section_header.dart',
-  'lib/features/game/widgets/units/shared/region_section_header.dart',
-  // units_entity_action_row.dart is a de-parted barrel; actions module owns the
-  // symmetric padding.
-  'lib/features/game/widgets/units/shared/units_entity_action_row_actions.dart',
-  'lib/features/game/widgets/units/shared/units_panel_row_chrome.dart',
-  'lib/features/game/widgets/units/shared/units_panel_shell.dart',
-  // new_game_setup_flow.dart is a de-parted barrel; error dialog module owns the
-  // token-eligible inset.
-  'lib/features/shell/new_game_setup_flow_dialogs_error.dart',
-  'lib/features/debug_log/debug_log_viewer_screen.dart',
-  // Top-level shell screen widgets (`CtMainMenu`) under `lib/widgets/`.
-  // main_menu.dart delegates layout padding to main_menu_constants.dart
-  // (Refs #4117 de-part).
-  'lib/widgets/main_menu_constants.dart',
-];

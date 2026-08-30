@@ -13,6 +13,7 @@ import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/ftp_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
@@ -22,6 +23,7 @@ import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/intelligence_council_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
@@ -163,6 +165,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
     actual: DiplomacyDetailScreen.screenId,
     expected: UiScreenIds.diplomacyDetailScreen,
   ),
+  'IntelligenceCouncilScreen': (
+    actual: IntelligenceCouncilScreen.screenId,
+    expected: UiScreenIds.intelligenceCouncilScreen,
+  ),
   'GameSideMenu': (
     actual: GameSideMenu.screenId,
     expected: UiScreenIds.gameSideMenu,
@@ -182,6 +188,10 @@ const Map<String, ({String actual, String expected})> _bindings = {
   'CallToArmsDialogueOverlay': (
     actual: CallToArmsDialogueOverlay.screenId,
     expected: UiScreenIds.callToArmsDialogueOverlay,
+  ),
+  'FtpDialogueOverlay': (
+    actual: FtpDialogueOverlay.screenId,
+    expected: UiScreenIds.ftpDialogueOverlay,
   ),
   'DebugLogViewerScreen': (
     actual: DebugLogViewerScreen.screenId,

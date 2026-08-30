@@ -23,7 +23,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show demoGameForOverlay, sampleProvinceIdForOverlay, sampleTileKeyForProvinceOverlay;
+    show
+        demoGameForOverlay,
+        sampleProvinceIdForOverlay,
+        sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 
 import 'province_overlay_test_harness.dart';
@@ -41,7 +44,7 @@ Widget _overlayWithInlineActions({
   VoidCallback? onProspectWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
-  bool buildImprovementActionHasBuilderUnits = false,
+  bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
 }) {
   return buildProvinceOverlayDarkThemeShell(
@@ -56,7 +59,8 @@ Widget _overlayWithInlineActions({
     onProspectWithExplorerTap: onProspectWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+    buildImprovementActionHasMatchingUnits:
+        buildImprovementActionHasMatchingUnits,
     onBuildImprovementTap: onBuildImprovementTap,
   );
 }
@@ -83,214 +87,211 @@ CtIconAction _buildImprovementIconAction(WidgetTester tester) {
 void main() {
   suppressLogsForTests();
 
-  group(
-    'ProvinceSeaZoneDetailOverlay Tile inline actions — non-clickable when '
-    'disabled (SPEC § Tile inline actions, ACs L388/L392/L401)',
-    () {
-      testWidgets(
-        'disabled Explore inline action is non-clickable: tapping does not '
-        'invoke the callback and the action is wrapped in IgnorePointer '
-        '(zero-Explorer AC L392)',
-        (WidgetTester tester) async {
-          var tapped = false;
-          await tester.pumpWidget(
-            _overlayWithInlineActions(
-              showExploreActionIcon: true,
-              exploreActionEnabled: false,
-              onExploreWithExplorerTap: () => tapped = true,
-            ),
-          );
-          await tester.pumpAndSettle();
+  group('ProvinceSeaZoneDetailOverlay Tile inline actions — non-clickable when '
+      'disabled (SPEC § Tile inline actions, ACs L388/L392/L401)', () {
+    testWidgets(
+      'disabled Explore inline action is non-clickable: tapping does not '
+      'invoke the callback and the action is wrapped in IgnorePointer '
+      '(zero-Explorer AC L392)',
+      (WidgetTester tester) async {
+        var tapped = false;
+        await tester.pumpWidget(
+          _overlayWithInlineActions(
+            showExploreActionIcon: true,
+            exploreActionEnabled: false,
+            onExploreWithExplorerTap: () => tapped = true,
+          ),
+        );
+        await tester.pumpAndSettle();
 
-          final tooltip = find.byTooltip('Explore with explorer');
-          expect(tooltip, findsOneWidget);
+        final tooltip = find.byTooltip('Explore with explorer');
+        expect(tooltip, findsOneWidget);
 
-          // Non-clickable: the disabled action ignores pointer input.
+        // Non-clickable: the disabled action ignores pointer input.
+        expect(
+          find.descendant(of: tooltip, matching: find.byType(IgnorePointer)),
+          findsOneWidget,
+          reason:
+              'A disabled Explore inline action must be wrapped in an '
+              'IgnorePointer so it cannot receive taps (SPEC AC: zero '
+              'Explorer units → Explore icon disabled and non-clickable).',
+        );
+
+        final action = _iconActionByTooltip(tester, 'Explore with explorer');
+        expect(action.enabled, isFalse);
+        expect(
+          action.onPressed,
+          isNull,
+          reason:
+              'The overlay must wire a disabled inline action to a null '
+              'onPressed so no tap handler runs.',
+        );
+
+        await tester.tap(tooltip, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(
+          tapped,
+          isFalse,
+          reason:
+              'Tapping a disabled Explore inline action must not invoke the '
+              'explorer-shortcut callback (non-clickable contract).',
+        );
+      },
+    );
+
+    testWidgets(
+      'disabled Prospect inline action is non-clickable: tapping does not '
+      'invoke the callback and the action is wrapped in IgnorePointer '
+      '(zero-Explorer AC L388)',
+      (WidgetTester tester) async {
+        var tapped = false;
+        await tester.pumpWidget(
+          _overlayWithInlineActions(
+            showProspectActionIcon: true,
+            prospectActionEnabled: false,
+            onProspectWithExplorerTap: () => tapped = true,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final tooltip = find.byTooltip('Prospect with explorer');
+        expect(tooltip, findsOneWidget);
+        expect(
+          find.descendant(of: tooltip, matching: find.byType(IgnorePointer)),
+          findsOneWidget,
+        );
+
+        final action = _iconActionByTooltip(tester, 'Prospect with explorer');
+        expect(action.enabled, isFalse);
+        expect(action.onPressed, isNull);
+
+        await tester.tap(tooltip, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(
+          tapped,
+          isFalse,
+          reason:
+              'Tapping a disabled Prospect inline action must not invoke the '
+              'explorer-shortcut callback (non-clickable contract).',
+        );
+      },
+    );
+
+    testWidgets(
+      'disabled Build improvement inline action is non-clickable: tapping '
+      'does not invoke the callback and the action is wrapped in '
+      'IgnorePointer (no-valid-Builder AC L401)',
+      (WidgetTester tester) async {
+        var tapped = false;
+        await tester.pumpWidget(
+          _overlayWithInlineActions(
+            showBuildImprovementActionIcon: true,
+            buildImprovementActionEnabled: false,
+            onBuildImprovementTap: () => tapped = true,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final tooltip = find.byWidgetPredicate(
+          (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
+        );
+        expect(tooltip, findsOneWidget);
+        expect(
+          find.descendant(of: tooltip, matching: find.byType(IgnorePointer)),
+          findsOneWidget,
+        );
+
+        final action = _buildImprovementIconAction(tester);
+        expect(action.enabled, isFalse);
+        expect(action.onPressed, isNull);
+
+        await tester.tap(tooltip, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(
+          tapped,
+          isFalse,
+          reason:
+              'Tapping a disabled Build improvement inline action must not '
+              'invoke the build-improvement callback (non-clickable '
+              'contract).',
+        );
+      },
+    );
+
+    testWidgets(
+      'positive — enabled inline actions are clickable: tapping invokes the '
+      'callback and the action is not wrapped in IgnorePointer',
+      (WidgetTester tester) async {
+        var exploreTapped = false;
+        var prospectTapped = false;
+        var buildTapped = false;
+        await tester.pumpWidget(
+          _overlayWithInlineActions(
+            showExploreActionIcon: true,
+            exploreActionEnabled: true,
+            onExploreWithExplorerTap: () => exploreTapped = true,
+            showProspectActionIcon: true,
+            prospectActionEnabled: true,
+            onProspectWithExplorerTap: () => prospectTapped = true,
+            showBuildImprovementActionIcon: true,
+            buildImprovementActionEnabled: true,
+            buildImprovementActionHasMatchingUnits: true,
+            onBuildImprovementTap: () => buildTapped = true,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        for (final tooltip in const <String>[
+          'Explore with explorer',
+          'Prospect with explorer',
+        ]) {
+          final finder = find.byTooltip(tooltip);
+          expect(finder, findsOneWidget);
           expect(
-            find.descendant(of: tooltip, matching: find.byType(IgnorePointer)),
-            findsOneWidget,
-            reason:
-                'A disabled Explore inline action must be wrapped in an '
-                'IgnorePointer so it cannot receive taps (SPEC AC: zero '
-                'Explorer units → Explore icon disabled and non-clickable).',
-          );
-
-          final action = _iconActionByTooltip(tester, 'Explore with explorer');
-          expect(action.enabled, isFalse);
-          expect(
-            action.onPressed,
-            isNull,
-            reason:
-                'The overlay must wire a disabled inline action to a null '
-                'onPressed so no tap handler runs.',
-          );
-
-          await tester.tap(tooltip, warnIfMissed: false);
-          await tester.pumpAndSettle();
-          expect(
-            tapped,
-            isFalse,
-            reason:
-                'Tapping a disabled Explore inline action must not invoke the '
-                'explorer-shortcut callback (non-clickable contract).',
-          );
-        },
-      );
-
-      testWidgets(
-        'disabled Prospect inline action is non-clickable: tapping does not '
-        'invoke the callback and the action is wrapped in IgnorePointer '
-        '(zero-Explorer AC L388)',
-        (WidgetTester tester) async {
-          var tapped = false;
-          await tester.pumpWidget(
-            _overlayWithInlineActions(
-              showProspectActionIcon: true,
-              prospectActionEnabled: false,
-              onProspectWithExplorerTap: () => tapped = true,
-            ),
-          );
-          await tester.pumpAndSettle();
-
-          final tooltip = find.byTooltip('Prospect with explorer');
-          expect(tooltip, findsOneWidget);
-          expect(
-            find.descendant(of: tooltip, matching: find.byType(IgnorePointer)),
-            findsOneWidget,
-          );
-
-          final action = _iconActionByTooltip(tester, 'Prospect with explorer');
-          expect(action.enabled, isFalse);
-          expect(action.onPressed, isNull);
-
-          await tester.tap(tooltip, warnIfMissed: false);
-          await tester.pumpAndSettle();
-          expect(
-            tapped,
-            isFalse,
-            reason:
-                'Tapping a disabled Prospect inline action must not invoke the '
-                'explorer-shortcut callback (non-clickable contract).',
-          );
-        },
-      );
-
-      testWidgets(
-        'disabled Build improvement inline action is non-clickable: tapping '
-        'does not invoke the callback and the action is wrapped in '
-        'IgnorePointer (no-valid-Builder AC L401)',
-        (WidgetTester tester) async {
-          var tapped = false;
-          await tester.pumpWidget(
-            _overlayWithInlineActions(
-              showBuildImprovementActionIcon: true,
-              buildImprovementActionEnabled: false,
-              onBuildImprovementTap: () => tapped = true,
-            ),
-          );
-          await tester.pumpAndSettle();
-
-          final tooltip = find.byWidgetPredicate(
-            (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
-          );
-          expect(tooltip, findsOneWidget);
-          expect(
-            find.descendant(of: tooltip, matching: find.byType(IgnorePointer)),
-            findsOneWidget,
-          );
-
-          final action = _buildImprovementIconAction(tester);
-          expect(action.enabled, isFalse);
-          expect(action.onPressed, isNull);
-
-          await tester.tap(tooltip, warnIfMissed: false);
-          await tester.pumpAndSettle();
-          expect(
-            tapped,
-            isFalse,
-            reason:
-                'Tapping a disabled Build improvement inline action must not '
-                'invoke the build-improvement callback (non-clickable '
-                'contract).',
-          );
-        },
-      );
-
-      testWidgets(
-        'positive — enabled inline actions are clickable: tapping invokes the '
-        'callback and the action is not wrapped in IgnorePointer',
-        (WidgetTester tester) async {
-          var exploreTapped = false;
-          var prospectTapped = false;
-          var buildTapped = false;
-          await tester.pumpWidget(
-            _overlayWithInlineActions(
-              showExploreActionIcon: true,
-              exploreActionEnabled: true,
-              onExploreWithExplorerTap: () => exploreTapped = true,
-              showProspectActionIcon: true,
-              prospectActionEnabled: true,
-              onProspectWithExplorerTap: () => prospectTapped = true,
-              showBuildImprovementActionIcon: true,
-              buildImprovementActionEnabled: true,
-              buildImprovementActionHasBuilderUnits: true,
-              onBuildImprovementTap: () => buildTapped = true,
-            ),
-          );
-          await tester.pumpAndSettle();
-
-          for (final tooltip in const <String>[
-            'Explore with explorer',
-            'Prospect with explorer',
-          ]) {
-            final finder = find.byTooltip(tooltip);
-            expect(finder, findsOneWidget);
-            expect(
-              find.descendant(of: finder, matching: find.byType(IgnorePointer)),
-              findsNothing,
-              reason:
-                  'An enabled "$tooltip" inline action must remain interactive '
-                  '(no IgnorePointer wrapper).',
-            );
-            final action = _iconActionByTooltip(tester, tooltip);
-            expect(action.enabled, isTrue);
-            expect(action.onPressed, isNotNull);
-          }
-
-          final buildImprovementFinder = find.byWidgetPredicate(
-            (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
-          );
-          expect(buildImprovementFinder, findsOneWidget);
-          expect(
-            find.descendant(
-              of: buildImprovementFinder,
-              matching: find.byType(IgnorePointer),
-            ),
+            find.descendant(of: finder, matching: find.byType(IgnorePointer)),
             findsNothing,
             reason:
-                'An enabled Build improvement inline action must remain '
-                'interactive (no IgnorePointer wrapper).',
+                'An enabled "$tooltip" inline action must remain interactive '
+                '(no IgnorePointer wrapper).',
           );
-          final buildAction = _buildImprovementIconAction(tester);
-          expect(buildAction.enabled, isTrue);
-          expect(buildAction.onPressed, isNotNull);
+          final action = _iconActionByTooltip(tester, tooltip);
+          expect(action.enabled, isTrue);
+          expect(action.onPressed, isNotNull);
+        }
 
-          await tester.tap(find.byTooltip('Explore with explorer'));
-          await tester.tap(find.byTooltip('Prospect with explorer'));
-          await tester.tap(buildImprovementFinder);
-          await tester.pumpAndSettle();
+        final buildImprovementFinder = find.byWidgetPredicate(
+          (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
+        );
+        expect(buildImprovementFinder, findsOneWidget);
+        expect(
+          find.descendant(
+            of: buildImprovementFinder,
+            matching: find.byType(IgnorePointer),
+          ),
+          findsNothing,
+          reason:
+              'An enabled Build improvement inline action must remain '
+              'interactive (no IgnorePointer wrapper).',
+        );
+        final buildAction = _buildImprovementIconAction(tester);
+        expect(buildAction.enabled, isTrue);
+        expect(buildAction.onPressed, isNotNull);
 
-          expect(exploreTapped, isTrue);
-          expect(prospectTapped, isTrue);
-          expect(
-            buildTapped,
-            isTrue,
-            reason:
-                'Tapping enabled inline actions must invoke their callbacks '
-                '(clickable counterpart to the disabled non-clickable ACs).',
-          );
-        },
-      );
-    },
-  );
+        await tester.tap(find.byTooltip('Explore with explorer'));
+        await tester.tap(find.byTooltip('Prospect with explorer'));
+        await tester.tap(buildImprovementFinder);
+        await tester.pumpAndSettle();
+
+        expect(exploreTapped, isTrue);
+        expect(prospectTapped, isTrue);
+        expect(
+          buildTapped,
+          isTrue,
+          reason:
+              'Tapping enabled inline actions must invoke their callbacks '
+              '(clickable counterpart to the disabled non-clickable ACs).',
+        );
+      },
+    );
+  });
 }

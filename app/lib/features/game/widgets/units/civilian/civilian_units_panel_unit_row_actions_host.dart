@@ -7,10 +7,10 @@ import 'dart:async';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../shared/units_entity_action_row.dart';
 import 'civilian_units_panel_support_unit_row_actions.dart';
 import 'civilian_units_panel_unit_row_pending.dart';
+import 'civilian_units_panel_unit_row_relocate.dart';
 import 'civilian_units_panel_unit_row_shortcuts.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -48,10 +48,7 @@ Future<void> confirmCancelCivilianUnitsPanelUnitRowWork({
   final idx = pending.pendingIndex;
   if (idx != null) {
     bus.emit(
-      RemovePendingWorkOrderRequestedEvent(
-        playerId: humanPlayerId,
-        index: idx,
-      ),
+      RemovePendingWorkOrderRequestedEvent(playerId: humanPlayerId, index: idx),
     );
   } else if (unit.currentWork != null) {
     bus.emit(CancelInProgressCivilianWorkRequestedEvent(unitId: unit.id));
@@ -62,6 +59,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required AppLocalizations l10n,
   required BuildContext context,
   required AppEventBus bus,
+  required Game game,
   required Unit unit,
   required String humanPlayerId,
   required CivilianUnitsPanelUnitRowPending pending,
@@ -76,7 +74,12 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
+  required String? buildPortShortcutTargetTileKey,
+  required String? buildRailShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
+  required String? upgradeTownShortcutTargetTileKey,
+  required String? relocateShortcutTargetTileKey,
+  required String? counterSpyShortcutTargetTileKey,
 }) {
   if (readOnly) {
     return const <UnitsEntityAction>[];
@@ -91,18 +94,27 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
         tooltip: l10n.civilian_units_relocate,
         icon: Icons.directions_walk,
         label: l10n.civilian_units_relocate,
-        onPressed: () {
-          bus.closePanelThenEmit(
-            StartCivilianRelocateSelectionEvent(unitId: unit.id),
-          );
-        },
+        onPressed: () => onCivilianUnitsPanelRelocatePressed(
+          context: context,
+          bus: bus,
+          game: game,
+          unit: unit,
+          humanPlayerId: humanPlayerId,
+          pending: pending,
+          relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
+        ),
       ),
     if (showActions && pending.isIdleNoPending && !pending.hasPendingWorkOnly)
       UnitsEntityAction(
         tooltip: l10n.civilian_units_assign,
         icon: Icons.playlist_add,
         label: l10n.civilian_units_assign,
-        onPressed: !pending.isSpy && inExplorerShortcutMode
+        onPressed:
+            _civilianAssignIsShortcut(
+              isSpy: pending.isSpy,
+              inExplorerShortcutMode: inExplorerShortcutMode,
+              counterSpyShortcutTargetTileKey: counterSpyShortcutTargetTileKey,
+            )
             ? () => startCivilianUnitsPanelUnitRowShortcutAssign(
                 bus: bus,
                 unit: unit,
@@ -115,8 +127,14 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
                     buildImprovementShortcutTargetTileKey,
                 buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
                 buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+                buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+                buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
                 purchaseLandShortcutTargetTileKey:
                     purchaseLandShortcutTargetTileKey,
+                upgradeTownShortcutTargetTileKey:
+                    upgradeTownShortcutTargetTileKey,
+                counterSpyShortcutTargetTileKey:
+                    counterSpyShortcutTargetTileKey,
               )
             : () => showCivilianUnitsPanelOrderMenu(
                 context,
@@ -156,4 +174,16 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
           : null,
     ),
   ];
+}
+
+bool _civilianAssignIsShortcut({
+  required bool isSpy,
+  required bool inExplorerShortcutMode,
+  required String? counterSpyShortcutTargetTileKey,
+}) {
+  if (isSpy) {
+    return counterSpyShortcutTargetTileKey != null &&
+        counterSpyShortcutTargetTileKey.isNotEmpty;
+  }
+  return inExplorerShortcutMode;
 }

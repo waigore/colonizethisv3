@@ -12,7 +12,6 @@ import 'package:colonizethis_turn/colonizethis_turn.dart'
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,12 +21,10 @@ import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
-import '../../widgets/production/production_commodity_breakdown_dialog.dart';
-import '../../widgets/production/production_labour_helpers.dart';
-import '../../widgets/production/production_panel.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import 'production_screen.dart';
+import 'production_screen_body_panel.dart';
 
 /// Production screen body with shell guard and panel wiring (Refs #4117 de-part).
 class ProductionScreenBody extends ConsumerWidget {
@@ -141,68 +138,53 @@ class ProductionScreenBody extends ConsumerWidget {
         }),
       );
     }
-    final labourCallbacks = ProductionLabourCallbacks(
-      onAppendRecruitOrder: (tier) {
-        if (!canEdit) return;
-        final next = ordersWithAppendedRecruitWorkerOrder(
-          currentOrders: shellRef.read(currentOrdersProvider),
-          playerId: displayPlayer.id,
-          tier: tier,
-        );
+
+    void openTradeMarket(String commodityId) {
+      bus.emit(
+        NavigateToRouteEvent(Routes.trade, {
+          'game': displayGame,
+          'humanPlayerId': displayPlayer.id,
+          'initialTabIndex': 0,
+          'highlightCommodityId': commodityId,
+        }),
+      );
+    }
+
+    final labourCallbacks = productionScreenLabourCallbacks(
+      canEdit: canEdit,
+      playerId: displayPlayer.id,
+      readCurrentOrders: () => shellRef.read(currentOrdersProvider),
+      replaceCurrentOrders: (next) {
         shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
       },
-      onPopLastRecruitOrder: (tier) {
-        if (!canEdit) return;
-        final next = ordersWithLastRecruitWorkerOrderRemoved(
-          currentOrders: shellRef.read(currentOrdersProvider),
-          playerId: displayPlayer.id,
-          tier: tier,
-        );
-        shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
-      },
-      onDisband: (tier) {
-        if (!canEdit) return;
-        final nextGame = gameWithImmediateDisband(
-          game: shellRef.read(currentGameProvider) ?? displayGame,
-          playerId: displayPlayer.id,
-          tier: tier,
-        );
-        if (nextGame == null) return;
+      readGame: () => shellRef.read(currentGameProvider) ?? displayGame,
+      writeGame: (nextGame) {
         shellRef.read(currentGameProvider.notifier).setGame(nextGame);
       },
+      context: context,
     );
-    final productionPanel = ProductionPanel(
-      game: displayGame,
-      player: displayPlayer,
+    final productionPanel = buildProductionScreenPanel(
+      context: context,
+      displayGame: displayGame,
+      displayPlayer: displayPlayer,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
       labourReadiness: labourReadiness,
       forcesFeeding: forcesFeeding,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
-      canEditLabour: canEdit,
-      onOpenCommodityBreakdown: canEdit
-          ? () {
-              showDialog<void>(
-                context: context,
-                barrierColor: EditorialMonoclePalette.dialogScrim,
-                builder: (_) => ProductionCommodityBreakdownDialog(
-                  game: displayGame,
-                  player: displayPlayer,
-                  topology: panelTopology,
-                  tileMapByRegion: panelTileMaps,
-                  currentOrders: currentOrders,
-                ),
-              );
-            }
-          : null,
-      onDesiredOutputChanged: (next) {
-        if (!canEdit) return;
-        shellRef.read(productionDesiredOutputProvider.notifier).replaceAll(next);
+      canEdit: canEdit,
+      replaceDesiredOutput: (next) {
+        shellRef
+            .read(productionDesiredOutputProvider.notifier)
+            .replaceAll(next);
       },
+      panelTopology: panelTopology,
+      panelTileMaps: panelTileMaps,
       starredProduceRecommendationsByRecipeId:
           starredProduceRecommendationsByRecipeId,
-      onOpenCounsel: openCounsel,
+      openCounsel: openCounsel,
+      openTradeMarket: openTradeMarket,
     );
     if (kCtE2EEnabled) {
       updateCtE2eProductionPanelSnapshotIfEnabled(
@@ -217,7 +199,10 @@ class ProductionScreenBody extends ConsumerWidget {
           tileMapByRegion: panelTileMaps,
         ),
       );
-      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: productionPanel);
+      return KeyedSubtree(
+        key: kCtE2EProductionPanelRootKey,
+        child: productionPanel,
+      );
     }
     return productionPanel;
   }

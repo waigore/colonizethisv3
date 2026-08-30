@@ -27,10 +27,11 @@ class TradeScreen extends ConsumerWidget {
     required this.game,
     required this.player,
     this.initialTabIndex = 0,
+    this.highlightCommodityId,
   }) : assert(
-          initialTabIndex >= 0 && initialTabIndex < 2,
-          'initialTabIndex must be 0 (Market) or 1 (Deal Book) for TradeScreen',
-        );
+         initialTabIndex >= 0 && initialTabIndex < 2,
+         'initialTabIndex must be 0 (Market) or 1 (Deal Book) for TradeScreen',
+       );
 
   /// Initially-selected tab index for the body's `CtTabStrip`. Defaults
   /// to `0` so the dark-theme E4 contract (Market tab visible on first
@@ -39,6 +40,9 @@ class TradeScreen extends ConsumerWidget {
   /// label tap; the underlying `CtTabStrip.initialTabIndex` is the only
   /// surface that propagates the override.
   final int initialTabIndex;
+
+  /// Market row to highlight and scroll into view (Production inbound).
+  final String? highlightCommodityId;
 
   /// SPEC/ui/trade-screen.md — [UiScreenIds.tradeScreen].
   static const screenId = UiScreenIds.tradeScreen;
@@ -67,6 +71,7 @@ class TradeScreen extends ConsumerWidget {
           playerId: player.id,
           canEdit: canEdit,
           initialTabIndex: initialTabIndex,
+          highlightCommodityId: highlightCommodityId,
         );
       },
     );

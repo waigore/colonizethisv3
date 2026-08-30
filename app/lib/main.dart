@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Directory;
 
 import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,6 +21,7 @@ import 'core/services/platform/desktop_window_startup_service.dart';
 import 'features/game/flame/map_theme/active_map_theme.dart';
 import 'features/game/flame/map_theme/map_theme_resolver.dart';
 import 'features/shell/new_game_leader_dialog_builder.dart';
+import 'features/shell/quick_start_new_game_handler.dart';
 import 'features/shell/save_load/save_load_dialog_builders.dart';
 import 'features/shell/settings/settings_dialog_builder.dart';
 
@@ -55,8 +57,7 @@ Future<void> bootstrapApp({
   await openHiveBoxSafely(HiveBoxNames.settings);
   await openHiveBoxSafely(HiveBoxNames.games);
   await openHiveBoxSafely(HiveBoxNames.offlineQueue);
-  final resolveTheme =
-      ensureMapThemeResolved ?? loadAndInstallActiveMapTheme;
+  final resolveTheme = ensureMapThemeResolved ?? loadAndInstallActiveMapTheme;
   await resolveTheme();
   await ensureMapTerrainLoaded();
   await ensureDesktopWindowStartup();
@@ -82,6 +83,7 @@ Future<void> bootstrapApp({
           loadGameListDialogId: buildLoadGameListDialog,
           settingsDialogId: buildSettingsDialog,
         },
+        extraActionHandlers: {QuickStartNewGameEvent: handleQuickStartNewGame},
         child: App(),
       ),
     ),

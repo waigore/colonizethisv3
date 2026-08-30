@@ -41,6 +41,7 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/phase_planner_economy_filter.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
+import 'phase_planner_threshold_cap_soft_weight_wiring_tail_cases.dart';
 
 /// One colonial-pressure threshold-cap helper under contract: its [label], the
 /// value it returns at zero weight ([offValue] — the uncapped threshold for the
@@ -242,104 +243,5 @@ void main() {
     },
   );
 
-  group(
-    'economyColonialPressureBuildOrderThresholdCap scaling pins (Refs #2847)',
-    () {
-      test('weight = -0.5 returns null (negative-weight regression guard)', () {
-        expect(
-          economyColonialPressureBuildOrderThresholdCap(
-            colonialPressureWeight: -0.5,
-          ),
-          isNull,
-          reason:
-              'A negative weight must return null (no cap) so a transient '
-              'negative weight cannot flip the cap on.',
-        );
-      });
-
-      test('weight = 0.5 scales linearly (-> 8)', () {
-        expect(
-          economyColonialPressureBuildOrderThresholdCap(
-            colonialPressureWeight: 0.5,
-          ),
-          8,
-        );
-      });
-
-      test('early-sprint curve weight 0.05 returns token cap 1', () {
-        expect(
-          economyColonialPressureBuildOrderThresholdCap(
-            colonialPressureWeight: 0.05,
-          ),
-          1,
-        );
-      });
-
-      test('resource-need override floor 0.60 returns cap 9 (Refs #2924)', () {
-        expect(
-          economyColonialPressureBuildOrderThresholdCap(
-            colonialPressureWeight: 0.60,
-          ),
-          9,
-        );
-      });
-
-      test('cap scales monotonically non-decreasing as weight rises', () {
-        final caps = <int?>[
-          for (var w = 0.05; w <= 1.0; w += 0.05)
-            economyColonialPressureBuildOrderThresholdCap(
-              colonialPressureWeight: w,
-            ),
-        ];
-        for (var i = 1; i < caps.length; i++) {
-          expect(
-            caps[i]!,
-            greaterThanOrEqualTo(caps[i - 1]!),
-            reason: 'cap at step $i must not drop below prior step',
-          );
-        }
-      });
-    },
-  );
-
-  group(
-    'resolvePhaseEconomyColonialBuildOrderThresholdCap NW-ownership tagalong',
-    () {
-      test(
-        'returns null when newWorldProvincesOwned == 0 regardless of weight',
-        () {
-          const outcome = PhasePlanOutcome(
-            phase: ObserverGoalPhase.colonial,
-            priorityWeights: PhasePriorityWeights(
-              oldWorldConquest: 0.1,
-              newWorldAcquisition: 1.0,
-              oldWorldCivilian: 0.1,
-              newWorldCivilian: 0.9,
-            ),
-          );
-          expect(
-            resolvePhaseEconomyColonialBuildOrderThresholdCap(
-              phasePlan: outcome,
-              colonial: ColonialSummary(),
-            ),
-            isNull,
-          );
-        },
-      );
-
-      test(
-        'EXPAND with early-sprint weight and NW owned returns scaled cap',
-        () {
-          const outcome = PhasePlanOutcome(phase: ObserverGoalPhase.expand);
-          expect(
-            resolvePhaseEconomyColonialBuildOrderThresholdCap(
-              phasePlan: outcome,
-              colonial: ColonialSummary(newWorldProvincesOwned: 1),
-            ),
-            1,
-          );
-        },
-      );
-    },
-  );
+  registerPhasePlannerThresholdCapSoftWeightWiringTailCases();
 }

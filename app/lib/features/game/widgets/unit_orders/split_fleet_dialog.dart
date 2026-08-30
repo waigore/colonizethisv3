@@ -6,6 +6,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../province_overlay/sea_zone_name_resolver.dart';
 import '../units/shared/region_labels.dart';
+import 'home_fleet_cargo_consequence.dart';
 import 'split_entity_dialog.dart';
 
 class SplitFleetDialog extends SplitEntityDialog {
@@ -16,6 +17,11 @@ class SplitFleetDialog extends SplitEntityDialog {
     required this.humanPlayerId,
     required this.bus,
     required this.isHomeFleet,
+    this.title,
+    this.confirmLabel,
+    this.overseasCargoUsed = 0,
+    this.isCargoUsedReliable = true,
+    this.cargoNotDefined = false,
   });
 
   final Fleet originalFleet;
@@ -23,6 +29,11 @@ class SplitFleetDialog extends SplitEntityDialog {
   final String humanPlayerId;
   final AppEventBus bus;
   final bool isHomeFleet;
+  final String? title;
+  final String? confirmLabel;
+  final int overseasCargoUsed;
+  final bool isCargoUsedReliable;
+  final bool cargoNotDefined;
 
   Map<String, int> _initialOriginalCounts() {
     final counts = <String, int>{};
@@ -76,7 +87,7 @@ class SplitFleetDialog extends SplitEntityDialog {
         shipInstanceIdsToNewFleet: toMove.map((s) => s.id).toList(),
       ),
     );
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(true);
   }
 
   @override
@@ -84,8 +95,8 @@ class SplitFleetDialog extends SplitEntityDialog {
     final l10n = appL10n(context);
     return buildSplitDialogScaffold(
       context: context,
-      title: l10n.splitFleet_dialogTitle,
-      leftTitle: originalFleet.id == 'home_fleet'
+      title: title ?? l10n.splitFleet_dialogTitle,
+      leftTitle: isHomeFleet
           ? l10n.naval_homeFleetLabel
           : l10n.naval_fleetLabel(originalFleet.id),
       rightTitle: l10n.splitFleet_newFleetTitle,
@@ -94,9 +105,18 @@ class SplitFleetDialog extends SplitEntityDialog {
       itemLabelBuilder: shipTypeDisplayName,
       leftEmptyLabel: l10n.splitFleet_noShips,
       rightEmptyLabel: l10n.splitFleet_noShips,
-      confirmLabel: l10n.splitFleet_confirm,
+      confirmLabel: confirmLabel ?? l10n.splitFleet_confirm,
       totalLabelBuilder: (total) => l10n.splitFleet_totalShips(total),
       isHomeEntity: isHomeFleet,
+      extraContentBuilder: isHomeFleet
+          ? (left, _) => homeFleetSplitCargoLine(
+              l10n: l10n,
+              leftCounts: left,
+              overseasUsed: overseasCargoUsed,
+              isCargoUsedReliable: isCargoUsedReliable,
+              cargoNotDefined: cargoNotDefined,
+            )
+          : null,
       onConfirm: (right) => _handleConfirm(right, context),
     );
   }

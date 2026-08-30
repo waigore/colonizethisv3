@@ -5,13 +5,13 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 400;
+const _maxPhysicalLines = 250;
 
 const _diplomacyTestsRelativePath = 'packages/colonizethis_diplomacy/test';
 
 /// PR-blocking structural check: files under
-/// `packages/colonizethis_diplomacy/test/**` must stay at or below 400 physical
-/// lines (Refs #3837).
+/// `packages/colonizethis_diplomacy/test/**` must stay at or below 250 physical
+/// lines (Refs #3837, #4574).
 int runCheckDiplomacyTestFileSize(
   String repoRoot, {
   Iterable<String>? targetFiles,
@@ -20,8 +20,9 @@ int runCheckDiplomacyTestFileSize(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final diplomacyTestsDir =
-      Directory(p.join(repoRoot, _diplomacyTestsRelativePath));
+  final diplomacyTestsDir = Directory(
+    p.join(repoRoot, _diplomacyTestsRelativePath),
+  );
   if (!diplomacyTestsDir.existsSync()) {
     logE(
       'check_diplomacy_test_file_size: packages/colonizethis_diplomacy/test '

@@ -11,88 +11,7 @@ import '../../../../widgets/ct_spacing.dart';
 import 'naval_mission_flow.dart';
 import 'move_units_dialog_base.dart';
 
-/// Fleet picker when multiple fleets share one map marker (Refs #4213).
-class NavalMissionFleetPickerDialog extends StatefulWidget {
-  const NavalMissionFleetPickerDialog({
-    super.key,
-    required this.game,
-    required this.humanPlayerId,
-    required this.fleetIds,
-    this.initialFleetId,
-  });
-
-  static const screenId = NavalMissionDialogIds.fleetPickerDialog;
-
-  final Game game;
-  final String humanPlayerId;
-  final List<String> fleetIds;
-  final String? initialFleetId;
-
-  @override
-  State<NavalMissionFleetPickerDialog> createState() =>
-      _NavalMissionFleetPickerDialogState();
-}
-
-class _NavalMissionFleetPickerDialogState
-    extends State<NavalMissionFleetPickerDialog> {
-  late String? _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = widget.initialFleetId ?? widget.fleetIds.first;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final theme = Theme.of(context);
-    return CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.naval_mission_selectFleetTitle,
-            style: moveDialogTitleTextStyle(theme),
-          ),
-          const SizedBox(height: CtSpacing.ml),
-          for (final fleetId in widget.fleetIds)
-            MoveDialogDestinationRow(
-              selected: _selected == fleetId,
-              semanticsLabel: l10n.naval_fleetLabel(fleetId),
-              onTap: () => setState(() => _selected = fleetId),
-              content: Text(
-                l10n.naval_fleetLabel(fleetId),
-                style: moveDialogRowLabelStyle(
-                  theme,
-                  selected: _selected == fleetId,
-                ),
-              ),
-            ),
-          const SizedBox(height: CtSpacing.l),
-          Wrap(
-            alignment: WrapAlignment.end,
-            spacing: CtSpacing.m,
-            children: [
-              CtNinePatchButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(l10n.common_cancel),
-              ),
-              CtNinePatchButton(
-                enabled: _selected != null,
-                onPressed: _selected == null
-                    ? null
-                    : () => Navigator.pop(context, _selected),
-                child: Text(l10n.common_confirm),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
+export 'naval_mission_fleet_picker_dialog.dart';
 
 /// Mission assign / cancel-pending menu for one fleet (Refs #4213).
 class NavalMissionMenuDialog extends StatelessWidget {
@@ -114,33 +33,8 @@ class NavalMissionMenuDialog extends StatelessWidget {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
     final fleetLabel = l10n.naval_fleetLabel(fleet.id);
-    final rows = <Widget>[
-      for (final option in availability.missions)
-        _missionRow(context, option),
-      if (availability.canCancelPending)
-        _menuActionRow(
-          context: context,
-          label: l10n.naval_mission_cancelPending,
-          enabled: true,
-          onTap: () => Navigator.pop(
-            context,
-            const NavalMissionMenuChoiceCancelPending(),
-          ),
-        ),
-    ];
-    if (rows.isEmpty) {
-      rows.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: CtSpacing.s),
-          child: Text(
-            l10n.naval_mission_noMissionsAvailable,
-            style: moveDialogEmptyTextStyle(theme),
-          ),
-        ),
-      );
-    }
-
     return CtDialogShell(
+      maxHeight: 720,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -150,7 +44,7 @@ class NavalMissionMenuDialog extends StatelessWidget {
             style: moveDialogTitleTextStyle(theme),
           ),
           const SizedBox(height: CtSpacing.ml),
-          ...rows,
+          ..._menuRows(context, l10n, theme),
           const SizedBox(height: CtSpacing.l),
           Align(
             alignment: Alignment.centerRight,
@@ -162,6 +56,47 @@ class NavalMissionMenuDialog extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Sail/Move, mission options, optional cancel-pending (Refs #4343).
+  List<Widget> _menuRows(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    final rows = <Widget>[
+      _menuActionRow(
+        context: context,
+        label: l10n.naval_mission_sail,
+        effectLine: l10n.naval_mission_effect_sail,
+        enabled: true,
+        onTap: () => Navigator.pop(context, const NavalMissionMenuChoiceSail()),
+      ),
+      for (final option in availability.missions) _missionRow(context, option),
+      if (availability.canCancelPending)
+        _menuActionRow(
+          context: context,
+          label: l10n.naval_mission_cancelPending,
+          enabled: true,
+          onTap: () => Navigator.pop(
+            context,
+            const NavalMissionMenuChoiceCancelPending(),
+          ),
+        ),
+    ];
+    // Sail/Move is always present; empty copy only if somehow no rows remain.
+    if (rows.isEmpty) {
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: CtSpacing.s),
+          child: Text(
+            l10n.naval_mission_noMissionsAvailable,
+            style: moveDialogEmptyTextStyle(theme),
+          ),
+        ),
+      );
+    }
+    return rows;
   }
 
   Widget _missionRow(BuildContext context, NavalMissionOption option) {

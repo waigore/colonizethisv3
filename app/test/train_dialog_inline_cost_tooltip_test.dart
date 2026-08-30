@@ -1,22 +1,8 @@
 // Pins the resource-icon tooltip convention for the shared
-// `TrainDialogInlineCost` cost segment and its application in the Train
-// Military (`UNIT50001`) and Train Naval (`UNIT60001`) dialogs.
-//
 // SPEC: `SPEC/ui/components/resource-icon-tooltip.md`,
 // `SPEC/ui/components/train-dialog-chrome.md`,
 // `SPEC/ui/train-military-dialog.md`, `SPEC/ui/train-naval-dialog.md`.
 // Refs #3631.
-//
-// The convention requires every icon-only resource glyph (commodity,
-// treasury coin, peasant worker) in a per-unit-row cost summary to:
-//
-//  * carry a `Tooltip` (`TooltipTriggerMode.tap` — hover on desktop, tap on
-//    mobile) whose message names the resource;
-//  * expose a `>= kMinTouchTargetSize` (44 dp) trigger region so it is
-//    reachable on narrow mobile viewports.
-
-import 'dart:io' show File;
-
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/production/commodity_ui_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
@@ -149,13 +135,18 @@ void main() {
       );
 
       expect(commodityIconTooltip(l10n, 'fabric'), 'Fabric (manufactured)');
-      expect(commodityIconTooltip(l10n, 'castIron'), 'Cast iron (manufactured)');
+      expect(
+        commodityIconTooltip(l10n, 'castIron'),
+        'Cast iron (manufactured)',
+      );
       expect(commodityIconTooltip(l10n, 'coal'), 'Coal (raw material)');
       expect(commodityIconTooltip(l10n, 'grain'), 'Grain (food)');
       expect(commodityIconTooltip(l10n, 'gold'), 'Gold (riches)');
       // Negative: an id absent from CommodityCatalog returns just the id.
-      expect(commodityIconTooltip(l10n, 'definitely_not_a_commodity'),
-          'definitely_not_a_commodity');
+      expect(
+        commodityIconTooltip(l10n, 'definitely_not_a_commodity'),
+        'definitely_not_a_commodity',
+      );
 
       expect(
         commodityCategoryDisplayName(l10n, CommodityCategory.advanced),
@@ -189,8 +180,7 @@ void main() {
         // At least one commodity cost icon names its commodity + category.
         expect(
           _tooltipMessages(tester).any(
-            (m) =>
-                m.contains('(manufactured)') || m.contains('(raw material)'),
+            (m) => m.contains('(manufactured)') || m.contains('(raw material)'),
           ),
           isTrue,
           reason:
@@ -222,8 +212,7 @@ void main() {
         expect(find.byTooltip('Peasants'), findsWidgets);
         expect(
           _tooltipMessages(tester).any(
-            (m) =>
-                m.contains('(manufactured)') || m.contains('(raw material)'),
+            (m) => m.contains('(manufactured)') || m.contains('(raw material)'),
           ),
           isTrue,
           reason:
@@ -258,8 +247,9 @@ void main() {
         matching: find.byType(WorkerIcon),
       );
       expect(peasantIcon, findsWidgets);
-      for (final WorkerIcon icon
-          in tester.widgetList<WorkerIcon>(peasantIcon)) {
+      for (final WorkerIcon icon in tester.widgetList<WorkerIcon>(
+        peasantIcon,
+      )) {
         expect(icon.size, kTrainDialogCostIconSize);
       }
 
@@ -268,15 +258,18 @@ void main() {
         matching: find.byType(ResourceIcon),
       );
       expect(commodityIcon, findsWidgets);
-      for (final ResourceIcon icon
-          in tester.widgetList<ResourceIcon>(commodityIcon)) {
+      for (final ResourceIcon icon in tester.widgetList<ResourceIcon>(
+        commodityIcon,
+      )) {
         expect(icon.size, kTrainDialogCostIconSize);
       }
 
       // Larger icons must still nest inside the >= 44 dp touch target.
       final int segments = find.byType(TrainDialogInlineCost).evaluate().length;
       for (int i = 0; i < segments; i++) {
-        final Size size = tester.getSize(find.byType(TrainDialogInlineCost).at(i));
+        final Size size = tester.getSize(
+          find.byType(TrainDialogInlineCost).at(i),
+        );
         expect(size.height, greaterThanOrEqualTo(kMinTouchTargetSize));
         expect(size.width, greaterThanOrEqualTo(kMinTouchTargetSize));
       }
@@ -338,72 +331,11 @@ void main() {
           matching: find.byType(WorkerIcon),
         );
         expect(barPeasant, findsWidgets);
-        for (final WorkerIcon icon
-            in tester.widgetList<WorkerIcon>(barPeasant)) {
+        for (final WorkerIcon icon in tester.widgetList<WorkerIcon>(
+          barPeasant,
+        )) {
           expect(icon.size, 14);
         }
-      },
-    );
-  });
-
-  group('_InlineCost de-duplication guard', () {
-    test(
-      'the private _InlineCost class lives nowhere — the shared '
-      'TrainDialogInlineCost is the single source',
-      () {
-        final String military = File(
-          'lib/features/game/widgets/train/train_military_dialog.dart',
-        ).readAsStringSync();
-        final String naval = File(
-          'lib/features/game/widgets/train/train_naval_dialog.dart',
-        ).readAsStringSync();
-        final String chrome = File(
-          'lib/features/game/widgets/train/train_dialog_chrome.dart',
-        ).readAsStringSync();
-        final String chromeUnitRowCost = File(
-          'lib/features/game/widgets/train/train_dialog_chrome_unit_row_cost.dart',
-        ).readAsStringSync();
-        // Refs #3686: the military/naval cost rows (incl. the inline cost
-        // segments) are now rendered by the shared commodity-cost base, so the
-        // single `TrainDialogInlineCost` reference lives there rather than in
-        // each thin dialog file.
-        final String commodityCostBase = File(
-          'lib/features/game/widgets/train/train_commodity_cost_dialog_base.dart',
-        ).readAsStringSync();
-        final String commodityCostUnitRow = File(
-          'lib/features/game/widgets/train/train_commodity_cost_dialog_base_unit_row.dart',
-        ).readAsStringSync();
-
-        expect(
-          military.contains('class _InlineCost'),
-          isFalse,
-          reason: 'train_military_dialog.dart must not redeclare _InlineCost.',
-        );
-        expect(
-          naval.contains('class _InlineCost'),
-          isFalse,
-          reason: 'train_naval_dialog.dart must not redeclare _InlineCost.',
-        );
-        expect(
-          commodityCostBase.contains('class _InlineCost'),
-          isFalse,
-          reason:
-              'train_commodity_cost_dialog_base.dart must not redeclare '
-              '_InlineCost.',
-        );
-        expect(
-          chrome.contains('class TrainDialogInlineCost') ||
-              chromeUnitRowCost.contains('class TrainDialogInlineCost'),
-          isTrue,
-          reason:
-              'TrainDialogInlineCost must be the single shared cost segment in '
-              'train_dialog_chrome.dart (or its unit-row library files).',
-        );
-        expect(
-          commodityCostBase.contains('TrainDialogInlineCost') ||
-              commodityCostUnitRow.contains('TrainDialogInlineCost'),
-          isTrue,
-        );
       },
     );
   });

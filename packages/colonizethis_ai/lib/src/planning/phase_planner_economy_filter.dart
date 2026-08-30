@@ -1,77 +1,8 @@
 /// Phase-planner economy directive resolvers for orchestrator wiring
-/// (Refs #2509 S5 slice — companion to `phase_planner_conquest_filter.dart`,
-/// `phase_planner_naval_filter.dart`, `phase_planner_diplomacy_filter.dart`,
-/// and `phase_planner_work_order_filter.dart`).
+/// (Refs #2509 S5; #4602 Slice A).
 ///
-/// Two pure phase resolvers feed the orchestrator's economy pass off the
-/// dispatched [PhasePlanOutcome]:
-///
-/// - [resolvePhaseEconomyColonialPressureActive] — gates the COLONIAL
-///   economy boost (lower civilian threshold, force
-///   `runFullAiCivilianWork`, `BuildPickInput.colonialPressure` cargo
-///   bonus). Active only under [ObserverGoalPhase.colonial].
-/// - [resolvePhaseEconomyDevelopActive] — gates the DEVELOP economy
-///   civilian-work decisions (lower threshold to
-///   [kDevelopCivilianWorkThresholdCap], force
-///   `runFullAiCivilianWork`). Active only under
-///   [ObserverGoalPhase.develop].
-/// - [resolvePhaseEconomyExpandQuotaPressureActive] — gates the
-///   below-quota OW build-pass arms in `_appendEconomyBuildOrders`
-///   (stalled build threshold, GP-blocker focus, quota peace rebuild
-///   helpers). Active only under [ObserverGoalPhase.expand] and
-///   [ObserverGoalPhase.colonialLite]; field-equal to
-///   [resolvePhaseConquestExtraPassesActive].
-///
-/// Both resolvers read **only** `outcome.phase` and never inspect
-/// sibling slots. The dispatcher already resolved
-/// `observerGoalPhaseFor` once via `runPhasePlanners`, so each resolver
-/// replaces a per-call recompute (`hasColonialAcquisitionTargets`
-/// three-predicate compute for the colonial pressure;
-/// `isObserverDevelopPhase` for the develop gate) with an O(1) phase
-/// comparison. Phase-derived `true/false` is field-equal to the legacy
-/// computes across every [ObserverGoalPhase] value, preserving the
-/// orchestrator's economy-pass behaviour exactly on the landed
-/// post-S5 dispatch path.
-///
-/// Resolves whether `_runEconomyDomainPlanners` should engage the colonial
-/// economy boost this turn for the active player, given a single
-/// [PhasePlanOutcome]. The boolean drives three economy-pass decisions
-/// today:
-///
-/// 1. Civilian work threshold cap (`kColonialCivilianWorkThresholdCap`):
-///    lowered when colonial economy pressure is active so civilian planning
-///    triggers below the default 40-weight bar.
-/// 2. `runFullAiCivilianWork` gate: forces the civilian planner to run
-///    even when domain weights are below threshold so colonial builders
-///    and merchants get a chance to act.
-/// 3. `BuildPickInput.colonialPressure` (`pickBuildOrder` in
-///    `build_planner.dart`): adds the cargo-ship build bonus
-///    (`+2.5` cargo bonus when `cargoHold > 0`) so cargo capacity grows
-///    while colonial pressure is active.
-///
-/// Suppression matrix (mirrors `SPEC/ai/phase-planner-dispatch.md` §
-/// Adapter helpers, economy row, and § Orchestrator economy slice):
-///
-/// | Phase | Colonial economy pressure | Notes |
-/// |---|---|---|
-/// | [ObserverGoalPhase.expand] | `false` (structural) | EXPAND never weights economy toward NW activity; matches today's `shouldSuppressNewWorldColonialOrders` gate. |
-/// | [ObserverGoalPhase.colonialLite] | `false` (structural) | COLONIAL-lite is the EXPAND safeguard: NW overture/naval is permitted, but the spec explicitly forbids weakening the OW quota push by biasing economy/build toward NW cargo or lowering civilian thresholds (issue #2509 § COLONIAL-lite "Begin NW penetration without weakening OW push"). |
-/// | [ObserverGoalPhase.colonial] | `true` | Full COLONIAL drives every NW economic path — cargo bias, civilian threshold cap, full civilian planner run. |
-/// | [ObserverGoalPhase.develop] | `false` (structural) | DEVELOP focuses on improvements (driven by `developCivilianWorkOrders`), not acquisition pressure. |
-///
-/// The active-phase signal for COLONIAL is **structural**: the resolver
-/// does not re-check whether visible NW invadable is non-empty. The
-/// phase-planner dispatcher already gated entry to COLONIAL on
-/// `hasColonialAcquisitionTargets` (`observerGoalPhaseFor`). Re-checking
-/// inside the economy pass would duplicate that gate and could drift from
-/// the phase resolver. The structural exclusion of COLONIAL-lite mirrors
-/// the conquest resolver `resolvePhaseConquestColonialPressureActive`
-/// (active only under COLONIAL), preserving the architectural property
-/// that COLONIAL-lite is a *safeguard*, not a full-COLONIAL substitute.
-///
-/// The resolver is pure and deterministic — identical inputs always
-/// yield identical resolutions (Refs #2509 Must-have #7). It performs no
-/// I/O, no logging, and no order emission.
+/// Cite `SPEC/ai/phase-planner-dispatch.md` (adapter helpers / economy row)
+/// rather than restating the colonial-pressure matrix here.
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -82,12 +13,8 @@ import 'observer_goal_phase.dart';
 import 'phase_filter_common.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
-import 'phase_priority_weights.dart';
-import 'planning_helpers.dart'
-    show
-        resolvePhaseNewWorldAcquisitionWeight;
+import 'planning_helpers.dart' show resolvePhaseNewWorldAcquisitionWeight;
 import 'phase_planner_economy_filter_caps.dart';
-import 'phase_planner_economy_filter_expand.dart';
 
 export 'phase_planner_economy_filter_caps.dart';
 export 'phase_planner_economy_filter_expand.dart';

@@ -13,6 +13,11 @@ final RegExp _partShardTestName = RegExp(
   r'^(.+)_part(\d+)_test\.dart$',
 );
 
+/// Matches lettered case shards (`*_part_a_cases.dart`, `*_part_b_test.dart`, …).
+final RegExp _letteredPartShardName = RegExp(
+  r'^.+_part_[ab](?:_cases|_test)?\.dart$',
+);
+
 /// True when [slashPath] is an AI planning `*_partN_test.dart` (N ≥ 2).
 bool aiTestMatrixPartShardPathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
@@ -20,6 +25,9 @@ bool aiTestMatrixPartShardPathInScope(String slashPath) {
     return false;
   }
   final name = p.basename(normalized);
+  if (_letteredPartShardName.hasMatch(name)) {
+    return true;
+  }
   final match = _partShardTestName.firstMatch(name);
   if (match == null) {
     return false;
@@ -30,7 +38,8 @@ bool aiTestMatrixPartShardPathInScope(String slashPath) {
 
 /// Returns a violation reason when [slashPath] is a planning matrix part shard
 /// whose sibling `*_support.dart` already exists (the consolidation landing
-/// pad from Refs #3941), or `null` when compliant / out of scope.
+/// pad from Refs #3941), when it is a lettered `_part_a_` / `_part_b_` shard,
+/// or `null` when compliant / out of scope.
 String? aiTestMatrixPartShardViolationReason(
   String slashPath,
   String repoRoot,
@@ -40,6 +49,11 @@ String? aiTestMatrixPartShardViolationReason(
     return null;
   }
   final name = p.basename(normalized);
+  if (_letteredPartShardName.hasMatch(name)) {
+    return 'lettered part shard `$name` uses the `_part_a_` / `_part_b_` '
+        'token; rename to a topic-named sibling `*_cases.dart` / host '
+        '(Refs #4669)';
+  }
   final match = _partShardTestName.firstMatch(name);
   if (match == null) {
     return null;

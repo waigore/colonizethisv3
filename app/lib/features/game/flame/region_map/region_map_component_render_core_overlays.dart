@@ -1,175 +1,34 @@
 import 'dart:math' as math;
-import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show resourceIdVisibleInPlayerView;
 import 'package:flutter/material.dart';
+
 import '../caches/resource_icon_cache.dart';
-import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
-import 'region_map_component_render_core.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
 
-extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
-  void paintL1PlainsInteriorResourceVariantOverlays(Canvas canvas) {
-    for (final cell in region.cells) {
-      if (cell.isSea) continue;
-      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
-        continue;
-      }
-      if (cell.terrainType != TerrainType.plains) continue;
-      if (isPlainTerrainAtDesertTransitionWangCell(cell)) continue;
-
-      final plainsVariantKey = landInteriorPlainsVariantTileKey(cell);
-      if (plainsVariantKey == null) continue;
-
-      final standaloneTile = terrainTilesetCache.getStandaloneTileByKey(
-        plainsVariantKey,
-      );
-      if (standaloneTile == null) {
-        throw StateError(
-          'Missing required plains terrain variant tile: $plainsVariantKey',
-        );
-      }
-      final left = cell.x * cellSize;
-      final top = cell.y * cellSize;
-      final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-      final overlayPaint = Paint();
-      if (shouldApplyFogToInteriorPlainsVariantOverlay(
-        visibilityMode: visibilityMode,
-        tileVisibility: regionMapComponentVisibilityForTerrain(this, cell),
-      )) {
-        overlayPaint.colorFilter = ColorFilter.mode(
-          Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
-          BlendMode.darken,
-        );
-      }
-      final srcRect = Rect.fromLTWH(
-        0,
-        0,
-        standaloneTile.image.width.toDouble(),
-        standaloneTile.image.height.toDouble(),
-      );
-      canvas.drawImageRect(
-        standaloneTile.image,
-        srcRect,
-        dstRect,
-        overlayPaint,
-      );
-    }
+/// Paint colour for an improvement corner mark (Refs #4408).
+Color improvementMarkPaintColor({
+  required ImprovementCornerMark mark,
+  required bool fogged,
+}) {
+  if (mark.muted || fogged) {
+    return EditorialMonoclePalette.muted;
   }
-
-  bool isPlainTerrainAtDesertTransitionWangCell(CellViewData cell) {
-    final nearDesertCorner = getCornerValues(
-      cell.x,
-      cell.y,
-      (c) => !c.isSea && c.terrainType == TerrainType.desert,
-    );
-    return !nearDesertCorner.same && nearDesertCorner.value;
+  if (mark.hasCapDenominator) {
+    return RegionMapPalette.mapSelectionGold;
   }
+  return Colors.black;
+}
 
-  void paintTransportOverlayTiles(Canvas canvas) {
-    if (!shouldRenderTransportOverlay(
-      baseLayerDisplayMode: baseLayerDisplayMode,
-    )) {
-      return;
-    }
-    if (!transportOverlayTilesetCache.isLoaded) {
-      return;
-    }
-    for (final cell in region.cells) {
-      final tileVisibility = regionMapComponentVisibilityForTerrain(this, cell);
-      if (!shouldPaintTransportOverlayForCell(
-        cell: cell,
-        visibilityMode: visibilityMode,
-        tileVisibility: tileVisibility,
-      )) {
-        continue;
-      }
-      final roadLevel = cell.roadLevel ?? 0;
-      final family = isRailTransportLevel(roadLevel)
-          ? TransportTileFamily.rail
-          : TransportTileFamily.road;
-      final tileset = transportOverlayTilesetCache.getTileset(family);
-      if (tileset == null) {
-        continue;
-      }
-      final mask = computeTransportConnectivityMask(
-        x: cell.x,
-        y: cell.y,
-        getCellAt: getCellAt,
-      );
-      final srcRect = tileset.tileRectForMask(mask);
-      if (srcRect == null) {
-        regionMapComponentLifecycleLog.w('Transport tile missing for family=$family mask=$mask');
-        continue;
-      }
-      final tileLeft = cell.x * cellSize;
-      final tileTop = cell.y * cellSize;
-      final dstRect = Rect.fromLTWH(tileLeft, tileTop, cellSize, cellSize);
-      canvas.drawImageRect(
-        tileset.image,
-        srcRect,
-        dstRect,
-        resourceOverlayPaintForCell(cell),
-      );
-    }
-  }
-
-  void paintFeatureCell(Canvas canvas, CellViewData cell) {
-    final left = cell.x * cellSize;
-    final top = cell.y * cellSize;
-
-    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
-      return;
-    }
-
-    final terrain = cell.terrainType;
-    if (terrain == null || !regionMapComponentIsFeatureTerrain(terrain)) return;
-
-    final overlayTileKey = featureOverlayTileKey(
-      terrain: terrain,
-      resourceId: cell.resourceId,
-      improvementLevel: cell.improvementLevel,
-    );
-    final standaloneTile =
-        terrainTilesetCache.getStandaloneTileByKey(overlayTileKey) ??
-        terrainTilesetCache.getStandaloneTile(terrain);
-    if (standaloneTile == null) {
-      regionMapComponentLifecycleLog.w(
-        'Feature overlay tile missing for key=$overlayTileKey terrain=$terrain; '
-        'skipping feature overlay for cell (${cell.x}, ${cell.y})',
-      );
-      return;
-    }
-
-    final paint = Paint();
-    if (shouldApplyFogToFeatureOverlay(
-      visibilityMode: visibilityMode,
-      tileVisibility: regionMapComponentVisibilityForTerrain(this, cell),
-      terrain: terrain,
-    )) {
-      paint.colorFilter = ColorFilter.mode(
-        Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
-        BlendMode.darken,
-      );
-    }
-
-    final srcRect = Rect.fromLTWH(
-      0,
-      0,
-      standaloneTile.image.width.toDouble(),
-      standaloneTile.image.height.toDouble(),
-    );
-    final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-    canvas.drawImageRect(standaloneTile.image, srcRect, dstRect, paint);
-  }
-
+extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
   Paint resourceOverlayPaintForCell(CellViewData cell) {
     final paint = Paint();
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.fogged) {
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.fogged) {
       paint.colorFilter = ColorFilter.mode(
         RegionMapPalette.mapHoverSelectorIdle.withValues(
           alpha: RegionMapPalette.foggedResourceIconModulateAlpha,
@@ -179,9 +38,7 @@ extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
     }
     return paint;
   }
-}
 
-extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
   String? _resourceIdForMapIcon(CellViewData cell) {
     final raw = cell.resourceId;
     if (raw == null) return null;
@@ -200,20 +57,18 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
   }
 
   void paintOverlay(Canvas canvas) {
-    final showResources =
-        baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
+    final showResources = shouldShowResourceIcons(flags: mapBaseLayerFlags);
     final showExtractionIndicators = shouldShowExtractionUnitIndicators(
-      baseLayerDisplayMode: baseLayerDisplayMode,
+      flags: mapBaseLayerFlags,
     );
-    final showImprovementLabels =
-        baseLayerDisplayMode ==
-            BaseLayerDisplayMode.terrainAndResourcesImprovementLabels ||
-        baseLayerDisplayMode ==
-            BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+    final showImprovementLabels = shouldShowImprovementLabels(
+      flags: mapBaseLayerFlags,
+    );
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
+          regionMapComponentVisibilityForTerrain(this, cell) ==
+              TileVisibility.unrevealed) {
         continue;
       }
 
@@ -257,16 +112,64 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
 
     if (showImprovementLabels) {
       for (final cell in region.cells) {
-        if (cell.isSea) continue;
-        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.unrevealed) {
-          continue;
-        }
-        final imp = cell.improvementLevel ?? 0;
-        if (imp <= 0) continue;
-        _paintTileCornerLabel(canvas, cell, 'I$imp', alignEnd: false);
+        _paintImprovementMarkForCell(canvas, cell);
       }
     }
+  }
+
+  void _paintImprovementMarkForCell(Canvas canvas, CellViewData cell) {
+    if (cell.isSea) {
+      return;
+    }
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.unrevealed) {
+      return;
+    }
+    final resourceVisible = _resourceIdForMapIcon(cell) != null;
+    final mark = resolveImprovementCornerMark(
+      improvementLevel: cell.improvementLevel ?? 0,
+      improvementTechCap: cell.improvementTechCap,
+      resourceVisible: resourceVisible,
+      unrevealed: false,
+      showImprovements: true,
+    );
+    if (mark == null) {
+      return;
+    }
+    final fogged =
+        visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.fogged;
+    final color = improvementMarkPaintColor(mark: mark, fogged: fogged);
+    final pad = math.max(1.0, cellSize * 0.06);
+    final maxWidth = cellSize - 2 * pad;
+    var text = mark.text;
+    if (mark.hasCapDenominator) {
+      final compact = resolveImprovementCornerMark(
+        improvementLevel: cell.improvementLevel ?? 0,
+        improvementTechCap: cell.improvementTechCap,
+        resourceVisible: resourceVisible,
+        unrevealed: false,
+        showImprovements: true,
+        compact: true,
+      );
+      if (compact != null && _improvementMarkLayoutWidth(text) > maxWidth) {
+        text = compact.text;
+      }
+    }
+    _paintTileCornerLabel(canvas, cell, text, alignEnd: false, color: color);
+  }
+
+  double _improvementMarkLayoutWidth(String text) {
+    final fontSize = math.max(8.0, cellSize * 0.25);
+    final painter = TextPainter(textDirection: TextDirection.ltr);
+    painter.text = TextSpan(
+      text: text,
+      style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
+    );
+    painter.layout();
+    return painter.width;
   }
 
   void _paintTileCornerLabel(
@@ -274,6 +177,7 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
     CellViewData cell,
     String text, {
     required bool alignEnd,
+    required Color color,
   }) {
     final tileLeft = cell.x * cellSize;
     final tileTop = cell.y * cellSize;
@@ -283,7 +187,7 @@ extension CtRegionMapRenderCoreOverlays on CtRegionMapComponent {
     textPainter.text = TextSpan(
       text: text,
       style: TextStyle(
-        color: Colors.black,
+        color: color,
         fontSize: fontSize,
         fontWeight: FontWeight.w600,
       ),

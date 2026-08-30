@@ -31,8 +31,14 @@ class HomeFleetCargoSummary {
 }
 
 final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
+  final game = ref.watch(currentGameProvider);
+  // Overlay hosts watch this provider. Skip Hive-backed GameService until a
+  // current game exists so widget tests without an opened games box can mount.
+  if (game == null) {
+    return const HomeFleetCargoSummary(used: 0, capacity: 0);
+  }
   return computeGameSummary<HomeFleetCargoSummary>(
-    game: ref.watch(currentGameProvider),
+    game: game,
     shell: ref.watch(shellPlayerContextProvider),
     orders: ref.watch(currentOrdersProvider),
     gameService: ref.watch(gameServiceProvider),

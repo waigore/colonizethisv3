@@ -20,6 +20,7 @@ class CtMainMenu extends StatelessWidget {
     required this.variant,
     required this.state,
     required this.version,
+    required this.onQuickStart,
     required this.onNewGame,
     this.resumeGameVisible = false,
     this.onResumeGame,
@@ -37,6 +38,7 @@ class CtMainMenu extends StatelessWidget {
   final MainMenuVariant variant;
   final MainMenuState state;
   final String version;
+  final VoidCallback onQuickStart;
   final VoidCallback onNewGame;
   final bool resumeGameVisible;
   final VoidCallback? onResumeGame;
@@ -55,6 +57,7 @@ class CtMainMenu extends StatelessWidget {
       loadGameEnabled: _loadGameEnabled,
       resumeGameVisible: resumeGameVisible,
       version: version,
+      onQuickStart: onQuickStart,
       onNewGame: onNewGame,
       onResumeGame: onResumeGame,
       onLoadGame: onLoadGame,

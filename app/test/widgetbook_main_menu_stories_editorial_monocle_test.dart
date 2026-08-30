@@ -75,88 +75,131 @@ void main() {
 
   setUpAll(preloadNinePatchImage);
 
-  group(
-    'Main Menu Widgetbook editorial-monocle stories (Refs #2860 S6)',
-    () {
-      test(
-        'mainMenuDirectories exposes the normative 10-story inventory',
-        () {
-          final names = (_mainMenuFolder().children ?? const <WidgetbookNode>[])
-              .whereType<WidgetbookUseCase>()
-              .map((uc) => uc.name)
-              .toList();
-          expect(names, kMainMenuWidgetbookUseCaseNames);
+  group('Main Menu Widgetbook editorial-monocle stories (Refs #2860 S6)', () {
+    test('mainMenuDirectories exposes the normative 10-story inventory', () {
+      final names = (_mainMenuFolder().children ?? const <WidgetbookNode>[])
+          .whereType<WidgetbookUseCase>()
+          .map((uc) => uc.name)
+          .toList();
+      expect(names, kMainMenuWidgetbookUseCaseNames);
+    });
+
+    testWidgets(
+      'Default and Default (pixel) stories show Quick Start above New Game',
+      (WidgetTester tester) async {
+        for (final name in const ['Default', 'Default (pixel)']) {
+          await _pumpEditorialMonocleStory(
+            tester,
+            findWidgetbookUseCase(
+              mainMenuDirectories,
+              folderName: 'Main Menu',
+              useCaseName: name,
+            ),
+          );
+          expect(find.text('Quick Start'), findsOneWidget);
+          expect(find.text('New Game'), findsOneWidget);
+        }
+      },
+    );
+
+    for (final useCaseName in kMainMenuEditorialMonocleDesktopUseCaseNames) {
+      testWidgets(
+        '$useCaseName pumps under editorialMonocle without exceptions',
+        (WidgetTester tester) async {
+          await _pumpEditorialMonocleStory(
+            tester,
+            findWidgetbookUseCase(
+              mainMenuDirectories,
+              folderName: 'Main Menu',
+              useCaseName: useCaseName,
+            ),
+          );
+          expect(
+            tester.takeException(),
+            isNull,
+            reason:
+                'Widgetbook story "$useCaseName" must mount without '
+                'overflow or asset-missing fallbacks per SPEC/ui/main-menu.md '
+                '§ Widgetbook (Refs #2860 S6).',
+          );
         },
       );
 
-      for (final useCaseName in kMainMenuEditorialMonocleDesktopUseCaseNames) {
-        testWidgets(
-          '$useCaseName pumps under editorialMonocle without exceptions',
-          (WidgetTester tester) async {
-            await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
-            expect(
-              tester.takeException(),
-              isNull,
-              reason:
-                  'Widgetbook story "$useCaseName" must mount without '
-                  'overflow or asset-missing fallbacks per SPEC/ui/main-menu.md '
-                  '§ Widgetbook (Refs #2860 S6).',
-            );
-          },
-        );
-
-        testWidgets(
-          '$useCaseName renders no Material ElevatedButton / TextButton / '
-          'OutlinedButton chrome',
-          (WidgetTester tester) async {
-            await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
-            expect(find.byType(ElevatedButton), findsNothing);
-            expect(find.byType(TextButton), findsNothing);
-            expect(find.byType(OutlinedButton), findsNothing);
-          },
-        );
-
-        testWidgets(
-          '$useCaseName resolves editorial-monocle scaffold tokens',
-          (WidgetTester tester) async {
-            await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
-            final ThemeData theme = Theme.of(
-              tester.element(find.byType(CtMainMenu)),
-            );
-            expect(theme.brightness, Brightness.dark);
-            expect(
-              theme.scaffoldBackgroundColor,
-              EditorialMonoclePalette.bg,
-            );
-            expect(theme.colorScheme.primary, EditorialMonoclePalette.accent);
-            expect(theme.colorScheme.surface, EditorialMonoclePalette.surface);
-          },
-        );
-
-        if (_isPixelArtStory(useCaseName)) {
-          testWidgets(
-            '$useCaseName (pixelArt) mounts collage + compass + divider chrome',
-            (WidgetTester tester) async {
-              await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
-              expect(find.byType(CtMainMenuCollage), findsOneWidget);
-              expect(find.byType(CtCompassRose), findsOneWidget);
-              expect(find.byType(CtFleurDeLisOrnament), findsWidgets);
-              expect(find.byType(CtBrassDivider), findsOneWidget);
-            },
+      testWidgets(
+        '$useCaseName renders no Material ElevatedButton / TextButton / '
+        'OutlinedButton chrome',
+        (WidgetTester tester) async {
+          await _pumpEditorialMonocleStory(
+            tester,
+            findWidgetbookUseCase(
+              mainMenuDirectories,
+              folderName: 'Main Menu',
+              useCaseName: useCaseName,
+            ),
           );
-        } else {
-          testWidgets(
-            '$useCaseName (plain) omits pixelArt-only decorative chrome',
-            (WidgetTester tester) async {
-              await _pumpEditorialMonocleStory(tester, findWidgetbookUseCase(mainMenuDirectories, folderName: 'Main Menu', useCaseName: useCaseName));
-              expect(find.byType(CtMainMenuCollage), findsNothing);
-              expect(find.byType(CtCompassRose), findsNothing);
-              expect(find.byType(CtFleurDeLisOrnament), findsNothing);
-              expect(find.byType(CtBrassDivider), findsNothing);
-            },
-          );
-        }
+          expect(find.byType(ElevatedButton), findsNothing);
+          expect(find.byType(TextButton), findsNothing);
+          expect(find.byType(OutlinedButton), findsNothing);
+        },
+      );
+
+      testWidgets('$useCaseName resolves editorial-monocle scaffold tokens', (
+        WidgetTester tester,
+      ) async {
+        await _pumpEditorialMonocleStory(
+          tester,
+          findWidgetbookUseCase(
+            mainMenuDirectories,
+            folderName: 'Main Menu',
+            useCaseName: useCaseName,
+          ),
+        );
+        final ThemeData theme = Theme.of(
+          tester.element(find.byType(CtMainMenu)),
+        );
+        expect(theme.brightness, Brightness.dark);
+        expect(theme.scaffoldBackgroundColor, EditorialMonoclePalette.bg);
+        expect(theme.colorScheme.primary, EditorialMonoclePalette.accent);
+        expect(theme.colorScheme.surface, EditorialMonoclePalette.surface);
+      });
+
+      if (_isPixelArtStory(useCaseName)) {
+        testWidgets(
+          '$useCaseName (pixelArt) mounts collage + compass + divider chrome',
+          (WidgetTester tester) async {
+            await _pumpEditorialMonocleStory(
+              tester,
+              findWidgetbookUseCase(
+                mainMenuDirectories,
+                folderName: 'Main Menu',
+                useCaseName: useCaseName,
+              ),
+            );
+            expect(find.byType(CtMainMenuCollage), findsOneWidget);
+            expect(find.byType(CtCompassRose), findsOneWidget);
+            expect(find.byType(CtFleurDeLisOrnament), findsWidgets);
+            expect(find.byType(CtBrassDivider), findsOneWidget);
+          },
+        );
+      } else {
+        testWidgets(
+          '$useCaseName (plain) omits pixelArt-only decorative chrome',
+          (WidgetTester tester) async {
+            await _pumpEditorialMonocleStory(
+              tester,
+              findWidgetbookUseCase(
+                mainMenuDirectories,
+                folderName: 'Main Menu',
+                useCaseName: useCaseName,
+              ),
+            );
+            expect(find.byType(CtMainMenuCollage), findsNothing);
+            expect(find.byType(CtCompassRose), findsNothing);
+            expect(find.byType(CtFleurDeLisOrnament), findsNothing);
+            expect(find.byType(CtBrassDivider), findsNothing);
+          },
+        );
       }
-    },
-  );
+    }
+  });
 }

@@ -42,131 +42,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _nationId = 'gp1';
-const String _tribeId = 'tribe1';
-const String _nwTribeProvince = 'newWorld|tribe1_nw0';
-const String _nwGpOwnedProvince = 'newWorld|gp1_nw0';
+import '../support/observer_goal_phase_nw_suppression_predicate_matrix_test_support.dart';
 
-/// Game fixture used for the EXPAND, COLONIAL-lite, and COLONIAL branches.
-/// The non-GP-owned NW province satisfies the
-/// `globalNewWorldHasNonGpOwnership` precondition for COLONIAL-lite while
-/// the turn number drives whether the phase function picks COLONIAL-lite
-/// (turn ≥ `kObserverColonialLiteMinTurn`) or EXPAND (turn below it) when
-/// the snapshot is below quota, and supplies a visible NW acquisition
-/// target for the COLONIAL branch at OW quota.
-Game _gameWithTribeNw({required int turnNumber}) {
-  return Game(
-    id: 'g-2509-nw-suppression-predicate-matrix',
-    worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _nwTribeProvince,
-            regionId: kNewWorldRegionId,
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-    ),
-    players: const [Player(id: _nationId, displayName: 'P1', isHuman: false)],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-  );
-}
-
-/// Game fixture used for the DEVELOP branch — every visible NW province is
-/// GP-owned so `hasColonialAcquisitionTargets` is false and the phase
-/// function picks DEVELOP at OW quota.
-Game _gameWithGpOwnedNw() {
-  return Game(
-    id: 'g-2509-nw-suppression-predicate-matrix-develop',
-    worldState: WorldState(
-      turnState: const TurnState(
-        turnNumber: 140,
-        phase: TurnPhase.orders,
-      ),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _nwGpOwnedProvince,
-            regionId: kNewWorldRegionId,
-            ownerId: _nationId,
-          ),
-        ],
-      ),
-    ),
-    players: const [Player(id: _nationId, displayName: 'P1', isHuman: false)],
-    tribes: const [],
-    minorNations: const [],
-  );
-}
-
-/// Snapshot for EXPAND: below the observer OW quota, with one invadable
-/// NW tribe province visible so the suppression has meaningful targets to
-/// strip.
-const AIWorldSnapshot _expandSnapshot = AIWorldSnapshot(
-  playerId: _nationId,
-  threats: ThreatSummary(),
-  opportunities: OpportunitySummary(),
-  conquest: ConquestSummary(oldWorldProvincesOwned: 7),
-  colonial: ColonialSummary(
-    invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
-    adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-  ),
-  economy: EconomySummary(),
-  relations: {},
-);
-
-/// Snapshot for COLONIAL-lite: OW = `kObserverColonialLiteNearQuotaOw` (9)
-/// and below quota. Combined with turn ≥120 and tribe-owned NW the GP
-/// enters COLONIAL-lite per `isObserverColonialLitePhase`.
-const AIWorldSnapshot _colonialLiteSnapshot = AIWorldSnapshot(
-  playerId: _nationId,
-  threats: ThreatSummary(),
-  opportunities: OpportunitySummary(),
-  conquest: ConquestSummary(
-    oldWorldProvincesOwned: kObserverColonialLiteNearQuotaOw,
-  ),
-  colonial: ColonialSummary(
-    invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
-    adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-  ),
-  economy: EconomySummary(),
-  relations: {},
-);
-
-/// Snapshot for COLONIAL: at quota with visible colonial acquisition
-/// targets, so `hasColonialAcquisitionTargets` is true and the phase
-/// function picks COLONIAL.
-const AIWorldSnapshot _colonialSnapshot = AIWorldSnapshot(
-  playerId: _nationId,
-  threats: ThreatSummary(),
-  opportunities: OpportunitySummary(),
-  conquest: ConquestSummary(oldWorldProvincesOwned: 11),
-  colonial: ColonialSummary(
-    invadableNewWorldProvinceIdsSorted: [_nwTribeProvince],
-    adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-  ),
-  economy: EconomySummary(),
-  relations: {},
-);
-
-/// Snapshot for DEVELOP: at quota and no colonial acquisition targets.
-const AIWorldSnapshot _developSnapshot = AIWorldSnapshot(
-  playerId: _nationId,
-  threats: ThreatSummary(),
-  opportunities: OpportunitySummary(),
-  conquest: ConquestSummary(oldWorldProvincesOwned: 11),
-  colonial: ColonialSummary(newWorldProvincesOwned: 1),
-  economy: EconomySummary(),
-  relations: {},
-);
+import 'observer_goal_phase_nw_suppression_predicate_game_matrix_determinism_cases.dart';
 
 /// One observer phase fixture: a `(snapshot, game)` pair whose
 /// `observerGoalPhaseFor` resolves to [expectedPhase]. The game is built per
@@ -188,26 +66,30 @@ class _PhaseFixture {
 
 final _PhaseFixture _expandFixture = _PhaseFixture(
   label: 'EXPAND',
-  snapshot: _expandSnapshot,
-  gameBuilder: () => _gameWithTribeNw(turnNumber: 50),
+  snapshot: kObserverGoalPhaseNwSuppressionMatrixExpandSnapshot,
+  gameBuilder: () =>
+      observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: 50),
   expectedPhase: ObserverGoalPhase.expand,
 );
 final _PhaseFixture _colonialLiteFixture = _PhaseFixture(
   label: 'COLONIAL-lite',
-  snapshot: _colonialLiteSnapshot,
-  gameBuilder: () => _gameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn),
+  snapshot: kObserverGoalPhaseNwSuppressionMatrixColonialLiteSnapshot,
+  gameBuilder: () => observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(
+        turnNumber: kObserverColonialLiteMinTurn,
+      ),
   expectedPhase: ObserverGoalPhase.colonialLite,
 );
 final _PhaseFixture _colonialFixture = _PhaseFixture(
   label: 'COLONIAL',
-  snapshot: _colonialSnapshot,
-  gameBuilder: () => _gameWithTribeNw(turnNumber: 110),
+  snapshot: kObserverGoalPhaseNwSuppressionMatrixColonialSnapshot,
+  gameBuilder: () =>
+      observerGoalPhaseNwSuppressionMatrixGameWithTribeNw(turnNumber: 110),
   expectedPhase: ObserverGoalPhase.colonial,
 );
 final _PhaseFixture _developFixture = _PhaseFixture(
   label: 'DEVELOP',
-  snapshot: _developSnapshot,
-  gameBuilder: _gameWithGpOwnedNw,
+  snapshot: kObserverGoalPhaseNwSuppressionMatrixDevelopSnapshot,
+  gameBuilder: observerGoalPhaseNwSuppressionMatrixGameWithGpOwnedNw,
   expectedPhase: ObserverGoalPhase.develop,
 );
 
@@ -355,66 +237,5 @@ void main() {
     ],
   );
 
-  // Determinism guards (must-have #7) retained verbatim from the source
-  // suites: each predicate is pure with respect to (snapshot, game), so
-  // repeated invocations across all four phases must agree with the
-  // expected per-phase outcome. These are the only assertions that are not a
-  // single `(snapshot, game) -> bool` matrix row.
-  group('shouldSuppressNewWorldColonialOrders determinism', () {
-    test('identical phase inputs produce identical predicate outcome', () {
-      final colonialLiteGame =
-          _gameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn);
-      final colonialGame = _gameWithTribeNw(turnNumber: 110);
-      final developGame = _gameWithGpOwnedNw();
-      final expandGame = _gameWithTribeNw(turnNumber: 50);
-
-      for (final entry in <(AIWorldSnapshot, Game, bool)>[
-        (_expandSnapshot, expandGame, true),
-        (_colonialLiteSnapshot, colonialLiteGame, false),
-        (_colonialSnapshot, colonialGame, false),
-        (_developSnapshot, developGame, false),
-      ]) {
-        final (snapshot, game, expected) = entry;
-        final first = shouldSuppressNewWorldColonialOrders(
-          snapshot: snapshot,
-          game: game,
-        );
-        final second = shouldSuppressNewWorldColonialOrders(
-          snapshot: snapshot,
-          game: game,
-        );
-        expect(first, expected);
-        expect(second, first);
-      }
-    });
-  });
-
-  group('shouldSuppressNewWorldDeclareWarInvasionAndPurchase determinism', () {
-    test('identical phase inputs produce identical predicate outcome', () {
-      final colonialLiteGame =
-          _gameWithTribeNw(turnNumber: kObserverColonialLiteMinTurn);
-      final colonialGame = _gameWithTribeNw(turnNumber: 110);
-      final developGame = _gameWithGpOwnedNw();
-      final expandGame = _gameWithTribeNw(turnNumber: 50);
-
-      for (final entry in <(AIWorldSnapshot, Game, bool)>[
-        (_expandSnapshot, expandGame, true),
-        (_colonialLiteSnapshot, colonialLiteGame, true),
-        (_colonialSnapshot, colonialGame, false),
-        (_developSnapshot, developGame, true),
-      ]) {
-        final (snapshot, game, expected) = entry;
-        final first = shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: snapshot,
-          game: game,
-        );
-        final second = shouldSuppressNewWorldDeclareWarInvasionAndPurchase(
-          snapshot: snapshot,
-          game: game,
-        );
-        expect(first, expected);
-        expect(second, first);
-      }
-    });
-  });
+  registerObserverGoalPhaseNwSuppressionPredicateGameMatrixDeterminismCases();
 }

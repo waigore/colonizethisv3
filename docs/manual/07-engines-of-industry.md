@@ -2,75 +2,83 @@
 
 ## Purpose
 
-Extraction fills your warehouse only with raw plenty. **Production** turns timber into lumber, wool into fabric, and iron into the cast iron that builds roads and ships. Without industry, armies starve of arms and the New World stays a quarry without a forge. This chapter covers your central stockpile, the recipe pipeline, and the Production screen where you set how hard the realm works each turn.
+A **Great Power** is a playable nation. The **New World** is the colonial map. **Extraction** is the raw goods that reach your warehouse after you confirm **Next turn**. **Production** is the screen and the later step that turns those raw goods into finished goods. A **recipe** is one finished good and the inputs it needs. Without industry, armies lack arms and the New World stays a quarry without a forge. This chapter covers the one shared warehouse, the recipes you can run, and `GAME20001` **Production screen**.
 
 ## How it is done
 
 ### The warehouse of the realm
 
-1. Every Great Power has **one central stockpile** — commodities are not stored per province. Extraction (and later trade fills) land there; Consumption and Production draw from there.
-2. Phase order that shapes next-turn previews: **Extraction → Riches-to-treasury → Consumption → Production**. Gold, silver, gems, diamonds, and spices convert to treasury before industry runs; food and luxuries feed workers first so **idle labour** for crafts is honest.
-3. Stockpile storage is **unbounded** by design (no warehouse-full dump). Overseas **cargo** still limits how much arrives by sea in a turn — that is a shipping limit, not a shed limit.
+1. Every Great Power has **one central warehouse**. Goods are not stored separately in each province. Extraction and later trade fills land there; feeding people and industry draw from there.
+2. After you confirm **Next turn**, the game first brings in new goods, then turns gold and similar riches into treasury, then feeds people, then runs industry. Riches become treasury before industry runs. During feeding, armies eat first, then fleets, then workers. Only workers who were fed (and trained workers who also received their luxury) can staff industry that turn, so **Labour this turn** is honest. **Idle labour** means workers who were fed (and, if trained, given their luxury) and can staff industry that turn.
+3. Warehouse storage has **no upper limit**. Overseas **cargo** still limits how much arrives by sea in a turn — that is a shipping limit, not a shed limit.
+
+Two design notes disagree on preview timing: one lists **Extraction → Riches-to-treasury → Consumption → Production**; the player-facing **Breakdown** table starts with **Pending build costs**, then those same later steps. This handbook does not invent a third order. Do not treat the four-step list as the **Breakdown** column order until those notes are reconciled.
 
 ### Opening Production
 
-1. From `GAME10001` **Game screen**, open Production via the empire rail / toolbar route to `GAME20001` **Production screen**.
-2. **Available** (left on wide layouts): food, raw materials, manufactured goods, and worker tiers, with projected signed deltas when net change is non-zero. Under the worker grid, **Labour this turn** shows how much labour will be available after feeding armies, fleets, and workers (including food arriving from extraction this turn). When labour falls short of your full worker pool, a plain reason explains the main shortage; **Labour details** lists each tier’s working vs not-working headcounts. When you have regiments or ships, a forces-food strip below labour readiness states whether armies and/or fleets are fully fed this turn; if rations run short, it warns that land or naval battles will be somewhat or much weaker. **Forces food details** shows fed/total counts and reminds you that armies and fleets eat before workers. Tap **Breakdown** to open `PROD20001` **Production commodity breakdown dialog** for a read-only deeper view.
-3. **Allocation** (right / below): one row per recipe. Set **desired output** with the slider or − / + / maximize / clear. The row shows inputs in parentheses, `max · bottleneck`, and labour warnings when idle labour or materials cannot cover the ask.
-4. Desired output is converted to labour assignments for the resolver (`desired × labour per unit`). **Reset** clears allocations. While turn resolution is blocking, treat the panel as read-only.
+1. On `GAME10001` **Game screen**, tap the **Production** icon on the left of the map to open `GAME20001` **Production screen**.
+2. **Available** is on the left on a wide screen and above **Allocation** on a phone.
+3. Food, **Raw Materials**, **Manufactured**, and **Workers** show amounts: for tradeable goods, the painted number is what you can still sell (warehouse minus industry reservations and offers already staged on Trade — Chapter 8). Rest on a tradeable cell (or press and hold) to read that meaning. Tap a tradeable good to open `GAME60001` **Trade screen** on **Market**, focused on that good, without placing a bid or offer for you. **Riches** and **Workers** show the warehouse / pool amount and do not open Trade. A green **+N** or red **−N** appears only when the projected end-of-turn change is not zero.
+4. **Labour this turn** sits under the worker ranks.
+5. Tap **Labour details** for working vs not-working counts.
+6. **Labour Controls** is the hire/train block under that. For hire, train, **Queued: N**, **Disband**, and when new workers staff industry, see Chapter 5 — this chapter only points you to that block.
+7. When you have armies or fleets, the forces-food line and **Forces food details** follow.
+8. Tap **Breakdown** to open `PROD20001` **Production commodity breakdown dialog**. The title is **Commodity breakdown**. Columns are **Commodity**, **Pending build costs**, **Extraction**, **Riches to treasury**, **Consumption**, **Production**, and **Total**, grouped under Food / Raw materials / Manufactured. Tap **Close** to dismiss. Changing Allocation or **Reset** refreshes an open dialog. The **Total** matches the Available **+N** / **−N** (or hides the change when the net is zero).
+9. **Allocation** (right on a wide screen, below **Available** on a phone): one row per recipe. Set **desired output** with the slider or − / + / maximize / clear. The row shows inputs in parentheses, `max · bottleneck`, and labour warnings when idle labour or materials cannot cover the ask.
+10. After you confirm **Next turn**, the game tries to make that many whole batches from the warehouse and from workers who can work that turn. Tap **Reset** to clear every recipe. While the game is carrying out the turn, do not edit Allocation, **Reset**, **Breakdown**, or **Labour Controls**. You may still open `GAME90001` **Counsel screen** to read advice; Apply / Agree stay hidden until edits are allowed again.
 
 ### Industry Counsel (`GAME90001`)
 
-1. From Production Allocation, tap **Counsel** in the header or a starred row’s counsel star to open `GAME90001` **Counsel** with the Industry tab.
-2. The vizier lists up to three ranked recommendations (produce, train workers, or unblock feedstock) using the same **core** industry signals as AI planners — without crisis-only boosts.
-3. **Apply recommended industry allocation** on a produce card writes the ranker’s full core assignment snapshot to your desired outputs (recipes outside that snapshot keep their current sliders).
-4. **Agree** on a train card queues one recruit order for that tier when still affordable; Labour Controls shows the pending count.
-5. **Open Development** on a feedstock card navigates to `GAME80001` — it does not auto-assign improve work.
-6. Empty counsel: “No pressing industry advice this turn.” Agree actions are hidden while turn resolution blocks edits, same as Production.
+1. From Production Allocation, tap **Counsel** in the header or a starred row’s counsel star to open `GAME90001` **Counsel screen** on the Industry tab. Counsel also has **Military** and **Development** tabs; Industry is the tab you land on from Production.
+2. The vizier lists up to three ranked cards: make a good, train workers, or send you to improve land that supplies a missing input. The advice uses the same everyday industry signals rivals use for ordinary production — not the extra wartime shortcuts only they get.
+3. On a make-a-good card, tap **Apply recommended industry allocation** to write that full set of desired outputs; recipes not in that set keep the numbers you already set.
+4. On a train card, tap **Agree** to queue one hire of that rank when you can still afford it.
+5. On a missing-input card, tap **Open Development** to open `GAME80001` **Development screen**; that tap does not assign improve work.
+6. Empty counsel shows **No pressing industry advice this turn.**
 
-The same **Counsel** screen (`GAME90001`) also hosts a **Trade** tab when opened from `GAME60001` Market — see Chapter 8 for Apply/Agree on the AI-equivalent trade book.
+The same `GAME90001` **Counsel screen** also hosts a **Trade** tab when opened from `GAME60001` **Trade screen** — see Chapter 8 for Apply/Agree on trade advice.
 
-### Recipes you can run (current product)
+### Recipes you can run
 
 | Output | Typical inputs | Labour / unit | Notes |
 |--------|----------------|---------------|--------|
 | Lumber | timber ×2 | 2 | Roads, ports, builds |
 | Fabric (wool) | wool ×2 | 2 | Always available |
-| Fabric (cotton) | cotton ×2 | 2 | Needs `cotton_weaving` unlocked |
+| Fabric (cotton) | cotton ×2 | 2 | Needs **Cotton Weaving** (Chapter 9); the row stays visible and shows **(locked)** until then |
 | Cast iron | iron ×2 | 2 | Civilian builds |
 | Steel | iron ×1, coal ×1 | 2 | Rails and later industry |
 | Paper | timber ×2 | 2 | |
-| Bronze | copper ×1, tin ×1 | 3 | Catalogue exception (labour 3) |
-| Refined sugar / cigars / fur hats | cane / tobacco / furs ×2 | 2 | Luxuries / trade goods |
+| Bronze | copper ×1, tin ×1 | 3 | Uses 3 labour even though it has two inputs |
+| Refined sugar / cigars / fur hats | Sugar Cane / tobacco / furs ×2 | 2 | Luxuries / trade goods |
 
-Whole runs only — if materials or labour run short, industry completes as many full batches as possible and stops. Worker tiers supply labour points (Peasant 1, Apprentice 4, Journeyman 6, Master 8 per turn, subject to luxury caps). Production uses idle labour; it does **not** remove workers from the pool.
+Whole runs only — if materials or labour run short, industry completes as many full batches as possible and stops. Peasant 1, Apprentice 4, Journeyman 6, Master 8 labour per turn, but only if that worker was fed — and a trained worker also received refined sugar, cigars, or fur hats. Missing food or luxury means 0 labour from that worker; they stay in the pool. Production uses idle labour; it does **not** remove workers from the capital pool.
 
 ## Counsel
 
-**Counsel.** Hark, my liege: when the stars gleam on Allocation, the Industry Counsel speaks — heed the ranked advice, then **Agree** only when you mean to queue labour or train workers; the sliders obey your hand afterward.
+**Counsel.** Hark, my liege: when stars mark Allocation rows, open Industry Counsel. Tap **Apply recommended industry allocation** only when you want those recipe amounts written for you; tap **Agree** on a train card only when you mean to hire. You may still move the sliders afterward.
 
-**Tip.** Read the Available deltas after you set Allocation. If Consumption will eat your food, Production labour collapses next turn even when the warehouse looks full today.
+**Tip.** Read the Available **+N** / **−N** after you set Allocation. If feeding people will eat your food, next turn’s labour for crafts collapses even when the warehouse looks full today.
 
-**Warning.** Tech-gated recipes (cotton fabric) stay silent until researched. Do not plan a cotton empire on the wool row alone.
+**Warning.** The cotton-fabric row stays on Allocation with **(locked)** until you research **Cotton Weaving**. Do not plan a cotton industry on the wool row alone.
 
 ## The other courts
 
-Rival Great Powers run an **economy planner** that assigns labour to feasible recipes under the same effective-labour cap, biased by personality and growth stage (`SPEC/ai/economy-planner.md`, `SPEC/ai/growth-stage-planner.md`). Expect industrial rivals to lock feedstock early and to prefer cargo when their agendas lean trader.
+Rival Great Powers assign work only to recipes they can actually run, under the same labour limit you see after feeding people. A chosen **leader** changes how boldly they lean toward trade goods or cargo ships — not how you win. Expect industrial rivals to improve the land that feeds their forges early, and to keep cargo ships home when they lean toward trade. They do not get extra wartime production shortcuts beyond what Industry Counsel shows you.
 
 ## Consequences
 
-- Ignoring Production while expanding extraction floods the stockpile with raw goods that never become build materials.
-- Over-allocating past idle labour or inputs wastes the turn’s craft window; under-allocating leaves Workers idle while rivals forge ahead.
-- Disconnecting improved tiles (Chapter 6) starves Extraction first, then starves industry — the Production screen cannot invent timber that never arrives.
+- Ignoring Production while expanding extraction floods the warehouse with raw goods that never become build materials.
+- Asking for more batches than idle labour or inputs can cover wastes the turn’s craft window; asking for too little leaves workers idle while rivals forge ahead.
+- Cutting improved tiles off from the capital (Chapter 6) starves Extraction first, then starves industry — the Production screen cannot invent timber that never arrives.
 
 ## Acceptance criteria for this chapter
 
-- [ ] Explains central unbounded stockpile and Extraction → Riches → Consumption → Production order.
-- [ ] Documents `GAME20001` / `PROD20001` flows: Available, labour readiness, Allocation, desired output, bottleneck, Reset.
-- [x] Documents `GAME90001` Counsel Industry tab: stars entry, Agree apply, Development deep-link.
-- [ ] Lists current-product recipes with tech gate on cotton fabric.
-- [ ] States whole-run rule and labour tiers without WorkerPool headcount drain.
-- [ ] Sources match the chapter coverage map.
+- [x] Explains the one shared unbounded warehouse and next-turn order in player words (riches to treasury, then feeding, then industry).
+- [x] Documents `GAME20001` / `PROD20001` flows: Available (sellable amount for tradeable goods, tap opens Trade Market), labour readiness, Allocation, desired output, bottleneck, Reset, Breakdown columns.
+- [x] Documents `GAME90001` **Counsel screen** Industry tab: stars entry, **Apply recommended industry allocation**, **Agree** on train cards, **Open Development**.
+- [x] Lists the recipes you can run now, with Cotton Weaving gating cotton fabric.
+- [x] States the whole-batch rule and labour ranks without removing workers from the capital pool.
+- [x] Sources match the chapter coverage map (unique path bullets; empire buttons, Cotton Weaving, industry counsel ranking included).
 
 ## Sources
 
@@ -78,14 +86,16 @@ Rival Great Powers run an **economy planner** that assigns labour to feasible re
 - `SPEC/game/production-recipes.md`
 - `SPEC/game/commodity-catalog.md`
 - `SPEC/game/workers-and-population.md`
+- `SPEC/game/tech-tree-new-world.md`
 - `SPEC/program/orders.md`
-- `SPEC/ui/production-panel.md`
 - `SPEC/program/economy-models.md`
 - `SPEC/program/order-projections.md`
+- `SPEC/program/industry-counsel-ranking.md`
+- `SPEC/program/trade-counsel-ranking.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/production-commodity-breakdown-dialog.md`
 - `SPEC/ui/counsel-panel.md`
-- `SPEC/program/trade-counsel-ranking.md`
+- `SPEC/ui/empire-buttons.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/economy-planner.md`
 - `SPEC/ai/growth-stage-planner.md`

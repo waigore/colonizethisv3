@@ -4,7 +4,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'trade_counsel_test_support.dart';
+import 'trade_counsel_test_fixtures.dart';
 
 void main() {
   group('tradeCounselProjectStockpileAfterProduction', () {

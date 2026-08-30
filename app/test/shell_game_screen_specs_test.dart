@@ -57,10 +57,11 @@ Widget _wrapGameScreen({
   required AppEventBus bus,
   required Game game,
   required bool victory,
+  bool calendarHalted = false,
   bool blocking = false,
   bool introShown = true,
 }) {
-  final activeGame = victory
+  var activeGame = victory
       ? game.copyWith(
           victory: VictoryState(
             winnerPlayerId: game.players.first.id,
@@ -69,6 +70,9 @@ Widget _wrapGameScreen({
           ),
         )
       : game;
+  if (calendarHalted) {
+    activeGame = activeGame.copyWith(calendarCampaignHalted: true);
+  }
   return buildGameScreenHost(
     gamesBox: _StubBox(),
     game: activeGame,
@@ -214,6 +218,56 @@ void main() {
       );
       // Sanity: at least one button is inside the VictoryOverlay.
       expect(tester.widgetList(overlayButtons), isNotEmpty);
+    });
+
+    testWidgets(
+        'calendar halt hides overlay buttons and shows calendar VictoryOverlay',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      await tester.pumpWidget(
+        _wrapGameScreen(
+          bus: bus,
+          game: baseGame,
+          victory: false,
+          calendarHalted: true,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.byType(VictoryOverlay), findsOneWidget);
+      expect(find.text('CAMPAIGN COMPLETE'), findsOneWidget);
+      expect(find.text('MILITARY VICTORY'), findsNothing);
+      expect(find.byIcon(Icons.menu), findsNothing);
+      final allButtons = find.byType(CtNinePatchButton);
+      final overlayButtons = find.descendant(
+        of: find.byType(VictoryOverlay),
+        matching: find.byType(CtNinePatchButton),
+      );
+      expect(
+        tester.widgetList(allButtons).length,
+        tester.widgetList(overlayButtons).length,
+      );
+    });
+
+    testWidgets(
+        'military victory wins over calendar halt for overlay title',
+        (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      await tester.pumpWidget(
+        _wrapGameScreen(
+          bus: bus,
+          game: baseGame,
+          victory: true,
+          calendarHalted: true,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.byType(VictoryOverlay), findsOneWidget);
+      expect(find.text('MILITARY VICTORY'), findsOneWidget);
+      expect(find.text('CAMPAIGN COMPLETE'), findsNothing);
     });
 
     testWidgets(

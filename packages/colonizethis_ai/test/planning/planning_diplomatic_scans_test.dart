@@ -5,8 +5,12 @@ import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
+
+import '../support/planning_diplomatic_scans_test_support.dart';
+import 'planning_diplomatic_scans_at_war_gp_cases.dart';
+
+const String _gp1 = kPlanningDiplomaticScansGp1;
+const String _gp2 = kPlanningDiplomaticScansGp2;
 const String _gp3 = 'gp3';
 const String _minor1 = 'minor1';
 
@@ -18,22 +22,6 @@ AIWorldSnapshot _snapshotWithAtWar(List<String> atWarWith) {
     conquest: const ConquestSummary(),
     economy: const EconomySummary(),
     relations: const {},
-  );
-}
-
-Game _gameWithEvents(List<DiplomaticEvent> events) {
-  return Game(
-    id: 'g-3717-cooldown-scan',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(provinces: []),
-      newWorld: const RegionData(provinces: []),
-    ),
-    players: const [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false),
-      Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    diplomaticHistoryEvents: events,
   );
 }
 
@@ -61,7 +49,7 @@ bool _warFromGp1ToGp2(DiplomaticEvent e) =>
 void main() {
   group('hasRecentDiplomaticEventWithinCooldown (Refs #3717)', () {
     test('true when the newest matching event is inside the window', () {
-      final game = _gameWithEvents([_ev(2)]);
+      final game = planningDiplomaticScansGameWithEvents([_ev(2)]);
       expect(
         hasRecentDiplomaticEventWithinCooldown(
           game: game,
@@ -76,7 +64,7 @@ void main() {
     test(
       'false when matching event is exactly cooldownTurns old (strict <)',
       () {
-        final game = _gameWithEvents([_ev(1)]);
+        final game = planningDiplomaticScansGameWithEvents([_ev(1)]);
         expect(
           hasRecentDiplomaticEventWithinCooldown(
             game: game,
@@ -90,7 +78,7 @@ void main() {
     );
 
     test('false when no event satisfies the predicate', () {
-      final game = _gameWithEvents([_ev(4, type: DiplomaticEventType.peace)]);
+      final game = planningDiplomaticScansGameWithEvents([_ev(4, type: DiplomaticEventType.peace)]);
       expect(
         hasRecentDiplomaticEventWithinCooldown(
           game: game,
@@ -103,7 +91,7 @@ void main() {
     });
 
     test('false on empty diplomatic history', () {
-      final game = _gameWithEvents(const []);
+      final game = planningDiplomaticScansGameWithEvents(const []);
       expect(
         hasRecentDiplomaticEventWithinCooldown(
           game: game,
@@ -121,7 +109,7 @@ void main() {
         // History ascending by turn; `.reversed` visits turn 5 (peace, no
         // match) first and must continue to the older matching declare-war at
         // turn 4 rather than stopping at the first non-match.
-        final game = _gameWithEvents([
+        final game = planningDiplomaticScansGameWithEvents([
           _ev(4),
           _ev(5, type: DiplomaticEventType.peace),
         ]);
@@ -138,7 +126,7 @@ void main() {
     );
 
     test('directional predicate ignores the reverse-direction event', () {
-      final game = _gameWithEvents([_ev(4, from: _gp2, to: _gp1)]);
+      final game = planningDiplomaticScansGameWithEvents([_ev(4, from: _gp2, to: _gp1)]);
       expect(
         hasRecentDiplomaticEventWithinCooldown(
           game: game,
@@ -214,53 +202,5 @@ void main() {
     });
   });
 
-  group('atWarGreatPowerOrderTarget (Refs #3717)', () {
-    const Player gp = Player(id: _gp2, displayName: 'GP2', isHuman: false);
-
-    test('true when target is a Great Power we are at war with', () {
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: gp,
-          snapshot: _snapshotWithAtWar([_gp2]),
-          targetFactionId: _gp2,
-        ),
-        isTrue,
-      );
-    });
-
-    test('false when the target is not a Great Power (targetGp null)', () {
-      // A minor/tribe target the player is at war with still fails the gate:
-      // only Player Great Powers are eligible offer-peace candidates here.
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: null,
-          snapshot: _snapshotWithAtWar([_minor1]),
-          targetFactionId: _minor1,
-        ),
-        isFalse,
-      );
-    });
-
-    test('false when the Great Power target is not currently at war', () {
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: gp,
-          snapshot: _snapshotWithAtWar([_gp3]),
-          targetFactionId: _gp2,
-        ),
-        isFalse,
-      );
-    });
-
-    test('false when both eligibility conditions fail', () {
-      expect(
-        atWarGreatPowerOrderTarget(
-          targetGp: null,
-          snapshot: _snapshotWithAtWar(const []),
-          targetFactionId: _gp2,
-        ),
-        isFalse,
-      );
-    });
-  });
+  registerPlanningDiplomaticScansAtWarGpCases();
 }

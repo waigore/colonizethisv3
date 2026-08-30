@@ -17,11 +17,12 @@
 
 ## Trigger conditions
 
-- **Access:** Toolbar **Military Units** button.
+- **Access:** Toolbar **Military Units** button, or a `MAP10001` Home-Army-only stack-marker tap (`OpenArmyStackMarkerEvent` → `OpenMilitaryUnitsPanelEvent`).
 - **Desktop / wide:** Bottom-sheet panel over the map; map visible.
 - **Mobile / narrow:** [mobile-adaptation.md](mobile-adaptation.md).
 - **Bottom-sheet sizing (Refs #3627):** The host sizes the panel via the shared `unitsPanelSheetConstraints(viewport)` rule (see [`components/units-panel-shell.md`](components/units-panel-shell.md) § Bottom-sheet sizing): **narrow** (`width < 600` dp) → full width × **`50%`** height; **wide** (`width >= 600` dp) → **`70%`** width × **`55vh`**. `isScrollControlled: true`; content scrolls inside the sheet.
 - **Train button:** Header **Train** closes panel and emits `OpenDialogEvent(trainMilitaryDialogId)` for [train-military-dialog.md](train-military-dialog.md).
+- **Counsel button:** Header **Counsel** closes panel and emits `NavigateToRouteEvent(Routes.counsel, …)` with `counselTab: 'military'` for [counsel-panel.md](counsel-panel.md) Military tab (Refs #4307).
 - **Header action chrome (mockup `.train-btn` primary; issue #3514 owner decisions #5 / #15):** The header **Train** and **Combine** actions render as compact **primary** pills via `CtActionTextButton(primary: true)` — gradient surface, 1 px `EditorialMonoclePalette.accentDim` border (lifting to `--accent` on hover), `--accent` label foreground, and **no nine-patch corner brackets**. The select-all checkbox is unchanged. Bus emissions and enable/disable rules are unchanged: **Train** is disabled in observe (read-only) mode; **Combine** is enabled only when `canCombineArmySelection` holds for the current selection. The `pixel-art-ui-catalog.md` § `CtActionTextButton` entry documents the primary variant.
 - **No production Close pill (mockup `.close-btn` preview-only; issue #3514 owner decision #14):** The `UNIT20001` mockup header (`mockups/UNIT20001-military-units-panel.html`) depicts a **Close** pill purely as a static preview affordance. The shipped panel renders **no** production Close pill: it is hosted in a side-panel / bottom-sheet surface that owns its own dismissal (the shared [`UnitsPanelShell`](components/units-panel-shell.md) `CtTopBar` renders **without** a back/close button — see § *Layout / wireframe* there). The mockup HTML is **not** edited to remove the preview Close; this divergence is recorded here so the panel matches the mockup style without adding a redundant Close control.
 - **Army row action chrome (mockup `.unit-row` pills; issue #3514 owner decision #6):** Army row actions render through the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) mockup compact-pill family — **Move** and **Split** as neutral `CtActionTextButton` pills, and **Locate** as the rightmost **icon-only circular** `CtCircularLocateButton` (mockup `.locate-btn`). The Locate control is **moved out of the title row** (`CtIconAction`) into the actions cluster; it still emits the same `LocateMapTileEvent` tile key (no behavioral regression). Move / Split are exposed **only** as these title-row pills; the expanded body carries **no** duplicate `CtNinePatchButton` footer actions (mockup `.u-comp-table` shows the composition rows only).
@@ -75,6 +76,7 @@ Side panel or bottom sheet (viewport-dependent); **Land** and **Naval** branches
 | Move (army) | Non-Home army | Opens [move-army-dialog.md](move-army-dialog.md) | `ArmyMoveRequestedEvent` on confirm. |
 | Locate | Row action | `LocateMapTileEvent` | Map pan/highlight. |
 | Train (header) | Always | `OpenDialogEvent(trainMilitaryDialogId)` | Closes panel. |
+| Counsel (header) | Not read-only | `NavigateToRouteEvent(Routes.counsel, counselTab: military)` | Closes panel; opens `GAME90001` Military tab. |
 | Split / Combine | Per army management spec | Bus events per [military-units-army-management.md](military-units-army-management.md) | — |
 
 ---

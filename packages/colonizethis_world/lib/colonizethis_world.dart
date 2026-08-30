@@ -71,7 +71,9 @@ export 'package:colonizethis_world/src/world/naval_mission_orders.dart';
 export 'package:colonizethis_world/src/world/fog_resolution.dart'
     show
         applyCoastalSeaZoneFullVisibility,
-        applyCoastalSeaZoneFullVisibilityForProvinceTargets;
+        applyCoastalSeaZoneFullVisibilityForProvinceTargets,
+        applyDistantSeaZoneFogRevert,
+        applyFogDecay;
 export 'package:colonizethis_world/src/world/player_state_pipeline.dart';
 export 'package:colonizethis_world/src/world/player_view.dart';
 export 'package:colonizethis_world/src/world/province_owner_cache.dart';

@@ -16,13 +16,13 @@ Players reorganize **regiments** between **armies** in the same province, analog
 - **Per-army checkbox:** Every **army** row (including **Home Army**) shows a checkbox at all times (collapsed or expanded).
 - **Combine enabled** when at least two armies are checked and every checked army shares the **same province** (same owner). Cross-province combine is disabled.
 - **Merge target:** If **Home Army** is checked, it is always the survivor; otherwise the target is the checked army **first in panel display order** ([military-units-panel.md](military-units-panel.md)).
-- **Data:** Concatenate regiment id lists; remove source armies; remove empty non-Home armies. **Implementation:** **colonizethis_logic** (or colonizethis_models + logic) applies state mutations; the **app** emits events and displays results only ([military-units-panel.md](military-units-panel.md) § UI vs logic).
+- **Data:** Concatenate regiment id lists; remove source armies; remove empty non-Home armies. **Implementation:** **colonizethis_logic** (or colonizethis_models + logic) applies state mutations; the **app** emits events and displays results only ([military-units-panel.md](military-units-panel.md) § UI vs logic). `MAP20001` Military **Combine** (when ≥2 human armies share the overlay province) confirms then emits the same `ArmyCombineRequestedEvent`; subset merges stay on this panel ([province-sea-zone-detail-overlay-army-combine.md](province-sea-zone-detail-overlay-army-combine.md), Refs #4610).
 
 ---
 
 ## Split army
 
-- **Trigger:** Expanded army row shows **Split Army** (including Home Army).
+- **Trigger:** Expanded army row shows **Split Army** (including Home Army). `MAP20001` Military **Move** / **Invade** and a non-empty Home Army map marker also open this dialog on the detach-then-move path (confirm label **Detach and choose destination**); confirm still emits `ArmySplitRequestedEvent` and does not auto-pick composition.
 - **UX:** Reuse the same **transfer-list** pattern as naval split ([naval-units-fleet-management.md](naval-units-fleet-management.md) § Reusable Transfer Component): **one row per regiment type** with counts (like ship types in Split Fleet); confirm resolves types to concrete regiment unit ids in army list order and creates a **new** army in the **same** province with the chosen regiments.
 - **Composite contract:** The transfer-list scaffold (props, layout, narrow-stack threshold at `kCtTransferListSideBySideMinWidth = 360 dp`) lives in [`components/ct-transfer-list.md`](components/ct-transfer-list.md); the Split Army dialog only configures regiment-type labels and the per-army `canConfirm` rule (Refs #2914 S9).
 
@@ -41,3 +41,5 @@ Players reorganize **regiments** between **armies** in the same province, analog
 - Given the user checks armies in **different** provinces, when the user views **Combine**, then **Combine** is disabled.
 
 - Given the human player has **no** land armies (edge case only if state is invalid), when the land section renders, then the UI layer shows the empty land state per [military-units-panel.md](military-units-panel.md) (e.g. no army rows).
+
+- Given Split Army opens from the map detach-then-move path, when the dialog renders, then the UI layer shows title **Detach a field army** and confirm **Detach and choose destination** (`app/test/home_army_detach_split_goldens_test.dart`).

@@ -1,6 +1,5 @@
-// Wave 6 (#4246) split validation, suggestion, and application modules and
-// ratcheted ceiling to 350 physical lines; shrink-only grandfather cleared after
-// Slice C.
+// Wave 10 (#4587) near-cap lib splits and ratcheted ceiling to 250 physical lines;
+// shrink-only grandfather remains empty.
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,8 +7,8 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling chosen at wave-6 post-split target (~350 physical lines).
-const int ordersLibSourceFileSizeCeiling = 350;
+/// Ratchet ceiling chosen at wave-10 post-split target (250 physical lines).
+const int ordersLibSourceFileSizeCeiling = 250;
 
 const String _ordersLibRelativePath = 'packages/colonizethis_orders/lib';
 
@@ -31,7 +30,9 @@ int runCheckOrdersLibSourceFileSize(
   final logE = err ?? stderr.writeln;
   final libDir = Directory(p.join(repoRoot, _ordersLibRelativePath));
   if (!libDir.existsSync()) {
-    logE('check_orders_lib_source_file_size: $_ordersLibRelativePath not found.');
+    logE(
+      'check_orders_lib_source_file_size: $_ordersLibRelativePath not found.',
+    );
     return 1;
   }
 
@@ -78,7 +79,7 @@ int runCheckOrdersLibSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_orders_lib_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4246).',
+      '(ceiling $ceiling; Refs #4246, #4317, #4508, #4587).',
     );
     return 0;
   }
@@ -86,7 +87,7 @@ int runCheckOrdersLibSourceFileSize(
   violations.sort();
   logE(
     'check_orders_lib_source_file_size: found ${violations.length} violation(s) '
-    'under $_ordersLibRelativePath (wave-6 ceiling $ceiling; Refs #4246):',
+    'under $_ordersLibRelativePath (wave-10 ceiling $ceiling; Refs #4246, #4317, #4508, #4587):',
   );
   for (final violation in violations) {
     logE(' - $violation');

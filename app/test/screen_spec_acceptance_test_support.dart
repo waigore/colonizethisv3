@@ -1,4 +1,4 @@
-// Shared CtMainMenu frames and finders for screen_spec_acceptance_part*_test
+// Shared CtMainMenu frames and finders for screen_spec_acceptance_*_test
 // (Refs #4013). Pins SPEC/ui/main-menu.md under colonial / editorial themes.
 
 import 'package:colonizethis_app/config/themes.dart';
@@ -16,6 +16,7 @@ Widget buildScreenSpecMainMenu({
   MainMenuVariant variant = MainMenuVariant.plain,
   bool resumeGameVisible = false,
   VoidCallback? onResumeGame,
+  VoidCallback? onQuickStart,
   required VoidCallback onNewGame,
   required VoidCallback onLoadGame,
   required VoidCallback onSettings,
@@ -28,6 +29,7 @@ Widget buildScreenSpecMainMenu({
       variant: variant,
       state: state,
       version: formatDebugAwareVersion('v1.0.0'),
+      onQuickStart: onQuickStart ?? () {},
       onNewGame: onNewGame,
       resumeGameVisible: resumeGameVisible,
       onResumeGame: onResumeGame,
@@ -70,6 +72,34 @@ DecoratedBox findGradientSurfaceFor(WidgetTester tester, String label) {
   return tester.widget<DecoratedBox>(boxes.first);
 }
 
+/// Default-size [CtMainMenu] pump for pixelArt chrome ACs (Refs #4352).
+Future<void> pumpScreenSpecMainMenu(
+  WidgetTester tester, {
+  MainMenuVariant variant = MainMenuVariant.plain,
+  VoidCallback? onQuit,
+  bool resumeGameVisible = false,
+  VoidCallback? onResumeGame,
+}) async {
+  await tester.pumpWidget(
+    buildScreenSpecMainMenu(
+      variant: variant,
+      resumeGameVisible: resumeGameVisible,
+      onResumeGame: onResumeGame,
+      onQuickStart: () {},
+      onNewGame: () {},
+      onLoadGame: () {},
+      onSettings: () {},
+      onQuit: onQuit ?? () {},
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// Texts whose style letter-spacing matches [spacing].
+Finder textsWithLetterSpacing(double spacing) => find.byWidgetPredicate(
+  (Widget w) => w is Text && w.style?.letterSpacing == spacing,
+);
+
 /// Pumps [CtMainMenu] at an explicit viewport size for responsive ACs.
 Future<void> pumpScreenSpecMainMenuAtSize(
   WidgetTester tester, {
@@ -83,6 +113,7 @@ Future<void> pumpScreenSpecMainMenuAtSize(
       data: MediaQueryData(size: size),
       child: buildScreenSpecMainMenu(
         variant: variant,
+        onQuickStart: () {},
         onNewGame: () {},
         onLoadGame: () {},
         onSettings: () {},

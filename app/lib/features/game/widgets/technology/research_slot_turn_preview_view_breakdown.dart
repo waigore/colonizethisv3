@@ -6,8 +6,10 @@ import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'research_slot_preview.dart';
-import 'research_slot_turn_preview_view_styles.dart';
-import 'technology_slot_funding_toggles.dart';
+import 'research_slot_turn_preview_view_breakdown_rows.dart';
+
+export 'research_slot_turn_preview_view_breakdown_rows.dart'
+    show spyInsightBreakdownLabel, joinCourtDisplayNames;
 
 /// Opens the research-funding breakdown dialog (Refs #4117 de-part).
 void showResearchFundingBreakdownDialog({
@@ -47,88 +49,16 @@ class ResearchFundingBreakdownDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: CtSpacing.m),
-          _BreakdownRow(
-            label: l10n.technologyPanel_rpBreakdownBaseLabel(
-              fundingLevelLabel(l10n, preview.funding),
-            ),
-            value: l10n.technologyPanel_rpValue(preview.baseRpPerTurn),
+          ResearchFundingBreakdownMetrics(preview: preview, l10n: l10n),
+          ResearchFundingBreakdownBlockedNotice(
+            preview: preview,
+            l10n: l10n,
+            theme: theme,
           ),
-          if (preview.hasIndustrialBonus)
-            _BreakdownRow(
-              label: l10n.technologyPanel_rpBreakdownIndustrialLabel,
-              value: l10n.technologyPanel_rpValue(
-                preview.industrialBonusRpPerTurn,
-              ),
-            ),
-          _BreakdownRow(
-            label: l10n.technologyPanel_rpBreakdownEffectiveLabel,
-            value: l10n.technologyPanel_rpValue(preview.effectiveRpPerTurn),
-            emphasised: true,
-          ),
-          _BreakdownRow(
-            label: l10n.technologyPanel_rpBreakdownTreasuryLabel,
-            value: l10n.technologyPanel_goldValue(preview.goldCostPerTurn),
-          ),
-          if (preview.debtBlocked) ...[
-            const SizedBox(height: CtSpacing.s),
-            Text(
-              l10n.technologyPanel_rpBreakdownDebtBlocked,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: EditorialMonoclePalette.danger,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
           const SizedBox(height: CtSpacing.ml),
           CtNinePatchButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(l10n.common_close),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BreakdownRow extends StatelessWidget {
-  const _BreakdownRow({
-    required this.label,
-    required this.value,
-    this.emphasised = false,
-  });
-
-  final String label;
-  final String value;
-  final bool emphasised;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color labelColor = emphasised
-        ? EditorialMonoclePalette.fg
-        : EditorialMonoclePalette.muted;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 11,
-                fontWeight: emphasised ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ),
-          const SizedBox(width: CtSpacing.m),
-          Text(
-            value,
-            style: researchSlotTurnPreviewMonoStyle(
-              emphasised
-                  ? EditorialMonoclePalette.accentBright
-                  : EditorialMonoclePalette.accentDim,
-            ).copyWith(fontSize: 11),
           ),
         ],
       ),

@@ -42,8 +42,10 @@
 
 import 'phase_planner_economy_filter_below_quota_peace_insufficient_regiments_cases.dart';
 import 'phase_planner_economy_filter_below_quota_peace_zero_regiments_cases.dart';
+import 'phase_planner_economy_filter_below_quota_peace_zero_regiments_matrix_cases.dart';
 
 void main() {
   registerPhasePlannerEconomyFilterBelowQuotaPeaceInsufficientRegimentsCases();
   registerPhasePlannerEconomyFilterBelowQuotaPeaceZeroRegimentsCases();
+  registerPhasePlannerEconomyFilterBelowQuotaPeaceZeroRegimentsMatrixCases();
 }

@@ -2,6 +2,245 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
+  String provinceOverlay_indentedCount(String label, int count) {
+    return '  $label: $count';
+  }
+
+  @override
+  String get militaryCounsel_tabMilitary => 'Military';
+
+  @override
+  String get militaryCounsel_empty => 'No pressing military advice this turn.';
+
+  @override
+  String get militaryCounsel_action_agree => 'Agree';
+
+  @override
+  String get militaryCounsel_trainAgreeFailed =>
+      'Cannot raise those units right now — check treasury, stockpile, peasants, and queued orders.';
+
+  @override
+  String get militaryCounsel_invadeAgreeFailed =>
+      'Cannot stage that invasion right now — check army, destination, and diplomacy.';
+
+  @override
+  String get militaryCounsel_title_train => 'Raise units';
+
+  @override
+  String militaryCounsel_title_trainUnit(String unit, int count) {
+    return 'Raise $unit × $count';
+  }
+
+  @override
+  String get militaryCounsel_title_invade => 'Invade province';
+
+  @override
+  String militaryCounsel_title_invadeArmy(String army, String province) {
+    return 'Invade with $army → $province';
+  }
+
+  @override
+  String militaryCounsel_ownerLine(String owner) {
+    return 'Owner: $owner';
+  }
+
+  @override
+  String get militaryCounsel_cost_noMaterials => 'no extra materials';
+
+  @override
+  String militaryCounsel_costSummary(
+    int treasury,
+    String materials,
+    int peasants,
+  ) {
+    return 'Cost: $treasury treasury; $materials; $peasants peasants';
+  }
+
+  @override
+  String get militaryCounsel_reason_affordableTrain_brief =>
+      'Affordable this turn — the planner would raise these units now.';
+
+  @override
+  String get militaryCounsel_reason_atWarInvasion_brief =>
+      'Already at war — a field army can march on this province.';
+
+  @override
+  String get militaryCounsel_reason_declareWarInvasion_brief =>
+      'Invasion target — confirm war before the army marches.';
+
+  @override
+  String militaryCounsel_trainStarSemantic(String brief) {
+    return 'Military counsel: $brief';
+  }
+
+  @override
+  String get mapCorner_tooltipBaseLayer =>
+      'Map marks: resources, improvements, and roads';
+
+  @override
+  String mapCorner_tooltipMapMarks(String combination) =>
+      'Map marks: $combination';
+
+  @override
+  String get mapCorner_mapMarks_terrainOnly => 'terrain only';
+
+  @override
+  String get mapCorner_mapMarks_resources => 'resources';
+
+  @override
+  String get mapCorner_mapMarks_resourcesAndImprovements =>
+      'resources and improvements';
+
+  @override
+  String get mapCorner_mapMarks_full => 'resources, improvements, and roads';
+
+  @override
+  String get mapCorner_mapMarks_improvements => 'improvements';
+
+  @override
+  String get mapCorner_mapMarks_improvementsAndRoads =>
+      'improvements and roads';
+
+  @override
+  String get mapCorner_tooltipCenterCapital => 'Center on capital';
+
+  @override
+  String get mapCorner_tooltipMapDisplayOptions => 'Map display options';
+
+  @override
+  String mapControls_cargoHold(String used, String capacity) {
+    return '$used/$capacity';
+  }
+
+  @override
+  String mapControls_cargoHold_tooltip(String used, String capacity) {
+    return 'Cargo: $used overseas of $capacity Home Fleet holds';
+  }
+
+  @override
+  String mapControls_cargoHold_semanticsLabel(String used, String capacity) {
+    return 'Cargo hold: $used overseas, $capacity Home Fleet holds';
+  }
+
+  @override
+  String mapControls_cargoHold_details_overseas(String used) {
+    return 'Overseas extraction: $used';
+  }
+
+  @override
+  String mapControls_cargoHold_details_capacity(String capacity) {
+    return 'Home Fleet holds: $capacity';
+  }
+
+  @override
+  String mapControls_cargoHold_details_free(String free) {
+    return 'Free for trade bids: $free';
+  }
+
+  @override
+  String get mapControls_cargoHold_details_counsel =>
+      'Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.';
+
+  @override
+  String mapControls_labourFeeding(String effective, String capacity) {
+    return '$effective/$capacity';
+  }
+
+  @override
+  String mapControls_labourFeeding_tooltip(String effective, String capacity) {
+    return 'Labour this turn: $effective of $capacity';
+  }
+
+  @override
+  String mapControls_labourFeeding_semanticsLabel(
+    String effective,
+    String capacity,
+  ) {
+    return 'Labour this turn: $effective of $capacity. Tap for details.';
+  }
+
+  @override
+  String mapControls_labourFeeding_details_labour(
+    String effective,
+    String capacity,
+  ) {
+    return 'Labour this turn: $effective of $capacity';
+  }
+
+  @override
+  String get mapControls_labourFeeding_details_emptyPool =>
+      'No workers trained yet';
+
+  @override
+  String get mapControls_playersBarToggle => 'Players bar';
+
+  @override
+  String mapControls_oldWorldRace(String count, String threshold) {
+    return '$count / $threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_compact(String count, String threshold) {
+    return '$count/$threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_rivalCue(
+    String name,
+    String count,
+    String threshold,
+  ) {
+    return ' · $name $count / $threshold';
+  }
+
+  @override
+  String mapControls_oldWorldRace_rivalCueCompact(String name, String count) {
+    return ' · $name $count';
+  }
+
+  @override
+  String get mapControls_oldWorldRace_tooltip =>
+      'Old World provinces toward the 31-province win. Tap for full standings.';
+
+  @override
+  String mapControls_oldWorldRace_semanticsLabel(
+    String count,
+    String threshold,
+  ) {
+    return 'Old World province race: $count of $threshold. Tap to open Victory.';
+  }
+
+  @override
+  String mapControls_oldWorldRace_semanticsWithRival(
+    String count,
+    String threshold,
+    String name,
+    String rivalCount,
+  ) {
+    return 'Old World province race: $count of $threshold. $name leads with '
+        '$rivalCount of $threshold. Tap to open Victory.';
+  }
+
+  @override
+  String mapControls_playersBar_calendarStrengthTooltip(String score) {
+    return 'Calendar-end strength: $score. Used only if the calendar ends '
+        'with no province-count winner.';
+  }
+
+  @override
+  String common_percent(int value) {
+    return '$value%';
+  }
+
+  @override
+  String get regionMinimap_mapZoom => 'Map zoom';
+
+  @override
+  String regionMinimap_zoomSemanticsValue(int pct) {
+    return '$pct percent';
+  }
+
+  @override
   String province_economic_resourceRow(
     String terrain,
     String resourceName,
@@ -29,6 +268,11 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_detail_currentRelation => 'Current relation';
 
   @override
+  String diplomacy_detail_formalAllies(String names) {
+    return 'Formal allies: $names';
+  }
+
+  @override
   String get diplomacy_detail_noDossier => 'No dossier evidence yet.';
 
   @override
@@ -43,7 +287,8 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
 
   @override
-  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
+  String get diplomacy_panel_noMinorNations =>
+      'No Minor Nations discovered yet.';
 
   @override
   String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
@@ -103,7 +348,10 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_panel_fewerActions => 'Fewer actions';
 
   @override
-  String diplomacy_actionRejection_semanticsLabel(String action, String reason) {
+  String diplomacy_actionRejection_semanticsLabel(
+    String action,
+    String reason,
+  ) {
     return '$action. $reason';
   }
 
@@ -139,11 +387,7 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get production_labourDetails => 'Labour details';
 
   @override
-  String production_labourTierDetail(
-    String tier,
-    int working,
-    int notWorking,
-  ) {
+  String production_labourTierDetail(String tier, int working, int notWorking) {
     return '$tier: $working working, $notWorking not working';
   }
 
@@ -261,6 +505,43 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get production_labourControlsSectionLabel => 'Labour Controls';
 
   @override
+  String production_labourCostMaterial(String name, int quantity) {
+    return '$name ×$quantity';
+  }
+
+  @override
+  String get production_labourCostPeasantConsume => '1 peasant';
+
+  @override
+  String production_labourUpkeepLabour(int n) {
+    return '$n labour / turn';
+  }
+
+  @override
+  String production_labourUpkeepFoodOr(String a, String b) {
+    return '$a or $b';
+  }
+
+  @override
+  String production_labourUpkeepFoodAnd(String a, String b) {
+    return '$a + $b';
+  }
+
+  @override
+  String production_labourRequires(String names) {
+    return 'Requires: $names';
+  }
+
+  @override
+  String get production_labourStaffsNextProduction =>
+      'New workers staff next Production';
+
+  @override
+  String production_labourAppendEnabledTooltip(String action, String timing) {
+    return '$action. $timing';
+  }
+
+  @override
   String production_workerCount(String name, int count) {
     return '$name: $count';
   }
@@ -366,6 +647,17 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
 
   @override
   String get splitFleet_confirm => 'Confirm Split';
+
+  @override
+  String get splitFleet_detachTitle => 'Detach a squadron';
+
+  @override
+  String get splitFleet_detachConfirm => 'Detach and choose destination';
+
+  @override
+  String splitFleet_homeCargoConsequence(int remaining, String used) {
+    return 'Cargo holds remaining after this split: $remaining (overseas load this turn: $used).';
+  }
 
   @override
   String splitFleet_totalShips(int total) {
@@ -700,92 +992,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
 
   @override
   String get techEffectSummary_hat_production_1 => 'Unlocks: Master Artisans';
-
-  @override
-  String get techEffectSummary_heavy_artillery_0 =>
-      'Improves: Royal Artillery regiment upgrade path';
-
-  @override
-  String get techEffectSummary_heavy_artillery_1 =>
-      'Prerequisite for: High Grade Steel and Emplaced Siege Guns';
-
-  @override
-  String get techEffectSummary_heavy_emplaced_artillery_0 =>
-      'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)';
-
-  @override
-  String get techEffectSummary_heavy_emplaced_artillery_1 =>
-      'Prerequisite for: Emplaced Siege Guns';
-
-  @override
-  String get techEffectSummary_high_grade_steel_0 =>
-      'Improves: Heavy Artillery regiment upgrade path';
-
-  @override
-  String get techEffectSummary_horse_artillery_0 =>
-      'Prerequisite for: Light Artillery Tactics';
-
-  @override
-  String get techEffectSummary_hussars_0 =>
-      'Improves: Cossacks regiment upgrade path';
-
-  @override
-  String get techEffectSummary_hussars_1 => 'Prerequisite for: Scouting';
-
-  @override
-  String get techEffectSummary_improved_cavalry_tactics_0 =>
-      'Prerequisite for: Hussars and Improved Cavalry Weapons';
-
-  @override
-  String get techEffectSummary_improved_cavalry_weapons_0 =>
-      'Improves: Harquebusiers regiment upgrade path';
-
-  @override
-  String get techEffectSummary_improved_cavalry_weapons_1 =>
-      'Prerequisite for: Repeating Cavalry Carbine';
-
-  @override
-  String get techEffectSummary_improved_food_preservation_0 =>
-      'Improves: Spices extraction cap to 4';
-
-  @override
-  String get techEffectSummary_improved_food_preservation_1 =>
-      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
-
-  @override
-  String get techEffectSummary_improved_infantry_tactics_0 =>
-      'Improves: General cap floor to at least 3 (or National Bureaucracy)';
-
-  @override
-  String get techEffectSummary_improved_infantry_tactics_1 =>
-      'Unlocks: Early Rifles (with Crucible Process)';
-
-  @override
-  String get techEffectSummary_improved_iron_weapons_0 =>
-      'Unlocks: Bayonet (with Crucible Process)';
-
-  @override
-  String get techEffectSummary_improved_sail_design_0 =>
-      'Unlocks: Advanced Hull Design path (University + Privateering)';
-
-  @override
-  String get techEffectSummary_improved_sea_routes_0 =>
-      'Improves: Spices extraction cap to 2';
-
-  @override
-  String get techEffectSummary_improved_sea_routes_1 =>
-      'Unlocks: Large Spice Plantations';
-
-  @override
-  String get techEffectSummary_improved_trapping_techniques_0 =>
-      'Improves: Furs extraction cap to 2';
-
-  @override
-  String get techEffectSummary_improved_trapping_techniques_1 =>
-      'Unlocks: Riverboats';
-
-  @override
-  String get techEffectSummary_industrial_funding_of_research_0 =>
-      'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)';
-
 }

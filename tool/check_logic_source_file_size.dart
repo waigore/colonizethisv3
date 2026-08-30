@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 
 const _logicSrcRelative = 'packages/colonizethis_logic/lib/src';
 const _baselineRelative = 'tool/logic_source_file_size_baseline.json';
-const _maxPhysicalLines = 500;
+const _maxPhysicalLines = 250;
 
 void main() {
   exit(runCheckLogicSourceFileSize(Directory.current.path));

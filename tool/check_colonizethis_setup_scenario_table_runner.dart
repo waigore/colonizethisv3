@@ -25,13 +25,53 @@ final RegExp _longFormTestOpen = RegExp(
 /// Look-behind window (lines) when searching for a surrounding scenario loop.
 const _lookBehindLines = 8;
 
-/// Documented-exception imperative suites after wave-6 slice D migrations.
-final Set<String> setupPreferScenarioTablesAllowlist = {};
+/// Documented-exception imperative suites after wave-7 slice C densify
+/// (Refs #4349). Fat ≥300-line suites migrated to `support/*_scenarios.dart`;
+/// remaining legitimately imperative suites stay allowlisted until a later
+/// table-driven pass.
+final Set<String> setupPreferScenarioTablesAllowlist = {
+  'packages/colonizethis_setup/test/setup/advanced_start_bootstrap_colonization_test.dart',
+  'packages/colonizethis_setup/test/setup/advanced_start_bootstrap_development_test.dart',
+  'packages/colonizethis_setup/test/setup/advanced_start_bootstrap_prospecting_test.dart',
+  'packages/colonizethis_setup/test/setup/advanced_start_bootstrap_test.dart',
+  'packages/colonizethis_setup/test/setup/advanced_start_bootstrap_world_test.dart',
+  'packages/colonizethis_setup/test/setup/advanced_start_init_game_test.dart',
+  'packages/colonizethis_setup/test/setup/capital_choice_classification_test.dart',
+  'packages/colonizethis_setup/test/setup/capital_choice_reassignment_test.dart',
+  'packages/colonizethis_setup/test/setup/faction_setup_helpers_test.dart',
+  'packages/colonizethis_setup/test/setup/full_assignment_verification_test.dart',
+  'packages/colonizethis_setup/test/setup/game_setup_snapshot_test.dart',
+  'packages/colonizethis_setup/test/setup/game_setup_town_tile_ranking_test.dart',
+  'packages/colonizethis_setup/test/setup/gp_gp_auto_embassy_test.dart',
+  'packages/colonizethis_setup/test/setup/gp_land_connectivity_repair_test.dart',
+  'packages/colonizethis_setup/test/setup/gp_starting_grain_integration_test.dart',
+  'packages/colonizethis_setup/test/setup/grid_bfs_test.dart',
+  'packages/colonizethis_setup/test/setup/hidden_agenda_assignment_test.dart',
+  'packages/colonizethis_setup/test/setup/init_game_human_ai_slots_test.dart',
+  'packages/colonizethis_setup/test/setup/init_game_orchestrator_part1_test.dart',
+  'packages/colonizethis_setup/test/setup/init_game_tribe_sea_bound_test.dart',
+  'packages/colonizethis_setup/test/setup/init_game_world_market_seed_test.dart',
+  'packages/colonizethis_setup/test/setup/init_pipeline_retry_test.dart',
+  'packages/colonizethis_setup/test/setup/locked_assigner/locked_assigner_mechanics_test.dart',
+  'packages/colonizethis_setup/test/setup/minor_tribe_starting_development_select_test.dart',
+  'packages/colonizethis_setup/test/setup/minor_tribe_starting_development_test.dart',
+  'packages/colonizethis_setup/test/setup/plains/game_setup_plains_conversion_test.dart',
+  'packages/colonizethis_setup/test/setup/plains/game_setup_plains_terrain_restore_test.dart',
+  'packages/colonizethis_setup/test/setup/plains/game_setup_plains_town_assignment_test.dart',
+  'packages/colonizethis_setup/test/setup/province_tile_ranking_test.dart',
+  'packages/colonizethis_setup/test/setup/seed_perturbation_test.dart',
+  'packages/colonizethis_setup/test/setup/setup_exception_and_seed_coverage_test.dart',
+  'packages/colonizethis_setup/test/setup/setup_logging_test.dart',
+  'packages/colonizethis_setup/test/setup/setup_wave7_slice_a_api_surface_test.dart',
+  'packages/colonizethis_setup/test/setup/tile_cell_scan_test.dart',
+  'packages/colonizethis_setup/test/setup/validation_exceptions_test.dart',
+  'packages/colonizethis_setup/test/setup/warp_zone_generator_test.dart',
+};
 
 /// When true, every existing `*_test.dart` under the setup test tree is
-/// treated as allowlisted (wave-6 kickoff). Set false once migration coverage
-/// is sufficient to tighten to [setupPreferScenarioTablesAllowlist] only.
-const bool setupPreferScenarioTablesBaselineAllowAll = true;
+/// treated as allowlisted (wave-6 kickoff). Wave-7 slice C (#4349) tightens
+/// to [setupPreferScenarioTablesAllowlist] only.
+const bool setupPreferScenarioTablesBaselineAllowAll = false;
 
 bool setupScenarioTableRunnerPathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');

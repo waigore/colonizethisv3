@@ -26,7 +26,8 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_e2e_support/test_support/production_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
-import 'package:colonizethis_app_e2e_support/e2e_helpers.dart' show collectTextPreorder;
+import 'package:colonizethis_app_e2e_support/e2e_helpers.dart'
+    show collectTextPreorder;
 
 import 'app_shell_harness.dart';
 import 'widget_test_pumps.dart';
@@ -122,74 +123,73 @@ void main() {
   });
 
   group('productionLabourControlsExpectedTexts', () {
-    testWidgets(
-      'mirror reproduces the rendered Labour Controls pre-order text '
-      '(canEdit=true, mixed pool + queued + locked/unlocked tiers)',
-      (tester) async {
-        final player = _player(
-          peasants: 2,
-          apprentices: 1,
-          journeymen: 1,
-          masters: 1,
-          treasury: 500,
-          stockpile: {CommodityCatalog.paper.id: 50},
-          // Unlock only the apprentice tier so the mirror's (unlocked)/(locked)
-          // branch is exercised on both legs.
-          techUnlocked: const {
-            kTechIdApprenticeWorkers: true,
-            kTechIdSugarRefining: true,
-          },
-        );
-        final orders = Orders(
-          recruitWorkerOrdersByPlayerId: {
-            _playerId: const [
-              RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-              RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-            ],
-          },
-        );
+    testWidgets('mirror reproduces the rendered Labour Controls pre-order text '
+        '(canEdit=true, mixed pool + queued + locked/unlocked tiers)', (
+      tester,
+    ) async {
+      final player = _player(
+        peasants: 2,
+        apprentices: 1,
+        journeymen: 1,
+        masters: 1,
+        treasury: 500,
+        stockpile: {CommodityCatalog.paper.id: 50},
+        // Unlock only the apprentice tier so Requires: vs unlocked gist
+        // both appear in the pre-order Text mirror.
+        techUnlocked: const {
+          kTechIdApprenticeWorkers: true,
+          kTechIdSugarRefining: true,
+        },
+      );
+      final orders = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          _playerId: const [
+            RecruitWorkerOrder(targetTier: WorkerTier.peasant),
+            RecruitWorkerOrder(targetTier: WorkerTier.peasant),
+          ],
+        },
+      );
 
-        await tester.pumpWidget(
-          _mount(player: player, currentOrders: orders, canEdit: true),
-        );
-        await pumpSettleCapped(tester);
+      await tester.pumpWidget(
+        _mount(player: player, currentOrders: orders, canEdit: true),
+      );
+      await pumpSettleCapped(tester);
 
-        final expected = productionLabourControlsExpectedTexts(
-          player: player,
-          currentOrders: orders,
-          canEdit: true,
-          l10n: l10n,
-        );
+      final expected = productionLabourControlsExpectedTexts(
+        player: player,
+        currentOrders: orders,
+        canEdit: true,
+        l10n: l10n,
+      );
 
-        expect(
-          _collected(tester),
-          orderedEquals(expected),
-          reason:
-              'The expected-lines mirror must reproduce the rendered Labour '
-              'Controls section pre-order Text data exactly; any drift here '
-              'is the same drift the slow E2E lane would catch.',
-        );
+      expect(
+        _collected(tester),
+        orderedEquals(expected),
+        reason:
+            'The expected-lines mirror must reproduce the rendered Labour '
+            'Controls section pre-order Text data exactly; any drift here '
+            'is the same drift the slow E2E lane would catch.',
+      );
 
-        // Absolute sanity pins on the values the mirror is built from.
-        expect(
-          expected.first,
-          'LABOUR CONTROLS',
-          reason: 'CtSectionLabel upper-cases the header text.',
-        );
-        expect(
-          expected.where((t) => t == l10n.production_labourDisband).length,
-          4,
-          reason:
-              'Disband label appears once per tier (3 trained buttons + the '
-              'opacity-0 peasant reserved slot the collector still visits).',
-        );
-        expect(
-          expected.contains(l10n.production_labourQueued(2)),
-          isTrue,
-          reason: 'Two queued peasant recruit orders render a Queued: 2 badge.',
-        );
-      },
-    );
+      // Absolute sanity pins on the values the mirror is built from.
+      expect(
+        expected.first,
+        'LABOUR CONTROLS',
+        reason: 'CtSectionLabel upper-cases the header text.',
+      );
+      expect(
+        expected.where((t) => t == l10n.production_labourDisband).length,
+        4,
+        reason:
+            'Disband label appears once per tier (3 trained buttons + the '
+            'opacity-0 peasant reserved slot the collector still visits).',
+      );
+      expect(
+        expected.contains(l10n.production_labourQueued(2)),
+        isTrue,
+        reason: 'Two queued peasant recruit orders render a Queued: 2 badge.',
+      );
+    });
 
     testWidgets(
       'mirror reproduces the rendered section with no action labels when '

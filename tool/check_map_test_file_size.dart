@@ -5,7 +5,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 400;
+const _maxPhysicalLines = 250;
 
 const _mapTestsRelativePath = 'packages/colonizethis_map/test';
 

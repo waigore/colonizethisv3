@@ -9,11 +9,10 @@ Game _tradeScreenStoryGame({
   Map<String, bool>? techUnlocked,
 }) {
   const humanId = 'gp_human';
-  // Seed the world market state so the Refs #2993 E5a read-only
-  // commodity table renders representative prices + previous-turn
-  // aggregate volumes for a handful of commodities — the remaining
-  // rows render the em-dash price glyph + `Bids 0 / Offers 0` zero
-  // default so reviewers can see both code paths at a glance.
+  // Seed the world market state so the Refs #2993 E5a / #4345 / #4653 Market
+  // commodity table renders representative prices, Last market chips, and
+  // signed price deltas for a handful of commodities — remaining rows
+  // omit Last market (zero last-turn volume).
   // Post-#3093: WorldMarketState.prices is `Map<CommodityId, int>` (floored at
   // persistence boundary per SPEC/game/world-market.md § Price discovery).
   const Map<CommodityId, int> prices = <CommodityId, int>{
@@ -25,8 +24,18 @@ Game _tradeScreenStoryGame({
   };
   const Map<CommodityId, MarketActivity> activity =
       <CommodityId, MarketActivity>{
-        'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8),
-        'iron': MarketActivity(totalBidQuantity: 5, totalOfferQuantity: 14),
+        'timber': MarketActivity(
+          totalBidQuantity: 12,
+          totalOfferQuantity: 8,
+          // 25 → 30 ⇒ +£5
+          priceChangePercent: 0.2,
+        ),
+        'iron': MarketActivity(
+          totalBidQuantity: 5,
+          totalOfferQuantity: 14,
+          // 89 → 80 ⇒ −£9
+          priceChangePercent: -0.1,
+        ),
         'grain': MarketActivity(totalBidQuantity: 18, totalOfferQuantity: 18),
       };
   return Game(
@@ -95,9 +104,7 @@ Game _tradeScreenStoryFirstRightGame() {
         displayName: 'England',
         isHuman: true,
         treasury: 500,
-        stockpile: Stockpile(
-          quantities: <CommodityId, int>{'timber': 10},
-        ),
+        stockpile: Stockpile(quantities: <CommodityId, int>{'timber': 10}),
       ),
     ],
     minorNations: const [
@@ -154,8 +161,10 @@ Widget _tradeScreenDefaultStory({
   List<OvertureState> overtureStates = const <OvertureState>[],
   Map<String, bool>? techUnlocked,
   Game? gameOverride,
+  String? highlightCommodityId,
 }) {
-  final game = gameOverride ??
+  final game =
+      gameOverride ??
       _tradeScreenStoryGame(
         treasury: treasury,
         stockpile: stockpile,
@@ -165,7 +174,11 @@ Widget _tradeScreenDefaultStory({
   final player = game.players.first;
   return _tradeScreenProviderScope(
     initialOrders: initialOrders,
-    child: TradeScreen(game: game, player: player),
+    child: TradeScreen(
+      game: game,
+      player: player,
+      highlightCommodityId: highlightCommodityId,
+    ),
   );
 }
 
@@ -393,7 +406,7 @@ Game _tradeScreenDealBookStoryGame({
 /// `WorldMarketState` for the empty Deal Book story — no filled deals
 /// and no carry-forwards. Proves the per-side empty-state copy
 /// (`dealBookBidsEmpty` / `dealBookOffersEmpty`) renders together with
-/// the always-mounted `Total spent: 0` / `Total received: 0` rows
+/// the always-mounted `Total spent: £0` / `Total received: £0` rows
 /// (Refs #2993 E6).
 WorldMarketState _tradeScreenDealBookEmptyState() {
   return const WorldMarketState();
@@ -402,15 +415,77 @@ WorldMarketState _tradeScreenDealBookEmptyState() {
 /// `WorldMarketState` for the overseas-profit Deal Book story (Refs #4226).
 WorldMarketState _tradeScreenDealBookOverseasProfitState() {
   return const WorldMarketState(
-    lastTurnOverseasProfitCreditsByGpId: <String, List<OverseasProfitCreditRecord>>{
-      'gp_human': <OverseasProfitCreditRecord>[
-        OverseasProfitCreditRecord(
-          creditKind: OverseasProfitCreditKind.tileOwnerShare,
+    lastTurnOverseasProfitCreditsByGpId:
+        <String, List<OverseasProfitCreditRecord>>{
+          'gp_human': <OverseasProfitCreditRecord>[
+            OverseasProfitCreditRecord(
+              creditKind: OverseasProfitCreditKind.tileOwnerShare,
+              commodityId: 'timber',
+              quantity: 5,
+              profitTreasury: 15,
+              buyerFactionId: 'gp_aragon',
+              sourceFactionId: 'M1',
+            ),
+          ],
+        },
+  );
+}
+
+/// `WorldMarketState` for leftover-reason Deal Book stories (Refs #4500).
+WorldMarketState _tradeScreenDealBookLeftoverReasonsState() {
+  const String human = 'gp_human';
+  return WorldMarketState(
+    lastTurnActivity: const <CommodityId, MarketActivity>{
+      'timber': MarketActivity(
+        notes: <MarketActivityNote>[
+          MarketActivityNote(
+            kind: MarketActivityNoteKind.bidPartialFillTreasuryInsufficient,
+            factionId: human,
+            commodityId: 'timber',
+            quantity: 10,
+          ),
+        ],
+      ),
+      'iron': MarketActivity(
+        notes: <MarketActivityNote>[
+          MarketActivityNote(
+            kind: MarketActivityNoteKind.carryForwardDroppedCargoInsufficient,
+            factionId: human,
+            commodityId: 'iron',
+            quantity: 6,
+          ),
+        ],
+      ),
+      'grain': MarketActivity(
+        notes: <MarketActivityNote>[
+          MarketActivityNote(
+            kind:
+                MarketActivityNoteKind.carryForwardDroppedStockpileInsufficient,
+            factionId: human,
+            commodityId: 'grain',
+            quantity: 4,
+          ),
+        ],
+      ),
+      'fabric': MarketActivity(totalBidQuantity: 0),
+    },
+    carryForwardBidsByFactionId: <String, List<TradeOrder>>{
+      human: <TradeOrder>[
+        TradeOrder(
           commodityId: 'timber',
+          type: TradeOrderType.bid,
           quantity: 5,
-          profitTreasury: 15,
-          buyerFactionId: 'gp_aragon',
-          sourceFactionId: 'M1',
+          priority: 1,
+        ),
+      ],
+    },
+    carryForwardOffersByFactionId: <String, List<TradeOrder>>{
+      human: <TradeOrder>[
+        TradeOrder(
+          commodityId: 'fabric',
+          type: TradeOrderType.offer,
+          quantity: 3,
+          priority: 1,
         ),
       ],
     },
@@ -625,6 +700,10 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Market tab — last market chip (Refs #4653)',
+        builder: (context) => _tradeScreenDefaultStory(),
+      ),
+      WidgetbookUseCase(
         name: 'Market tab — sellable clamp (Refs #3093)',
         builder: (context) => _tradeScreenDefaultStory(
           stockpile: _tradeScreenStorySellableClampStockpile(),
@@ -668,6 +747,11 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Market tab — highlighted commodity from Production (Refs #4581)',
+        builder: (context) =>
+            _tradeScreenDefaultStory(highlightCommodityId: 'timber'),
+      ),
+      WidgetbookUseCase(
         name: 'Deal Book tab — empty (Refs #2993 E7)',
         builder: (context) => _tradeScreenDealBookProviderScope(
           worldMarketState: _tradeScreenDealBookEmptyState(),
@@ -683,6 +767,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         name: 'Deal Book tab — overseas profit ledger (Refs #4226)',
         builder: (context) => _tradeScreenDealBookProviderScope(
           worldMarketState: _tradeScreenDealBookOverseasProfitState(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Deal Book tab — leftover reasons (Refs #4500)',
+        builder: (context) => _tradeScreenDealBookProviderScope(
+          worldMarketState: _tradeScreenDealBookLeftoverReasonsState(),
         ),
       ),
       WidgetbookUseCase(

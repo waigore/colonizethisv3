@@ -20,3 +20,23 @@ const String kIndustryCounselNeutralAgendaId = '';
 
 /// When true, growth-stage scoring replaces plain recipe scoring in counsel.
 const bool kIndustryCounselGrowthStageEnabled = false;
+
+/// Additive bias so in-stage low-shortage recipes can win.
+const double kIndustryCounselGrowthStagePriorityBias = 16.0;
+
+const double kIndustryCounselMinCategoryFloor = 0.1;
+
+const int kIndustryCounselTargetLabourForMaturity = 12;
+const int kIndustryCounselTargetFeedstockTileCount = 6;
+const int kIndustryCounselMinLabourForMilitary = 6;
+const int kIndustryCounselLabourRangeForMilitary = 6;
+const int kIndustryCounselReserveTarget = 20;
+const double kIndustryCounselAtWarMilitaryFloor = 0.3;
+
+const Set<String> kIndustryCounselCriticalFeedstockResourceIds = {
+  'wool',
+  'cotton',
+  'timber',
+  'iron',
+  'coal',
+};

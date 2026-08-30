@@ -1,0 +1,120 @@
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+void main() {
+  group('CurrentWork', () {
+    const work = CurrentWork(
+      workTarget: 'build_farm',
+      tileKey: 'r1|p1|2|3',
+      totalTurns: 5,
+      remainingTurns: 2,
+    );
+
+    test('toJson/fromJson round-trips', () {
+      expect(CurrentWork.fromJson(work.toJson()), work);
+    });
+
+    test('fromJson defaults turn counts when missing', () {
+      final restored = CurrentWork.fromJson({
+        'workTarget': 'build_farm',
+        'tileKey': 'r1|p1|0|0',
+      });
+      expect(restored.totalTurns, 0);
+      expect(restored.remainingTurns, 0);
+    });
+
+    test('copyWith and equality', () {
+      final updated = work.copyWith(remainingTurns: 1);
+      expect(updated.remainingTurns, 1);
+      expect(work == updated, isFalse);
+      expect(work.hashCode, work.copyWith().hashCode);
+    });
+  });
+  group('General', () {
+    const general = General(id: 'g1', ownerId: 'p1', medals: 3);
+
+    test('toJson omits zero medals and round-trips', () {
+      const plain = General(id: 'g2', ownerId: 'p1');
+      expect(plain.toJson().containsKey('medals'), isFalse);
+      expect(General.fromJson(plain.toJson()), plain);
+      expect(General.fromJson(general.toJson()), general);
+    });
+
+    test('copyWith and equality', () {
+      expect(general.copyWith(medals: 0).medals, 0);
+      expect(general, const General(id: 'g1', ownerId: 'p1', medals: 3));
+    });
+  });
+  group('DossierEvidenceEntry', () {
+    const entry = DossierEvidenceEntry(
+      observerId: 'o1',
+      subjectId: 's1',
+      agendaType: 'expansionist',
+      turnNumber: 4,
+      description: 'Built up army',
+      scoreDelta: 2,
+    );
+
+    test('toJson/fromJson round-trips all fields', () {
+      final restored = DossierEvidenceEntry.fromJson(entry.toJson());
+      expect(restored.observerId, 'o1');
+      expect(restored.subjectId, 's1');
+      expect(restored.agendaType, 'expansionist');
+      expect(restored.turnNumber, 4);
+      expect(restored.description, 'Built up army');
+      expect(restored.scoreDelta, 2);
+    });
+
+    test('fromJson applies defaults for missing optionals', () {
+      final restored = DossierEvidenceEntry.fromJson({
+        'observerId': 'o2',
+        'subjectId': 's2',
+        'agendaType': 'militarist',
+      });
+      expect(restored.turnNumber, 0);
+      expect(restored.description, '');
+      expect(restored.scoreDelta, 1);
+    });
+  });
+  group('AISeedBundle', () {
+    test('fromTurnSeed is deterministic; different seeds differ', () {
+      final a = AISeedBundle.fromTurnSeed(12345);
+      final b = AISeedBundle.fromTurnSeed(12345);
+      expect(a.perceptionSeed, b.perceptionSeed);
+      expect(a.goalSeed, b.goalSeed);
+      expect(AISeedBundle.fromTurnSeed(1).goalSeed,
+          isNot(AISeedBundle.fromTurnSeed(2).goalSeed));
+    });
+
+    test('explicit constructor retains supplied sub-seeds', () {
+      const bundle = AISeedBundle(
+        perceptionSeed: 1,
+        goalSeed: 2,
+        economySeed: 3,
+        militarySeed: 4,
+        diplomacySeed: 5,
+        researchSeed: 6,
+        tacticalSeed: 7,
+        dialogueSeed: 8,
+        agendaSeed: 9,
+      );
+      expect(bundle.economySeed, 3);
+      expect(bundle.tacticalSeed, 7);
+      expect(bundle.agendaSeed, 9);
+    });
+  });
+  group('AssignedRecipe', () {
+    test('stores recipe id and labour', () {
+      const recipe = AssignedRecipe(recipeId: 'r-iron', assignedLabour: 3);
+      expect(recipe.recipeId, 'r-iron');
+      expect(recipe.assignedLabour, 3);
+    });
+
+    test('asserts labour is non-negative', () {
+      expect(
+        () => AssignedRecipe(recipeId: 'r', assignedLabour: -1),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+  });
+}

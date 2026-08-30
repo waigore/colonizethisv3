@@ -19,6 +19,7 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 - Fix not on **`origin/dev`** (local-only or unmerged PR).
 - **UI issue** without passing widget golden + PNG proof on the issue comment.
 - Any golden test failure, missing golden mapping for a visual AC, or gist upload/embed failure.
+- Issue that updates the player manual whose merged chapter(s) fail the **style + accuracy** audit below.
 
 **Never** change labels, milestones, or issue state — **`gh issue comment` only**.
 
@@ -29,9 +30,10 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 3. **`git fetch origin && git checkout dev && git pull`** — verify only on **latest `dev`**. Unmerged or local-only work → **Gaps remain**.
 4. Map ACs → code, SPEC, tests, merged PR(s) referencing the issue.
 5. **Manual (player-facing issues):** When the issue changes player UX or gameplay, verify `docs/manual/` chapter updates on merged `dev` (or justified non-update in the PR). Policy: `.cursor/rules/colonizethis-game-manual.mdc`.
-6. Run relevant tests (`melos`, `cd app && flutter test …`).
-7. **UI issues** (see below): widget golden procedure + gist upload.
-8. `gh issue comment <n> --body-file …` using the template below.
+6. **Manual audit (when the issue updates the handbook):** If merged work (or the issue ACs) change `docs/manual/[0-9][0-9]-*.md`, audit **each updated chapter** with the same two checks as [`.cursor/skills/review-game-manual-agent/SKILL.md`](../review-game-manual-agent/SKILL.md) § Style review and § Accuracy review. Authority is that skill’s table: **style** = `docs/manual/STYLE_GUIDE.md`; **accuracy** = the chapter’s `## Sources` plus `SPEC/ui/screen-registry.md`. Do not invent extra rules. Skip this step only for a justified non-update (no chapter to audit). Remaining style or accuracy findings → **Gaps remain**.
+7. Run relevant tests (`melos`, `cd app && flutter test …`).
+8. **UI issues** (see below): widget golden procedure + gist upload.
+9. `gh issue comment <n> --body-file …` using the template below.
 
 ### UI issues
 
@@ -55,6 +57,7 @@ Follow existing golden patterns: `AppThemes.editorialMonocle`, `suppressLogsForT
 
 - [AC bullets → code/tests; partial/missing marked]
 - Manual (if player-facing): [chapters updated on `dev` | justified non-update | gap]
+- Manual audit (if handbook updated): [chapter files] style: <n> findings; accuracy: <n> findings [pass | remaining misses listed]
 
 Implementation: [merged PR on `dev`]. Tests: [commands run].
 
@@ -69,7 +72,7 @@ Implementation: [merged PR on `dev`]. Tests: [commands run].
 Outcome: [Complete | Gaps remain — see above].
 ```
 
-**Complete** only when ACs are met on **merged `dev`**, tests pass, and UI proof is embedded. Unmerged PR → **Gaps remain**.
+**Complete** only when ACs are met on **merged `dev`**, tests pass, UI proof is embedded when required, and any handbook update passes the style + accuracy audit. Unmerged PR → **Gaps remain**.
 
 ## Tools
 

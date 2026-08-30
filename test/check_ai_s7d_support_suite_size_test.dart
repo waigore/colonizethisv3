@@ -7,6 +7,10 @@ import '../tool/check_ai_s7d_support_suite_size.dart';
 
 void main() {
   group('runCheckAiS7dSupportSuiteSize', () {
+    test('ceiling is 250 after #4669 Slice E', () {
+      expect(aiS7dSupportSuitePhysicalLineCeiling, 250);
+    });
+
     test('fails when an S7D support module exceeds the soft ceiling', () {
       final temp = Directory.systemTemp.createTempSync('ai-s7d-over-');
       try {
@@ -58,14 +62,7 @@ void main() {
 
 void _writeS7dModule(Directory temp, String basename, String body) {
   final dir = Directory(
-    p.join(
-      temp.path,
-      'packages',
-      'colonizethis_ai',
-      'test',
-      'support',
-      's7d',
-    ),
+    p.join(temp.path, 'packages', 'colonizethis_ai', 'test', 'support', 's7d'),
   )..createSync(recursive: true);
   File(p.join(dir.path, basename)).writeAsStringSync(body);
 }

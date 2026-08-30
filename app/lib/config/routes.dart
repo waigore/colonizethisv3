@@ -4,8 +4,10 @@ import 'route_paths.dart';
 import '../features/debug_log/debug_log_viewer_screen.dart';
 import '../features/game/screens/game/game_screen.dart';
 import '../features/game/screens/diplomacy/diplomacy_detail_screen.dart';
-import '../features/game/widgets/diplomacy/diplomacy_panel.dart' show FactionKind;
+import '../features/game/widgets/diplomacy/diplomacy_panel.dart'
+    show FactionKind;
 import '../features/game/screens/diplomacy/diplomacy_screen.dart';
+import '../features/game/screens/diplomacy/intelligence_council_screen.dart';
 import '../features/game/screens/production/production_screen.dart';
 import '../features/game/screens/technology/technology_screen.dart';
 import '../features/game/screens/trade/trade_screen.dart';
@@ -25,6 +27,7 @@ class Routes {
   static const String production = RoutePaths.production;
   static const String diplomacy = RoutePaths.diplomacy;
   static const String diplomacyDetail = RoutePaths.diplomacyDetail;
+  static const String intelligence = RoutePaths.intelligence;
   static const String technology = RoutePaths.technology;
   static const String trade = RoutePaths.trade;
   static const String victory = RoutePaths.victory;
@@ -51,6 +54,7 @@ class Routes {
       case RoutePaths.production:
       case RoutePaths.diplomacy:
       case RoutePaths.diplomacyDetail:
+      case RoutePaths.intelligence:
       case RoutePaths.technology:
       case RoutePaths.trade:
       case RoutePaths.victory:
@@ -94,6 +98,14 @@ class Routes {
             relation: args['relation'] as DiplomacyRelation?,
           ),
         );
+      case RoutePaths.intelligence:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => IntelligenceCouncilScreen(
+            game: game,
+            humanPlayerId: humanPlayerId,
+          ),
+        );
       case RoutePaths.technology:
         final player = game.playerById(humanPlayerId)!;
         return MaterialPageRoute<void>(
@@ -109,6 +121,7 @@ class Routes {
             game: game,
             player: player,
             initialTabIndex: initialTabIndex,
+            highlightCommodityId: args['highlightCommodityId'] as String?,
           ),
         );
       case RoutePaths.victory:
@@ -120,10 +133,8 @@ class Routes {
       case RoutePaths.development:
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => DevelopmentScreen(
-            game: game,
-            humanPlayerId: humanPlayerId,
-          ),
+          builder: (_) =>
+              DevelopmentScreen(game: game, humanPlayerId: humanPlayerId),
         );
       case RoutePaths.counsel:
         return MaterialPageRoute<void>(

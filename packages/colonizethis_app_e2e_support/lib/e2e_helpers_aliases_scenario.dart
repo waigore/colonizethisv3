@@ -34,7 +34,6 @@ Future<E2eFleetReachScenarioPreamble> enterFleetReachScenarioReady(
 );
 
 /// AC1 alias for [e2eFleetReachTurnLoop] (Refs #2336 / #4075).
-/// AC1 alias for [e2eFleetReachTurnLoop] (Refs #2336 / #4075).
 Future<E2eFleetReachLoopResult> fleetReachTurnLoop(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -52,11 +51,9 @@ Future<E2eFleetReachLoopResult> fleetReachTurnLoop(
 );
 
 /// AC1 alias for [e2eFleetReachLoopExitTestTotalMetaLabel] (Refs #2336 / #4075).
-/// AC1 alias for [e2eFleetReachLoopExitTestTotalMetaLabel] (Refs #2336 / #4075).
 String? fleetReachLoopExitTestTotalMetaLabel(E2eFleetReachLoopExit exit) =>
     e2eFleetReachLoopExitTestTotalMetaLabel(exit);
 
-/// AC1 alias for [e2eExpectPanelTextsMatchSnapshot] (Refs #2336 / #4075).
 /// AC1 alias for [e2eExpectPanelTextsMatchSnapshot] (Refs #2336 / #4075).
 Future<void> expectPanelTextsMatchSnapshot(
   WidgetTester tester, {
@@ -87,14 +84,12 @@ Future<void> expectPanelTextsMatchSnapshot(
 );
 
 /// AC1 alias for [e2eExpectCivilianPanelMatchesE2eSnapshot] (Refs #2336 / #4075).
-/// AC1 alias for [e2eExpectCivilianPanelMatchesE2eSnapshot] (Refs #2336 / #4075).
 Future<void> expectCivilianPanelMatchesE2eSnapshot(
   WidgetTester tester,
   AppLocalizations l10n, {
   E2ePerfLog? perf,
 }) => e2eExpectCivilianPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
-/// AC1 alias for [e2eExpectNavalPanelMatchesE2eSnapshot] (Refs #2336 / #4075).
 /// AC1 alias for [e2eExpectNavalPanelMatchesE2eSnapshot] (Refs #2336 / #4075).
 Future<void> expectNavalPanelMatchesE2eSnapshot(
   WidgetTester tester,
@@ -109,7 +104,6 @@ Future<void> expectNavalPanelMatchesE2eSnapshot(
 );
 
 /// AC1 alias for [e2eExpectProductionPanelMatchesE2eSnapshot] (Refs #2336 / #4075).
-/// AC1 alias for [e2eExpectProductionPanelMatchesE2eSnapshot] (Refs #2336 / #4075).
 Future<void> expectProductionPanelMatchesE2eSnapshot(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -117,14 +111,12 @@ Future<void> expectProductionPanelMatchesE2eSnapshot(
 }) => e2eExpectProductionPanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
 /// AC1 alias for [e2eExpectProvincePanelMatchesE2eSnapshot] (Refs #2336 / #4075).
-/// AC1 alias for [e2eExpectProvincePanelMatchesE2eSnapshot] (Refs #2336 / #4075).
 Future<void> expectProvincePanelMatchesE2eSnapshot(
   WidgetTester tester,
   AppLocalizations l10n, {
   E2ePerfLog? perf,
 }) => e2eExpectProvincePanelMatchesE2eSnapshot(tester, l10n, perf: perf);
 
-/// AC1 alias for [e2eEnsureNonHomeFleetInNwAfterLoop] (Refs #2336 / #4075).
 /// AC1 alias for [e2eEnsureNonHomeFleetInNwAfterLoop] (Refs #2336 / #4075).
 Future<E2eFinalNavalReachCheckResult> ensureNonHomeFleetInNwAfterLoop(
   WidgetTester tester, {
@@ -138,7 +130,6 @@ Future<E2eFinalNavalReachCheckResult> ensureNonHomeFleetInNwAfterLoop(
   maxUiResponseWait: maxUiResponseWait,
 );
 
-/// AC1 alias for [e2ePickFirstValidWorkTileAndAwaitOverlayClear] (Refs #2336 / #4075).
 /// AC1 alias for [e2eEnterStandardE2eScenario] (Refs #2336 / #4075).
 Future<E2eStandardScenarioOpener> enterStandardE2eScenario(
   WidgetTester tester, {
@@ -174,7 +165,6 @@ Future<E2eStandardScenarioOpener> enterStandardE2eScenario(
   afterNewGameToMapStep: afterNewGameToMapStep,
 );
 
-/// AC1 alias for [e2eRunIntegrationTestBootstrap] (Refs #2336 / #4075).
 /// AC1 alias for [e2eRunIntegrationTestBootstrap] (Refs #2336 / #4075).
 Future<E2eIntegrationTestBootstrapResult> runIntegrationTestBootstrap(
   WidgetTester tester, {

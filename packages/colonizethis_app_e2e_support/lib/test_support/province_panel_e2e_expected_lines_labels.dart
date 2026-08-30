@@ -1,6 +1,32 @@
-part of 'province_panel_e2e_expected_lines.dart';
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
+// Expected plain-text lines for ProvinceSeaZoneDetailOverlay wide layout (scroll column).
+// Mirrors app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart for e2e.
+// If drift fails tests, align this file with the overlay widget.
 
-Province? _findProvince(Game game, String provinceId) {
+
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        CommodityCatalog,
+        MapTopology,
+        TileMapResult,
+        isMilitaryUnit,
+        terrainDisplayName;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_pending_orders.dart';
+import 'package:colonizethis_app/widgets/commodity_display_name.dart';
+
+Province? findProvince(Game game, String provinceId) {
   for (final p in game.worldState.oldWorld.provinces) {
     if (p.id == provinceId) return p;
   }
@@ -14,7 +40,7 @@ Province? _findProvince(Game game, String provinceId) {
 /// province_sea_zone_detail_overlay_sections.dart (duplicated rather than
 /// imported to keep this fixture free of `@visibleForTesting` production
 /// symbols, per the file header convention).
-String _regionLabel(AppLocalizations l10n, String regionId) {
+String regionLabel(AppLocalizations l10n, String regionId) {
   return switch (regionId) {
     'oldWorld' => l10n.region_oldWorld,
     'newWorld' => l10n.region_newWorld,
@@ -25,7 +51,7 @@ String _regionLabel(AppLocalizations l10n, String regionId) {
 /// Mirrors `provinceOverlayIsCapital` from
 /// province_sea_zone_detail_overlay_sections.dart: a province is a capital
 /// when any faction (player, minor nation, or tribe) claims it as its capital.
-bool _isCapitalProvince(Game game, String provinceId) {
+bool isCapitalProvince(Game game, String provinceId) {
   for (final p in game.players) {
     if (p.capitalProvinceId == provinceId) return true;
   }
@@ -42,13 +68,13 @@ bool _isCapitalProvince(Game game, String provinceId) {
 /// province_sea_zone_detail_overlay_sections.dart (duplicated rather than
 /// imported to keep this fixture free of `@visibleForTesting` production
 /// symbols, per the file header convention). Capital takes priority over town.
-String? _tileDesignationLine({
+String? tileDesignationLine({
   required AppLocalizations l10n,
   required Game game,
   required String provinceId,
   required String selectedTileKey,
 }) {
-  final province = _findProvince(game, provinceId);
+  final province = findProvince(game, provinceId);
   final provinceName = province?.displayName ?? provinceId;
   for (final p in game.players) {
     if (p.capitalTile?.toTileKey() == selectedTileKey) {
@@ -78,7 +104,7 @@ String? _tileDesignationLine({
   return null;
 }
 
-String _ownerName(Game game, String? ownerId) {
+String ownerDisplayName(Game game, String? ownerId) {
   if (ownerId == null || ownerId.isEmpty) return 'Unclaimed';
   for (final p in game.players) {
     if (p.id == ownerId) return p.displayName;
@@ -92,7 +118,7 @@ String _ownerName(Game game, String? ownerId) {
   return ownerId;
 }
 
-String _economicTerrainTitle(String raw) {
+String economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
   final spaced = raw
       .replaceAll('_', ' ')
@@ -104,7 +130,7 @@ String _economicTerrainTitle(String raw) {
       .join(' ');
 }
 
-String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
+String? economicTerrainTitleForTile(RegionMapViewData region, String tk) {
   final parsed = tryParseTileKey(tk);
   if (parsed == null || parsed.regionId != region.regionId) return null;
   final x = parsed.x;
@@ -118,10 +144,10 @@ String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
     return terrainDisplayName(terrainType);
   }
   final raw = cell.terrainTypeId ?? '—';
-  return _economicTerrainTitle(raw);
+  return economicTerrainTitle(raw);
 }
 
-String _improvementNameForResource(String? resourceId) {
+String improvementNameForResource(String? resourceId) {
   if (resourceId == null) return 'Improvement';
   switch (resourceId) {
     case 'grain':
@@ -154,25 +180,25 @@ String _improvementNameForResource(String? resourceId) {
   }
 }
 
-String _improvementBaseNameForPlayer({
+String improvementBaseNameForPlayer({
   required VisibilityLevel visLevel,
   required String? rawResourceId,
   required String? visibleResourceId,
 }) {
   if (visibleResourceId != null) {
-    return _improvementNameForResource(visibleResourceId);
+    return improvementNameForResource(visibleResourceId);
   }
   if (rawResourceId != null &&
       kProspectRequiredResourceIds.contains(rawResourceId)) {
     return 'Mine';
   }
   if (rawResourceId != null) {
-    return _improvementNameForResource(rawResourceId);
+    return improvementNameForResource(rawResourceId);
   }
   return 'Improvement';
 }
 
-String _improvementLabelForTileDetail({
+String improvementLabelForTileDetail({
   required int impLevel,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
@@ -181,7 +207,7 @@ String _improvementLabelForTileDetail({
   if (impLevel <= 0) {
     return '—';
   }
-  final base = _improvementBaseNameForPlayer(
+  final base = improvementBaseNameForPlayer(
     visLevel: visLevel,
     rawResourceId: rawResourceId,
     visibleResourceId: visibleResourceId,

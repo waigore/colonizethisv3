@@ -24,7 +24,7 @@ html,body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg
 .deficit{font-size:11px;color:var(--danger);font-style:italic;text-align:center;margin-bottom:8px}
 .unit-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);margin-bottom:6px;flex-wrap:wrap}
 .unit-row.locked{opacity:0.5}
-.unit-row .info{flex:1;min-width:120px}.unit-row .name{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--fg);letter-spacing:0.03em;margin-bottom:3px}.unit-row .cost{font-size:11px;color:var(--muted)}.unit-row .cost .danger{color:var(--danger)}.unit-row .lock-reason{font-size:10px;color:var(--muted);font-style:italic}
+.unit-row .info{flex:1;min-width:120px}.unit-row .name{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--fg);letter-spacing:0.03em;margin-bottom:3px}.unit-row .role-cap{font-size:10px;color:var(--muted);margin-bottom:2px}.unit-row .cost{font-size:11px;color:var(--muted)}.unit-row .cost .danger{color:var(--danger)}.unit-row .lock-reason{font-size:10px;color:var(--muted);font-style:italic}
 .stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .stepper .btn{padding:3px 10px;font-family:monospace;font-size:14px;font-weight:700;cursor:pointer;border:none;min-width:28px;transition:color 0.15s}
 .stepper .btn-minus{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}.stepper .btn-minus:hover:not(:disabled){color:var(--fg)}.stepper .btn-minus:disabled{opacity:0.3;cursor:not-allowed}
@@ -59,6 +59,17 @@ const COST_LABEL={peasants:'peasant',lumber:'lumber',fabric:'fabric',castIron:'c
 // Every ship costs 1 peasant. Costs mirror ShipEconomyCatalog; lock/unlock
 // state here is illustrative (a representative mid-game tech state) rather
 // than a literal tech-tree projection.
+// cargoHold and combat-role gist mirror NavalStatsCatalog + SPEC/game/tech-tree-naval.md § Notes.
+const CARGO={carrack:3,fluyte:4,sloop:0,trader:5,galleon:6,indiaman:8,frigate:0,raider:0,ship_of_the_line:0,clipper:7,merchant_steamship:9,ironclad:0}
+const FAST_INTERCEPT=new Set(['sloop','frigate','raider'])
+const BATTLE_SHIP=new Set(['ship_of_the_line','ironclad'])
+function roleCapabilityGist(id){
+  const holds=CARGO[id]||0
+  if(holds>0)return `Merchant · +${holds} cargo holds`
+  if(FAST_INTERCEPT.has(id))return 'Warship · Fast interceptor'
+  if(BATTLE_SHIP.has(id))return 'Warship · Battle ship'
+  return 'Warship'
+}
 const units=[
   {id:'carrack',name:'Carrack',treasury:8000,peasants:1,lumber:2,fabric:1,locked:false},
   {id:'fluyte',name:'Fluyte',treasury:6000,peasants:1,lumber:1,fabric:1,locked:false},
@@ -126,6 +137,7 @@ function render(){
     return `
     <div class="unit-row${u.locked?' locked':''}">
       <div class="info"><div class="name">${u.locked?'&#x1F512; ':''}${u.name}</div>
+      <div class="role-cap">${roleCapabilityGist(u.id)}</div>
       <div class="cost">${costHtml(u,r)}</div>
       ${u.locked?`<div class="lock-reason">Requires: ${u.tech}</div>`:''}</div>
       <div class="stepper">

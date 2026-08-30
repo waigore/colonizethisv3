@@ -5,7 +5,6 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import '../extraction_fixture_support.dart';
-import 'purchased_tile_expectations.dart';
 import 'purchased_tile_riches_test_support.dart';
 /// One row in [purchasedTileRichesScenarios].
 typedef PurchasedTileRichesScenario = ({String label, Game Function() buildGame, Map<String, TileMapResult> Function() tileMaps, double? richesCashMultiplier, void Function(PurchasedTileRichesResult result, PurchasedTileIndex index, Game game) verify, String? refs});

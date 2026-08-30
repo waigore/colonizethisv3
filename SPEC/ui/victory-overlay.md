@@ -1,8 +1,8 @@
 # Victory Overlay
 
 **Screen ID:** `OVL20001` — stable; do not reassign.
-**SPEC/ui** — Full-screen overlay shown when a military victory is recorded. Implementation: `app/lib/features/game/flame/overlays/victory_overlay.dart`.
-**Widgetbook:** `Victory` → `app/lib/widgetbook/catalog.dart`. Game model: [victory.md](../game/victory.md). Return target: [main-menu.md](main-menu.md). Host: [`game-screen.md`](game-screen.md).
+**SPEC/ui** — Full-screen overlay for military victory **or** calendar campaign complete. Implementation: `app/lib/features/game/flame/overlays/victory_overlay.dart`.
+**Widgetbook:** `Victory` → `widgetbook_host/lib/catalogs/catalog_screens_combat.dart`. Game model: [victory.md](../game/victory.md). Return target: [main-menu.md](main-menu.md). Host: [`game-screen.md`](game-screen.md).
 
 **Mockup:** [mockups/OVL20001-game-victory-overlay.html](mockups/OVL20001-game-victory-overlay.html)
 ---
@@ -11,8 +11,8 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `VictoryOverlay` | `StatefulWidget` | `game` (`Game`), `victory` (`VictoryState`), `bus` (`AppEventBus`) | Full-screen `--dialog-scrim` wash with centered `VictoryPanel` via [`CtFullScreenDialogueShell`](../components/ct-full-screen-dialogue-shell.md) (`wrapBodyInDialogShell: false`). Owns `_dismissed` so "View final state" hides the overlay without a route change. |
-| `VictoryPanel` | `StatelessWidget` | `game`, `victory`, `bus`, `onViewFinalState` (`VoidCallback?`, optional) | Presentational brass-bordered panel (2px `--accent` border + asymmetric corner brackets + `surface-lite → bg-deep` vertical gradient). Resolves winner display name and victory-type label. |
+| `VictoryOverlay` | `StatefulWidget` | `game` (`Game`), `victory` (`VictoryState?`), `bus` (`AppEventBus`) | Full-screen `--dialog-scrim` wash with centered `VictoryPanel` via [`CtFullScreenDialogueShell`](../components/ct-full-screen-dialogue-shell.md) (`wrapBodyInDialogShell: false`). Owns `_dismissed` so "View final state" hides the overlay without a route change. `victory == null` selects the calendar-complete variant. |
+| `VictoryPanel` | `StatelessWidget` | `game`, `victory` (`VictoryState?`), `bus`, `onViewFinalState` (`VoidCallback?`, optional) | Presentational brass-bordered panel. Military: winner + turn. Calendar: campaign-complete title + declared-winner / tie body from `pickUniqueGreatPowerLeaderByPowerScore`. |
 
 Implementation: `app/lib/features/game/flame/overlays/victory_overlay.dart`.
 
@@ -48,13 +48,12 @@ Implementation: `app/lib/features/game/flame/overlays/victory_overlay.dart`.
 - Scrim color resolves through `EditorialMonoclePalette.dialogScrim` (canonical `--dialog-scrim` token; see [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) § Dialog scrim).
 - Panel container: 2px solid `--accent` border, `surface-lite → bg-deep` vertical gradient (`CtGradients.victoryPanelGradient`), inner padding `24` logical px, max-width `460`, intrinsic-min height. Two `--accent` asymmetric corner brackets — top-left (1.5px borders, ~20x24 box, 4px inset) and bottom-right (1.5px borders, ~20x24 box, 4px inset) at 0.7 alpha.
 - Laurel row: three Unicode glyphs in `--accent` at 0.6 alpha — `☜` `☆` `☞` (or visually equivalent decorative cluster) rendered with the display font.
-- Title: `appL10n(context).victory_military` when `victory.type == VictoryType.military` (only variant implemented). Display font (Cinzel slot — `headlineSmall`), color `--accent`, letter-spacing 0.06em, upper-cased.
+- Title (upper-cased display font, `--accent`): `victory_military` when `victory?.type == VictoryType.military`; `victory_campaignComplete` when `victory == null` (calendar halt).
 - Brass divider: `CtBrassDivider` between title and body.
-- Body: `appL10n(context).victory_winnerOnTurn(winner.displayName, victory.turnNumber)`. Display font, color `--fg`. Winner name highlighted in `--accent-bright` is reserved for a future enhancement (the localized line is rendered as a single span until the winner-substring helper lands).
-- Buttons: two `CtNinePatchButton`s in a `Row` with 12 logical-px spacing — "Return to Main Menu" (primary, default styling), "View Final State" (secondary; rendered with the muted/secondary text variant — label color `--muted`).
-- No Material buttons.
+- Body (`--fg`): military → `victory_winnerOnTurn(winner.displayName, victory.turnNumber)`; calendar → `victory_endCalendarDeclaredWinner` / `victory_endCalendarNoWinner` (same strings as `GAME70001`).
+- Buttons: two `CtNinePatchButton`s — "Return to Main Menu" (primary), "View Final State" (secondary, `--muted`). No Material buttons.
 
-Winner resolution: `game.playerById(victory.winnerPlayerId) ?? game.players.first`.
+Military winner resolution: `game.playerById(victory.winnerPlayerId) ?? game.players.first`. Calendar declared winner: `pickUniqueGreatPowerLeaderByPowerScore(game)` (null ⇒ tie / no-winner copy).
 
 ### Narrow viewport (`< kNarrowBreakpoint`)
 
@@ -75,22 +74,22 @@ Implementers MUST drive the narrow flag from `MediaQuery.sizeOf(context).width <
 
 ## Trigger conditions
 
-- `GameScreen` renders `VictoryOverlay` when `game != null && game.victory != null` (see `game_screen.dart` build `Stack` children).
-- The overlay is the topmost interactive layer above the Flame canvas / map area, next-turn control, and pause affordances.
-- Turn advancement and full turn resolution are blocked while `Game.victory != null` via `GameMapAreaStateLogic.allowsFullTurnResolution` (returns `false` when victory is set). See [victory.md](../game/victory.md) § Victory Check and § Victory Screen (UI).
+- `GameScreen` mounts `VictoryOverlay` when `game != null && game.victory != null` (military; passes `victory`) **or** when `game != null && game.calendarCampaignHalted && game.victory == null` (calendar-complete; `victory` omitted).
+- Military takes precedence: if `victory != null`, only the military variant mounts.
+- Topmost interactive layer above map / Flame, next-turn, and pause.
+- Full turn resolution stays blocked while `Game.victory != null` **or** `Game.calendarCampaignHalted` (`allowsFullTurnResolution`). See [victory.md](../game/victory.md).
 
 ---
 
 ## States and variants
 
-| State | Condition | UI |
-|-------|-----------|-----|
-| Overlay visible (default) | `VictoryOverlay` mounted, `_dismissed == false` | Scrim + `VictoryPanel` shown. |
-| Overlay dismissed | User tapped “View Final State”; `_dismissed == true` | `VictoryOverlay` returns `SizedBox.shrink()`; map/canvas remains visible; `Game.victory` stays set; further turns remain blocked. |
-| Military victory | `victory.type == VictoryType.military` | Title uses `victory_military` l10n string. |
-| Future types | `VictoryType.economic`, `VictoryType.scientific` | Not implemented ([victory.md](../game/victory.md) § Out of scope). Spec reserves extension: add l10n labels and `switch` arms when product adds types. |
-
-Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory == null`) does **not** use this overlay; see [victory.md](../game/victory.md) § Calendar campaign end.
+| State / ID | Condition | UI |
+|------------|-----------|-----|
+| Overlay visible | Mounted, `_dismissed == false` | Scrim + `VictoryPanel`. |
+| Overlay dismissed | “View Final State”; `_dismissed == true` | `SizedBox.shrink()`; map remains; `Game.victory` / `calendarCampaignHalted` unchanged; further turns stay blocked. |
+| Military (`OVL20001`) | `victory.type == VictoryType.military` | Title `victory_military`; body `victory_winnerOnTurn`. |
+| Calendar complete (`OVL20001a`) | `victory == null` and host mounted for halt | Title `victory_campaignComplete`; body declared-winner / tie strings. |
+| Future types | `VictoryType.economic`, `VictoryType.scientific` | Not implemented ([victory.md](../game/victory.md) § Out of scope). |
 
 ---
 
@@ -100,14 +99,15 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 
 | Source | Condition | Result |
 |--------|-----------|--------|
-| `GameScreen` stack | `game.victory != null` and `VictoryOverlay` mounted | Full-screen scrim + `VictoryPanel`. |
+| `GameScreen` stack | `game.victory != null` | Military `VictoryOverlay`. |
+| `GameScreen` stack | `calendarCampaignHalted && victory == null` | Calendar-complete `VictoryOverlay`. |
 
 ### User actions → outcomes
 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | Return to Main Menu | Overlay visible | `NavigateToShellEvent` | Shell navigates per [main-menu.md](main-menu.md). |
-| View Final State | Overlay visible | `onViewFinalState` callback | `_dismissed = true`; map remains; no route pop. |
+| View Final State | Overlay visible | `onViewFinalState` callback; emits `VictoryOverlayViewFinalStateEvent` on the bus | `_dismissed = true`; map remains; no route pop. Starts last-turn spatial playback when pending (Refs #4486; [map-widget.md](map-widget.md) § Last-turn spatial playback). |
 
 ---
 
@@ -117,7 +117,7 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 - `CtGradients.victoryPanelGradient` (`app/lib/widgets/ct_gradients.dart`).
 - `CtNinePatchButton` (`app/lib/widgets/ct_nine_patch_button.dart`).
 - `EditorialMonoclePalette` (`packages/colonizethis_app_ui_chrome/lib/config/editorial_monocle_palette.dart`) — `accent`, `accentBright`, `fg`, `muted`, `dialogScrim`, `surfaceLite`, `bgDeep` tokens.
-- Localized strings: `victory_military`, `victory_winnerOnTurn`, `victory_returnToMainMenu`, `victory_viewFinalState` via `appL10n(context)`.
+- Localized strings: `victory_military`, `victory_campaignComplete`, `victory_winnerOnTurn`, `victory_endCalendarDeclaredWinner`, `victory_endCalendarNoWinner`, `victory_returnToMainMenu`, `victory_viewFinalState` via `appL10n(context)`.
 
 ---
 
@@ -169,15 +169,42 @@ Calendar campaign halt (`Game.calendarCampaignHalted == true` with `Game.victory
 
 - Given `VictoryOverlay` is mounted above a `Stack` host at exactly `kMinViewportWidth` (`320` dp) width and `640` dp height with `Game.victory.type == VictoryType.military`,
   When the overlay builds,
-  Then `WidgetTester.takeException()` returns `null` (no `RenderFlex` overflow exception from the scrim + centered `VictoryPanel` narrow column wireframe — laurel row, upper-cased title, `CtBrassDivider`, body sentence, stacked vertical `Column` of two `CtNinePatchButton`s per § Narrow viewport — at the minimum supported viewport from [mobile-adaptation.md](mobile-adaptation.md) § 7).
+  Then `WidgetTester.takeException()` returns `null` (no `RenderFlex` overflow from the narrow column wireframe at the minimum supported viewport from [mobile-adaptation.md](mobile-adaptation.md) § 7).
+
+- Given `Game.calendarCampaignHalted == true` and `Game.victory == null` with a unique power-score leader,
+  When `GameScreen` builds,
+  Then the UI layer mounts `VictoryOverlay` with upper-cased **Campaign complete** and the declared-winner body (not military copy).
+
+- Given the same halt with a tied / null power-score leader,
+  When the overlay builds,
+  Then the body uses `victory_endCalendarNoWinner`.
+
+- Given calendar-complete overlay is visible,
+  When the player taps **View Final State**,
+  Then the overlay dismisses, `Game.victory` stays null, `calendarCampaignHalted` stays true, and `allowsFullTurnResolution` remains false.
+
+- Given `Game.victory != null`,
+  When the screen builds,
+  Then only the military overlay mounts (no calendar-complete title).
+
+- Given `infiniteMode == true` or `calendarCampaignHalted == false` with `victory == null`,
+  When the screen builds,
+  Then no calendar-complete overlay mounts.
+
+- Given calendar-complete `VictoryOverlay` at `320` dp × `640` dp,
+  When the overlay builds,
+  Then `WidgetTester.takeException()` returns `null` and both action buttons mount under narrow compact rules.
 
 ---
 
 ## Widgetbook
 
-Catalog folder: **Victory** (registered in `app/lib/widgetbook/catalog.dart` via `victoryUiDirectories`). Use cases:
+Catalog folder: **Victory** (`victoryUiDirectories` in `widgetbook_host/lib/catalogs/catalog_screens_combat.dart`). Use cases:
 
-1. **Victory panel — military (default):** `VictoryPanel` with `getDebugInitGameResult().game`, sample `VictoryState` (`VictoryType.military`, turn `45`, first player as winner), and a throwaway `AppEventBus`.
-2. **Victory overlay — full scrim (optional):** `VictoryOverlay` inside a fixed-size `Stack` to show the dimmed full-screen presentation.
+1. **Victory panel — military** — sample military `VictoryState`.
+2. **Victory overlay — full scrim** — military `VictoryOverlay` in a fixed `Stack`.
+3. **Victory panel — calendar complete (declared winner)** — halted game, unique leader.
+4. **Victory panel — calendar complete (tie)** — halted game, tied scores.
+5. **Victory overlay — calendar complete (320 dp)** — calendar `VictoryOverlay` at min viewport.
 
-Automated widget tests: `app/test/victory_overlay_test.dart`.
+Automated tests: `app/test/victory_overlay_test.dart`, `app/test/victory_overlay_calendar_test.dart`, goldens under `app/test/goldens/victory_overlay_calendar_*.png`.

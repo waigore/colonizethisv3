@@ -1,9 +1,9 @@
 // Physical line ratchet for colonizethis_turn lib source (repo rule:
 // `repo.turn_lib_file_size`).
 //
-// Wave 4 (#4113) splits near-cap turn orchestration modules so lib files stay
-// below a peer-aligned 400 physical-line ceiling (economy/orders/map already
-// enforce package-local caps). Generated suffixes are excluded.
+// Wave 4 (#4113) split near-cap turn orchestration modules under a 400
+// physical-line ceiling. Wave 7 (#4342) ratchets that ceiling to 300 after
+// resolver / research / combat helper splits. Generated suffixes are excluded.
 import 'dart:convert';
 import 'dart:io';
 
@@ -11,13 +11,14 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-4 post-split target (≤400 physical lines).
-const int turnLibFileSizeCeiling = 400;
+/// Ratchet ceiling for wave-8 post-split target (≤250 physical lines).
+/// Wave 4 landed 400 (Refs #4113); wave 7 tightens to 300 (Refs #4342);
+/// wave 8 tightens to 250 (Refs #4583).
+const int turnLibFileSizeCeiling = 250;
 
 const String _turnLibRelativePath = 'packages/colonizethis_turn/lib';
 
-/// Hot files still above the wave-4 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land.
+/// Shrink-only grandfather; empty after wave-8 splits (Refs #4583).
 const List<String> turnLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -80,7 +81,7 @@ int runCheckTurnLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_turn_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4113).',
+      '(ceiling $ceiling; Refs #4113, #4342).',
     );
     return 0;
   }
@@ -88,7 +89,7 @@ int runCheckTurnLibFileSize(
   violations.sort();
   logE(
     'check_turn_lib_file_size: found ${violations.length} violation(s) '
-    'under $_turnLibRelativePath (wave-4 ceiling $ceiling; Refs #4113):',
+    'under $_turnLibRelativePath (wave-7 ceiling $ceiling; Refs #4113, #4342):',
   );
   for (final violation in violations) {
     logE(' - $violation');

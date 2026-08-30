@@ -3,9 +3,15 @@ library colonizethis_diplomacy;
 
 export 'src/diplomacy/alliance_break_cooldown.dart';
 export 'src/diplomacy/alliance_resolver.dart';
+export 'src/diplomacy/alliance_process.dart';
 export 'src/diplomacy/boycott_resolver.dart';
 export 'src/diplomacy/break_alliance_resolver.dart';
+export 'src/diplomacy/diplomacy_boycott_confirm_preview.dart';
 export 'src/diplomacy/diplomacy_confirm_preview.dart';
+export 'src/diplomacy/diplomacy_grant_aid_confirm_preview.dart';
+export 'src/diplomacy/favored_trading_partner_preview.dart';
+export 'src/diplomacy/diplomacy_declare_war_third_party_preview.dart';
+export 'src/diplomacy/incoming_overture_effect_preview.dart';
 export 'src/diplomacy/diplomacy_event_logging.dart';
 export 'src/diplomacy/diplomacy_logging.dart';
 export 'src/diplomacy/diplomacy_relation_lookup.dart';
@@ -17,12 +23,17 @@ export 'src/diplomacy/diplomacy_relation_upsert.dart';
 export 'src/diplomacy/diplomacy_relation_updates.dart';
 export 'src/diplomacy/diplomacy_resolver.dart';
 export 'src/diplomacy/diplomacy_shared_helpers.dart';
+export 'src/diplomacy/diplomacy_human_decision.dart';
 export 'src/diplomacy/diplomacy_grant_aid_resolver.dart';
 export 'src/diplomacy/diplomacy_relation_modifiers_resolver.dart';
 export 'src/diplomacy/diplomacy_subsidies_resolver.dart';
 export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart';
 export 'src/diplomacy/faction_absorption_engine.dart';
 export 'src/diplomacy/ftp_resolver.dart';
+export 'package:colonizethis_economy/colonizethis_economy.dart'
+    show kWorldMarketBaselineBidTypeCap, worldMarketBidTypeCap;
+export 'package:colonizethis_world/src/world/faction_membership.dart'
+    show DiplomacyFactionMembership, isGreatPower, isMinorOrTribe;
 export 'src/diplomacy/gp_tribe_first_contact.dart';
 export 'src/diplomacy/intervention_hold_flags.dart';
 export 'src/diplomacy/intervention_resolver.dart';

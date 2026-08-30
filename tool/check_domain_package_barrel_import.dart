@@ -20,10 +20,10 @@
 // combinator only publishes a subset of its target file's symbols, so the file
 // is treated as **not** fully published and deep imports of it remain allowed
 // (a consumer may legitimately need a symbol the barrel withholds). For example
-// `colonizethis_world` re-exports `fog_resolution.dart` with a `show` of only
-// the coastal-visibility helpers, so `colonizethis_turn` keeps a deep import for
-// the internal fog-decay helpers. Only combinator-free (full) re-exports count
-// toward the published closure.
+// `colonizethis_world` re-exports `fog_resolution.dart` with a `show` combinator
+// (coastal-visibility plus end-of-turn fog helpers; Refs #4515), so the file is
+// not fully published and a deep import remains allowed. Only combinator-free
+// (full) re-exports count toward the published closure.
 import 'dart:io';
 
 import 'package:path/path.dart' as p;

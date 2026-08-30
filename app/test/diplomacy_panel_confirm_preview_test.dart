@@ -9,223 +9,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'diplomacy_panel_confirm_preview_test_fixtures.dart';
 import 'diplomacy_panel_orders_pump_support.dart';
+import 'diplomacy_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_assets.dart';
-
-Game _minorConsulateConfirmGame() {
-  const ow = 'oldWorld';
-  return buildPanelTestGame(
-    id: 'diplomacy-consulate-confirm-test',
-    players: const [
-      Player(
-        id: diplomacyOrdersHumanId,
-        displayName: 'Test Human',
-        isHuman: true,
-        treasury: 5000,
-        techUnlocked: {kTechIdDiplomaticExpertise: true},
-      ),
-    ],
-    minorNations: const [
-      MinorNation(id: diplomacyOrdersMinorId, displayName: 'Free City'),
-    ],
-    oldWorldProvinces: [
-      Province(id: '$ow|p1', regionId: ow, ownerId: diplomacyOrdersHumanId),
-      Province(
-        id: '$ow|m1',
-        regionId: ow,
-        ownerId: diplomacyOrdersMinorId,
-      ),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: diplomacyOrdersMinorId,
-        state: RelationState.atPeace,
-        score: 50,
-      ),
-    ],
-  );
-}
-
-Game _minorJoinEmpireConfirmGame() {
-  return buildDiplomacyRichPanelTestGame().copyWith(
-    diplomacyRelations: [
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: 'gp2',
-        state: RelationState.atPeace,
-        score: 50,
-      ),
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: 'gp3',
-        state: RelationState.atWar,
-        score: 20,
-      ),
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: diplomacyOrdersMinorId,
-        state: RelationState.atPeace,
-        score: relationScoreMinFriendly,
-      ),
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: 't1',
-        state: RelationState.atPeace,
-        score: 50,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: diplomacyOrdersHumanId,
-        targetId: diplomacyOrdersMinorId,
-        stage: OvertureStage.nap,
-      ),
-    ],
-  );
-}
-
-Game _gpJoinEmpireConfirmGame() {
-  const ow = 'oldWorld';
-  const rivalCapital = '$ow|cap2';
-  const rivalProv1 = '$ow|p2a';
-  return buildPanelTestGame(
-    id: 'diplomacy-gp-join-empire-confirm-test',
-    players: const [
-      Player(
-        id: diplomacyOrdersHumanId,
-        displayName: 'Test Human',
-        isHuman: true,
-        treasury: 5000,
-        techUnlocked: {kTechIdEmpireBuilding: true},
-      ),
-      Player(
-        id: diplomacyOrdersGp2,
-        displayName: 'Rival Power',
-        isHuman: false,
-        capitalProvinceId: rivalCapital,
-      ),
-    ],
-    oldWorldProvinces: [
-      Province(id: '$ow|p1', regionId: ow, ownerId: diplomacyOrdersHumanId),
-      Province(id: rivalCapital, regionId: ow, ownerId: diplomacyOrdersHumanId),
-      Province(id: rivalProv1, regionId: ow, ownerId: diplomacyOrdersGp2),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: diplomacyOrdersGp2,
-        state: RelationState.atPeace,
-        score: relationScoreMinFriendly,
-      ),
-    ],
-  ).copyWith(
-    overtureStates: const [
-      OvertureState(
-        gpId: diplomacyOrdersHumanId,
-        targetId: diplomacyOrdersGp2,
-        stage: OvertureStage.nap,
-      ),
-    ],
-  );
-}
-
-Game _minorEmbassyOvertureConfirmGame() {
-  return _minorConsulateConfirmGame().copyWith(
-    overtureStates: const [
-      OvertureState(
-        gpId: diplomacyOrdersHumanId,
-        targetId: diplomacyOrdersMinorId,
-        stage: OvertureStage.tradeConsulate,
-      ),
-    ],
-  );
-}
-
-Game _minorNapOvertureConfirmGame() {
-  return _minorConsulateConfirmGame().copyWith(
-    overtureStates: const [
-      OvertureState(
-        gpId: diplomacyOrdersHumanId,
-        targetId: diplomacyOrdersMinorId,
-        stage: OvertureStage.embassy,
-      ),
-    ],
-  );
-}
-
-Game _ftpConfirmGame() {
-  return buildDiplomacyPanelTestGame().copyWith(
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: diplomacyOrdersGp2,
-        state: RelationState.atPeace,
-        score: relationScoreMinFtp,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: diplomacyOrdersHumanId,
-        targetId: diplomacyOrdersGp2,
-        stage: OvertureStage.embassy,
-      ),
-    ],
-  );
-}
-
-Game _colonyBoycottConfirmGame({List<BoycottState> boycotts = const []}) {
-  return buildDiplomacyPanelTestGame().copyWith(
-    colonyStates: const [
-      ColonyState(
-        tribeId: 't1',
-        colonyOfGpId: diplomacyOrdersHumanId,
-        sinceTurn: 1,
-      ),
-    ],
-    tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
-    boycottStates: boycotts,
-  );
-}
-
-Game _tribeJoinEmpireConfirmGame() {
-  return buildDiplomacyRichPanelTestGame().copyWith(
-    diplomacyRelations: [
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: 'gp2',
-        state: RelationState.atPeace,
-        score: 50,
-      ),
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: 'gp3',
-        state: RelationState.atWar,
-        score: 20,
-      ),
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: diplomacyOrdersMinorId,
-        state: RelationState.atPeace,
-        score: 50,
-      ),
-      const DiplomacyRelation(
-        factionId1: diplomacyOrdersHumanId,
-        factionId2: 't1',
-        state: RelationState.atPeace,
-        score: relationScoreMinFriendly,
-      ),
-    ],
-    overtureStates: const [
-      OvertureState(
-        gpId: diplomacyOrdersHumanId,
-        targetId: 't1',
-        stage: OvertureStage.nap,
-      ),
-    ],
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -296,7 +84,7 @@ void main() {
           .timeout(const Duration(seconds: 2));
       await pumpDiplomacyOrdersPanel(
         tester,
-        game: _minorConsulateConfirmGame(),
+        game: diplomacyConfirmPreviewMinorConsulateGame(),
         bus: eventBus,
         minorsTab: true,
         tall: true,
@@ -319,7 +107,7 @@ void main() {
     (WidgetTester tester) async {
       final confirm = await awaitConfirmOnDiplomacyActionTap(
         tester,
-        game: _minorJoinEmpireConfirmGame(),
+        game: diplomacyConfirmPreviewMinorJoinEmpireGame(),
         actionFinder: find.text('Join Empire').first,
         minorsTab: true,
         tall: true,
@@ -335,7 +123,7 @@ void main() {
     (WidgetTester tester) async {
       final confirm = await awaitConfirmOnDiplomacyActionTap(
         tester,
-        game: _tribeJoinEmpireConfirmGame(),
+        game: diplomacyConfirmPreviewTribeJoinEmpireGame(),
         actionFinder: find.text('Join Empire').last,
         tall: true,
       );
@@ -354,7 +142,7 @@ void main() {
           .timeout(const Duration(seconds: 2));
       await pumpDiplomacyOrdersPanel(
         tester,
-        game: _gpJoinEmpireConfirmGame(),
+        game: diplomacyConfirmPreviewGpJoinEmpireGame(),
         bus: eventBus,
         tall: true,
       );
@@ -411,7 +199,7 @@ void main() {
     ),
     (
       name: 'Embassy confirm shows paid overture preview (Refs #4181)',
-      game: _minorEmbassyOvertureConfirmGame,
+      game: diplomacyConfirmPreviewMinorEmbassyOvertureGame,
       actionFinder: () => find.descendant(
         of: diplomacyMinorRow(),
         matching: find.text('Embassy'),
@@ -424,7 +212,7 @@ void main() {
     ),
     (
       name: 'NAP confirm shows free pact preview (Refs #4181)',
-      game: _minorNapOvertureConfirmGame,
+      game: diplomacyConfirmPreviewMinorNapOvertureGame,
       actionFinder: () => find.descendant(
         of: diplomacyMinorRow(),
         matching: find.text('NAP'),
@@ -437,29 +225,37 @@ void main() {
       },
     ),
     (
-      name: 'Establish FTP confirm shows favoured-trading preview (Refs #4181)',
-      game: _ftpConfirmGame,
-      actionFinder: () => find.text('Establish FTP'),
+      name: 'Establish Favored partner confirm shows matching preview (Refs #4586)',
+      game: diplomacyConfirmPreviewFtpGame,
+      actionFinder: () => find.text('Establish Favored partner'),
       minorsTab: false,
       assertBody: (body) {
         expect(body, contains('No treasury charge'));
-        expect(body.toLowerCase(), contains('favoured-trading-partner'));
+        expect(body, contains('Favored Trading Partners'));
+        expect(body, contains('same bid rank'));
         expect(body, isNot(contains('When:')));
       },
     ),
     (
       name: 'Boycott confirm shows colony embargo preview (Refs #4181)',
-      game: _colonyBoycottConfirmGame,
+      game: diplomacyConfirmPreviewColonyBoycottGame,
       actionFinder: () => find.text('Boycott'),
       minorsTab: false,
       assertBody: (body) {
-        expect(body.toLowerCase(), contains('colonies'));
+        expect(body, contains('No treasury charge'));
+        expect(body, contains('will not fill in either direction'));
+        expect(body.toLowerCase(), contains('purchase land'));
+        expect(body.toLowerCase(), contains('grant aid'));
+        expect(body.toLowerCase(), contains('cancelled'));
+        expect(body, contains('Aztec'));
+        expect(body, isNot(contains('t1')));
+        expect(body, isNot(contains('-50')));
         expect(body, isNot(contains('When:')));
       },
     ),
     (
       name: 'Revoke Boycott confirm ends embargo preview (Refs #4181)',
-      game: () => _colonyBoycottConfirmGame(
+      game: () => diplomacyConfirmPreviewColonyBoycottGame(
         boycotts: const [
           BoycottState(
             gpId: diplomacyOrdersHumanId,
@@ -471,7 +267,12 @@ void main() {
       actionFinder: () => find.text('Revoke Boycott'),
       minorsTab: false,
       assertBody: (body) {
+        expect(body, contains('No treasury charge'));
         expect(body.toLowerCase(), contains('embargo'));
+        expect(body.toLowerCase(), contains('purchase land'));
+        expect(body.toLowerCase(), contains('grant aid'));
+        expect(body, contains('Aztec'));
+        expect(body, isNot(contains('t1')));
         expect(body, isNot(contains('When:')));
       },
     ),

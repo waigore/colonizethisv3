@@ -47,12 +47,7 @@ Game siegePipelineGame() {
     ),
     players: const [
       Player(id: 'att', displayName: 'Att', isHuman: true),
-      Player(
-        id: 'def',
-        displayName: 'Def',
-        isHuman: true,
-        militaryLevel: 3,
-      ),
+      Player(id: 'def', displayName: 'Def', isHuman: true, militaryLevel: 3),
     ],
   );
 }

@@ -1,14 +1,15 @@
 // Physical line limit for game feature widgets (`repo.game_widgets_file_size`).
-// SPEC: SPEC/program/game-widgets-file-size.md
+// SPEC: SPEC/program/game-widgets-file-size.md (wave-15 #4352 Slice B).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 700;
+/// Ratchet ceiling for game feature widgets (wave-20 #4582; was 300).
+const int gameWidgetsFileSizeCeiling = 250;
 
 /// PR-blocking structural check: files under
-/// `app/lib/features/game/widgets/**` must stay at or below 700 physical lines.
+/// `app/lib/features/game/widgets/**` must stay at or below 250 physical lines.
 int runCheckGameWidgetsFileSize(
   String repoRoot, {
   void Function(String line)? info,
@@ -38,21 +39,25 @@ int runCheckGameWidgetsFileSize(
     final physicalLines = const LineSplitter()
         .convert(entity.readAsStringSync())
         .length;
-    if (physicalLines <= _maxPhysicalLines) {
+    if (physicalLines <= gameWidgetsFileSizeCeiling) {
       continue;
     }
     violations.add(
-      '$relativePath ($physicalLines physical lines > $_maxPhysicalLines)',
+      '$relativePath ($physicalLines physical lines > $gameWidgetsFileSizeCeiling)',
     );
   }
 
   if (violations.isEmpty) {
-    logI('check_game_widgets_file_size: no violations found.');
+    logI(
+      'check_game_widgets_file_size: no violations found '
+      '(ceiling $gameWidgetsFileSizeCeiling; Refs #4352).',
+    );
     return 0;
   }
 
   logE(
-    'check_game_widgets_file_size: found ${violations.length} violation(s) under app/lib/features/game/widgets:',
+    'check_game_widgets_file_size: found ${violations.length} violation(s) '
+    'under app/lib/features/game/widgets:',
   );
   for (final violation in violations) {
     logE(' - $violation');

@@ -6,10 +6,7 @@
 /// Market tab commodity row.
 library;
 
-
 import 'package:flutter/material.dart';
-
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../widgets/ct_choice_chip.dart';
@@ -18,7 +15,8 @@ import 'trade_screen_market_row_stepper.dart';
 import 'trade_screen_market_tab.dart';
 
 class MarketCommodityRowControls extends StatelessWidget {
-  const MarketCommodityRowControls({super.key, 
+  const MarketCommodityRowControls({
+    super.key,
     required this.commodityId,
     required this.stagedType,
     required this.quantityText,
@@ -30,6 +28,7 @@ class MarketCommodityRowControls extends StatelessWidget {
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
+    this.absorbPointers = false,
   });
 
   final CommodityId commodityId;
@@ -53,9 +52,16 @@ class MarketCommodityRowControls extends StatelessWidget {
   final ValueChanged<TradeOrderType?> onDirectionChanged;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
+  final bool absorbPointers;
 
   @override
   Widget build(BuildContext context) {
+    final Widget strip = _directionAndQuantityStrip();
+    if (!absorbPointers) return strip;
+    return IgnorePointer(child: strip);
+  }
+
+  Widget _directionAndQuantityStrip() {
     return Wrap(
       spacing: 6,
       runSpacing: 6,

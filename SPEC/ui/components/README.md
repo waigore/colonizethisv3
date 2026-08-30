@@ -10,14 +10,17 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 
 | Component | File | Consumed by |
 |-----------|------|-------------|
+| Development assign row | [`development-assign-row.md`](development-assign-row.md) | `GAME80001` (Development) improvable commodity **Show** / **Assign** preview. |
+| Combat mode choice intel | [`combat-mode-choice-intel.md`](combat-mode-choice-intel.md) | `CMPT10001` (combat mode choice dialog). |
+| Tile radial catalog | [`tile-radial-catalog.md`](tile-radial-catalog.md) | `MAP30001` (tile context radial), `MAP30002` (more tile actions). |
 | `CtDarkScaffold` | [`ct-dark-scaffold.md`](ct-dark-scaffold.md) | `CtGameFeatureScreenShell` (dark-chrome path) and any dark-theme screen. |
-| `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention). |
+| `CtFullScreenDialogueShell` | [`ct-full-screen-dialogue-shell.md`](ct-full-screen-dialogue-shell.md) | `OVL10001` (game-start intro), `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL50001` (pending intervention), `OVL90001` (Favored Trading Partner). |
 | `TitledDialogueChrome` / `buildTitledDialogueChrome` | [`titled-dialogue-chrome.md`](titled-dialogue-chrome.md) | `OVL10001` (game-start intro), `OVL80001` (tribe first contact). |
-| `DialogueTristateDecisionRow` | [`dialogue-tristate-decision-row.md`](dialogue-tristate-decision-row.md) | `OVL30001` (overture), `OVL40001` (call-to-arms). |
+| `DialogueTristateDecisionRow` | [`dialogue-tristate-decision-row.md`](dialogue-tristate-decision-row.md) | `OVL30001` (overture), `OVL40001` (call-to-arms), `OVL90001` (Favored Trading Partner). |
 | `CtGameFeatureScreenShell` | [`ct-game-feature-screen-shell.md`](ct-game-feature-screen-shell.md) | `GAME20001` (production), `GAME30001` (diplomacy), `GAME40001` (technology), `GAME60001` (trade). |
 | `CtPanelWithTopBar` | [`ct-panel-with-top-bar.md`](ct-panel-with-top-bar.md) | `CtScreenShell`, `UnitsPanelShell`. |
 | `CtTransferList` | [`ct-transfer-list.md`](ct-transfer-list.md) | `DLG40001` (transfer to home fleet), Split Fleet dialog, Split Army dialog. |
-| `MoveUnitsDialogState` / `MoveDialogDestinationRow` | [`move-units-dialog-base.md`](move-units-dialog-base.md) | `DLG20001` (move army dialog), `DLG30001` (move fleet dialog). |
+| `MoveUnitsDialogState` / `MoveDialogDestinationRow` | [`move-units-dialog-base.md`](move-units-dialog-base.md) | `DLG20001` (move army), `DLG30001` (move fleet), `DLG20002` / `DLG31003` unit pickers. |
 | `ProductionAllocationRow` | [`production-allocation-row.md`](production-allocation-row.md) | `GAME20001` (production panel). |
 | `ResourceIconTooltip` (convention) | [`resource-icon-tooltip.md`](resource-icon-tooltip.md) | `UNIT50001` (train military dialog), `UNIT60001` (train naval dialog), and any icon-only resource glyph. |
 | `TrainDialogChrome` | [`train-dialog-chrome.md`](train-dialog-chrome.md) | `UNIT40001` (train civilians dialog), `UNIT50001` (train military dialog), `UNIT60001` (train naval dialog). |
@@ -25,3 +28,5 @@ Create `<kebab-name>.md` before duplicating composite layout in multiple screen 
 | `UnitsEntityCard` | [`units-entity-card.md`](units-entity-card.md) | `UNIT20001` (military units panel). |
 | `UnitsPanelSheetSurface` | [`units-panel-sheet-surface.md`](units-panel-sheet-surface.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
 | `UnitsPanelShell` | [`units-panel-shell.md`](units-panel-shell.md) | `UNIT10001` (civilian units panel), `UNIT20001` (military units panel), `UNIT30001` (naval units panel). |
+| Old World race chip | [`old-world-race-chip.md`](old-world-race-chip.md) | `MAP10001` tab bar (`GameTabBar` / `GameMapControls`). |
+| Staged decree review | [`staged-decree-review.md`](staged-decree-review.md) | `DLG60001` (next turn confirmation). |

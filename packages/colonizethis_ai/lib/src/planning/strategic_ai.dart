@@ -4,25 +4,19 @@ import 'package:colonizethis_logic/ai_api.dart'
     show
         PlayerView,
         TurnTraceAiSection,
-        buildPlayerView,
         cargoHoldsForHomeFleet,
         computeExtractionTotalsForTradeForecast;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'army_conquest_prep.dart';
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
-import 'goal_manager.dart';
-import 'observer_goal_phase.dart';
 import 'orchestrator_options.dart';
+import 'strategic_ai_goal_prep.dart';
 import 'strategic_planning_input.dart';
 import 'phase_planner_dispatch.dart';
-import 'phase_planner_goal_filter.dart';
-import 'phase_priority_weights.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
-import '../perception/perception_snapshot.dart';
 import '../social/strategic_dialogue_emission.dart';
 
 final _log = packageLogger();
@@ -76,70 +70,9 @@ class StrategicOrderTraceResult {
 StrategicOrderTraceResult generateStrategicOrdersWithTrace(
   StrategicPlanningInput input,
 ) {
-  final turn = input.game.worldState.turnState.turnNumber;
+  final prep = prepareStrategicAiGoalAndArmy(input);
+  final turn = prep.turn;
   _log.i('generateStrategicOrders nationId=${input.nationId} turn=$turn');
-  final snapshot = AIWorldSnapshot.fromPlayerView(
-    input.view,
-    topology: input.topology,
-  );
-  final observerGoalPhase = observerGoalPhaseFor(
-    snapshot: snapshot,
-    game: input.game,
-  );
-  final suppressColonialPressure = resolvePhaseGoalSuppressColonialPressure(
-    observerGoalPhase,
-  );
-  // Refs #2847 Phase 3 goal-score wiring: pre-compute the soft-phase
-  // priority weights from the pre-prep snapshot/game so the
-  // `evaluateStrategicGoalScores` colonial-pressure penalty/floor pass
-  // can scale continuously with `newWorldAcquisition` instead of switching
-  // on/off at the EXPAND→COLONIAL hard-phase boundary.
-  // `goalColonialPressureWeightFor` derives the EXPAND economy plan from the
-  // pre-prep `(game, snapshot)` so the treasury-recovery resource-need
-  // override lifts the goal-score NW acquisition weight to its `0.60` floor
-  // for a below-quota peer-war-locked GP — matching the conquest / naval /
-  // diplomacy scoring sites that already consume the dispatched plan's
-  // weights. Goal selection precedes `prepareConquestFieldArmy`, so the
-  // pre-prep state is the correct input here (Refs #2847 § Resource-need
-  // overrides).
-  final goalColonialPressureWeight = goalColonialPressureWeightFor(
-    snapshot: snapshot,
-    game: input.game,
-  );
-  final goalScores = evaluateStrategicGoalScores(
-    snapshot,
-    input.config,
-    observerGoalPhase: observerGoalPhase,
-    colonialPressureWeight: goalColonialPressureWeight,
-  );
-  var primaryGoal = selectPrimaryGoal(
-    snapshot,
-    input.config,
-    input.seeds.goalSeed,
-    nationId: input.nationId,
-    turn: turn,
-    observerGoalPhase: observerGoalPhase,
-    colonialPressureWeight: goalColonialPressureWeight,
-  );
-  if (suppressColonialPressure &&
-      snapshot.conquest.provincesToVictory >
-          kConquerScoreFloorProvincesToVictoryThreshold) {
-    primaryGoal = StrategicGoal.conquer;
-  }
-  _log.d('primaryGoal=$primaryGoal');
-  final planningGame = prepareConquestFieldArmy(
-    game: input.game,
-    nationId: input.nationId,
-    provincesToVictory: snapshot.conquest.provincesToVictory,
-    oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-    primaryGoal: primaryGoal,
-  );
-  final planningView = planningGame == input.game
-      ? input.view
-      : buildPlayerView(planningGame, input.topology, input.nationId);
-  final planningSnapshot = planningView == input.view
-      ? snapshot
-      : AIWorldSnapshot.fromPlayerView(planningView, topology: input.topology);
   // Refs #2509 S5: dispatch the phase plan once per AI player turn against
   // the planning-state inputs and thread the resolved `PhasePlanOutcome`
   // into both `runEconomyPlanner` and the orchestrator. The dispatch is
@@ -153,8 +86,8 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace(
   // same plan so the dispatch runs exactly once per AI player turn against
   // the same `(planningGame, planningSnapshot, personalityId)` inputs.
   final phasePlan = runPhasePlanners(
-    game: planningGame,
-    snapshot: planningSnapshot,
+    game: prep.planningGame,
+    snapshot: prep.planningSnapshot,
     personalityId: input.config.personalityId,
   );
   // Refs #3517 Cluster 4: the treasury planner forecasts overseas trade-cargo
@@ -174,9 +107,9 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace(
   final tradeForecastExtractionById =
       (input.tileMapByRegion != null &&
           input.tileMapByRegion!.isNotEmpty &&
-          cargoHoldsForHomeFleet(planningGame, input.nationId) > 0)
+          cargoHoldsForHomeFleet(prep.planningGame, input.nationId) > 0)
       ? computeExtractionTotalsForTradeForecast(
-          game: planningGame,
+          game: prep.planningGame,
           tileMapByRegion: input.tileMapByRegion!,
           topology: input.topology,
         )
@@ -189,12 +122,12 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace(
   // `pendingTreasuryCostsForTurn` projector and the bid budget reflects
   // the real treasury the matcher will see at phase 13.
   final economyPlan = runEconomyPlanner(
-    game: planningGame,
-    view: planningView,
+    game: prep.planningGame,
+    view: prep.planningView,
     config: input.config,
     seeds: input.seeds,
-    colonial: snapshot.colonial,
-    snapshot: planningSnapshot,
+    colonial: prep.snapshot.colonial,
+    snapshot: prep.planningSnapshot,
     phasePlan: phasePlan,
     tileMapByRegion: input.tileMapByRegion,
     topology: input.topology,
@@ -204,13 +137,13 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace(
   );
   final plannerOutcome = runDomainPlannersWithOutcome(
     DomainPlannerInput(
-      game: planningGame,
+      game: prep.planningGame,
       topology: input.topology,
       nationId: input.nationId,
-      view: planningView,
-      snapshot: planningSnapshot,
+      view: prep.planningView,
+      snapshot: prep.planningSnapshot,
       config: input.config,
-      primaryGoal: primaryGoal,
+      primaryGoal: prep.primaryGoal,
       seeds: input.seeds,
       suggestionAPI: input.suggestionAPI,
       economyPlan: economyPlan,
@@ -253,23 +186,23 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace(
   final finalOrders = finalAggregatedOrders(input.nationId, orders);
   return StrategicOrderTraceResult(
     result: result,
-    game: planningGame,
+    game: prep.planningGame,
     aiTraceSection: buildAiTraceSection(
       AiTraceBuildInput(
         nationId: input.nationId,
         turn: turn,
         config: input.config,
         seeds: input.seeds,
-        snapshot: snapshot,
-        primaryGoal: primaryGoal,
-        goalScores: goalScores,
+        snapshot: prep.snapshot,
+        primaryGoal: prep.primaryGoal,
+        goalScores: prep.goalScores,
         economyPlan: economyPlan,
         orders: orders,
         ordersByDomain: ordersByDomain,
         finalOrders: finalOrders,
         declaredWarTargetFactionId: plannerOutcome.declaredWarTargetFactionId,
         conquestArmyMoveCount: plannerOutcome.conquestArmyMoveCount,
-        observerGoalPhase: observerGoalPhase,
+        observerGoalPhase: prep.observerGoalPhase,
         phasePlan: plannerOutcome.phasePlan ?? phasePlan,
         domainGateData: plannerOutcome.domainGateData,
       ),

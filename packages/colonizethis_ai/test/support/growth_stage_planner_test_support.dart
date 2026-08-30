@@ -8,6 +8,9 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_test_fake_api.dart';
+
+export 'growth_stage_planner_relocation_support.dart';
+
 const kTestTopology = MapTopology(nodes: [], edges: []);
 final kTestSeeds = AISeedBundle.fromTurnSeed(3371);
 
@@ -113,28 +116,5 @@ Game matureCastIronGame({int castIronHeld = 0}) {
         workerPool: const WorkerPool(peasants: 12),
       ),
     ],
-  );
-}
-
-AIWorldSnapshot atWarSnapshot(String playerId) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: const ThreatSummary(
-      atWarWith: ['gp2'],
-      neighborProvincesHostile: 1,
-      capitalThreatened: false,
-    ),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 2,
-      provincesToVictory: 29,
-      invadableProvinceIdsSorted: ['oldWorld|enemy'],
-    ),
-    economy: const EconomySummary(
-      workerCount: 4,
-      treasury: 100,
-      ownProvinceCount: 2,
-    ),
-    relations: const {},
   );
 }

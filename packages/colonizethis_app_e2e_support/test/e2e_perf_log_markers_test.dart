@@ -27,27 +27,11 @@
 library;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
-
-/// Captures every `debugPrint` line emitted while [body] runs and restores
-/// the original printer afterwards (defensive in `finally` so a thrown
-/// expectation does not leak the override into later tests).
-List<String> _captureDebugPrints(void Function() body) {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
+import 'support/e2e_perf_log_markers_guard_group.dart';
+import 'support/e2e_perf_log_markers_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -55,12 +39,14 @@ void main() {
   group('E2ePerfLog.bumpCounter', () {
     test('emits canonical E2E_COUNTER marker on the first call', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('turn_loop_iterations');
       });
       expect(
         lines,
-        <String>['E2E_COUNTER|test=pin_perf_log|name=turn_loop_iterations|value=1'],
+        <String>[
+          'E2E_COUNTER|test=pin_perf_log|name=turn_loop_iterations|value=1',
+        ],
         reason:
             'The first bump must emit the canonical pipe-delimited marker '
             'with test=, name=, and value= fields in that order so any '
@@ -71,7 +57,7 @@ void main() {
 
     test('increments by 1 by default across successive calls', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('next_turn_taps');
         perf.bumpCounter('next_turn_taps');
         perf.bumpCounter('next_turn_taps');
@@ -93,7 +79,7 @@ void main() {
 
     test('accumulates by the explicit `by` step when supplied', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('frames', by: 5);
         perf.bumpCounter('frames', by: 2);
       });
@@ -112,7 +98,7 @@ void main() {
 
     test('appends `|meta=…` suffix when `meta:` is supplied', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('wait_until_found_calls', meta: 'phase=open_panel');
       });
       expect(
@@ -130,7 +116,7 @@ void main() {
 
     test('omits the `|meta=…` suffix when `meta:` is null', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('plain_counter');
       });
       expect(lines, hasLength(1));
@@ -146,7 +132,7 @@ void main() {
 
     test('tracks counters independently within the same instance', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('a');
         perf.bumpCounter('b');
         perf.bumpCounter('a');
@@ -172,7 +158,7 @@ void main() {
   group('E2ePerfLog.timing', () {
     test('emits canonical E2E_TIMING marker with milliseconds', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.timing('open_panel_civilian', const Duration(milliseconds: 123));
       });
       expect(
@@ -190,7 +176,7 @@ void main() {
 
     test('uses Duration.inMilliseconds (truncates sub-millisecond input)', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         // 1500 microseconds == 1.5ms; Duration.inMilliseconds truncates to 1.
         perf.timing('phase_a', const Duration(microseconds: 1500));
         perf.timing('phase_b', Duration.zero);
@@ -212,7 +198,7 @@ void main() {
 
     test('appends `|meta=…` suffix when `meta:` is supplied', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.timing(
           'fleet_move_segment',
           const Duration(milliseconds: 250),
@@ -236,7 +222,7 @@ void main() {
 
     test('omits the `|meta=…` suffix when `meta:` is null', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.timing('plain_phase', const Duration(milliseconds: 7));
       });
       expect(lines, hasLength(1));
@@ -251,7 +237,7 @@ void main() {
 
     test('does not mutate counter state', () {
       final perf = E2ePerfLog('pin_perf_log');
-      final lines = _captureDebugPrints(() {
+      final lines = captureE2ePerfLogDebugPrints(() {
         perf.bumpCounter('mixed');
         perf.timing('mixed', const Duration(milliseconds: 9));
         perf.bumpCounter('mixed');
@@ -272,46 +258,5 @@ void main() {
     });
   });
 
-  group('E2ePerfLog testName', () {
-    test('embeds the constructor-supplied testName in every marker', () {
-      final perf = E2ePerfLog('new_game_full_turn');
-      final lines = _captureDebugPrints(() {
-        perf.bumpCounter('open_panel_civilian');
-        perf.timing('open_panel_civilian', const Duration(milliseconds: 12));
-      });
-      expect(
-        lines,
-        <String>[
-          'E2E_COUNTER|test=new_game_full_turn|name=open_panel_civilian|value=1',
-          'E2E_TIMING|test=new_game_full_turn|phase=open_panel_civilian|ms=12',
-        ],
-        reason:
-            'AC8 timing analysis groups markers by `test=` so each scenario '
-            'totals independently; mis-quoting or losing the testName would '
-            'mix per-scenario phase totals in any downstream report.',
-      );
-    });
-
-    test('keeps counters scoped to a single instance', () {
-      final perfA = E2ePerfLog('scenario_a');
-      final perfB = E2ePerfLog('scenario_b');
-      final lines = _captureDebugPrints(() {
-        perfA.bumpCounter('shared');
-        perfB.bumpCounter('shared');
-        perfA.bumpCounter('shared');
-      });
-      expect(
-        lines,
-        <String>[
-          'E2E_COUNTER|test=scenario_a|name=shared|value=1',
-          'E2E_COUNTER|test=scenario_b|name=shared|value=1',
-          'E2E_COUNTER|test=scenario_a|name=shared|value=2',
-        ],
-        reason:
-            'Two perf logs in the same isolate (for example two test cases '
-            'running back-to-back) must not share a counter table; a shared '
-            'tally would corrupt per-scenario value= fields.',
-      );
-    });
-  });
+  registerE2ePerfLogMarkersGuardGroup();
 }

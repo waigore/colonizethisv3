@@ -57,16 +57,13 @@
 //      the war is held open (`const []`). On the multi-GP arm it
 //      peaces every at-war GP except the blocker, sorted ascending.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
 
-
-
 import 'expand_phase_planner_default_start_near_quota_peace_support.dart';
+import 'expand_phase_planner_default_start_peace_filter_sort_cases.dart';
 
 void registerExpandDefaultStartPeaceCases() {
   group('defaultStartGpPeaceTargets — outer guards', () {
@@ -126,7 +123,10 @@ void registerExpandDefaultStartPeaceCases() {
         // frontier is not GP-only → invadableBlocker = null →
         // every at-war GP is peaced (gp_a alone here).
         final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 9, defaultStartPeaceMinorM1: 1},
+          owOwners: const {
+            defaultStartPeaceGpOwn: 9,
+            defaultStartPeaceMinorM1: 1,
+          },
           atWarPartners: const [defaultStartPeaceGpA],
           atWarWithExtraGp: false,
         );
@@ -155,7 +155,12 @@ void registerExpandDefaultStartPeaceCases() {
       // owner makes the frontier non-GP-only → invadableBlocker null
       // → every at-war GP is peaced ascending.
       final game = buildDefaultStartNearQuotaExpandPeaceGame(
-        owOwners: const {defaultStartPeaceGpOwn: 8, defaultStartPeaceGpA: 1, defaultStartPeaceGpB: 0, defaultStartPeaceMinorM1: 1},
+        owOwners: const {
+          defaultStartPeaceGpOwn: 8,
+          defaultStartPeaceGpA: 1,
+          defaultStartPeaceGpB: 0,
+          defaultStartPeaceMinorM1: 1,
+        },
         atWarPartners: const [defaultStartPeaceGpA, defaultStartPeaceGpB],
       );
       final snapshot = defaultStartPeaceSnapshot(
@@ -183,7 +188,11 @@ void registerExpandDefaultStartPeaceCases() {
         // also at war but owns nothing on the frontier. The canonical
         // helper must drop gp_a (blocker) and return [gp_b] sorted.
         final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 8, defaultStartPeaceGpA: 1, defaultStartPeaceGpB: 0},
+          owOwners: const {
+            defaultStartPeaceGpOwn: 8,
+            defaultStartPeaceGpA: 1,
+            defaultStartPeaceGpB: 0,
+          },
           atWarPartners: const [defaultStartPeaceGpA, defaultStartPeaceGpB],
         );
         final snapshot = defaultStartPeaceSnapshot(
@@ -204,71 +213,5 @@ void registerExpandDefaultStartPeaceCases() {
     );
   });
 
-  group(
-    'defaultStartGpPeaceTargets — atWarWith filter / sort / determinism',
-    () {
-      test('non-GP factions are filtered out of the returned list', () {
-        // atWarWith mixes a tribe with a Great Power; the tribe must
-        // be dropped because game.playerById(tribe_t1) == null. The
-        // GP-only frontier is true (gp_a owns the only invadable OW)
-        // so blocker exclusion drops gp_a as well → empty.
-        final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 7, defaultStartPeaceGpA: 1, defaultStartPeaceTribeT1: 0},
-          atWarPartners: const [defaultStartPeaceGpA],
-          atWarWithExtraGp: false,
-        );
-        final snapshot = defaultStartPeaceSnapshot(
-          oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-          atWarWith: const [defaultStartPeaceTribeT1, defaultStartPeaceGpA],
-          invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-        );
-        expect(
-          defaultStartGpPeaceTargets(game: game, snapshot: snapshot),
-          isEmpty,
-          reason:
-              'Tribes are filtered before sort via playerById; with a '
-              'GP-only frontier the lone GP foe (the blocker) is also '
-              'excluded so the result is empty.',
-        );
-      });
-
-      test('multi-GP roster returns deterministically ascending output', () {
-        // Three at-war GPs supplied out of order; gp_a is the blocker
-        // (owns the only invadable OW). The canonical helper must
-        // return [gp_b, gp_c] ascending across two consecutive calls
-        // (Refs #2509 Must-have #7).
-        final game = buildDefaultStartNearQuotaExpandPeaceGame(
-          owOwners: const {defaultStartPeaceGpOwn: 7, defaultStartPeaceGpA: 1, defaultStartPeaceGpB: 0, defaultStartPeaceGpC: 0},
-          atWarPartners: const [defaultStartPeaceGpC, defaultStartPeaceGpA, defaultStartPeaceGpB],
-        );
-        final snapshot = defaultStartPeaceSnapshot(
-          oldWorldProvincesOwned: kObserverDefaultStartOldWorldProvincesPerGp,
-          atWarWith: const [defaultStartPeaceGpC, defaultStartPeaceGpA, defaultStartPeaceGpB],
-          invadableProvinceIdsSorted: const ['oldWorld|gp_a_1'],
-        );
-        final first = defaultStartGpPeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        );
-        final second = defaultStartGpPeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        );
-        expect(
-          first,
-          const [defaultStartPeaceGpB, defaultStartPeaceGpC],
-          reason:
-              'On a GP-only frontier the blocker (gp_a) is excluded; '
-              'remaining GPs return ascending across an out-of-order input.',
-        );
-        expect(
-          second,
-          first,
-          reason:
-              'Two consecutive canonical-helper invocations on identical '
-              'inputs must return identical lists (Must-have #7).',
-        );
-      });
-    },
-  );
+  registerExpandDefaultStartPeaceFilterSortCases();
 }

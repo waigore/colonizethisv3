@@ -12,7 +12,10 @@ import 'turn_logging.dart';
 import 'turn_resolution_seeds.dart';
 
 export 'spy_research_boost.dart'
-    show applySpyResearchBoostToPoints, spyResearchBoostGpCountForTech;
+    show
+        applySpyResearchBoostToPoints,
+        spyResearchBoostGpCountForTech,
+        spyResearchBoostRivalIdsForTech;
 export 'spy_resolution_models.dart'
     show SpyCaughtDetail, SpyDefectedDetail, SpyResolutionResult;
 
@@ -49,13 +52,16 @@ SpyResolutionResult resolveSpyPhase(Game game, {Random? random}) {
     final spy = entry.value;
     final provinceId = spy.locationProvinceId;
     final territoryOwner = ownerByProvince[provinceId]!;
-    final garrisonBonus = (garrisonByProvince[provinceId] ?? 0)
-        .clamp(0, spyGarrisonKillChanceCapPercent);
-    final counterEspBonus =
-        counterEspionageKillBonusPercent(territoryOwner, counterEspGpIds);
-    final killChancePercent = spyBaseKillChancePercent +
-        garrisonBonus +
-        counterEspBonus;
+    final garrisonBonus = (garrisonByProvince[provinceId] ?? 0).clamp(
+      0,
+      spyGarrisonKillChanceCapPercent,
+    );
+    final counterEspBonus = counterEspionageKillBonusPercent(
+      territoryOwner,
+      counterEspGpIds,
+    );
+    final killChancePercent =
+        spyBaseKillChancePercent + garrisonBonus + counterEspBonus;
     if (rand.nextDouble() * 100 < killChancePercent) {
       units.remove(unitId);
       killedIds.add(unitId);
@@ -115,9 +121,10 @@ SpyResolutionResult resolveSpyPhase(Game game, {Random? random}) {
     );
   }
 
-  final nextGame = gameWithSpyUnits(game, units).copyWith(
-    diplomacyRelations: relations,
-  );
+  final nextGame = gameWithSpyUnits(
+    game,
+    units,
+  ).copyWith(diplomacyRelations: relations);
   return SpyResolutionResult(
     game: nextGame,
     killedSpyUnitIds: killedIds,

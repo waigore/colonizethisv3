@@ -5,7 +5,9 @@
 
 import 'package:colonizethis_test/test.dart';
 
+import 'event_dialogue_reactive_scenario_helpers.dart';
 import 'event_dialogue_reactive_scenarios.dart';
+import 'event_dialogue_reactive_scenarios_more.dart';
 
 void main() {
   group('dialogueEventsForReactiveFortsOnBorder', () {

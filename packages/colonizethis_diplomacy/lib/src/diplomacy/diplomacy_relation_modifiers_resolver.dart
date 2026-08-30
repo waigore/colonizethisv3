@@ -14,12 +14,7 @@ Game applyRelationModifiersAndUpdateScores(
   int turn, {
   IntraTurnEventTally? eventTally,
 }) {
-  game = applyGrantAidOrders(
-    game,
-    diploByPlayer,
-    turn,
-    eventTally: eventTally,
-  );
+  game = applyGrantAidOrders(game, diploByPlayer, turn, eventTally: eventTally);
   return applySetSubsidyOrders(
     game,
     diploByPlayer,
@@ -60,14 +55,19 @@ Game applyRelationDecay(
 
     // Skip-on-event: a pair modified this turn (or created this turn) does not
     // also decay the same turn.
-    final startScore = phaseStartScores[pairKey(rel.factionId1, rel.factionId2)];
+    final startScore =
+        phaseStartScores[pairKey(rel.factionId1, rel.factionId2)];
     if (startScore == null || startScore != rel.score) continue;
 
     final num newScore = rel.score < relationScoreNeutral
-        ? (rel.score + relationDecayPerTurn)
-              .clamp(relationScoreMin, relationScoreNeutral)
-        : (rel.score - relationDecayPerTurn)
-              .clamp(relationScoreNeutral, relationScoreMax);
+        ? (rel.score + relationDecayPerTurn).clamp(
+            relationScoreMin,
+            relationScoreNeutral,
+          )
+        : (rel.score - relationDecayPerTurn).clamp(
+            relationScoreNeutral,
+            relationScoreMax,
+          );
 
     if (newScore == rel.score) continue;
     relations[i] = rel.copyWith(score: newScore, level: scoreToLevel(newScore));
@@ -98,10 +98,10 @@ Game applyTradeDealRelationBoosts(Game game, int turn) {
   var changed = false;
   final next = withRelationUpserts(game, (relationsIndex) {
     for (final key in pairKeys) {
-      final parts = key.split('|');
-      if (parts.length != 2) continue;
-      final id1 = parts[0];
-      final id2 = parts[1];
+      final ids = pairIdsFromKey(key);
+      if (ids == null) continue;
+      final id1 = ids.id1;
+      final id2 = ids.id2;
       if (id1.isEmpty || id2.isEmpty || id1 == id2) continue;
 
       // War scores are frozen and never receive the trade boost.
@@ -113,7 +113,8 @@ Game applyTradeDealRelationBoosts(Game game, int turn) {
       // Subsidy modifier (Refs #3753 R10): +0.2 per subsidy percentage point in
       // effect between the parties (subsidies are GP→Minor/Tribe, counted once).
       final subsidyPercent = subsidyPercentBetween(game, id1, id2);
-      final boost = tradeDealRelationBoostBase +
+      final boost =
+          tradeDealRelationBoostBase +
           (hasEmbassy ? tradeDealRelationBoostEmbassyBonus : 0.0) +
           (tradeDealRelationBoostPerSubsidyPercent * subsidyPercent);
 
@@ -136,10 +137,7 @@ DiplomacyRelation Function(DiplomacyRelation?) _tradeDealBoostUpdater(
   int turn,
 ) => (existing) {
   final num base = existing?.score ?? relationScoreNeutral;
-  final num newScore = (base + boost).clamp(
-    relationScoreMin,
-    relationScoreMax,
-  );
+  final num newScore = (base + boost).clamp(relationScoreMin, relationScoreMax);
   final newLevel = scoreToLevel(newScore);
   if (existing == null) {
     return DiplomacyRelation(

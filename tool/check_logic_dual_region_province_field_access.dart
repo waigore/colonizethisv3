@@ -13,16 +13,23 @@ const _canonicalProvinceRelativePaths = <String>[
 const _canonicalUnitRelativePath =
     'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
-/// Post-split scan root (Refs #3290): world domain code moved out of the monolith.
-const _scanDirRelative = 'packages/colonizethis_world/lib/src';
+/// Post-split scan roots (Refs #3290 world; Refs #4660 thin logic core).
+const _scanDirRelatives = <String>[
+  'packages/colonizethis_world/lib/src',
+  'packages/colonizethis_logic/lib/src',
+];
 
-/// Exposed for tests verifying the post-split scan root.
+/// Exposed for tests verifying the post-split scan roots.
+List<String> logicDualRegionProvinceFieldAccessScanDirsForTests() =>
+    List<String>.unmodifiable(_scanDirRelatives);
+
+/// Backward-compatible single-root accessor used by older tests.
 String logicDualRegionProvinceFieldAccessScanDirForTests() =>
-    _scanDirRelative;
+    _scanDirRelatives.first;
 
 /// Keep direct dual-region field access rare; budget tracks the smallest value
 /// confirmed achievable by the audit recorded in
-/// SPEC/program/logic-dual-region-province-access.md (Refs #2836 AC 5).
+/// SPEC/program/logic-dual-region-province-access.md (Refs #2836 AC 5; #4660).
 const _maxMatchingLinesOutsideCanonical = 0;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -62,35 +69,47 @@ int runCheckLogicDualRegionProvinceFieldAccess(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final root = p.normalize(repoRoot);
-  final scanRoot = Directory(p.join(root, _scanDirRelative));
-  if (!scanRoot.existsSync()) {
-    logE('ERROR: Expected world lib tree missing: $_scanDirRelative');
-    return 1;
-  }
 
   final hits = <LogicDualRegionProvinceFieldHit>[];
-  for (final entity in scanRoot.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) continue;
-    final fullPath = p.normalize(entity.path);
-    if (!fullPath.endsWith('.dart')) continue;
-    if (_generatedSuffix.hasMatch(fullPath)) continue;
-    final relative = p.relative(fullPath, from: root);
-    final normalizedRelative = p.normalize(relative);
-    if (_canonicalProvinceRelativePaths.contains(normalizedRelative) ||
-        normalizedRelative == _canonicalUnitRelativePath) {
+  for (final scanRelative in _scanDirRelatives) {
+    final scanRoot = Directory(p.join(root, scanRelative));
+    if (!scanRoot.existsSync()) {
+      // World tree is required; logic core is required when present on real
+      // workspaces. Missing world fails; missing logic in fixtures is OK only
+      // when world is also absent (handled below via world-required check).
+      if (scanRelative == _scanDirRelatives.first) {
+        logE('ERROR: Expected world lib tree missing: $scanRelative');
+        return 1;
+      }
       continue;
     }
 
-    final lines = entity.readAsLinesSync();
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      if (logicDualRegionProvinceFieldAccessLineMatches(line)) {
-        hits.add(
-          LogicDualRegionProvinceFieldHit(
-            path: p.normalize(relative),
-            line: i + 1,
-          ),
-        );
+    for (final entity in scanRoot.listSync(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is! File) continue;
+      final fullPath = p.normalize(entity.path);
+      if (!fullPath.endsWith('.dart')) continue;
+      if (_generatedSuffix.hasMatch(fullPath)) continue;
+      final relative = p.relative(fullPath, from: root);
+      final normalizedRelative = p.normalize(relative);
+      if (_canonicalProvinceRelativePaths.contains(normalizedRelative) ||
+          normalizedRelative == _canonicalUnitRelativePath) {
+        continue;
+      }
+
+      final lines = entity.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        if (logicDualRegionProvinceFieldAccessLineMatches(line)) {
+          hits.add(
+            LogicDualRegionProvinceFieldHit(
+              path: p.normalize(relative),
+              line: i + 1,
+            ),
+          );
+        }
       }
     }
   }
@@ -120,11 +139,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
   return 1;
 }
 
-void main() {
-  exit(runCheckLogicDualRegionProvinceFieldAccess(Directory.current.path));
-}
-
-final class LogicDualRegionProvinceFieldHit {
+class LogicDualRegionProvinceFieldHit {
   const LogicDualRegionProvinceFieldHit({
     required this.path,
     required this.line,
@@ -132,4 +147,8 @@ final class LogicDualRegionProvinceFieldHit {
 
   final String path;
   final int line;
+}
+
+void main() {
+  exit(runCheckLogicDualRegionProvinceFieldAccess(Directory.current.path));
 }

@@ -2,6 +2,7 @@
 // Sort stability pins for colonial naval move / mission ranking.
 
 import 'package:colonizethis_ai/src/planning/colonial_naval_scoring.dart';
+import 'package:colonizethis_ai/src/planning/colonial_naval_topology_context.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -66,6 +67,32 @@ void registerColonialNavalScoringBranchesSortCases() {
         expect(ranked[1].destinationSeaZoneId, 'newWorld|nwSeaIsolated');
         expect(ranked[2].fleetId, 'fA');
         expect(ranked[2].destinationPortProvinceId, 'oldWorld|home');
+      },
+    );
+
+    test(
+      'builds topology adjacency once for the whole candidate batch (Refs #4669 AC1)',
+      () {
+        ColonialNavalTopologyContext.resetContextBuildCountForTesting();
+        sortNavalMovesForColonialPressure(
+          [
+            const NavalMoveOrder(
+              fleetId: 'f1',
+              destinationSeaZoneId: 'oldWorld|owSeaGateway',
+            ),
+            const NavalMoveOrder(
+              fleetId: 'f2',
+              destinationSeaZoneId: 'newWorld|nwSeaShared',
+            ),
+            const NavalMoveOrder(
+              fleetId: 'f3',
+              destinationSeaZoneId: 'newWorld|nwSeaIsolated',
+            ),
+          ],
+          colonialNavalScoringBranchesTopology,
+          colonialNavalScoringWithInvadable,
+        );
+        expect(ColonialNavalTopologyContext.contextBuildCountForTesting, 1);
       },
     );
 

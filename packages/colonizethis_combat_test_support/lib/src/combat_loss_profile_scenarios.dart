@@ -3,85 +3,83 @@ import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
 
-
-List<RunnableScenario> combatLossProfileForStrengthRatioScenarios() =>
-    [
-      RunnableScenario(
-        scenarioId: 'clp-low-morale-blunt',
-        label: 'blunts strong attacker victory when attacker morale is lower',
-        run: () {
-          final profile = combatLossProfileForStrengthRatio(
-            attackerDefenderStrengthRatio: 2,
-            attackerLowMorale: true,
-          );
-          expect(profile.attackerLossFraction, 0.6);
-          expect(profile.defenderLossFraction, 0.4);
-          expect(profile.bluntsAttackerVictory, isTrue);
-          expect(
-            profile.mutualEliminationOutcome,
-            CombatMutualEliminationOutcome.mutualAnnihilation,
-          );
-        },
-      ),
-      RunnableScenario(
-        scenarioId: 'clp-blunt-upper-bound',
-        label: 'uses decisive attacker band at the blunt upper bound',
-        run: () {
-          final profile = combatLossProfileForStrengthRatio(
-            attackerDefenderStrengthRatio: 4,
-            attackerLowMorale: true,
-          );
-          expect(profile.attackerLossFraction, 0.15);
-          expect(profile.defenderLossFraction, 1.0);
-          expect(profile.bluntsAttackerVictory, isFalse);
-          expect(
-            profile.mutualEliminationOutcome,
-            CombatMutualEliminationOutcome.attackerVictory,
-          );
-        },
-      ),
-      RunnableScenario(
-        scenarioId: 'clp-exact-thresholds',
-        label: 'keeps exact ratio thresholds in the documented bands',
-        run: () {
-          final attackerEdge = combatLossProfileForStrengthRatio(
-            attackerDefenderStrengthRatio: 1,
-            attackerLowMorale: false,
-          );
-          final strongAttacker = combatLossProfileForStrengthRatio(
-            attackerDefenderStrengthRatio: 1.5,
-            attackerLowMorale: false,
-          );
-          final strongDefender = combatLossProfileForStrengthRatio(
-            attackerDefenderStrengthRatio: 0.67,
-            attackerLowMorale: false,
-          );
-          expect(attackerEdge.attackerLossFraction, 0.3);
-          expect(attackerEdge.defenderLossFraction, 0.6);
-          expect(strongAttacker.attackerLossFraction, 0.15);
-          expect(strongAttacker.defenderLossFraction, 1.0);
-          expect(strongDefender.attackerLossFraction, 1.0);
-          expect(strongDefender.defenderLossFraction, 0.15);
-        },
-      ),
-      RunnableScenario(
-        scenarioId: 'clp-close-fight',
-        label: 'uses default close-fight profile below attacker edge',
-        run: () {
-          final profile = combatLossProfileForStrengthRatio(
-            attackerDefenderStrengthRatio: 0.9,
-            attackerLowMorale: false,
-          );
-          expect(profile.attackerLossFraction, 0.5);
-          expect(profile.defenderLossFraction, 0.4);
-          expect(profile.bluntsAttackerVictory, isFalse);
-          expect(
-            profile.mutualEliminationOutcome,
-            CombatMutualEliminationOutcome.mutualAnnihilation,
-          );
-        },
-      ),
-    ];
+List<RunnableScenario> combatLossProfileForStrengthRatioScenarios() => [
+  RunnableScenario(
+    scenarioId: 'clp-low-morale-blunt',
+    label: 'blunts strong attacker victory when attacker morale is lower',
+    run: () {
+      final profile = combatLossProfileForStrengthRatio(
+        attackerDefenderStrengthRatio: 2,
+        attackerLowMorale: true,
+      );
+      expect(profile.attackerLossFraction, 0.6);
+      expect(profile.defenderLossFraction, 0.4);
+      expect(profile.bluntsAttackerVictory, isTrue);
+      expect(
+        profile.mutualEliminationOutcome,
+        CombatMutualEliminationOutcome.mutualAnnihilation,
+      );
+    },
+  ),
+  RunnableScenario(
+    scenarioId: 'clp-blunt-upper-bound',
+    label: 'uses decisive attacker band at the blunt upper bound',
+    run: () {
+      final profile = combatLossProfileForStrengthRatio(
+        attackerDefenderStrengthRatio: 4,
+        attackerLowMorale: true,
+      );
+      expect(profile.attackerLossFraction, 0.15);
+      expect(profile.defenderLossFraction, 1.0);
+      expect(profile.bluntsAttackerVictory, isFalse);
+      expect(
+        profile.mutualEliminationOutcome,
+        CombatMutualEliminationOutcome.attackerVictory,
+      );
+    },
+  ),
+  RunnableScenario(
+    scenarioId: 'clp-exact-thresholds',
+    label: 'keeps exact ratio thresholds in the documented bands',
+    run: () {
+      final attackerEdge = combatLossProfileForStrengthRatio(
+        attackerDefenderStrengthRatio: 1,
+        attackerLowMorale: false,
+      );
+      final strongAttacker = combatLossProfileForStrengthRatio(
+        attackerDefenderStrengthRatio: 1.5,
+        attackerLowMorale: false,
+      );
+      final strongDefender = combatLossProfileForStrengthRatio(
+        attackerDefenderStrengthRatio: 0.67,
+        attackerLowMorale: false,
+      );
+      expect(attackerEdge.attackerLossFraction, 0.3);
+      expect(attackerEdge.defenderLossFraction, 0.6);
+      expect(strongAttacker.attackerLossFraction, 0.15);
+      expect(strongAttacker.defenderLossFraction, 1.0);
+      expect(strongDefender.attackerLossFraction, 1.0);
+      expect(strongDefender.defenderLossFraction, 0.15);
+    },
+  ),
+  RunnableScenario(
+    scenarioId: 'clp-close-fight',
+    label: 'uses default close-fight profile below attacker edge',
+    run: () {
+      final profile = combatLossProfileForStrengthRatio(
+        attackerDefenderStrengthRatio: 0.9,
+        attackerLowMorale: false,
+      );
+      expect(profile.attackerLossFraction, 0.5);
+      expect(profile.defenderLossFraction, 0.4);
+      expect(profile.bluntsAttackerVictory, isFalse);
+      expect(
+        profile.mutualEliminationOutcome,
+        CombatMutualEliminationOutcome.mutualAnnihilation,
+      );
+    },
+  ),
+];
 List<RunnableScenario> classifyCombatStrengthRatioBandScenarios() => [
   RunnableScenario(
     scenarioId: 'clp-strong-striker',

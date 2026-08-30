@@ -1,7 +1,6 @@
 /// Sea-zone tab content assembly for [ProvinceSeaZoneDetailOverlay].
 library;
 
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -9,10 +8,18 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
+import '../../flame/map_state/province_naval_combine_overlay_controls.dart'
+    show ProvinceNavalCombineOverlayControls;
+import '../../flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
+import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
+    show ProvinceTransferToHomeFleetOverlayControls;
 import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'sea_zone_name_resolver.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show kRegionOldWorld;
+import 'package:colonizethis_app/features/game/flame/controls/map_tile_sight.dart';
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show kRegionOldWorld;
 
 OverlayContent seaZoneContent({
   required AppLocalizations l10n,
@@ -21,6 +28,13 @@ OverlayContent seaZoneContent({
   required String seaZoneId,
   required String humanPlayerId,
   required Orders draftOrders,
+  String? selectedTileKey,
+  ProvinceNavalMissionOverlayControls navalMission =
+      ProvinceNavalMissionOverlayControls.hidden,
+  ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet =
+      ProvinceTransferToHomeFleetOverlayControls.hidden,
+  ProvinceNavalCombineOverlayControls navalCombine =
+      ProvinceNavalCombineOverlayControls.hidden,
 }) {
   final regionId = prefixedIdRegionSegment(seaZoneId) ?? kRegionOldWorld;
   final localSeaZoneId = prefixedIdLocalSegment(seaZoneId);
@@ -66,11 +80,27 @@ OverlayContent seaZoneContent({
     regionId: regionId,
     seaZoneId: localSeaZoneId,
   );
+  final sightPhrase = mapTileSightPhraseForSelectedTile(
+    l10n: l10n,
+    region: region,
+    selectedTileKey: selectedTileKey,
+  );
   final political = buildOverlaySection(
     l10n.provinceOverlay_sectionPolitical,
-    Text(
-      l10n.provinceOverlay_seaZone(seaName),
-      style: overlayFgBodyStyle(),
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.provinceOverlay_seaZone(seaName),
+          style: overlayFgBodyStyle(),
+        ),
+        if (sightPhrase != null)
+          Text(
+            l10n.provinceOverlay_sight(sightPhrase),
+            style: overlayFgBodyStyle(),
+          ),
+      ],
     ),
   );
   final naval = buildNavalSection(
@@ -80,6 +110,10 @@ OverlayContent seaZoneContent({
     humanPlayerId: humanPlayerId,
     draftOrders: draftOrders,
     pendingNavalPortProvinceId: null,
+    pendingNavalSeaZoneId: seaZoneId,
+    navalMission: navalMission,
+    transferToHomeFleet: transferToHomeFleet,
+    navalCombine: navalCombine,
   );
 
   final tabLabels = [

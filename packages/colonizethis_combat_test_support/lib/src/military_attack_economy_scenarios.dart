@@ -1,11 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
-
 
 BattleContext _context(List<AttackingSide> attackers) => BattleContext(
   regionId: kRegionOldWorld,
@@ -18,8 +18,7 @@ BattleContext _context(List<AttackingSide> attackers) => BattleContext(
   defenderGeneralId: null,
   defenderGeneralMedals: 0,
 );
-List<RunnableScenario>
-landBattleAttackTreasuryCostForPlayerScenarios() => [
+List<RunnableScenario> landBattleAttackTreasuryCostForPlayerScenarios() => [
   RunnableScenario(
     scenarioId: 'mae-base-cost',
     label: 'base cost 100 without military tech discounts',
@@ -50,8 +49,7 @@ landBattleAttackTreasuryCostForPlayerScenarios() => [
     },
   ),
 ];
-List<RunnableScenario>
-applyLandBattleAttackTreasuryCostsScenarios() => [
+List<RunnableScenario> applyLandBattleAttackTreasuryCostsScenarios() => [
   RunnableScenario(
     scenarioId: 'mae-deducts-one',
     label: 'deducts per attacker Great Power once per battle context',

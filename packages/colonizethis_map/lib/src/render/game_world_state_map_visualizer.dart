@@ -1,4 +1,3 @@
-// Game world state map visualization: ownership overlay and capital markers.
 // SPEC/program/map-visualization.md § Game world state map visualizer.
 
 import 'dart:typed_data';
@@ -27,10 +26,7 @@ import 'tile_map_visualization_legend_layout.dart'
         swatchGap,
         swatchSize;
 import 'tile_map_visualization_png_markers.dart'
-    show
-        capitalMarkerRgb,
-        drawCapitalMarkersOnImage,
-        drawPortMarkersOnImage;
+    show capitalMarkerRgb, drawCapitalMarkersOnImage, drawPortMarkersOnImage;
 import 'tile_map_visualization_shared.dart' show colorMapFromIds;
 
 export 'game_world_state_map_visualizer_from_view_data.dart';
@@ -42,8 +38,6 @@ void _appendPortTileToRegionLists(
 ) {
   final parsed = tryParseMapTileKey(tileKey);
   if (parsed == null) return;
-  // Unknown regions are silently ignored (foreign tile keys), so use the
-  // non-throwing dispatch to pick the destination bucket.
   final bucket = selectByMapRegionIdOrNull<List<({int x, int y})>>(
     parsed.regionId,
     oldWorld: () => owPortTiles,
@@ -52,8 +46,7 @@ void _appendPortTileToRegionLists(
   bucket?.add((x: parsed.x, y: parsed.y));
 }
 
-/// Renders a single region (OW or NW) with ownership and capitals to PNG bytes.
-/// Used by renderInitGameMapToPng to render each region before composition.
+/// Single-region ownership PNG. SPEC/program/map-visualization.md.
 Uint8List renderSingleRegionGameStateMapToPng({
   required TileMapResult result,
   required MapTopology topology,
@@ -98,9 +91,6 @@ Uint8List renderSingleRegionGameStateMapToPng({
   );
   image.clear(white);
 
-  // Fill: provinces by owner color, sea zones deep blue. Shares the canonical
-  // cell-fill render pipeline (fillTileGridCells) with the base visualizer;
-  // this path differs only by its ownership colour strategy (Refs #3574).
   fillTileGridCells(
     image,
     height: result.height,
@@ -125,7 +115,6 @@ Uint8List renderSingleRegionGameStateMapToPng({
     cellSize,
   );
 
-  // Legend
   final legendY0 = mapH + legendPadding;
   var legendY = legendY0;
   img.drawString(
@@ -192,8 +181,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   return img.encodePng(image);
 }
 
-/// Renders the combined Old World + New World map with ownership and capitals.
-/// SPEC/program/map-visualization.md § Game world state map visualizer, Multi-region rendering.
+/// Combined OW+NW ownership map. SPEC/program/map-visualization.md.
 Uint8List renderInitGameMapToPng({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -203,7 +191,6 @@ Uint8List renderInitGameMapToPng({
   final owInputs = regionMapRenderInputs(game: game, regionId: kRegionOldWorld);
   final nwInputs = regionMapRenderInputs(game: game, regionId: kRegionNewWorld);
 
-  // Port tile positions from WorldState.portsByProvinceSeaboard (value = regionId|provinceId|x|y)
   final owPortTiles = <({int x, int y})>[];
   final nwPortTiles = <({int x, int y})>[];
   for (final tileKey in game.worldState.portsByProvinceSeaboard.values) {

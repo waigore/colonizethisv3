@@ -5,22 +5,26 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 400;
+/// Ratchet ceiling for economy test files (Refs #4631).
+const int economyTestFileSizeCeiling = 250;
 
 const _economyTestsRelativePath = 'packages/colonizethis_economy/test';
 
 /// PR-blocking structural check: files under
-/// `packages/colonizethis_economy/test/**` must stay at or below 400 physical
-/// lines (Refs #3823).
+/// `packages/colonizethis_economy/test/**` must stay at or below 250 physical
+/// lines (Refs #4631).
 int runCheckEconomyTestFileSize(
   String repoRoot, {
   Iterable<String>? targetFiles,
   void Function(String line)? info,
   void Function(String line)? err,
+  int ceiling = economyTestFileSizeCeiling,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final economyTestsDir = Directory(p.join(repoRoot, _economyTestsRelativePath));
+  final economyTestsDir = Directory(
+    p.join(repoRoot, _economyTestsRelativePath),
+  );
   if (!economyTestsDir.existsSync()) {
     logE(
       'check_economy_test_file_size: packages/colonizethis_economy/test '
@@ -41,12 +45,10 @@ int runCheckEconomyTestFileSize(
     final physicalLines = const LineSplitter()
         .convert(file.readAsStringSync())
         .length;
-    if (physicalLines <= _maxPhysicalLines) {
+    if (physicalLines <= ceiling) {
       continue;
     }
-    violations.add(
-      '$relativePath ($physicalLines physical lines > $_maxPhysicalLines)',
-    );
+    violations.add('$relativePath ($physicalLines physical lines > $ceiling)');
   }
 
   if (violations.isEmpty) {

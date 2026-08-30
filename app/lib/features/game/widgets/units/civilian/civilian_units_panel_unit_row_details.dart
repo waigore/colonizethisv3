@@ -12,7 +12,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../../widgets/resource_icon.dart';
 import '../shared/region_labels.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData;
 import 'civilian_units_panel_support_resolution.dart';
+import 'civilian_units_panel_unit_row_gists.dart';
 import 'civilian_units_panel_unit_row_pending.dart';
 import 'work_order_afford_preview_ui.dart';
 
@@ -106,6 +109,15 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   required Unit unit,
   required CivilianUnitsPanelUnitRowPending pending,
   required Map<String, String> provinceNames,
+  required String humanPlayerId,
+  GameMapData? mapData,
+  String? buildImprovementShortcutTargetTileKey,
+  String? purchaseLandShortcutTargetTileKey,
+  String? buildRoadShortcutTargetTileKey,
+  String? buildPortShortcutTargetTileKey,
+  String? buildRailShortcutTargetTileKey,
+  String? buildFortShortcutTargetTileKey,
+  bool readOnly = false,
 }) {
   final pendingMove = pending.pendingMoveOrder;
   if (pendingMove != null) {
@@ -170,6 +182,14 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
               ),
             ),
           ),
+        ...civilianUnitsPanelPendingWorkGistChildren(
+          l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          pendingWork: pendingWork,
+          readOnly: readOnly,
+          mapData: mapData,
+        ),
         if (pendingAfford != null &&
             pendingAfford.hasCostPreview &&
             !pendingAfford.canAfford)
@@ -184,7 +204,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
       ],
     );
   }
-  return Text(
+  final assigned = Text(
     l10n.civilian_units_assignedTo(
       civilianUnitsPanelUnitRowAssignedToLabelNonPending(
         l10n: l10n,
@@ -192,5 +212,20 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
         provinceNames: provinceNames,
       ),
     ),
+  );
+  return wrapCivilianUnitsPanelAssignedWithShortcutGists(
+    assigned: assigned,
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    readOnly: readOnly,
+    mapData: mapData,
+    buildImprovementShortcutTargetTileKey:
+        buildImprovementShortcutTargetTileKey,
+    purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+    buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+    buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
+    buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
+    buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
   );
 }

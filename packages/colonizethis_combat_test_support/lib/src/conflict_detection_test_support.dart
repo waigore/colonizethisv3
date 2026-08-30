@@ -22,18 +22,16 @@ Game landConflictTwoPlayerGame({
   RegionData? oldWorld,
   RegionData? newWorld,
   List<Army> armies = const [],
-}) =>
-    TestFixtures.minimalGame(
-      id: id,
-      players: players,
-      oldWorld: oldWorld,
-      newWorld: newWorld,
-      armies: armies,
-    );
+}) => TestFixtures.minimalGame(
+  id: id,
+  players: players,
+  oldWorld: oldWorld,
+  newWorld: newWorld,
+  armies: armies,
+);
 
 /// Move order targeting tile 0|0 in [provinceId].
 MoveOrder landConflictMoveOrder({
   required String unitId,
   required String provinceId,
-}) =>
-    MoveOrder(unitId: unitId, destinationTileKey: '$provinceId|0|0');
+}) => MoveOrder(unitId: unitId, destinationTileKey: '$provinceId|0|0');

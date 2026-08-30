@@ -1,7 +1,7 @@
 // Physical line ratchet for colonizethis_data lib source (`repo.data_lib_file_size`).
 //
-// Wave 5 (#4292) lowers the peer-aligned ceiling from 500 NCL to 400 physical
-// lines after topic splits. Generated suffixes are excluded.
+// Wave 7 (#4626) ratchets the wave-6 300 physical-line ceiling to 250 after
+// leftover topic splits. Generated suffixes are excluded.
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,12 +9,12 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-5 post-split target (≤400 physical lines).
-const int dataLibFileSizeCeiling = 400;
+/// Ratchet ceiling for wave-7 post-split target (≤250 physical lines).
+const int dataLibFileSizeCeiling = 250;
 
 const String _dataSrcRelDir = 'packages/colonizethis_data/lib/src';
 
-/// Empty allowlist: every hand-written data `lib/src` file must stay ≤400 physical
+/// Empty allowlist: every hand-written data `lib/src` file must stay ≤250 physical
 /// lines. Override in tests via [grandfatheredPaths].
 const List<String> dataFileSizeGrandfatheredForTests = <String>[];
 
@@ -80,7 +80,7 @@ int runCheckDataLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_data_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4292).',
+      '(ceiling $ceiling; Refs #4412).',
     );
     return 0;
   }
@@ -88,7 +88,7 @@ int runCheckDataLibFileSize(
   violations.sort();
   logE(
     'check_data_lib_file_size: found ${violations.length} violation(s) under '
-    '$_dataSrcRelDir (wave-5 ceiling $ceiling; Refs #4292):',
+    '$_dataSrcRelDir (wave-7 ceiling $ceiling; Refs #4626):',
   );
   for (final violation in violations) {
     logE(' - $violation');

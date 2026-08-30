@@ -71,100 +71,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _nationId = 'gp1';
-const String _otherGpId = 'gp2';
-const String _tribeId = 'tribe1';
-const String _minorId = 'minor1';
-
-/// Snapshot at the COLONIAL-lite near-quota lower boundary (OW = 9).
-AIWorldSnapshot _snapshotOw(int ow) {
-  return AIWorldSnapshot(
-    playerId: _nationId,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: ow,
-      // Non-empty so a tuning slice that filtered by invadable presence
-      // does not silently force EXPAND for an unrelated reason.
-      invadableProvinceIdsSorted: const ['oldWorld|minor_invadable'],
-    ),
-    colonial: const ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: ['newWorld|tribe1_nw0'],
-    ),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
-/// Game with one NW province owned by [ownerId]. `null` means unowned.
-Game _gameWithNwOwner({
-  required int turnNumber,
-  String? ownerId,
-}) {
-  return Game(
-    id: 'g-2509-colonial-lite-pre-${ownerId ?? "unowned"}-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: [
-          Province(
-            id: 'newWorld|nw0',
-            regionId: 'newWorld',
-            ownerId: ownerId,
-          ),
-        ],
-      ),
-    ),
-    players: const [
-      Player(id: _nationId, displayName: 'GP1', isHuman: false),
-      Player(id: _otherGpId, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [MinorNation(id: _minorId, displayName: 'M1')],
-  );
-}
-
-/// Game with NW provinces enumerated by owner — supports mixed-ownership cases.
-Game _gameWithNwOwners({
-  required int turnNumber,
-  required List<String?> nwOwners,
-}) {
-  return Game(
-    id: 'g-2509-colonial-lite-pre-multi-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(
-        turnNumber: turnNumber,
-        phase: TurnPhase.orders,
-      ),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < nwOwners.length; i++)
-            Province(
-              id: 'newWorld|nw$i',
-              regionId: 'newWorld',
-              ownerId: nwOwners[i],
-            ),
-        ],
-      ),
-    ),
-    players: const [
-      Player(id: _nationId, displayName: 'GP1', isHuman: false),
-      Player(id: _otherGpId, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [MinorNation(id: _minorId, displayName: 'M1')],
-  );
-}
+import '../support/observer_goal_phase_colonial_lite_preconditions_test_support.dart';
+import 'observer_goal_phase_colonial_lite_preconditions_tail_cases.dart';
 
 void main() {
   group('globalNewWorldHasNonGpOwnership', () {
     test('tribe-owned NW province → true', () {
-      final game = _gameWithNwOwner(turnNumber: 120, ownerId: _tribeId);
+      final game = observerGoalPhaseColonialLiteGameWithNwOwner(turnNumber: 120, ownerId: kObserverGoalPhaseColonialLiteTribeId);
       expect(
         globalNewWorldHasNonGpOwnership(game),
         isTrue,
@@ -175,7 +88,7 @@ void main() {
     });
 
     test('minor-owned NW province → true', () {
-      final game = _gameWithNwOwner(turnNumber: 120, ownerId: _minorId);
+      final game = observerGoalPhaseColonialLiteGameWithNwOwner(turnNumber: 120, ownerId: kObserverGoalPhaseColonialLiteMinorId);
       expect(
         globalNewWorldHasNonGpOwnership(game),
         isTrue,
@@ -186,7 +99,7 @@ void main() {
     });
 
     test('unowned (null ownerId) NW province → true', () {
-      final game = _gameWithNwOwner(turnNumber: 120);
+      final game = observerGoalPhaseColonialLiteGameWithNwOwner(turnNumber: 120);
       expect(
         globalNewWorldHasNonGpOwnership(game),
         isTrue,
@@ -198,7 +111,7 @@ void main() {
     });
 
     test('empty-string ownerId → true', () {
-      final game = _gameWithNwOwner(turnNumber: 120, ownerId: '');
+      final game = observerGoalPhaseColonialLiteGameWithNwOwner(turnNumber: 120, ownerId: '');
       expect(
         globalNewWorldHasNonGpOwnership(game),
         isTrue,
@@ -209,9 +122,9 @@ void main() {
     });
 
     test('every NW province owned by a Great Power → false', () {
-      final game = _gameWithNwOwners(
+      final game = observerGoalPhaseColonialLiteGameWithNwOwners(
         turnNumber: 120,
-        nwOwners: const [_nationId, _otherGpId],
+        nwOwners: const [kObserverGoalPhaseColonialLiteNationId, kObserverGoalPhaseColonialLiteOtherGpId],
       );
       expect(
         globalNewWorldHasNonGpOwnership(game),
@@ -224,9 +137,9 @@ void main() {
     });
 
     test('mixed ownership (one GP, one tribe) → true', () {
-      final game = _gameWithNwOwners(
+      final game = observerGoalPhaseColonialLiteGameWithNwOwners(
         turnNumber: 120,
-        nwOwners: const [_nationId, _tribeId],
+        nwOwners: const [kObserverGoalPhaseColonialLiteNationId, kObserverGoalPhaseColonialLiteTribeId],
       );
       expect(
         globalNewWorldHasNonGpOwnership(game),
@@ -247,7 +160,7 @@ void main() {
           newWorld: const RegionData(),
         ),
         players: const [
-          Player(id: _nationId, displayName: 'GP1', isHuman: false),
+          Player(id: kObserverGoalPhaseColonialLiteNationId, displayName: 'GP1', isHuman: false),
         ],
       );
       expect(
@@ -266,14 +179,14 @@ void main() {
       // One turn below `kObserverColonialLiteMinTurn` (120). All other
       // preconditions met; only the turn gate should keep the GP in
       // EXPAND.
-      final game = _gameWithNwOwner(
+      final game = observerGoalPhaseColonialLiteGameWithNwOwner(
         turnNumber: kObserverColonialLiteMinTurn - 1,
-        ownerId: _tribeId,
+        ownerId: kObserverGoalPhaseColonialLiteTribeId,
       );
       expect(
         isObserverColonialLitePhase(
           game: game,
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw),
+          snapshot: observerGoalPhaseColonialLiteSnapshotOw(kObserverColonialLiteNearQuotaOw),
         ),
         isFalse,
         reason:
@@ -283,164 +196,7 @@ void main() {
             'window by one turn and break the SPEC contract.',
       );
     });
-
-    test('turn 120 + OW 9 + tribe NW → true (turn gate at floor)', () {
-      final game = _gameWithNwOwner(
-        turnNumber: kObserverColonialLiteMinTurn,
-        ownerId: _tribeId,
-      );
-      expect(
-        isObserverColonialLitePhase(
-          game: game,
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw),
-        ),
-        isTrue,
-        reason:
-            'The turn-120 floor inclusively enters COLONIAL-lite when all '
-            'other preconditions are met. This is the canonical sibling '
-            'positive case for the rest of the COLONIAL-lite pins.',
-      );
-    });
-
-    test('OW 8 + turn 120 + tribe NW → false (near-quota lower edge)', () {
-      // One below `kObserverColonialLiteNearQuotaOw` (9). GP is still below
-      // the OW quota (10) so falls through to EXPAND, not COLONIAL-lite.
-      final game = _gameWithNwOwner(
-        turnNumber: kObserverColonialLiteMinTurn,
-        ownerId: _tribeId,
-      );
-      expect(
-        isObserverColonialLitePhase(
-          game: game,
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw - 1),
-        ),
-        isFalse,
-        reason:
-            'GPs more than one province below the OW quota must not enter '
-            'COLONIAL-lite. A regression that lowered the near-quota '
-            'threshold to 8 (or used `>` instead of `>=`) would let too '
-            'many GPs trade away OW expansion pressure for NW work.',
-      );
-    });
-
-    test('OW 9 + turn 120 + tribe NW → true (near-quota lower edge at floor)',
-        () {
-      final game = _gameWithNwOwner(
-        turnNumber: kObserverColonialLiteMinTurn,
-        ownerId: _tribeId,
-      );
-      expect(
-        isObserverColonialLitePhase(
-          game: game,
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw),
-        ),
-        isTrue,
-        reason:
-            'OW=9 is the inclusive lower edge of the near-quota window. '
-            'This and the turn-120 boundary together gate the canonical '
-            'COLONIAL-lite fixture used by sibling orchestrator pins.',
-      );
-    });
-
-    test('OW 10 + turn 120 + tribe NW → false (above quota)', () {
-      // At the OW quota: `isBelowObserverConquestQuota` returns false, so
-      // the COLONIAL-lite gate must reject regardless of turn or NW state.
-      // Phase routing flips to COLONIAL (has acquisition targets).
-      final game = _gameWithNwOwner(
-        turnNumber: kObserverColonialLiteMinTurn,
-        ownerId: _tribeId,
-      );
-      expect(
-        isObserverColonialLitePhase(
-          game: game,
-          snapshot: _snapshotOw(kObserverConquestMinOwProvincesPerGp),
-        ),
-        isFalse,
-        reason:
-            'COLONIAL-lite is the near-quota safeguard only — once the GP '
-            'meets the OW quota it routes through full COLONIAL with the '
-            'complete acquisition path enabled (declareWar, invasion, '
-            'purchase_land all allowed).',
-      );
-    });
-
-    test('OW 9 + turn 120 + all-GP NW → false (NW precondition)', () {
-      // Every NW province GP-owned: `globalNewWorldHasNonGpOwnership` is
-      // false, so even at the canonical turn-120 + OW-9 boundary the GP
-      // must fall back to EXPAND.
-      final game = _gameWithNwOwners(
-        turnNumber: kObserverColonialLiteMinTurn,
-        nwOwners: const [_nationId, _otherGpId],
-      );
-      expect(
-        isObserverColonialLitePhase(
-          game: game,
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw),
-        ),
-        isFalse,
-        reason:
-            'When NW is already fully held by GPs the COLONIAL-lite '
-            'safeguard has nothing to push toward — the near-quota GP '
-            'returns to EXPAND for pure OW expansion. Without this '
-            'precondition the GP would stay in COLONIAL-lite with no NW '
-            'targets and silently weaken OW pressure in the 100→120 '
-            'window.',
-      );
-    });
   });
 
-  group('observerGoalPhaseFor integration with COLONIAL-lite preconditions',
-      () {
-    test('OW 9 + turn 120 + all-GP NW → ObserverGoalPhase.expand', () {
-      // Confirms the precondition gap propagates to the public phase API
-      // (the same function the orchestrator + planners route through).
-      final game = _gameWithNwOwners(
-        turnNumber: kObserverColonialLiteMinTurn,
-        nwOwners: const [_nationId, _otherGpId],
-      );
-      expect(
-        observerGoalPhaseFor(
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw),
-          game: game,
-        ),
-        ObserverGoalPhase.expand,
-        reason:
-            'Public phase API must mirror the precondition: all-GP NW at '
-            'OW=9 routes the GP to EXPAND, not COLONIAL-lite.',
-      );
-    });
-
-    test('OW 9 + turn 120 + tribe NW → ObserverGoalPhase.colonialLite', () {
-      // Canonical positive sanity-check at the precondition lower edges.
-      final game = _gameWithNwOwner(
-        turnNumber: kObserverColonialLiteMinTurn,
-        ownerId: _tribeId,
-      );
-      expect(
-        observerGoalPhaseFor(
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw),
-          game: game,
-        ),
-        ObserverGoalPhase.colonialLite,
-      );
-    });
-
-    test('OW 9 + turn 119 + tribe NW → ObserverGoalPhase.expand', () {
-      final game = _gameWithNwOwner(
-        turnNumber: kObserverColonialLiteMinTurn - 1,
-        ownerId: _tribeId,
-      );
-      expect(
-        observerGoalPhaseFor(
-          snapshot: _snapshotOw(kObserverColonialLiteNearQuotaOw),
-          game: game,
-        ),
-        ObserverGoalPhase.expand,
-        reason:
-            'One turn before the COLONIAL-lite gate the GP must remain in '
-            'EXPAND — sibling positive pins all enter via turn 120, so '
-            'this is the only direct turn-boundary regression catch.',
-      );
-    });
-  });
+  registerObserverGoalPhaseColonialLitePreconditionsTailCases();
 }

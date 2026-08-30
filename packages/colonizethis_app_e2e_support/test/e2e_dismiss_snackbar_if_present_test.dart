@@ -61,6 +61,7 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 import 'support/dismiss_snackbar_counter_group.dart';
 import 'support/dismiss_snackbar_perf_attribution_group.dart';
 import 'support/dismiss_widget_tester_harness.dart';
+import 'support/e2e_dismiss_snackbar_if_present_short_circuit_group.dart';
 
 /// Builds a SnackBar that surfaces two action [TextButton]s. When
 /// [coverFirstAction] is `true`, an [AbsorbPointer] overlay sits above
@@ -99,41 +100,7 @@ SnackBar _twoActionSnackBar({required bool coverFirstAction}) {
 void main() {
   suppressLogsForTests();
 
-  group('e2eDismissSnackBarIfPresent — no-SnackBar branch', () {
-    testWidgets('returns false without tapping when no SnackBar is mounted', (
-      WidgetTester tester,
-    ) async {
-      var siblingTaps = 0;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: TextButton(
-                onPressed: () => siblingTaps++,
-                child: const Text('sibling-action'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      final dismissed = await e2eDismissSnackBarIfPresent(tester);
-
-      expect(
-        dismissed,
-        isFalse,
-        reason:
-            'Helper must short-circuit and return false when no SnackBar '
-            'is mounted; otherwise a stray TextButton elsewhere in the '
-            'tree would be tapped between phases.',
-      );
-      expect(
-        siblingTaps,
-        0,
-        reason: 'No tap should fire when the SnackBar branch short-circuits.',
-      );
-    });
-  });
+  registerDismissSnackBarIfPresentShortCircuitGroup();
 
   group('e2eDismissSnackBarIfPresent — single-action happy path', () {
     testWidgets(
@@ -278,24 +245,6 @@ void main() {
   });
 
   registerDismissSnackBarCounterGroup();
-
-  group('e2eDismissSnackBarIfPresent — constant pin', () {
-    test('kE2eDefaultSnackBarDismissTimeout matches legacy 2 s budget', () {
-      // The legacy inline SnackBar branch of e2eDismissTransientUi used a
-      // hardcoded 2 s timeout. A silent drift here would either inflate the
-      // per-call dismiss window (regressing AC9 aggregate wall-clock) or
-      // shrink it (risking false negatives when the SnackBar dismiss
-      // animation runs slow under load).
-      expect(
-        kE2eDefaultSnackBarDismissTimeout,
-        const Duration(seconds: 2),
-        reason:
-            'kE2eDefaultSnackBarDismissTimeout must preserve the legacy 2 s '
-            'inline budget to keep AC9 aggregate wall-clock attribution '
-            'stable across the lift.',
-      );
-    });
-  });
 
   registerDismissSnackBarPerfAttributionGroup();
 }

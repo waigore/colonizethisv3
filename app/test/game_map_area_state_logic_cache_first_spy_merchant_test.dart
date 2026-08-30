@@ -71,7 +71,7 @@ void main() {
         MapEntry(kWorkTargetPurchaseLand, purchaseTile),
       ]) {
         final resolved =
-            GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
+            GameMapAreaStateLogicWorkTargets.resolveValidTileKeysForCivilianWorkSelection(
               workTarget: entry.key,
               workTargetSelectionCache: cache,
               humanPlayerId: 'gp1',
@@ -118,7 +118,7 @@ void main() {
         kWorkTargetPurchaseLand,
       ]) {
         final resolved =
-            GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
+            GameMapAreaStateLogicWorkTargets.resolveValidTileKeysForCivilianWorkSelection(
               workTarget: workTarget,
               workTargetSelectionCache: cache,
               humanPlayerId: 'gp1',
@@ -141,7 +141,7 @@ void main() {
       cache.refresh(snapshot());
 
       final resolved =
-          GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
+          GameMapAreaStateLogicWorkTargets.resolveValidTileKeysForCivilianWorkSelection(
             workTarget: '__not_cache_first__',
             workTargetSelectionCache: cache,
             humanPlayerId: 'gp1',

@@ -49,130 +49,30 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gpOwn = 'gp_own';
-const String _gpOther = 'gp_other';
-const String _minorZeta = 'minor_zeta';
-
-Game _pristineOwProvinces(int count) {
-  return Game(
-    id: 'g-2509-composite-pristine-$count',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= count; i++)
-          Province(
-            id: 'oldWorld|${_gpOwn}_$i',
-            regionId: 'oldWorld',
-            ownerId: _gpOwn,
-          ),
-      ]),
-      newWorld: const RegionData(),
-      armies: [],
-    ),
-    players: [
-      Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-      Player(id: _gpOther, displayName: 'GP_OTHER', isHuman: false),
-    ],
-    minorNations: const [],
-    tribes: const [],
-    diplomacyRelations: const [],
-  );
-}
-
-Game _zeroRegimentAtWarGame() {
-  return Game(
-    id: 'g-2509-composite-zero-reg',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: [
-        for (var i = 1; i <= 6; i++)
-          Province(
-            id: 'oldWorld|${_gpOwn}_$i',
-            regionId: 'oldWorld',
-            ownerId: _gpOwn,
-          ),
-        for (var i = 1; i <= 6; i++)
-          Province(
-            id: 'oldWorld|${_gpOther}_$i',
-            regionId: 'oldWorld',
-            ownerId: _gpOther,
-          ),
-        const Province(
-          id: 'oldWorld|minor_invadable',
-          regionId: 'oldWorld',
-          ownerId: _minorZeta,
-        ),
-      ]),
-      newWorld: const RegionData(),
-      armies: [],
-    ),
-    players: [
-      Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-      Player(id: _gpOther, displayName: 'GP_OTHER', isHuman: false),
-    ],
-    minorNations: const [MinorNation(id: _minorZeta, displayName: 'MZ')],
-    tribes: const [],
-    diplomacyRelations: [
-      const DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: _gpOther,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-      const DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: _minorZeta,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-    ],
-  );
-}
-
-AIWorldSnapshot _snapshotFor({
-  required String playerId,
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-}) {
-  return AIWorldSnapshot(
-    playerId: playerId,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: 31 - oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: const [
-        'oldWorld|minor_invadable',
-        'oldWorld|gp_other_1',
-      ],
-    ),
-    colonial: ColonialSummary(),
-    economy: EconomySummary(),
-    relations: {},
-  );
-}
+import '../support/observer_goal_phase_composite_peace_test_support.dart';
+import 'observer_goal_phase_composite_peace_tail_cases.dart';
 
 void main() {
   group('survivalGreatPowerPeaceTargets', () {
     test('yields zero-regiment survival paths when active', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final game = observerGoalPhaseCompositePeaceZeroRegimentAtWarGame();
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
+        atWarWith: [kObserverGoalPhaseCompositePeaceGpOther, kObserverGoalPhaseCompositePeaceMinorZeta],
       );
       final result = survivalGreatPowerPeaceTargets(
         game: game,
         snapshot: snapshot,
       ).toList();
       expect(result, isNotEmpty);
-      expect(result, contains(_gpOther));
+      expect(result, contains(kObserverGoalPhaseCompositePeaceGpOther));
     });
 
     test('yields nothing for pristine game state', () {
-      final game = _pristineOwProvinces(8);
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final game = observerGoalPhaseCompositePeacePristineOwProvinces(8);
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 8,
         atWarWith: [],
       );
@@ -184,11 +84,11 @@ void main() {
     });
 
     test('deterministic across repeated calls (Must-have #7)', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final game = observerGoalPhaseCompositePeaceZeroRegimentAtWarGame();
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
+        atWarWith: [kObserverGoalPhaseCompositePeaceGpOther, kObserverGoalPhaseCompositePeaceMinorZeta],
       );
       final first = survivalGreatPowerPeaceTargets(
         game: game,
@@ -206,24 +106,24 @@ void main() {
 
   group('expandRatchetGreatPowerPeaceTargets', () {
     test('yields entries when stalled-expansion deciders fire', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final game = observerGoalPhaseCompositePeaceZeroRegimentAtWarGame();
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
+        atWarWith: [kObserverGoalPhaseCompositePeaceGpOther, kObserverGoalPhaseCompositePeaceMinorZeta],
       );
       final result = expandRatchetGreatPowerPeaceTargets(
         game: game,
         snapshot: snapshot,
       ).toList();
       expect(result, isNotEmpty);
-      expect(result, contains(_gpOther));
+      expect(result, contains(kObserverGoalPhaseCompositePeaceGpOther));
     });
 
     test('yields nothing for pristine game state', () {
-      final game = _pristineOwProvinces(8);
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final game = observerGoalPhaseCompositePeacePristineOwProvinces(8);
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 8,
         atWarWith: [],
       );
@@ -235,11 +135,11 @@ void main() {
     });
 
     test('deterministic across repeated calls (Must-have #7)', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final game = observerGoalPhaseCompositePeaceZeroRegimentAtWarGame();
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
+        atWarWith: [kObserverGoalPhaseCompositePeaceGpOther, kObserverGoalPhaseCompositePeaceMinorZeta],
       );
       final first = expandRatchetGreatPowerPeaceTargets(
         game: game,
@@ -257,11 +157,11 @@ void main() {
 
   group('collectStalledGreatPowerPeaceTargets', () {
     test('canonical: returns expected results for typical EXPAND state', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final game = observerGoalPhaseCompositePeaceZeroRegimentAtWarGame();
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
+        atWarWith: [kObserverGoalPhaseCompositePeaceGpOther, kObserverGoalPhaseCompositePeaceMinorZeta],
       );
       final result = collectStalledGreatPowerPeaceTargets(
         game: game,
@@ -279,30 +179,30 @@ void main() {
           oldWorld: RegionData(provinces: [
             for (var i = 1; i <= 10; i++)
               Province(
-                id: 'oldWorld|${_gpOwn}_$i',
+                id: 'oldWorld|${kObserverGoalPhaseCompositePeaceGpOwn}_$i',
                 regionId: 'oldWorld',
-                ownerId: _gpOwn,
+                ownerId: kObserverGoalPhaseCompositePeaceGpOwn,
               ),
           ]),
           newWorld: const RegionData(),
         ),
         players: [
-          Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-          Player(id: _gpOther, displayName: 'GP_OTHER', isHuman: false),
+          Player(id: kObserverGoalPhaseCompositePeaceGpOwn, displayName: 'GP_OWN', isHuman: false),
+          Player(id: kObserverGoalPhaseCompositePeaceGpOther, displayName: 'GP_OTHER', isHuman: false),
         ],
         diplomacyRelations: [
           const DiplomacyRelation(
-            factionId1: _gpOwn,
-            factionId2: _gpOther,
+            factionId1: kObserverGoalPhaseCompositePeaceGpOwn,
+            factionId2: kObserverGoalPhaseCompositePeaceGpOther,
             state: RelationState.atWar,
             score: 30,
           ),
         ],
       );
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
+      final snapshot = observerGoalPhaseCompositePeaceSnapshotFor(
+        playerId: kObserverGoalPhaseCompositePeaceGpOwn,
         oldWorldProvincesOwned: 10,
-        atWarWith: [_gpOther],
+        atWarWith: [kObserverGoalPhaseCompositePeaceGpOther],
       );
       final result = collectStalledGreatPowerPeaceTargets(
         game: game,
@@ -310,137 +210,7 @@ void main() {
       );
       expect(result, isNotEmpty);
     });
-
-    test('deterministic across repeated calls (Must-have #7)', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
-        oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
-      );
-      final first = collectStalledGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      );
-      for (var i = 0; i < 5; i++) {
-        final next = collectStalledGreatPowerPeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        );
-        expect(next, first);
-      }
-    });
   });
 
-  // Refs #3749 step 5 — expand-peace decider registry. The two aggregators are
-  // now driven by the ordered `kSurvivalGreatPowerPeaceDeciders` /
-  // `kExpandRatchetGreatPowerPeaceDeciders` registries; these tests pin the
-  // registry-as-single-source-of-truth contract (aggregator output is exactly
-  // the in-order concatenation of every registered decider) and the documented
-  // decider counts so an accidental add/remove/reorder cannot pass silently.
-  group('expand-peace decider registries (Refs #3749)', () {
-    test('survival aggregator equals in-order registry concatenation', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
-        oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
-      );
-      final viaAggregator = survivalGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      ).toList();
-      final viaRegistry = [
-        for (final decider in kSurvivalGreatPowerPeaceDeciders)
-          ...decider(game: game, snapshot: snapshot),
-      ];
-      expect(viaAggregator, viaRegistry);
-      expect(viaAggregator, isNotEmpty);
-    });
-
-    test('ratchet aggregator equals in-order registry concatenation', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
-        oldWorldProvincesOwned: 6,
-        atWarWith: [_gpOther, _minorZeta],
-      );
-      final viaAggregator = expandRatchetGreatPowerPeaceTargets(
-        game: game,
-        snapshot: snapshot,
-      ).toList();
-      final viaRegistry = [
-        for (final decider in kExpandRatchetGreatPowerPeaceDeciders)
-          ...decider(game: game, snapshot: snapshot),
-      ];
-      expect(viaAggregator, viaRegistry);
-      expect(viaAggregator, isNotEmpty);
-    });
-
-    test('registry concatenation matches aggregator on pristine state', () {
-      final game = _pristineOwProvinces(8);
-      final snapshot = _snapshotFor(
-        playerId: _gpOwn,
-        oldWorldProvincesOwned: 8,
-        atWarWith: [],
-      );
-      final survivalRegistry = [
-        for (final decider in kSurvivalGreatPowerPeaceDeciders)
-          ...decider(game: game, snapshot: snapshot),
-      ];
-      final ratchetRegistry = [
-        for (final decider in kExpandRatchetGreatPowerPeaceDeciders)
-          ...decider(game: game, snapshot: snapshot),
-      ];
-      expect(survivalRegistry, isEmpty);
-      expect(ratchetRegistry, isEmpty);
-      expect(
-        survivalGreatPowerPeaceTargets(game: game, snapshot: snapshot).toList(),
-        survivalRegistry,
-      );
-      expect(
-        expandRatchetGreatPowerPeaceTargets(
-          game: game,
-          snapshot: snapshot,
-        ).toList(),
-        ratchetRegistry,
-      );
-    });
-
-    test('documented decider counts are pinned', () {
-      expect(kSurvivalGreatPowerPeaceDeciders, hasLength(5));
-      expect(kExpandRatchetGreatPowerPeaceDeciders, hasLength(17));
-    });
-  });
-
-  group('supplementMutualStalledGreatPowerPeaceOrders', () {
-    test('no-op when no mutual peace offers exist', () {
-      final game = _pristineOwProvinces(8);
-      const orders = Orders();
-      final result = supplementMutualStalledGreatPowerPeaceOrders(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      );
-      expect(result, same(orders));
-    });
-
-    test('deterministic across repeated calls (Must-have #7)', () {
-      final game = _pristineOwProvinces(8);
-      const orders = Orders();
-      final first = supplementMutualStalledGreatPowerPeaceOrders(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      );
-      for (var i = 0; i < 5; i++) {
-        final next = supplementMutualStalledGreatPowerPeaceOrders(
-          game: game,
-          topology: const MapTopology(),
-          orders: orders,
-        );
-        expect(next, same(first));
-      }
-    });
-  });
+  registerObserverGoalPhaseCompositePeaceTailCases();
 }

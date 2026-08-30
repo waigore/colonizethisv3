@@ -1,11 +1,13 @@
 /// Tile section builder for [ProvinceSeaZoneDetailOverlay].
 library;
 
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
@@ -25,26 +27,11 @@ Widget buildTileSection({
   required PlayerView playerView,
   required int civilianCount,
   String? selectedTileKey,
-  required bool showExploreActionIcon,
-  required bool exploreActionEnabled,
-  VoidCallback? onExploreWithExplorerTap,
-  required bool showProspectActionIcon,
-  required bool prospectActionEnabled,
-  VoidCallback? onProspectWithExplorerTap,
-  required bool showBuildImprovementActionIcon,
-  required bool buildImprovementActionEnabled,
-  required bool buildImprovementActionHasBuilderUnits,
-  VoidCallback? onBuildImprovementTap,
+  required ProvinceActionStates civilianInlineActions,
+  required ProvinceInlineActionCallbacks inlineActionCallbacks,
   required Orders currentOrders,
-  required bool showBuildRoadActionIcon,
-  required bool buildRoadActionEnabled,
-  required bool buildRoadActionHasEngineerUnits,
-  VoidCallback? onBuildRoadTap,
-  required bool showPurchaseLandActionIcon,
-  required bool purchaseLandActionEnabled,
-  required bool purchaseLandActionHasMerchantUnits,
-  VoidCallback? onPurchaseLandTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
+  ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   if (selectedTileKey == null) {
     return buildOverlaySection(
@@ -77,13 +64,19 @@ Widget buildTileSection({
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          overlayObfuscatedBodyText(l10n.provinceOverlay_tileCoordinatesUnknown),
+          overlayObfuscatedBodyText(
+            l10n.provinceOverlay_tileCoordinatesUnknown,
+          ),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileTerrainUnknown),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileResourceUnknown),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileProspectedUnknown),
-          overlayObfuscatedBodyText(l10n.provinceOverlay_tileImprovementUnknown),
+          overlayObfuscatedBodyText(
+            l10n.provinceOverlay_tileImprovementUnknown,
+          ),
           overlayObfuscatedBodyText(l10n.provinceOverlay_tileRoadUnknown),
-          overlayObfuscatedBodyText(l10n.provinceOverlay_tileCivilianUnitsUnknown),
+          overlayObfuscatedBodyText(
+            l10n.provinceOverlay_tileCivilianUnitsUnknown,
+          ),
         ],
       ),
     );
@@ -101,25 +94,10 @@ Widget buildTileSection({
     x: x,
     y: y,
     cell: cell,
-    showExploreActionIcon: showExploreActionIcon,
-    exploreActionEnabled: exploreActionEnabled,
-    onExploreWithExplorerTap: onExploreWithExplorerTap,
-    showProspectActionIcon: showProspectActionIcon,
-    prospectActionEnabled: prospectActionEnabled,
-    onProspectWithExplorerTap: onProspectWithExplorerTap,
-    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-    buildImprovementActionEnabled: buildImprovementActionEnabled,
-    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
-    onBuildImprovementTap: onBuildImprovementTap,
+    civilianInlineActions: civilianInlineActions,
+    inlineActionCallbacks: inlineActionCallbacks,
     currentOrders: currentOrders,
-    showBuildRoadActionIcon: showBuildRoadActionIcon,
-    buildRoadActionEnabled: buildRoadActionEnabled,
-    buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
-    onBuildRoadTap: onBuildRoadTap,
-    showPurchaseLandActionIcon: showPurchaseLandActionIcon,
-    purchaseLandActionEnabled: purchaseLandActionEnabled,
-    purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
-    onPurchaseLandTap: onPurchaseLandTap,
     tileConnectivity: tileConnectivity,
+    blockadeStatus: blockadeStatus,
   );
 }

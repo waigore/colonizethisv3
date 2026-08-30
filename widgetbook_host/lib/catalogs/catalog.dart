@@ -9,10 +9,20 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
-    show CapitalMarkerView, CellViewData, RegionMapViewData, TownMarkerView;
+    show
+        CapitalMarkerView,
+        CellViewData,
+        RegionMapViewData,
+        TileVisibility,
+        TownMarkerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart'
-    show GameSaveAdapter, LoadableSaveEntry, LoadableSaveKind, kAutoSaveListLabel, kAutoSaveSlotId;
+    show
+        GameSaveAdapter,
+        LoadableSaveEntry,
+        LoadableSaveKind,
+        kAutoSaveListLabel,
+        kAutoSaveSlotId;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,9 +30,11 @@ import 'package:hive/hive.dart' show Box;
 import 'package:jenny/jenny.dart';
 import 'package:widgetbook/widgetbook.dart';
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart' show GameMapData, GameService;
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -32,11 +44,17 @@ import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/providers/region_minimap_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_context_radial.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_more_actions_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_catalog.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_spoke_view.dart';
+import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_intel.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_action_selector.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -46,7 +64,11 @@ import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/cargo_hold_indicator_support.dart';
+import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend.dart';
+import 'package:colonizethis_app/features/game/flame/controls/extraction_disc_legend_support.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/treasury_committed_spend.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/treasury_details_indicator_support.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_generals_strip.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
@@ -60,30 +82,49 @@ import 'package:colonizethis_app/features/shell/settings/settings_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_catalog_loader.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_disband_confirm.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel_support_allocation.dart';
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/province_detach_and_sail_overlay_controls.dart'
+    show ProvinceDetachAndSailOverlayControls;
+import 'package:colonizethis_app/features/game/flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
+    show ProvinceTransferToHomeFleetOverlayControls;
+import 'package:colonizethis_app/features/game/flame/map_state/province_naval_combine_overlay_controls.dart'
+    show ProvinceNavalCombineOverlayControls;
+import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_fleet_picker_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/in_port_fleet_marker_actions_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
+    show ProvinceBlockadeStatus;
+import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
+    show ProvinceNavalMissionOverlayControls;
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen.dart';
+import 'package:colonizethis_app/features/game/screens/development/development_assign_preview.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_disconnected_assign_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy/intelligence_council_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_political_minimap.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_app/features/game/turn_resolution/staged_decree_review.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show CivilianMissingWorkOrderEntry, navalMissionAvailabilityForFleet;
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/ftp_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_choice_buttons.dart';
@@ -93,6 +134,9 @@ import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogu
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
+import 'improvement_headroom_mark_story.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map_component_shared_palette.dart'
+    show BaseLayerDisplayMode;
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
@@ -106,6 +150,7 @@ import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dia
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_target_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/overlay_army_move_picker_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
@@ -144,12 +189,17 @@ import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'army_tile_marker_story.dart';
 import 'debug_map_visibility_story.dart';
 import 'fort_map_icon_levels_story.dart';
+import 'capital_link_disconnected_highlight_story.dart';
+import 'last_turn_pulse_story.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
+
+import 'transport_overlay_candidate_preview.dart';
 
 // Widgetbook catalog parts grouped by UI domain (Refs #3546 item 6). Files are
 // named by the surface family they register (panels, screens, dialogs, chrome,
@@ -158,20 +208,54 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // that exceeds the cap is split into clearly-named sibling parts rather than a
 // numbered fragment. The `repo.app_widgetbook_file_naming` gate enforces the
 // no-`catalog_partN` convention.
+part 'catalog_transport_overlay_candidates.dart';
+part 'catalog_panel_map_build_port_stories.dart';
+part 'catalog_panel_map_build_railroad_stories.dart';
+part 'catalog_panel_map_build_road_stories.dart';
+part 'catalog_panel_map_build_improvement_yield_stories.dart';
+part 'catalog_panel_map_transport_step_yield_stories.dart';
+part 'catalog_panel_map_build_fort_stories.dart';
+part 'catalog_panel_map_purchase_land_stories.dart';
+part 'catalog_panel_map_upgrade_town_stories.dart';
+part 'catalog_panel_map_move_invade_stories.dart';
+part 'catalog_panel_map_combine_armies_stories.dart';
+part 'catalog_panel_map_combine_fleets_stories.dart';
+part 'catalog_panel_map_naval_mission_stories.dart';
+part 'catalog_panel_map_detach_sail_stories.dart';
+part 'catalog_panel_map_transfer_home_stories.dart';
+part 'catalog_panel_map_station_spy_stories.dart';
+part 'catalog_panel_map_counter_espionage_stories.dart';
+part 'catalog_panel_map_establish_consulate_stories.dart';
+part 'catalog_panel_map_owner_standing_stories.dart';
+part 'catalog_panel_map_political_sight_stories.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
+part 'catalog_turn_news_stories.dart';
+part 'catalog_panels_technology_spy_insight.dart';
+part 'catalog_panels_technology_tree_assign.dart';
+part 'catalog_panels_counsel.dart';
 part 'catalog_panels_generals.dart';
 part 'catalog_panels_intervention.dart';
 part 'catalog_diplomacy_panel.dart';
+part 'catalog_diplomacy_boycott_confirm.dart';
 part 'catalog_diplomacy_detail.dart';
+part 'catalog_intelligence_council.dart';
 part 'catalog_screens_combat.dart';
+part 'catalog_screens_combat_mode_choice.dart';
+part 'catalog_tile_radial.dart';
 part 'catalog_dialogs.dart';
+part 'catalog_dialogs_grant_or_subsidy.dart';
 part 'catalog_dialogs_move_army_invasion_intel.dart';
+part 'catalog_dialogs_move_fleet_destination_intel.dart';
 part 'catalog_dialogs_naval_mission.dart';
 part 'catalog_primitives.dart';
 part 'catalog_data_screens.dart';
 part 'catalog_data_screens_trade.dart';
 part 'catalog_game_chrome.dart';
+part 'catalog_game_chrome_old_world_race.dart';
+part 'catalog_game_chrome_labour_feeding.dart';
+part 'catalog_game_chrome_treasury_details.dart';
+part 'catalog_improvement_headroom.dart';
 part 'catalog_shell_chrome.dart';
 part 'catalog_event_feed.dart';
 part 'catalog_observe_mode.dart';
@@ -293,6 +377,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...transferListDirectories,
   ...mainMenuDirectories,
   ...mapWidgetDirectories,
+  ...transportOverlayCandidatesDirectories,
   ...workOrderAffordPreviewDirectories,
   ...provinceOverlayDirectories,
   ...productionPanelDirectories,
@@ -304,17 +389,20 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...militaryUnitsPanelDirectories,
   ...navalUnitsPanelDirectories,
   ...diplomacyPanelDirectories,
+  ...intelligenceCouncilDirectories,
   ...techTreeDirectories,
   ...interventionDialogueDirectories,
   ...ctDialogueViewDirectories,
   ...gameStartIntroOverlayDirectories,
   ...overtureDialogueOverlayDirectories,
   ...callToArmsDialogueOverlayDirectories,
+  ...ftpDialogueOverlayDirectories,
   ...turnNewsDialogDirectories,
   ...victoryUiDirectories,
   ...playersBarDirectories,
   ...exitConfirmDialogDirectories,
   ...combatUiDirectories,
+  ...combatModeChoiceDirectories,
   ...moveArmyDialogDirectories,
   ...moveFleetDialogDirectories,
   ...navalMissionDialogDirectories,
@@ -327,6 +415,11 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameScreenDirectories,
   ...gameTopBarDirectories,
   ...gameTabBarDirectories,
+  ...extractionDiscLegendDirectories,
+  ...improvementHeadroomLegendDirectories,
+  ...improvementHeadroomMarkDirectories,
+  ...mapTileHoverReadoutDirectories,
+  ...tileRadialDirectories,
   ...playersBarToggleDirectories,
   ...gameMapCornerControlsDirectories,
   ...gameMapEmpireLeftRailDirectories,
@@ -515,6 +608,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           variant: MainMenuVariant.plain,
           state: MainMenuState.default_,
           version: 'v1.0.0',
+          onQuickStart: () {},
           onNewGame: () {},
           onLoadGame: () {},
           onSettings: () {},
@@ -527,6 +621,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           variant: MainMenuVariant.plain,
           state: MainMenuState.default_,
           version: 'v1.0.0',
+          onQuickStart: () {},
           onNewGame: () {},
           resumeGameVisible: true,
           onResumeGame: () {},
@@ -541,6 +636,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           variant: MainMenuVariant.plain,
           state: MainMenuState.afterVictory,
           version: 'v1.0.0',
+          onQuickStart: () {},
           onNewGame: () {},
           onLoadGame: () {},
           onSettings: () {},
@@ -553,6 +649,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           variant: MainMenuVariant.plain,
           state: MainMenuState.noSaves,
           version: 'v1.0.0',
+          onQuickStart: () {},
           onNewGame: () {},
           onLoadGame: () {},
           onSettings: () {},
@@ -565,6 +662,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           variant: MainMenuVariant.pixelArt,
           state: MainMenuState.default_,
           version: 'v1.0.0',
+          onQuickStart: () {},
           onNewGame: () {},
           onLoadGame: () {},
           onSettings: () {},
@@ -577,6 +675,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           variant: MainMenuVariant.pixelArt,
           state: MainMenuState.afterVictory,
           version: 'v1.0.0',
+          onQuickStart: () {},
           onNewGame: () {},
           onLoadGame: () {},
           onSettings: () {},
@@ -593,6 +692,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           variant: MainMenuVariant.pixelArt,
           state: MainMenuState.noSaves,
           version: 'v1.0.0',
+          onQuickStart: () {},
           onNewGame: () {},
           onLoadGame: () {},
           onSettings: () {},
@@ -611,6 +711,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
           version: 'v1.0.0',
           resumeGameVisible: true,
           onResumeGame: () {},
+          onQuickStart: () {},
           onNewGame: () {},
           onLoadGame: () {},
           onSettings: () {},
@@ -625,6 +726,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
             variant: MainMenuVariant.plain,
             state: MainMenuState.default_,
             version: 'v1.0.0',
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -644,6 +746,7 @@ List<WidgetbookNode> get mainMenuDirectories => [
             variant: MainMenuVariant.pixelArt,
             state: MainMenuState.default_,
             version: 'v1.0.0',
+            onQuickStart: () {},
             onNewGame: () {},
             onLoadGame: () {},
             onSettings: () {},
@@ -687,6 +790,58 @@ List<WidgetbookNode> get mapWidgetDirectories => [
           child: const Center(child: FortMapIconLevelsStory()),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — mixed connected/disconnected',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: CapitalLinkDisconnectedHighlightStory()),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Last-turn pulse',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: LastTurnPulseStory()),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Last-turn pulse (320 dp)',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: LastTurnPulseStory(narrow: true)),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — highlight off',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(
+            child: CapitalLinkDisconnectedHighlightStory(showHighlight: false),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — fogged disconnected',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(
+            child: CapitalLinkDisconnectedHighlightStory(
+              disconnectedVisibility: TileVisibility.fogged,
+              playerConstrained: true,
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Capital-link hatch — narrow (320 dp)',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(
+            child: CapitalLinkDisconnectedHighlightStory(narrow: true),
+          ),
+        ),
+      ),
+      for (final entry in armyTileMarkerCatalogEntries)
+        WidgetbookUseCase(
+          name: entry.$1,
+          builder: (context) => widgetbookEditorialMonocleApp(
+            child: Center(child: ArmyTileMarkerStory(kind: entry.$2)),
+          ),
+        ),
     ],
   ),
 ];

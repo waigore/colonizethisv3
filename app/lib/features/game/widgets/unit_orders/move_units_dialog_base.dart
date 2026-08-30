@@ -9,12 +9,13 @@
 
 library;
 
-
 export 'move_units_dialog_base_row.dart'
     show MoveDialogDestinationRow, MoveDialogRadioDot;
 export 'move_units_dialog_base_scaffold.dart' show MoveUnitsDialogState;
 export 'move_units_dialog_base_styles.dart'
     show
+        moveDialogCompositionTextStyle,
         moveDialogEmptyTextStyle,
         moveDialogRowLabelStyle,
         moveDialogTitleTextStyle;
+export 'unit_picker_composition_row.dart' show UnitPickerCompositionContent;

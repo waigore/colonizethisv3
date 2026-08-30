@@ -1,28 +1,25 @@
 // Table-driven battle general assignment scenarios (Refs #3865).
 
 import 'package:colonizethis_combat/src/combat/leader_bonus_helpers.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-
-
 List<RunnableScenario> battleGeneralAssignmentScenarios() => [
   RunnableScenario(
     scenarioId: 'bga-second-attack-excludes-general',
-    label: 'second attack in same phase excludes general already used as attacker',
+    label:
+        'second attack in same phase excludes general already used as attacker',
     run: () {
       final game = landResolverMultiProvinceGame(
         provinces: const [
           Province(id: 'p1', regionId: 'oldWorld', ownerId: 'def'),
           Province(id: 'p2', regionId: 'oldWorld', ownerId: 'def'),
         ],
-        generals: const [
-          General(id: 'g1', ownerId: 'att', medals: 2),
-        ],
+        generals: const [General(id: 'g1', ownerId: 'att', medals: 2)],
       );
       final ledger = CombatPhaseGeneralLedger();
       const ctx1 = BattleContext(
@@ -30,7 +27,9 @@ List<RunnableScenario> battleGeneralAssignmentScenarios() => [
         regionId: 'oldWorld',
         defenderFactionId: 'def',
         defenderUnitIds: ['d1'],
-        attackers: [AttackingSide(factionId: 'att', unitIds: ['a1'])],
+        attackers: [
+          AttackingSide(factionId: 'att', unitIds: ['a1']),
+        ],
         fortLevel: 0,
         terrain: 'plains',
       );
@@ -48,7 +47,9 @@ List<RunnableScenario> battleGeneralAssignmentScenarios() => [
         regionId: 'oldWorld',
         defenderFactionId: 'def',
         defenderUnitIds: ['d2'],
-        attackers: [AttackingSide(factionId: 'att', unitIds: ['a2'])],
+        attackers: [
+          AttackingSide(factionId: 'att', unitIds: ['a2']),
+        ],
         fortLevel: 0,
         terrain: 'plains',
       );
@@ -75,16 +76,16 @@ List<RunnableScenario> battleGeneralAssignmentScenarios() => [
         provinceId: 'px',
         units: const [],
         players: landResolverHumanPlayers,
-        generals: const [
-          General(id: 'g1', ownerId: 'att', medals: 1),
-        ],
+        generals: const [General(id: 'g1', ownerId: 'att', medals: 1)],
       );
       const ctx = BattleContext(
         provinceId: 'px',
         regionId: 'oldWorld',
         defenderFactionId: 'att',
         defenderUnitIds: ['x1'],
-        attackers: [AttackingSide(factionId: 'def', unitIds: ['e1'])],
+        attackers: [
+          AttackingSide(factionId: 'def', unitIds: ['e1']),
+        ],
         fortLevel: 0,
         terrain: 'plains',
       );

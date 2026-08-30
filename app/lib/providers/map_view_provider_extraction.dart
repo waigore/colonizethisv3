@@ -12,17 +12,39 @@ class MapResourceExtractionMaps {
     required this.unitsByTile,
     required this.effectiveUnitsByTile,
     required this.blockedUnitsByTile,
+    this.capitalLinkDisconnectedTileKeys = const {},
   });
 
   static const empty = MapResourceExtractionMaps(
     unitsByTile: {},
     effectiveUnitsByTile: {},
     blockedUnitsByTile: {},
+    capitalLinkDisconnectedTileKeys: {},
   );
 
   final Map<String, int> unitsByTile;
   final Map<String, int> effectiveUnitsByTile;
   final Map<String, int> blockedUnitsByTile;
+
+  /// Viewing-player owned land tiles not in `ConnectivityResult.connected`
+  /// (Refs #4370). Empty when there is no viewing player / connectivity.
+  final Set<String> capitalLinkDisconnectedTileKeys;
+}
+
+/// Global observe (`panelPlayerId == null`) keeps extraction discs but omits
+/// hatch keys so no GP's connected set is painted (Refs #4370).
+MapResourceExtractionMaps mapViewExtractionMapsForShell({
+  required MapResourceExtractionMaps built,
+  required String? panelPlayerId,
+}) {
+  if (panelPlayerId != null) {
+    return built;
+  }
+  return MapResourceExtractionMaps(
+    unitsByTile: built.unitsByTile,
+    effectiveUnitsByTile: built.effectiveUnitsByTile,
+    blockedUnitsByTile: built.blockedUnitsByTile,
+  );
 }
 
 void _recordExtractionDiscs({
@@ -51,6 +73,7 @@ MapResourceExtractionMaps mapViewBuildResourceExtractionMaps({
   final resourceExtractionUnitsByTile = <String, int>{};
   final resourceExtractionEffectiveUnitsByTile = <String, int>{};
   final resourceExtractionBlockedUnitsByTile = <String, int>{};
+  final capitalLinkDisconnectedTileKeys = <String>{};
   final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
   final prospected =
       game.worldState.playerProspectedTiles[mapPlayer.id] ?? const <String>{};
@@ -113,9 +136,11 @@ MapResourceExtractionMaps mapViewBuildResourceExtractionMaps({
     );
   }
 
-  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+  for (final regionEntry
+      in game.worldState.tileKeysByRegionAndProvince.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
-      final province = provincesByFullId[provinceEntry.key] ??
+      final province =
+          provincesByFullId[provinceEntry.key] ??
           game.worldState.tryGetProvince(provinceEntry.key);
       if (province?.ownerId != mapPlayer.id) {
         continue;
@@ -124,6 +149,7 @@ MapResourceExtractionMaps mapViewBuildResourceExtractionMaps({
         if (connected.contains(tileKey)) {
           continue;
         }
+        capitalLinkDisconnectedTileKeys.add(tileKey);
         final contribution = computeTileExtractionDisplayContribution(
           game: game,
           tileMapByRegion: tileMapByRegion,
@@ -160,5 +186,6 @@ MapResourceExtractionMaps mapViewBuildResourceExtractionMaps({
     unitsByTile: resourceExtractionUnitsByTile,
     effectiveUnitsByTile: resourceExtractionEffectiveUnitsByTile,
     blockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+    capitalLinkDisconnectedTileKeys: capitalLinkDisconnectedTileKeys,
   );
 }

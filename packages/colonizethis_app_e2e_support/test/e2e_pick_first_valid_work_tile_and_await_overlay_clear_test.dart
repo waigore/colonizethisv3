@@ -40,63 +40,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'support/work_tile_overlay_host_harness.dart';
+import 'support/e2e_pick_first_valid_work_tile_and_await_overlay_clear_constants_group.dart';
+import 'support/e2e_pick_first_valid_work_tile_and_await_overlay_clear_guard_group.dart';
+
 /// Mounts an [InkWell] keyed by [kCtE2ESelectFirstValidWorkTileKey] inside
 /// a [Material] ancestor so [WidgetTester.tap] resolves the same gesture
 /// surface as the production overlay in `game_map_area_build.dart`. The
 /// host removes the overlay on tap so the strict and best-effort
 /// `pump_until_work_tile_overlay_cleared_*` settles see the same
 /// "tap → unmount" transition the real overlay produces.
-class _OverlayHost extends StatefulWidget {
-  const _OverlayHost();
-
-  @override
-  State<_OverlayHost> createState() => _OverlayHostState();
-}
-
-class _OverlayHostState extends State<_OverlayHost> {
-  bool _visible = true;
-  int taps = 0;
-
-  void _onTap() {
-    taps++;
-    setState(() => _visible = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: !_visible
-              ? const SizedBox.shrink(key: ValueKey('overlay-cleared'))
-              : SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      key: kCtE2ESelectFirstValidWorkTileKey,
-                      onTap: _onTap,
-                    ),
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Mounts no overlay at all so the appearance-wait branches (strict
-/// `e2eWaitUntilFound` fail / best-effort `e2ePumpUntilConditionOrIdle`
-/// false) both see a permanently absent finder.
-class _EmptyHost extends StatelessWidget {
-  const _EmptyHost();
-
-  @override
-  Widget build(BuildContext context) =>
-      const MaterialApp(home: Scaffold(body: SizedBox.shrink()));
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -104,7 +57,7 @@ void main() {
     testWidgets('taps the overlay once and pumps until it unmounts', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const _OverlayHost());
+      await tester.pumpWidget(const WorkTileOverlayHost());
       expect(find.byKey(kCtE2ESelectFirstValidWorkTileKey), findsOneWidget);
 
       await e2ePickFirstValidWorkTileAndAwaitOverlayClear(
@@ -113,7 +66,9 @@ void main() {
         clearPhase: 'pump_until_work_tile_overlay_cleared_build',
       );
 
-      final state = tester.state<_OverlayHostState>(find.byType(_OverlayHost));
+      final state = tester.state<WorkTileOverlayHostState>(
+        find.byType(WorkTileOverlayHost),
+      );
       expect(
         state.taps,
         1,
@@ -136,7 +91,7 @@ void main() {
     testWidgets('fails the test when the overlay never becomes hit-testable', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const _EmptyHost());
+      await tester.pumpWidget(const EmptyWorkTileHost());
 
       Object? caught;
       try {
@@ -167,7 +122,7 @@ void main() {
     testWidgets(
       'taps the overlay once with warnIfMissed=false and returns true',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const _OverlayHost());
+        await tester.pumpWidget(const WorkTileOverlayHost());
 
         final picked = await e2eMaybePickFirstValidWorkTileAndAwaitOverlayClear(
           tester,
@@ -178,8 +133,8 @@ void main() {
         );
 
         expect(picked, isTrue);
-        final state = tester.state<_OverlayHostState>(
-          find.byType(_OverlayHost),
+        final state = tester.state<WorkTileOverlayHostState>(
+          find.byType(WorkTileOverlayHost),
         );
         expect(state.taps, 1);
         expect(find.byKey(kCtE2ESelectFirstValidWorkTileKey), findsNothing);
@@ -192,7 +147,7 @@ void main() {
       'returns false and emits the skipped meta timing when the overlay never '
       'appears',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const _EmptyHost());
+        await tester.pumpWidget(const EmptyWorkTileHost());
 
         final perf = E2ePerfLog('prospect_skip');
         final lines = <String>[];
@@ -245,7 +200,7 @@ void main() {
     testWidgets(
       'does not emit the skipped meta when perf is null but still returns false',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const _EmptyHost());
+        await tester.pumpWidget(const EmptyWorkTileHost());
 
         final lines = <String>[];
         final original = debugPrint;
@@ -284,83 +239,6 @@ void main() {
     );
   });
 
-  group('Default constants', () {
-    test(
-      'kE2eDefaultCivilianWorkTileAppearTimeout matches legacy 15 s budget',
-      () {
-        expect(
-          kE2eDefaultCivilianWorkTileAppearTimeout,
-          const Duration(seconds: 15),
-          reason:
-              'A silent budget bump would change wall-clock guarantees for '
-              'every call site that relies on the default; require an explicit '
-              'override at the call site instead. Refs GitHub #2336 / AC4.',
-        );
-      },
-    );
-
-    test(
-      'kE2eDefaultCivilianWorkTileClearTimeout matches legacy 5 s budget',
-      () {
-        expect(
-          kE2eDefaultCivilianWorkTileClearTimeout,
-          const Duration(seconds: 5),
-          reason:
-              'A silent budget bump would change wall-clock guarantees for '
-              'every call site that relies on the default; require an explicit '
-              'override at the call site instead. Refs GitHub #2336 / AC4.',
-        );
-      },
-    );
-  });
-
-  group('Perf wiring', () {
-    testWidgets(
-      'strict variant forwards appearPhase and clearPhase verbatim through '
-      'e2eWaitUntilFound and e2ePumpUntil',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const _OverlayHost());
-        final perf = E2ePerfLog('work_tile_strict_phase');
-
-        final lines = <String>[];
-        final original = debugPrint;
-        debugPrint = (String? message, {int? wrapWidth}) {
-          lines.add(message ?? '');
-        };
-        try {
-          await e2ePickFirstValidWorkTileAndAwaitOverlayClear(
-            tester,
-            appearPhase: 'custom_appear_phase',
-            clearPhase: 'custom_clear_phase',
-            perf: perf,
-          );
-        } finally {
-          debugPrint = original;
-        }
-
-        expect(
-          lines.any(
-            (l) =>
-                l.startsWith('E2E_TIMING') &&
-                l.contains('phase=custom_appear_phase'),
-          ),
-          isTrue,
-          reason:
-              'appearPhase must be forwarded verbatim to e2eWaitUntilFound — '
-              'log scrapers and dashboards key on the exact phase literal.',
-        );
-        expect(
-          lines.any(
-            (l) =>
-                l.startsWith('E2E_TIMING') &&
-                l.contains('phase=custom_clear_phase'),
-          ),
-          isTrue,
-          reason:
-              'clearPhase must be forwarded verbatim to e2ePumpUntil — log '
-              'scrapers and dashboards key on the exact phase literal.',
-        );
-      },
-    );
-  });
+  registerE2ePickFirstValidWorkTileAndAwaitOverlayClearConstantsGroup();
+  registerE2ePickFirstValidWorkTileAndAwaitOverlayClearGuardGroup();
 }

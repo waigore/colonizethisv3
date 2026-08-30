@@ -1,11 +1,15 @@
 // Full-screen Development panel. SPEC/ui/development-panel.md.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_constants.dart';
+import '../../../../config/routes.dart';
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../widgets/ct_action_text_button.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
@@ -34,12 +38,27 @@ class DevelopmentScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = appL10n(context);
+    final bus = ref.read(appEventBusProvider);
     return CtGameFeatureScreenShell(
       game: game,
       topBar: GameFeatureScreenTopBar.build(
         key: DevelopmentPanelKeys.topBarKey,
         title: topBarTitle,
         iconAsset: topBarIconAsset,
+        trailing: CtActionTextButton(
+          key: DevelopmentPanelKeys.counselButtonKey,
+          onPressed: () {
+            bus.emit(
+              NavigateToRouteEvent(Routes.counsel, {
+                'game': game,
+                'humanPlayerId': humanPlayerId,
+                'counselTab': 'development',
+              }),
+            );
+          },
+          label: l10n.development_counsel,
+        ),
       ),
       bodyBuilder: (context, shellRef, displayGame) {
         final shell = shellRef.read(shellPlayerContextProvider);

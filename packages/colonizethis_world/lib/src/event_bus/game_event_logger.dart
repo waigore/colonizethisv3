@@ -32,7 +32,8 @@ class GameEventLogger {
             'provinceId=${e.provinceId} newMedals=${e.newMedals}',
       NavalCombatResultEvent e =>
         'turn=${e.turnNumber} seaZoneId=${e.seaZoneId} outcome=${e.outcomeName} '
-            'winnerOwnerId=${e.winnerOwnerId} side1=${e.side1OwnerId} side2=${e.side2OwnerId}',
+            'winnerOwnerId=${e.winnerOwnerId} side1=${e.side1OwnerId} side2=${e.side2OwnerId} '
+            'side1Casualties=${e.side1CasualtyCount} side2Casualties=${e.side2CasualtyCount}',
       ProvinceCapturedEvent e =>
         'turn=${e.turnNumber} provinceId=${e.provinceId} previousOwnerId=${e.previousOwnerId} '
             'newOwnerId=${e.newOwnerId}',
@@ -67,6 +68,10 @@ class GameEventLogger {
         'turn=${e.turnNumber} playerId=${e.playerId} '
             'totalSpent=${e.totalSpent} totalReceived=${e.totalReceived} '
             'carryForwardOrderCount=${e.carryForwardOrderCount}',
+      EconomyTurnSummaryEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} '
+            'treasuryDelta=${e.treasuryDelta} '
+            'stockpileDeltaCount=${e.stockpileDeltas.length}',
     };
   }
 }

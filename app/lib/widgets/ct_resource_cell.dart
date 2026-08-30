@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'ct_gradients.dart';
+import 'ct_resource_cell_format.dart';
+import 'ct_resource_cell_trailing.dart';
 import 'ct_spacing.dart';
-
-part 'ct_resource_cell_format.dart';
-part 'ct_resource_cell_trailing.dart';
 
 /// Compact icon + name + quantity (+ optional signed delta) row for the dark
 /// editorial-monocle theme.
@@ -97,14 +96,14 @@ class CtResourceCell extends StatelessWidget {
   /// Returns the formatted delta string for the supplied [delta] per R10.
   /// Returns `null` if the delta glyphs should not be painted.
   static String? formattedDeltaText(int? delta) =>
-      _ctResourceCellFormattedDeltaText(delta);
+      ctResourceCellFormattedDeltaText(delta);
 
   /// Returns the colour token for the supplied [delta] per R10. Returns
   /// `null` if the delta glyphs should not be painted.
-  static Color? deltaColor(int? delta) => _ctResourceCellDeltaColor(delta);
+  static Color? deltaColor(int? delta) => ctResourceCellDeltaColor(delta);
 
   /// Renders an integer with thousands separators (`1_240` → `1,240`).
-  static String formatQuantity(int value) => _ctResourceCellFormatQuantity(value);
+  static String formatQuantity(int value) => ctResourceCellFormatQuantity(value);
 
   /// Quantity [Text] key for visibility / panel-wide alignment tests (#3999).
   static const Key quantityTextKey = ValueKey<String>('ct_resource_cell_quantity');
@@ -144,14 +143,14 @@ class CtResourceCell extends StatelessWidget {
                       Expanded(
                         child: Text(
                           name,
-                          style: nameStyle(context),
+                          style: ctResourceCellNameStyle(context),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
                       ),
                       ConstrainedBox(
                         constraints: BoxConstraints(maxWidth: budget),
-                        child: trailingCluster(
+                        child: ctResourceCellTrailingCluster(
                           context,
                           quantityText: formatQuantity(quantity),
                           deltaText: deltaText,

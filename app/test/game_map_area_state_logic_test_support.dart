@@ -1,4 +1,4 @@
-// Shared helpers for the `game_map_area_state_logic_part*_test.dart` family.
+// Shared helpers for the `game_map_area_state_logic_*_test.dart` family.
 // Lives outside `app/test/support/` so state-logic expectation helpers do not
 // count toward `repo.app_test_support_loc`. Re-exported from
 // `app/test/support/game_map_area_state_logic_test_support.dart` (Refs #4013).
@@ -19,7 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Expected `provinceBuildImprovementActionState(...).enabled` per **pipeline
 /// contract A** (`SPEC/program/order-suggestions.md` Province Tile
 /// `Build improvement` shortcut enablement): same predicate as
-/// `GameMapAreaStateLogic.provinceBuildImprovementActionState` — any human
+/// `GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState` — any human
 /// Builder whose allowed targets include `build_improvement` has
 /// `selectedTileKey` in `getValidWorkOrderTileKeysWithVisibility` for the same
 /// `(game, topology, view, orders, tileMap)`.

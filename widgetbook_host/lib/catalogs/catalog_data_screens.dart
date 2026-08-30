@@ -76,12 +76,24 @@ Game _victoryScreenStoryGame() {
   return Game(
     id: 'wb_victory_screen',
     worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 12),
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 42),
       oldWorld: RegionData(
         provinces: [
-          const Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-          const Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
-          const Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp2'),
+          const Province(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            ownerId: 'gp1',
+          ),
+          const Province(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            ownerId: 'gp2',
+          ),
+          const Province(
+            id: 'oldWorld|p3',
+            regionId: 'oldWorld',
+            ownerId: 'gp2',
+          ),
         ],
       ),
       newWorld: const RegionData(),
@@ -94,7 +106,10 @@ Game _victoryScreenStoryGame() {
 }
 
 Widget _victoryScreenDefaultStory() {
-  final game = _victoryScreenStoryGame();
+  return _victoryScreenStory(_victoryScreenStoryGame());
+}
+
+Widget _victoryScreenStory(Game game) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -151,18 +166,10 @@ RegionMapViewData _victoryScreenAnnotatedMinimapRegion() {
       ),
     ],
     capitalMarkers: const [
-      CapitalMarkerView(
-        factionId: 'gp1',
-        displayName: 'England',
-        x: 0,
-        y: 0,
-      ),
+      CapitalMarkerView(factionId: 'gp1', displayName: 'England', x: 0, y: 0),
     ],
     portMarkers: const [],
-    factionColors: const {
-      'gp1': (180, 80, 80),
-      'gp2': (80, 80, 180),
-    },
+    factionColors: const {'gp1': (180, 80, 80), 'gp2': (80, 80, 180)},
     greatPowerFactionIds: {'gp1', 'gp2'},
     terrainColors: const {},
     townMarkers: const [
@@ -198,6 +205,11 @@ Widget _victoryScreenAnnotatedMinimapStory() {
 }
 
 const String _kDevelopmentPanelStoryGameId = 'wb_development_panel';
+const String _kDevelopmentPanelFogStoryGameId = 'wb_development_panel_fog';
+const String _kDevelopmentPanelAssignedStoryGameId =
+    'wb_development_panel_assigned';
+const String _kDevelopmentPanelAssignPreviewStoryGameId =
+    'wb_development_panel_assign_preview';
 
 Game _developmentPanelStoryGame() {
   const human = 'gp1';
@@ -254,16 +266,8 @@ Game _developmentPanelStoryGame() {
           p2: [tileP2],
         },
       },
-      resourceByTileKey: {
-        tileA: 'grain',
-        tileB: 'grain',
-      },
-      tileState: const TileMapState(
-        improvementByTile: {
-          tileA: 0,
-          tileB: 0,
-        },
-      ),
+      resourceByTileKey: {tileA: 'grain', tileB: 'grain'},
+      tileState: const TileMapState(improvementByTile: {tileA: 0, tileB: 0}),
       playerVisibilityByTile: {
         human: {
           tileA: 'fullyVisible',
@@ -291,6 +295,200 @@ Game _developmentPanelStoryGame() {
   );
 }
 
+Game _developmentPanelFogVisibilityStoryGame() {
+  const human = 'gp1';
+  const p1 = 'oldWorld|p1';
+  const p2 = 'oldWorld|p2';
+  const tileA = 'oldWorld|p1|0|0';
+  const tileB = 'oldWorld|p1|1|0';
+  const tileHidden = 'oldWorld|p1|2|0';
+  const tileP2 = 'oldWorld|p2|0|1';
+  const tileP2Fog = 'oldWorld|p2|1|1';
+  const tileP2Visible = 'oldWorld|p2|2|1';
+
+  return Game(
+    id: _kDevelopmentPanelFogStoryGameId,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: p1,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Avalon',
+            townTileKey: tileA,
+          ),
+          Province(
+            id: p2,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Barren',
+            townTileKey: tileP2,
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'b1',
+            type: kUnitTypeBuilder,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.idle,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          p1: [tileA, tileB, tileHidden],
+          p2: [tileP2, tileP2Fog, tileP2Visible],
+        },
+      },
+      resourceByTileKey: {tileA: 'grain', tileB: 'grain', tileHidden: 'grain'},
+      tileState: const TileMapState(
+        improvementByTile: {tileA: 0, tileB: 0, tileHidden: 0},
+      ),
+      playerVisibilityByTile: {
+        human: {
+          tileA: 'fullyVisible',
+          tileB: 'fogged',
+          tileP2Fog: 'fogged',
+          tileP2Visible: 'fullyVisible',
+        },
+      },
+    ),
+    players: const [
+      Player(
+        id: human,
+        displayName: 'England',
+        isHuman: true,
+        capitalProvinceId: p1,
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'p1',
+          x: 0,
+          y: 0,
+        ),
+        stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
+        techUnlocked: {kTechIdCircularSaw: true},
+      ),
+    ],
+  );
+}
+
+Game _developmentPanelAssignedCiviliansStoryGame() {
+  const human = 'gp1';
+  const p1 = 'oldWorld|p1';
+  const p2 = 'oldWorld|p2';
+  const tileA = 'oldWorld|p1|0|0';
+  const tileB = 'oldWorld|p1|1|0';
+  const tileP2 = 'oldWorld|p2|0|1';
+
+  return Game(
+    id: _kDevelopmentPanelAssignedStoryGameId,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: p1,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Avalon',
+            townTileKey: tileA,
+          ),
+          Province(
+            id: p2,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Barren',
+            townTileKey: tileP2,
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'b1',
+            type: kUnitTypeBuilder,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.idle,
+          ),
+          Unit(
+            id: 'b2',
+            type: kUnitTypeBuilder,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.idle,
+          ),
+          Unit(
+            id: 'e1',
+            type: kUnitTypeEngineer,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.working,
+            currentWork: const CurrentWork(
+              workTarget: 'build_road',
+              tileKey: tileB,
+              totalTurns: 3,
+              remainingTurns: 2,
+            ),
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          p1: [tileA, tileB],
+          p2: [tileP2],
+        },
+      },
+      resourceByTileKey: {tileA: 'grain', tileB: 'grain'},
+      tileState: const TileMapState(improvementByTile: {tileA: 0, tileB: 0}),
+      playerVisibilityByTile: {
+        human: {
+          tileA: 'fullyVisible',
+          tileB: 'fullyVisible',
+          tileP2: 'fullyVisible',
+        },
+      },
+    ),
+    players: const [
+      Player(
+        id: human,
+        displayName: 'England',
+        isHuman: true,
+        capitalProvinceId: p1,
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'p1',
+          x: 0,
+          y: 0,
+        ),
+        stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
+        techUnlocked: {kTechIdCircularSaw: true},
+      ),
+    ],
+  );
+}
+
+Orders _developmentPanelAssignedCiviliansStoryOrders() {
+  return Orders(
+    workOrdersByPlayerId: {
+      'gp1': [
+        WorkOrder(
+          unitId: 'b1',
+          target: 'build_improvement',
+          targetTileKey: 'oldWorld|p1|0|0',
+        ),
+      ],
+    },
+  );
+}
+
 class _DevelopmentPanelStoryGameService extends StoryStubGameService {
   static final Map<String, MapTopology> _topologyByRegion = {
     'oldWorld': MapTopology(
@@ -311,7 +509,7 @@ class _DevelopmentPanelStoryGameService extends StoryStubGameService {
     'newWorld': const MapTopology(nodes: [], edges: []),
   };
 
-  static final Map<String, TileMapResult> _tileMapByRegion = {
+  static final Map<String, TileMapResult> _tileMapByRegion2x2 = {
     'oldWorld': TileMapResult(
       width: 2,
       height: 2,
@@ -340,6 +538,35 @@ class _DevelopmentPanelStoryGameService extends StoryStubGameService {
     ),
   };
 
+  static final Map<String, TileMapResult> _tileMapByRegion3x2 = {
+    'oldWorld': TileMapResult(
+      width: 3,
+      height: 2,
+      grid: const [
+        ['p1', 'p1', 'p1'],
+        ['p2', 'p2', 'p2'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains, TerrainType.plains, TerrainType.plains],
+        [TerrainType.plains, TerrainType.plains, TerrainType.plains],
+      ],
+      resourceGrid: [
+        [Resource.grain, Resource.grain, Resource.grain],
+        [null, null, null],
+      ],
+    ),
+    'newWorld': TileMapResult(
+      width: 1,
+      height: 1,
+      grid: const [
+        ['nw1'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains],
+      ],
+    ),
+  };
+
   static final MapTopology _combinedTopology = MapTopology(
     nodes: const [
       TopologyNode(
@@ -353,25 +580,33 @@ class _DevelopmentPanelStoryGameService extends StoryStubGameService {
         type: TopologyNodeType.province,
       ),
     ],
-    edges: const [
-      TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
-    ],
+    edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2')],
   );
 
   @override
   GameMapData? getMapData(String gameId) {
-    if (gameId != _kDevelopmentPanelStoryGameId) return null;
+    final tileMapByRegion = switch (gameId) {
+      _kDevelopmentPanelFogStoryGameId => _tileMapByRegion3x2,
+      _kDevelopmentPanelStoryGameId ||
+      _kDevelopmentPanelAssignedStoryGameId ||
+      _kDevelopmentPanelAssignPreviewStoryGameId => _tileMapByRegion2x2,
+      _ => null,
+    };
+    if (tileMapByRegion == null) return null;
     return (
       combinedTopology: _combinedTopology,
-      tileMapByRegion: _tileMapByRegion,
+      tileMapByRegion: tileMapByRegion,
       topologyByRegion: _topologyByRegion,
       warpLinks: null,
     );
   }
 }
 
-Widget _developmentPanelStoryHost({required Widget child}) {
-  final game = _developmentPanelStoryGame();
+Widget _developmentPanelStoryHost({
+  required Game game,
+  required Orders orders,
+  required Widget child,
+}) {
   return ProviderScope(
     overrides: [
       appEventBusProvider.overrideWith((ref) {
@@ -380,9 +615,7 @@ Widget _developmentPanelStoryHost({required Widget child}) {
         return bus;
       }),
       currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-      currentOrdersProvider.overrideWith(
-        () => CurrentOrdersNotifier(const Orders()),
-      ),
+      currentOrdersProvider.overrideWith(() => CurrentOrdersNotifier(orders)),
       gameServiceProvider.overrideWith(
         (ref) => _DevelopmentPanelStoryGameService(),
       ),
@@ -396,10 +629,56 @@ Widget _developmentPanelStoryHost({required Widget child}) {
   );
 }
 
+Widget _developmentPanelStory({required Game game, required Orders orders}) {
+  return _developmentPanelStoryHost(
+    game: game,
+    orders: orders,
+    child: DevelopmentScreen(game: game, humanPlayerId: 'gp1'),
+  );
+}
+
 Widget _developmentPanelDefaultStory() {
   final game = _developmentPanelStoryGame();
-  return _developmentPanelStoryHost(
-    child: DevelopmentScreen(game: game, humanPlayerId: 'gp1'),
+  return _developmentPanelStory(game: game, orders: const Orders());
+}
+
+Widget _developmentPanelFogVisibilityStory() {
+  final game = _developmentPanelFogVisibilityStoryGame();
+  return _developmentPanelStory(game: game, orders: const Orders());
+}
+
+Widget _developmentPanelAssignedCiviliansStory() {
+  final game = _developmentPanelAssignedCiviliansStoryGame();
+  return _developmentPanelStory(
+    game: game,
+    orders: _developmentPanelAssignedCiviliansStoryOrders(),
+  );
+}
+
+Game _developmentPanelAssignPreviewStoryGame() {
+  final base = _developmentPanelStoryGame();
+  return base.copyWith(
+    id: _kDevelopmentPanelAssignPreviewStoryGameId,
+    worldState: base.worldState.copyWith(
+      tileState: const TileMapState(
+        improvementByTile: {'oldWorld|p1|0|0': 1, 'oldWorld|p1|1|0': 1},
+      ),
+    ),
+    players: [
+      base.players.first.copyWith(
+        techUnlocked: const {
+          kTechIdCircularSaw: true,
+          kTechIdLandEnclosure: true,
+        },
+      ),
+    ],
+  );
+}
+
+Widget _developmentPanelAssignPreviewStory() {
+  return _developmentPanelStory(
+    game: _developmentPanelAssignPreviewStoryGame(),
+    orders: const Orders(),
   );
 }
 
@@ -422,9 +701,83 @@ List<WidgetbookNode> get developmentScreenDirectories => [
         builder: (context) =>
             wideViewport(context, _developmentPanelDefaultStory()),
       ),
+      WidgetbookUseCase(
+        name: 'Fog map — player-constrained visibility',
+        builder: (context) => _developmentPanelFogVisibilityStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Fog map — player-constrained visibility (wide)',
+        builder: (context) =>
+            wideViewport(context, _developmentPanelFogVisibilityStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Assigned civilians — overview rows',
+        builder: (context) => _developmentPanelAssignedCiviliansStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Assigned civilians — overview rows (wide)',
+        builder: (context) =>
+            wideViewport(context, _developmentPanelAssignedCiviliansStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview enabled',
+        builder: (context) => _developmentPanelAssignPreviewStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview enabled (mobile)',
+        builder: (context) =>
+            mobileViewport(context, _developmentPanelAssignPreviewStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield raise',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (0, 0) · 0 → 1 · Lumber 1 · Cast iron 1 · '
+          'After this work: 0 → 1 Grain if still linked',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield road cap',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (0, 0) · 2 → 3 · Lumber 4 · Cast iron 4 · '
+          'After this work: still 2 Timber — the road is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield town cap',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (0, 0) · 2 → 3 · Lumber 4 · Cast iron 4 · '
+          'After this work: still 2 Grain — town development is the limit',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Assign preview — Build improvement next yield disconnected',
+        builder: (context) => _developmentAssignNextYieldCaptionStory(
+          'Place: Avalon (1, 0) · 0 → 1 · Lumber 1 · Cast iron 1 · '
+          'not bound to the capital · '
+          'After this work: still none — not bound to the capital',
+        ),
+      ),
     ],
   ),
 ];
+
+Widget _developmentAssignNextYieldCaptionStory(String previewLine) {
+  return widgetbookEditorialMonocleApp(
+    child: Builder(
+      builder: (context) {
+        return SizedBox(
+          width: 420,
+          child: DevelopmentAssignPreviewCaption(
+            scopeKey: 'nextYield',
+            commodityId: 'grain',
+            previewLine: previewLine,
+            textTheme: Theme.of(context).textTheme,
+          ),
+        );
+      },
+    ),
+  );
+}
 
 /// Victory screen stories. SPEC/ui/victory-panel.md.
 List<WidgetbookNode> get victoryScreenDirectories => [
@@ -442,7 +795,27 @@ List<WidgetbookNode> get victoryScreenDirectories => [
       ),
       WidgetbookUseCase(
         name: 'Scaffold (wide side-by-side)',
-        builder: (context) => wideViewport(context, _victoryScreenDefaultStory()),
+        builder: (context) =>
+            wideViewport(context, _victoryScreenDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (infinite mode)',
+        builder: (context) => _victoryScreenStory(
+          _victoryScreenStoryGame().copyWith(infiniteMode: true),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (last campaign year)',
+        builder: (context) => _victoryScreenStory(
+          _victoryScreenStoryGame().copyWith(
+            worldState: _victoryScreenStoryGame().worldState.copyWith(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 201,
+              ),
+            ),
+          ),
+        ),
       ),
       WidgetbookUseCase(
         name: 'Scaffold (rival GP selected)',

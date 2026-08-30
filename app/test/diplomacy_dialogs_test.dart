@@ -1,31 +1,20 @@
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_body.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
-import 'panel_test_fixtures.dart';
+import 'diplomacy_dialogs_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
-  testWidgets('GrantOrSubsidyDialog submits default valid grant amount',
-      (WidgetTester tester) async {
-    // Refs #3656: lightweight fixture (gp1 human treasury 5000 + gp2) replaces
-    // the ~7-11s getDebugInitGameResult(); the grant dialog only reads players.
-    final game = buildDiplomacyScreenTestGame();
-    final humanPlayerId = game.players.first.id;
-    final treasury = game.players.first.treasury;
-    if (treasury < 1000) {
-      return;
-    }
-    final targetFactionId = game.players.length >= 2
-        ? game.players[1].id
-        : (game.minorNations.isNotEmpty ? game.minorNations.first.id : 'm1');
-
+  testWidgets('GrantOrSubsidyDialog submits default valid grant amount', (
+    WidgetTester tester,
+  ) async {
     final bus = AppEventBus.create();
     GrantOrSubsidySubmittedEvent? submitted;
     final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((e) {
@@ -33,32 +22,7 @@ void main() {
     });
     addTearDown(sub.cancel);
 
-    await tester.pumpWidget(
-      buildAppShell(
-        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-        child: Scaffold(
-          body: Builder(
-            builder: (context) => ElevatedButton(
-              child: const Text('Open'),
-              onPressed: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => GrantOrSubsidyDialog(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    targetFactionId: targetFactionId,
-                    isSubsidy: false,
-                    bus: bus,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await pumpGrantOrSubsidyDialog(tester, humanTreasury: 5000, bus: bus);
 
     expect(find.text('Grant aid'), findsOneWidget);
     expect(find.textContaining('£'), findsWidgets);
@@ -73,21 +37,33 @@ void main() {
   });
 
   testWidgets(
-      'GrantOrSubsidyDialog submit disabled when treasury below minimum',
-      (WidgetTester tester) async {
-    final base = buildDiplomacyScreenTestGame();
-    final humanPlayerId = base.players.first.id;
-    final targetFactionId = base.players.length >= 2
-        ? base.players[1].id
-        : (base.minorNations.isNotEmpty ? base.minorNations.first.id : 'm1');
+    'GrantOrSubsidyDialog submit disabled when treasury below minimum',
+    (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      var submittedCalled = false;
+      final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((_) {
+        submittedCalled = true;
+      });
+      addTearDown(sub.cancel);
 
-    final game = base.copyWith(
-      players: [
-        base.players.first.copyWith(treasury: 500),
-        ...base.players.skip(1),
-      ],
-    );
+      await pumpGrantOrSubsidyDialog(tester, humanTreasury: 500, bus: bus);
 
+      expect(find.text('Grant aid'), findsOneWidget);
+      final submit = find.widgetWithText(CtNinePatchButton, 'Submit');
+      final button = tester.widget<CtNinePatchButton>(submit);
+      expect(button.enabled, isFalse);
+
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+
+      expect(submittedCalled, isFalse);
+      expect(find.text('Grant aid'), findsOneWidget);
+    },
+  );
+
+  testWidgets('GrantOrSubsidyDialog Cancel closes dialog', (
+    WidgetTester tester,
+  ) async {
     final bus = AppEventBus.create();
     var submittedCalled = false;
     final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((_) {
@@ -95,88 +71,7 @@ void main() {
     });
     addTearDown(sub.cancel);
 
-    await tester.pumpWidget(
-      buildAppShell(
-        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-        child: Scaffold(
-          body: Builder(
-            builder: (context) => ElevatedButton(
-              child: const Text('Open'),
-              onPressed: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => GrantOrSubsidyDialog(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    targetFactionId: targetFactionId,
-                    isSubsidy: false,
-                    bus: bus,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Grant aid'), findsOneWidget);
-    final submit = find.widgetWithText(CtNinePatchButton, 'Submit');
-    final button = tester.widget<CtNinePatchButton>(submit);
-    expect(button.enabled, isFalse);
-
-    await tester.tap(submit);
-    await tester.pumpAndSettle();
-
-    expect(submittedCalled, isFalse);
-    expect(find.text('Grant aid'), findsOneWidget);
-  });
-
-  testWidgets('GrantOrSubsidyDialog Cancel closes dialog',
-      (WidgetTester tester) async {
-    final game = buildDiplomacyScreenTestGame();
-    final humanPlayerId = game.players.first.id;
-    final targetFactionId = game.players.length >= 2
-        ? game.players[1].id
-        : (game.minorNations.isNotEmpty ? game.minorNations.first.id : 'm1');
-
-    final bus = AppEventBus.create();
-    var submittedCalled = false;
-    final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((_) {
-      submittedCalled = true;
-    });
-    addTearDown(sub.cancel);
-
-    await tester.pumpWidget(
-      buildAppShell(
-        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-        child: Scaffold(
-          body: Builder(
-            builder: (context) => ElevatedButton(
-              child: const Text('Open'),
-              onPressed: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => GrantOrSubsidyDialog(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    targetFactionId: targetFactionId,
-                    isSubsidy: false,
-                    bus: bus,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await pumpGrantOrSubsidyDialog(tester, humanTreasury: 5000, bus: bus);
 
     await tester.tap(find.widgetWithText(CtNinePatchButton, 'Cancel'));
     await tester.pumpAndSettle();
@@ -185,286 +80,130 @@ void main() {
     expect(find.text('Grant aid'), findsNothing);
   });
 
-  // ---------------------------------------------------------------------------
-  // Dark editorial-monocle chrome (#2863 S6)
-  // SPEC: SPEC/ui/grant-or-subsidy-dialog.md § "Dark editorial-monocle chrome".
-  // Pin the palette tokens (title --accent + 0.05em, treasury --muted, thin
-  // 1 dp --border divider, amount --fg + 0.04em, warning --danger italic) and
-  // the Material-chrome regression guard (no AlertDialog/ListTile/Card leak).
-  // ---------------------------------------------------------------------------
+  testWidgets(
+    'GrantOrSubsidyDialog shows live Cost/Effect for grant and updates on step',
+    (WidgetTester tester) async {
+      final game = await pumpGrantOrSubsidyDialog(tester, humanTreasury: 5000);
+      final targetName = game.players[1].displayName;
 
-  Future<Game> pumpGrantDialog(
-    WidgetTester tester, {
-    required int humanTreasury,
-    bool isSubsidy = false,
-  }) async {
-    final base = buildDiplomacyScreenTestGame();
-    final humanPlayerId = base.players.first.id;
-    final targetFactionId = base.players.length >= 2
-        ? base.players[1].id
-        : (base.minorNations.isNotEmpty ? base.minorNations.first.id : 'm1');
-
-    final game = base.copyWith(
-      players: [
-        base.players.first.copyWith(treasury: humanTreasury),
-        ...base.players.skip(1),
-      ],
-    );
-
-    final bus = AppEventBus.create();
-
-    await tester.pumpWidget(
-      buildAppShell(
-        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-        child: Scaffold(
-          body: Builder(
-            builder: (context) => ElevatedButton(
-              child: const Text('Open'),
-              onPressed: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (ctx) => GrantOrSubsidyDialog(
-                    game: game,
-                    humanPlayerId: humanPlayerId,
-                    targetFactionId: targetFactionId,
-                    isSubsidy: isSubsidy,
-                    bus: bus,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-    return game;
-  }
-
-  group('Dark editorial-monocle chrome (#2863 S6)', () {
-    testWidgets(
-        'title resolves to EditorialMonoclePalette.accent with letterSpacing == fontSize * 0.05',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 5000);
-
-      final titleFinder = find.byKey(const Key('grantOrSubsidyDialogTitle'));
-      expect(titleFinder, findsOneWidget);
-
-      final Text title = tester.widget<Text>(titleFinder);
-      expect(title.style?.color, EditorialMonoclePalette.accent);
-      expect(title.style?.fontSize, isNotNull);
-      final double size = title.style!.fontSize!;
-      expect(title.style?.letterSpacing, closeTo(size * 0.05, 1e-6));
-    });
-
-    testWidgets(
-        'title color does NOT fall back to ambient textTheme.titleMedium.color (regression guard)',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 5000);
-
-      final titleFinder = find.byKey(const Key('grantOrSubsidyDialogTitle'));
-      final BuildContext context = tester.element(titleFinder);
-      final Color? defaultColor = Theme.of(context).textTheme.titleMedium?.color;
-      final Text title = tester.widget<Text>(titleFinder);
-      expect(title.style?.color, isNot(equals(defaultColor)));
-      expect(title.style?.color, EditorialMonoclePalette.accent);
-    });
-
-    testWidgets('treasury row resolves to EditorialMonoclePalette.muted',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 5000);
-
-      final treasury = tester.widget<Text>(
-        find.byKey(const Key('grantOrSubsidyDialogTreasury')),
-      );
-      expect(treasury.style?.color, EditorialMonoclePalette.muted);
-    });
-
-    testWidgets(
-        'thin divider is a 1 dp Container painted in EditorialMonoclePalette.border',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 5000);
-
-      final dividerFinder = find.byKey(
-        const Key('grantOrSubsidyDialogThinDivider'),
-      );
-      expect(dividerFinder, findsOneWidget);
-
-      final Container container = tester.widget<Container>(dividerFinder);
-      expect(container.constraints?.maxHeight, 1);
-      expect(container.constraints?.minHeight, 1);
-
-      final BoxDecoration decoration =
-          container.decoration as BoxDecoration;
-      expect(decoration.color, EditorialMonoclePalette.border);
-    });
-
-    testWidgets(
-        'amount resolves to EditorialMonoclePalette.fg with letterSpacing == fontSize * 0.04',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 5000);
-
-      final amount = tester.widget<Text>(
-        find.byKey(const Key('grantOrSubsidyDialogAmount')),
-      );
-      expect(amount.style?.color, EditorialMonoclePalette.fg);
-      expect(amount.style?.fontSize, isNotNull);
-      final double size = amount.style!.fontSize!;
-      expect(amount.style?.letterSpacing, closeTo(size * 0.04, 1e-6));
-    });
-
-    testWidgets(
-        'warning text resolves to EditorialMonoclePalette.danger and italic when below minimum',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 500);
-
-      final warningFinder = find.byKey(
-        const Key('grantOrSubsidyDialogWarning'),
-      );
-      expect(warningFinder, findsOneWidget);
-
-      final Text warning = tester.widget<Text>(warningFinder);
-      expect(warning.style?.color, EditorialMonoclePalette.danger);
-      expect(warning.style?.fontStyle, FontStyle.italic);
-    });
-
-    testWidgets(
-        'warning is absent when treasury is above the minimum step (positive negation)',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 5000);
       expect(
-        find.byKey(const Key('grantOrSubsidyDialogWarning')),
+        find.byKey(const Key('grantOrSubsidyDialogPreview')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Cost: £1000 from your treasury when the grant resolves.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Effect: Standing with $targetName improves when the grant resolves.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Effect: A larger gift this turn does not improve standing further.',
+        ),
+        findsOneWidget,
+      );
+      final standingWord = find.textContaining('Effect: Standing word ');
+      expect(standingWord, findsOneWidget);
+      final standingWordText = tester.widget<Text>(standingWord).data;
+
+      await tester.tap(find.byKey(const Key('diplo_amount_plus')));
+      await tester.pump();
+
+      expect(
+        find.text('Cost: £2000 from your treasury when the grant resolves.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Cost: £1000 from your treasury when the grant resolves.'),
         findsNothing,
       );
-    });
-
-    testWidgets(
-        'no Material AlertDialog / ListTile / Card descendant leaks into the chrome',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 5000);
-
-      expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(ListTile), findsNothing);
-      expect(find.byType(Card), findsNothing);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Subsidy percent mode (Refs #3753 R3 / S15)
-  // SPEC: SPEC/ui/grant-or-subsidy-dialog.md § Subsidy mode.
-  // Subsidy is a treasury-independent percentage (5–20, step 5); the dialog
-  // must render `%` (never `£`) and keep Submit enabled regardless of treasury.
-  // ---------------------------------------------------------------------------
-  group('Subsidy percent mode (Refs #3753 R3)', () {
-    testWidgets(
-        'renders percent amount and a percent step line with no £ currency copy',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
-
-      expect(find.text('Set subsidy'), findsOneWidget);
-
-      final amount = tester.widget<Text>(
-        find.byKey(const Key('grantOrSubsidyDialogAmount')),
+      expect(
+        find.text(
+          'Effect: A larger gift this turn does not improve standing further.',
+        ),
+        findsOneWidget,
       );
-      expect(amount.data, '$kSubsidyPercentDefault%');
+      expect(find.text(standingWordText!), findsOneWidget);
+    },
+  );
 
-      final treasury = tester.widget<Text>(
-        find.byKey(const Key('grantOrSubsidyDialogTreasury')),
+  testWidgets(
+    'GrantOrSubsidyDialog shows subsidy Cost/Effect without a second confirm path',
+    (WidgetTester tester) async {
+      final game = await pumpGrantOrSubsidyDialog(
+        tester,
+        humanTreasury: 5000,
+        isSubsidy: true,
       );
-      expect(treasury.data, contains('%'));
-      expect(treasury.data, isNot(contains('£')));
+      final targetName = game.players[1].displayName;
 
-      // No £ currency glyph anywhere in subsidy mode.
-      expect(find.textContaining('£'), findsNothing);
-    });
-
-    testWidgets('Submit is enabled even when treasury is zero', (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
-
-      final submit = find.widgetWithText(CtNinePatchButton, 'Submit');
-      expect(tester.widget<CtNinePatchButton>(submit).enabled, isTrue);
-      // Treasury-independent: the below-minimum warning must not render.
-      expect(find.byKey(const Key('grantOrSubsidyDialogWarning')), findsNothing);
-    });
-
-    testWidgets('plus steps by 5% and clamps at the 20% maximum',
-        (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
+      expect(find.text('Cost: No per-turn gold charge.'), findsOneWidget);
+      expect(
+        find.text(
+          'Effect: ${subsidyFillPriceConsequence(targetDisplayName: targetName, percent: 5)}',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Standing word'), findsNothing);
+      expect(find.textContaining('larger gift'), findsNothing);
+      expect(find.textContaining('market terms are affected'), findsNothing);
 
       await tester.tap(find.byKey(const Key('diplo_amount_plus')));
       await tester.pump();
-      expect(find.text('10%'), findsOneWidget);
 
-      // Tap well past the ceiling; amount must clamp at kSubsidyPercentMax.
-      for (var i = 0; i < 6; i++) {
-        await tester.tap(find.byKey(const Key('diplo_amount_plus')));
-        await tester.pump();
-      }
-      expect(find.text('$kSubsidyPercentMax%'), findsOneWidget);
-    });
+      expect(
+        find.text(
+          'Effect: ${subsidyFillPriceConsequence(targetDisplayName: targetName, percent: 10)}',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 
-    testWidgets('minus clamps at the 5% minimum', (tester) async {
-      await pumpGrantDialog(tester, humanTreasury: 0, isSubsidy: true);
+  testWidgets(
+    'GrantOrSubsidyDialog omits Cost/Effect when grant treasury is below minimum',
+    (WidgetTester tester) async {
+      await pumpGrantOrSubsidyDialog(tester, humanTreasury: 500);
 
-      for (var i = 0; i < 4; i++) {
-        await tester.tap(find.byKey(const Key('diplo_amount_minus')));
-        await tester.pump();
-      }
-      expect(find.text('$kSubsidyPercentMin%'), findsOneWidget);
-    });
+      expect(
+        find.byKey(const Key('grantOrSubsidyDialogPreview')),
+        findsNothing,
+      );
+      expect(find.textContaining('Cost:'), findsNothing);
+      expect(
+        find.byKey(const Key('grantOrSubsidyDialogWarning')),
+        findsOneWidget,
+      );
+    },
+  );
 
-    testWidgets('Submit emits a valid subsidy percent', (tester) async {
-      final base = buildDiplomacyScreenTestGame();
-      final humanPlayerId = base.players.first.id;
-      final targetFactionId = base.players.length >= 2
-          ? base.players[1].id
-          : (base.minorNations.isNotEmpty ? base.minorNations.first.id : 'm1');
-
-      final bus = AppEventBus.create();
-      GrantOrSubsidySubmittedEvent? submitted;
-      final sub = bus.on<GrantOrSubsidySubmittedEvent>().listen((e) {
-        submitted = e;
-      });
-      addTearDown(sub.cancel);
-
+  testWidgets(
+    'GrantSubsidyAmountBody does not call preview builder when grant amount is 0',
+    (WidgetTester tester) async {
+      final invokedAmounts = <int>[];
       await tester.pumpWidget(
         buildAppShell(
-          // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-          child: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                child: const Text('Open'),
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (ctx) => GrantOrSubsidyDialog(
-                      game: base,
-                      humanPlayerId: humanPlayerId,
-                      targetFactionId: targetFactionId,
-                      isSubsidy: true,
-                      bus: bus,
-                    ),
-                  );
-                },
-              ),
-            ),
+          child: GrantSubsidyAmountBody(
+            title: 'Grant aid',
+            treasury: 0,
+            isSubsidy: false,
+            onCancel: () {},
+            onSubmit: (_) {},
+            previewLinesForAmount: (amount) {
+              invokedAmounts.add(amount);
+              return const <String>['Cost: £0'];
+            },
           ),
         ),
       );
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('diplo_amount_plus')));
       await tester.pump();
 
-      await tester.tap(find.widgetWithText(CtNinePatchButton, 'Submit'));
-      await tester.pumpAndSettle();
-
-      expect(submitted, isNotNull);
-      expect(submitted!.isSubsidy, isTrue);
-      expect(submitted!.amount, 10);
-      expect(isValidSubsidyPercent(submitted!.amount), isTrue);
-    });
-  });
+      expect(invokedAmounts, isEmpty);
+      expect(find.text('Cost: £0'), findsNothing);
+    },
+  );
 }

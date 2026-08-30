@@ -12,17 +12,10 @@
 //   - The recorded `conquestPasses` value follows the existing
 //     `extraPassesActive` rule today: 22 under EXPAND / COLONIAL-lite,
 //     1 under COLONIAL / DEVELOP. These are issue-#2832 ACs.
-//
-// The fixture reuses the same minimal EXPAND game as
-// `domain_planner_orchestrator_phase_plan_injection_test.dart` so the
-// new pins live side-by-side with the legacy phase-plan injection
-// contract (a planner-state regression that would break this test
-// would also break the existing legacy pin).
 
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/orchestrator_options.dart';
 import 'package:colonizethis_ai/src/planning/domain_gate_data.dart';
 import 'package:colonizethis_ai/src/planning/domain_planner_outcome.dart';
 import 'package:colonizethis_ai/src/planning/naval_planner.dart';
@@ -33,71 +26,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../support/domain_planner_test_fake_api.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
-
-const String _nationId = kOrchestratorGp1NationId;
-const String _minorId = kOrchestratorMinorId;
-const String _fieldArmyId = kOrchestratorFieldArmyId;
-const String _owMinorProvince = kOrchestratorOwMinorProvince;
-const String _owHomeProvince = kOrchestratorOwHomeProvince;
-
-const FakeOrderSuggestionAPIForDomainPlannerTests _conquestCandidateApi =
-    FakeOrderSuggestionAPIForDomainPlannerTests(
-      work: [],
-      build: [],
-      move: [],
-      research: [],
-      navalMove: [],
-      navalMission: [],
-      armyMove: [
-        ArmyMoveOrder(
-          armyId: _fieldArmyId,
-          destinationProvinceId: _owMinorProvince,
-        ),
-      ],
-    );
-
-const EconomyPlan _economyPlan = EconomyPlan(
-  productionAssignments: [],
-  cargoPreference: CargoPreference.none,
-);
-
-const AIConfig _aiConfig = AIConfig(
-  leaderId: 'napoleon',
-  personalityId: 'napoleon',
-  hiddenAgendaId: 'warmonger',
-);
-
-DomainPlannerOutcome _runForPhase(PhasePlanOutcome plan) {
-  final game = buildOrchestratorExpandMinorWarScenarioGame(
-    id: 'g-2832-orchestrator-domain-gates',
-  );
-  const topology = MapTopology(nodes: [], edges: []);
-  final view = buildPlayerView(game, topology, _nationId);
-  final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
-  return runDomainPlannersWithOutcome(
-    DomainPlannerInput(
-      game: game,
-      topology: topology,
-      nationId: _nationId,
-      view: view,
-      snapshot: snapshot,
-      config: _aiConfig,
-      primaryGoal: StrategicGoal.conquer,
-      seeds: AISeedBundle.fromTurnSeed(2832100),
-      suggestionAPI: _conquestCandidateApi,
-      economyPlan: _economyPlan,
-      options: OrchestratorOptions(phasePlan: plan),
-    ),
-  );
-}
+import 'domain_planner_orchestrator_domain_gates_support.dart';
 
 void main() {
   group('Refs #2832 domain gate data on DomainPlannerOutcome', () {
     test('phasePlan slot surfaces the injected plan unchanged', () {
       const injected = PhasePlanOutcome.defaultDevelop;
-      final outcome = _runForPhase(injected);
+      final outcome = runDomainGatesForPhase(injected);
       expect(
         identical(outcome.phasePlan, injected),
         isTrue,
@@ -113,10 +49,10 @@ void main() {
       'gate booleans / conquestPasses follow the active phase: EXPAND -> 22',
       () {
         final game = buildOrchestratorExpandMinorWarScenarioGame(
-    id: 'g-2832-orchestrator-domain-gates',
-  );
+          id: 'g-2832-orchestrator-domain-gates',
+        );
         const topology = MapTopology(nodes: [], edges: []);
-        final view = buildPlayerView(game, topology, _nationId);
+        final view = buildPlayerView(game, topology, kDomainGatesNationId);
         final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -131,14 +67,14 @@ void main() {
           DomainPlannerInput(
             game: game,
             topology: topology,
-            nationId: _nationId,
+            nationId: kDomainGatesNationId,
             view: view,
             snapshot: snapshot,
-            config: _aiConfig,
+            config: kDomainGatesAiConfig,
             primaryGoal: StrategicGoal.conquer,
             seeds: AISeedBundle.fromTurnSeed(2832200),
-            suggestionAPI: _conquestCandidateApi,
-            economyPlan: _economyPlan,
+            suggestionAPI: kDomainGatesConquestApi,
+            economyPlan: kDomainGatesEconomyPlan,
           ),
         );
 
@@ -148,15 +84,7 @@ void main() {
         expect(gates.conquestArmyMovePlannerRan, isTrue);
         expect(gates.movePlannerRan, isTrue);
         expect(gates.diplomacyPlannerRan, isTrue);
-        // Naval activation depends on per-fixture weight arithmetic
-        // (`computeNavalRunGate` >= `kNavalRunMinWeight`); the boolean
-        // round-trip test below pins the trace shape. Here we just
-        // assert it is a boolean (truthy or falsy) so a future
-        // regression that dropped the field surfaces.
         expect(gates.navalPlannerRan, isA<bool>());
-        // This fixture has no research candidates, so the planner emits
-        // no orders and the multi-slot research decision is omitted from
-        // the trace (Refs #3472 AC10).
         expect(gates.researchDecision, isNull);
         expect(gates.toJson().containsKey('research'), isFalse);
       },
@@ -165,7 +93,7 @@ void main() {
     test(
       'gate booleans / conquestPasses follow the active phase: DEVELOP -> 1',
       () {
-        final outcome = _runForPhase(PhasePlanOutcome.defaultDevelop);
+        final outcome = runDomainGatesForPhase(PhasePlanOutcome.defaultDevelop);
         final gates = outcome.domainGateData;
         expect(gates, isNotNull);
         expect(gates!.conquestPasses, 1);
@@ -175,31 +103,26 @@ void main() {
     test('computeNavalRunGate.willRun is false when base weight falls below '
         'kNavalRunMinWeight with no colonial-pressure boost', () {
       final game = buildOrchestratorExpandMinorWarScenarioGame(
-    id: 'g-2832-orchestrator-domain-gates',
-  );
+        id: 'g-2832-orchestrator-domain-gates',
+      );
       const topology = MapTopology(nodes: [], edges: []);
-      final view = buildPlayerView(game, topology, _nationId);
+      final view = buildPlayerView(game, topology, kDomainGatesNationId);
       final snapshot = buildOrchestratorExpandMinorWarAtWarSnapshot();
       final ctx = PlannerContext(
-        nationId: _nationId,
+        nationId: kDomainGatesNationId,
         view: view,
         game: game,
         topology: topology,
         orders: const Orders(),
-        config: _aiConfig,
+        config: kDomainGatesAiConfig,
         primaryGoal: StrategicGoal.conquer,
         seeds: AISeedBundle.fromTurnSeed(2832300),
-        suggestionAPI: _conquestCandidateApi,
+        suggestionAPI: kDomainGatesConquestApi,
       );
-      // EXPAND with no NW pressure: phase-dispatched naval directive
-      // reports `colonialPreferenceActive: false`, so the gate is
-      // decided purely by `ctx.resolveNavalBaseWeight() >=
-      // kNavalRunMinWeight`. The minimal fixture's weight is below
-      // that bound, so `willRun` is false.
       final phasePlan = runPhasePlanners(
         game: game,
         snapshot: snapshot,
-        personalityId: _aiConfig.personalityId,
+        personalityId: kDomainGatesAiConfig.personalityId,
       );
       final gate = computeNavalRunGate(
         ctx: ctx,

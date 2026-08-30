@@ -1,13 +1,12 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
 
-
-List<RunnableScenario>
-combatResolverProvinceOwnerTransferScenarios() => [
+List<RunnableScenario> combatResolverProvinceOwnerTransferScenarios() => [
   RunnableScenario(
     scenarioId: 'crpot-owner-not-defender',
     label:

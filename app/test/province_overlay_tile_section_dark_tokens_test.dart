@@ -18,9 +18,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart'
     show kProvinceOverlayTileInlineActionDisabledAlpha;
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details_dialog.dart'
+    show kProvinceTileDetailsActionKey;
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 
 import 'province_overlay_test_harness.dart';
+import 'province_overlay_test_harness_demo_shells.dart';
 
 Color _expectedDisabledIconColor() {
   return EditorialMonoclePalette.muted.withValues(
@@ -50,6 +53,9 @@ Future<void> _assertMutedRoadCaption(
   String? extraMutedText,
 }) async {
   await _pumpFullPlayerRoad(tester, roadLevel: roadLevel);
+  expect(find.text(caption), findsNothing);
+  await tester.tap(find.byKey(kProvinceTileDetailsActionKey));
+  await tester.pumpAndSettle();
   expect(_textStyleFor(tester, caption).color, EditorialMonoclePalette.muted);
   if (extraMutedText != null) {
     expect(

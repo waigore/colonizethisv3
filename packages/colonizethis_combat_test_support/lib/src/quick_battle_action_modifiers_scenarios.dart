@@ -5,8 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'scenario_runner.dart';
 
-
-
 /// Scenarios for [aggregateActionModifiers].
 List<RunnableScenario> aggregateActionModifiersScenarios() => [
   RunnableScenario(

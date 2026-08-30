@@ -59,43 +59,34 @@ mixin CtTransferListLayout on CtTransferListStateBase, CtTransferListMutations {
     );
   }
 
-  Widget actionRow(BuildContext context, {required bool useWrap}) {
-    // At the minimum supported viewport (`kMinViewportWidth = 320` dp) the
+  Widget actionRow(BuildContext context) {
     // Cinzel engraved-label text in `CtNinePatchButton` overflows a single
     // right-aligned `Row` for `Cancel` + a long `confirmLabel` (e.g.
-    // "Confirm Split", "Transfer"). The narrow stack therefore uses `Wrap`
-    // so Cancel + Confirm can flow onto a second run when needed. Wider
-    // viewports keep the canonical single-row right-aligned layout so
-    // existing dialog tests (and SPEC mockups) see the unchanged chrome.
+    // "Detach and choose destination") even inside the 520 dp split shell.
+    // `Wrap` keeps a single right-aligned run when both buttons fit and
+    // flows onto a second run at the minimum supported viewport.
     final cancel = widget.onCancel == null
         ? null
         : CtNinePatchButton(
             onPressed: widget.onCancel,
+            shrinkWrap: true,
             child: Text(widget.cancelLabel),
           );
     final confirm = CtNinePatchButton(
       onPressed: handleConfirm,
       enabled: canConfirm,
+      shrinkWrap: true,
       child: Text(widget.confirmLabel),
     );
-    if (useWrap) {
-      return Wrap(
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Wrap(
         alignment: WrapAlignment.end,
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: 8,
         runSpacing: 8,
-        children: [
-          ?cancel,
-          confirm,
-        ],
-      );
-    }
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        if (cancel != null) ...[cancel, const SizedBox(width: 8)],
-        confirm,
-      ],
+        children: [?cancel, confirm],
+      ),
     );
   }
 
@@ -113,8 +104,9 @@ mixin CtTransferListLayout on CtTransferListStateBase, CtTransferListMutations {
               leftPanel(),
               const SizedBox(height: 16),
               rightPanel(),
+              ...extraContent(),
               const SizedBox(height: 16),
-              actionRow(context, useWrap: true),
+              actionRow(context),
             ],
           );
         }
@@ -130,11 +122,20 @@ mixin CtTransferListLayout on CtTransferListStateBase, CtTransferListMutations {
                 Expanded(child: rightPanel()),
               ],
             ),
+            ...extraContent(),
             const SizedBox(height: 16),
-            actionRow(context, useWrap: false),
+            actionRow(context),
           ],
         );
       },
     );
+  }
+
+  List<Widget> extraContent() {
+    final builder = widget.extraContentBuilder;
+    if (builder == null) return const [];
+    final child = builder(leftCounts, rightCounts);
+    if (child == null) return const [];
+    return [const SizedBox(height: 8), child];
   }
 }

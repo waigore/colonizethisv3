@@ -7,8 +7,10 @@
 // regiment/ship catalogs.
 
 import 'package:colonizethis_app/features/game/widgets/train/train_commodity_cost_dialog_base.dart';
+import 'package:colonizethis_app/features/game/widgets/train/train_commodity_cost_dialog_base_costs.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_dialog_base.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -188,6 +190,50 @@ void main() {
     expect(find.textContaining('1 / 2'), findsOneWidget);
     expect(find.textContaining('1 / 3'), findsOneWidget);
   });
+
+  testWidgets(
+    'other-family worker trains reduce available peasants for + and chip',
+    (tester) async {
+      final orders = Orders(
+        recruitWorkerOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: List<RecruitWorkerOrder>.generate(
+            3,
+            (_) => const RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
+          ),
+        },
+      );
+      final state = await _pump(
+        tester,
+        game: _gameWith(peasants: 8, treasury: 50000, wood: 20),
+        currentOrders: orders,
+      );
+      expect(find.textContaining('5 / 8'), findsOneWidget);
+      expect(state.availablePeasants(), 5);
+      expect(state.canAffordIncrement('a'), isTrue);
+      // Exhaust remaining 5.
+      for (var i = 0; i < 5; i++) {
+        state.increment('a');
+      }
+      await tester.pumpAndSettle();
+      expect(state.remainingPeasants(), 0);
+      expect(state.canAffordIncrement('a'), isFalse);
+    },
+  );
+
+  testWidgets(
+    'this dialog managed builds are not double-subtracted from available',
+    (tester) async {
+      final state = await _pump(
+        tester,
+        game: _gameWith(peasants: 8, treasury: 50000, wood: 20),
+        currentOrders: _ordersFor(const ['a', 'a']),
+      );
+      expect(state.availablePeasants(), 8);
+      expect(state.remainingPeasants(), 6);
+      expect(find.textContaining('6 / 8'), findsOneWidget);
+      expect(find.textContaining('already promised'), findsNothing);
+    },
+  );
 
   testWidgets(
     'deficit hint joins multiple insufficient resources with ", "',

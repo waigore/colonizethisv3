@@ -3,8 +3,10 @@
 
 import 'phase_planner_naval_plans_routing_cases.dart';
 import 'phase_planner_naval_plans_adapter_cases.dart';
+import 'phase_planner_naval_plans_adapter_determinism_cases.dart';
 
 void main() {
   registerPhasePlannerNavalPlansRoutingCases();
   registerPhasePlannerNavalPlansAdapterCases();
+  registerPhasePlannerNavalPlansAdapterDeterminismCases();
 }

@@ -10,8 +10,9 @@ import 'package:path/path.dart' as p;
 
 import 'check_turn_test_support_loc.dart';
 
-/// Ratchet ceiling for wave-4 post-densify root test files.
-const int turnTestFileSizeCeiling = 400;
+/// Ratchet ceiling for wave-8 densify of non-support test files (≤300).
+/// Wave 4 landed 400 (Refs #4113); wave 8 tightens to 300 (Refs #4583).
+const int turnTestFileSizeCeiling = 300;
 
 const String _turnTestsRelativePath = 'packages/colonizethis_turn/test';
 
@@ -58,7 +59,7 @@ int runCheckTurnTestFileSize(
   if (violations.isEmpty) {
     logI(
       'check_turn_test_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4113).',
+      '(ceiling $ceiling; Refs #4113, #4583).',
     );
     return 0;
   }
@@ -66,7 +67,7 @@ int runCheckTurnTestFileSize(
   violations.sort();
   logE(
     'check_turn_test_file_size: found ${violations.length} violation(s) '
-    'under $_turnTestsRelativePath (wave-4 ceiling $ceiling; Refs #4113):',
+    'under $_turnTestsRelativePath (wave-8 ceiling $ceiling; Refs #4113, #4583):',
   );
   for (final violation in violations) {
     logE(' - $violation');

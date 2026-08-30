@@ -1,0 +1,95 @@
+/// Province overlay work-order tooltip strings. SPEC/ui/civilian-units-panel.md.
+library;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'work_order_afford_preview_ui.dart'
+    show formatWorkOrderMaterialCostSummary, workOrderAffordStatusLine;
+
+export 'work_order_afford_overlay_tooltips_build.dart';
+export 'work_order_afford_overlay_tooltips_special.dart';
+
+String provinceOverlayBuildImprovementTooltip({
+  required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String selectedTileKey,
+  required bool enabled,
+  required bool hasMatchingUnits,
+}) {
+  if (!hasMatchingUnits) {
+    return l10n.provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip;
+  }
+  final preview = previewWorkOrderAffordAtTile(
+    game: game,
+    playerId: humanPlayerId,
+    currentOrders: currentOrders,
+    workTarget: kWorkTargetBuildImprovement,
+    targetTileKey: selectedTileKey,
+  );
+  if (!enabled &&
+      preview.hasCostPreview &&
+      !preview.canAfford &&
+      preview.materialShortfalls.isNotEmpty) {
+    return l10n.provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip(
+      workOrderAffordStatusLine(l10n: l10n, preview: preview),
+    );
+  }
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
+    return l10n.provinceOverlay_tileBuildImprovementTooltipWithCost(
+      formatWorkOrderMaterialCostSummary(preview.materialCosts!),
+    );
+  }
+  return l10n.provinceOverlay_tileBuildImprovementTooltip;
+}
+
+String provinceOverlayPoliticalUpgradeTownTooltip({
+  required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String townTileKey,
+  required bool enabled,
+  required bool hasBuilderUnits,
+}) {
+  final player = game.playerById(humanPlayerId);
+  if (player?.techUnlocked?[kTechIdNationalBureaucracy] != true) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledTechTooltip;
+  }
+  if (!hasBuilderUnits) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledNoBuilderTooltip;
+  }
+  final preview = previewWorkOrderAffordAtTile(
+    game: game,
+    playerId: humanPlayerId,
+    currentOrders: currentOrders,
+    workTarget: kWorkTargetUpgradeTown,
+    targetTileKey: townTileKey,
+  );
+  if (!enabled &&
+      preview.hasCostPreview &&
+      !preview.canAfford &&
+      preview.materialShortfalls.isNotEmpty) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledMaterialsTooltip(
+      workOrderAffordStatusLine(l10n: l10n, preview: preview),
+    );
+  }
+  if (!enabled) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledTooltip;
+  }
+  if (enabled &&
+      preview.materialCosts != null &&
+      preview.materialCosts!.isNotEmpty) {
+    return l10n.provinceOverlay_politicalUpgradeTownTooltipWithCost(
+      formatWorkOrderMaterialCostSummary(preview.materialCosts!),
+    );
+  }
+  return l10n.provinceOverlay_politicalUpgradeTownTooltip;
+}

@@ -2,8 +2,10 @@
 // SPEC: SPEC/ui/grant-or-subsidy-dialog.md (DIPL20001),
 // SPEC/ui/diplomacy-panel.md.
 
-
+import 'package:colonizethis_app/core/utils/faction_display_name.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
@@ -35,11 +37,24 @@ class GrantOrSubsidyDialog extends StatelessWidget {
   final bool isSubsidy;
   final AppEventBus bus;
 
-  int get _treasury {
-    for (final p in game.players) {
-      if (p.id == humanPlayerId) return p.treasury;
-    }
-    return 0;
+  int get _treasury => game.playerById(humanPlayerId)?.treasury ?? 0;
+
+  String get _targetDisplayName => displayNameForFaction(game, targetFactionId);
+
+  List<String> _previewLines(int amount) {
+    final order = DiplomaticOrder(
+      type: isSubsidy
+          ? DiplomaticOrderType.setSubsidy
+          : DiplomaticOrderType.grantAid,
+      targetFactionId: targetFactionId,
+      amount: amount,
+    );
+    return buildDiplomacyConfirmPreviewLines(
+      order: order,
+      game: game,
+      humanPlayerId: humanPlayerId,
+      targetDisplayName: _targetDisplayName,
+    );
   }
 
   @override
@@ -50,6 +65,7 @@ class GrantOrSubsidyDialog extends StatelessWidget {
         title: isSubsidy ? l10n.diplomacy_setSubsidy : l10n.diplomacy_grantAid,
         treasury: _treasury,
         isSubsidy: isSubsidy,
+        previewLinesForAmount: _previewLines,
         onCancel: () => Navigator.of(context).pop(),
         onSubmit: (amount) {
           Navigator.of(context).pop();

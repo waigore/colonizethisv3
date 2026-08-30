@@ -28,9 +28,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'incremental_candidate_validator_cache.dart';
+import 'incremental_candidate_validator_factory.dart';
 import 'order_resolution_context.dart';
 import 'order_validators.dart';
 
+export 'incremental_candidate_validator_army_naval.dart';
 export 'incremental_candidate_validator_cache.dart';
 export 'incremental_candidate_validator_replay.dart';
 
@@ -48,15 +50,8 @@ class IncrementalCandidateValidator {
   });
 
   /// Builds a validator bound to the given `basePrefix` and player. Reuse one
-  /// instance per suggestion pass to amortize the per-player view/unit lookup
-  /// build cost across many candidate probes (the AI suggestion API enumerates
-  /// many candidates per call).
-  ///
-  /// When the caller already built [resolution] for this suggestion pass, pass
-  /// it to skip embedded `buildPlayerView` and unit-map scans (Refs #2394,
-  /// #2836; `SPEC/program/order-suggestions.md` § Throughput bounds). The
-  /// shared instance must be built from the **same** inputs as the validator;
-  /// behavior is undefined otherwise.
+  /// instance per suggestion pass. Factory wiring lives in
+  /// [resolveIncrementalCandidateValidatorPass] (Refs #4508).
   factory IncrementalCandidateValidator.forPlayer({
     required Game game,
     required MapTopology topology,
@@ -64,37 +59,23 @@ class IncrementalCandidateValidator {
     required Orders basePrefix,
     Map<String, TileMapResult>? tileMapByRegion,
     OrderResolutionContext? resolution,
-
-    /// When callers rebuild this validator for many `basePrefix` snapshots over
-    /// the same [game] (for example simple-heuristic iterations), supplying the
-    /// membership snapshot avoids repeated `DiplomacyFactionMembership.from`
-    /// work. Must remain valid for [game] for the validator lifetime (Refs #2394).
     DiplomacyFactionMembership? factionMembership,
   }) {
-    final ctx =
-        resolution ??
-        buildOrderResolutionContext(
-          game: game,
-          topology: topology,
-          playerId: playerId,
-        );
-    assert(
-      ctx.view.playerId == playerId,
-      'OrderResolutionContext view playerId must match validator playerId',
+    final resolved = resolveIncrementalCandidateValidatorPass(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      basePrefix: basePrefix,
+      resolution: resolution,
     );
-    final actualView = ctx.view;
-    final actualUnitsById = ctx.unitsById;
-    final diplomaticOrders =
-        basePrefix.diplomaticOrdersByPlayerId[playerId] ??
-        const <DiplomaticOrder>[];
     return IncrementalCandidateValidator._(
       game: game,
       topology: topology,
       playerId: playerId,
       basePrefix: basePrefix,
-      view: actualView,
-      unitsById: actualUnitsById,
-      diplomaticOrders: diplomaticOrders,
+      view: resolved.view,
+      unitsById: resolved.unitsById,
+      diplomaticOrders: resolved.diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
       prefetchedFactionMembership: factionMembership,
     );
@@ -212,66 +193,5 @@ class IncrementalCandidateValidator {
       if (w.unitId == candidate.unitId) return false;
     }
     return true;
-  }
-
-  bool isArmyMoveAccepted(ArmyMoveOrder candidate) {
-    const validator = ArmyMoveValidator();
-    return validator
-        .validate(
-          candidate,
-          game,
-          playerId,
-          diplomaticOrders,
-          view,
-          topology,
-          previousRejected: false,
-          armiesById: _armiesById(),
-          factionMembership: _factionMembership(),
-        )
-        .isAccepted;
-  }
-
-  /// Lazy O(1) army lookup map. Cached for the lifetime of this validator
-  /// (single suggestion pass). Avoids rebuilding `armies.where(id == ...)` per
-  /// candidate probe (Refs #2394, SPEC/program/order-suggestions.md).
-  Map<String, Army> _armiesById() {
-    final cached = cache.armiesById;
-    if (cached != null) {
-      return cached;
-    }
-    final computed = <String, Army>{
-      for (final a in game.worldState.armies) a.id: a,
-    };
-    cache.armiesById = computed;
-    return computed;
-  }
-
-  /// One [NavalOrderValidator] per incremental pass: it snapshots fleet ids
-  /// once; reuse avoids rebuilding the fleet map on every naval probe (Refs
-  /// #2394, SPEC/program/order-suggestions.md).
-  NavalOrderValidator _navalOrderValidator() {
-    final cached = cache.navalOrderValidator;
-    if (cached != null) {
-      return cached;
-    }
-    final built = NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    );
-    cache.navalOrderValidator = built;
-    return built;
-  }
-
-  bool isNavalMoveAccepted(NavalMoveOrder candidate) {
-    return _navalOrderValidator()
-        .validateNavalMove(candidate, previousRejected: false)
-        .isAccepted;
-  }
-
-  bool isNavalMissionAccepted(NavalMissionOrder candidate) {
-    return _navalOrderValidator()
-        .validateNavalMission(candidate, previousRejected: false)
-        .isAccepted;
   }
 }

@@ -12,9 +12,7 @@ List<RunnableScenario> effectiveEraForFactionScenarios() => [
     scenarioId: 'eef-gp',
     label: 'returns 4 for Great Power',
     run: () {
-      final game = militaryStrengthGame(
-        players: const [franceGreatPower],
-      );
+      final game = militaryStrengthGame(players: const [franceGreatPower]);
 
       expect(effectiveEraForFaction(game, 'france'), equals(4));
     },
@@ -42,11 +40,7 @@ List<RunnableScenario> effectiveEraForFactionScenarios() => [
     run: () {
       final game = militaryStrengthGame(
         tribes: const [
-          Tribe(
-            id: 'tribe1',
-            displayName: 'Tribe',
-            effectiveMilitaryLevel: 1,
-          ),
+          Tribe(id: 'tribe1', displayName: 'Tribe', effectiveMilitaryLevel: 1),
         ],
       );
 

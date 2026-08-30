@@ -51,6 +51,26 @@ void main() {
       expect(logs.join('\n'), contains('diplomacy/foo_test.dart'));
     });
 
+    test('fails when a test imports colonizethis_world src/', () {
+      final root =
+          Directory.systemTemp.createTempSync('diplomacy_world_import_bad');
+      addTearDown(() => root.deleteSync(recursive: true));
+      _writeFile(
+        root,
+        'packages/colonizethis_diplomacy/test/diplomacy/foo_test.dart',
+        "import 'package:colonizethis_world/src/game_player_lookup.dart';\n",
+      );
+
+      final logs = <String>[];
+      final code = runCheckDiplomacyTestNoSrcImports(
+        root.path,
+        info: logs.add,
+        err: logs.add,
+      );
+      expect(code, 1);
+      expect(logs.join('\n'), contains('diplomacy/foo_test.dart'));
+    });
+
     test('allows phase_types_split deep-import gate test', () {
       final root =
           Directory.systemTemp.createTempSync('diplomacy_test_import_allow');

@@ -1,7 +1,7 @@
 // Table-driven bindGeneralsForCombatPhase scenarios (Refs #3865).
 
 import 'package:colonizethis_combat/src/combat/leader_bonus_helpers.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
@@ -19,10 +19,7 @@ BattleContext _bindPhaseCtx(String provinceId) => BattleContext(
   terrain: 'plains',
 );
 
-
-
-List<RunnableScenario>
-battleGeneralAssignmentBindPhaseScenarios() => [
+List<RunnableScenario> battleGeneralAssignmentBindPhaseScenarios() => [
   RunnableScenario(
     scenarioId: 'bgb-binds-distinct-then-fallback',
     label:
@@ -33,14 +30,15 @@ battleGeneralAssignmentBindPhaseScenarios() => [
       final ledger = CombatPhaseGeneralLedger();
       final bound = bindGeneralsForCombatPhase(
         game: game,
-        contexts: [_bindPhaseCtx('p3'), _bindPhaseCtx('p1'), _bindPhaseCtx('p2')],
+        contexts: [
+          _bindPhaseCtx('p3'),
+          _bindPhaseCtx('p1'),
+          _bindPhaseCtx('p2'),
+        ],
         ledger: ledger,
       );
 
-      expect(
-        bound.map((c) => c.provinceId).toList(),
-        ['p1', 'p2', 'p3'],
-      );
+      expect(bound.map((c) => c.provinceId).toList(), ['p1', 'p2', 'p3']);
 
       final attackerGenerals = [
         for (final c in bound) c.attackers.single.generalId,
@@ -49,15 +47,12 @@ battleGeneralAssignmentBindPhaseScenarios() => [
       expect(attackerGenerals[1], isNotNull);
       expect(attackerGenerals[0], isNot(attackerGenerals[1]));
       expect(attackerGenerals[2], isNull);
-      expect(
-        {attackerGenerals[0], attackerGenerals[1]},
-        {'gatt1', 'gatt2'},
-      );
+      expect({attackerGenerals[0], attackerGenerals[1]}, {'gatt1', 'gatt2'});
 
-      expect(
-        ledger.attackCommanderGeneralIdsByFaction['att'],
-        {'gatt1', 'gatt2'},
-      );
+      expect(ledger.attackCommanderGeneralIdsByFaction['att'], {
+        'gatt1',
+        'gatt2',
+      });
 
       for (final c in bound.take(2)) {
         expect(c.attackers.single.generalMedals, lessThanOrEqualTo(4));

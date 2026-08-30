@@ -64,90 +64,19 @@ Game ordersTwoGpEmptyGame({
 );
 
 /// Empty both-regions game with three GPs and peace relations from gp1 to each other GP.
-Game ordersThreeGpEmptyGame({
-  String id = 'g1',
-  int turnNumber = 1,
-  List<Player>? players,
-  List<DiplomacyRelation>? diplomacyRelations,
-}) {
-  final resolvedPlayers = players ?? const [
-    Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-    Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-    Player(id: 'gp3', displayName: 'GP3', isHuman: false),
-  ];
-  return TestFixtures.minimalGame(
-    id: id,
-    turnNumber: turnNumber,
-    players: resolvedPlayers,
-    diplomacyRelations: diplomacyRelations ?? [ordersGpRelation(factionId2: 'gp2'), ordersGpRelation(factionId2: 'gp3')],
-  );
+Game ordersThreeGpEmptyGame({String id = 'g1', int turnNumber = 1, List<Player>? players, List<DiplomacyRelation>? diplomacyRelations}) {
+  final resolvedPlayers = players ?? const [Player(id: 'gp1', displayName: 'GP1', isHuman: false), Player(id: 'gp2', displayName: 'GP2', isHuman: false), Player(id: 'gp3', displayName: 'GP3', isHuman: false)];
+  return TestFixtures.minimalGame(id: id, turnNumber: turnNumber, players: resolvedPlayers, diplomacyRelations: diplomacyRelations ?? [ordersGpRelation(factionId2: 'gp2'), ordersGpRelation(factionId2: 'gp3')]);
 }
 
 /// Old-world (or [regionId]) game with two owned provinces and two GPs.
-Game ordersTwoProvinceOwnedGame({
-  String id = 'g1',
-  int turnNumber = 1,
-  String regionId = 'oldWorld',
-  String p1Local = 'p1',
-  String p2Local = 'p2',
-  String owner1 = 'gp1',
-  String owner2 = 'gp2',
-  bool prefixedIds = true,
-  bool inNewWorld = false,
-  List<Player>? players,
-  List<Unit> units = const [],
-  List<Army> armies = const [],
-  Map<String, Map<String, String>>? playerVisibilityByTile,
-  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
-  List<DiplomacyRelation>? diplomacyRelations,
-  bool includeDefaultDiplomacy = false,
-  RelationState state = RelationState.atPeace,
-  num score = 50,
-}) {
-  final region = RegionData(
-    provinces: [
-      ordersProvince(localId: p1Local, regionId: regionId, ownerId: owner1, prefixed: prefixedIds),
-      ordersProvince(localId: p2Local, regionId: regionId, ownerId: owner2, prefixed: prefixedIds),
-    ],
-    units: units,
-  );
-  return TestFixtures.minimalGame(
-    id: id,
-    turnNumber: turnNumber,
-    players: players ?? const [ordersCommonGp1, ordersCommonGp2],
-    oldWorld: inNewWorld ? const RegionData() : region,
-    newWorld: inNewWorld ? region : const RegionData(),
-    armies: armies,
-    playerVisibilityByTile: playerVisibilityByTile,
-    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-    diplomacyRelations: diplomacyRelations ?? (includeDefaultDiplomacy ? [ordersGpRelation(state: state, score: score)] : const []),
-  );
+Game ordersTwoProvinceOwnedGame({String id = 'g1', int turnNumber = 1, String regionId = 'oldWorld', String p1Local = 'p1', String p2Local = 'p2', String owner1 = 'gp1', String owner2 = 'gp2', bool prefixedIds = true, bool inNewWorld = false, List<Player>? players, List<Unit> units = const [], List<Army> armies = const [], Map<String, Map<String, String>>? playerVisibilityByTile, Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {}, List<DiplomacyRelation>? diplomacyRelations, bool includeDefaultDiplomacy = false, RelationState state = RelationState.atPeace, num score = 50}) {
+  final region = RegionData(provinces: [ordersProvince(localId: p1Local, regionId: regionId, ownerId: owner1, prefixed: prefixedIds), ordersProvince(localId: p2Local, regionId: regionId, ownerId: owner2, prefixed: prefixedIds)], units: units);
+  return TestFixtures.minimalGame(id: id, turnNumber: turnNumber, players: players ?? const [ordersCommonGp1, ordersCommonGp2], oldWorld: inNewWorld ? const RegionData() : region, newWorld: inNewWorld ? region : const RegionData(), armies: armies, playerVisibilityByTile: playerVisibilityByTile, tileKeysByRegionAndProvince: tileKeysByRegionAndProvince, diplomacyRelations: diplomacyRelations ?? (includeDefaultDiplomacy ? [ordersGpRelation(state: state, score: score)] : const []));
 }
 
 /// Dual-region owner map: OW p1/p2 (+ optional unowned p3) and NW n1.
-Game ordersDualRegionOwnerMapGame({
-  String id = 'g1',
-  int turnNumber = 1,
-  bool includeUnownedOwProvince = true,
-  List<Player>? players,
-}) {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
-  return TestFixtures.minimalGame(
-    id: id,
-    turnNumber: turnNumber,
-    players: players ?? ordersCommonTwoGpAb,
-    oldWorld: RegionData(
-      provinces: [
-        const Province(id: 'oldWorld|p1', regionId: ow, ownerId: 'gp1'),
-        const Province(id: 'oldWorld|p2', regionId: ow, ownerId: 'gp2'),
-        if (includeUnownedOwProvince) const Province(id: 'oldWorld|p3', regionId: ow),
-      ],
-      units: const [],
-    ),
-    newWorld: const RegionData(provinces: [Province(id: 'newWorld|n1', regionId: nw, ownerId: 'gp1')], units: []),
-  );
-}
+Game ordersDualRegionOwnerMapGame({String id = 'g1', int turnNumber = 1, bool includeUnownedOwProvince = true, List<Player>? players}) => TestFixtures.minimalGame(id: id, turnNumber: turnNumber, players: players ?? ordersCommonTwoGpAb, oldWorld: RegionData(provinces: [const Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'), const Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'), if (includeUnownedOwProvince) const Province(id: 'oldWorld|p3', regionId: 'oldWorld')], units: const []), newWorld: const RegionData(provinces: [Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'gp1')], units: []));
 
 /// Flexible OW (or dual-region) game routed through [TestFixtures.minimalGame].
 Game ordersOwRegionGame({

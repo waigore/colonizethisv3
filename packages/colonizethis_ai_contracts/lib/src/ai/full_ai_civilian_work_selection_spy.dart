@@ -42,14 +42,6 @@ int _spyWorkScore(
   return score;
 }
 
-int _compareSpyCandidate(WorkOrder a, WorkOrder b) {
-  final pa = Unit.provinceIdFromTileKey(a.targetTileKey) ?? '';
-  final pb = Unit.provinceIdFromTileKey(b.targetTileKey) ?? '';
-  final p = pa.compareTo(pb);
-  if (p != 0) return p;
-  return a.targetTileKey.compareTo(b.targetTileKey);
-}
-
 Set<String> _spyEnemySpyProvinceIds(Game game, String playerId) {
   final out = <String>{};
   for (final u in game.worldState.allUnitsById.values) {
@@ -79,36 +71,18 @@ WorkOrder? _bestSpyRow(
 }) {
   final spyCandidates =
       candidates.where((w) => _isSpyWorkTarget(w.target)).toList();
-  if (spyCandidates.isEmpty) return null;
-  var best = spyCandidates.first;
-  var bestScore = _spyWorkScore(
-    best,
-    game,
-    playerId: playerId,
-    spyDevelopPhase: spyDevelopPhase,
-    enemySpyProvinceIds: enemySpyProvinceIds,
-    playerAlreadyHasCounterSpy: playerAlreadyHasCounterSpy,
-  );
-  for (var i = 1; i < spyCandidates.length; i++) {
-    final w = spyCandidates[i];
-    final s = _spyWorkScore(
+  return bestScoredWorkRow(
+    spyCandidates,
+    scoreOf: (w) => _spyWorkScore(
       w,
       game,
       playerId: playerId,
       spyDevelopPhase: spyDevelopPhase,
       enemySpyProvinceIds: enemySpyProvinceIds,
       playerAlreadyHasCounterSpy: playerAlreadyHasCounterSpy,
-    );
-    if (s > bestScore) {
-      bestScore = s;
-      best = w;
-      continue;
-    }
-    if (s == bestScore && _compareSpyCandidate(w, best) < 0) {
-      best = w;
-    }
-  }
-  return best;
+    ),
+    compareTieBreak: compareWorkOrderProvinceThenTile,
+  );
 }
 
 void appendSpyPathResult({

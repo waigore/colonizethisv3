@@ -1,18 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../screens/diplomacy/intelligence_council_screen.dart';
 import '../../widgets/diplomacy/diplomacy_panel_rows_builder_helpers.dart';
 
 import 'map_location_resolver.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed_labels.dart';
+import 'game_map_area_turn_feed_locate.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 
@@ -21,7 +22,8 @@ mixin GameMapAreaTurnFeedTaps
     on
         ConsumerState<GameMapArea>,
         GameMapAreaStateBase,
-        GameMapAreaTurnFeedLabels {
+        GameMapAreaTurnFeedLabels,
+        GameMapAreaTurnFeedLocate {
   void navigateToDiplomacyDetail(String factionId) {
     final kind = factionKindForId(factionId);
     if (kind == null) {
@@ -34,7 +36,9 @@ mixin GameMapAreaTurnFeedTaps
           factionId,
           widget.game.worldState.turnState.turnNumber,
         );
-    ref.read(appEventBusProvider).emit(
+    ref
+        .read(appEventBusProvider)
+        .emit(
           ct_models.NavigateToRouteEvent(Routes.diplomacyDetail, {
             'game': widget.game,
             'humanPlayerId': mapPlayerId,
@@ -53,6 +57,14 @@ mixin GameMapAreaTurnFeedTaps
     return () => navigateToDiplomacyDetail(factionId);
   }
 
+  void navigateToIntelligenceCouncil() {
+    emitOpenIntelligenceCouncil(
+      bus: ref.read(appEventBusProvider),
+      game: widget.game,
+      humanPlayerId: mapPlayerId,
+    );
+  }
+
   void locateAndOpenProvinceOverlay(String provinceId) {
     final province = provinceByPrefixedId(provinceId);
     if (province == null) {
@@ -63,9 +75,9 @@ mixin GameMapAreaTurnFeedTaps
       return;
     }
     locateProvinceTile(province);
-    ref.read(appEventBusProvider).emit(
-          ct_models.OpenMapTileDetailEvent(tileKey: tileKey),
-        );
+    ref
+        .read(appEventBusProvider)
+        .emit(ct_models.OpenMapTileDetailEvent(tileKey: tileKey));
   }
 
   void Function()? provinceOverlayTapForProvince(String provinceId) {
@@ -87,9 +99,9 @@ mixin GameMapAreaTurnFeedTaps
     }
     return () {
       locateSeaZoneTile(seaZoneId);
-      ref.read(appEventBusProvider).emit(
-            ct_models.OpenMapTileDetailEvent(tileKey: tileKey),
-          );
+      ref
+          .read(appEventBusProvider)
+          .emit(ct_models.OpenMapTileDetailEvent(tileKey: tileKey));
     };
   }
 
@@ -102,7 +114,9 @@ mixin GameMapAreaTurnFeedTaps
     }
     return () {
       locateTileKey(targetTileKey);
-      ref.read(appEventBusProvider).emit(
+      ref
+          .read(appEventBusProvider)
+          .emit(
             ct_models.OpenCivilianUnitsPanelEvent(
               initialSelectedUnitId: unitId,
             ),
@@ -111,11 +125,24 @@ mixin GameMapAreaTurnFeedTaps
   }
 
   void Function()? overseasProfitCreditedTap() {
-    return () => ref.read(appEventBusProvider).emit(
+    return () => ref
+        .read(appEventBusProvider)
+        .emit(
           ct_models.NavigateToRouteEvent(Routes.trade, {
             'game': widget.game,
             'humanPlayerId': mapPlayerId,
             'initialTabIndex': 1,
+          }),
+        );
+  }
+
+  void Function()? productionPanelTap() {
+    return () => ref
+        .read(appEventBusProvider)
+        .emit(
+          ct_models.NavigateToRouteEvent(Routes.production, {
+            'game': widget.game,
+            'humanPlayerId': mapPlayerId,
           }),
         );
   }
@@ -126,28 +153,25 @@ mixin GameMapAreaTurnFeedTaps
     switch (orderKind) {
       case ct_models.OrderKind.work:
       case ct_models.OrderKind.recruitWorker:
-        return () => ref.read(appEventBusProvider).emit(
-              const ct_models.OpenCivilianUnitsPanelEvent(),
-            );
+        return () => ref
+            .read(appEventBusProvider)
+            .emit(const ct_models.OpenCivilianUnitsPanelEvent());
       case ct_models.OrderKind.move:
       case ct_models.OrderKind.armyMove:
-        return () => ref.read(appEventBusProvider).emit(
-              const ct_models.OpenMilitaryUnitsPanelEvent(),
-            );
+        return () => ref
+            .read(appEventBusProvider)
+            .emit(const ct_models.OpenMilitaryUnitsPanelEvent());
       case ct_models.OrderKind.navalMove:
       case ct_models.OrderKind.navalMission:
-        return () => ref.read(appEventBusProvider).emit(
-              const ct_models.OpenNavalUnitsPanelEvent(),
-            );
+        return () => ref
+            .read(appEventBusProvider)
+            .emit(const ct_models.OpenNavalUnitsPanelEvent());
       case ct_models.OrderKind.buildUnit:
-        return () => ref.read(appEventBusProvider).emit(
-              ct_models.NavigateToRouteEvent(Routes.production, {
-                'game': widget.game,
-                'humanPlayerId': mapPlayerId,
-              }),
-            );
+        return productionPanelTap();
       case ct_models.OrderKind.trade:
-        return () => ref.read(appEventBusProvider).emit(
+        return () => ref
+            .read(appEventBusProvider)
+            .emit(
               ct_models.NavigateToRouteEvent(Routes.trade, {
                 'game': widget.game,
                 'humanPlayerId': mapPlayerId,
@@ -160,7 +184,9 @@ mixin GameMapAreaTurnFeedTaps
         if (topology == null) {
           return null;
         }
-        return () => ref.read(appEventBusProvider).emit(
+        return () => ref
+            .read(appEventBusProvider)
+            .emit(
               ct_models.NavigateToRouteEvent(Routes.diplomacy, {
                 'game': widget.game,
                 'humanPlayerId': mapPlayerId,

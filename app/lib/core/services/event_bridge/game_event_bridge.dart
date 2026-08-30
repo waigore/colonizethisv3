@@ -34,8 +34,11 @@ class GameEventBridge {
             provinceId: event.provinceId,
             attackerId: event.attackerId,
             defenderId: event.defenderId,
+            outcomeName: event.outcomeName,
             winnerId: event.winnerId,
             turnNumber: event.turnNumber,
+            attackerCasualtyCount: event.attackerCasualtyCount,
+            defenderCasualtyCount: event.defenderCasualtyCount,
             casualties: event.casualties,
           ),
         );
@@ -48,6 +51,8 @@ class GameEventBridge {
             outcomeName: event.outcomeName,
             turnNumber: event.turnNumber,
             winnerOwnerId: event.winnerOwnerId,
+            side1CasualtyCount: event.side1CasualtyCount,
+            side2CasualtyCount: event.side2CasualtyCount,
             side1Retreated: event.side1Retreated,
             side2Retreated: event.side2Retreated,
           ),
@@ -167,6 +172,15 @@ class GameEventBridge {
             totalSpent: event.totalSpent,
             totalReceived: event.totalReceived,
             carryForwardOrderCount: event.carryForwardOrderCount,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case EconomyTurnSummaryEvent():
+        _appBus.emit(
+          AppEconomyTurnSummaryEvent(
+            playerId: event.playerId,
+            treasuryDelta: event.treasuryDelta,
+            stockpileDeltas: Map<String, int>.from(event.stockpileDeltas),
             turnNumber: event.turnNumber,
           ),
         );

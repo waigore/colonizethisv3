@@ -5,9 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart'
-    show WorldStateProvinceLookup;
-
-import '../constants.dart' show kRegionNewWorld, kRegionOldWorld;
+    show WorldStateProvinceLookup, WorldStateUnitLookup, kRegionNewWorld, kRegionOldWorld;
 
 /// One human-owned civilian listed in the end-turn idle-work warning.
 class CivilianMissingWorkOrderEntry {
@@ -66,12 +64,8 @@ List<CivilianMissingWorkOrderEntry> findCiviliansMissingWorkOrders({
   required String humanPlayerId,
 }) {
   final provinceNames = _provinceNamesByPrefixedId(game);
-  final units = [
-    ...game.worldState.oldWorld.units,
-    ...game.worldState.newWorld.units,
-  ];
   final sorted = _civilianUnitsInRegion(
-    units,
+    game.worldState.allUnitsById.values,
     humanPlayerId,
     provinceNames,
     orders,
@@ -132,7 +126,7 @@ String _regionDisplayLabel(String regionId) {
 }
 
 List<Unit> _civilianUnitsInRegion(
-  List<Unit> units,
+  Iterable<Unit> units,
   String humanPlayerId,
   Map<String, String> provinceNames,
   Orders currentOrders,

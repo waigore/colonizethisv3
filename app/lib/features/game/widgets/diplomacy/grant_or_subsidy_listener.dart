@@ -1,9 +1,7 @@
-// Listens for GrantOrSubsidySubmittedEvent and shows a confirmation dialog.
+// Listens for GrantOrSubsidySubmittedEvent and stages the pending order.
+// SPEC: SPEC/ui/grant-or-subsidy-dialog.md (DIPL20001 Submit; Refs #4415).
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -33,18 +31,6 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
   final SubscriptionTracker _subscriptions = SubscriptionTracker();
   final Map<String, String> _moodByLeaderId = <String, String>{};
 
-  String _targetName(String factionId) {
-    final p = widget.game.playerById(factionId);
-    if (p != null) return p.displayName;
-    for (final m in widget.game.minorNations) {
-      if (m.id == factionId) return m.displayName ?? factionId;
-    }
-    for (final t in widget.game.tribes) {
-      if (t.id == factionId) return t.displayName ?? factionId;
-    }
-    return factionId;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -56,53 +42,33 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
     if (!widget.readOnly) {
       _subscriptions.track(
         widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
-        final targetName = _targetName(event.targetFactionId);
-        final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
-        final order = DiplomaticOrder(
-          type: event.isSubsidy
-              ? DiplomaticOrderType.setSubsidy
-              : DiplomaticOrderType.grantAid,
-          targetFactionId: event.targetFactionId,
-          amount: event.amount,
-        );
-        widget.bus.emit(
-          ConfirmDialogEvent(
-            title: actionName,
-            message: buildDiplomacyConfirmPreviewMessage(
+          final order = DiplomaticOrder(
+            type: event.isSubsidy
+                ? DiplomaticOrderType.setSubsidy
+                : DiplomaticOrderType.grantAid,
+            targetFactionId: event.targetFactionId,
+            amount: event.amount,
+          );
+          widget.bus.emit(
+            AppendDiplomaticOrderRequestedEvent(
+              playerId: widget.humanPlayerId,
               order: order,
-              game: widget.game,
-              humanPlayerId: widget.humanPlayerId,
-              targetDisplayName: targetName,
             ),
-            onResult: (confirmed) {
-              if (confirmed) {
-                widget.bus.emit(
-                  AppendDiplomaticOrderRequestedEvent(
-                    playerId: widget.humanPlayerId,
-                    order: order,
-                  ),
-                );
-                final turn = widget.game.worldState.turnState.turnNumber;
-                final base = widget.game.globalGameSeed ?? 0;
-                final currentMood =
-                    _moodByLeaderId[event.targetFactionId] ?? kDefaultMood;
-                widget.bus.emit(
-                  NegotiationMoodUpdateEvent(
-                    leaderId: event.targetFactionId,
-                    currentMood: currentMood,
-                    offerQualityDelta: event.isSubsidy ? 0.5 : 0.7,
-                    stallCounter: 0,
-                    seed:
-                        base ^
-                        (turn * kDeterministicHashMixPrime32) ^
-                        event.amount,
-                  ),
-                );
-              }
-            },
-          ),
-        );
-      }),
+          );
+          final turn = widget.game.worldState.turnState.turnNumber;
+          final base = widget.game.globalGameSeed ?? 0;
+          final currentMood =
+              _moodByLeaderId[event.targetFactionId] ?? kDefaultMood;
+          widget.bus.emit(
+            NegotiationMoodUpdateEvent(
+              leaderId: event.targetFactionId,
+              currentMood: currentMood,
+              offerQualityDelta: event.isSubsidy ? 0.5 : 0.7,
+              stallCounter: 0,
+              seed: base ^ (turn * kDeterministicHashMixPrime32) ^ event.amount,
+            ),
+          );
+        }),
       );
     }
   }

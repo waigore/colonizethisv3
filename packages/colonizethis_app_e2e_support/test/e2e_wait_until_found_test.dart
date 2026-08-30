@@ -22,105 +22,13 @@
 /// itself.
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-// `dart:async` is imported for the `Timer` used by `_DelayedMountHost` to
-// flip its `_mounted` flag during the helper's adaptive pump loop without the
-// test driving extra pumps itself.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Host that mounts a single keyed `TextButton` after an optional fake-async
-/// delay so the test can flip visibility while the helper polls.
-///
-/// `Timer` callbacks scheduled in [State.initState] fire when `tester.pump`
-/// advances fake-time past the registered duration, so the helper sees the
-/// newly mounted widget on a later iteration without the test calling
-/// `tester.pump` itself (which would deadlock against the helper's guarded
-/// pump loop).
-class _DelayedMountHost extends StatefulWidget {
-  const _DelayedMountHost({
-    required this.targetKey,
-    this.mountAfter,
-    this.startMounted = false,
-  });
-
-  /// Key the host will render once mounted; the test waits on
-  /// `find.byKey(targetKey)`.
-  final Key targetKey;
-
-  /// Fake-async delay before the host mounts [targetKey], or `null` to leave
-  /// the mounted flag untouched.
-  final Duration? mountAfter;
-
-  /// Whether [targetKey] is mounted on the first frame (pre-pump).
-  final bool startMounted;
-
-  @override
-  State<_DelayedMountHost> createState() => _DelayedMountHostState();
-}
-
-class _DelayedMountHostState extends State<_DelayedMountHost> {
-  late bool _mounted;
-  Timer? _mountTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _mounted = widget.startMounted;
-    final after = widget.mountAfter;
-    if (after != null) {
-      _mountTimer = Timer(after, () {
-        if (!mounted) return;
-        setState(() {
-          _mounted = true;
-        });
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _mountTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_mounted) {
-      return const SizedBox.shrink();
-    }
-    return TextButton(
-      key: widget.targetKey,
-      onPressed: () {},
-      child: const Text('btn'),
-    );
-  }
-}
-
-Future<void> _pumpHost(
-  WidgetTester tester, {
-  required Key targetKey,
-  Duration? mountAfter,
-  bool startMounted = false,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: _DelayedMountHost(
-            targetKey: targetKey,
-            mountAfter: mountAfter,
-            startMounted: startMounted,
-          ),
-        ),
-      ),
-    ),
-  );
-}
+import 'support/delayed_mount_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -129,7 +37,11 @@ void main() {
     'short-circuits before any pump when finder is already non-empty',
     (WidgetTester tester) async {
       const targetKey = Key('e2e_present_btn');
-      await _pumpHost(tester, targetKey: targetKey, startMounted: true);
+      await pumpDelayedMountKeyedButton(
+        tester,
+        targetKey: targetKey,
+        startMounted: true,
+      );
       expect(find.byKey(targetKey), findsOneWidget);
 
       final sw = Stopwatch()..start();
@@ -153,7 +65,7 @@ void main() {
     'returns once a scheduled mount makes the finder non-empty during pump',
     (WidgetTester tester) async {
       const targetKey = Key('e2e_late_btn');
-      await _pumpHost(
+      await pumpDelayedMountKeyedButton(
         tester,
         targetKey: targetKey,
         mountAfter: const Duration(milliseconds: 80),
@@ -180,7 +92,7 @@ void main() {
     'fails with TestFailure when finder never becomes non-empty within timeout',
     (WidgetTester tester) async {
       const missingKey = Key('e2e_missing_btn');
-      await _pumpHost(tester, targetKey: missingKey);
+      await pumpDelayedMountKeyedButton(tester, targetKey: missingKey);
       Object? caught;
       try {
         await e2eWaitUntilFound(
@@ -220,7 +132,7 @@ void main() {
     'diagnoseAfter parameter still fails on persistent absence without crashing',
     (WidgetTester tester) async {
       const missingKey = Key('e2e_diagnose_btn');
-      await _pumpHost(tester, targetKey: missingKey);
+      await pumpDelayedMountKeyedButton(tester, targetKey: missingKey);
 
       Object? caught;
       try {
@@ -256,7 +168,11 @@ void main() {
     'accepts a custom phaseName and E2ePerfLog on the short-circuit path',
     (WidgetTester tester) async {
       const targetKey = Key('e2e_perf_btn');
-      await _pumpHost(tester, targetKey: targetKey, startMounted: true);
+      await pumpDelayedMountKeyedButton(
+        tester,
+        targetKey: targetKey,
+        startMounted: true,
+      );
       final perf = E2ePerfLog('e2e_wait_until_found_test');
       await e2eWaitUntilFound(
         tester,
@@ -271,31 +187,30 @@ void main() {
     },
   );
 
-  testWidgets(
-    'accepts a custom phaseName and E2ePerfLog on the timeout path',
-    (WidgetTester tester) async {
-      const missingKey = Key('e2e_perf_timeout_btn');
-      await _pumpHost(tester, targetKey: missingKey);
-      final perf = E2ePerfLog('e2e_wait_until_found_test');
-      Object? caught;
-      try {
-        await e2eWaitUntilFound(
-          tester,
-          find.byKey(missingKey),
-          timeout: const Duration(milliseconds: 100),
-          perf: perf,
-          phaseName: 'pin_wait_until_found_perf_timeout',
-        );
-      } catch (e) {
-        caught = e;
-      }
-      expect(
-        caught,
-        isA<TestFailure>(),
-        reason:
-            'Passing a perf log on the timeout path must not suppress the '
-            'fail() invocation; perf is observability metadata only.',
+  testWidgets('accepts a custom phaseName and E2ePerfLog on the timeout path', (
+    WidgetTester tester,
+  ) async {
+    const missingKey = Key('e2e_perf_timeout_btn');
+    await pumpDelayedMountKeyedButton(tester, targetKey: missingKey);
+    final perf = E2ePerfLog('e2e_wait_until_found_test');
+    Object? caught;
+    try {
+      await e2eWaitUntilFound(
+        tester,
+        find.byKey(missingKey),
+        timeout: const Duration(milliseconds: 100),
+        perf: perf,
+        phaseName: 'pin_wait_until_found_perf_timeout',
       );
-    },
-  );
+    } catch (e) {
+      caught = e;
+    }
+    expect(
+      caught,
+      isA<TestFailure>(),
+      reason:
+          'Passing a perf log on the timeout path must not suppress the '
+          'fail() invocation; perf is observability metadata only.',
+    );
+  });
 }

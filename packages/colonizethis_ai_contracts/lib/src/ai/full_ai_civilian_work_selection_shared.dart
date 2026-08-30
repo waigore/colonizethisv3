@@ -29,3 +29,40 @@ WorkOrder? pickLexicographic(List<WorkOrder> w) {
   final copy = List<WorkOrder>.from(w)..sort(compareWorkOrderLex);
   return copy.first;
 }
+
+/// Stable secondary ordering for equally-scored candidates that share a work
+/// target: province id first, then full tile key (Refs #3794 AC16, #4368 AC1).
+int compareWorkOrderProvinceThenTile(WorkOrder a, WorkOrder b) {
+  final pa = Unit.provinceIdFromTileKey(a.targetTileKey) ?? '';
+  final pb = Unit.provinceIdFromTileKey(b.targetTileKey) ?? '';
+  final p = pa.compareTo(pb);
+  if (p != 0) return p;
+  return a.targetTileKey.compareTo(b.targetTileKey);
+}
+
+/// Picks the highest-scoring [WorkOrder] from [candidates].
+///
+/// When scores tie, [compareTieBreak] selects the winning row: a negative
+/// return means [a] beats [b] (Refs #4368 Slice A).
+WorkOrder? bestScoredWorkRow(
+  List<WorkOrder> candidates, {
+  required int Function(WorkOrder) scoreOf,
+  required int Function(WorkOrder a, WorkOrder b) compareTieBreak,
+}) {
+  if (candidates.isEmpty) return null;
+  var best = candidates.first;
+  var bestScore = scoreOf(best);
+  for (var i = 1; i < candidates.length; i++) {
+    final w = candidates[i];
+    final s = scoreOf(w);
+    if (s > bestScore) {
+      bestScore = s;
+      best = w;
+      continue;
+    }
+    if (s == bestScore && compareTieBreak(w, best) < 0) {
+      best = w;
+    }
+  }
+  return best;
+}

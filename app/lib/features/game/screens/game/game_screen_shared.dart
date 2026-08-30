@@ -30,8 +30,14 @@ const Key kEmpireDebugConsoleButtonKey = Key('empire_rail_debug_console');
 /// Key for the cargo hold indicator row item. SPEC/ui/empire-overview.md.
 const Key kCargoHoldIndicatorKey = Key('cargo_hold_indicator');
 
+/// Key for the labour/feeding indicator row item. SPEC/ui/empire-overview.md.
+const Key kLabourFeedingIndicatorKey = Key('labour_feeding_indicator');
+
 /// Key for the treasury indicator row item. SPEC/ui/empire-overview.md.
 const Key kTreasuryIndicatorKey = Key('treasury_indicator');
+
+/// Key for the Old World race chip on the tab bar. Refs #4451.
+const Key kOldWorldRaceChipKey = Key('old_world_race_chip');
 
 /// Key for the in-map Next turn control (integration / widget tests).
 const Key kGameMapNextTurnButtonKey = Key('game_map_next_turn_button');

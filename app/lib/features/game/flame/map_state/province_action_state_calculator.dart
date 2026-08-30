@@ -1,62 +1,69 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import '../../../../core/services/game_service/game_service.dart' show GameMapData;
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData;
 import 'game_map_area_state_logic.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
+import 'game_map_area_province_action_states_assignable.dart'
+    show GameMapAreaProvinceActionStatesAssignable, ProvinceInlineActionState;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
-/// Explore / prospect inline action state shape (shared by both overlay slots).
-typedef ProvinceExplorerActionState = ({
-  bool showIcon,
-  bool enabled,
-  bool hasExplorerUnits,
-});
+export 'game_map_area_province_action_states_assignable.dart'
+    show ProvinceInlineActionState;
 
-/// Build-improvement inline action state shape.
-typedef ProvinceBuilderActionState = ({
-  bool showIcon,
-  bool enabled,
-  bool hasBuilderUnits,
-});
+/// Canonical hidden defaults for all eight civilian inline-action slots.
+const ProvinceActionStates kHiddenProvinceActionStates = (
+  explore: GameMapAreaProvinceActionStatesAssignable.kHidden,
+  prospect: GameMapAreaProvinceActionStatesAssignable.kHidden,
+  buildImprovement: GameMapAreaProvinceActionStatesAssignable.kHidden,
+  buildRoad: GameMapAreaProvinceActionStatesAssignable.kHidden,
+  buildFort: GameMapAreaProvinceActionStatesAssignable.kHidden,
+  buildPort: GameMapAreaProvinceActionStatesAssignable.kHidden,
+  buildRail: GameMapAreaProvinceActionStatesAssignable.kHidden,
+  purchaseLand: GameMapAreaProvinceActionStatesAssignable.kHidden,
+);
 
-/// Build-road inline action state shape.
-typedef ProvinceEngineerActionState = ({
-  bool showIcon,
-  bool enabled,
-  bool hasEngineerUnits,
-});
-
-/// Build-fort inline action state shape.
-typedef ProvinceBuildFortActionState = ({
-  bool showIcon,
-  bool enabled,
-  bool hasEngineerUnits,
-});
-
-/// Purchase-land inline action state shape.
-typedef ProvinceMerchantActionState = ({
-  bool showIcon,
-  bool enabled,
-  bool hasMerchantUnits,
-});
-
-/// The five province-overlay inline action states computed together.
+/// The eight province-overlay civilian inline action states computed together.
 typedef ProvinceActionStates = ({
-  ProvinceExplorerActionState explore,
-  ProvinceExplorerActionState prospect,
-  ProvinceBuilderActionState buildImprovement,
-  ProvinceEngineerActionState buildRoad,
-  ProvinceBuildFortActionState buildFort,
-  ProvinceMerchantActionState purchaseLand,
+  ProvinceInlineActionState explore,
+  ProvinceInlineActionState prospect,
+  ProvinceInlineActionState buildImprovement,
+  ProvinceInlineActionState buildRoad,
+  ProvinceInlineActionState buildFort,
+  ProvinceInlineActionState buildPort,
+  ProvinceInlineActionState buildRail,
+  ProvinceInlineActionState purchaseLand,
 });
+
+/// Gated copy for UI overlay: [showIcon]/[enabled] respect [canMutateViaUi];
+/// [hasMatchingUnits] stays ungated (tooltip/disabled-icon affordance parity).
+ProvinceActionStates gateProvinceInlineActionsForUi({
+  required ProvinceActionStates states,
+  required bool canMutateViaUi,
+}) {
+  ProvinceInlineActionState gate(ProvinceInlineActionState state) => (
+    showIcon: canMutateViaUi && state.showIcon,
+    enabled: canMutateViaUi && state.enabled,
+    hasMatchingUnits: state.hasMatchingUnits,
+  );
+  return (
+    explore: gate(states.explore),
+    prospect: gate(states.prospect),
+    buildImprovement: gate(states.buildImprovement),
+    buildRoad: gate(states.buildRoad),
+    buildFort: gate(states.buildFort),
+    buildPort: gate(states.buildPort),
+    buildRail: gate(states.buildRail),
+    purchaseLand: gate(states.purchaseLand),
+  );
+}
 
 /// Computes the explore / prospect / build-improvement inline action states
 /// for the province detail overlay.
 ///
 /// Both the narrow bottom-sheet host
-/// ([`GameMapNarrowDetailOverlaySlot`](game_map_narrow_detail_overlay.dart))
+/// ([`GameMapNarrowDetailOverlay`](game_map_narrow_detail_overlay.dart))
 /// and the wide side panel
 /// ([`GameMapProvinceDetailSidePanel`](game_map_province_detail_side_panel.dart))
 /// previously duplicated this identical computation (issue #3279 work item 4).
@@ -85,8 +92,8 @@ class ProvinceActionStateCalculator {
   }) {
     final topology = mapData?.combinedTopology;
     final explore = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenExplorerInlineActionState
-        : GameMapAreaStateLogic.provinceExploreActionState(
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -94,8 +101,8 @@ class ProvinceActionStateCalculator {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     final prospect = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenExplorerInlineActionState
-        : GameMapAreaStateLogic.provinceProspectActionState(
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -108,8 +115,8 @@ class ProvinceActionStateCalculator {
     // with only the unit/selection inputs, leaving `topology`/`currentOrders`/
     // `tileMapByRegion` at their defaults. Do not widen this call.
     final buildImprovement = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenBuilderInlineActionState
-        : GameMapAreaStateLogic.provinceBuildImprovementActionState(
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -117,8 +124,8 @@ class ProvinceActionStateCalculator {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     final buildRoad = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
-        : GameMapAreaStateLogic.provinceBuildRoadActionState(
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provinceBuildRoadActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -126,17 +133,41 @@ class ProvinceActionStateCalculator {
             workTargetSelectionCache: workTargetSelectionCache,
           );
     final buildFort = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
-        : GameMapAreaStateLogic.provinceBuildFortActionState(
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provinceBuildFortActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
             playerView: playerView,
             workTargetSelectionCache: workTargetSelectionCache,
           );
+    final buildPort = selectedTileKey == null
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provinceBuildPortActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+            topology: topology,
+            currentOrders: currentOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          );
+    final buildRail = selectedTileKey == null
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provinceBuildRailActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+            topology: topology,
+            currentOrders: currentOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          );
     final purchaseLand = selectedTileKey == null
-        ? GameMapAreaStateLogic.kHiddenMerchantInlineActionState
-        : GameMapAreaStateLogic.provincePurchaseLandActionState(
+        ? GameMapAreaProvinceActionStatesAssignable.kHidden
+        : GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: selectedTileKey,
@@ -149,6 +180,8 @@ class ProvinceActionStateCalculator {
       buildImprovement: buildImprovement,
       buildRoad: buildRoad,
       buildFort: buildFort,
+      buildPort: buildPort,
+      buildRail: buildRail,
       purchaseLand: purchaseLand,
     );
   }

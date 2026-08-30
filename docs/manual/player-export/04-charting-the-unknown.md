@@ -2,54 +2,83 @@
 
 ## Purpose
 
-Fog hides opportunity and danger alike. Your Explorers and fleets push back ignorance: provinces become walkable and workable, minerals appear under the ground, and Tribes announce themselves when your eyes first fall on their land. This chapter teaches visibility, exploration and prospecting work, naval revelation of coasts, and where discoveries are reported after the turn.
+Fog hides both danger and opportunity. An **Explorer** is a civilian who pushes back fog and finds buried minerals. A **province** is a named piece of land. A **Great Power** is a playable nation. **Old World** and **New World** are the two maps. A **Tribe** is a New World people. A **decree** is an action you choose on your turn. Send Explorers and fleets so you can walk a province, work it, and see what lies under the ground. When a Tribe’s land first comes into view, their court announces itself. After you confirm **Next turn**, the game shows what was found.
 
 ## How it is done
 
 ### Visibility levels
 
-Each tile you care about sits in one of three intel states for your court (ordered from least to most useful):
+Each tile you care about is in one of three **sight** levels (least useful first):
 
 | Level | What you know |
 |-------|----------------|
-| **Unknown** | No usable intel; you cannot explore or prospect there yet. New World land and sea start here for Great Powers. |
-| **Fogged** | Terrain and non-prospect resources; last-known improvements of others. Old World provinces you do not own start fogged. |
-| **Fully visible** | Full local detail except minerals that still need prospecting. **Your own provinces stay fully visible** and never decay. |
+| **Unknown — no intel yet** | You cannot explore or prospect there yet. New World land and sea start here for Great Powers. |
+| **Fogged — terrain only** | Terrain and goods that do not need prospecting; last-known buildings of others. Old World provinces you do not own start here. |
+| **Fully visible** | Full local detail except minerals that still need prospecting. **Your own provinces stay Fully visible** and never fade. |
 
-Political ownership on the map remains authoritative even when a province is fogged — fog hides detail, not who holds the claim.
+Who owns the land on the map stays true even when a province is fogged. Fog hides detail, not the claim.
 
-**Setup defaults:** Old World fogged (owned tiles fully visible); New World unknown. Sea zones adjacent to coasts you **fully own** become fully visible at setup and again each end of turn.
+On **Empire overview / map area**, rest on a tile (without tapping) to read a compact panel: **Place**, **Owner:** with the holder’s name or `Unclaimed` (water shows a **Sea zone** line instead of an owner), and **Sight** as one of those three phrases. Warp water adds a line that the water is the passage to the other world. On an unrevealed tile, that panel still shows who holds it. It must not name terrain, a resource, or a building. While you are choosing where an Explorer will work, that panel hides; only the selection prompt remains. Tap the tile to open **Province sea-zone overlay**. Its **Political** section repeats a **Sight** row for the selected tile. On a phone or tablet with no pointer, use that **Sight** row.
+
+**Setup defaults:** Old World starts fogged (owned tiles Fully visible). New World starts unknown. Sea next to coasts you **fully own** becomes Fully visible at setup and again at the end of each turn.
+
+Land you do not own can lose detail. If none of your Explorers (or Spies — hidden agents) stay in another nation’s province, tiles that were **Fully visible** become **Fogged — terrain only**. Tiles that were already **Unknown** or **Fogged** stay as they are. Provinces you own stay **Fully visible** and never fade this way.
 
 ### Bootstrap prospecting (advanced start)
 
-**turns50** and **turns100** presets run a **setup-only** prospecting pass on **owned** provinces before the first Orders phase — separate from Explorer **prospect** work below. Setup marks a tier fraction of prospect-required minerals in your combined owned pool (50% OW-only at 50-turn; 75% OW+NW after 100-turn colonization). Minor OW minerals receive the same fraction and are recorded in buyer Great Power prospected sets.
-
-That bootstrap step is **not** NW flood-fill **reveal** and **not** in-game Explorer labor. Chapter 2 **Founding Your Reign** documents tier fractions, OW vs NW scope, and the prospect-before-development bootstrap order.
+Choosing **50 Turns In (1598)** or **100 Turns In (1698)** runs a **setup-only** mineral pass on land you already own, before you take your first actions. That pass is **not** the New World coast-reveal you get from setup, and it is **not** Explorer **prospect** work during play. Chapter 2 **Founding Your Reign** names the printed fractions, Old World vs New World scope, and the prospect-before-development order. Each Minor Nation already knows a share of minerals in its **own** Old World provinces. Separately, Great Powers may already have bought some minor-nation tiles. Those two facts are not the same thing.
 
 ### Explorer work: explore and prospect
 
-Use **Civilian units panel** (or tile shortcuts on **Province sea-zone overlay**) with an **Explorer**:
+You explore and prospect **your** land, **unclaimed** land, and (with a Consulate) **Minor Nation** or **Tribe** land. You do **not** explore or prospect a rival Great Power’s provinces.
 
-1. Select the Explorer and choose **explore** or **prospect** (or the overlay’s Explore / Prospect shortcuts when eligible).
-2. For **explore**, pick a land tile in a province that is **partially revealed**: at least one land tile fogged or fully visible **and** at least one land tile still unknown. The work is **free**. Duration scales with province size: up to **three** turns (`ceil(3 × tilesInProvince / maxTilesInRegion)`). On completion in **Build/work**, every tile in that province becomes fully visible **for you**.
-3. For **prospect**, pick a **mineral-eligible** tile (swamp, hills, mountain, or desert) that is at least fogged. The work is **free** and lasts **one** turn; the tile joins your prospected set only when work **completes**. Prospect-required minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until then. Terrain-known commodities (grain, meat, wool, horses, timber, sugar cane, tobacco, cotton, furs, spices) do not need prospecting.
-4. Exploring or prospecting in **Minor Nation** or **Tribe** provinces requires a **Consulate or higher** with that owner. Without it, the UI and validator refuse with counsel such as “Establish a consulate before exploring or prospecting.”
+**From the civilian list**
 
-Assignment happens in the **Orders** phase; progress and completion apply in **Build/work** after you confirm the turn.
+1. Open **Civilian units panel**.
+2. On an idle Explorer, tap **Assign**, then **Explore** or **Prospect**.
+3. Tap a legal tile on the map.
+
+**From the province panel**
+
+1. On **Province sea-zone overlay**, open **Tile**.
+2. Tap **Explore with explorer** or **Prospect with explorer**. Those shortcuts open the same civilian panel already filtered to Explorers.
+3. Tap **Assign** to commit that work to the selected tile (no second menu).
+
+**Explore**
+
+1. Pick a land tile in a province that is **partly seen**: at least one land tile Fogged or Fully visible **and** at least one land tile still Unknown. The work is **free**.
+2. Larger provinces take longer, up to **three** turns. Time is compared to the biggest province on the same map, so a small province finishes sooner than a large one.
+3. When that work **finishes**, after you confirm **Next turn**, every tile in that province becomes **Fully visible** for you.
+
+**Prospect**
+
+1. Pick a swamp, hills, mountain, or desert tile that is at least Fogged. Tiles that already show a good you can see from the land (grain, meat, wool, horses, timber, sugar cane, tobacco, cotton, furs, spices) cannot be prospected, even on those terrains. Hills with wool cannot be prospected.
+2. The work is **free** and lasts **one** turn. The mineral is known to you only when that work **finishes**, after you confirm **Next turn**. Prospect-required minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until then.
+
+**Consulate on Minor Nation or Tribe land**
+
+Exploring or prospecting in a **Minor Nation** or **Tribe** province needs a **Consulate or higher** with that owner. Without it, **Explore with explorer** and **Prospect with explorer** stay **visible but greyed out**. Their hint reads **Establish a consulate before exploring or prospecting**. On a narrow screen, that disabled hint points you to **Political** **Establish Consulate**.
+
+Open **Political** on **Province sea-zone overlay**. Tap **Establish Consulate**, read the stated cost and effect, and confirm to queue the decree; **Cancel** withdraws it while it is still pending. If the control is greyed out, its hint names the missing treasury, peace, or other condition. Diplomatic Expertise is the **Embassy** technology, not a Consulate requirement.
 
 ### Fleets into new sea zones
 
-1. On **Naval units panel**, open **Move** for a fleet that is allowed to sail (not the home fleet).
-2. In **Move fleet dialog**, choose an adjacent sea zone or an owned port destination.
-3. When the fleet **enters** a sea zone in **Movement**, coastal land tiles around that zone and the zone’s water become fully visible for you. At end of turn, a distant sea zone may re-fog if you lack an owned adjacent coast **and** have no fleet **at sea** there (ships in port do not hold the fog open).
+1. Open **Naval units panel**.
+2. Open **Move** for a fleet that is allowed to sail (the **Home Fleet** has no **Move**).
+3. In **Move fleet dialog**:
+ - A fleet **in port** may only undock into an adjacent sea zone. The dialog shows **Sea zones** only.
+ - A fleet **at sea** may pick an adjacent sea zone under **Sea zones**, or an owned dock. A capital dock is labelled **(capital — joins Home Fleet)**.
+4. After you confirm **Next turn**, when that fleet **enters** a sea zone, the water there and the coastal land tiles that **touch that water** become **Fully visible** for you. **Inland** land in the same province stays **Unknown** until an Explorer finishes **Explore**. That is why Explorer work is still needed after a fleet arrives.
 
-Land **Move** orders also need fogged or fully visible tiles at source and destination — pure unknown provinces are not marchable targets.
+At the end of the turn, a distant sea zone’s **water** becomes **Fogged — terrain only** only when you own no adjacent coast **and** have no fleet **at sea** there (ships **in port** do not count). Tiles that are still **Unknown** stay **Unknown**. There is no fourth sight level.
+
+Land **Move** also needs Fogged or Fully visible tiles at the start and the end. You cannot send an army into a province that is still fully Unknown.
 
 ### Tribe first contact and discovery reports
 
-- When your court first gains **non-unknown land** visibility into a **Tribe-owned** province, **Tribe first contact herald** may block the screen with the tribe and capital names. A peaceful relation is established for that contact; each tribe heralds once per game session for you.
-- After turn resolution, **Turn news dialog** summarizes discoveries (including province-discovered lines) for turns after the first.
-- On the map chrome, the news toggle opens **Player turn event feed** — a compact, human-scoped scroll of outcomes that replaces its entries each resolved turn. Use it alongside turn news and the fog itself (Chapter 14).
+- When you first see **Tribe** land that is Fogged or Fully visible, **Tribe first contact herald** **blocks** the game once. The title is **First Contact**. The text names the tribe and the capital. Tap **Continue** to go on. Seeing only the sea next to that land does not create the relation or the herald. Each tribe heralds once per game for you this session.
+- After you confirm **Next turn** and that turn finishes (including the first turn you play from turn 0), **Turn news dialog** can open. It is a **world** newspaper, not only your fog: a **Province discovered** line appears when **any** Great Power first sees that province, and province names **may appear before your map shows them**. If nothing major happened, it reads **No major events last turn.** If Spies of yours still stood in a foreign court, a line at the bottom offers **open Intelligence** (Chapter 10). For **your** outcomes, use the feed below. When you close turn news — or **View Final State** if **Victory overlay** is up — **Empire overview / map area** may also pulse the tiles where **your** Explorer finished **Explore** / **Prospect** or where **you** gained new sight, so you can see those places without hunting the map.
+- The news list starts **hidden**. On the map’s tab row (treasury, cargo, then the newspaper button), the news button opens **Player turn event feed** — a short list of **your** outcomes that is **replaced** each time a turn finishes. A badge on the button shows how many lines are in the list. Use it beside turn news and the fog itself (Chapter 14).
 
 ## Counsel
 
@@ -61,11 +90,11 @@ Land **Move** orders also need fogged or fully visible tiles at source and desti
 
 ## The other courts
 
-Rival courts race the same fog. AI civilian planners score Explorer **explore** and **prospect** work highly when feedstock minerals are needed, and colonial phases favor training and replacing Explorers . Growth-stage logic pressures prospected-and-improved feedstock before heavy infrastructure . Explorer-leaning personalities push extraction and colonies harder than cautious peers .
+Rival courts send Explorers into the same fog. When they need ore for workshops and ships, they prospect before they build. Courts that favor exploration push mines and colonies harder than cautious peers; a chosen **leader** changes how bold or cautious they are, not how you win.
 
 ## Consequences
 
-- Leaving New World fog untouched delays colonial extraction and purchase targets.
-- Skipping prospect on mineral tiles wastes Builder turns on improvements that cannot yield.
+- Leaving New World fog untouched delays colonies, mines, and land you might buy.
+- Skipping **Prospect** on ore tiles wastes Builder turns on mines that cannot produce yet.
 - Fleets that never leave port fail to hold distant sea visibility open.
-- Missing Consulate gates strand Explorers at Minor/Tribe borders while rivals dig in.
+- Without a Consulate, Explorers wait at Minor Nation and Tribe borders while rivals prospect inside.

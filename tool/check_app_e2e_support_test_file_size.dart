@@ -2,19 +2,19 @@
 // (`repo.app_e2e_support_test_file_size`).
 //
 // SPEC: SPEC/program/repo-lint.md (§ app e2e support test file size).
-// Refs #4075, #4195.
+// Refs #4075, #4195, #4344, #4598.
 //
-// Cap is 500 physical lines. Files currently over the cap are listed in
+// Cap is 300 physical lines. Files currently over the cap are listed in
 // [appE2eSupportTestFileSizeAllowlistForTests] (shrink-only). A stale
 // allowlist entry (missing file, or file now ≤ cap) fails so the backlog
-// cannot retain slack. `test/support/**` harness modules should prefer ≤400
+// cannot retain slack. `test/support/**` harness modules should prefer ≤300
 // physical lines (same hygiene as `repo.app_test_support_file_size`).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 500;
+const _maxPhysicalLines = 300;
 
 const String _testsRelativePath = 'packages/colonizethis_app_e2e_support/test';
 

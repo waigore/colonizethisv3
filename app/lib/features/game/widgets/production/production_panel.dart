@@ -32,6 +32,7 @@ class ProductionPanel extends StatelessWidget {
     this.canEditLabour = false,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
+    this.onOpenTradeMarket,
   });
 
   /// SPEC/ui/production-panel.md — [UiScreenIds.productionScreen]. Hosted by
@@ -65,6 +66,7 @@ class ProductionPanel extends StatelessWidget {
   starredProduceRecommendationsByRecipeId;
 
   final ProductionOpenCounselCallback? onOpenCounsel;
+  final void Function(String commodityId)? onOpenTradeMarket;
 
   static Set<String> get _inputCommodityIds {
     final inputIds = <String>{};
@@ -98,6 +100,7 @@ class ProductionPanel extends StatelessWidget {
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: canEditLabour,
+      onOpenTradeMarket: onOpenTradeMarket,
     );
     final allocationSubpanel = ProductionPanelAllocationSubpanel(
       player: player,

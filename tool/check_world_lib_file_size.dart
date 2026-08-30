@@ -1,8 +1,11 @@
 // Physical line ratchet for colonizethis_world lib source (repo rule:
 // `repo.colonizethis_world_lib_file_size`).
 //
-// Wave 5 (#4125) splits near-cap world modules so lib files stay below a
-// peer-aligned 400 physical-line ceiling. Generated suffixes are excluded.
+// Wave 8 (#4611) lowers the general ceiling from wave-7's 300 to 250
+// physical lines. Sealed `GameEvent` stays in one library
+// (`lib/src/game_events.dart`) with a dedicated 400-line ceiling — splits need
+// `part` (banned) or dropping `sealed` (see SPEC/program/game-events.md).
+// Generated suffixes are excluded.
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,16 +13,35 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-5 post-split target (≤400 physical lines).
-const int worldLibFileSizeCeiling = 400;
+/// General ratchet ceiling for world lib files except [worldGameEventsRelativePath].
+const int worldLibFileSizeCeiling = 250;
+
+/// Dedicated ceiling for sealed `GameEvent` (`lib/src/game_events.dart`).
+const int worldGameEventsFileSizeCeiling = 400;
 
 const String _worldLibRelativePath = 'packages/colonizethis_world/lib';
 
-/// Hot files still above the wave-5 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land.
+/// Repo-relative path of the sealed `GameEvent` library.
+const String worldGameEventsRelativePath =
+    'packages/colonizethis_world/lib/src/game_events.dart';
+
+/// Hot files still above the general ceiling during transition slices. Shrink-only
+/// allowlist; must stay empty when wave-7 lib ratchet completes.
 const List<String> worldLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
+
+int ceilingForWorldLibRelativePath(
+  String relativePath, {
+  int generalCeiling = worldLibFileSizeCeiling,
+  int gameEventsCeiling = worldGameEventsFileSizeCeiling,
+}) {
+  final normalized = relativePath.replaceAll('\\', '/');
+  if (normalized == worldGameEventsRelativePath) {
+    return gameEventsCeiling;
+  }
+  return generalCeiling;
+}
 
 int runCheckWorldLibFileSize(
   String repoRoot, {
@@ -28,6 +50,7 @@ int runCheckWorldLibFileSize(
   void Function(String line)? info,
   void Function(String line)? err,
   int ceiling = worldLibFileSizeCeiling,
+  int gameEventsCeiling = worldGameEventsFileSizeCeiling,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
@@ -67,19 +90,26 @@ int runCheckWorldLibFileSize(
     if (grandfathered.contains(relativePath)) {
       continue;
     }
+    final fileCeiling = ceilingForWorldLibRelativePath(
+      relativePath,
+      generalCeiling: ceiling,
+      gameEventsCeiling: gameEventsCeiling,
+    );
     final physicalLines = const LineSplitter()
         .convert(file.readAsStringSync())
         .length;
-    if (physicalLines <= ceiling) {
+    if (physicalLines <= fileCeiling) {
       continue;
     }
-    violations.add('$relativePath ($physicalLines physical lines > $ceiling)');
+    violations.add(
+      '$relativePath ($physicalLines physical lines > $fileCeiling)',
+    );
   }
 
   if (violations.isEmpty) {
     logI(
       'check_world_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4125).',
+      '(ceiling $ceiling, game_events $gameEventsCeiling; Refs #4611).',
     );
     return 0;
   }
@@ -87,7 +117,8 @@ int runCheckWorldLibFileSize(
   violations.sort();
   logE(
     'check_world_lib_file_size: found ${violations.length} violation(s) '
-    'under $_worldLibRelativePath (wave-5 ceiling $ceiling; Refs #4125):',
+    'under $_worldLibRelativePath (wave-7 ceiling $ceiling / '
+    'game_events $gameEventsCeiling; Refs #4611):',
   );
   for (final violation in violations) {
     logE(' - $violation');

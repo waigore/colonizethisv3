@@ -16,7 +16,10 @@ List<RunnableScenario> resolveSeaBattleScenarios() => [
         seaZoneId: 'sea1',
         side1: NavalBattleSide(
           ownerId: 'p1',
-          ships: legacyShipInstancesForFleet('battle_p1', ['carrack', 'carrack']),
+          ships: legacyShipInstancesForFleet('battle_p1', [
+            'carrack',
+            'carrack',
+          ]),
         ),
         side2: NavalBattleSide(
           ownerId: 'p2',
@@ -48,7 +51,8 @@ List<RunnableScenario> resolveSeaBattleScenarios() => [
   ),
   RunnableScenario(
     scenarioId: 'rsb-feeding-morale',
-    label: 'feeding coverage multiplies raw naval strength like land combat morale',
+    label:
+        'feeding coverage multiplies raw naval strength like land combat morale',
     run: () {
       final raw = navalStrength(['carrack', 'carrack']);
       expect(raw * moraleMultiplierForFeedingCoverage(1.0), raw);
@@ -58,7 +62,8 @@ List<RunnableScenario> resolveSeaBattleScenarios() => [
   ),
   RunnableScenario(
     scenarioId: 'rsb-no-retreat',
-    label: 'does not retreat when retreat is disallowed by topology/relation gate',
+    label:
+        'does not retreat when retreat is disallowed by topology/relation gate',
     run: () {
       final battle = BattleContextSea(
         seaZoneId: 'sea1',

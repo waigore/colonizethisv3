@@ -7,8 +7,6 @@ import 'package:colonizethis_test/test.dart';
 import 'quick_battle_emplaced_guns_test_support.dart';
 import 'scenario_runner.dart';
 
-
-
 /// Scenarios for [MutableEmplacedGun.fromInput].
 List<RunnableScenario> mutableEmplacedGunFromInputScenarios() => [
   RunnableScenario(
@@ -41,7 +39,11 @@ List<RunnableScenario> aliveGunStrengthSumScenarios() => [
     scenarioId: 'ags-sum-alive',
     label: 'sums attack+defense over alive guns and skips dead',
     run: () {
-      final guns = [emplacedGun('a', 4), emplacedGun('b', 0), emplacedGun('c', 2)];
+      final guns = [
+        emplacedGun('a', 4),
+        emplacedGun('b', 0),
+        emplacedGun('c', 2),
+      ];
 
       expect(aliveGunStrengthSum(guns), closeTo(10.0, 1e-9));
     },
@@ -61,7 +63,11 @@ List<RunnableScenario> sumAliveGunHpScenarios() => [
     scenarioId: 'sah-sum-hp',
     label: 'sums hp over alive guns only',
     run: () {
-      final guns = [emplacedGun('a', 4), emplacedGun('b', 0), emplacedGun('c', 2)];
+      final guns = [
+        emplacedGun('a', 4),
+        emplacedGun('b', 0),
+        emplacedGun('c', 2),
+      ];
 
       expect(sumAliveGunHp(guns), 6);
     },

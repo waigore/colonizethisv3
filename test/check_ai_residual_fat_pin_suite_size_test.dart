@@ -7,6 +7,10 @@ import '../tool/check_ai_residual_fat_pin_suite_size.dart';
 
 void main() {
   group('runCheckAiResidualFatPinSuiteSize', () {
+    test('ceiling is 250 after #4669 Slice E', () {
+      expect(residualFatPinSuitePhysicalLineCeiling, 250);
+    });
+
     test('fails when gated residual fat pin is oversize without cases', () {
       final temp = Directory.systemTemp.createTempSync('ai-residual-fat-');
       try {
@@ -39,8 +43,8 @@ void main() {
           temp,
           'treasury_planner_treasury_budget_test.dart',
           "import 'treasury_planner_treasury_budget_deficit_clamp_cases.dart';\n"
-          '${List.filled(800, '// pad').join('\n')}\n'
-          'void main() {}\n',
+              '${List.filled(800, '// pad').join('\n')}\n'
+              'void main() {}\n',
         );
         final exitCode = runCheckAiResidualFatPinSuiteSize(
           temp.path,

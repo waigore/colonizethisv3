@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'victory_standings.dart';
 
-/// Victory conditions copy (military threshold, calendar end, infinite mode).
+/// Victory conditions copy (military threshold, calendar remaining, infinite).
 class VictoryConditionsBlock extends StatelessWidget {
   const VictoryConditionsBlock({super.key, required this.game});
 
@@ -15,12 +15,14 @@ class VictoryConditionsBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final threshold = victoryPanelMilitaryOwThreshold;
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: EditorialMonoclePalette.fg,
-    );
+    final clock = CampaignCalendarClock.fromGame(game);
+    final bodyStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: EditorialMonoclePalette.fg);
     final mutedStyle = bodyStyle?.copyWith(
       color: EditorialMonoclePalette.muted,
     );
+    final calendarCopy = _calendarCopy(l10n, clock, game);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -31,19 +33,42 @@ class VictoryConditionsBlock extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.victory_conditionsCalendarEnd,
-          style: mutedStyle,
-        ),
+        if (calendarCopy != null) ...[
+          const SizedBox(height: 8),
+          Text(calendarCopy, style: mutedStyle),
+        ],
         if (game.infiniteMode) ...[
           const SizedBox(height: 8),
-          Text(
-            l10n.victory_conditionsInfiniteMode,
-            style: mutedStyle,
-          ),
+          Text(l10n.victory_conditionsInfiniteMode, style: mutedStyle),
         ],
       ],
     );
+  }
+}
+
+String? _calendarCopy(
+  AppLocalizations l10n,
+  CampaignCalendarClock clock,
+  Game game,
+) {
+  switch (clock.kind) {
+    case CampaignCalendarClockKind.remaining:
+      return l10n.victory_conditionsCalendarRemaining(
+        clock.currentYear,
+        clock.lastCampaignYear,
+        clock.remainingYears,
+        clock.remainingTurns,
+      );
+    case CampaignCalendarClockKind.lastYear:
+      return l10n.victory_conditionsCalendarLastYear(clock.lastCampaignYear);
+    case CampaignCalendarClockKind.noHaltOnMapping:
+      return l10n.victory_conditionsCalendarNoHalt(
+        TurnTimeMapping.campaignCalendarStopStartYear,
+      );
+    case CampaignCalendarClockKind.omitCountdown:
+      if (game.infiniteMode) {
+        return null;
+      }
+      return l10n.victory_conditionsCalendarEnded;
   }
 }

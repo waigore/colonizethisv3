@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flame/game.dart' hide Game;
@@ -16,6 +15,7 @@ import '../../flame/host/host.dart';
 import '../../flame/map_state/map_state.dart';
 import '../../flame/overlays/victory_overlay.dart';
 import '../../widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import '../../widgets/dialogue/ftp_dialogue_overlay.dart';
 import '../../widgets/dialogue/intervention_dialogue_overlay.dart';
 import '../../widgets/dialogue/overture_dialogue_overlay.dart';
 import '../../widgets/dialogue/tribe_first_contact_overlay.dart';
@@ -69,7 +69,8 @@ class GameScreenOverlayStack extends ConsumerWidget {
               iconSize: 24,
               onPressed: turnResolutionBlocking
                   ? null
-                  : () => showGameScreenPauseMenu(ref.read(appEventBusProvider)),
+                  : () =>
+                        showGameScreenPauseMenu(ref.read(appEventBusProvider)),
               enabled: !turnResolutionBlocking,
               tooltip: appL10n(context).game_pauseMenu_tooltip,
             ),
@@ -88,7 +89,9 @@ class GameScreenOverlayStack extends ConsumerWidget {
             game: game!,
             victory: victory!,
             bus: ref.read(appEventBusProvider),
-          ),
+          )
+        else if (game != null && game!.calendarCampaignHalted)
+          VictoryOverlay(game: game!, bus: ref.read(appEventBusProvider)),
       ],
     );
 
@@ -152,12 +155,8 @@ class GameScreenOverlayStack extends ConsumerWidget {
                 service: ref.read(gameServiceProvider),
                 orders: ref.read(currentOrdersProvider),
                 applier: ref.read(turnResolutionResultApplierProvider),
-                resume: (service, orders) =>
-                    service.resumeInterventionDecisions(
-                  game!,
-                  decisions,
-                  orders,
-                ),
+                resume: (service, orders) => service
+                    .resumeInterventionDecisions(game!, decisions, orders),
               );
             },
             child: content,
@@ -172,8 +171,23 @@ class GameScreenOverlayStack extends ConsumerWidget {
                 orders: ref.read(currentOrdersProvider),
                 applier: ref.read(turnResolutionResultApplierProvider),
                 resume: (service, orders) =>
-                    service.resumeCallToArmsDecisions(
+                    service.resumeCallToArmsDecisions(game!, decisions, orders),
+              );
+            },
+            child: content,
+          );
+        case PendingDiplomacyFtp(:final offers) when offers.isNotEmpty:
+          content = FtpDialogueOverlay(
+            game: game!,
+            pending: offers,
+            onDecisions: (decisions) {
+              applyDiplomacyResumeDecisions(
+                service: ref.read(gameServiceProvider),
+                orders: ref.read(currentOrdersProvider),
+                applier: ref.read(turnResolutionResultApplierProvider),
+                resume: (service, orders) => service.resumeFtpDecisions(
                   game!,
+                  offers,
                   decisions,
                   orders,
                 ),

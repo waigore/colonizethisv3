@@ -1,9 +1,12 @@
-
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show kMilitaryVictoryOldWorldProvinceThreshold;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
 import 'game_map_players_bar_chip_column.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart' show greatPowerPowerScore;
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show greatPowerPowerScore;
 
 /// Floating column of per–Great-Power chips on the in-game map stack.
 ///
@@ -38,21 +41,28 @@ class GameMapPlayersBar extends StatelessWidget {
     final roster = game.players
         .where((player) => !tribeIds.contains(player.id))
         .toList(growable: false);
-    return List<Player>.from(roster)
-      ..sort((a, b) {
-        final scoreCompare = greatPowerPowerScore(
-          game,
-          b.id,
-        ).compareTo(greatPowerPowerScore(game, a.id));
-        if (scoreCompare != 0) {
-          return scoreCompare;
-        }
-        return a.id.compareTo(b.id);
-      });
+    return List<Player>.from(roster)..sort((a, b) {
+      final owCompare = oldWorldProvinceCountOwnedBy(
+        game,
+        b.id,
+      ).compareTo(oldWorldProvinceCountOwnedBy(game, a.id));
+      if (owCompare != 0) {
+        return owCompare;
+      }
+      return a.displayName.compareTo(b.displayName);
+    });
   }
 
   static int powerScoreFor(Game game, String playerId) =>
       greatPowerPowerScore(game, playerId);
+
+  static int oldWorldCountFor(Game game, String playerId) =>
+      oldWorldProvinceCountOwnedBy(game, playerId);
+
+  static String oldWorldRaceLabelFor(Game game, String playerId) {
+    final count = oldWorldCountFor(game, playerId);
+    return '$count / $kMilitaryVictoryOldWorldProvinceThreshold';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,10 +76,6 @@ class GameMapPlayersBar extends StatelessWidget {
     }
     final top = topInsetOverride ?? (narrow ? narrowTopInset : wideTopInset);
     final right = rightInset ?? rightInsetDefault;
-    return Positioned(
-      top: top,
-      right: right,
-      child: column,
-    );
+    return Positioned(top: top, right: right, child: column);
   }
 }

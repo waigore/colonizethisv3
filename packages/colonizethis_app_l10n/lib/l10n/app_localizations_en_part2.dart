@@ -138,6 +138,23 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get quickBattle_quickBattle => 'Quick Battle';
 
   @override
+  String get quickBattle_autoResolveMeaning => 'Decides the battle at once.';
+
+  @override
+  String get quickBattle_quickBattleMeaning => 'You give orders in the fight.';
+
+  @override
+  String combatMode_attackersRegiments(int count) {
+    return 'Attackers: $count regiments';
+  }
+
+  @override
+  String get combatMode_details => 'Details';
+
+  @override
+  String get combatMode_hideDetails => 'Hide';
+
+  @override
   String quickBattle_attackerWins(String name) {
     return '$name wins';
   }
@@ -220,6 +237,9 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get victory_military => 'Military victory';
+
+  @override
+  String get victory_campaignComplete => 'Campaign complete';
 
   @override
   String victory_winnerOnTurn(String winner, int turn) {
@@ -400,7 +420,23 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String get moveFleet_destinationIntel_fleetsUnknown => 'Fleets unknown';
+
+  @override
+  String get moveFleet_destinationIntel_hostilePatrol => 'Hostile patrol';
+
+  @override
+  String get moveFleet_destinationIntel_hostileBlockade => 'Hostile blockade';
+
+  @override
+  String moveFleet_destinationIntel_hostileFleets(int count) {
+    return 'Hostile fleets: $count';
+  }
+
+  @override
   String get military_units_title => 'Military Units';
+  @override
+  String get military_units_counsel => 'Counsel';
 
   @override
   String get military_units_deselectAllArmies => 'Deselect all armies';
@@ -565,19 +601,44 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get naval_mission_effect_blockade =>
-      'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.';
+      'Severs the target port\'s link to its capital, so goods from that province will not reach warehouses. Also gives stronger intercept chance on fleets entering this zone, including ships leaving the target port.';
 
   @override
   String get naval_mission_effect_beachhead =>
       'Stage a landing site so your armies can invade that coast next turn; marker then expires.';
 
   @override
+  String get naval_mission_sail => 'Sail / Move';
+
+  @override
+  String get naval_mission_effect_sail =>
+      'Move this fleet to an adjacent sea zone or owned port.';
+
+  @override
   String get naval_mission_targetCaption_blockade =>
-      'Pressures the target port approaches with stronger interception than Patrol.';
+      'Goods from the chosen port will not reach its owner\'s warehouses until the blockade ends. Stronger interception than Patrol on fleets entering this zone.';
+
+  @override
+  String get naval_mission_blockade_capitalExtra =>
+      'At a capital port, sea-only and overseas links are cut; land roads still reach inland tiles.';
 
   @override
   String get naval_mission_targetCaption_beachhead =>
       'Landing site supports invasion on the following turn and expires after that turn if unused.';
+
+  @override
+  String get naval_mission_targetIntel_harborUnknown => 'Harbor status unknown';
+
+  @override
+  String get naval_mission_targetIntel_noPort => 'No port';
+
+  @override
+  String get naval_mission_targetIntel_emptyHarbor => 'Empty harbor';
+
+  @override
+  String naval_mission_targetIntel_fleetsInPort(int count) {
+    return '$count fleets in port';
+  }
 
   @override
   String get naval_units_noShipsInFleet => 'No ships in this fleet';
@@ -656,10 +717,108 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainCivilians_title => 'Train Civilians';
 
   @override
+  String get trainCivilians_roleGistExplorer =>
+      'Explores provinces · Prospects minerals';
+
+  @override
+  String get trainCivilians_roleGistBuilder =>
+      'Improves tiles · Upgrades towns';
+
+  @override
+  String get trainCivilians_roleGistEngineer =>
+      'Builds roads, ports, and forts';
+
+  @override
+  String get trainCivilians_roleGistSpy =>
+      'Holds foreign intel · Counter-espionage at home';
+
+  @override
+  String get trainCivilians_roleGistMerchant =>
+      'Purchases land in Minor/Tribe provinces';
+
+  @override
+  String get trainCivilians_roleGistRailBuilder => 'Upgrades roads to railroad';
+
+  @override
   String get trainMilitary_title => 'Train Military';
 
   @override
+  String get trainMilitary_categoryLightInfantry => 'Light infantry';
+
+  @override
+  String get trainMilitary_categoryRegularInfantry => 'Regular infantry';
+
+  @override
+  String get trainMilitary_categoryHeavyInfantry => 'Heavy infantry';
+
+  @override
+  String get trainMilitary_categoryBowmen => 'Bowmen';
+
+  @override
+  String get trainMilitary_categoryLightCavalry => 'Light cavalry';
+
+  @override
+  String get trainMilitary_categorySpearCavalry => 'Spear cavalry';
+
+  @override
+  String get trainMilitary_categoryHeavyCavalry => 'Heavy cavalry';
+
+  @override
+  String get trainMilitary_categoryLightArtillery => 'Light artillery';
+
+  @override
+  String get trainMilitary_categoryHeavyArtillery => 'Heavy artillery';
+
+  @override
+  String get trainMilitary_combatGistLightInfantry => 'Melee skirmishers';
+
+  @override
+  String get trainMilitary_combatGistRegularInfantry => 'Melee line';
+
+  @override
+  String get trainMilitary_combatGistHeavyInfantry => 'Ranged firepower';
+
+  @override
+  String get trainMilitary_combatGistBowmen => 'Ranged volleys';
+
+  @override
+  String get trainMilitary_combatGistLightCavalry => 'Fast harassers';
+
+  @override
+  String get trainMilitary_combatGistSpearCavalry => 'Shock cavalry';
+
+  @override
+  String get trainMilitary_combatGistHeavyCavalry => 'Armored charge';
+
+  @override
+  String get trainMilitary_combatGistLightArtillery => 'Field guns';
+
+  @override
+  String get trainMilitary_combatGistHeavyArtillery => 'Siege guns';
+
+  @override
+  String trainMilitary_foodUpkeepPerTurn(int count) {
+    return '$count food / turn';
+  }
+
+  @override
   String get trainNaval_title => 'Train Naval';
+
+  @override
+  String trainNaval_merchantCargoHolds(int count) {
+    return '+$count cargo holds';
+  }
+
+  @override
+  String get trainNaval_warshipRoleFastInterceptor => 'Fast interceptor';
+
+  @override
+  String get trainNaval_warshipRoleBattleShip => 'Battle ship';
+
+  @override
+  String trainNaval_roleCapabilityGist(String role, String capability) {
+    return '$role · $capability';
+  }
 
   @override
   String get trainUnits_noCapital => 'No capital set — cannot train units';
@@ -695,6 +854,29 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get trainDialog_costPeasantsTooltip => 'Peasants';
+
+  @override
+  String trainUnits_promisedToWorkerTraining(int count) {
+    return '$count already promised to worker training';
+  }
+
+  @override
+  String trainUnits_promisedToShips(int count) {
+    return '$count already promised to ships';
+  }
+
+  @override
+  String trainUnits_promisedToRegiments(int count) {
+    return '$count already promised to regiments';
+  }
+
+  @override
+  String get trainUnits_peasantsChipDetailsHeader =>
+      'Peasants already promised:';
+
+  @override
+  String get trainUnits_peasantsChipDetailsEmpty =>
+      'No peasants promised to other training.';
 
   @override
   String trainDialog_costCommodityTooltip(String name, String category) {

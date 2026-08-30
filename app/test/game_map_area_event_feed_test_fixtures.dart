@@ -1,5 +1,5 @@
-// Shared harness and pump helpers for `game_map_area_event_feed_test.dart`
-// (Refs #4146 — keeps the main suite under the 800-line app test gate).
+// Shared harness and pump helpers for `game_map_area_event_feed_*` suites
+// (Refs #4146, #4305 — keeps event-feed widget tests under the 500-line gate).
 
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
@@ -142,10 +142,17 @@ Future<void> commitEventFeedTurnEvents(
   for (final event in events) {
     harness.bus.emit(event);
   }
+  // Digest marks that DLG50001 will show, so last-turn playback stays gated
+  // (SPEC/ui/map-widget.md). Feed suites do not close news; omitting digest
+  // starts pulses immediately and duplicates spatial captions in finders.
   harness.bus.emit(
     TurnResolutionCompleteEvent(
       gameId: harness.game.id,
       turnNumber: turnNumber,
+      turnNewsDigest: TurnNewsDigest(
+        resolvedTurnNumber: turnNumber,
+        lines: const [],
+      ),
     ),
   );
   await tester.pump();

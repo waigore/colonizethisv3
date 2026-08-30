@@ -1,0 +1,201 @@
+// Scenario table for GameSetup additional naming (relations) (Refs #4349 slice D).
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_test/test.dart';
+
+import '../init_game_orchestrator_test_support.dart';
+import 'scenario_runner.dart';
+
+List<RunnableScenario>
+gameSetupVariantsAndNamingAdditionalRelationsScenarios() => [
+  rs(
+    'regional faction discovery - same-region relations initialized, cross-region undiscovered',
+    () {
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p3',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p2', id2: 'p1'),
+          TopologyEdge(id1: 'p2', id2: 'p3'),
+        ],
+      );
+      final owTileMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: const [
+          ['p2', 'p3'],
+          ['p1', 'p1'],
+        ],
+      );
+
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'nw1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'nw2',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'nw2', id2: 'nw1')],
+      );
+      final nwTileMap = TileMapResult(
+        width: 1,
+        height: 2,
+        grid: const [
+          ['nw2'],
+          ['nw1'],
+        ],
+      );
+
+      final config = configWithOverrides(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 1,
+        tribeCount: 1,
+        numProvincesOldWorld: 2,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+      );
+
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'regional-discovery',
+      );
+
+      final owRelation = result.game.diplomacyRelations.firstWhere(
+        (r) =>
+            (r.factionId1 == 'gp1' && r.factionId2 == 'minor1') ||
+            (r.factionId1 == 'minor1' && r.factionId2 == 'gp1'),
+        orElse: () => throw Exception('GP-Minor relation not found'),
+      );
+      expect(owRelation.state, RelationState.atPeace);
+      expect(owRelation.score, 50);
+
+      final crossRelationCount = result.game.diplomacyRelations
+          .where(
+            (r) =>
+                (r.factionId1 == 'gp1' && r.factionId2 == 'tribe1') ||
+                (r.factionId2 == 'gp1' && r.factionId1 == 'tribe1') ||
+                (r.factionId1 == 'minor1' && r.factionId2 == 'tribe1') ||
+                (r.factionId2 == 'minor1' && r.factionId1 == 'tribe1'),
+          )
+          .length;
+      expect(crossRelationCount, 0);
+    },
+  ),
+  rs('sea-zone naming covers all topology sea zones', () {
+    final owTopology = MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'p1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 's1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+        TopologyNode(
+          id: 's2',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+      ],
+      edges: const [
+        TopologyEdge(id1: 'p1', id2: 's1'),
+        TopologyEdge(id1: 's1', id2: 's2'),
+      ],
+    );
+    final nwTopology = MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'n1',
+          regionId: 'newWorld',
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 'ns1',
+          regionId: 'newWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+        TopologyNode(
+          id: 'ns2',
+          regionId: 'newWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+      ],
+      edges: const [
+        TopologyEdge(id1: 'n1', id2: 'ns1'),
+        TopologyEdge(id1: 'ns1', id2: 'ns2'),
+      ],
+    );
+    final config = configWithOverrides(
+      selectedGreatPowerIds: ['england'],
+      continentCount: 1,
+      minorNationCount: 0,
+      tribeCount: 1,
+      numProvincesOldWorld: 1,
+      numProvincesNewWorld: 1,
+      minProvincesPerMinor: 0,
+      seed: 7,
+    );
+    final result = createGameFromGeneratedMaps(
+      config: config,
+      tileMapOldWorld: TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 'p1'],
+          ['s1', 's2'],
+        ],
+      ),
+      topologyOldWorld: owTopology,
+      tileMapNewWorld: TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['n1', 'n1'],
+          ['ns1', 'ns2'],
+        ],
+      ),
+      topologyNewWorld: nwTopology,
+      gameId: 'sea-zone-names',
+      namingSeed: 7,
+    );
+    final names = result.game.worldState.seaZoneDisplayNameById;
+    expect(names['oldWorld|s1'], isNotNull);
+    expect(names['oldWorld|s2'], isNotNull);
+    expect(names['newWorld|ns1'], isNotNull);
+    expect(names['newWorld|ns2'], isNotNull);
+    for (final v in names.values) {
+      expect(v.isNotEmpty, isTrue);
+    }
+  }),
+];

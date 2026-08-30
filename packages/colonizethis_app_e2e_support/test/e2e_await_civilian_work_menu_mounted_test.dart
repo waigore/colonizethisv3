@@ -21,111 +21,13 @@
 // is the only per-PR enforcement gate for the helper's contract.
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Host that mounts at most one of the three canonical work-menu labels on
-/// demand so the test can flip visibility while the helper polls. `Timer`
-/// callbacks scheduled in [State.initState] fire when `tester.pump` advances
-/// fake-time past the registered duration, mirroring the
-/// `e2e_wait_until_any_finder_hit_testable_test.dart` precedent.
-class _WorkMenuHost extends StatefulWidget {
-  const _WorkMenuHost({
-    required this.controller,
-    this.mountAfter,
-    this.labelToMount,
-  });
-
-  final _WorkMenuController controller;
-
-  /// Fake-async delay before the host swaps in [labelToMount], or `null` to
-  /// leave the controller's initial state untouched.
-  final Duration? mountAfter;
-
-  /// Label to surface as a mounted [Text] when [mountAfter] elapses.
-  final String? labelToMount;
-
-  @override
-  State<_WorkMenuHost> createState() => _WorkMenuHostState();
-}
-
-class _WorkMenuHostState extends State<_WorkMenuHost> {
-  Timer? _mountTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onControllerChanged);
-    final after = widget.mountAfter;
-    final label = widget.labelToMount;
-    if (after != null && label != null) {
-      _mountTimer = Timer(after, () {
-        widget.controller.mountedLabel = label;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _mountTimer?.cancel();
-    widget.controller.removeListener(_onControllerChanged);
-    super.dispose();
-  }
-
-  void _onControllerChanged() {
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final label = widget.controller.mountedLabel;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[if (label != null) Text(label)],
-    );
-  }
-}
-
-class _WorkMenuController extends ChangeNotifier {
-  _WorkMenuController({String? initialLabel}) : _mountedLabel = initialLabel;
-
-  String? _mountedLabel;
-
-  String? get mountedLabel => _mountedLabel;
-
-  set mountedLabel(String? value) {
-    if (_mountedLabel == value) return;
-    _mountedLabel = value;
-    notifyListeners();
-  }
-}
-
-Future<void> _pumpHost(
-  WidgetTester tester,
-  _WorkMenuController controller, {
-  Duration? mountAfter,
-  String? labelToMount,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: _WorkMenuHost(
-            controller: controller,
-            mountAfter: mountAfter,
-            labelToMount: labelToMount,
-          ),
-        ),
-      ),
-    ),
-  );
-}
+import 'support/civilian_work_menu_host_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -170,8 +72,10 @@ void main() {
     // must return without burning fake-async time so the common Builder
     // tap-then-build-improvement path is byte-equivalent to the pre-lift
     // inline `e2eWaitUntilAnyFinderHitTestable` call.
-    final controller = _WorkMenuController(initialLabel: 'Build improvement');
-    await _pumpHost(tester, controller);
+    final controller = CivilianWorkMenuController(
+      initialLabel: 'Build improvement',
+    );
+    await pumpCivilianWorkMenuHost(tester, controller);
     final sw = Stopwatch()..start();
     await e2eAwaitCivilianWorkMenuMounted(tester);
     expect(
@@ -190,8 +94,8 @@ void main() {
       // that bound the helper to `Build improvement` only would silently
       // burn the 5 s timeout when an Explorer tapped Assign and the panel
       // surfaced `Prospect` instead.
-      final controller = _WorkMenuController(initialLabel: 'Prospect');
-      await _pumpHost(tester, controller);
+      final controller = CivilianWorkMenuController(initialLabel: 'Prospect');
+      await pumpCivilianWorkMenuHost(tester, controller);
       final sw = Stopwatch()..start();
       await e2eAwaitCivilianWorkMenuMounted(tester);
       expect(
@@ -212,8 +116,8 @@ void main() {
       // assignment in fleet-reach scenarios surfaces `Explore` first; a
       // regression that bound the helper to one of the other labels would
       // silently stall the bundled-Explore retry loop.
-      final controller = _WorkMenuController(initialLabel: 'Explore');
-      await _pumpHost(tester, controller);
+      final controller = CivilianWorkMenuController(initialLabel: 'Explore');
+      await pumpCivilianWorkMenuHost(tester, controller);
       final sw = Stopwatch()..start();
       await e2eAwaitCivilianWorkMenuMounted(tester);
       expect(
@@ -234,8 +138,8 @@ void main() {
     // helper has already passed its pre-pump scan and is inside the
     // adaptive backoff loop. The helper must observe the late mount via
     // its `tester.pump` cadence without the test driving extra pumps.
-    final controller = _WorkMenuController();
-    await _pumpHost(
+    final controller = CivilianWorkMenuController();
+    await pumpCivilianWorkMenuHost(
       tester,
       controller,
       mountAfter: const Duration(milliseconds: 80),
@@ -268,8 +172,8 @@ void main() {
     // menu must surface a TestFailure so the surrounding scenario fails at
     // the offending turn rather than continuing with a stale civilian
     // panel state (#2336 AC10).
-    final controller = _WorkMenuController();
-    await _pumpHost(tester, controller);
+    final controller = CivilianWorkMenuController();
+    await pumpCivilianWorkMenuHost(tester, controller);
     Object? caught;
     try {
       await e2eAwaitCivilianWorkMenuMounted(
@@ -305,8 +209,8 @@ void main() {
     // timeout and confirming `_perf` recorded a timing slice keyed on the
     // caller's phase.
     const callerPhase = 'wait_until_civilian_work_menu_row';
-    final controller = _WorkMenuController();
-    await _pumpHost(tester, controller);
+    final controller = CivilianWorkMenuController();
+    await pumpCivilianWorkMenuHost(tester, controller);
     final perf = E2ePerfLog('await_civilian_work_menu_phase_pin');
 
     // Capture debugPrint output so we can assert on the inner perf timing

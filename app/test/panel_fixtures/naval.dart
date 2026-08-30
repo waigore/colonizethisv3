@@ -8,7 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'core.dart';
 
-/// Lightweight game shaped for the `naval_units_panel_part*` family.
+/// Lightweight game shaped for the naval panel suite family.
 ///
 /// Covers what those parts read from `game` / `humanPlayerIdWithFleets`:
 /// - one human player ([kPanelTestHumanPlayerId]) with a defined
@@ -24,8 +24,8 @@ import 'core.dart';
 ///   sea-zone and port locate tile keys resolve like a generated map.
 ///
 /// A non-owning player id (e.g. `'no-such-player'`) exercises the empty state.
-/// This is the shape the heavier `naval_units_panel_part1` map-derived
-/// assertions need; lighter parts simply ignore the unused richness.
+/// This is the shape the heavier `naval_units_panel_roster_and_draft`
+/// assertions need; lighter suites simply ignore the unused richness.
 Game buildNavalPanelTestGame() {
   const human = kPanelTestHumanPlayerId;
   const ow = 'oldWorld';

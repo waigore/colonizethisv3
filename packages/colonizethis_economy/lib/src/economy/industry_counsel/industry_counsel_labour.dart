@@ -4,6 +4,7 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../economy_worker_consumption_rates.dart';
 import 'industry_counsel_constants.dart';
 import 'industry_counsel_growth_stage.dart';
 import 'industry_counsel_scored_candidate.dart';
@@ -56,9 +57,7 @@ List<AssignedRecipe> industryCounselAllocateLabourCore({
             agendaId: agendaId,
           );
     if (score <= 0) continue;
-    candidates.add(
-      IndustryCounselScoredCandidate(item: recipe, score: score),
-    );
+    candidates.add(IndustryCounselScoredCandidate(item: recipe, score: score));
   }
 
   if (candidates.isEmpty) return const [];
@@ -102,9 +101,7 @@ int industryCounselTotalAssignedLabour(List<AssignedRecipe> assignments) {
   return total;
 }
 
-int industryCounselDesiredOutputForAssignment(
-  AssignedRecipe assignment,
-) {
+int industryCounselDesiredOutputForAssignment(AssignedRecipe assignment) {
   final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
   if (recipe == null || recipe.labourPerOutput <= 0) return 0;
   return assignment.assignedLabour ~/ recipe.labourPerOutput;
@@ -156,16 +153,7 @@ Map<WorkerTier, int> industryCounselSustainableTrainedCounts({
 }
 
 String? industryCounselLuxuryCommodityForTier(WorkerTier tier) {
-  switch (tier) {
-    case WorkerTier.peasant:
-      return null;
-    case WorkerTier.apprentice:
-      return CommodityCatalog.refinedSugar.id;
-    case WorkerTier.journeyman:
-      return CommodityCatalog.cigars.id;
-    case WorkerTier.master:
-      return CommodityCatalog.furHats.id;
-  }
+  return workerLuxuryCommodityIdForTier(tier);
 }
 
 double industryCounselScoreTrainWorker({

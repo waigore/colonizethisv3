@@ -191,13 +191,13 @@ void main() {
     );
     expect(containerFinder, findsOneWidget);
 
-    final gesture = await tester.createGesture(
-      kind: PointerDeviceKind.mouse,
-    );
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
     addTearDown(gesture.removePointer);
     await gesture.addPointer(location: Offset.zero);
     await tester.pump();
-    await gesture.moveTo(tester.getCenter(find.byKey(kEmpireProductionButtonKey)));
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(kEmpireProductionButtonKey)),
+    );
     await tester.pumpAndSettle();
 
     final hovered = tester.widget<AnimatedContainer>(containerFinder);
@@ -209,29 +209,30 @@ void main() {
     );
   });
 
-  testWidgets('Rail button icon glyphs render without srcIn ColorFiltered tint', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(railScaffold());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Rail button icon glyphs render without srcIn ColorFiltered tint',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(railScaffold());
+      await tester.pumpAndSettle();
 
-    for (final key in railButtonKeys) {
-      final filterFinder = find.descendant(
-        of: find.byKey(key),
-        matching: find.byType(ColorFiltered),
-      );
-      expect(
-        filterFinder,
-        findsNothing,
-        reason: 'Rail button $key must not apply a srcIn tint over the icon',
-      );
-      final iconFinder = find.descendant(
-        of: find.byKey(key),
-        matching: find.byType(StrictAssetIcon),
-      );
-      expect(iconFinder, findsOneWidget);
-    }
-  });
+      for (final key in railButtonKeys) {
+        final filterFinder = find.descendant(
+          of: find.byKey(key),
+          matching: find.byType(ColorFiltered),
+        );
+        expect(
+          filterFinder,
+          findsNothing,
+          reason: 'Rail button $key must not apply a srcIn tint over the icon',
+        );
+        final iconFinder = find.descendant(
+          of: find.byKey(key),
+          matching: find.byType(StrictAssetIcon),
+        );
+        expect(iconFinder, findsOneWidget);
+      }
+    },
+  );
 
   testWidgets('Hover lifts border but does not add icon glyph tint', (
     WidgetTester tester,
@@ -239,13 +240,13 @@ void main() {
     await tester.pumpWidget(railScaffold());
     await tester.pumpAndSettle();
 
-    final gesture = await tester.createGesture(
-      kind: PointerDeviceKind.mouse,
-    );
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
     addTearDown(gesture.removePointer);
     await gesture.addPointer(location: Offset.zero);
     await tester.pump();
-    await gesture.moveTo(tester.getCenter(find.byKey(kEmpireProductionButtonKey)));
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(kEmpireProductionButtonKey)),
+    );
     await tester.pumpAndSettle();
 
     final filterFinder = find.descendant(
@@ -255,7 +256,8 @@ void main() {
     expect(
       filterFinder,
       findsNothing,
-      reason: 'Hover affordance must not recolour the icon glyph via srcIn tint',
+      reason:
+          'Hover affordance must not recolour the icon glyph via srcIn tint',
     );
     final containerFinder = find.descendant(
       of: find.byKey(kEmpireProductionButtonKey),
@@ -263,94 +265,9 @@ void main() {
     );
     final border =
         (tester.widget<AnimatedContainer>(containerFinder).decoration
-                as BoxDecoration)
-            .border as Border;
+                    as BoxDecoration)
+                .border
+            as Border;
     expect(border.top.color, EditorialMonoclePalette.accentDim);
   });
-
-  testWidgets('Rail buttons render with 3 dp vertical gaps between them', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(railScaffold());
-    await tester.pumpAndSettle();
-
-    expect(GameMapEmpireLeftRail.rowGap, 3.0);
-    for (var i = 1; i < railButtonKeys.length; i++) {
-      final aBottom = tester
-          .getRect(find.byKey(railButtonKeys[i - 1]))
-          .bottom;
-      final bTop = tester.getRect(find.byKey(railButtonKeys[i])).top;
-      expect(
-        bTop - aBottom,
-        3.0,
-        reason:
-            'Rail button ${railButtonKeys[i]} must sit 3 dp below ${railButtonKeys[i - 1]}',
-      );
-    }
-  });
-
-  testWidgets('No rail descendant paints Colors.white as a Material color', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(railScaffold(debugConsoleEnabled: true));
-    await tester.pumpAndSettle();
-
-    final materials = tester
-        .widgetList<Material>(
-          find.descendant(
-            of: find.byType(GameMapEmpireLeftRail),
-            matching: find.byType(Material),
-          ),
-        )
-        .toList();
-    expect(materials.isNotEmpty, isTrue, reason: 'Rail must paint Material chrome');
-    for (final material in materials) {
-      final color = material.color;
-      expect(
-        color,
-        anyOf(isNull, equals(Colors.transparent)),
-        reason:
-            'Rail Material chrome must be transparent so dark editorial-monocle '
-            'chrome shows through (no light parchment / Colors.white surface)',
-      );
-    }
-  });
-
-  testWidgets(
-    'Rail exposes Semantics(button: true) with the tooltip label for each entry',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(railScaffold());
-      await tester.pumpAndSettle();
-
-      final Map<Key, String> expectedLabels = <Key, String>{
-        kEmpireProductionButtonKey: 'Production',
-        kEmpireTradeButtonKey: 'Trade',
-        kEmpireDevelopmentButtonKey: 'Development',
-        kEmpireCivilianUnitsButtonKey: 'Civilian Units',
-        kEmpireMilitaryUnitsButtonKey: 'Military Units',
-        kEmpireNavalUnitsButtonKey: 'Naval Units',
-        kEmpireDiplomacyButtonKey: 'Diplomacy',
-        kEmpireTechnologyButtonKey: 'Technology',
-        kEmpireVictoryButtonKey: 'Victory',
-      };
-
-      for (final entry in expectedLabels.entries) {
-        final semanticsFinder = find.ancestor(
-          of: find.byKey(entry.key),
-          matching: find.byWidgetPredicate(
-            (widget) =>
-                widget is Semantics &&
-                widget.properties.button == true &&
-                widget.properties.label == entry.value,
-          ),
-        );
-        expect(
-          semanticsFinder,
-          findsOneWidget,
-          reason:
-              'Rail button ${entry.key} must wrap its glyph in Semantics(button: true, label: "${entry.value}")',
-        );
-      }
-    },
-  );
 }

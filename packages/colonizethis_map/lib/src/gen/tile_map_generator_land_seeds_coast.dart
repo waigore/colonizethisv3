@@ -2,25 +2,23 @@
 ///
 /// SPEC/program/tile-map-gen-algorithm.md.
 ///
-/// Extracted from the former `tile_map_generator_land_seeds_coast_part`
-/// `part` fragment so the thickness-first coastline growth is an independently
-/// importable, testable unit (see #3588). Called from the organic placement
-/// pass when land budget remains.
+/// Grow driver only; registration and scoring live in sibling libraries
+/// (Refs #4654 Slice B).
 library;
 
 import 'dart:math';
 
 import 'tile_map_generator_land_seeds_shared.dart';
-import '../tile_map_directions.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
 import '../tile_map_grid.dart';
+import 'tile_map_generator_land_seeds_coast_membership.dart';
+import 'tile_map_generator_land_seeds_coast_register.dart';
+import 'tile_map_generator_land_seeds_coast_score.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_province_budget.dart';
 
-/// Coastal-tile registration / sea-neighbor expansion, local-density scoring,
-/// per-continent single-step growth, and the top-level thickness-first
-/// coastline growth driver.
+/// Top-level thickness-first coastline growth driver.
 class LandSeedCoast {
   const LandSeedCoast._();
 
@@ -47,12 +45,12 @@ class LandSeedCoast {
 
     var g = TileMapGrid.copy(grid);
     var cg = TileMapGrid.copy(continentGrid);
-    final coastalByContinent = <int, List<(int x, int y)>>{};
+    final coastalByContinent = <int, LandSeedCoastalCells>{};
     for (var c = 0; c < numContinents; c++) {
-      coastalByContinent[c] = [];
+      coastalByContinent[c] = LandSeedCoastalCells();
     }
 
-    _registerCoastalSeaTilesAdjacentToLand(
+    LandSeedCoastRegister.registerCoastalSeaTilesAdjacentToLand(
       params,
       g,
       cg,
@@ -66,7 +64,6 @@ class LandSeedCoast {
       numContinents: numContinents,
     );
 
-    // Radius for local land-neighbour scoring when picking coastal cells.
     const scoreRadius = 3;
     final buffer = params.continentBufferTiles == 0
         ? 1
@@ -100,124 +97,19 @@ class LandSeedCoast {
       }
 
       if (!anyProgress) {
-        // No continent could grow further under current constraints; stop.
         break;
       }
     }
     return (g, cg);
   }
 
-  static void _appendOrthogonalSeaNeighborsToCoastalList(
-    TileMapLandSeedParams params,
-    List<List<String>> g,
-    String seaZoneId,
-    int sx,
-    int sy,
-    List<(int x, int y)> coastalList,
-  ) {
-    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
-      final nx = sx + dx;
-      final ny = sy + dy;
-      if (nx >= 0 &&
-          nx < params.width &&
-          ny >= 0 &&
-          ny < params.height &&
-          g[ny][nx] == seaZoneId &&
-          !coastalList.contains((nx, ny))) {
-        coastalList.add((nx, ny));
-      }
-    }
-  }
-
-  static void _registerFirstOrthogonalSeaTouchingLand(
-    TileMapLandSeedParams params,
-    List<List<String>> g,
-    String seaZoneId,
-    int x,
-    int y,
-    void Function(int nx, int ny) onSea,
-  ) {
-    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
-      final nx = x + dx;
-      final ny = y + dy;
-      if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-        continue;
-      }
-      if (g[ny][nx] != seaZoneId) continue;
-      onSea(nx, ny);
-      return;
-    }
-  }
-
-  static void _registerCoastalSeaTilesAdjacentToLand(
-    TileMapLandSeedParams params,
-    List<List<String>> g,
-    List<List<int>> cg,
-    String seaZoneId,
-    Map<int, List<(int x, int y)>> coastalByContinent,
-  ) {
-    TileMapGrid.forEachIndex(params.height, params.width, (y, x) {
-      if (g[y][x] != kTileMapLandSentinel) return;
-      final c = cg[y][x];
-      if (c < 0) return;
-      _registerFirstOrthogonalSeaTouchingLand(
-        params,
-        g,
-        seaZoneId,
-        x,
-        y,
-        (nx, ny) => coastalByContinent[c]!.add((nx, ny)),
-      );
-    });
-  }
-
-  static int _coastalNeighborScoreDelta(
-    List<List<String>> g,
-    List<List<int>> cg,
-    int nx,
-    int ny,
-    int continentIndex,
-  ) {
-    if (g[ny][nx] != kTileMapLandSentinel) return 0;
-    final nc = cg[ny][nx];
-    if (nc == continentIndex) return 1;
-    if (nc >= 0 && nc != continentIndex) return -10;
-    return 0;
-  }
-
-  static int _scoreCoastalCellForContinent(
-    List<List<String>> g,
-    List<List<int>> cg,
-    TileMapLandSeedParams params,
-    int sx,
-    int sy,
-    int continentIndex,
-    int scoreRadius,
-  ) {
-    var score = 0;
-    for (var dy = -scoreRadius; dy <= scoreRadius; dy++) {
-      for (var dx = -scoreRadius; dx <= scoreRadius; dx++) {
-        final nx = sx + dx;
-        final ny = sy + dy;
-        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-          continue;
-        }
-        if (dx == 0 && dy == 0) continue;
-        score += _coastalNeighborScoreDelta(g, cg, nx, ny, continentIndex);
-      }
-    }
-    return score;
-  }
-
-  /// Attempts one coastal growth step for [continentIndex]. Returns whether a
-  /// sea cell was converted to land.
   static bool _tryGrowOneCoastalCellForContinent(
     TileMapLandSeedParams params,
     int continentIndex,
     List<List<String>> g,
     List<List<int>> cg,
     String seaZoneId,
-    Map<int, List<(int x, int y)>> coastalByContinent,
+    Map<int, LandSeedCoastalCells> coastalByContinent,
     List<int> budgetPerContinent,
     List<(int, int)> bufferOffsets,
     int scoreRadius,
@@ -230,7 +122,7 @@ class LandSeedCoast {
     var bestScore = kMinLandSeedScoreSentinel;
     final bestCandidates = <(int x, int y)>[];
 
-    for (final (sx, sy) in coastal) {
+    for (final (sx, sy) in coastal.list) {
       if (g[sy][sx] != seaZoneId) continue;
 
       if (LandSeedShared.wouldJoinOtherContinentInBuffer(
@@ -244,7 +136,7 @@ class LandSeedCoast {
         continue;
       }
 
-      final score = _scoreCoastalCellForContinent(
+      final score = LandSeedCoastScore.scoreCoastalCellForContinent(
         g,
         cg,
         params,
@@ -270,16 +162,14 @@ class LandSeedCoast {
     cg[sy][sx] = continentIndex;
     budgetPerContinent[continentIndex]--;
 
-    coastalByContinent[continentIndex]!.removeWhere(
-      (p) => p.$1 == sx && p.$2 == sy,
-    );
-    _appendOrthogonalSeaNeighborsToCoastalList(
+    coastal.removeCell((sx, sy));
+    LandSeedCoastRegister.appendOrthogonalSeaNeighborsToCoastalList(
       params,
       g,
       seaZoneId,
       sx,
       sy,
-      coastalByContinent[continentIndex]!,
+      coastal,
     );
     return true;
   }

@@ -3,10 +3,15 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'diplomacy_relation_lookup.dart';
 
 /// Canonical faction pair IDs for a pair key.
-({String id1, String id2}) canonicalPairIds(String a, String b) {
-  final key = pairKey(a, b);
+({String id1, String id2})? pairIdsFromKey(String key) {
   final parts = key.split('|');
+  if (parts.length != 2) return null;
   return (id1: parts[0], id2: parts[1]);
+}
+
+/// Canonical faction pair IDs for two faction identifiers.
+({String id1, String id2}) canonicalPairIds(String a, String b) {
+  return pairIdsFromKey(pairKey(a, b)) ?? (id1: a, id2: b);
 }
 
 /// Updater applying declare-war relation state for the batched
@@ -56,13 +61,14 @@ DiplomacyRelation Function(DiplomacyRelation?) peaceRelationUpdater(
   );
 };
 
-/// Updater applying a fixed Grant Aid relation modifier (+5, clamped) for the
-/// batched [RelationUpsertIndex] path (Refs #3419 step 5 / #4037).
+/// Updater applying a fixed Grant Aid relation modifier
+/// ([grantAidRelationScoreDelta], clamped) for the batched [RelationUpsertIndex]
+/// path (Refs #3419 step 5 / #4037).
 DiplomacyRelation Function(DiplomacyRelation?) grantAidRelationUpdater(
   String gpId,
   String targetId,
   int turn,
-) => _scoreDeltaUpdater(gpId, targetId, 5, turn);
+) => _scoreDeltaUpdater(gpId, targetId, grantAidRelationScoreDelta, turn);
 
 /// Updater applying a [boost] to the relation score (clamped) for the batched
 /// [RelationUpsertIndex] path (Refs #4037).

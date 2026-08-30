@@ -35,7 +35,7 @@ mixin GameScreenFallbackNextTurnRunner
   Future<void> runFlameCanvasFallbackNextTurn() async {
     final context = this.context;
     final game = widget.game;
-    if (!GameMapAreaStateLogic.allowsFullTurnResolution(game)) {
+    if (!GameMapAreaStateLogicShell.allowsFullTurnResolution(game)) {
       return;
     }
     final currentTurn = game.worldState.turnState.turnNumber;
@@ -46,6 +46,7 @@ mixin GameScreenFallbackNextTurnRunner
     final warnIdleCiviliansEnabled =
         settings[UxSettingsKeys.warnIdleCiviliansOnEndTurn] as bool? ?? true;
     final bus = ref.read(appEventBusProvider);
+    final mapDataForConfirm = ref.read(gameServiceProvider).getMapData(game.id);
     final ok = await confirmNextTurnWithIdleCivilianWarning(
       context: context,
       game: game,
@@ -54,6 +55,7 @@ mixin GameScreenFallbackNextTurnRunner
       orders: orders,
       warnIdleCiviliansEnabled: warnIdleCiviliansEnabled,
       bus: bus,
+      topology: mapDataForConfirm?.combinedTopology,
       onDisableIdleCivilianWarning: () => ref
           .read(settingsProvider.notifier)
           .setValue(UxSettingsKeys.warnIdleCiviliansOnEndTurn, false),

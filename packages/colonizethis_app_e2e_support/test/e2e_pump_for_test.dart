@@ -53,176 +53,112 @@
 library;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Host that owns an active [Ticker] and counts every frame the binding
-/// processes after the ticker is started.
-///
-/// [Ticker.start] dispatches one `onTick` callback per frame as long as
-/// the ticker is muted=false and active, so each `tester.pump(step)`
-/// invocation inside `e2ePumpFor` produces exactly one tick. The
-/// counter is exposed via [framesPumped] so the surrounding test can
-/// assert the iteration count after the helper returns.
-class _TickerFrameCounter extends StatefulWidget {
-  const _TickerFrameCounter({required this.onState});
-
-  final void Function(_TickerFrameCounterState state) onState;
-
-  @override
-  State<_TickerFrameCounter> createState() => _TickerFrameCounterState();
-}
-
-class _TickerFrameCounterState extends State<_TickerFrameCounter>
-    with SingleTickerProviderStateMixin {
-  int framesPumped = 0;
-  late final Ticker _ticker;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.onState(this);
-    _ticker = createTicker((_) => framesPumped++);
-  }
-
-  void startCounting() {
-    framesPumped = 0;
-    _ticker.start();
-  }
-
-  void stopCounting() {
-    _ticker.stop();
-  }
-
-  @override
-  void dispose() {
-    _ticker.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
-
-Future<_TickerFrameCounterState> _pumpTickerHost(WidgetTester tester) async {
-  late _TickerFrameCounterState captured;
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: _TickerFrameCounter(onState: (s) => captured = s),
-      ),
-    ),
-  );
-  return captured;
-}
+import 'support/e2e_pump_for_ticker_host.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('e2ePumpFor', () {
-    testWidgets(
-      'short-circuits before any pump when total is Duration.zero',
-      (WidgetTester tester) async {
-        final host = await _pumpTickerHost(tester);
-        host.startCounting();
-        final sw = Stopwatch()..start();
+    testWidgets('short-circuits before any pump when total is Duration.zero', (
+      WidgetTester tester,
+    ) async {
+      final host = await pumpTickerFrameCounterHost(tester);
+      host.startCounting();
+      final sw = Stopwatch()..start();
 
-        await e2ePumpFor(tester, Duration.zero);
-        host.stopCounting();
+      await e2ePumpFor(tester, Duration.zero);
+      host.stopCounting();
 
-        expect(
-          host.framesPumped,
-          0,
-          reason:
-              'A zero-duration call must not pump any frames. '
-              '`e2eWaitUntilFound` passes `Duration.zero` on its '
-              '`diagnoseAfter` failure path by default; a regression that '
-              'always pumps one 50ms frame would silently lengthen every '
-              'failure timeline by a frame and burn wall-clock budget on '
-              'the success path of any future caller that opts into a '
-              'zero-cap settle (#2336 AC5).',
-        );
-        expect(
-          sw.elapsed,
-          lessThan(const Duration(milliseconds: 200)),
-          reason:
-              'The pre-loop short-circuit must return well inside any '
-              'sensible wall-clock budget when nothing needs settling.',
-        );
-      },
-    );
+      expect(
+        host.framesPumped,
+        0,
+        reason:
+            'A zero-duration call must not pump any frames. '
+            '`e2eWaitUntilFound` passes `Duration.zero` on its '
+            '`diagnoseAfter` failure path by default; a regression that '
+            'always pumps one 50ms frame would silently lengthen every '
+            'failure timeline by a frame and burn wall-clock budget on '
+            'the success path of any future caller that opts into a '
+            'zero-cap settle (#2336 AC5).',
+      );
+      expect(
+        sw.elapsed,
+        lessThan(const Duration(milliseconds: 200)),
+        reason:
+            'The pre-loop short-circuit must return well inside any '
+            'sensible wall-clock budget when nothing needs settling.',
+      );
+    });
 
-    testWidgets(
-      'short-circuits without pumping when total is negative',
-      (WidgetTester tester) async {
-        final host = await _pumpTickerHost(tester);
-        host.startCounting();
+    testWidgets('short-circuits without pumping when total is negative', (
+      WidgetTester tester,
+    ) async {
+      final host = await pumpTickerFrameCounterHost(tester);
+      host.startCounting();
 
-        await e2ePumpFor(tester, const Duration(milliseconds: -25));
-        host.stopCounting();
+      await e2ePumpFor(tester, const Duration(milliseconds: -25));
+      host.stopCounting();
 
-        expect(
-          host.framesPumped,
-          0,
-          reason:
-              'A negative duration is treated by the strict `elapsed < total` '
-              'check as "nothing to do" — the loop body must not execute. A '
-              'regression that absolutized or ignored the sign would pump '
-              'unbounded frames on a defensive caller passing a clamped '
-              'delta.',
-        );
-      },
-    );
+      expect(
+        host.framesPumped,
+        0,
+        reason:
+            'A negative duration is treated by the strict `elapsed < total` '
+            'check as "nothing to do" — the loop body must not execute. A '
+            'regression that absolutized or ignored the sign would pump '
+            'unbounded frames on a defensive caller passing a clamped '
+            'delta.',
+      );
+    });
 
-    testWidgets(
-      'pumps exactly one 50ms frame for a sub-step duration',
-      (WidgetTester tester) async {
-        final host = await _pumpTickerHost(tester);
-        host.startCounting();
+    testWidgets('pumps exactly one 50ms frame for a sub-step duration', (
+      WidgetTester tester,
+    ) async {
+      final host = await pumpTickerFrameCounterHost(tester);
+      host.startCounting();
 
-        await e2ePumpFor(tester, const Duration(milliseconds: 25));
-        host.stopCounting();
+      await e2ePumpFor(tester, const Duration(milliseconds: 25));
+      host.stopCounting();
 
-        expect(
-          host.framesPumped,
-          1,
-          reason:
-              'For any `0 < total <= 50ms` the loop runs exactly one '
-              'iteration: `0 < 25 -> pump -> 50 !< 25 -> exit`. A regression '
-              'that rounded sub-step callers down to zero pumps would skip '
-              'the intended diagnostic snapshot entirely.',
-        );
-      },
-    );
+      expect(
+        host.framesPumped,
+        1,
+        reason:
+            'For any `0 < total <= 50ms` the loop runs exactly one '
+            'iteration: `0 < 25 -> pump -> 50 !< 25 -> exit`. A regression '
+            'that rounded sub-step callers down to zero pumps would skip '
+            'the intended diagnostic snapshot entirely.',
+      );
+    });
 
-    testWidgets(
-      'pumps exactly one 50ms frame for total equal to the step',
-      (WidgetTester tester) async {
-        final host = await _pumpTickerHost(tester);
-        host.startCounting();
+    testWidgets('pumps exactly one 50ms frame for total equal to the step', (
+      WidgetTester tester,
+    ) async {
+      final host = await pumpTickerFrameCounterHost(tester);
+      host.startCounting();
 
-        await e2ePumpFor(tester, const Duration(milliseconds: 50));
-        host.stopCounting();
+      await e2ePumpFor(tester, const Duration(milliseconds: 50));
+      host.stopCounting();
 
-        expect(
-          host.framesPumped,
-          1,
-          reason:
-              'The strict `elapsed < total` bound excludes the boundary '
-              'case: a single pump satisfies `total == step`. A regression '
-              'that used `elapsed <= total` would pump one extra frame on '
-              'every multiple-of-step caller.',
-        );
-      },
-    );
+      expect(
+        host.framesPumped,
+        1,
+        reason:
+            'The strict `elapsed < total` bound excludes the boundary '
+            'case: a single pump satisfies `total == step`. A regression '
+            'that used `elapsed <= total` would pump one extra frame on '
+            'every multiple-of-step caller.',
+      );
+    });
 
     testWidgets(
       'pumps an extra step when total is not a multiple of 50ms (overshoot)',
       (WidgetTester tester) async {
-        final host = await _pumpTickerHost(tester);
+        final host = await pumpTickerFrameCounterHost(tester);
         host.startCounting();
 
         await e2ePumpFor(tester, const Duration(milliseconds: 51));
@@ -242,33 +178,32 @@ void main() {
       },
     );
 
-    testWidgets(
-      'pumps four 50ms frames for a 200ms total',
-      (WidgetTester tester) async {
-        final host = await _pumpTickerHost(tester);
-        host.startCounting();
+    testWidgets('pumps four 50ms frames for a 200ms total', (
+      WidgetTester tester,
+    ) async {
+      final host = await pumpTickerFrameCounterHost(tester);
+      host.startCounting();
 
-        await e2ePumpFor(tester, const Duration(milliseconds: 200));
-        host.stopCounting();
+      await e2ePumpFor(tester, const Duration(milliseconds: 200));
+      host.stopCounting();
 
-        expect(
-          host.framesPumped,
-          4,
-          reason:
-              'For a clean multiple of the step, the loop runs '
-              '`200ms / 50ms = 4` iterations. A regression that swapped the '
-              'per-iteration `tester.pump(step)` for a single '
-              '`tester.pump(total)` would collapse this to one frame and '
-              'break callers that rely on intermediate frames for the '
-              'diagnostic snapshot.',
-        );
-      },
-    );
+      expect(
+        host.framesPumped,
+        4,
+        reason:
+            'For a clean multiple of the step, the loop runs '
+            '`200ms / 50ms = 4` iterations. A regression that swapped the '
+            'per-iteration `tester.pump(step)` for a single '
+            '`tester.pump(total)` would collapse this to one frame and '
+            'break callers that rely on intermediate frames for the '
+            'diagnostic snapshot.',
+      );
+    });
 
     testWidgets(
       'pumps three 50ms frames for a 150ms total (no overshoot at boundary)',
       (WidgetTester tester) async {
-        final host = await _pumpTickerHost(tester);
+        final host = await pumpTickerFrameCounterHost(tester);
         host.startCounting();
 
         await e2ePumpFor(tester, const Duration(milliseconds: 150));

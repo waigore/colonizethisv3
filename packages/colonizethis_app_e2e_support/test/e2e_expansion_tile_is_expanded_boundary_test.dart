@@ -23,21 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
-
-/// Mounts a single child rooted under a stable `Center` so the test can
-/// resolve a deterministic `Element` to hand to `e2eExpansionTileIsExpanded`.
-Future<Element> _pumpAndResolveRoot(WidgetTester tester, Widget child) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(body: Center(child: child)),
-    ),
-  );
-  final centerFinder = find.byType(Center);
-  // `MaterialApp` and `Scaffold` mount their own `Center` descendants, so
-  // anchor on the outermost user-supplied `Center` deterministically by
-  // taking the first `Center` element found via pre-order traversal.
-  return centerFinder.evaluate().first;
-}
+import 'support/e2e_widget_pump_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -46,7 +32,7 @@ void main() {
     testWidgets(
       'returns false when no RotationTransition exists in the subtree',
       (WidgetTester tester) async {
-        final root = await _pumpAndResolveRoot(
+        final root = await pumpE2eScaffoldAndResolveFirstCenter(
           tester,
           const Text('no-rotation-here'),
         );
@@ -64,7 +50,7 @@ void main() {
     testWidgets('returns false at exactly the threshold (turns == 0.4)', (
       WidgetTester tester,
     ) async {
-      final root = await _pumpAndResolveRoot(
+      final root = await pumpE2eScaffoldAndResolveFirstCenter(
         tester,
         RotationTransition(
           turns: const AlwaysStoppedAnimation<double>(0.4),
@@ -85,7 +71,7 @@ void main() {
     testWidgets('returns true just above the threshold (turns == 0.41)', (
       WidgetTester tester,
     ) async {
-      final root = await _pumpAndResolveRoot(
+      final root = await pumpE2eScaffoldAndResolveFirstCenter(
         tester,
         RotationTransition(
           turns: const AlwaysStoppedAnimation<double>(0.41),
@@ -106,7 +92,7 @@ void main() {
     testWidgets(
       'returns true at the canonical fully-expanded value (turns == 0.5)',
       (WidgetTester tester) async {
-        final root = await _pumpAndResolveRoot(
+        final root = await pumpE2eScaffoldAndResolveFirstCenter(
           tester,
           RotationTransition(
             turns: const AlwaysStoppedAnimation<double>(0.5),
@@ -127,7 +113,7 @@ void main() {
     testWidgets(
       'returns false at the canonical collapsed value (turns == 0.0)',
       (WidgetTester tester) async {
-        final root = await _pumpAndResolveRoot(
+        final root = await pumpE2eScaffoldAndResolveFirstCenter(
           tester,
           RotationTransition(
             turns: const AlwaysStoppedAnimation<double>(0.0),
@@ -147,7 +133,7 @@ void main() {
     testWidgets(
       'returns false on a mid-animation value below the threshold (turns == 0.25)',
       (WidgetTester tester) async {
-        final root = await _pumpAndResolveRoot(
+        final root = await pumpE2eScaffoldAndResolveFirstCenter(
           tester,
           RotationTransition(
             turns: const AlwaysStoppedAnimation<double>(0.25),
@@ -173,7 +159,7 @@ void main() {
       'returns true when at least one nested RotationTransition is past the '
       'threshold',
       (WidgetTester tester) async {
-        final root = await _pumpAndResolveRoot(
+        final root = await pumpE2eScaffoldAndResolveFirstCenter(
           tester,
           Column(
             children: const [
@@ -202,7 +188,7 @@ void main() {
     testWidgets(
       'returns false when every nested RotationTransition is below the threshold',
       (WidgetTester tester) async {
-        final root = await _pumpAndResolveRoot(
+        final root = await pumpE2eScaffoldAndResolveFirstCenter(
           tester,
           Column(
             children: const [
@@ -236,7 +222,7 @@ void main() {
     testWidgets(
       'reads `RotationTransition` descendants beneath unrelated wrappers',
       (WidgetTester tester) async {
-        final root = await _pumpAndResolveRoot(
+        final root = await pumpE2eScaffoldAndResolveFirstCenter(
           tester,
           Padding(
             padding: const EdgeInsets.all(8),

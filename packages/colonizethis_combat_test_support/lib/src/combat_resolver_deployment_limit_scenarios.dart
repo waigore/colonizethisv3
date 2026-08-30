@@ -1,15 +1,14 @@
 // Deployment-limit scenarios for land resolver (Refs #4196 slice C).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-List<RunnableScenario> combatResolverDeploymentLimitScenarios() =>
-    [
+List<RunnableScenario> combatResolverDeploymentLimitScenarios() => [
   RunnableScenario(
     scenarioId: 'crl-deployment-cap-base-10',
     label:
@@ -136,4 +135,3 @@ List<RunnableScenario> combatResolverDeploymentLimitScenarios() =>
     },
   ),
 ];
-

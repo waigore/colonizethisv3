@@ -1,6 +1,8 @@
-export 'feedstock_common.dart';
-export 'feedstock_extraction_gate_shared.dart'
-    show isBelowQuotaZeroNwSeller;
+// Keep feedstock_common unpublished. Re-exporting it would put
+// `regimentCountForPlayer` on the orders barrel, colliding with the AI
+// planner helper of the same name when tests import both
+// `colonizethis_logic` and `army_conquest_prep.dart` (Refs #4508).
+export 'feedstock_extraction_gate_shared.dart' show isBelowQuotaZeroNwSeller;
 export 'feedstock_seller_extraction_targets.dart';
 export 'feedstock_supplier_extraction_targets.dart';
 

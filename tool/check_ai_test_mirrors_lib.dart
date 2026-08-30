@@ -20,45 +20,20 @@ const String _aiTestRootPrefix = 'packages/colonizethis_ai/test/';
 /// Two categories are permitted:
 /// 1. **Package-level surface tests** that exercise the public barrel / DI
 ///    exports (`lib/colonizethis_ai.dart`), not a `lib/src/` unit.
-/// 2. **Cross-cutting integration / diagnostic tests** (the `seed42_*` and
-///    `observer_*` families plus `full_ai_*`) that drive whole-AI / observer
-///    runs and assert end-to-end behaviour rather than a single unit.
+/// 2. **Cross-cutting integration / diagnostic tests** live under
+///    `test/observer/` (Refs #4530 Slice C) so they are nested and no longer
+///    need allowlist entries. The allowlist is only the three package-surface
+///    files.
 ///
 /// New entries must be justified in the PR/issue (Refs #3717): a regular unit
 /// test for a `lib/src/<subtree>/<file>.dart` source belongs under
-/// `test/<subtree>/`, not on this list.
+/// `test/<subtree>/`, not on this list. New observer campaigns belong under
+/// `test/observer/`.
 const Set<String> aiTestMirrorsLibAllowlist = <String>{
   // Package-level surface (public barrel / DI exports).
   'ai_config_test.dart',
   'ai_di_export_test.dart',
   'seed_bundle_test.dart',
-  // Cross-cutting integration / diagnostic (whole-AI / observer runs).
-  'full_ai_no_order_engine_validate_test.dart',
-  'observer_conquest_geography_seed42_test.dart',
-  'seed42_gp3_gp4_war_activity_test.dart',
-  'seed42_gp4_war_focus_test.dart',
-  'seed42_growth_stage_conquest_regression_test.dart',
-  'seed42_invadable_probe_test.dart',
-  'seed42_nw_invadable_diag_test.dart',
-  'seed42_observer_colonial_c0_diagnostic_test.dart',
-  'seed42_observer_colonial_phase_entry_budget_test.dart',
-  'seed42_observer_colonial_regression_test.dart',
-  'seed42_observer_connectivity_dev_closure_test.dart',
-  'seed42_observer_connectivity_dev_heartland_baseline_test.dart',
-  'connectivity_dev_multi_turn_chain_test.dart',
-  'connectivity_dev_overseas_port_test.dart',
-  'connectivity_dev_reconquest_test.dart',
-  'seed42_observer_conquest_regression_test.dart',
-  'seed42_observer_conquest_s7d_conquest_geography_diagnostic_test.dart',
-  'seed42_observer_conquest_s7d_diagnostic_test.dart',
-  'seed42_observer_conquest_s7d_feedstock_diagnostic_test.dart',
-  'seed42_observer_conquest_s7d_lock_recovery_diagnostic_test.dart',
-  'seed42_observer_nw_acquisition_chain_diagnostic_test.dart',
-  'seed42_observer_nw_lock_recovery_declare_war_regression_test.dart',
-  'seed42_observer_treasury_planner_trade_emission_test.dart',
-  'seed42_observer_world_market_diagnostic_test.dart',
-  'seed42_observer_world_market_lock_recovery_diagnostic_test.dart',
-  'seed42_observer_world_market_lock_recovery_regression_test.dart',
 };
 
 /// True when the repo-relative [slashPath] is under the AI package `test/`.

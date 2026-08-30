@@ -36,17 +36,10 @@ Files listed in `tool/app_no_part_directives_grandfather.dart` may still contain
 stale entries (missing file or file no longer containing a part directive) fail
 CI, and new part directives outside the allowlist fail CI.
 
-As of wave-9 completion on PR #4135, the remaining grandfather entries are three
-clusters held for open product issues (coordination boundaries in #4117):
-
-| Cluster | Paths | Blocked by |
-|---------|-------|------------|
-| Terrain tileset | `app/lib/features/game/flame/tilesets/terrain_tileset*.dart` | #4088 (map theme) |
-| CtDropdown | `app/lib/widgets/ct_dropdown*.dart` | #4062 (compact dropdown L&F) |
-| CtResourceCell | `app/lib/widgets/ct_resource_cell*.dart` | #3999 (production Available alignment) |
-
-Wave-9 de-part work does **not** edit these paths; each cluster shrinks from the
-allowlist when its owning issue lands a behavior-preserving de-part slice.
+As of wave-14 Slice A (#4305), the grandfather allowlist is **empty**: all
+residual `part` clusters (`terrain_tileset`, `ct_dropdown`, `ct_resource_cell`)
+were converted to explicit-import modules. New `part` / `part of` directives
+under `app/lib/**` fail CI immediately.
 
 ## What is a `part` directive
 

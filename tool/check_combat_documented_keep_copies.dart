@@ -30,7 +30,7 @@ const List<_KeepCopySite> _keepCopySites = [
   ),
   _KeepCopySite(
     relativePath:
-        'packages/colonizethis_combat/lib/src/combat/quick_battle_resolver_engine.dart',
+        'packages/colonizethis_combat/lib/src/combat/quick_battle_resolver_engine_groups.dart',
     expressionLabel: 'copyGroups List<String>.from(...)',
     expressionPattern: r'\bList<\s*String\s*>\.from\(',
   ),

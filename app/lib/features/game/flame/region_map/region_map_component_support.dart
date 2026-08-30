@@ -13,6 +13,8 @@ import '../caches/town_icon_cache.dart';
 import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 
+export 'region_map_component_hover.dart';
+
 /// Mutable session fields for de-parted [CtRegionMapComponent] libraries (Refs #4117).
 class CtRegionMapComponentSession {
   int? hoveredTileX;
@@ -73,67 +75,6 @@ Future<void> ctRegionMapComponentAfterSuperOnLoad(
   );
 }
 
-void ctRegionMapComponentAdvanceHoverAnimation(
-  CtRegionMapComponent component,
-  double dt,
-) {
-  component.session.hoverAnimationT += dt;
-}
-
-void ctRegionMapComponentUpdateHoverFromWorld(
-  CtRegionMapComponent component,
-  Vector2 worldPosition,
-) {
-  final local = worldPosition - component.absoluteTopLeftPosition;
-  ctRegionMapComponentSetHoverFromCell(
-    component,
-    (local.x / component.cellSize).floor(),
-    (local.y / component.cellSize).floor(),
-  );
-}
-
-void ctRegionMapComponentSetHoverFromCell(
-  CtRegionMapComponent component,
-  int x,
-  int y,
-) {
-  int? nx;
-  int? ny;
-  if (x >= 0 &&
-      x < component.region.width &&
-      y >= 0 &&
-      y < component.region.height) {
-    final cell = component.region.cellAt(x, y);
-    final isUnrevealed =
-        component.visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.unrevealed;
-    if (!isUnrevealed) {
-      nx = x;
-      ny = y;
-    }
-  }
-  final session = component.session;
-  final prevId =
-      session.hoveredTileX != null && session.hoveredTileY != null
-      ? '${component.region.regionId}|${component.region.cellAt(session.hoveredTileX!, session.hoveredTileY!).regionCellId}'
-      : null;
-  final nextId = nx != null && ny != null
-      ? '${component.region.regionId}|${component.region.cellAt(nx, ny).regionCellId}'
-      : null;
-  if (prevId != nextId) {
-    component.onProvinceHovered?.call(nextId);
-  }
-  final nextTileKey = nx != null && ny != null
-      ? '${component.region.regionId}|${component.region.cellAt(nx, ny).regionCellId}|$nx|$ny'
-      : null;
-  component.onTileHovered?.call(nextTileKey);
-  session.hoveredTileX = nx;
-  session.hoveredTileY = ny;
-  session.hoveredProvinceId = nx != null && ny != null
-      ? component.region.cellAt(nx, ny).regionCellId
-      : null;
-}
-
 void ctRegionMapComponentHandleTapAtWorld(
   CtRegionMapComponent component,
   Vector2 worldPosition,
@@ -154,6 +95,17 @@ void ctRegionMapComponentHandleTapAtWorld(
         component.validTileKeys!.contains(tileKey)) {
       component.onTileTapped?.call(tileKey);
     }
+    return;
+  }
+  final tappedArmy = ctRegionMapComponentGetArmyMarkerAtLocal(
+    component,
+    local.x,
+    local.y,
+    x,
+    y,
+  );
+  if (tappedArmy != null) {
+    component.onArmyMarkerTapped?.call(tappedArmy);
     return;
   }
   final tappedFleet = ctRegionMapComponentGetFleetMarkerAtTile(component, x, y);
@@ -198,6 +150,33 @@ FleetTileMarkerView? ctRegionMapComponentGetFleetMarkerAtTile(
 ) {
   for (final marker in component.region.fleetTileMarkers) {
     if (marker.x == x && marker.y == y) return marker;
+  }
+  return null;
+}
+
+ArmyTileMarkerView? ctRegionMapComponentGetArmyMarkerAtLocal(
+  CtRegionMapComponent component,
+  double localX,
+  double localY,
+  int x,
+  int y,
+) {
+  for (final marker in component.region.armyTileMarkers) {
+    if (marker.x != x || marker.y != y) continue;
+    final cell = component.region.cellAt(x, y);
+    if (component.visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.unrevealed) {
+      return null;
+    }
+    final inCellX = localX - x * component.cellSize;
+    final inCellY = localY - y * component.cellSize;
+    if (ArmyTileMarkerLayout.hitTestInCell(
+      localX: inCellX,
+      localY: inCellY,
+      cellSize: component.cellSize,
+    )) {
+      return marker;
+    }
   }
   return null;
 }

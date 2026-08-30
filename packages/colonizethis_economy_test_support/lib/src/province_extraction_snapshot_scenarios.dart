@@ -5,7 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'extraction_fixture_support.dart';
-import 'province_extraction_snapshot_expectations.dart';
+import 'province_extraction_snapshot_pins.dart';
 
 /// One row for `computeProvinceExtractionSnapshots` scenario tables.
 typedef ProvinceExtractionSnapshotScenario = ({
@@ -44,10 +44,6 @@ ProvinceExtractionSnapshotScenario provinceSnapScenario({
   expectTileKeys: expectTileKeys,
   refs: refs,
 );
-
-void runProvinceExtractionSnapshotScenario(ProvinceExtractionSnapshotScenario scenario) {
-  assertProvinceExtractionSnapshot(scenario);
-}
 
 /// Canonical GP Extraction snapshot pins (transport / town / disconnect / capital).
 List<ProvinceExtractionSnapshotScenario> provinceExtractionSnapshotScenarios() {
@@ -107,6 +103,26 @@ List<ProvinceExtractionSnapshotScenario> provinceExtractionSnapshotScenarios() {
       expectEffective: 6,
       expectFull: 6,
     ),
+    provinceSnapScenario(
+      label:
+          'negative: out-of-bounds improvement keys do not throw during snapshot build',
+      specs: [
+        const TileImprovementSpec('oldWorld|p1|0|0', 2, 1),
+        const TileImprovementSpec('oldWorld|p1|0|1', 2, 1),
+      ],
+      connectivity: connectivityFor(
+        {'oldWorld|p1|0|0'},
+        pathTransportCap: const {'oldWorld|p1|0|0': 4},
+      ),
+      map: tileMapFromGrids(
+        grid: const [['p1', 'p1']],
+        resourceGrid: const [[Resource.grain, Resource.grain]],
+      ),
+      expectEffective: 2,
+      expectFull: 2,
+      expectTileKeys: ['oldWorld|p1|0|0'],
+      refs: '#4550',
+    ),
   ];
 }
 
@@ -116,10 +132,6 @@ typedef ProvinceImprovableCountsScenario = ({
   ProvinceImprovableCountsPin pin,
   String? refs,
 });
-
-void runProvinceImprovableCountsScenario(ProvinceImprovableCountsScenario scenario) {
-  assertProvinceImprovableCounts(scenario.pin);
-}
 
 ProvinceImprovableCountsScenario provinceImprovableCountsScenario({
   required String label,

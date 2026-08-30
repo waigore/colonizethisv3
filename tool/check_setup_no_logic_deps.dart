@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 const _setupLibRelative = 'packages/colonizethis_setup/lib';
+const _setupTestRelative = 'packages/colonizethis_setup/test';
 
 final _forbiddenImport = RegExp(r"import\s+'package:colonizethis_logic/");
 
@@ -22,12 +23,20 @@ int runCheckSetupNoLogicDeps(
     return 1;
   }
 
+  final testDir = Directory(p.join(repoRoot, _setupTestRelative));
+  if (!testDir.existsSync()) {
+    logE('check_setup_no_logic_deps: missing $_setupTestRelative');
+    return 1;
+  }
+
   final violations = <String>[];
-  for (final entity in libDir.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File || !entity.path.endsWith('.dart')) continue;
-    final content = entity.readAsStringSync();
-    if (_forbiddenImport.hasMatch(content)) {
-      violations.add(p.relative(entity.path, from: repoRoot));
+  for (final dir in [libDir, testDir]) {
+    for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (_forbiddenImport.hasMatch(content)) {
+        violations.add(p.relative(entity.path, from: repoRoot));
+      }
     }
   }
 
@@ -36,7 +45,7 @@ int runCheckSetupNoLogicDeps(
   }
 
   logE(
-    'check_setup_no_logic_deps: colonizethis_setup/lib must not import colonizethis_logic:',
+    'check_setup_no_logic_deps: colonizethis_setup/{lib,test} must not import colonizethis_logic:',
   );
   for (final path in violations) {
     logE(' - $path');

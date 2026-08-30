@@ -13,8 +13,37 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckOrdersLibSourceFileSize', () {
-    test('passes on current repo tree under wave-6 ceiling', () {
+    test('passes on current repo tree under wave-10 ceiling', () {
       expect(runCheckOrdersLibSourceFileSize('.'), 0);
+    });
+
+    test('wave-10 ceiling is 250 with an empty grandfather', () {
+      expect(ordersLibSourceFileSizeCeiling, 250);
+      expect(ordersLibSourceFileSizeGrandfathered, isEmpty);
+    });
+
+    test('wave-10 split entry files stay ≥20 lines under 250', () {
+      const files = <String>[
+        'packages/colonizethis_orders/lib/src/orders/orders_application_build_phase.dart',
+        'packages/colonizethis_orders/lib/src/orders/validators/diplomatic/diplomatic_sub_validator.dart',
+        'packages/colonizethis_orders/lib/src/orders/draft_orders_mutations.dart',
+        'packages/colonizethis_orders/lib/src/orders/incremental_candidate_validator.dart',
+        'packages/colonizethis_orders/lib/src/orders/order_suggestion_research.dart',
+        'packages/colonizethis_orders/lib/src/orders/order_suggestion_pass_context.dart',
+        'packages/colonizethis_orders/lib/src/orders/validator_bundle.dart',
+        'packages/colonizethis_orders/lib/src/orders/order_suggestion_naval.dart',
+        'packages/colonizethis_orders/lib/src/orders/per_player_work_target_selection_cache.dart',
+        'packages/colonizethis_orders/lib/src/orders/order_engine.dart',
+        'packages/colonizethis_orders/lib/src/orders/work_tile_candidacy/work_tile_candidate_index_prefilters.dart',
+      ];
+      for (final relative in files) {
+        final lines = File(relative).readAsLinesSync().length;
+        expect(
+          lines,
+          lessThanOrEqualTo(230),
+          reason: '$relative is $lines physical lines (need ≤230)',
+        );
+      }
     });
 
     test('fails when an orders lib file exceeds the ceiling', () {

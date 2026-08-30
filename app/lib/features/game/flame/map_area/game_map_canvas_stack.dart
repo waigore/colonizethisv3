@@ -1,37 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/map_province_panel_provider.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
-import '../region_map/region_map_component.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode;
-import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
-
-import '../overlays/game_map_province_detail_side_panel.dart';
-import 'game_map_canvas_stack_selection_prompt.dart';
-import '../caches/per_player_work_target_selection_cache.dart';
+import '../../../../providers/map_province_panel_provider.dart';
+import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
+import '../../widgets/map_radial/game_map_tile_radial_host.dart';
+import 'game_map_canvas_stack_hover.dart';
+import 'game_map_canvas_stack_region_row.dart';
+import 'game_map_canvas_stack_selection_prompt_layer.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
-/// Compact minimum tap-target height applied to the selection-prompt
-/// banner's `cancel` [CtNinePatchButton]. Pinned to keep the inline
-/// affordance vertically proportional to the surrounding banner row
-/// (banner padding is 8 logical px vertical) without inflating the prompt
-/// to the catalog default 48 dp button. SPEC: `SPEC/ui/map-widget.md`
-/// § Dark-theme selection prompt overlay tokens.
-const double kMapSelectionPromptCancelMinHeight = 34;
-
-/// Canonical alpha applied to [EditorialMonoclePalette.bgDeep] for the
-/// work-target selection prompt overlay banner background. Pinned at
-/// `0.85` per `SPEC/ui/map-widget.md` § Dark-theme selection prompt overlay
-/// tokens so the banner reads as a framed dark surface against the lit
-/// map while still allowing terrain to glimmer through.
-const double kMapSelectionPromptBackgroundAlpha = 0.85;
+export 'game_map_canvas_stack_selection_prompt_tokens.dart';
 
 /// Renders the Flame-backed map and the wide right-side detail panel.
 /// Map and panel communicate only via [mapProvincePanelProvider].
@@ -40,15 +25,19 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.isNarrow,
     required this.game,
     required this.region,
-    required this.baseLayerDisplayMode,
+    required this.mapBaseLayerFlags,
     required this.showProvinceOverlay,
     required this.showProvinceOwnershipTint,
     required this.showProvinceNamesLayer,
+    required this.showCapitalLinkDisconnectedHighlight,
     required this.humanPlayerId,
     required this.playerView,
     required this.workTargetSelectionCache,
+    this.armyMovePickerCache,
     required this.centerOnTileKey,
     required this.validTileKeysForSelection,
+    this.lastTurnPulseTileKey,
+    this.onLastTurnPlaybackMapTap,
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
     required this.selectedCivilianTileKey,
@@ -71,15 +60,19 @@ class GameMapCanvasStack extends ConsumerWidget {
   final bool isNarrow;
   final ct_models.Game game;
   final RegionMapViewData region;
-  final BaseLayerDisplayMode baseLayerDisplayMode;
+  final MapBaseLayerFlags mapBaseLayerFlags;
   final bool showProvinceOverlay;
   final bool showProvinceOwnershipTint;
   final bool showProvinceNamesLayer;
+  final bool showCapitalLinkDisconnectedHighlight;
   final String humanPlayerId;
   final PlayerView playerView;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
+  final PerPlayerArmyMovePickerCache? armyMovePickerCache;
   final String? centerOnTileKey;
   final Set<String>? validTileKeysForSelection;
+  final String? lastTurnPulseTileKey;
+  final VoidCallback? onLastTurnPlaybackMapTap;
 
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
@@ -110,96 +103,70 @@ class GameMapCanvasStack extends ConsumerWidget {
     return Positioned.fill(
       child: Stack(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: CtRegionMap(
-                  region: region,
-                  cellSizePx: region.cellSize.toDouble(),
-                  showProvinceOverlay: showProvinceOverlay,
-                  showProvinceOwnershipTint: showProvinceOwnershipTint,
-                  showProvinceNamesLayer: showProvinceNamesLayer,
-                  visibilityMode: visibilityMode,
-                  playerViewForResources:
-                      visibilityMode == CtMapVisibilityMode.playerConstrained
-                      ? playerView
-                      : null,
-                  baseLayerDisplayMode: baseLayerDisplayMode,
-                  onProvinceSelected: null,
-                  onMapTileTappedForDetail: inWorkTargetSelectionMode
-                      ? null
-                      : (tk) => ref
-                            .read(mapProvincePanelProvider.notifier)
-                            .reportMapTileTapped(tk),
-                  onProvinceHovered: (_) {},
-                  onTileHovered: inWorkTargetSelectionMode
-                      ? onWorkTargetTileHovered
-                      : (_) {},
-                  onCivilianTileStateChanged: inWorkTargetSelectionMode
-                      ? null
-                      : onCivilianTileStateChanged,
-                  onCivilianTileSelectionCleared: inWorkTargetSelectionMode
-                      ? null
-                      : onCivilianTileSelectionCleared,
-                  selectedTileKey: highlights.selectedTileKey,
-                  selectedCivilianTileKey: selectedCivilianTileKey,
-                  secondaryHighlightTileKey:
-                      highlights.secondaryHighlightTileKey,
-                  secondaryHighlightTileKeys:
-                      highlights.secondaryHighlightTileKeys,
-                  centerOnTileKey: centerOnTileKey,
-                  validTileKeys: validTileKeysForSelection,
-                  onTileSelected: onTileSelectedForWork,
-                  onWorkTargetSelectionCancelled:
-                      onWorkTargetSelectionCancelled,
-                  bus: inWorkTargetSelectionMode ? null : bus,
-                  onViewportSnapshotChanged: onRegionViewportSnapshot,
-                  zoomMultiplier: zoomMultiplier,
-                ),
+          GameMapTileRadialHost(
+            game: game,
+            region: region,
+            humanPlayerId: humanPlayerId,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+            canMutateViaUi: canMutateViaUi && !inWorkTargetSelectionMode,
+            bus: bus,
+            mapBuilder: (onSecondary) => GameMapCanvasStackHoverHost(
+              inWorkTargetSelectionMode: inWorkTargetSelectionMode,
+              game: game,
+              region: region,
+              onWorkTargetTileHovered: onWorkTargetTileHovered,
+              mapBuilder: (onTileHovered) => gameMapCanvasStackRegionRow(
+                onMapTileTapped: (tk) => ref
+                    .read(mapProvincePanelProvider.notifier)
+                    .reportMapTileTapped(tk),
+                isNarrow: isNarrow,
+                game: game,
+                region: region,
+                mapBaseLayerFlags: mapBaseLayerFlags,
+                showProvinceOverlay: showProvinceOverlay,
+                showProvinceOwnershipTint: showProvinceOwnershipTint,
+                showProvinceNamesLayer: showProvinceNamesLayer,
+                showCapitalLinkDisconnectedHighlight:
+                    showCapitalLinkDisconnectedHighlight,
+                humanPlayerId: humanPlayerId,
+                playerView: playerView,
+                workTargetSelectionCache: workTargetSelectionCache,
+                armyMovePickerCache: armyMovePickerCache,
+                centerOnTileKey: centerOnTileKey,
+                validTileKeysForSelection: validTileKeysForSelection,
+                lastTurnPulseTileKey: lastTurnPulseTileKey,
+                onLastTurnPlaybackMapTap: onLastTurnPlaybackMapTap,
+                onTileSelectedForWork: onTileSelectedForWork,
+                onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+                selectedCivilianTileKey: selectedCivilianTileKey,
+                onCivilianTileStateChanged: onCivilianTileStateChanged,
+                onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
+                onRegionViewportSnapshot: onRegionViewportSnapshot,
+                zoomMultiplier: zoomMultiplier,
+                visibilityMode: visibilityMode,
+                omniscientDetail: omniscientDetail,
+                canMutateViaUi: canMutateViaUi,
+                bus: bus,
+                highlights: highlights,
+                inWorkTargetSelectionMode: inWorkTargetSelectionMode,
+                onTileHovered: onTileHovered,
+                onSecondary: onSecondary,
               ),
-              if (!isNarrow)
-                GameMapProvinceDetailSidePanel(
-                  game: game,
-                  region: region,
-                  humanPlayerId: humanPlayerId,
-                  playerView: playerView,
-                  omniscientDetail: omniscientDetail,
-                  canMutateViaUi: canMutateViaUi,
-                  workTargetSelectionCache: workTargetSelectionCache,
-                ),
-            ],
+            ),
           ),
           if (inWorkTargetSelectionMode)
-            Consumer(
-              builder: (context, ref, _) {
-                final overlayOpen = ref.watch(
-                  mapProvincePanelProvider.select((s) => s.overlayOpen),
-                );
-                final orders = ref.watch(currentOrdersProvider);
-                final previewTileKey =
-                    hoveredWorkTargetTileKey ??
-                    lastValidHoveredWorkTargetTileKey;
-                final workTarget = workTargetForSelection;
-                final affordPreview =
-                    workTarget != null &&
-                        previewTileKey != null &&
-                        !selectionPromptUsesRelocateCopy
-                    ? previewWorkOrderAffordAtTile(
-                        game: game,
-                        playerId: humanPlayerId,
-                        currentOrders: orders,
-                        workTarget: workTarget,
-                        targetTileKey: previewTileKey,
-                      )
-                    : null;
-                return GameMapCanvasStackSelectionPrompt(
-                  isNarrow: isNarrow,
-                  overlayOpen: overlayOpen,
-                  onCancel: onWorkTargetSelectionCancelled,
-                  usesRelocateCopy: selectionPromptUsesRelocateCopy,
-                  affordPreview: affordPreview,
-                );
-              },
+            GameMapCanvasStackSelectionPromptLayer(
+              isNarrow: isNarrow,
+              game: game,
+              humanPlayerId: humanPlayerId,
+              onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+              selectionPromptUsesRelocateCopy: selectionPromptUsesRelocateCopy,
+              workTargetForSelection: workTargetForSelection,
+              hoveredWorkTargetTileKey: hoveredWorkTargetTileKey,
+              lastValidHoveredWorkTargetTileKey:
+                  lastValidHoveredWorkTargetTileKey,
+              canMutateViaUi: canMutateViaUi,
             ),
         ],
       ),

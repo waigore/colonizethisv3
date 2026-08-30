@@ -5,9 +5,14 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'game_map_canvas_stack.dart';
-import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
+import 'game_map_canvas_stack_selection_prompt_tokens.dart';
+import '../../screens/game/game_screen_shared.dart'
+    show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
+import '../../widgets/units/civilian/build_fort_payoff_gist_line.dart';
+import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
+import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
+import '../../widgets/units/civilian/transport_step_yield_gist_line.dart';
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
 ///
@@ -19,6 +24,10 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     required this.onCancel,
     this.usesRelocateCopy = false,
     this.affordPreview,
+    this.nextYieldGist,
+    this.payoffGist,
+    this.transportGist,
+    this.buildFortGist,
     super.key,
   });
 
@@ -27,51 +36,97 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final VoidCallback? onCancel;
   final bool usesRelocateCopy;
   final WorkOrderAffordPreview? affordPreview;
+  final String? nextYieldGist;
+  final String? payoffGist;
+  final String? transportGist;
+  final String? buildFortGist;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final preview = affordPreview;
-    final showAfford =
-        preview != null && preview.hasCostPreview && !usesRelocateCopy;
     return Positioned(
       top: 8,
       left: 0,
       right: !isNarrow && overlayOpen ? kGameMapWideProvinceSidePanelWidth : 0,
       child: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: EditorialMonoclePalette.bgDeep.withValues(
-              alpha: kMapSelectionPromptBackgroundAlpha,
+        child: _GameMapSelectionPromptCard(
+          l10n: appL10n(context),
+          usesRelocateCopy: usesRelocateCopy,
+          onCancel: onCancel,
+          affordPreview: affordPreview,
+          nextYieldGist: nextYieldGist,
+          payoffGist: payoffGist,
+          transportGist: transportGist,
+          buildFortGist: buildFortGist,
+        ),
+      ),
+    );
+  }
+}
+
+class _GameMapSelectionPromptCard extends StatelessWidget {
+  const _GameMapSelectionPromptCard({
+    required this.l10n,
+    required this.usesRelocateCopy,
+    required this.onCancel,
+    this.affordPreview,
+    this.nextYieldGist,
+    this.payoffGist,
+    this.transportGist,
+    this.buildFortGist,
+  });
+
+  final AppLocalizations l10n;
+  final bool usesRelocateCopy;
+  final VoidCallback? onCancel;
+  final WorkOrderAffordPreview? affordPreview;
+  final String? nextYieldGist;
+  final String? payoffGist;
+  final String? transportGist;
+  final String? buildFortGist;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = affordPreview;
+    final yieldGist = nextYieldGist;
+    final landGist = payoffGist;
+    final roadGist = transportGist;
+    final fortGist = buildFortGist;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: EditorialMonoclePalette.bgDeep.withValues(
+          alpha: kMapSelectionPromptBackgroundAlpha,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: EditorialMonoclePalette.accentDim, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: CtSpacing.m,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _GameMapSelectionPromptHeaderRow(
+              l10n: l10n,
+              usesRelocateCopy: usesRelocateCopy,
+              onCancel: onCancel,
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: EditorialMonoclePalette.accentDim,
-              width: 1,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: CtSpacing.m,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _GameMapSelectionPromptHeaderRow(
-                  l10n: l10n,
-                  usesRelocateCopy: usesRelocateCopy,
-                  onCancel: onCancel,
-                ),
-                if (showAfford)
-                  _GameMapSelectionPromptAffordSection(
-                    l10n: l10n,
-                    preview: preview!,
-                  ),
-              ],
-            ),
-          ),
+            if (preview != null && preview.hasCostPreview && !usesRelocateCopy)
+              _GameMapSelectionPromptAffordSection(
+                l10n: l10n,
+                preview: preview,
+              ),
+            if (yieldGist != null && yieldGist.isNotEmpty && !usesRelocateCopy)
+              BuildImprovementYieldGistLine(text: yieldGist),
+            if (landGist != null && landGist.isNotEmpty && !usesRelocateCopy)
+              PurchaseLandPayoffGistLine(text: landGist),
+            if (roadGist != null && roadGist.isNotEmpty && !usesRelocateCopy)
+              TransportStepYieldGistLine(text: roadGist),
+            if (fortGist != null && fortGist.isNotEmpty && !usesRelocateCopy)
+              BuildFortPayoffGistLine(text: fortGist),
+          ],
         ),
       ),
     );
@@ -140,10 +195,7 @@ class _GameMapSelectionPromptAffordSection extends StatelessWidget {
         const SizedBox(height: 6),
         buildWorkOrderAffordCostChips(l10n: l10n, preview: preview),
         const SizedBox(height: 4),
-        buildWorkOrderAffordStatusText(
-          l10n: l10n,
-          preview: preview,
-        ),
+        buildWorkOrderAffordStatusText(l10n: l10n, preview: preview),
       ],
     );
   }

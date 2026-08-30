@@ -11,6 +11,7 @@ import 'package:colonizethis_test/test.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/planner_test_helpers.dart';
 import 'phase_planner_naval_mission_ranking_support.dart';
+import 'phase_planner_naval_mission_ranking_integration_cases_tail_cases.dart';
 
 void registerPhasePlannerNavalMissionRankingIntegrationCases() {
   group('runNavalPlanner phase-priority mission ranking integration', () {
@@ -236,107 +237,7 @@ void registerPhasePlannerNavalMissionRankingIntegrationCases() {
             'tighter tier active, fleetId asc tiebreak puts fA first.',
       );
     });
-
-    test('null phase plan preserves legacy NW-port mission ranking (no '
-        'regression for callers that have not adopted the phase-priority '
-        'parameter)', () {
-      final ctx = buildTestPlannerContext(
-        game: buildGame(),
-        topology: topology,
-        nationId: 'gp1',
-        primaryGoal: StrategicGoal.expand,
-        config: const AIConfig(
-          leaderId: 'napoleon',
-          personalityId: 'napoleon',
-          hiddenAgendaId: 'warmonger',
-        ),
-        suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-          work: [],
-          build: [],
-          move: [],
-          research: [],
-          navalMove: [],
-          navalMission: navalMissionCandidates,
-        ),
-      );
-      final orders = runNavalPlanner(ctx: ctx, snapshot: snapshot);
-      final missions = orders.navalMissionOrdersByPlayerId['gp1'] ?? const [];
-      expect(missions, isNotEmpty);
-      // Legacy: both score 160 -> fleetId asc -> fA first.
-      expect(
-        missions.first.fleetId,
-        'fA',
-        reason:
-            'Without a phase plan, the legacy NW-port tier must apply '
-            'unchanged (both candidates score 160; fleetId asc tiebreak '
-            'wins).',
-      );
-    });
-
-    test('deterministic naval mission ordering for identical phase-priority '
-        'inputs (Must-have #7)', () {
-      const phasePlan = PhasePlanOutcome(
-        phase: ObserverGoalPhase.colonial,
-        colonialNavalPlan: ColonialNavalPlan(
-          priorityInvasionTransportProvinceIdsSorted: <String>[
-            'newWorld|phaseColony',
-          ],
-          priorityTargetOwnerFactionIdsSorted: <String>['tribe1'],
-        ),
-      );
-      List<String> fingerprint(Orders o) => <String>[
-        for (final m in o.navalMissionOrdersByPlayerId['gp1'] ?? const [])
-          '${m.fleetId}|${m.targetPortId ?? ''}|${m.targetProvinceId ?? ''}',
-      ];
-      final ctx1 = buildTestPlannerContext(
-        game: buildGame(),
-        topology: topology,
-        nationId: 'gp1',
-        primaryGoal: StrategicGoal.expand,
-        config: const AIConfig(
-          leaderId: 'napoleon',
-          personalityId: 'napoleon',
-          hiddenAgendaId: 'warmonger',
-        ),
-        suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-          work: [],
-          build: [],
-          move: [],
-          research: [],
-          navalMove: [],
-          navalMission: navalMissionCandidates,
-        ),
-      );
-      final ctx2 = buildTestPlannerContext(
-        game: buildGame(),
-        topology: topology,
-        nationId: 'gp1',
-        primaryGoal: StrategicGoal.expand,
-        config: const AIConfig(
-          leaderId: 'napoleon',
-          personalityId: 'napoleon',
-          hiddenAgendaId: 'warmonger',
-        ),
-        suggestionAPI: const FakeOrderSuggestionAPIForDomainPlannerTests(
-          work: [],
-          build: [],
-          move: [],
-          research: [],
-          navalMove: [],
-          navalMission: navalMissionCandidates,
-        ),
-      );
-      final a = runNavalPlanner(
-        ctx: ctx1,
-        snapshot: snapshot,
-        phasePlan: phasePlan,
-      );
-      final b = runNavalPlanner(
-        ctx: ctx2,
-        snapshot: snapshot,
-        phasePlan: phasePlan,
-      );
-      expect(fingerprint(b), fingerprint(a));
-    });
   });
+
+  registerPhasePlannerNavalMissionRankingIntegrationCasesTail();
 }

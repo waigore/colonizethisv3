@@ -1,45 +1,15 @@
-import 'dart:convert';
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
 import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
-import 'package:colonizethis_app/core/errors/ui_validation_exception.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
-import 'package:flutter/services.dart';
 
 import '../caches/asset_image_cache.dart';
-
-part 'terrain_tileset_loaders.dart';
-part 'terrain_tileset_models.dart';
-part 'terrain_tileset_variant_keys.dart';
+import 'terrain_tileset_models.dart';
+import 'terrain_tileset_tile_ids.dart';
+import 'terrain_tileset_wang_load.dart';
 
 final _log = packageLogger();
-
-// Forest is split into hardwood and scrub variants (issue #3573 R8/R9). The
-// standalone tile keys mirror `tile_${TerrainType.name}` so
-// [TerrainTilesetCache.getStandaloneTile] resolves each base feature tile.
-// Hardwood loads the renamed `hardwood_forest` / `hardwood_forest_timber` art
-// (formerly `forest` / `forest_timber`); scrub loads its own distinct
-// `scrub_forest` / `scrub_forest_timber` art (#3573 R8/S4).
-const String _tileHardwoodForest = 'tile_hardwoodForest';
-const String _tileHardwoodForestTimber = 'tile_hardwoodForestTimber';
-const String _tileScrubForest = 'tile_scrubForest';
-const String _tileScrubForestTimber = 'tile_scrubForestTimber';
-const String _tileHills = 'tile_hills';
-const String _tileHillsMine = 'tile_hills_mine';
-const String _tileHillsWool = 'tile_hills_wool';
-const String _tileMountain = 'tile_mountain';
-const String _tileSwamp = 'tile_swamp';
-const String _tilePlainsGrain = 'tile_plains_grain';
-const String _tilePlainsMeat = 'tile_plains_meat';
-const String _tilePlainsHorses = 'tile_plains_horses';
-const String _tilePlainsSugarCane = 'tile_plains_sugar_cane';
-const String _tilePlainsTobacco = 'tile_plains_tobacco';
-const String _tilePlainsCotton = 'tile_plains_cotton';
-const String _tilePlainsSpices = 'tile_plains_spices';
 
 /// Cache for loaded tilesets.
 /// Loads L0/L1 Wang tilesets (sea_plains, sea_desert, plains_desert)
@@ -62,21 +32,20 @@ class TerrainTilesetCache {
       await MapTerrainConfig.ensureLoaded(
         assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
       );
-      // Load L0/L1 Wang tilesets for coastline and land transitions.
       await Future.wait([
-        loadWangTileset(
+        _loadWangTileset(
           'sea_plains',
           seaTerrainId,
           plainsTerrainId,
           (tileset) => _seaPlainsTileset = tileset,
         ),
-        loadWangTileset(
+        _loadWangTileset(
           'sea_desert',
           seaTerrainId,
           desertTerrainId,
           (tileset) => _seaDesertTileset = tileset,
         ),
-        loadWangTileset(
+        _loadWangTileset(
           'plains_desert',
           plainsTerrainId,
           desertTerrainId,
@@ -84,34 +53,29 @@ class TerrainTilesetCache {
         ),
       ]);
 
-      // L2+ feature overlays are best-effort and loaded in the background.
-      // Failures must not block base terrain or map rendering. Desert is now L1.
       await Future.wait([
-        loadStandaloneTileRequired(_tilePlainsGrain, 'plains_grain'),
-        loadStandaloneTileRequired(_tilePlainsMeat, 'plains_meat'),
-        loadStandaloneTileRequired(_tilePlainsHorses, 'plains_horses'),
-        loadStandaloneTileRequired(_tilePlainsSugarCane, 'plains_sugar_cane'),
-        loadStandaloneTileRequired(_tilePlainsTobacco, 'plains_tobacco'),
-        loadStandaloneTileRequired(_tilePlainsCotton, 'plains_cotton'),
-        loadStandaloneTileRequired(_tilePlainsSpices, 'plains_spices'),
+        _loadStandaloneTileRequired(tilePlainsGrain, 'plains_grain'),
+        _loadStandaloneTileRequired(tilePlainsMeat, 'plains_meat'),
+        _loadStandaloneTileRequired(tilePlainsHorses, 'plains_horses'),
+        _loadStandaloneTileRequired(tilePlainsSugarCane, 'plains_sugar_cane'),
+        _loadStandaloneTileRequired(tilePlainsTobacco, 'plains_tobacco'),
+        _loadStandaloneTileRequired(tilePlainsCotton, 'plains_cotton'),
+        _loadStandaloneTileRequired(tilePlainsSpices, 'plains_spices'),
       ]);
 
       for (final item in const <(String tileId, String assetStem)>[
-        // Hardwood uses the renamed dense-canopy forest art; scrub uses its
-        // own distinct sparse art (#3573 R8/S4).
-        (_tileHardwoodForest, 'hardwood_forest'),
-        (_tileHardwoodForestTimber, 'hardwood_forest_timber'),
-        (_tileScrubForest, 'scrub_forest'),
-        (_tileScrubForestTimber, 'scrub_forest_timber'),
-        (_tileHills, 'hills'),
-        (_tileHillsMine, 'hills_mine'),
-        (_tileHillsWool, 'hills_wool'),
-        (_tileMountain, 'mountain'),
-        (_tileSwamp, 'swamp'),
+        (tileHardwoodForest, 'hardwood_forest'),
+        (tileHardwoodForestTimber, 'hardwood_forest_timber'),
+        (tileScrubForest, 'scrub_forest'),
+        (tileScrubForestTimber, 'scrub_forest_timber'),
+        (tileHills, 'hills'),
+        (tileHillsMine, 'hills_mine'),
+        (tileHillsWool, 'hills_wool'),
+        (tileMountain, 'mountain'),
+        (tileSwamp, 'swamp'),
       ]) {
-        // Intentionally not awaited; errors are logged inside loadStandaloneTile.
         // ignore: discarded_futures
-        loadStandaloneTile(item.$1, item.$2);
+        _loadStandaloneTile(item.$1, item.$2);
       }
 
       _isLoaded = true;
@@ -132,15 +96,53 @@ class TerrainTilesetCache {
     }
   }
 
-  // L0/L1 Wang tileset getters
+  Future<void> _loadWangTileset(
+    String name,
+    String lower,
+    String upper,
+    void Function(WangTileset) setter,
+  ) async {
+    setter(
+      await loadWangTilesetFromAssets(
+        name: name,
+        lower: lower,
+        upper: upper,
+        log: _log,
+      ),
+    );
+  }
+
+  Future<void> _loadStandaloneTile(String tileId, String assetStem) async {
+    final pngPath = terrainTileAssetPath(assetStem);
+
+    try {
+      final image = await decodeImageAsset(pngPath);
+
+      _standaloneTiles[tileId] = StandaloneTile(tileId: tileId, image: image);
+    } catch (e, stackTrace) {
+      _log.w(
+        'Failed to load feature overlay tile (non-fatal): $tileId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _loadStandaloneTileRequired(
+    String tileId,
+    String assetStem,
+  ) async {
+    final pngPath = terrainTileAssetPath(assetStem);
+    final image = await decodeImageAsset(pngPath);
+    _standaloneTiles[tileId] = StandaloneTile(tileId: tileId, image: image);
+  }
+
   WangTileset? getSeaPlainsTileset() => _seaPlainsTileset;
   WangTileset? getSeaDesertTileset() => _seaDesertTileset;
   WangTileset? getPlainsDesertTileset() => _plainsDesertTileset;
 
-  // Legacy getter for backwards compatibility
   WangTileset? getSeaBeachTileset() => _seaPlainsTileset;
 
-  // L2+ Standalone feature tiles
   StandaloneTile? getStandaloneTile(TerrainType terrain) =>
       _standaloneTiles['tile_${terrain.name}'];
 

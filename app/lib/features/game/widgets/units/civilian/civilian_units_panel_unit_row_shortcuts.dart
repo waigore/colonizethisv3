@@ -15,7 +15,10 @@ bool civilianUnitsPanelUnitRowInExplorerShortcutMode({
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
+  required String? buildPortShortcutTargetTileKey,
+  required String? buildRailShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
+  required String? upgradeTownShortcutTargetTileKey,
 }) =>
     (prospectShortcutTargetTileKey != null &&
         prospectShortcutTargetTileKey.isNotEmpty) ||
@@ -27,8 +30,14 @@ bool civilianUnitsPanelUnitRowInExplorerShortcutMode({
         buildRoadShortcutTargetTileKey.isNotEmpty) ||
     (buildFortShortcutTargetTileKey != null &&
         buildFortShortcutTargetTileKey.isNotEmpty) ||
+    (buildPortShortcutTargetTileKey != null &&
+        buildPortShortcutTargetTileKey.isNotEmpty) ||
+    (buildRailShortcutTargetTileKey != null &&
+        buildRailShortcutTargetTileKey.isNotEmpty) ||
     (purchaseLandShortcutTargetTileKey != null &&
-        purchaseLandShortcutTargetTileKey.isNotEmpty);
+        purchaseLandShortcutTargetTileKey.isNotEmpty) ||
+    (upgradeTownShortcutTargetTileKey != null &&
+        upgradeTownShortcutTargetTileKey.isNotEmpty);
 
 void startCivilianUnitsPanelUnitRowShortcutAssign({
   required AppEventBus bus,
@@ -41,8 +50,15 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
+  required String? buildPortShortcutTargetTileKey,
+  required String? buildRailShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
+  required String? upgradeTownShortcutTargetTileKey,
+  String? counterSpyShortcutTargetTileKey,
 }) {
+  final hasCounterSpyShortcut =
+      counterSpyShortcutTargetTileKey != null &&
+      counterSpyShortcutTargetTileKey.isNotEmpty;
   final hasExploreShortcut =
       exploreShortcutTargetTileKey != null &&
       exploreShortcutTargetTileKey.isNotEmpty;
@@ -58,15 +74,32 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   final hasBuildFortShortcut =
       buildFortShortcutTargetTileKey != null &&
       buildFortShortcutTargetTileKey.isNotEmpty;
+  final hasBuildPortShortcut =
+      buildPortShortcutTargetTileKey != null &&
+      buildPortShortcutTargetTileKey.isNotEmpty;
+  final hasBuildRailShortcut =
+      buildRailShortcutTargetTileKey != null &&
+      buildRailShortcutTargetTileKey.isNotEmpty;
   final hasPurchaseLandShortcut =
       purchaseLandShortcutTargetTileKey != null &&
       purchaseLandShortcutTargetTileKey.isNotEmpty;
-  final targetTileKey = hasPurchaseLandShortcut
+  final hasUpgradeTownShortcut =
+      upgradeTownShortcutTargetTileKey != null &&
+      upgradeTownShortcutTargetTileKey.isNotEmpty;
+  final targetTileKey = hasCounterSpyShortcut
+      ? counterSpyShortcutTargetTileKey
+      : hasPurchaseLandShortcut
       ? purchaseLandShortcutTargetTileKey
       : hasBuildRoadShortcut
       ? buildRoadShortcutTargetTileKey
       : hasBuildFortShortcut
       ? buildFortShortcutTargetTileKey
+      : hasBuildPortShortcut
+      ? buildPortShortcutTargetTileKey
+      : hasBuildRailShortcut
+      ? buildRailShortcutTargetTileKey
+      : hasUpgradeTownShortcut
+      ? upgradeTownShortcutTargetTileKey
       : hasBuildImprovementShortcut
       ? buildImprovementShortcutTargetTileKey
       : hasExploreShortcut
@@ -75,18 +108,27 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
       ? prospectShortcutTargetTileKey
       : null;
   if (targetTileKey == null || targetTileKey.isEmpty) return;
-  final workTarget = hasPurchaseLandShortcut
+  final workTarget = hasCounterSpyShortcut
+      ? kWorkTargetCounterSpy
+      : hasPurchaseLandShortcut
       ? kWorkTargetPurchaseLand
       : hasBuildRoadShortcut
       ? kWorkTargetBuildRoad
       : hasBuildFortShortcut
       ? kWorkTargetBuildFort
+      : hasBuildPortShortcut
+      ? kWorkTargetBuildPort
+      : hasBuildRailShortcut
+      ? kWorkTargetBuildRail
+      : hasUpgradeTownShortcut
+      ? kWorkTargetUpgradeTown
       : hasBuildImprovementShortcut
       ? kWorkTargetBuildImprovement
       : hasExploreShortcut
       ? kWorkTargetExplore
       : kWorkTargetProspect;
-  if (!pending.isIdleNoPending || !availableWorkTargetIds.contains(workTarget)) {
+  if (!pending.isIdleNoPending ||
+      !availableWorkTargetIds.contains(workTarget)) {
     return;
   }
   bus.closePanelThenEmit(

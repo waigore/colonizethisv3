@@ -35,7 +35,8 @@ const Set<String> _ownSnapshotAdopterBasenames = {
 /// Classic expand-peace `*peace*_test.dart` pins are also covered via
 /// [_isExpandPeacePinPath] (sole-GP deciders + critical OW-hold).
 const Set<String> _ownVsPartnerAdopterBasenames = {
-  'expand_phase_peace_matrix_sole_gp_blocker_cases.dart',
+  'expand_phase_peace_matrix_sole_gp_blocker_guard_cases.dart',
+  'expand_phase_peace_matrix_sole_gp_blocker_fire_cases.dart',
 };
 
 /// Phase-11 expand-peace Game-builder adopters (Refs #4239 Slice B).
@@ -49,7 +50,10 @@ const Set<String> _stalledFutileOwnGameAdopterBasenames = {
 };
 
 const Set<String> _defaultStartFutileMinorGameAdopterBasenames = {
-  'expand_phase_planner_default_start_futile_minor_peace_test.dart',
+  'expand_phase_planner_default_start_futile_minor_peace_guard_cases.dart',
+  'expand_phase_planner_default_start_futile_minor_peace_mixed_frontier_cases.dart',
+  'expand_phase_planner_default_start_futile_minor_peace_boundary_cases.dart',
+  'expand_phase_planner_default_start_futile_minor_peace_determinism_cases.dart',
 };
 
 const Set<String> _tribeDistractionGameAdopterBasenames = {
@@ -71,17 +75,22 @@ const Set<String> _stalledOwGameAdopterBasenames = {
 };
 
 const Set<String> _weakHoldingsGameAdopterBasenames = {
-  'expand_phase_planner_weak_holdings_invadable_blocker_peace_test.dart',
+  'expand_phase_planner_weak_holdings_invadable_blocker_peace_guard_cases.dart',
+  'expand_phase_planner_weak_holdings_invadable_blocker_peace_tail_cases.dart',
+  'expand_phase_planner_weak_holdings_invadable_blocker_peace_determinism_cases.dart',
+  'expand_phase_planner_weak_holdings_invadable_blocker_peace_delegation_cases.dart',
 };
 
 const Set<String> _multiMinorGameAdopterBasenames = {
-  'expand_phase_planner_below_quota_multi_minor_distraction_fire_cases.dart',
+  'expand_phase_planner_below_quota_multi_minor_distraction_fire_fire_cases.dart',
+  'expand_phase_planner_below_quota_multi_minor_distraction_fire_determinism_cases.dart',
+  'expand_phase_planner_below_quota_multi_minor_distraction_fire_delegation_cases.dart',
   'expand_phase_planner_below_quota_multi_minor_distraction_guards_cases.dart',
 };
 
 const Set<String> _soleGpMatrixGameAdopterBasenames = {
-  'expand_phase_peace_matrix_sole_gp_blocker_cases.dart',
-  'expand_phase_peace_matrix_sole_gp_identity_cases.dart',
+  'expand_phase_peace_matrix_sole_gp_identity_sole_at_war_cases.dart',
+  'expand_phase_peace_matrix_sole_gp_identity_consolidate_cases.dart',
 };
 
 /// Peace-matrix case modules that must import [buildExpandPeaceMatrixGame].
@@ -108,24 +117,30 @@ final RegExp _localPeerGameDecl = RegExp(r'Game\s+_peerGame\b');
 final RegExp _localOwnVsPartnerGameDecl = RegExp(r'Game\s+_ownVsPartnerGame\b');
 final RegExp _localGameOfDecl = RegExp(r'Game\s+_gameOf\b');
 final RegExp _localOwnGameDecl = RegExp(r'Game\s+_ownGame\b');
-final RegExp _localTribeDistractionGameDecl =
-    RegExp(r'Game\s+_tribeDistractionGame\b');
+final RegExp _localTribeDistractionGameDecl = RegExp(
+  r'Game\s+_tribeDistractionGame\b',
+);
 final RegExp _localPivotGameDecl = RegExp(r'Game\s+_pivotGame\b');
 final RegExp _localSurvivalGameDecl = RegExp(r'Game\s+_survivalGame\b');
 final RegExp _localMatrixBuildGameDecl = RegExp(r'Game\s+_buildGame\b');
 final RegExp _localPristineGameDecl = RegExp(r'Game\s+_pristineGame\b');
-final RegExp _localZeroRegimentAtWarGameDecl =
-    RegExp(r'Game\s+_zeroRegimentAtWarGame\b');
-final RegExp _localGpOnlyInvadableGameDecl =
-    RegExp(r'Game\s+_gameWithGpOnlyInvadable\b');
-final RegExp _localMinorAndGpInvadableGameDecl =
-    RegExp(r'Game\s+_gameWithMinorAndGpInvadable\b');
-final RegExp _localTribeOnlyInvadableGameDecl =
-    RegExp(r'Game\s+_gameWithTribeOnlyInvadable\b');
+final RegExp _localZeroRegimentAtWarGameDecl = RegExp(
+  r'Game\s+_zeroRegimentAtWarGame\b',
+);
+final RegExp _localGpOnlyInvadableGameDecl = RegExp(
+  r'Game\s+_gameWithGpOnlyInvadable\b',
+);
+final RegExp _localMinorAndGpInvadableGameDecl = RegExp(
+  r'Game\s+_gameWithMinorAndGpInvadable\b',
+);
+final RegExp _localTribeOnlyInvadableGameDecl = RegExp(
+  r'Game\s+_gameWithTribeOnlyInvadable\b',
+);
 final RegExp _localWeakHoldingsGameDecl = RegExp(r'Game\s+_weakHoldingsGame\b');
 final RegExp _localMultiMinorGameDecl = RegExp(r'Game\s+_multiMinorGame\b');
-final RegExp _localGpsAndMinorsGameDecl =
-    RegExp(r'Game\s+_gameWithGpsAndMinors\b');
+final RegExp _localGpsAndMinorsGameDecl = RegExp(
+  r'Game\s+_gameWithGpsAndMinors\b',
+);
 final RegExp _localConsolidateTwoGpGameDecl = RegExp(r'Game\s+_twoGpGame\b');
 
 /// True when [slashPath] is a classic expand-peace `*_peace*_test.dart` pin.
@@ -169,7 +184,10 @@ bool aiExpandPeaceSharedFixturesPathInScope(String slashPath) {
       _isOwnSnapshotAdopterPath(normalized) ||
       _isOwnVsPartnerAdopterPath(normalized) ||
       _isBasenameAdopterPath(normalized, _defaultStartGameAdopterBasenames) ||
-      _isBasenameAdopterPath(normalized, _stalledFutileOwnGameAdopterBasenames) ||
+      _isBasenameAdopterPath(
+        normalized,
+        _stalledFutileOwnGameAdopterBasenames,
+      ) ||
       _isBasenameAdopterPath(
         normalized,
         _defaultStartFutileMinorGameAdopterBasenames,
@@ -198,10 +216,14 @@ String? aiExpandPeaceSharedFixturesViolationReason(
   final isPeacePin = _isExpandPeacePinPath(normalized);
   final isOwnSnapshotAdopter = _isOwnSnapshotAdopterPath(normalized);
   final isOwnVsPartnerAdopter = _isOwnVsPartnerAdopterPath(normalized);
-  final isDefaultStartGameAdopter =
-      _isBasenameAdopterPath(normalized, _defaultStartGameAdopterBasenames);
-  final isStalledFutileOwnGameAdopter =
-      _isBasenameAdopterPath(normalized, _stalledFutileOwnGameAdopterBasenames);
+  final isDefaultStartGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _defaultStartGameAdopterBasenames,
+  );
+  final isStalledFutileOwnGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _stalledFutileOwnGameAdopterBasenames,
+  );
   final isDefaultStartFutileMinorGameAdopter = _isBasenameAdopterPath(
     normalized,
     _defaultStartFutileMinorGameAdopterBasenames,
@@ -210,18 +232,30 @@ String? aiExpandPeaceSharedFixturesViolationReason(
     normalized,
     _tribeDistractionGameAdopterBasenames,
   );
-  final isPivotGameAdopter =
-      _isBasenameAdopterPath(normalized, _pivotGameAdopterBasenames);
-  final isSurvivalGameAdopter =
-      _isBasenameAdopterPath(normalized, _survivalGameAdopterBasenames);
-  final isStalledOwGameAdopter =
-      _isBasenameAdopterPath(normalized, _stalledOwGameAdopterBasenames);
-  final isWeakHoldingsGameAdopter =
-      _isBasenameAdopterPath(normalized, _weakHoldingsGameAdopterBasenames);
-  final isMultiMinorGameAdopter =
-      _isBasenameAdopterPath(normalized, _multiMinorGameAdopterBasenames);
-  final isSoleGpMatrixGameAdopter =
-      _isBasenameAdopterPath(normalized, _soleGpMatrixGameAdopterBasenames);
+  final isPivotGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _pivotGameAdopterBasenames,
+  );
+  final isSurvivalGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _survivalGameAdopterBasenames,
+  );
+  final isStalledOwGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _stalledOwGameAdopterBasenames,
+  );
+  final isWeakHoldingsGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _weakHoldingsGameAdopterBasenames,
+  );
+  final isMultiMinorGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _multiMinorGameAdopterBasenames,
+  );
+  final isSoleGpMatrixGameAdopter = _isBasenameAdopterPath(
+    normalized,
+    _soleGpMatrixGameAdopterBasenames,
+  );
   final isMatrixCasesAdopter = _isExpandPeaceMatrixCasesPath(normalized);
   if (!isPeacePin &&
       !isOwnSnapshotAdopter &&
@@ -312,12 +346,14 @@ String? aiExpandPeaceSharedFixturesViolationReason(
         '`buildStalledOwPristineGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #4291)';
   }
-  if (isStalledOwGameAdopter && _localZeroRegimentAtWarGameDecl.hasMatch(content)) {
+  if (isStalledOwGameAdopter &&
+      _localZeroRegimentAtWarGameDecl.hasMatch(content)) {
     return 'redeclares local `_zeroRegimentAtWarGame`; import '
         '`buildStalledOwZeroRegimentAtWarGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #4291)';
   }
-  if (isStalledOwGameAdopter && _localGpOnlyInvadableGameDecl.hasMatch(content)) {
+  if (isStalledOwGameAdopter &&
+      _localGpOnlyInvadableGameDecl.hasMatch(content)) {
     return 'redeclares local `_gameWithGpOnlyInvadable`; import '
         '`buildStalledOwGpOnlyInvadableGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #4291)';
@@ -334,7 +370,8 @@ String? aiExpandPeaceSharedFixturesViolationReason(
         '`buildStalledOwTribeOnlyInvadableGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #4291)';
   }
-  if (isWeakHoldingsGameAdopter && _localWeakHoldingsGameDecl.hasMatch(content)) {
+  if (isWeakHoldingsGameAdopter &&
+      _localWeakHoldingsGameDecl.hasMatch(content)) {
     return 'redeclares local `_weakHoldingsGame`; import '
         '`buildWeakHoldingsInvadableBlockerGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #4291)';
@@ -344,7 +381,8 @@ String? aiExpandPeaceSharedFixturesViolationReason(
         '`buildExpandPeaceMultiMinorGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #4291)';
   }
-  if (isSoleGpMatrixGameAdopter && _localGpsAndMinorsGameDecl.hasMatch(content)) {
+  if (isSoleGpMatrixGameAdopter &&
+      _localGpsAndMinorsGameDecl.hasMatch(content)) {
     return 'redeclares local `_gameWithGpsAndMinors`; import '
         '`buildExpandPeaceGpsAndMinorsGame` from '
         '`$expandPeaceSharedFixturesSupportFile` (Refs #4291)';

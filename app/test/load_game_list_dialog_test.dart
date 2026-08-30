@@ -1,12 +1,7 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -14,72 +9,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
-
-class _LoadDialogGameService extends GameService {
-  _LoadDialogGameService(super.box, super.adapter);
-
-  List<LoadableSaveEntry> entries = const [];
-  GameSaveSession? sessionToLoad;
-  final List<String> deletedIds = <String>[];
-
-  @override
-  List<LoadableSaveEntry> listLoadableSaves() => entries;
-
-  @override
-  void deleteSave(String storageId) {
-    deletedIds.add(storageId);
-    entries = entries.where((e) => e.storageId != storageId).toList();
-  }
-
-  @override
-  GameSaveSession? loadGameSession(String gameId) =>
-      sessionToLoad != null && gameId == sessionToLoad!.game.id
-      ? sessionToLoad
-      : null;
-
-  @override
-  GameSaveSession? loadAutoSaveSession() =>
-      sessionToLoad != null &&
-          entries.any(
-            (e) =>
-                e.kind == LoadableSaveKind.autoSave &&
-                e.storageId == kAutoSaveSlotId,
-          )
-      ? sessionToLoad
-      : null;
-}
-
-LoadableSaveEntry _manual(int i, {DateTime? at}) {
-  return LoadableSaveEntry(
-    storageId: 'manual_$i',
-    label: 'Save $i',
-    kind: LoadableSaveKind.manual,
-    turnNumber: i,
-    calendarYear: 1500 + i,
-    humanNation: 'England',
-    lastSavedAt: at ?? DateTime.utc(2026, 7, 12, 12, i),
-  );
-}
+import 'load_game_list_dialog_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   late Box<dynamic> gamesBox;
-  late _LoadDialogGameService service;
+  late LoadDialogGameService service;
   late AppEventBus bus;
 
-  final loadedGame = Game(
-    id: 'manual_a',
-    worldState: const WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 9),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'Spain', isHuman: true),
-    ],
-  );
+  Widget host({
+    required bool fromPause,
+    List<LoadableSaveEntry> entries = const [],
+    String? previewPendingDeleteId,
+  }) {
+    return loadGameListDialogHost(
+      gamesBox: gamesBox,
+      service: service,
+      bus: bus,
+      fromPause: fromPause,
+      entries: entries,
+      previewPendingDeleteId: previewPendingDeleteId,
+    );
+  }
 
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive_load_list_dialog');
@@ -90,53 +42,12 @@ void main() {
     await gamesBox.clear();
     AppEventBus.reset();
     bus = AppEventBus.create();
-    service = _LoadDialogGameService(gamesBox, GameSaveAdapter());
+    service = LoadDialogGameService(gamesBox, GameSaveAdapter());
   });
 
   tearDown(() {
     bus.dispose();
   });
-
-  Widget host({
-    required bool fromPause,
-    List<LoadableSaveEntry> entries = const [],
-    String? previewPendingDeleteId,
-  }) {
-    service.entries = entries;
-    service.sessionToLoad = GameSaveSession(
-      game: loadedGame,
-      draftOrders: const Orders(
-        buildUnitOrdersByPlayerId: {
-          'gp1': [
-            BuildUnitOrder(
-              unitType: 'peasant',
-              isMilitary: false,
-              spawnProvinceId: 'oldWorld|cap',
-            ),
-          ],
-        },
-      ),
-      productionDesiredOutputByRecipe: const {'r1': 2},
-      displayName: 'Spain Save',
-    );
-    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-    return buildAppShell(
-      overrides: [
-        gamesBoxProvider.overrideWithValue(gamesBox),
-        gameServiceProvider.overrideWith((ref) => service),
-        appEventBusProvider.overrideWith((ref) => bus),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier()),
-      ],
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      child: Scaffold(
-        body: LoadGameListDialog(
-          fromPause: fromPause,
-          previewPendingDeleteId: previewPendingDeleteId,
-        ),
-      ),
-    );
-  }
 
   testWidgets('empty list shows empty state', (tester) async {
     await tester.pumpWidget(host(fromPause: false));
@@ -171,10 +82,7 @@ void main() {
     await tester.tap(find.byKey(LoadGameListDialog.rowKey('manual_a')));
     await tester.pumpAndSettle();
 
-    expect(
-      events.whereType<NavigateToRouteEvent>().single.route,
-      Routes.game,
-    );
+    expect(events.whereType<NavigateToRouteEvent>().single.route, Routes.game);
     expect(find.byType(LoadGameListDialog), findsNothing);
   });
 
@@ -260,7 +168,7 @@ void main() {
             kind: LoadableSaveKind.autoSave,
             turnNumber: 3,
           ),
-          _manual(1),
+          loadDialogManualEntry(1),
         ],
       ),
     );
@@ -277,7 +185,7 @@ void main() {
     await tester.pumpWidget(
       host(
         fromPause: false,
-        entries: [for (var i = 0; i < 10; i++) _manual(i)],
+        entries: [for (var i = 0; i < 10; i++) loadDialogManualEntry(i)],
       ),
     );
     await tester.pumpAndSettle();
@@ -293,7 +201,7 @@ void main() {
             kind: LoadableSaveKind.autoSave,
             turnNumber: 99,
           ),
-          for (var i = 0; i < 11; i++) _manual(i),
+          for (var i = 0; i < 11; i++) loadDialogManualEntry(i),
         ],
       ),
     );
@@ -321,14 +229,13 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      host(
-        fromPause: false,
-        entries: [_manual(1)],
-      ),
+      host(fromPause: false, entries: [loadDialogManualEntry(1)]),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')));
+    await tester.tap(
+      find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(LoadGameListDialog.deleteConfirmKey), findsOneWidget);
 
@@ -352,13 +259,15 @@ void main() {
             kind: LoadableSaveKind.autoSave,
             turnNumber: 3,
           ),
-          _manual(1),
+          loadDialogManualEntry(1),
         ],
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')));
+    await tester.tap(
+      find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(LoadGameListDialog.deleteConfirmButtonKey));
     await tester.pumpAndSettle();
@@ -380,7 +289,7 @@ void main() {
             kind: LoadableSaveKind.autoSave,
             turnNumber: 3,
           ),
-          _manual(1),
+          loadDialogManualEntry(1),
         ],
       ),
     );

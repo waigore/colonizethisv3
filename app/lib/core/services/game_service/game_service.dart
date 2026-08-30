@@ -6,17 +6,19 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
+import 'game_service_diplomacy_resume.dart';
 import 'game_service_map_cache.dart';
 import 'game_service_new_game_setup.dart';
 import 'game_service_turn_resume.dart';
 import 'game_service_turn_trace.dart';
 
-export 'game_service_map_cache.dart' show GameMapCache, GameMapData, TurnTraceSession;
+export 'game_service_types.dart'
+    show GameMapCache, GameMapData, TurnTraceSession;
 export 'try_get_game_map_data.dart';
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
-class GameService {
+class GameService with GameServiceDiplomacyResume {
   /// Number of coarse progress steps reported by [createNewGameAsync]. SPEC/ui/game-initializing.md.
   static const int newGameSetupProgressStepCount = 5;
   GameService(
@@ -70,22 +72,8 @@ class GameService {
   int get turnTraceSessionCount => state.turnTraceSessionsByGameId.length;
 
   /// Cache-only map fingerprint for session-clear isolation tests.
-  String? cachedMapContentFingerprint(String gameId) {
-    final cached = state.mapCache[gameId];
-    if (cached == null) return null;
-    final ids = cached.tileMapByRegion.keys.toList()..sort();
-    return [
-      for (final id in ids)
-        () {
-          final m = cached.tileMapByRegion[id]!;
-          final sig = m.grid.fold<int>(
-            0,
-            (s, row) => row.fold<int>(s, Object.hash),
-          );
-          return '$id:${m.width}x${m.height}:$sig';
-        }(),
-    ].join('|');
-  }
+  String? cachedMapContentFingerprint(String gameId) =>
+      gameServiceCachedMapContentFingerprint(state.mapCache, gameId);
 
   /// Seeds a turn-trace session for tests (no export / resolution).
   void debugSeedTurnTraceSession(String gameId) =>
@@ -118,16 +106,15 @@ class GameService {
     Map<String, int> productionDesiredOutputByRecipe = const <String, int>{},
     String? displayName,
     bool mirrorAutoSave = true,
-  }) =>
-      gameServiceSaveGameSession(
-        this,
-        sessionGame: sessionGame,
-        saveGameId: saveGameId,
-        draftOrders: draftOrders,
-        productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
-        displayName: displayName,
-        mirrorAutoSave: mirrorAutoSave,
-      );
+  }) => gameServiceSaveGameSession(
+    this,
+    sessionGame: sessionGame,
+    saveGameId: saveGameId,
+    draftOrders: draftOrders,
+    productionDesiredOutputByRecipe: productionDesiredOutputByRecipe,
+    displayName: displayName,
+    mirrorAutoSave: mirrorAutoSave,
+  );
 
   /// Lists all saved game ids.
   List<String> listGameIds() => gameServiceListGameIds(this);
@@ -140,7 +127,8 @@ class GameService {
   int manualSaveCount() => state.adapter.manualSaveCount(state.box);
 
   /// Whether a new sanitized manual id may be created (count < [kMaxManualSaves]).
-  bool canCreateNewManualSave() => state.adapter.canCreateNewManualSave(state.box);
+  bool canCreateNewManualSave() =>
+      state.adapter.canCreateNewManualSave(state.box);
 
   /// Deletes a manual save or the auto-save slot (game + map keys).
   void deleteSave(String storageId) {
@@ -175,81 +163,16 @@ class GameService {
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
-  }) =>
-      gameServiceRunTurnResolution(
-        this,
-        current,
-        orders: orders,
-        aiOrders: aiOrders,
-        aiTraceSections: aiTraceSections,
-        topology: topology,
-        tileMapByRegion: tileMapByRegion,
-        onGameEvent: onGameEvent,
-      );
-
-  /// Resumes turn resolution after the user has submitted call to arms decisions.
-  TurnResolutionResult resumeCallToArmsDecisions(
-    Game game,
-    List<CallToArmsDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) =>
-      gameServiceResumeTurnFromDiplomacy(
-        this,
-        game,
-        orders,
-        onGameEvent: onGameEvent,
-        callToArmsDecisions: decisions,
-      );
-
-  /// Resumes turn resolution after the user has submitted overture accept/reject decisions.
-  /// Returns [TurnResolutionComplete] or again [TurnResolutionPendingOvertures].
-  /// When [TurnResolutionComplete], saves the game. SPEC/program/dialogue-system.md.
-  TurnResolutionResult resumeOvertureDecisions(
-    Game game,
-    List<OvertureOffer> pendingOvertures,
-    List<OvertureDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) =>
-      gameServiceResumeTurnFromDiplomacy(
-        this,
-        game,
-        orders,
-        onGameEvent: onGameEvent,
-        overtureDecisions: decisions,
-      );
-
-  /// Resumes turn resolution after FTP accept/reject decisions (Diplomacy phase).
-  TurnResolutionResult resumeFtpDecisions(
-    Game game,
-    List<FtpOffer> pendingFtpOffers,
-    List<FtpDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) =>
-      gameServiceResumeTurnFromDiplomacy(
-        this,
-        game,
-        orders,
-        onGameEvent: onGameEvent,
-        ftpDecisions: decisions,
-      );
-
-  /// Resumes after human intervention choices (GP declared war on Minor/Tribe).
-  TurnResolutionResult resumeInterventionDecisions(
-    Game game,
-    List<InterventionDecision> decisions,
-    Orders orders, {
-    void Function(GameEvent)? onGameEvent,
-  }) =>
-      gameServiceResumeTurnFromDiplomacy(
-        this,
-        game,
-        orders,
-        onGameEvent: onGameEvent,
-        interventionDecisions: decisions,
-      );
+  }) => gameServiceRunTurnResolution(
+    this,
+    current,
+    orders: orders,
+    aiOrders: aiOrders,
+    aiTraceSections: aiTraceSections,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+    onGameEvent: onGameEvent,
+  );
 
   /// Resolves one turn and returns the updated game; throws if resolution is pending overtures.
   /// Prefer [runTurnResolution] when the UI can show the overture dialogue.
@@ -283,13 +206,12 @@ class GameService {
     String? id,
     GameSetupConfig? config,
     void Function(int stepIndex, int totalSteps)? onProgress,
-  }) =>
-      gameServiceCreateNewGameAsync(
-        this,
-        id: id,
-        config: config,
-        onProgress: onProgress,
-      );
+  }) => gameServiceCreateNewGameAsync(
+    this,
+    id: id,
+    config: config,
+    onProgress: onProgress,
+  );
 
   /// Writes merged turn trace after resolution ran outside [runTurnResolution]
   /// (e.g. worker isolate). No-op when [isTurnTraceEnabled] is false.

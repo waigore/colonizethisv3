@@ -8,6 +8,8 @@ Each domain package (`world`, `combat`, `economy`, `diplomacy`, `orders`, `turn`
 
 Consumers (sibling domains, the thin `colonizethis_logic` core, the AI contract libraries) MUST import a sibling symbol through that sibling's barrel whenever the barrel already publishes the owning file. A deep `package:colonizethis_<domain>/src/...` import/export is permitted only for a symbol the domain barrel does not yet publish; promoting such a file into its barrel (a future Phase 1 barrel-bypass slice) is preferred over widening deep-import usage.
 
+`colonizethis_combat_test_support` is a consumer of the combat domain barrel (`package:colonizethis_combat/colonizethis_combat.dart`), not of the `colonizethis_logic` umbrella. Combat APIs used by its `lib/**` tables (`resolveBattleContext`, `detectConflicts`, `buildQuickBattleInput`, `isCapitalSiege`, `BattleContext`, …) are imported from the combat barrel. `QuickBattleInput` is imported from `package:colonizethis_models/colonizethis_models.dart` (models owns the type; combat does not re-export it). `kWorkTargetBuildRoad` is imported from `colonizethis_orders`. Unpublished combat internals may keep `package:colonizethis_combat/src/...` imports. Enforced by `repo.combat_test_support_no_logic_barrel` (Refs #4633).
+
 ## AI narrow contract (`ai_api.dart`)
 
 `packages/colonizethis_logic/lib/ai_api.dart` is the explicit, narrow logic surface consumed by `colonizethis_ai` (`colonizethis-logic-ai-decoupling.mdc`). It deliberately avoids re-exporting the broad `colonizethis_logic.dart` barrel.
@@ -21,9 +23,18 @@ Contract:
   core itself (no sibling barrel exists), so it remains a package-relative export.
 - The remaining deep `src/` exports are grouped under an in-code justification
   block and are permitted **only** because the owning domain barrel does not
-  publish those files. As of the #3543 slice these are:
-  `orders/feedstock_bootstrap_cost.dart` and
-  `orders/feedstock_extraction_targets.dart`.
+  publish those files. As of the #4508 slice (orders wave 9), the former
+  feedstock deep exports (`orders/feedstock_bootstrap_cost.dart` and
+  `orders/feedstock_extraction_targets.dart`) are published on the
+  `colonizethis_orders` barrel; `ai_api.dart` and `industry_counsel_api.dart`
+  consume them through `package:colonizethis_orders/colonizethis_orders.dart`
+  `show` lists. `feedstock_common.dart` stays unpublished and must not be
+  re-exported by the published extraction-targets file, or
+  `regimentCountForPlayer` collides with the AI planner helper of the same
+  name. Counsel ranking/types/emission/core-snapshot files listed in
+  issue #4508 are likewise published on the orders barrel for
+  `industry_counsel_api.dart`. No justified deep `colonizethis_orders` exports
+  remain on `ai_api.dart` as of this slice.
   (`world/sea_reachable_provinces.dart` was a deep export through Phase 3 but
   was promoted into the `colonizethis_world` barrel by the #3543 slice, so
   `ai_api.dart` now re-exports its two symbols through the world barrel `show`
@@ -31,10 +42,16 @@ Contract:
 - The exported **symbol set** consumed by `colonizethis_ai` is unchanged by the
   Phase 3 narrowing; only the export routing (deep `src/` → domain barrel)
   changes, so AI planner behaviour and tests are preserved.
+- Dart `show` lists do not pull in extensions from a class's library
+  automatically. When AI calls methods on IncrementalCandidateValidator
+  that live on companion extensions (for example
+  IncrementalCandidateValidatorArmyNaval.isArmyMoveAccepted), those
+  extension names MUST appear in the colonizethis_orders barrel `show`
+  list on `ai_api.dart` (Refs #4587).
 
 ## Enforcement: `repo.ai_api_narrow_surface`
 
-`tool/check_ai_api_narrow_surface.dart` (rule `repo.ai_api_narrow_surface`) scans `ai_api.dart`. For every `export 'package:colonizethis_<domain>/src/<file>'` directive it resolves the owning domain barrel's transitive `export` closure (following `package:` and relative `export` directives within that package's `lib/`). The directive is a **violation** when the barrel's closure already contains `<file>` — i.e. a barrel re-export alternative exists.
+`tool/check_ai_api_narrow_surface.dart` (rule `repo.ai_api_narrow_surface`) scans every logic contract library: `ai_api.dart`, `order_suggestion_api.dart`, `debug_console_api.dart`, `industry_counsel_api.dart`, `colonizethis_logic.dart`, and `src/constants.dart` (Refs #4660). For every `export 'package:colonizethis_<domain>/src/<file>'` directive it resolves the owning domain barrel's transitive `export` closure (following `package:` and relative `export` directives within that package's `lib/`). The directive is a **violation** when the barrel's closure already contains `<file>` — i.e. a barrel re-export alternative exists.
 
 The predicate is derived purely from the live barrel contents; the rule loads **no keyed waiver / allowlist data** (`SPEC/program/repo-lint.md` § Policy: no violation allowlists). Deep exports of files the barrel does not publish are not flagged because no barrel alternative exists.
 
@@ -42,13 +59,15 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 
 ### Acceptance criteria (`repo.ai_api_narrow_surface`)
 
-- **Given** the post-Phase-3 `packages/colonizethis_logic/lib/ai_api.dart` on `dev`, **when** `repo.ai_api_narrow_surface` resolves each domain barrel's transitive export closure, **then** no `export 'package:colonizethis_<domain>/src/<file>'` directive targets a file already published by that domain barrel and the rule exits `0`.
+- **Given** the post-#4660 logic contract libraries on `dev`, **when** `repo.ai_api_narrow_surface` resolves each domain barrel's transitive export closure across all scanned contract files, **then** no `export 'package:colonizethis_<domain>/src/<file>'` directive targets a file already published by that domain barrel and the rule exits `0`.
 - **Given** an `ai_api.dart` that deep-exports `package:colonizethis_world/src/world/ai_control.dart` while the `colonizethis_world` barrel already re-exports that file, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** it returns exit code `1` and lists the offending `ai_api.dart:<line>` with a "bypasses the colonizethis_world barrel" message.
 - **Given** an `ai_api.dart` that re-exports a symbol through `package:colonizethis_<domain>/colonizethis_<domain>.dart show ...`, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** that directive is not flagged.
-- **Given** an `ai_api.dart` deep export of a file the owning domain barrel does **not** re-export (e.g. `orders/feedstock_extraction_targets.dart`), **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** that directive is not flagged (no barrel alternative exists).
+- **Given** the post-#4508 `ai_api.dart` on `dev`, **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** no `export 'package:colonizethis_orders/src/...'` directives remain (feedstock and counsel contract files are barrel-published).
 - **Given** a deep export whose file is reachable only transitively through a sub-barrel (e.g. `orders/orders.dart` re-exporting it), **when** `runCheckAiApiNarrowSurface` scans the workspace, **then** the directive is flagged as a barrel bypass.
 - **Given** the `packages/colonizethis_logic/lib/ai_api.dart` file is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports `Missing AI contract file`.
+- **Given** `colonizethis_ai` calls IncrementalCandidateValidator.isArmyMoveAccepted through `package:colonizethis_logic/ai_api.dart`, **when** the analyzer compiles that AI library, **then** `ai_api.dart` re-exports IncrementalCandidateValidatorArmyNaval (not only the class name) so the method resolves.
 - **Given** a domain referenced by an `ai_api.dart` deep export whose barrel file `lib/<domain>.dart` is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports the missing barrel.
+- **Given** `order_suggestion_api.dart` or `debug_console_api.dart` deep-exports a file already in the owning domain barrel's transitive closure, **when** `runCheckAiApiNarrowSurface` runs, **then** it exits `1` and names the contract `file:line` (Refs #4660).
 
 ## Enforcement: `repo.app_narrow_logic_import` (Refs #4240 Slice A)
 
@@ -81,7 +100,7 @@ Scope and predicate:
 
 - The rule carries an explicit set of enforced **consumer → target** boundaries. It covers `turn → {combat, diplomacy, economy, orders, world}`, `orders → {diplomacy, economy, world}`, `combat → {world}`, `economy → {world}`, `logic → {orders, world}`, `diplomacy → {world}`, and `setup → {diplomacy, world}` — the latter two migrated by the `diplomacy/setup → sibling` slice, which completes the Phase 1 consumer set across the split domain packages. Any boundary not yet migrated is intentionally **not** enforced so the rule stays green while Phase 1 lands incrementally.
 - For each enforced target, the rule resolves the target domain barrel's transitive `export` closure (following `package:` and relative `export` directives within that package's `lib/`) to the set of published `lib/src/...` files.
-- **Combinator-aware publication.** A barrel `export` directive that carries a `show`/`hide` combinator publishes only a subset of its target file's symbols, so the file is treated as **not fully published** and deep imports of it remain allowed (a consumer may legitimately need a symbol the barrel withholds). Only combinator-free (full) re-exports contribute files to the published closure. Example: `colonizethis_world` re-exports `world/fog_resolution.dart` with `show` of only the coastal-visibility helpers, so `colonizethis_turn` keeps a deep import for the internal fog-decay helpers (`applyFogDecay`, `applySpyRevealTimerDecay`, `applyDistantSeaZoneFogRevert`).
+- **Combinator-aware publication.** A barrel `export` directive that carries a `show`/`hide` combinator publishes only a subset of its target file's symbols, so the file is treated as **not fully published** and deep imports of it remain allowed (a consumer may legitimately need a symbol the barrel withholds). Only combinator-free (full) re-exports contribute files to the published closure. Example: `colonizethis_world` re-exports `world/fog_resolution.dart` with `show` of the coastal-visibility helpers plus the end-of-turn fog entry points (`applyFogDecay`, `applyDistantSeaZoneFogRevert`); `colonizethis_turn` consumes those shown symbols through the world barrel (Refs #4515). Remaining fog helpers such as `applySpyRevealTimerDecay` stay withheld, so a deep import of that file is still allowed by this rule.
 - For each enforced consumer, it scans `lib/**` (excluding generated `*.g.dart` / `*.freezed.dart` / `*.mocks.dart`). An `import 'package:colonizethis_<target>/src/<file>'` directive is a **violation** when `<file>` is in that target's published closure.
 - Granularity is **per file** (matching the issue's "files the barrel does not publish at all" carve-out): deep imports of files the barrel omits remain allowed until a later slice promotes them into the barrel.
 - Only `import` directives are scanned. A deliberate narrow deep `export` re-export of a single internal file (for example `turn_resolution_result.dart` re-exporting `diplomacy/diplomacy_phase_result.dart`, or `naval_resolution.dart` re-exporting `world/naval_coastal_visibility.dart`/`world/naval_mission_orders.dart` to preserve a narrow consumer surface) is out of scope.
@@ -95,7 +114,7 @@ The `colonizethis_world` barrel publishes the world-state helper files that `col
   - `world/tile_key_coordinates.dart` hides `parseTileKeyCoordinates` (also published by the `colonizethis_orders` barrel as a thin forwarder to this canonical implementation; the orders barrel remains the single public source for the combined `colonizethis_logic` barrel).
 - Single canonical definition (Refs #3403 Phase 1): `landTileKeysForProvinceBucket` is defined only in `world/province_lookup.dart`. The former duplicate in `world/naval_coastal_visibility.dart` was removed; the canonical function takes an opt-in `allowLocalIdFallback` flag (default `false`, strict full-id only) that naval/fog ship-reveal callers pass `true` to preserve the legacy/fixture local-id bucket fallback. Because there is no longer a second definition, `world/naval_coastal_visibility.dart` re-exports (barrel and `naval_resolution.dart`) no longer carry a `hide`/`show` carve-out for this symbol.
 - Single province-lookup surface (Refs #3403 Phase 1 Step 2, wrapper removal #3843): the `WorldStateProvinceLookup` extension methods on `WorldState` (`world.getProvince`, `world.tryGetProvince`, `world.getProvinceByRegion`, `world.tryGetProvinceByRegion`) are the canonical province-lookup API. The former top-level standalone wrappers in `world/province_lookup.dart` were removed after the deprecation window; `repo.world_no_top_level_province_lookup` fails if those wrapper definitions or unqualified top-level calls reappear in `colonizethis_world/lib/**`.
-- Intentionally still partial: `world/fog_resolution.dart` remains a `show`-restricted export (coastal-visibility helpers only); its internal fog-decay helpers stay package-internal and are consumed by `colonizethis_turn` via a deep import.
+- Intentionally still partial: `world/fog_resolution.dart` remains a `show`-restricted export (coastal-visibility helpers plus `applyFogDecay` / `applyDistantSeaZoneFogRevert` for the end-of-turn orchestrator; Refs #4515). Other fog helpers stay withheld; a deep import of the file is still allowed because the combinator means the file is not fully published.
 - Intentionally still partial (Refs #4038): `world/capital_and_gp_fall.dart` is `show`-restricted to combat/debug entry points (`applyCapitalReassignmentAfterCombat`, `applyFactionCapitalReassignmentAfterCombat`, `applyGreatPowerFall`, `applyFactionTerminalFall`, `evaluateCapitalReassignmentEligibility`, `CapitalReassignmentEligibility`). The cascade siblings stay reachable via deep import of the cascade file; setup-facing `world/capital_reassignment.dart` is **omitted** from the world barrel on purpose so `colonizethis_setup` keeps its narrow deep import/export (not a barrel bypass — the file is not fully published).
 
 ### `colonizethis_orders → colonizethis_world` slice

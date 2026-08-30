@@ -1,7 +1,6 @@
 // Market-tab section list assembly for `MarketTabContent`.
 // Split from `trade_screen_market_tab_build.dart` (Refs #3878).
 
-
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +14,6 @@ extension MarketTabContentBuildSections on MarketTabContent {
   ({
     TextStyle nameStyle,
     TextStyle priceStyle,
-    TextStyle volumeStyle,
     TextStyle quantityStyle,
     TextStyle cargoIndicatorStyle,
     TextStyle cargoWarningStyle,
@@ -30,24 +28,25 @@ extension MarketTabContentBuildSections on MarketTabContent {
           .copyWith(color: EditorialMonoclePalette.accent),
       priceStyle: (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
           .copyWith(color: EditorialMonoclePalette.accentBright),
-      volumeStyle: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-          .copyWith(color: EditorialMonoclePalette.muted),
       quantityStyle:
           (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
               .copyWith(color: EditorialMonoclePalette.accentBright),
       cargoIndicatorStyle:
-          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.accent),
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+            color: EditorialMonoclePalette.accent,
+          ),
       cargoWarningStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
       bidGoodsIndicatorStyle:
-          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.accent),
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+            color: EditorialMonoclePalette.accent,
+          ),
       bidTypeWarningStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
       bidBudgetIndicatorStyle:
-          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.accent),
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+            color: EditorialMonoclePalette.accent,
+          ),
       bidBudgetWarningStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
     );
@@ -59,7 +58,6 @@ extension MarketTabContentBuildSections on MarketTabContent {
     required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
-    required TextStyle volumeStyle,
     required TextStyle quantityStyle,
     bool wideLayout = false,
   }) {
@@ -71,7 +69,6 @@ extension MarketTabContentBuildSections on MarketTabContent {
         staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
-        volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
         l10n: l10n,
         wideLayout: wideLayout,
@@ -83,7 +80,6 @@ extension MarketTabContentBuildSections on MarketTabContent {
         staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
-        volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
         isFirstSection: false,
         l10n: l10n,
@@ -96,7 +92,6 @@ extension MarketTabContentBuildSections on MarketTabContent {
         staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
-        volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
         isFirstSection: false,
         l10n: l10n,

@@ -1,6 +1,8 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MapBaseLayerFlags;
 import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/material.dart' show Offset;
 
 import 'ct_region_map_game_mixins.dart';
 import 'region_map_component.dart';
@@ -15,7 +17,9 @@ void ctRegionMapGameUpdateProps(
   bool? showProvinceOverlay,
   bool? showProvinceOwnershipTint,
   bool? showProvinceNamesLayer,
+  bool? showCapitalLinkDisconnectedHighlight,
   CtMapVisibilityMode? visibilityMode,
+  MapBaseLayerFlags? mapBaseLayerFlags,
   BaseLayerDisplayMode? baseLayerDisplayMode,
   String? selectedTileKey,
   String? selectedCivilianTileKey,
@@ -27,6 +31,8 @@ void ctRegionMapGameUpdateProps(
   bool clearSecondaryHighlightTileKeys = false,
   Set<String>? validTileKeys,
   bool clearValidTileKeys = false,
+  String? lastTurnPulseTileKey,
+  bool clearLastTurnPulseTileKey = false,
   void Function(String tileKey)? onTileSelected,
   VoidCallback? onWorkTargetSelectionCancelled,
   void Function(String tileKey)? onCivilianTileTapped,
@@ -36,6 +42,7 @@ void ctRegionMapGameUpdateProps(
     String markerTileKey,
   )?
   onFleetMarkerTapped,
+  void Function(ArmyTileMarkerView marker)? onArmyMarkerTapped,
   VoidCallback? onCivilianTileSelectionCleared,
   required PlayerView? playerViewForResources,
   void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
@@ -43,6 +50,8 @@ void ctRegionMapGameUpdateProps(
   bool? showPlayerTerritoryOutline,
   Set<String>? playerTerritoryTileKeys,
   bool clearPlayerTerritoryTileKeys = false,
+  void Function(String tileKey, Offset localPosition)?
+  onMapTileSecondaryForRadial,
 }) {
   var regionChanged = false;
   if (region != null) {
@@ -61,8 +70,19 @@ void ctRegionMapGameUpdateProps(
   if (showProvinceNamesLayer != null) {
     game.showProvinceNamesLayer = showProvinceNamesLayer;
   }
+  if (showCapitalLinkDisconnectedHighlight != null) {
+    game.showCapitalLinkDisconnectedHighlight =
+        showCapitalLinkDisconnectedHighlight;
+  }
   if (visibilityMode != null) {
     game.visibilityMode = visibilityMode;
+  }
+  if (mapBaseLayerFlags != null || baseLayerDisplayMode != null) {
+    final next = resolveMapBaseLayerFlags(
+      flags: mapBaseLayerFlags,
+      mode: baseLayerDisplayMode,
+    );
+    game.mapBaseLayerFlags = next;
   }
   if (baseLayerDisplayMode != null) {
     game.baseLayerDisplayMode = baseLayerDisplayMode;
@@ -92,10 +112,16 @@ void ctRegionMapGameUpdateProps(
   } else if (validTileKeys != null) {
     game.validTileKeys = validTileKeys;
   }
+  if (clearLastTurnPulseTileKey) {
+    game.lastTurnPulseTileKey = null;
+  } else if (lastTurnPulseTileKey != null) {
+    game.lastTurnPulseTileKey = lastTurnPulseTileKey;
+  }
   game.onTileSelected = onTileSelected;
   game.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
   game.onCivilianTileTapped = onCivilianTileTapped;
   game.onFleetMarkerTapped = onFleetMarkerTapped;
+  game.onArmyMarkerTapped = onArmyMarkerTapped;
   game.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
   game.playerViewForResources = playerViewForResources;
   if (onViewportSnapshotChanged != null) {
@@ -112,6 +138,9 @@ void ctRegionMapGameUpdateProps(
   } else if (playerTerritoryTileKeys != null) {
     game.playerTerritoryTileKeys = playerTerritoryTileKeys;
   }
+  if (onMapTileSecondaryForRadial != null) {
+    game.onMapTileSecondaryForRadial = onMapTileSecondaryForRadial;
+  }
 
   assertCtMapPlayerViewRequired(
     visibilityMode: game.visibilityMode,
@@ -126,17 +155,22 @@ void ctRegionMapGameUpdateProps(
       ..showProvinceOverlay = game.showProvinceOverlay
       ..showProvinceOwnershipTint = game.showProvinceOwnershipTint
       ..showProvinceNamesLayer = game.showProvinceNamesLayer
+      ..showCapitalLinkDisconnectedHighlight =
+          game.showCapitalLinkDisconnectedHighlight
       ..visibilityMode = game.visibilityMode
+      ..mapBaseLayerFlags = game.mapBaseLayerFlags
       ..baseLayerDisplayMode = game.baseLayerDisplayMode
       ..selectedTileKey = game.selectedTileKey
       ..selectedCivilianTileKey = game.selectedCivilianTileKey
       ..secondaryHighlightTileKey = game.secondaryHighlightTileKey
       ..secondaryHighlightTileKeys = game.secondaryHighlightTileKeys
       ..validTileKeys = game.validTileKeys
+      ..lastTurnPulseTileKey = game.lastTurnPulseTileKey
       ..playerViewForResources = game.playerViewForResources
       ..showPlayerTerritoryOutline = game.showPlayerTerritoryOutline
       ..playerTerritoryTileKeys = game.playerTerritoryTileKeys
-      ..onFleetMarkerTapped = onFleetMarkerTapped;
+      ..onFleetMarkerTapped = onFleetMarkerTapped
+      ..onArmyMarkerTapped = onArmyMarkerTapped;
     if (regionChanged || zoomMultiplier != null) {
       (game as CtRegionMapGameCamera).syncCameraZoomFromMultiplier();
     } else {

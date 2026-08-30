@@ -1,44 +1,8 @@
 /// Phase-planner naval directive resolver for orchestrator wiring
-/// (Refs #2509 S5 slice -- companion to `phase_planner_conquest_filter.dart`
-/// and `phase_planner_naval_plans.dart`).
+/// (Refs #2509 S5; #4602 Slice A).
 ///
-/// Resolves whether `runNavalPlanner` should engage the colonial-pressure
-/// boost + ranking this turn, and surfaces the optional phase-plan-derived
-/// priority province list, given a single [PhasePlanOutcome]. The resolver
-/// is the wiring counterpart of the conquest filter: callers consume a
-/// single struct and the structural NW suppression matrix is encoded in
-/// one place rather than reproduced at every naval call site.
-///
-/// Suppression matrix (mirrors `SPEC/ai/phase-planner-dispatch.md` §
-/// Adapter helpers, naval rows):
-///
-/// | Phase | Colonial naval pressure | Notes |
-/// |---|---|---|
-/// | [ObserverGoalPhase.expand] | `false` (structural) | EXPAND never advances NW activity; matches today's `shouldSuppressNewWorldColonialOrders` gate. |
-/// | [ObserverGoalPhase.colonialLite] | `true` | COLONIAL-lite explicitly allows colonial naval + cargo per issue #2509 § COLONIAL-lite scope summary. |
-/// | [ObserverGoalPhase.colonial] | `true` | Full COLONIAL drives invasion transport + exploration + cargo. |
-/// | [ObserverGoalPhase.develop] | `false` (structural) | DEVELOP suppresses NW acquisition / new colonial objectives. |
-///
-/// The active-phase signal for COLONIAL / COLONIAL-lite is **structural**:
-/// the resolver does not re-check whether visible NW invadable is
-/// non-empty. The phase-planner dispatcher already gated entry to those
-/// phases on the same precondition (`hasColonialAcquisitionTargets` for
-/// COLONIAL, `globalNewWorldHasNonGpOwnership` for COLONIAL-lite -- see
-/// `observerGoalPhaseFor`). Re-checking inside the naval pass would
-/// duplicate that gate and could drift from the phase resolver.
-///
-/// Callers pair the boolean signal with the per-phase priority province
-/// lists carried by the naval-plan adapters
-/// ([colonialNavalPlanFromPhasePlan] / [colonialLiteNavalPlanFromPhasePlan]
-/// in `phase_planner_naval_plans.dart`). Tighter ranking (preferring
-/// naval moves toward priority NW sea zones) is layered separately and
-/// remains out of scope for this resolver slice -- the resolver only
-/// surfaces the priority province ids so future slices can consume them
-/// without re-reading the dispatcher slots.
-///
-/// The resolver is pure and deterministic -- identical inputs always
-/// yield identical resolutions (Refs #2509 Must-have #7). It performs no
-/// I/O, no logging, and no order emission.
+/// Cite `SPEC/ai/phase-planner-dispatch.md` (adapter helpers / naval rows)
+/// rather than restating the suppression matrix here.
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';

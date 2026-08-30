@@ -7,8 +7,6 @@ import 'package:colonizethis_test/test.dart';
 import 'quick_battle_input_test_support.dart';
 import 'scenario_runner.dart';
 
-
-
 void _expectEmplacedGunOutcomesMatch(
   QuickBattleResult r1,
   QuickBattleResult r2,
@@ -155,8 +153,14 @@ List<RunnableScenario> quickBattlePerfInvariantScenarios() => [
       );
       final a = resolveQuickBattle(inputA);
       final b = resolveQuickBattle(inputB);
-      expect(resolveQuickBattle(inputA).attackerCasualties, a.attackerCasualties);
-      expect(resolveQuickBattle(inputB).defenderCasualties, b.defenderCasualties);
+      expect(
+        resolveQuickBattle(inputA).attackerCasualties,
+        a.attackerCasualties,
+      );
+      expect(
+        resolveQuickBattle(inputB).defenderCasualties,
+        b.defenderCasualties,
+      );
       final attTotalA = a.attackerCasualties.length;
       final defTotalA = a.defenderCasualties.length;
       final attTotalB = b.attackerCasualties.length;
@@ -164,7 +168,8 @@ List<RunnableScenario> quickBattlePerfInvariantScenarios() => [
       expect(
         attTotalA != attTotalB || defTotalA != defTotalB,
         isTrue,
-        reason: 'initiative ordering should still affect outcomes after caching',
+        reason:
+            'initiative ordering should still affect outcomes after caching',
       );
     },
   ),

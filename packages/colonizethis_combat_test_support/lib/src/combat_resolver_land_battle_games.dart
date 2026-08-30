@@ -1,11 +1,8 @@
-// Land battle [Game] builders for resolver integration tests (Refs #4196 slice C).
-
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combat_resolver_player_constants.dart';
 
-/// Single-province Old World battle [Game] with optional generals/seed.
 Game landResolverBattleGame({
   String id = 'g1',
   int turnNumber = 1,
@@ -20,14 +17,9 @@ Game landResolverBattleGame({
   List<General> generals = const [],
   int? globalGameSeed,
 }) {
-  final provinceList = provinces ??
-      [
-        Province(
-          id: provinceId,
-          regionId: regionId,
-          ownerId: defenderOwnerId,
-        ),
-      ];
+  final provinceList =
+      provinces ??
+      [Province(id: provinceId, regionId: regionId, ownerId: defenderOwnerId)];
   return Game(
     id: id,
     globalGameSeed: globalGameSeed,
@@ -41,7 +33,6 @@ Game landResolverBattleGame({
   );
 }
 
-/// New World battle [Game] (empty Old World).
 Game landResolverNewWorldBattleGame({
   String id = 'g1',
   int turnNumber = 1,
@@ -65,7 +56,6 @@ Game landResolverNewWorldBattleGame({
   );
 }
 
-/// Empty-region [Game] with optional global seed (RNG factory tests).
 Game landResolverSeededEmptyGame({
   String id = 'g',
   int? globalGameSeed,
@@ -84,7 +74,6 @@ Game landResolverSeededEmptyGame({
   );
 }
 
-/// Multi-province Old World game for general-assignment ledger tests.
 Game landResolverMultiProvinceGame({
   String id = 'g1',
   int turnNumber = 4,
@@ -104,7 +93,6 @@ Game landResolverMultiProvinceGame({
   );
 }
 
-/// Three-attacker tie-break fixture for [resolveBattleContext] determinism.
 Game landResolverTieBreakGame() {
   return Game(
     id: 'g1',
@@ -146,7 +134,6 @@ Game landResolverTieBreakGame() {
   );
 }
 
-/// Mutual-annihilation garrison-recovery fixture with optional minors/tribes.
 Game landResolverMutualAnnihilationGame({
   required String provinceId,
   required String defenderOwnerId,

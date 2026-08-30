@@ -1,41 +1,41 @@
-import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-
-import '../../../../config/constants.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show pickUniqueGreatPowerLeaderByPowerScore;
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../config/constants.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_spacing.dart';
-
 import 'victory_overlay_panel_actions.dart';
 import 'victory_overlay_panel_corners.dart';
 import 'victory_overlay_panel_layout.dart';
 
 export 'victory_overlay_panel_layout.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_logic/ai_api.dart';
 
-/// Brass-bordered ceremonial panel for the military victory overlay.
+/// Brass-bordered ceremonial panel for `OVL20001` (military or calendar halt).
 ///
 /// Visual contract: SPEC/ui/victory-overlay.md and the OVL20001 mockup.
-/// Renders the laurel decoration row, the localized victory-type label, a
-/// [CtBrassDivider], the winner sentence, and two action buttons inside a
+/// Renders the laurel decoration row, the localized title, a [CtBrassDivider],
+/// the body sentence, and two action buttons inside a
 /// `surface-lite → bg-deep` gradient surface with a 2px `--accent` border
 /// and asymmetric corner brackets.
 class VictoryPanel extends StatelessWidget {
   const VictoryPanel({
     required this.game,
-    required this.victory,
     required this.bus,
+    this.victory,
     this.onViewFinalState,
     super.key,
   });
 
   final ct_models.Game game;
-  final ct_models.VictoryState victory;
+
+  /// When non-null, military victory copy. When null, calendar-complete copy.
+  final ct_models.VictoryState? victory;
   final ct_models.AppEventBus bus;
   final VoidCallback? onViewFinalState;
 
@@ -108,11 +108,6 @@ class VictoryPanel extends StatelessWidget {
 
   Widget _buildPanelColumn(BuildContext context, {required bool narrow}) {
     final l10n = appL10n(context);
-    final ct_models.Player winner =
-        game.playerById(victory.winnerPlayerId) ?? game.players.first;
-    final String victoryLabel = switch (victory.type) {
-      ct_models.VictoryType.military => l10n.victory_military,
-    };
     final ThemeData theme = Theme.of(context);
     final TextStyle? titleBase =
         narrow ? theme.textTheme.titleMedium : theme.textTheme.headlineSmall;
@@ -132,7 +127,7 @@ class VictoryPanel extends StatelessWidget {
         VictoryLaurelRow(narrow: narrow),
         const SizedBox(height: 10),
         Text(
-          victoryLabel.toUpperCase(),
+          _titleLabel(l10n).toUpperCase(),
           style: titleStyle,
           textAlign: TextAlign.center,
         ),
@@ -140,7 +135,7 @@ class VictoryPanel extends StatelessWidget {
         const CtBrassDivider(),
         const SizedBox(height: 14),
         Text(
-          l10n.victory_winnerOnTurn(winner.displayName, victory.turnNumber),
+          _bodyLabel(l10n),
           style: bodyStyle,
           textAlign: TextAlign.center,
         ),
@@ -154,5 +149,27 @@ class VictoryPanel extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _titleLabel(AppLocalizations l10n) {
+    final state = victory;
+    if (state == null) return l10n.victory_campaignComplete;
+    return switch (state.type) {
+      ct_models.VictoryType.military => l10n.victory_military,
+    };
+  }
+
+  String _bodyLabel(AppLocalizations l10n) {
+    final state = victory;
+    if (state != null) {
+      final ct_models.Player winner =
+          game.playerById(state.winnerPlayerId) ?? game.players.first;
+      return l10n.victory_winnerOnTurn(winner.displayName, state.turnNumber);
+    }
+    final declaredId = pickUniqueGreatPowerLeaderByPowerScore(game);
+    if (declaredId == null) return l10n.victory_endCalendarNoWinner;
+    final name =
+        game.playerById(declaredId)?.displayName ?? declaredId;
+    return l10n.victory_endCalendarDeclaredWinner(name);
   }
 }
