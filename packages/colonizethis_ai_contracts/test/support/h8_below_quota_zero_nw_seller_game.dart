@@ -17,11 +17,25 @@ const String h8BelowQuotaGrainTile = 'oldWorld|p0|0|0';
 /// Wool regiment-build-input feedstock tile for extraction pins.
 const String h8BelowQuotaWoolTile = 'oldWorld|p0|1|0';
 
+/// Timber-over-grain improvement-input seller map (Refs #2847 H8-extraction).
+const Map<String, String> h8BelowQuotaTimberImprovementInputResources = {
+  h8BelowQuotaGrainTile: 'grain',
+  'oldWorld|p0|1|0': 'timber',
+  'oldWorld|p0|2|0': 'wool',
+};
+
+/// Grain + timber stageable seller map (fabric gate inactive; Refs #2847 S7-D).
+const Map<String, String> h8BelowQuotaStageableImprovementInputResources = {
+  h8BelowQuotaGrainTile: 'grain',
+  'oldWorld|p0|2|0': 'timber',
+};
+
 /// Builds a below-quota zero-NW lock-recovery seller with configurable OW
 /// province count, treasury, stockpile, units, resources, and tile state.
 Game belowQuotaZeroNwSellerGame({
   required int owOwned,
   required int treasury,
+  int newWorldOwned = 0,
   Stockpile stockpile = const Stockpile(),
   List<Unit> extraUnits = const [],
   Map<String, String> resourceByTileKey = const {
@@ -38,12 +52,20 @@ Game belowQuotaZeroNwSellerGame({
       ownerId: h8BelowQuotaSellerId,
     ),
   );
+  final newWorldProvinces = List.generate(
+    newWorldOwned,
+    (i) => Province(
+      id: 'newWorld|n$i',
+      regionId: kRegionNewWorld,
+      ownerId: h8BelowQuotaSellerId,
+    ),
+  );
   return Game(
     id: 'g',
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(provinces: provinces, units: extraUnits),
-      newWorld: const RegionData(),
+      newWorld: RegionData(provinces: newWorldProvinces),
       resourceByTileKey: resourceByTileKey,
       tileState: tileState ?? TileMapState(),
     ),
@@ -84,6 +106,7 @@ PlayerView belowQuotaSellerBuilderView(Game game) {
 Game belowQuotaActiveGateSellerGame({
   int? treasury,
   int owOwned = 5,
+  int newWorldOwned = 0,
   Stockpile stockpile = const Stockpile(),
   List<Unit> extraUnits = const [],
   Map<String, String> resourceByTileKey = const {
@@ -95,6 +118,7 @@ Game belowQuotaActiveGateSellerGame({
   return belowQuotaZeroNwSellerGame(
     owOwned: owOwned,
     treasury: treasury ?? cheapestRegimentBuildTreasuryCost(),
+    newWorldOwned: newWorldOwned,
     stockpile: stockpile,
     extraUnits: extraUnits,
     resourceByTileKey: resourceByTileKey,

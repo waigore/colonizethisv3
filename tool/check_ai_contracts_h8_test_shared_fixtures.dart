@@ -12,6 +12,10 @@ const String aiContractsH8FlaggedSellerSupportFile =
 const String aiContractsH8SupplierProspectSupportFile =
     'packages/colonizethis_ai_contracts/test/support/h8_supplier_prospect_game.dart';
 
+/// Shared below-quota zero-NW seller Game scaffold (Refs #4683).
+const String aiContractsH8BelowQuotaSellerSupportFile =
+    'packages/colonizethis_ai_contracts/test/support/h8_below_quota_zero_nw_seller_game.dart';
+
 /// Seller acquisition-target pins that must use [flaggedSellerGame].
 const Set<String> aiContractsH8FlaggedSellerAdopters = <String>{
   'packages/colonizethis_ai_contracts/test/'
@@ -30,11 +34,34 @@ const Set<String> aiContractsH8SupplierProspectAdopters = <String>{
       'full_ai_civilian_work_ow_feedstock_prospect_mineral_eligibility_test.dart',
 };
 
+/// Below-quota seller pins that must use [belowQuotaZeroNwSellerGame] /
+/// [belowQuotaActiveGateSellerGame] / [belowQuotaSellerBuilderView].
+const Set<String> aiContractsH8BelowQuotaSellerAdopters = <String>{
+  'packages/colonizethis_ai_contracts/test/'
+      'full_ai_civilian_work_seller_improvement_input_feedstock_extraction_test.dart',
+  'packages/colonizethis_ai_contracts/test/'
+      'full_ai_civilian_work_seller_feedstock_tile_acquisition_test.dart',
+  'packages/colonizethis_ai_contracts/test/'
+      'self_lock_recovery_seller_stageable_improvement_inputs_test.dart',
+};
+
 final RegExp _localFlaggedSellerGameDecl = RegExp(
   r'Game\s+_flaggedSellerGame\b',
 );
 
 final RegExp _localSupplierGameDecl = RegExp(r'Game\s+_supplierGame\b');
+
+final RegExp _localBelowQuotaSellerGameDecl = RegExp(
+  r'Game\s+_belowQuotaSellerGame\b',
+);
+
+final RegExp _localStageableSellerGameDecl = RegExp(
+  r'Game\s+_stageableSellerGame\b',
+);
+
+final RegExp _localSellerBuilderViewDecl = RegExp(
+  r'PlayerView\s+_sellerBuilderView\b',
+);
 
 String _normalizeSlash(String path) => path.replaceAll('\\', '/');
 
@@ -48,6 +75,13 @@ bool aiContractsH8FlaggedSellerPathInScope(String slashPath) {
 /// True when [slashPath] is an OW supplier prospect adopter pin.
 bool aiContractsH8SupplierProspectPathInScope(String slashPath) {
   return aiContractsH8SupplierProspectAdopters.contains(
+    _normalizeSlash(slashPath),
+  );
+}
+
+/// True when [slashPath] is a below-quota seller adopter pin.
+bool aiContractsH8BelowQuotaSellerPathInScope(String slashPath) {
+  return aiContractsH8BelowQuotaSellerAdopters.contains(
     _normalizeSlash(slashPath),
   );
 }
@@ -69,6 +103,23 @@ String? aiContractsH8TestSharedFixturesViolationReason(
     return 'redeclares local `_supplierGame`; import '
         '`supplierGame` from `$aiContractsH8SupplierProspectSupportFile` '
         '(Refs #4084)';
+  }
+  if (aiContractsH8BelowQuotaSellerPathInScope(normalized)) {
+    if (_localBelowQuotaSellerGameDecl.hasMatch(content)) {
+      return 'redeclares local `_belowQuotaSellerGame`; import '
+          '`belowQuotaZeroNwSellerGame` / `belowQuotaActiveGateSellerGame` '
+          'from `$aiContractsH8BelowQuotaSellerSupportFile` (Refs #4683)';
+    }
+    if (_localStageableSellerGameDecl.hasMatch(content)) {
+      return 'redeclares local `_stageableSellerGame`; import '
+          '`belowQuotaZeroNwSellerGame` / `belowQuotaActiveGateSellerGame` '
+          'from `$aiContractsH8BelowQuotaSellerSupportFile` (Refs #4683)';
+    }
+    if (_localSellerBuilderViewDecl.hasMatch(content)) {
+      return 'redeclares local `_sellerBuilderView`; import '
+          '`belowQuotaSellerBuilderView` from '
+          '`$aiContractsH8BelowQuotaSellerSupportFile` (Refs #4683)';
+    }
   }
   return null;
 }
@@ -111,6 +162,21 @@ int runCheckAiContractsH8TestSharedFixtures(
     );
     return 1;
   }
+  final belowQuotaSupport = p.join(
+    repoRoot,
+    'packages',
+    'colonizethis_ai_contracts',
+    'test',
+    'support',
+    'h8_below_quota_zero_nw_seller_game.dart',
+  );
+  if (!File(belowQuotaSupport).existsSync()) {
+    logE(
+      'check_ai_contracts_h8_test_shared_fixtures: missing shared support '
+      'file `$aiContractsH8BelowQuotaSellerSupportFile`.',
+    );
+    return 1;
+  }
 
   final violations = <String>[];
   for (final file in collectRepoLintDomainDartFiles(repoRoot)) {
@@ -127,7 +193,8 @@ int runCheckAiContractsH8TestSharedFixtures(
   if (violations.isEmpty) {
     logI(
       'check_ai_contracts_h8_test_shared_fixtures: no local '
-      '`_flaggedSellerGame` / `_supplierGame` redeclarations.',
+      '`_flaggedSellerGame` / `_supplierGame` / `_belowQuotaSellerGame` / '
+      '`_stageableSellerGame` / `_sellerBuilderView` redeclarations.',
     );
     return 0;
   }

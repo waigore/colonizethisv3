@@ -5,61 +5,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _playerId = 'gp1';
-const _tileGrain = 'oldWorld|p0|0|0';
-const _tileTimber = 'oldWorld|p0|2|0';
+import 'support/h8_below_quota_zero_nw_seller_game.dart';
 
-/// A below-quota zero-NW lock-recovery seller whose **fabric** improvement-cost
-/// gate is inactive (it owns no unimproved `wool` / `cotton` tile) but which
-/// still owns a `castIron`-feedstock (`timber`) tile — the seed-42 gp5 profile
-/// after its fabric feedstock tile has been improved. Refs #2847 § H8
-/// production allocation (S7-D castIron production-assignment, PR #3289).
-Game _stageableSellerGame({
-  int owOwned = 5,
-  int nwOwned = 0,
-  Stockpile stockpile = const Stockpile(),
-  List<Unit> extraUnits = const [],
-  Map<String, String> resourceByTileKey = const {
-    _tileGrain: 'grain',
-    _tileTimber: 'timber',
-  },
-}) {
-  final owProvinces = List.generate(
-    owOwned,
-    (i) => Province(
-      id: 'oldWorld|p$i',
-      regionId: kRegionOldWorld,
-      ownerId: _playerId,
-    ),
-  );
-  final nwProvinces = List.generate(
-    nwOwned,
-    (i) => Province(
-      id: 'newWorld|n$i',
-      regionId: kRegionNewWorld,
-      ownerId: _playerId,
-    ),
-  );
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: owProvinces, units: extraUnits),
-      newWorld: RegionData(provinces: nwProvinces),
-      resourceByTileKey: resourceByTileKey,
-      tileState: TileMapState(),
-    ),
-    players: [
-      Player(
-        id: _playerId,
-        displayName: 'GP',
-        isHuman: false,
-        treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: stockpile,
-      ),
-    ],
-  );
-}
+const _tileGrain = h8BelowQuotaGrainTile;
+const _tileTimber = 'oldWorld|p0|2|0';
 
 void main() {
   group(
@@ -70,17 +19,19 @@ void main() {
         'lock-recovery seller short castIron that owns only timber tile does '
         'not stage castIron once the recipe is iron-only (Refs #3858)',
         () {
-          final game = _stageableSellerGame();
+          final game = belowQuotaActiveGateSellerGame(
+            resourceByTileKey: h8BelowQuotaStageableImprovementInputResources,
+          );
           expect(
             selfLockRecoverySellerNeededProducibleImprovementInputs(
               game,
-              _playerId,
+              h8BelowQuotaSellerId,
             ),
             isEmpty,
             reason: 'fabric-tile gate inactive: prior helper must be empty',
           );
           expect(
-            selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
+            selfLockRecoverySellerStageableImprovementInputs(game, h8BelowQuotaSellerId),
             isEmpty,
             reason:
                 'castIron is single-input; multi-input staging path is inactive',
@@ -92,11 +43,11 @@ void main() {
         'returns empty when the seller owns no castIron feedstock tile '
         '(negative control — gate-inactive sellers with no tile do not stage)',
         () {
-          final game = _stageableSellerGame(
+          final game = belowQuotaActiveGateSellerGame(
             resourceByTileKey: const {_tileGrain: 'grain'},
           );
           expect(
-            selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
+            selfLockRecoverySellerStageableImprovementInputs(game, h8BelowQuotaSellerId),
             isEmpty,
           );
         },
@@ -105,14 +56,15 @@ void main() {
       test(
         'returns empty when the seller already holds castIron (short check)',
         () {
-          final game = _stageableSellerGame(
+          final game = belowQuotaActiveGateSellerGame(
             stockpile: const Stockpile().applyDelta(
               CommodityCatalog.castIron.id,
               1,
             ),
+            resourceByTileKey: h8BelowQuotaStageableImprovementInputResources,
           );
           expect(
-            selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
+            selfLockRecoverySellerStageableImprovementInputs(game, h8BelowQuotaSellerId),
             isEmpty,
           );
         },
@@ -122,18 +74,19 @@ void main() {
         'returns empty when the GP already owns a regiment '
         '(negative control — +6 baseline GPs unaffected)',
         () {
-          final game = _stageableSellerGame(
+          final game = belowQuotaActiveGateSellerGame(
             extraUnits: [
               Unit(
                 id: 'r1',
                 type: 'peasant_levies',
-                ownerId: _playerId,
+                ownerId: h8BelowQuotaSellerId,
                 locationProvinceId: 'oldWorld|p0',
               ),
             ],
+            resourceByTileKey: h8BelowQuotaStageableImprovementInputResources,
           );
           expect(
-            selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
+            selfLockRecoverySellerStageableImprovementInputs(game, h8BelowQuotaSellerId),
             isEmpty,
           );
         },
@@ -142,11 +95,12 @@ void main() {
       test(
         'returns empty at the conquest quota (negative control)',
         () {
-          final game = _stageableSellerGame(
+          final game = belowQuotaActiveGateSellerGame(
             owOwned: kObserverConquestMinOwProvincesPerGp,
+            resourceByTileKey: h8BelowQuotaStageableImprovementInputResources,
           );
           expect(
-            selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
+            selfLockRecoverySellerStageableImprovementInputs(game, h8BelowQuotaSellerId),
             isEmpty,
           );
         },
@@ -156,16 +110,21 @@ void main() {
         'returns empty when the seller owns a New World province '
         '(negative control — only zero-NW sellers stage)',
         () {
-          final game = _stageableSellerGame(nwOwned: 1);
+          final game = belowQuotaActiveGateSellerGame(
+            newWorldOwned: 1,
+            resourceByTileKey: h8BelowQuotaStageableImprovementInputResources,
+          );
           expect(
-            selfLockRecoverySellerStageableImprovementInputs(game, _playerId),
+            selfLockRecoverySellerStageableImprovementInputs(game, h8BelowQuotaSellerId),
             isEmpty,
           );
         },
       );
 
       test('returns empty for an unknown player id', () {
-        final game = _stageableSellerGame();
+        final game = belowQuotaActiveGateSellerGame(
+            resourceByTileKey: h8BelowQuotaStageableImprovementInputResources,
+          );
         expect(
           selfLockRecoverySellerStageableImprovementInputs(
             game,

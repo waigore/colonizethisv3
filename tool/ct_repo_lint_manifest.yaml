@@ -1085,7 +1085,7 @@ rules:
 
   - rule_id: repo.ai_contracts_h8_test_shared_fixtures
     group: testing
-    title: colonizethis_ai_contracts H8 seller/supplier pins must not redeclare local _flaggedSellerGame / _supplierGame (use test/support/) (Refs #4084)
+    title: colonizethis_ai_contracts H8 seller/supplier/below-quota pins must not redeclare local Game clones (use test/support/) (Refs #4084, #4683)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_contracts_h8_test_shared_fixtures.dart
