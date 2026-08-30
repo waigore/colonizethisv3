@@ -177,7 +177,7 @@ void main() {
       );
       final cache = _cache(game);
 
-      final onTown = tileRadialHostCatalogLayout(
+      final onTownContext = computeTileRadialHostCatalogContext(
         game: game,
         humanPlayerId: _kHumanPlayerId,
         tileKey: _kTownTileKey,
@@ -187,7 +187,7 @@ void main() {
         draftOrders: const Orders(),
         mapData: _mapData,
       );
-      final onOther = tileRadialHostCatalogLayout(
+      final onOtherContext = computeTileRadialHostCatalogContext(
         game: game,
         humanPlayerId: _kHumanPlayerId,
         tileKey: _kOtherTileKey,
@@ -196,6 +196,14 @@ void main() {
         workTargetSelectionCache: cache,
         draftOrders: const Orders(),
         mapData: _mapData,
+      );
+      final onTown = tileRadialHostCatalogLayout(
+        catalogContext: onTownContext,
+        tileKey: _kTownTileKey,
+      );
+      final onOther = tileRadialHostCatalogLayout(
+        catalogContext: onOtherContext,
+        tileKey: _kOtherTileKey,
       );
 
       expect(
