@@ -132,7 +132,8 @@ const _packageName = 'colonizethis_app';
 // raised for GAME80001 Development panel lifecycle + open-path perf (Refs #4687;
 // measured 92_679).
 // raised after #4687 lifecycle/session-cache merge (measured 92_949).
-const _maxMainLines = 93000;
+// raised for spy research insight gist at station commit (Refs #4679; measured 93_112).
+const _maxMainLines = 93200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

@@ -956,6 +956,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String civilian_units_spyStatus_holdingIntelMaySpeedResearch(String province) {
+    return 'Holding intel: $province — may speed research';
+  }
+
+  @override
   String get civilian_units_spyStatus_counterEspionage => 'Counter-espionage';
 
   @override

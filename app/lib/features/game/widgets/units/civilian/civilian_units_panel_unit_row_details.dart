@@ -4,7 +4,9 @@ library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_logic/civilian_intel_api.dart'
-    show isForeignProvinceForPlayer;
+    show
+        isForeignProvinceForPlayer,
+        isRivalGreatPowerProvinceForPlayer;
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:flutter/material.dart';
 
@@ -52,6 +54,15 @@ String? civilianUnitsPanelUnitRowSpyStatusLabel({
             provinceNames[provinceFullId] ??
             provinceNames['$regionId|${provinceFullId.split('|').last}'] ??
             provinceFullId;
+        if (isRivalGreatPowerProvinceForPlayer(
+          game: game,
+          prefixedProvinceId: provinceFullId,
+          humanPlayerId: humanPlayerId,
+        )) {
+          return l10n.civilian_units_spyStatus_holdingIntelMaySpeedResearch(
+            name,
+          );
+        }
         return l10n.civilian_units_spyStatus_holdingIntel(name);
       }
     }
@@ -117,6 +128,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   String? buildPortShortcutTargetTileKey,
   String? buildRailShortcutTargetTileKey,
   String? buildFortShortcutTargetTileKey,
+  String? relocateShortcutTargetTileKey,
   bool readOnly = false,
 }) {
   final pendingMove = pending.pendingMoveOrder;
@@ -217,6 +229,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
     assigned: assigned,
     l10n: l10n,
     game: game,
+    currentOrders: pending.currentOrders,
     humanPlayerId: humanPlayerId,
     readOnly: readOnly,
     mapData: mapData,
@@ -227,5 +240,6 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
     buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
     buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
     buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+    relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
   );
 }

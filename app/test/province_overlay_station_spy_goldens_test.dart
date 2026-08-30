@@ -89,6 +89,7 @@ void main() {
                 showControl: c.showControl,
                 enabled: c.enabled,
                 tooltip: c.tooltip,
+                gist: '',
                 onTap: () {},
               ),
               onClose: () {},
