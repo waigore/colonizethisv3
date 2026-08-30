@@ -27,18 +27,37 @@ class CtRegionMapState extends State<CtRegionMap>
     super.initState();
     game = buildCtRegionMapGame(this);
     attachCtRegionMapMinimapCameraBusSubscriptions(this);
+    _syncEnginePaused(widget.enginePaused);
+  }
+
+  void _syncEnginePaused(bool paused) {
+    if (paused) {
+      if (!game.paused) {
+        game.pauseEngine();
+      }
+      return;
+    }
+    if (game.paused) {
+      game.resumeEngine();
+    }
   }
 
   @override
   void dispose() {
     cancelTileRadialHoldTimer();
     subscriptions.cancelAll();
+    if (!game.paused) {
+      game.pauseEngine();
+    }
     super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant CtRegionMap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.enginePaused != oldWidget.enginePaused) {
+      _syncEnginePaused(widget.enginePaused);
+    }
     if (widget.region != oldWidget.region ||
         widget.showPoliticalOverlay != oldWidget.showPoliticalOverlay ||
         widget.showProvinceOverlay != oldWidget.showProvinceOverlay ||

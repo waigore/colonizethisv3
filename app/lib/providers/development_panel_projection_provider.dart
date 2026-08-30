@@ -57,12 +57,17 @@ final developmentPanelConnectivityProvider =
           ? null
           : ref.watch(gameServiceProvider).getMapData(game.id);
       if (game == null || mapData == null) return null;
+      final humanPlayerId = resolveShellPanelPlayerId(
+        ref.watch(shellPlayerContextProvider),
+        game,
+      );
       return ctAppPerfSync(
         'developmentPanel.connectivity',
         () => resolveDevelopmentPanelConnectivity(
           game: game,
           tileMapByRegion: mapData.tileMapByRegion,
           topology: mapData.combinedTopology,
+          humanPlayerId: humanPlayerId,
         ),
       );
     });

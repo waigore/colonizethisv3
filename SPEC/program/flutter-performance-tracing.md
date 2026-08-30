@@ -26,6 +26,7 @@ Markers use prefix **`CtAppPerf.`** (filter in the timeline).
 | Marker | When |
 |--------|------|
 | `CtAppPerf.development.readModelReady` | Post-frame gate flips so overview/list may build (instant). |
+| `CtAppPerf.development.interactiveReady` | First frame overview/list/Assign affordance build after read model is available (instant). |
 | `CtAppPerf.developmentPanel.connectivity` | Sync `resolveDevelopmentPanelConnectivity` in provider. |
 | `CtAppPerf.developmentPanel.staticContext` | Sync `buildPlayerView` + display-name maps in provider. |
 | `CtAppPerf.developmentPanel.sharedContext` | Sync idle/connectivity slice from draft orders. |

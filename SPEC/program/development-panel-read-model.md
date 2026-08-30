@@ -65,6 +65,18 @@ Representative fixture: dual-region save with two OW provinces (four improvable 
 
 DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/program/flutter-performance-tracing.md` § Development panel open path). Timing tests below remain the CI profiling anchor for AC2 (measurable µs reduction on read-model build path). **AC1 peer parity:** lazy Old World read-model open path must stay within **2×** the `ProductionScreenBody` synchronous prep surrogate on the same representative fixture (`development_panel_open_path_timing_test.dart`).
 
+### Open-path wall-clock budget (Refs #4687)
+
+- **1.0 s open-to-interactive** is a **profile/release** (non-debug) measurement on **Linux desktop and Android emulator** binding hosts. PR evidence uses DevTools `CtAppPerf.development*` markers including `development.interactiveReady`. **Not** enforced by debug-mode `flutter test` wall-clock assertions on CI runners.
+- **Repeated-entry stability** and **Flame lifecycle** are CI widget-test contracts (see UI spec ACs below).
+
+### Shell map pause and panel map lifecycle (Refs #4687)
+
+- While `GAME80001` is mounted, the live shell map (`MAP10001` / `GameMapArea`) **pauses** its `CtRegionMap` Flame engine via `shellMainMapPauseHoldProvider`.
+- On pop, the shell map **resumes** and continues consuming the current `Game` / draft-order revision from providers (live-invalidate; no stale assign/fog state).
+- Each panel `CtRegionMap` **pauses** its Flame engine on widget dispose so repeated open/close does not leave ticking engines.
+- `resolveDevelopmentPanelConnectivity` resolves **human-player connectivity only** (`onlyPlayerIds: {humanPlayerId}`); read-model Assign/Show/map consume no other-GP connectivity maps.
+
 ## Acceptance criteria
 
 - Given owned province P with three improvable grain tiles, when the read model builds, then P’s owned scope lists grain count 3 with sorted tile keys.
@@ -73,6 +85,9 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
 - Given two idle Builders and one with a pending work order, when idle counts compute, then `idleBuilderCount == 1`.
 - Given improvable grain on tiles `t_visible` (fullyVisible) and `t_hidden` (unknown) in the same owned scope, when the read model builds with `playerView`, then only `t_visible` contributes to the grain count and tile key set.
 - Given a Builder with pending improve and an Engineer with in-progress road work in region R, when assigned civilians build for R, then both units appear sorted by unit id with correct `workTarget` and `targetTileKey`.
+- Given `GAME80001` is mounted over the live game map, when the shell map Flame engine is inspected, then it is paused (`enginePaused`) until the panel route pops.
+- Given the player pops `GAME80001`, when the shell map renders again, then its Flame engine is resumed and reflects the current game and draft-order revision.
+- Given the panel region map widget is disposed, when Flame engine state is inspected in tests, then the panel map engine is paused and no live ticker remains on a disposed panel map.
 
 ## Assign selection (Slice B)
 

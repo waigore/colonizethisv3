@@ -97,3 +97,9 @@ Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `d
 Normative row copy, Show selected tile, waiver matching, disabled refusal, and one-tap connected commit: [development-assign-row.md](components/development-assign-row.md).
 
 - Given `GAME80001` layout/behavior/variants change for Assign preview, when implementation merges, then this spec and Widgetbook **Assign preview enabled** stay bound to `GAME80001` (`UiScreenIds.developmentScreen`).
+
+## Acceptance criteria (Performance — Refs #4687)
+
+- Given a campaign-sized fixture in widget tests, when the player mounts and unmounts `GAME80001` body at least **10** times without ending the turn, then after the final unmount at most **one** live shell `CtRegionMapGame` remains and no disposed panel map engine reports `paused == false`.
+- Given the player opens `GAME80001` on Linux desktop or Android emulator in **profile/release**, when they tap empire-rail **Development**, then `CtAppPerf.development.interactiveReady` appears within **1.0 s** wall-clock and overview, province list, Show/Assign, and the active-region minimap are usable (manual/PR DevTools evidence on both binding hosts; not a debug CI wall-clock gate).
+- Given the player assigns work in `GAME80001` and taps **← Map**, when the main game map renders, then it reflects the current game/orders revision (no stale connectivity, highlights, or unit work state).

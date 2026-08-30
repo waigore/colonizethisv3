@@ -61,6 +61,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   required MapTopology topology,
   Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
   ConnectivityHotPathMetrics? metrics,
+  Set<String>? onlyPlayerIds,
 }) {
   worldLog.d(
     'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
@@ -75,6 +76,9 @@ Map<String, ConnectivityResult> resolveConnectivity({
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
+    if (onlyPlayerIds != null && !onlyPlayerIds.contains(player.id)) {
+      continue;
+    }
     _putFactionConnectivityResult(
       result: result,
       input: input,
