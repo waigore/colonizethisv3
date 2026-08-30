@@ -51,6 +51,7 @@ import 'package:hive/hive.dart';
 import 'app_shell_harness.dart';
 import 'map_view_test_fixtures.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 /// Narrow viewport surface size — under `kNarrowBreakpoint` (600 dp) so
 /// `GameMapArea` selects its narrow branch and mounts the
@@ -118,8 +119,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_news_feed_narrow_inset');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'news_feed_narrow_inset');
   });
 
   mapAreaProviderOverrides({

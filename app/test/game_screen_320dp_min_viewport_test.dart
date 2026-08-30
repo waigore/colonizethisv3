@@ -65,6 +65,7 @@ import 'map_view_test_fixtures.dart';
 import 'min_viewport_harness.dart';
 import 'game_screen_test_support.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
@@ -94,8 +95,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_screen_320dp');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_screen_320dp');
   });
 
   /// Pumps the live `GameScreen` at [size] under the running

@@ -2679,6 +2679,13 @@ rules:
     runner: dart
     script: tool/check_app_test_no_duplicate_yarn_bundle.dart
 
+  - rule_id: repo.app_test_no_duplicate_hive_init
+    group: testing
+    title: "app/test must not reintroduce Hive.init outside app_test_hive_harness (Refs #4680)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_hive_init.dart
+
   - rule_id: repo.app_test_no_partn_double_suffix
     group: testing
     title: "app/test split families must use <family>_partN_test.dart (no _test_partN_test.dart) (Refs #3730, #4035)"

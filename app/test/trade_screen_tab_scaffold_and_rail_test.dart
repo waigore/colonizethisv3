@@ -21,6 +21,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'panel_test_fixtures.dart';
 import 'trade_screen_scaffold_test_support.dart';
 import 'widget_test_pumps.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -41,8 +42,7 @@ void main() {
       orElse: () => game.players.first,
     );
 
-    Hive.init('./.dart_tool/test_hive_trade_screen_tabs_and_rail');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'trade_screen_tabs_and_rail');
   });
 
   Widget tradeHost({bool globalObserve = false}) => buildTradeRouteHost(

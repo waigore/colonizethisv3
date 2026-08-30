@@ -28,6 +28,7 @@ import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -43,8 +44,7 @@ void main() {
     // procedural map generation paid by getDebugInitGameResult().
     game = buildTrainPanelTestGame();
 
-    Hive.init('./.dart_tool/test_hive_empire_rail');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'empire_rail');
   });
 
   String humanId() => game.players.where((p) => p.isHuman).isNotEmpty

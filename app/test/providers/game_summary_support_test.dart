@@ -9,6 +9,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import '../app_test_hive_harness.dart';
 
 /// Probe inputs exercising [computeGameSummary] short-circuit paths. The
 /// map-present, no-map, and error compute paths are covered end-to-end by
@@ -64,13 +65,13 @@ String _probe({
 }
 
 late final GameService _gameService;
+late Box<dynamic> box;
 
 void main() {
   suppressLogsForTests();
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_summary_support');
-    final box = await Hive.openBox<dynamic>('games_game_summary_support');
+    box = await openAppTestHiveBox(suiteId: 'game_summary_support', boxName: 'games_game_summary_support');
     _gameService = GameService(box, GameSaveAdapter());
   });
 

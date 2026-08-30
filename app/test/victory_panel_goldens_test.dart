@@ -23,7 +23,9 @@ void main() {
   suppressLogsForTests();
 
   setUpAll(() async {
-    _victoryGoldenGamesBox = await openVictoryPanelTestHiveBox();
+    _victoryGoldenGamesBox = await openVictoryPanelTestHiveBox(
+      suiteId: 'victory_panel_goldens',
+    );
   });
 
   tearDownAll(() async {

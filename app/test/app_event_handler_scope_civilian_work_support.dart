@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 class CivilianWorkScopeProbe extends ConsumerWidget {
   const CivilianWorkScopeProbe();
@@ -27,8 +28,7 @@ class CivilianWorkScopeProbe extends ConsumerWidget {
 }
 
 Future<void> openCivilianWorkHive() async {
-  Hive.init('./.dart_tool/test_hive_app_event_handler_scope_civilian_work');
-  await Hive.openBox<dynamic>(HiveBoxNames.games);
+  await openAppTestHiveBox(suiteId: 'app_event_handler_scope_civilian_work');
 }
 
 Future<void> closeCivilianWorkHive() async {

@@ -25,6 +25,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 class _StubGameService extends GameService {
   _StubGameService(super.box, super.adapter);
@@ -68,8 +69,7 @@ void main() {
   late _StubGameService stubService;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_new_game_setup_flow');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'new_game_setup_flow');
   });
 
   setUp(() {

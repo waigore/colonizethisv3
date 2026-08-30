@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'app_test_hive_harness.dart';
 import 'panel_fixtures/core.dart';
 
 const String kDevelopmentPanelMapTestGameId = 'development-panel-golden-test';
@@ -196,8 +197,7 @@ Game buildDevelopmentPanelGoldenGame() {
 Future<Box<dynamic>> openDevelopmentPanelTestHiveBox({
   required String suiteId,
 }) async {
-  Hive.init('./.dart_tool/test_hive_development_panel_$suiteId');
-  return Hive.openBox<dynamic>(HiveBoxNames.games);
+  return openAppTestHiveBox(suiteId: 'development_panel_$suiteId');
 }
 
 /// Pumps post-frame gates for read-model and map deferral (Slice E).

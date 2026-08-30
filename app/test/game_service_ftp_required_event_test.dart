@@ -9,6 +9,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -17,8 +18,7 @@ void main() {
   late GameSaveAdapter adapter;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_ftp_required_event');
-    box = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    box = await openAppTestHiveBox(suiteId: 'ftp_required_event');
     adapter = GameSaveAdapter();
   });
 

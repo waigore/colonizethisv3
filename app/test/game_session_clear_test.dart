@@ -25,6 +25,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -36,8 +37,7 @@ void main() {
 
   setUp(() async {
     hiveDir = await Directory.systemTemp.createTemp('ct_session_clear_');
-    Hive.init(hiveDir.path);
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_session_clear', directory: hiveDir);
     AppEventBus.reset();
     bus = AppEventBus.create();
     container = ProviderContainer(

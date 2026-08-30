@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 
 class _SaveDialogGameService extends GameService {
   _SaveDialogGameService(super.box, super.adapter);
@@ -71,8 +72,7 @@ void main() {
   );
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_save_name_dialog');
-    gamesBox = await Hive.openBox<dynamic>('${HiveBoxNames.games}_save_name');
+    gamesBox = await openAppTestHiveBox(suiteId: 'save_name_dialog', boxName: '${HiveBoxNames.games}_save_name');
   });
 
   setUp(() async {
