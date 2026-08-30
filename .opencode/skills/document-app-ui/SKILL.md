@@ -24,7 +24,7 @@ Not for ctdev (`SPEC/program/ctdev-app.md`).
 ## Workflow
 
 1. **ID** — Category + sub-flow from registry; next `####`; add row + `UiScreenIds` + widget `screenId`. Variants: `ID` + `a`/`b`/….
-2. **Spec** — `SPEC/ui/<kebab>.md` using the `.mdc` template (layout, exhaustive behavior tables, variants, Widgetbook, ACs).
+2. **Spec** — `SPEC/ui/<kebab>.md` using the `.mdc` template (layout, exhaustive behavior tables, variants, Widgetbook, ACs, required-on-open loads, mount/dispose).
 3. **Components** — New composites → `SPEC/ui/components/<name>.md` before screen spec references.
 4. **Widgetbook** — `catalog*.dart` use cases per variant; mobile when required.
 5. **Tests** — Given–When–Then ACs → existing screen acceptance tests where applicable.

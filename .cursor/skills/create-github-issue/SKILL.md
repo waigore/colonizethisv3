@@ -56,7 +56,7 @@ Do not proceed to draft/create the issue until this clarification step is comple
 ### 3. Investigate (read-only)
 
 - **Specs:** Trace the reported behavior to authoritative docs. For ColonizeThis: GDD under `SPEC/game/`, TDD under `SPEC/program/`, plus `SPEC/ai/` and `SPEC/ui/` as needed (see project SPEC-first rules). Quote or summarize **specific files/sections** that align or contradict the report.
-- **Player-app UI:** When the report involves screens, dialogs, overlays, layout, or UI-triggered bus events, also read `SPEC/ui/screen-registry.md` and the relevant screen spec under `SPEC/ui/`. Screen structure is governed by `.cursor/rules/colonizethis-ui-documentation.mdc` (stable 8-char IDs, layout/behavior/variants, Widgetbook)—orthogonal to style in `colonizethis-ui-design.mdc`.
+- **Player-app UI:** When the report involves screens, dialogs, overlays, layout, or UI-triggered bus events, also read `SPEC/ui/screen-registry.md` and the relevant screen spec under `SPEC/ui/`. Screen structure is governed by `.cursor/rules/colonizethis-ui-documentation.mdc` (stable 8-char IDs, layout/behavior/variants, Widgetbook)—orthogonal to style in `colonizethis-ui-design.mdc`. Slow opens and leftover mounted trees are standing budget defects (`colonizethis-ui-surface-budget.mdc`); proposed methods must not add always-mounted dialogs/`FlameGame`s. Do not require the issue to copy the 1 s AC.
 - **Implementation:** Search and read relevant modules. Map **symptoms -> likely code paths** (files, types, key functions). Stay factual; label inference as hypothesis when not proven.
 - **Tests:** Note existing tests that would fail or are missing for this scenario (read-only).
 

@@ -79,6 +79,10 @@ This rule covers four normalised Flutter dp breakpoints, each matching a per-scr
 
 ### 7. Minimum-viewport pin (`kMinViewportWidth = 320`)
 
+### 8. Memory (game-app surfaces)
+
+Do not keep extra `FlameGame` canvases, offstage maps, or closed panel/dialog trees mounted on mobile. Create on show; dispose on hide. Hard 1 s full-load open budget: [ui-surface-budget.md](../program/ui-surface-budget.md).
+
 The minimum supported viewport width is **`kMinViewportWidth = 320` dp** (from `app/lib/config/constants.dart`). The minimum touch-target size is **`kMinTouchTargetSize = 44` dp** (matching §1 and UXD 03). Both constants are normative for screen tests that pin the AC below.
 
 #### Acceptance criteria

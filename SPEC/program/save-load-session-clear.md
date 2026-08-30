@@ -8,7 +8,7 @@
 
 - Define `clearActiveGameSession` (app session layer): the only supported way to drop active game-session memory.
 - Define the mandatory ordered load/activate sequence so a prior session cannot bleed into the next.
-- Non-goals: process death, Flutter/Flame asset caches, deleting Hive disk saves, multiplayer isolation, ctdev/sim runners unless they call the same API.
+- Non-goals: process death, Flutter/Flame asset caches, deleting Hive disk saves, multiplayer isolation, ctdev/sim runners unless they call the same API. Closed game-app UI must still unmount its own widgets/`FlameGame`s ([ui-surface-budget.md](ui-surface-budget.md)); session clear does not replace that dispose contract.
 
 ---
 

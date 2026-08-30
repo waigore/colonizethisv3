@@ -38,4 +38,16 @@ void main() {
       }
     },
   );
+
+  test(
+    'Province overlay CtAppPerf marker names are DevTools-filterable (Refs #4690)',
+    () {
+      const markers = <String>['provinceOverlay.interactiveReady'];
+      for (final name in markers) {
+        expect(name, startsWith('provinceOverlay'));
+        expect(() => ctAppPerfInstant(name), returnsNormally);
+        expect(ctAppPerfSync(name, () => name.length), name.length);
+      }
+    },
+  );
 }

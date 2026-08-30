@@ -17,6 +17,7 @@ When reviewing or generating code, apply this checklist. Canonical policy lives 
 - **Spec:** New/changed behavior is authorized by SPEC (see `colonizethis-spec-required.mdc`).
 - **Logging:** Runtime logs use `logger`; no `print` (see `colonizethis-core-principles.mdc`).
 - **Flame/Flutter boundary:** No game logic in Flutter `build`.
+- **Game-app UI surface budget:** Opening a panel/dialog/overlay must complete every required load (calcs, minimap, Yarn) in ≤ 1 s; closed surfaces must unmount; no dummy/`Offstage` `FlameGame`s (`colonizethis-ui-surface-budget.mdc`).
 - **Reuse:** Check `app/lib/core/utils/`, `app/lib/widgets/`, `app/lib/config/`, `packages/*/lib/src/` before adding.
 - **New screens/widgets:** Screen spec + stable ID per `colonizethis-ui-documentation.mdc`; catalog + Widgetbook per `colonizethis-ui-design.mdc`.
 - **Tests:** Critical paths covered; thresholds and test layers follow `colonizethis-testing.mdc`.

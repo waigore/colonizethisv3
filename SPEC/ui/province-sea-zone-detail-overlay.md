@@ -702,6 +702,18 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - Given a 320–360 dp viewport, when Tile details opens, then the helper is dismissible, does not overflow the overlay slot, and does not add a new tab.
 - Given `MAP20001` Tile details helper open (caption + port + capital-link + `E of F`) and 320 dp overlay-open layouts under `AppThemes.editorialMonocle`, when the host golden suite in `app/test/province_overlay_tile_details_goldens_test.dart` captures each keyed surface, then each `matchesGoldenFile` baseline under `app/test/goldens/province_overlay_tile_details_dialog*.png` matches the committed PNG (Refs #4369).
 
+## Open-path performance (Refs #4690)
+
+- **1.0 s open-to-interactive** is a **profile/release** measurement on Linux desktop and Android emulator. PR evidence uses DevTools `CtAppPerf.provinceOverlay.*` markers including `provinceOverlay.interactiveReady`. Not enforced by debug-mode `flutter test` wall-clock assertions on CI runners.
+- **Narrow layout:** `CtTabStrip.lazyTabBodies: true` — Political (index 0) builds on first open; Economic, Military, Civilian, and Naval bodies build on first tab selection; Tile (index 1) builds on first selection.
+- **Wide layout:** unchanged single scroll column (deferred section virtualization is a follow-up slice).
+- **Session read-model cache** and wide lazy sections are follow-up slices on the same issue.
+
+### Acceptance criteria (performance)
+
+- Given narrow `MAP20001` on a representative campaign fixture, when the overlay first opens on the Political tab, then Economic / Military / Civilian / Naval tab bodies are not built until first selected (`app/test/province_overlay_lazy_open_test.dart`).
+- Given the overlay mounts in profile/release, when chrome + Political paint, then `CtAppPerf.provinceOverlay.interactiveReady` is emitted once per mount (DevTools filter `CtAppPerf.provinceOverlay`).
+
 ---
 
 ## Integration

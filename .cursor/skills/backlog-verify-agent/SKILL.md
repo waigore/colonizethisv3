@@ -40,7 +40,7 @@ Selection policy:
 For the selected issue:
 
 - Load issue details (`title`, `body`, `labels`, `comments`, `url`).
-- Apply `.cursor/skills/verify-github-issue/SKILL.md` strictly to verify whether implementation is complete with no gaps.
+- Apply `.cursor/skills/verify-github-issue/SKILL.md` strictly to verify whether implementation is complete with no gaps (including the standing game-app UI surface budget, even when the issue ACs omit it).
 - Enumerate every remaining gap with concrete evidence when any are found.
 
 ### 3) Post verification comment

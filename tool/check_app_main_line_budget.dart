@@ -128,6 +128,7 @@ const _packageName = 'colonizethis_app';
 // raised for transport-step payoff gist before Build road/port/rail
 // (Refs #4663; measured 92_253).
 // raised for MAP20001 Build fort siege payoff gist (Refs #4668; measured 92_433).
+// raised for MAP20001 lazy narrow tabs + open tracing (Refs #4690; measured 92_502).
 // raised for GAME80001 Development panel lifecycle + open-path perf (Refs #4687;
 // measured 92_679).
 // raised after #4687 lifecycle/session-cache merge (measured 92_949).

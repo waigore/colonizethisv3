@@ -1,6 +1,6 @@
 # UI Screen Registry
 
-**SPEC/ui** — Canonical index of player-app screen IDs. Assign IDs per [`.cursor/rules/colonizethis-ui-documentation.mdc`](../../.cursor/rules/colonizethis-ui-documentation.mdc). **Do not renumber** existing IDs; add new rows only.
+**SPEC/ui** — Canonical index of player-app screen IDs. Assign IDs per [`.cursor/rules/colonizethis-ui-documentation.mdc`](../../.cursor/rules/colonizethis-ui-documentation.mdc). **Do not renumber** existing IDs; add new rows only. Every **active** player-app screen inherits the hard 1 s full-load open budget and dispose-on-hide contract ([ui-surface-budget.md](../program/ui-surface-budget.md)); do not repeat the number on each row.
 
 **Code:** `app/lib/config/ui_screen_ids.dart` — every **active** row must have a matching `static const`.
 

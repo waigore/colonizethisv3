@@ -11,6 +11,7 @@ Reduce irrelevant rule overlays by defining one routing map for rule applicabili
 | `colonizethis-logging-file.mdc` | Logging standards |
 | `colonizethis-logic-ai-decoupling.mdc` | Package-boundary governance |
 | `colonizethis-turn-resolution-budget.mdc` | Turn-resolution performance governance |
+| `colonizethis-ui-surface-budget.mdc` | Game-app panel/dialog 1 s open budget and unused-UI dispose |
 | `colonizethis-agent-run-cleanup.mdc` | Post-run log and artifact cleanup for agent-driven commands |
 | `colonizethis-tools.mdc` | Tooling workflow |
 | `colonizethis-testing.mdc` | Test policy and coverage |
@@ -30,7 +31,7 @@ Reduce irrelevant rule overlays by defining one routing map for rule applicabili
 |---|---|---|---|
 | Generic Dart implementation in `app/lib/**` | always-applied + `component-structure` + `code-review` + `lifecycle` + `assets` via broad `**/*.dart` | always-applied + `component-structure` + `code-review` (plus targeted overlays only) | Remove lifecycle/asset over-application from default implementation flow |
 | Flutter widget/UI work (`**/lib/widgets/**`, `**/lib/ui/**`) | above set + `ui-design` | always-applied + `ui-design` + targeted `component-structure`/`code-review` + `lifecycle` | Keep style/asset constraints while applying lifecycle only in lifecycle-relevant paths |
-| Screen/dialog specs and hosts (`SPEC/ui/**`, `app/lib/features/**`, `ui_screen_ids.dart`) | `ui-design` + broad overlays | always-applied + `ui-documentation` + `ui-design` (style only) + targeted `component-structure`/`code-review` | Screen structure docs authoritative in `ui-documentation`; style in `ui-design` |
+| Screen/dialog specs and hosts (`SPEC/ui/**`, `app/lib/features/**`, `ui_screen_ids.dart`) | `ui-design` + broad overlays | always-applied (including `ui-surface-budget`) + `ui-documentation` + `ui-design` (style only) + targeted `component-structure`/`code-review` + `lifecycle` on `app/lib/features/**` | Screen structure docs authoritative in `ui-documentation`; style in `ui-design`; 1 s full-load + dispose is always-applied |
 | Tests (`**/*_test.dart`, `**/test/**`, `**/integration_test/**`) | testing/e2e + broad Dart overlays | testing/e2e first; general Dart overlays apply only where glob-matched | Prioritize test directives and reduce unrelated guidance |
 | Asset and pubspec edits (`**/assets/**`, `**/pubspec.yaml`) | `assets` plus broad Dart overlays | `assets` focused guidance + always-applied baseline only | Prevent non-asset directive bleed |
 | Tooling facade code (`tool/**`) | `tools` plus broad overlays | `tools` primary + targeted structural/review overlays | Preserve tooling rules and remove unrelated overlays |

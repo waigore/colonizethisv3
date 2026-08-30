@@ -1,6 +1,6 @@
 # Flutter performance tracing
 
-**Scope:** Optional instrumentation to attribute wall time for (1) **New Game** → game screen interactable (GitHub #1710) and (2) **Development panel** open-path sync work (GitHub #4175 Slice E). Complements manual **profile/release** DevTools sessions; does not replace them.
+**Scope:** Optional instrumentation to attribute wall time for (1) **New Game** → game screen interactable (GitHub #1710) and (2) **Development panel** open-path sync work (GitHub #4175 Slice E). Complements manual **profile/release** DevTools sessions; does not replace them. Game-app panel/dialog/overlay opens are a **hard 1 000 ms full-load** budget ([ui-surface-budget.md](ui-surface-budget.md)): markers must cover required calculations, minimaps, and Yarn — not first chrome only.
 
 ---
 
@@ -36,6 +36,14 @@ Markers use prefix **`CtAppPerf.`** (filter in the timeline).
 | `CtAppPerf.developmentPanel.mapSnapshot.<regionId>` | Sync `buildDevelopmentPanelMapSnapshot` for one region minimap. |
 
 Filter `CtAppPerf.development` to isolate panel-open slices. Lazy OW-only open should show Old World `regionScopes` / `regionModel` before any New World counterparts.
+
+### Province sea-zone overlay open path (Refs #4690)
+
+| Marker | When |
+|--------|------|
+| `CtAppPerf.provinceOverlay.interactiveReady` | Post-frame after narrow/wide chrome + default Political tab body mount (instant). |
+
+Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on binding hosts (PR evidence); CI covers lazy-tab structural invariants, not debug wall-clock assertions.
 
 ---
 

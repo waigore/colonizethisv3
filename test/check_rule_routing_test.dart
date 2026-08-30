@@ -53,7 +53,7 @@ void main() {
 void _writeFixture(
   String root, {
   String lifecycleGlob =
-      'app/lib/game/**/*.dart,app/lib/widgets/**/*.dart,app/lib/ui/**/*.dart,app/lib/screens/**/*.dart,app/lib/pages/**/*.dart',
+      'app/lib/game/**/*.dart,app/lib/widgets/**/*.dart,app/lib/ui/**/*.dart,app/lib/screens/**/*.dart,app/lib/pages/**/*.dart,app/lib/features/**/*.dart',
   bool includeRoutingPointerInAgents = true,
 }) {
   File(p.join(root, '.cursor', 'rules', 'routing-index.md'))
@@ -101,7 +101,18 @@ globs: "$lifecycleGlob"
     ..createSync(recursive: true)
     ..writeAsStringSync(
       includeRoutingPointerInAgents
-          ? 'see .cursor/rules/routing-index.md'
+          ? 'see .cursor/rules/routing-index.md\n'
+                'colonizethis-turn-resolution-budget.mdc\n'
+                'colonizethis-ui-surface-budget.mdc\n'
           : 'missing routing pointer',
     );
+
+  for (final name in [
+    'colonizethis-turn-resolution-budget.mdc',
+    'colonizethis-ui-surface-budget.mdc',
+  ]) {
+    File(p.join(root, '.cursor', 'rules', name))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('alwaysApply: true\n');
+  }
 }
