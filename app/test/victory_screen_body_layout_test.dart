@@ -21,7 +21,9 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    gamesBox = await openVictoryPanelTestHiveBox();
+    gamesBox = await openVictoryPanelTestHiveBox(
+      suiteId: 'victory_screen_body_layout',
+    );
   });
 
   tearDownAll(() async {

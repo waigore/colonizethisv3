@@ -19,6 +19,7 @@ import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -32,8 +33,7 @@ void main() {
     // lightweight fixture replaces the ~11s procedural map generation.
     game = buildSideMenuTestGame();
 
-    Hive.init('./.dart_tool/test_hive_side_menu');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'side_menu');
   });
 
   Widget host({

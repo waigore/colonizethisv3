@@ -14,6 +14,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'app_test_hive_harness.dart';
 
 class _ThrowingMapGameService extends GameService {
   _ThrowingMapGameService(super.box, super.adapter);
@@ -56,8 +57,7 @@ void main() {
 
     setUp(() async {
       dir = await Directory.systemTemp.createTemp('ct_home_fleet_cargo_');
-      Hive.init(dir.path);
-      box = await Hive.openBox<dynamic>(HiveBoxNames.games);
+      box = await openAppTestHiveBox(suiteId: 'home_fleet_cargo_provider', directory: dir);
     });
 
     tearDown(() async {

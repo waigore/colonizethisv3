@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -24,8 +25,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_ct_e2e_turn_snapshot_refresh');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'ct_e2e_turn_snapshot_refresh');
   });
 
   tearDown(() {

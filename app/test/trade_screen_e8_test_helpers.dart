@@ -32,6 +32,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
+import 'app_test_hive_harness.dart';
 import 'trade_screen_test_support.dart';
 import 'widget_test_pumps.dart';
 
@@ -41,14 +42,13 @@ late Game _tradeE8RouteHostGame;
 late Player _tradeE8RouteHostPlayer;
 late Box<dynamic> _tradeE8GamesBox;
 
-Future<void> tradeE8InitRouteHostHive() async {
+Future<void> tradeE8InitRouteHostHive({required String suiteId}) async {
   _tradeE8RouteHostGame = buildTradeScaffoldTestGame();
   _tradeE8RouteHostPlayer = _tradeE8RouteHostGame.players.firstWhere(
     (p) => p.isHuman,
     orElse: () => _tradeE8RouteHostGame.players.first,
   );
-  Hive.init('./.dart_tool/test_hive_trade_screen_e8');
-  _tradeE8GamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+  _tradeE8GamesBox = await openAppTestHiveBox(suiteId: suiteId);
 }
 
 List<Override> tradeE8RouteHostOverrides({bool globalObserve = false}) => [

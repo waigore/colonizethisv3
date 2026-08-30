@@ -14,6 +14,7 @@ import 'package:hive/hive.dart';
 
 import 'map_view_test_fixtures.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -21,8 +22,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_human_draft_region');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'human_draft_region');
   });
 
   test('humanDraftProjectedRegionProvider returns region when game loaded', () {

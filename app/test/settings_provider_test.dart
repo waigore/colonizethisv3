@@ -7,6 +7,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -17,8 +18,7 @@ void main() {
       final dir = await Directory.systemTemp.createTemp(
         'ct_settings_provider_',
       );
-      Hive.init(dir.path);
-      await Hive.openBox<dynamic>(HiveBoxNames.settings);
+      await openAppTestHiveBox(suiteId: 'settings_provider', directory: dir, boxName: HiveBoxNames.settings);
       addTearDown(() async {
         await Hive.close();
         await dir.delete(recursive: true);

@@ -20,7 +20,7 @@ import 'widget_test_pumps.dart';
 void main() {
   suppressLogsForTests();
 
-  setUpAll(tradeE8InitRouteHostHive);
+  setUpAll(() => tradeE8InitRouteHostHive(suiteId: 'trade_screen_e8'));
 
   group('AC #1 — Left rail Trade icon opens TradeScreen full-screen dark '
       'editorial-monocle surface (#2993 E8 (a))', () {

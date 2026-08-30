@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 import 'province_shortcut_host_golden_game_service.dart';
+import 'app_test_hive_harness.dart';
 
 class _FakeGameService extends GameService {
   _FakeGameService(super.box, super.adapter);
@@ -41,8 +42,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_map_view_provider');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'map_view_provider');
   });
 
   test('mapViewDataProvider returns null when there is no current game', () {

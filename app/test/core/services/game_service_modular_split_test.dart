@@ -10,6 +10,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service_map_cache.dart';
+import '../../app_test_hive_harness.dart';
 
 /// #2575 work item 12 — [GameService] library split sanity checks.
 void main() {
@@ -66,8 +67,7 @@ void main() {
             await hiveDir.delete(recursive: true);
           }
         });
-        Hive.init(hiveDir.path);
-        final box = await Hive.openBox<dynamic>('games_modular');
+        final box = await openAppTestHiveBox(suiteId: 'game_service_modular_split', directory: hiveDir, boxName: 'games_modular');
         final service = GameService(box, GameSaveAdapter());
         const gameId = 'modular_map';
         final tileMap = TileMapResult(
@@ -114,8 +114,7 @@ void main() {
           await hiveDir.delete(recursive: true);
         }
       });
-      Hive.init(hiveDir.path);
-      final box = await Hive.openBox<dynamic>('games_trace');
+      final box = await openAppTestHiveBox(suiteId: 'game_service_modular_split', directory: hiveDir, boxName: 'games_trace');
       final service = GameService(
         box,
         GameSaveAdapter(),

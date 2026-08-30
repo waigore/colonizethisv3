@@ -22,6 +22,7 @@ import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 /// Tests for the dark editorial-monocle chrome contract on
 /// [GameMapEmpireLeftRail] (issue #2861 S3 / R4).
@@ -41,8 +42,7 @@ void main() {
     // rail itself (no panels opened), so a single human player is sufficient.
     game = buildPanelTestGame();
 
-    Hive.init('./.dart_tool/test_hive_empire_rail_chrome');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'empire_rail_chrome');
   });
 
   String humanId() => game.players.where((p) => p.isHuman).isNotEmpty

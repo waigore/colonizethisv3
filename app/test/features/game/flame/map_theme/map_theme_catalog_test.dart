@@ -13,6 +13,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import '../../../../app_test_hive_harness.dart';
 
 /// Stems loaded by [TerrainTilesetCache] (required + best-effort overlays).
 const _kStandaloneTerrainStems = <String>[
@@ -190,8 +191,7 @@ void main() {
 
     test('Hive persistence round-trips terrain theme selection', () async {
       final dir = await Directory.systemTemp.createTemp('ct_map_theme_');
-      Hive.init(dir.path);
-      await Hive.openBox<dynamic>(HiveBoxNames.settings);
+      await openAppTestHiveBox(suiteId: 'map_theme_catalog', directory: dir, boxName: HiveBoxNames.settings);
       addTearDown(() async {
         await Hive.close();
         await dir.delete(recursive: true);

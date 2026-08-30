@@ -31,6 +31,7 @@ import 'app_shell_harness.dart';
 import 'counsel_panel_test_support.dart';
 import 'panel_fixtures/core.dart';
 import 'widget_test_pumps.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -38,8 +39,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_counsel_screen');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'counsel_screen');
   });
 
   tearDownAll(() async {

@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'load_game_list_dialog_test_support.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -34,8 +35,7 @@ void main() {
   }
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_load_list_dialog');
-    gamesBox = await Hive.openBox<dynamic>('${HiveBoxNames.games}_load_list');
+    gamesBox = await openAppTestHiveBox(suiteId: 'load_list_dialog', boxName: '${HiveBoxNames.games}_load_list');
   });
 
   setUp(() async {

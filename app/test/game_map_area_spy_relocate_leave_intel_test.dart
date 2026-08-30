@@ -20,6 +20,7 @@ import 'app_shell_harness.dart';
 import 'civilian_units_panel_test_support.dart';
 import 'map_view_test_fixtures.dart';
 import 'panel_fixtures/core.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -27,8 +28,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_spy_relocate_leave_intel');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'spy_relocate_leave_intel');
   });
 
   Future<({AppEventBus bus, Game game, GameMapAreaState state})>

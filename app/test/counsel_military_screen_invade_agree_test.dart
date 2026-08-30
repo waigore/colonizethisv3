@@ -29,6 +29,7 @@ import 'package:hive/hive.dart';
 import 'app_shell_harness.dart';
 import 'panel_fixtures/core.dart';
 import 'widget_test_pumps.dart';
+import 'app_test_hive_harness.dart';
 
 const _counselMilitaryInvadeGameId = 'counsel-military-invade-screen-test';
 const _rivalId = 'gp2';
@@ -154,8 +155,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_counsel_military_invade_agree');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'counsel_military_invade_agree');
   });
 
   tearDownAll(() async {

@@ -27,6 +27,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'province_explore_shortcut_host_emit_event_test_support.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -34,8 +35,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_province_explore_shortcut_emit');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'province_explore_shortcut_emit');
   });
 
   Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(

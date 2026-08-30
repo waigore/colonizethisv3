@@ -27,6 +27,7 @@ import 'package:hive/hive.dart';
 import 'app_shell_harness.dart';
 import 'panel_fixtures/core.dart';
 import 'widget_test_pumps.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -47,8 +48,7 @@ void main() {
       ],
     );
     humanPlayer = game.players.first;
-    Hive.init('./.dart_tool/test_hive_victory_screen');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'victory_screen');
   });
 
   tearDownAll(() async {

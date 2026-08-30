@@ -14,6 +14,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'app_test_hive_harness.dart';
 
 GameSetupConfig _tinyProviderConfig() => GameSetupConfig(
       selectedGreatPowerIds: ['england', 'france'],
@@ -32,8 +33,7 @@ void main() {
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('ct_app_provider_wf_');
-    Hive.init(dir.path);
-    box = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    box = await openAppTestHiveBox(suiteId: 'providers_game_map_workflow', directory: dir);
   });
 
   tearDown(() async {

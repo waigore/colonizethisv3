@@ -35,6 +35,7 @@ import 'package:hive/hive.dart';
 import 'map_view_test_fixtures.dart';
 import 'panel_test_fixtures.dart';
 import 'game_screen_test_support.dart';
+import 'app_test_hive_harness.dart';
 
 const Size _kWideViewport = Size(1024, 768);
 
@@ -65,8 +66,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    Hive.init('./.dart_tool/test_hive_game_screen_s13');
-    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+    gamesBox = await openAppTestHiveBox(suiteId: 'game_screen_s13');
   });
 
   Future<void> pumpGameScreen(WidgetTester tester, {required Size size}) async {

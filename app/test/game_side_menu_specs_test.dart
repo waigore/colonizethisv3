@@ -20,6 +20,7 @@ import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
+import 'app_test_hive_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -30,8 +31,7 @@ void main() {
 
     setUpAll(() async {
       game = buildSideMenuTestGame();
-      Hive.init('./.dart_tool/test_hive_game_side_menu_specs');
-      gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+      gamesBox = await openAppTestHiveBox(suiteId: 'game_side_menu_specs');
     });
 
     Widget wrap({
