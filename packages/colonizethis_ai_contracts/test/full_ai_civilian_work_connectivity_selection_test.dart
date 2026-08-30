@@ -1,13 +1,13 @@
 import 'package:colonizethis_ai_contracts/src/ai/full_ai_civilian_work_selection.dart';
 import 'package:colonizethis_ai_contracts/src/ai/full_ai_civilian_work_selection_engineer.dart';
 import 'package:colonizethis_ai_contracts/src/ai/full_ai_civilian_work_selection_build_purchase.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
-import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Connectivity-aware Engineer selection mirrors (Refs #4176 AC-E1).
+/// AC-G1 registry pins: [full_ai_civilian_work_connectivity_ga_tunability_test.dart].
 void main() {
   const playerId = 'gp1';
   const roadTile = 'oldWorld|p1|0|1';
@@ -239,28 +239,5 @@ void main() {
       connectivityDev: snapshot,
     );
     expect(selected?.targetTileKey, connectedTile);
-  });
-
-  group('Connectivity GA tunability (AC-G1)', () {
-    test('connectivity scoring constants are registered in the registry', () {
-      for (final name in const [
-        'kEngineerFrontierRoadExtensionBonus',
-        'kBuildImprovementConnectedBonus',
-        'kBuildImprovementAdjacentToConnectedBonus',
-        'kBuildRailBottleneckYieldBonus',
-        'kEngineerPortOverseasLinkageBonus',
-      ]) {
-        final p = AiParameterRegistry.byName(name);
-        expect(p, isNotNull, reason: name);
-        expect(p!.category, AiParameterCategory.victoryConfig, reason: name);
-        expect(p.isInteger, isTrue, reason: name);
-        expect(p.minValue, 0, reason: name);
-        expect(
-          p.maxValue,
-          greaterThanOrEqualTo(2000),
-          reason: name,
-        );
-      }
-    });
   });
 }
