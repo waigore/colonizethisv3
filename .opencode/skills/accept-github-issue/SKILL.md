@@ -17,6 +17,7 @@ When running in OpenCode:
 - Require an explicit issue number/URL; the issue must be open. To pick from the `backlog:acceptance` queue and relabel, use `backlog-accept-agent` instead.
 - Accept only on **latest `origin/dev`** (`git fetch && git checkout dev && git pull`).
 - Drive the app with the `dart_*` MCP tools (`dart_list_devices` → `dart_launch_app` → `dart_connect_dart_tooling_daemon` → `dart_get_widget_tree` / `dart_flutter_driver` / screenshots); fall back to `flutter test integration_test -d macos|linux` and headless CLIs when MCP tools are unavailable, and say so in the comment.
+- Gameplay/UI: apply the standing 1 s game-app surface budget + unmount check from the Cursor skill even when the issue ACs omit it.
 - Inspect generated art by reading PNGs directly (built-in vision) per the reference.md §C checklist.
 - Refactor issues: confirm a passing **Verification** comment (Complete outcome) and that `dev` matches the verified state per reference.md §B — do **not** re-run suites or audit the diff at acceptance.
 - Post **`gh issue comment` only** — never relabel, close, or change milestones.

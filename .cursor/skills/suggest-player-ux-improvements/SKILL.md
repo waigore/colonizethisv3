@@ -327,7 +327,7 @@ Chat-only complete. To proceed: ask to **plan-feature** / **file an issue** for 
 - **Density honesty** — if recommending declutter, name which facts leave the default surface and how details are requested.
 - **Clarity honesty** — default-visible copy must be plain enough that a new player need not open the manual; use the manual only as analyst ground truth.
 - **Mobile-aware** — if the change hits narrow viewports, note `SPEC/ui/mobile-adaptation.md` as a constraint (do not redesign chrome style here).
-- **Architecture** — cross-panel via AppEventBus patterns; Flame vs Flutter boundaries respected in the engineer section.
+- **Architecture** — cross-panel via AppEventBus patterns; Flame vs Flutter boundaries respected in the engineer section. Game-app surfaces inherit the 1 s full-load + dispose contract (`colonizethis-ui-surface-budget.mdc`); do not recommend a new always-mounted panel or extra `FlameGame`.
 
 ## Anti-patterns
 

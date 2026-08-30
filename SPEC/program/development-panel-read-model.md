@@ -63,7 +63,7 @@ Representative fixture: dual-region save with two OW provinces (four improvable 
 | Full improvable scope scan on assign/cancel draft churn | `developmentPanelRegionScopesProvider` order-independent memoization | Scope rows and extraction projection identity stable across order-only updates (provider unit test) |
 | Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + snapshot cache | Map defers one frame; highlight-only rebuilds reuse snapshot |
 
-DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/program/flutter-performance-tracing.md` § Development panel open path). Timing tests below remain the CI profiling anchor for AC2 (measurable µs reduction on read-model build path). **AC1 peer parity:** lazy Old World read-model open path must stay within **2×** the `ProductionScreenBody` synchronous prep surrogate on the same representative fixture (`development_panel_open_path_timing_test.dart`).
+DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/program/flutter-performance-tracing.md` § Development panel open path). Timing tests below remain the CI profiling anchor for AC2 (measurable µs reduction on read-model build path). **AC1 peer parity:** lazy Old World read-model open path must stay within **2×** the `ProductionScreenBody` synchronous prep surrogate on the same representative fixture (`development_panel_open_path_timing_test.dart`). That peer test is **complementary**; the standing game-app ceiling is **1 000 ms full load** including the panel minimap ([ui-surface-budget.md](ui-surface-budget.md)).
 
 ## Acceptance criteria
 

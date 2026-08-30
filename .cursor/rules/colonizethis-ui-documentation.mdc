@@ -85,6 +85,12 @@ Bus emissions must name **event types and payload fields**. Local `Navigator` on
 ...
 Base ID row required; variant suffix letter when applicable.
 
+## Required on open
+List every load that must finish before this surface is ready (read models, minimaps, Yarn/Jenny, required assets). Those loads sit inside `kUiSurfaceOpenBudgetMs` (`SPEC/program/ui-surface-budget.md`). Do not copy the 1 000 ms number here. Inactive tabs: say whether they must be ready on first open or only when selected.
+
+## Mount / dispose
+When the widget/`FlameGame`/Jenny host is constructed and when it is unmounted. No unused offstage trees.
+
 ## Components
 Bullet list: widget class, spec link, role in hierarchy.
 
@@ -145,6 +151,7 @@ When assigning an ID:
 | Style, palette, pixel generation | `colonizethis-ui-design.mdc` |
 | AC quality | `colonizethis-acceptance-criteria.mdc` |
 | Bus wiring | `SPEC/program/app-ui-wiring.md` |
+| 1 s open budget / dispose | `colonizethis-ui-surface-budget.mdc`, `SPEC/program/ui-surface-budget.md` |
 | Mobile viewports | `SPEC/ui/mobile-adaptation.md` |
 | Ct-* catalog | `SPEC/ui/pixel-art-ui-catalog.md` |
 
@@ -156,6 +163,7 @@ When assigning an ID:
 - [ ] `UiScreenIds` + widget `screenId` binding present
 - [ ] Layout wireframe complete; composites linked not duplicated
 - [ ] All triggers and user actions documented
+- [ ] Required-on-open loads listed; mount/dispose stated
 - [ ] Variants table includes suffix letters where needed
 - [ ] Widgetbook section matches catalog
 - [ ] ACs are Given–When–Then and test-targetable
