@@ -33,6 +33,7 @@ Evaluate these criteria in order:
    - Do tests in the PR cover acceptance criteria defined by the issue?
 3. **Architecture**
    - Does implementation align with existing coding and architecture conventions, especially `.cursor/rules/` constraints?
+   - Game-app UI (`app/`): **NO** if a panel/dialog/overlay can miss the hard 1 s full-load open budget or keep unused dialogs/widgets/`FlameGame`s mounted (`colonizethis-ui-surface-budget.mdc`). Not conditional on the issue mentioning performance.
 4. **Linting compliance**
    - Does the PR comply with all linting rules without adding/changing allowlists?
 5. **UI visual fidelity** (apply only when the PR touches app UI — widgets, screens, dialogs, overlays, theme, or Widgetbook stories)

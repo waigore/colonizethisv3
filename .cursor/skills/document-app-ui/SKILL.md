@@ -53,6 +53,8 @@ Per `colonizethis-ui-documentation.mdc`:
 | States and variants | IDs, suffix letters, render differences |
 | Widgetbook | Folder, file, each use case + overrides |
 | ACs | Given–When–Then (`colonizethis-acceptance-criteria.mdc`) |
+| Required on open | Loads that must finish before the surface is ready (projections, minimap, Yarn, assets). These sit inside `kUiSurfaceOpenBudgetMs` (`SPEC/program/ui-surface-budget.md`). Do not spec chrome-first if that content is required. |
+| Mount / dispose | When the tree is constructed and when it is unmounted; no unused `FlameGame`/dialog hosts. |
 
 **Exhaustive behavior:** No "etc." — list every button, slider, chip, and back gesture with enable/disable rules and bus event types.
 

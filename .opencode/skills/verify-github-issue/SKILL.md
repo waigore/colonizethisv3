@@ -15,6 +15,6 @@ When running in OpenCode:
 
 - Read both Cursor files in full before verifying.
 - Verify only on **latest `origin/dev`** (`git fetch && git checkout dev && git pull`). Local-only or unmerged fixes → **Gaps remain**.
-- **Complete** only when the fix is **merged on `dev`**, ACs pass, tests pass, and (for UI issues) widget golden PNGs are embedded in the issue comment via public gist.
+- **Complete** only when the fix is **merged on `dev`**, ACs pass, tests pass, (for UI issues) widget golden PNGs are embedded in the issue comment via public gist, and (for game-app UI) the standing 1 s surface-budget + dispose row in the Cursor skill is pass or N/A.
 - When the issue updates the player manual, apply `.cursor/skills/review-game-manual-agent/SKILL.md` § Style review and § Accuracy review to each updated chapter (STYLE_GUIDE + cited SPECs / screen-registry). Remaining findings → **Gaps remain**.
 - Post **`gh issue comment` only** — never relabel, close, or change milestones (unlike `backlog-verify-agent`, which may relabel after applying this skill).

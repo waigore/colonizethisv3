@@ -17,6 +17,7 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-logging-file.mdc` | Required file logging approach (`basic_logger_file`) |
 | `colonizethis-logic-ai-decoupling.mdc` | Enforces one-way architecture boundary between `colonizethis_logic` and `colonizethis_ai` |
 | `colonizethis-turn-resolution-budget.mdc` | Hard 15-second next-turn resolution usability budget |
+| `colonizethis-ui-surface-budget.mdc` | Hard 1-second game-app panel/dialog open budget + dispose unused UI |
 | `colonizethis-agent-run-cleanup.mdc` | Delete logs/coverage/CLI artifacts after agent-run verbose commands |
 
 ## Context-specific rules
@@ -30,7 +31,7 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-ui-design.mdc` | `SPEC/ui/**`, `**/lib/widgets/**`, `**/lib/ui/**` | UI style, mobile viewports, Widgetbook registration, pixel-art process (orthogonal to screen structure) |
 | `colonizethis-component-structure.mdc` | `app/lib/**/*.dart`, `packages/*/lib/**/*.dart`, `tool/**/*.dart` | Folder conventions, extraction/reuse, naming |
 | `colonizethis-code-review.mdc` | `app/lib/**/*.dart`, `packages/*/lib/**/*.dart`, `tool/**/*.dart` | Review checklist and quality gates |
-| `colonizethis-lifecycle.mdc` | `app/lib/game/**/*.dart`, `app/lib/widgets/**/*.dart`, `app/lib/ui/**/*.dart`, `app/lib/screens/**/*.dart`, `app/lib/pages/**/*.dart` | Flame/Flutter lifecycle conventions |
+| `colonizethis-lifecycle.mdc` | `app/lib/game/**/*.dart`, `app/lib/widgets/**/*.dart`, `app/lib/ui/**/*.dart`, `app/lib/screens/**/*.dart`, `app/lib/pages/**/*.dart`, `app/lib/features/**/*.dart` | Flame/Flutter lifecycle conventions |
 | `colonizethis-assets.mdc` | `**/pubspec.yaml`, `**/assets/**`, targeted asset-loading Dart files | Asset structure, naming, loading |
 | `colonizethis-acceptance-criteria.mdc` | `SPEC/ai/**`, `SPEC/game/**`, `SPEC/program/**`, `SPEC/ui/**` | Given–When–Then, testable AC quality |
 | `colonizethis-game-manual.mdc` | `docs/manual/**`, `SPEC/game/**`, `SPEC/ui/**`, allowlisted `SPEC/program/` order/turn files | Player game manual: required when player UX/gameplay changes; issue planning, implementation, PR review |
@@ -74,7 +75,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md` (source of truth for all agen
 | `refine-github-issue` | Refine an open issue from comment feedback (repro, root cause, priorities); update the body or return numbered clarifications when feedback conflicts with SPEC. |
 | `review-pr` | Review an open pull request against issue alignment, acceptance-criteria coverage, architecture conventions, and linting compliance; post all findings as a PR comment with strict YES/CONDITIONAL YES/NO outcomes. |
 | `review-github-issue` | Review an issue for **purpose ↔ proposed method** coherence and internal consistency; repo/SPEC/test evidence only when needed to show the method cannot satisfy the purpose. Consolidated comment with priorities and remedies; use **`verify-github-issue`** for AC↔implementation closure. |
-| `verify-github-issue` | Verify one open issue against ACs/specs/tests on merged `dev`; UI issues need widget golden PNG proof on the issue comment; handbook updates get the same STYLE_GUIDE + SPEC-accuracy audit as `review-game-manual-agent`; post via `gh issue comment` only. OpenCode: `.opencode/skills/verify-github-issue/`. |
+| `verify-github-issue` | Verify one open issue against ACs/specs/tests on merged `dev`; UI issues need widget golden PNG proof on the issue comment; game-app UI also has a standing 1 s surface-budget + dispose check even when ACs omit it; handbook updates get the same STYLE_GUIDE + SPEC-accuracy audit as `review-game-manual-agent`; post via `gh issue comment` only. OpenCode: `.opencode/skills/verify-github-issue/`. |
 | `accept-github-issue` | Executes product acceptance on one explicitly specified GitHub issue (number or URL) and posts an evidence-backed ACCEPT/REJECT comment via `gh`; never relabels or closes. Gameplay/UI: in-app AC execution; refactor: verification-based; art: vision inspection. OpenCode: `.opencode/skills/accept-github-issue/`. |
 | `document-app-ui` | Document player-app screens/UI changes per `colonizethis-ui-documentation.mdc` (stable 8-char IDs, layout/behavior/variants, Widgetbook, registry, `UiScreenIds`). OpenCode: `.opencode/skills/document-app-ui/`. |
 | `update-game-manual` | Update `docs/manual/` when player UX or gameplay changes: map chapters via `## Sources` footers, preserve vizier tone, grade-12 reading level, and player-angle framing, enforce template and draft marking. Policy: `colonizethis-game-manual.mdc`. OpenCode: `.opencode/skills/update-game-manual/`. |

@@ -1,6 +1,6 @@
 # Flutter performance tracing
 
-**Scope:** Optional instrumentation to attribute wall time for (1) **New Game** → game screen interactable (GitHub #1710) and (2) **Development panel** open-path sync work (GitHub #4175 Slice E). Complements manual **profile/release** DevTools sessions; does not replace them.
+**Scope:** Optional instrumentation to attribute wall time for (1) **New Game** → game screen interactable (GitHub #1710) and (2) **Development panel** open-path sync work (GitHub #4175 Slice E). Complements manual **profile/release** DevTools sessions; does not replace them. Game-app panel/dialog/overlay opens are a **hard 1 000 ms full-load** budget ([ui-surface-budget.md](ui-surface-budget.md)): markers must cover required calculations, minimaps, and Yarn — not first chrome only.
 
 ---
 

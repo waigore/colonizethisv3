@@ -13,6 +13,6 @@ Scope: code organization and extraction rules (folders, reuse thresholds, naming
 - `lib/widgets/` or `lib/ui/` — Shared Flutter widgets. `lib/screens/` or `lib/pages/` — Full screens.
 - `lib/state/` or `lib/providers/` — State (e.g. Riverpod). `lib/services/` — Save/load, API, audio. `lib/models/` — Domain models, DTOs.
 
-**Reuse:** Extract at 2+ places or when testable in isolation. Flame: keep components small and rendering-local. Flutter: keep screens thin and favor reusable widgets for loading/error/empty/list patterns.
+**Reuse:** Extract at 2+ places or when testable in isolation. Flame: keep components small and rendering-local. Flutter: keep screens thin and favor reusable widgets for loading/error/empty/list patterns. Prefer `CtTabStrip.lazyTabBodies` when a tab holds a map, Flame canvas, or heavy projection. Do not extract an always-mounted dialog host that keeps children alive (`colonizethis-ui-surface-budget.mdc`).
 
 **Naming:** Flame: `*Component` when useful for clarity. Flutter: `*Widget`, `*Screen`, `*Page` when useful for clarity.

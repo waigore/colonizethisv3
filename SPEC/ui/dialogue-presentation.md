@@ -36,7 +36,7 @@ The app presents **PendingDialoguePoint**s from the dialogue system. It uses **J
 
 ## Jenny integration
 
-- **Assets:** `.yarn` files under `assets/dialogue/` (or path defined in TDD). Loaded by the DialogueRunner in Flame’s `onLoad` or when the dialogue system initializes.
+- **Assets:** `.yarn` files under `assets/dialogue/` (or path defined in TDD). Loaded by the DialogueRunner in Flame’s `onLoad` or when the dialogue system initializes. Yarn parse plus the first presentable line/options sit inside the overlay’s **1 000 ms** full-load budget ([ui-surface-budget.md](../program/ui-surface-budget.md)); dispose the runner when the overlay is dismissed.
 - **Node selection:** When a PendingDialoguePoint is received, the app maps **contentKey** to a Yarn **node name** (see dialogue-content-and-yarn.md). Set **variables** (offererName, stage, province, era) on the runner from the payload, then start the node.
 - **Options → outcome:** When the player selects an option, Jenny runs a custom command or the app’s DialogueView handler maps the selection to the correct **DialogueOutcome** (e.g. OvertureDecision, InterventionChoice) and calls the **resume API**. No game state is changed in the UI layer; only the outcome is passed to logic.
 - **Flavour (no choice):** For `dialogue_flavour`, the node may have a single “Continue” or “Dismiss” option that closes the dialogue without calling any resume API.

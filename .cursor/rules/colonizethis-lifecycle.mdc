@@ -1,6 +1,6 @@
 ---
 description: Flame and Flutter component lifecycle conventions
-globs: "app/lib/game/**/*.dart,app/lib/widgets/**/*.dart,app/lib/ui/**/*.dart,app/lib/screens/**/*.dart,app/lib/pages/**/*.dart"
+globs: "app/lib/game/**/*.dart,app/lib/widgets/**/*.dart,app/lib/ui/**/*.dart,app/lib/screens/**/*.dart,app/lib/pages/**/*.dart,app/lib/features/**/*.dart"
 alwaysApply: false
 ---
 
@@ -11,3 +11,5 @@ alwaysApply: false
 **Flutter:** `initState()` — one-time init; if subscribing, cancel in `dispose()`. `dispose()` — cancel subscriptions, dispose controllers.
 
 **Rule of thumb:** Init → `onLoad()` (Flame) or `initState()` (Flutter). Subscribe → `onMount()` (Flame). Clean up → `onRemove()` (Flame) or `dispose()` (Flutter).
+
+**Game-app surfaces:** Mount `GameWidget` / `FlameGame`, Jenny runners, and panel/dialog subtrees only while shown; `onRemove()` / `dispose()` when closed. Do not keep a dummy `FlameGame` when the canvas is absent. Hard 1 s full-load budget and unused-tree ban: `colonizethis-ui-surface-budget.mdc` and `SPEC/program/ui-surface-budget.md`.
