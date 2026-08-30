@@ -195,13 +195,20 @@ void main() {
                 'Political and Naval tabs (in order) per SPEC § Layout.',
           );
 
-          // Both obfuscated section bodies are mounted (IndexedStack keeps all
-          // tab bodies in the tree, with non-selected bodies offstage), each
-          // with its section header.
+          // Lazy narrow tabs build only the selected tab body on first open
+          // (Refs #4690); Naval defers until first selection.
+          expect(find.byType(CtSectionLabel), findsOneWidget);
+          expect(find.text('POLITICAL'), findsOneWidget);
+          expect(find.text('NAVAL'), findsNothing);
+
+          await tester.tap(find.text('Naval'));
+          await tester.pump();
+
           expect(
             find.byType(CtSectionLabel, skipOffstage: false),
             findsNWidgets(2),
           );
+          expect(find.text('NAVAL'), findsOneWidget);
 
           // No land-only tab labels are present.
           for (final forbidden in const <String>['Tile', 'Economic']) {
