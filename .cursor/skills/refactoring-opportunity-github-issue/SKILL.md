@@ -58,7 +58,7 @@ Before finalizing findings and the issue body, **compare planned themes** to wor
 Search and read concrete sites (types, public APIs, large files, cross-imports, duplicated patterns):
 
 - **Project rules:** Tie each finding to a **specific rule file** (and SPEC section if applicable), or label it **general practice** (Dart/Flutter: e.g. unnecessary `dynamic`, over-wide imports, God widgets, tight coupling across layers).
-- **Architecture:** Respect boundaries from rules (e.g. logic vs AI, UI vs Flame, `AppEventBus` vs cross-panel callbacks) — flag violations with file paths and a short “why it matters.”
+- **Architecture:** Respect boundaries from rules (e.g. logic vs AI, UI vs Flame, `AppEventBus` vs cross-panel callbacks) — flag violations with file paths and a short “why it matters.” For `app/`, also scan eager `IndexedStack` maps, dummy/`Offstage` `FlameGame`s, and dialogs built at shell init (`colonizethis-ui-surface-budget.mdc`).
 - **UI screens:** Refactors that split, merge, or rename screens/dialogs/overlays must preserve **stable screen IDs** (`SPEC/ui/screen-registry.md`, `UiScreenIds`) unless the issue explicitly authorizes migration. Note implementers should run **`document-app-ui`** when spec/registry/Widgetbook must change.
 - **Tests:** Note gaps that would make a refactor risky; reference `colonizethis-testing.mdc` expectations for the layer.
 

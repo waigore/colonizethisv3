@@ -30,6 +30,8 @@ Example (UI):
   When the user presses the “Log in” button  
   Then the UI layer highlights the email field and shows the message `Email is required` under that field
 
+Game-app screen specs must list **required-on-open** loads (projections, minimap, Yarn, assets) so the standing 1 s budget in `SPEC/program/ui-surface-budget.md` has a checkable set. Do not copy the 1 000 ms number into every screen AC.
+
 ## Concrete data definitions
 
 AI agents cannot infer what “valid” means. Every AC MUST define inputs and state in concrete, checkable terms:

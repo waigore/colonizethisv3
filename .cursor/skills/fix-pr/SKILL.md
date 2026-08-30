@@ -24,6 +24,7 @@ Hard constraints:
 - Do not introduce behavior outside SPEC authorization. If needed behavior is not specified, update specs first.
 - Preserve architecture boundaries (Flutter UI vs Flame simulation, event bus usage, strict typing, logging policy).
 - Do not bypass quality gates or test expectations to force green checks.
+- Failing game-app open-path timing or unmount tests are 1 s surface-budget defects (`colonizethis-ui-surface-budget.mdc`); do not weaken them.
 - Resolve conflicts deliberately per hunk (not one global strategy). Use judgment to prefer either base (`dev`) or PR branch changes based on SPEC alignment, correctness, and lowest-risk unblock path.
 
 ## Workflow

@@ -22,7 +22,7 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 - Calling **`Navigator.of(context).push` / `pushNamed` / `popUntil` / `maybePop`** or **`showDialog` / `showModalBottomSheet`** from empire panels, the map, side menus, or shell to drive **cross-panel, cross-screen, or shell-level** behavior.
 - Using **`maybePop`** to dismiss bottom sheets or routes that **`AppEventHandler`** opened with **`navigatorKey`**, except from **`AppEventHandler`** itself (e.g. handling **`ClosePanelEvent`**) or from documented local-only flows.
 
-**Preferred:** Emit **`UIActionEvent`** subclasses (`NavigateToRouteEvent`, `NavigateToShellEvent`, `ClosePanelEvent`, `OpenDialogEvent`, typed panel opens, `LocateMapTileEvent`, etc.). **`AppEventHandler`** is the choke point that turns those into **`Navigator`** / **`showDialog`** using **`GlobalKey<NavigatorState>`**.
+**Preferred:** Emit **`UIActionEvent`** subclasses (`NavigateToRouteEvent`, `NavigateToShellEvent`, `ClosePanelEvent`, `OpenDialogEvent`, typed panel opens, `LocateMapTileEvent`, etc.). **`AppEventHandler`** is the choke point that turns those into **`Navigator`** / **`showDialog`** using **`GlobalKey<NavigatorState>`**. Close events (`ClosePanelEvent`, `UnitsPanelClosedEvent`) must **unmount** the surface (not hide it) per [ui-surface-budget.md](ui-surface-budget.md).
 
 **Local-by-design exception:** **`Navigator.pop`** / **`showDialog`** entirely **inside one widget’s local UX** (same panel subtree, confirm steps, internal pickers; see **Local by design** in app-ui-wiring) remain allowed; they must not replace the bus for cross-cutting actions.
 

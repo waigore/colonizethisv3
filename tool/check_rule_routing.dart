@@ -8,12 +8,17 @@ const Map<String, String> _requiredGlobs = {
   '.cursor/rules/colonizethis-code-review.mdc':
       'app/lib/**/*.dart,packages/*/lib/**/*.dart,tool/**/*.dart',
   '.cursor/rules/colonizethis-lifecycle.mdc':
-      'app/lib/game/**/*.dart,app/lib/widgets/**/*.dart,app/lib/ui/**/*.dart,app/lib/screens/**/*.dart,app/lib/pages/**/*.dart',
+      'app/lib/game/**/*.dart,app/lib/widgets/**/*.dart,app/lib/ui/**/*.dart,app/lib/screens/**/*.dart,app/lib/pages/**/*.dart,app/lib/features/**/*.dart',
 };
 
 const Set<String> _requiredPointers = {
   'AGENTS.md',
   '.opencode/skills/refactoring-opportunity-github-issue/references/ci-and-rules.md',
+};
+
+const Set<String> _requiredAlwaysApplyRules = {
+  '.cursor/rules/colonizethis-turn-resolution-budget.mdc',
+  '.cursor/rules/colonizethis-ui-surface-budget.mdc',
 };
 
 int runCheckRuleRouting(
@@ -56,6 +61,26 @@ int runCheckRuleRouting(
     final content = file.readAsStringSync();
     if (!content.contains('.cursor/rules/routing-index.md')) {
       violations.add('$relativePath must reference the routing index.');
+    }
+  }
+
+  final agentsMd = File(p.join(repoRoot, 'AGENTS.md'));
+  final agentsContent = agentsMd.existsSync()
+      ? agentsMd.readAsStringSync()
+      : '';
+  for (final relativePath in _requiredAlwaysApplyRules) {
+    final file = File(p.join(repoRoot, relativePath));
+    if (!file.existsSync()) {
+      violations.add('missing $relativePath');
+      continue;
+    }
+    final content = file.readAsStringSync();
+    if (!content.contains('alwaysApply: true')) {
+      violations.add('$relativePath must set alwaysApply: true.');
+    }
+    final basename = p.basename(relativePath);
+    if (agentsContent.isNotEmpty && !agentsContent.contains(basename)) {
+      violations.add('AGENTS.md must list $basename.');
     }
   }
 

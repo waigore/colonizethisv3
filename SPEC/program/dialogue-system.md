@@ -6,7 +6,7 @@
 
 ## Responsibility
 
-Define the **dialogue point** model used by the Flutter app, how resolution (or game loop) produces dialogue points, and how the client submits **outcomes** to resume. Logic lives in colonizethis_logic (or shared); the app UI consumes the same contract.
+Define the **dialogue point** model used by the Flutter app, how resolution (or game loop) produces dialogue points, and how the client submits **outcomes** to resume. Logic lives in colonizethis_logic (or shared); the app UI consumes the same contract. Presentation (Yarn/Jenny) is constructed only while the overlay is shown and disposed on dismiss; load sits inside the game-app 1 s surface budget ([ui-surface-budget.md](ui-surface-budget.md)).
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: verify-github-issue
-description: Verifies one open GitHub issue against acceptance criteria, specs, tests, and CONTRIBUTING; posts a verification comment via gh. UI issues require passing widget goldens on latest dev with PNG proof uploaded to the issue (hard-fail if goldens cannot be captured or fix is not merged). Never relabels issues.
+description: Verifies one open GitHub issue against acceptance criteria, specs, tests, and CONTRIBUTING; posts a verification comment via gh. UI issues require passing widget goldens on latest dev with PNG proof uploaded to the issue (hard-fail if goldens cannot be captured or fix is not merged). Game-app UI also has a standing 1 s full-load surface budget + dispose check even when issue ACs omit it. Never relabels issues.
 ---
 
 # Verify a GitHub issue (ColonizeThis)
@@ -19,6 +19,7 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 - Fix not on **`origin/dev`** (local-only or unmerged PR).
 - **UI issue** without passing widget golden + PNG proof on the issue comment.
 - Any golden test failure, missing golden mapping for a visual AC, or gist upload/embed failure.
+- **Game-app UI surface budget** (standing; **not** AC-gated): merged work under `app/lib/features|widgets|ui` / Flame host, or that references `SPEC/ui/` / screen IDs, must meet the hard 1 s full-load open budget and unmount unused dialogs/widgets/`FlameGame`s (`colonizethis-ui-surface-budget.mdc`, `SPEC/program/ui-surface-budget.md`) **even if the issue ACs omit it**. Exempt: ctdev-only. Missing timing/unmount evidence → **Gaps remain**.
 - Issue that updates the player manual whose merged chapter(s) fail the **style + accuracy** audit below.
 
 **Never** change labels, milestones, or issue state — **`gh issue comment` only**.
@@ -33,7 +34,8 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 6. **Manual audit (when the issue updates the handbook):** If merged work (or the issue ACs) change `docs/manual/[0-9][0-9]-*.md`, audit **each updated chapter** with the same two checks as [`.cursor/skills/review-game-manual-agent/SKILL.md`](../review-game-manual-agent/SKILL.md) § Style review and § Accuracy review. Authority is that skill’s table: **style** = `docs/manual/STYLE_GUIDE.md`; **accuracy** = the chapter’s `## Sources` plus `SPEC/ui/screen-registry.md`. Do not invent extra rules. Skip this step only for a justified non-update (no chapter to audit). Remaining style or accuracy findings → **Gaps remain**.
 7. Run relevant tests (`melos`, `cd app && flutter test …`).
 8. **UI issues** (see below): widget golden procedure + gist upload.
-9. `gh issue comment <n> --body-file …` using the template below.
+9. **Game-app UI surface budget** (see below): standing check even when ACs omit it.
+10. `gh issue comment <n> --body-file …` using the template below.
 
 ### UI issues
 
@@ -50,12 +52,21 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 
 Follow existing golden patterns: `AppThemes.editorialMonocle`, `suppressLogsForTests()`, deterministic fixtures (`province_build_improvement_shortcut_host_goldens_test.dart`, `region_map_*_test.dart`).
 
+### Game-app UI surface budget (standing)
+
+Same UI definition as goldens. **Exempt:** ctdev-only (`SPEC/program/ctdev-app.md`).
+
+The 1 s clock includes **every required load** on that surface (projections, minimaps, Yarn/Jenny, required assets), not first chrome. Closed surfaces must be **unmounted**. Policy: `.cursor/rules/colonizethis-ui-surface-budget.mdc`; measurement: `SPEC/program/ui-surface-budget.md`.
+
+Evidence (at least one): open-path timing test using `kUiSurfaceOpenBudgetMs`; unmount test (panel/dialog keys / `GameWidget` / Jenny hosts **absent** after dismiss); or a recorded open on `dev` with wall-clock ≤ 1000 ms including required content. No evidence → **Gaps remain**.
+
 ## Comment template
 
 ```markdown
 **Verification** (ACs / SPEC / tests / manual)
 
 - [AC bullets → code/tests; partial/missing marked]
+- Game-app UI surface budget (standing, not AC-gated): [pass + evidence | N/A: not game-app UI | gap]
 - Manual (if player-facing): [chapters updated on `dev` | justified non-update | gap]
 - Manual audit (if handbook updated): [chapter files] style: <n> findings; accuracy: <n> findings [pass | remaining misses listed]
 
@@ -72,7 +83,7 @@ Implementation: [merged PR on `dev`]. Tests: [commands run].
 Outcome: [Complete | Gaps remain — see above].
 ```
 
-**Complete** only when ACs are met on **merged `dev`**, tests pass, UI proof is embedded when required, and any handbook update passes the style + accuracy audit. Unmerged PR → **Gaps remain**.
+**Complete** only when ACs are met on **merged `dev`**, tests pass, UI proof is embedded when required, the standing game-app UI surface-budget row is **pass** or **N/A**, and any handbook update passes the style + accuracy audit. Unmerged PR → **Gaps remain**.
 
 ## Tools
 
