@@ -1,14 +1,14 @@
 // Physical line ratchet for colonizethis_ai_contracts lib
-// (`repo.ai_contracts_source_file_size`). Refs #4368 Slice D.
+// (`repo.ai_contracts_source_file_size`). Refs #4683 Slice D.
 //
-// Complements `repo.domain_package_source_file_size` (500) so wave-2 concern
-// splits cannot silently re-merge. Ceiling is **260** physical lines.
+// Complements `repo.domain_package_source_file_size` (500) so wave-3 concern
+// splits cannot silently re-merge. Ceiling is **250** physical lines.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const int aiContractsSourceFileSizeCeiling = 260;
+const int aiContractsSourceFileSizeCeiling = 250;
 
 const String _aiContractsLibRelDir = 'packages/colonizethis_ai_contracts/lib';
 
@@ -99,7 +99,7 @@ int runCheckAiContractsSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_ai_contracts_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4368).',
+      '(ceiling $ceiling; Refs #4683).',
     );
     return 0;
   }

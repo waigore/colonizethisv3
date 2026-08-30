@@ -1,11 +1,11 @@
 // Physical line ratchet for colonizethis_ai_contracts tests
-// (`repo.ai_contracts_test_file_size`). Refs #4368 Slice D.
+// (`repo.ai_contracts_test_file_size`). Refs #4683 Slice D.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const int aiContractsTestFileSizeCeiling = 280;
+const int aiContractsTestFileSizeCeiling = 250;
 
 const String _aiContractsTestsRelDir =
     'packages/colonizethis_ai_contracts/test';
@@ -99,7 +99,7 @@ int runCheckAiContractsTestFileSize(
   if (violations.isEmpty) {
     logI(
       'check_ai_contracts_test_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4368).',
+      '(ceiling $ceiling; Refs #4683).',
     );
     return 0;
   }
