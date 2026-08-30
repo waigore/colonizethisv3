@@ -53,6 +53,7 @@ Widget gameMapCanvasStackRegionRow({
   required bool inWorkTargetSelectionMode,
   required void Function(String? tileKey)? onTileHovered,
   required void Function(String tileKey, Offset local)? onSecondary,
+  bool shellMainMapPaused = false,
 }) {
   return Row(
     children: [
@@ -100,6 +101,7 @@ Widget gameMapCanvasStackRegionRow({
           bus: inWorkTargetSelectionMode ? null : bus,
           onViewportSnapshotChanged: onRegionViewportSnapshot,
           zoomMultiplier: zoomMultiplier,
+          enginePaused: shellMainMapPaused,
         ),
       ),
       if (!isNarrow)

@@ -43,6 +43,7 @@ class CtRegionMap extends StatefulWidget {
     this.zoomMultiplier,
     this.showPlayerTerritoryOutline = false,
     this.playerTerritoryTileKeys,
+    this.enginePaused = false,
   });
 
   final RegionMapViewData region;
@@ -92,6 +93,9 @@ class CtRegionMap extends StatefulWidget {
   final double? zoomMultiplier;
   final bool showPlayerTerritoryOutline;
   final Set<String>? playerTerritoryTileKeys;
+
+  /// When true, pauses the embedded Flame engine (panel pop / shell overlay).
+  final bool enginePaused;
 
   @override
   State<CtRegionMap> createState() => CtRegionMapState();

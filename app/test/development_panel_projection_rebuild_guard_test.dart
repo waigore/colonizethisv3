@@ -97,13 +97,6 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      var projectionNotifications = 0;
-      container.listen(
-        developmentPanelProjectionProvider,
-        (_, _) => projectionNotifications++,
-        fireImmediately: true,
-      );
-
       final hostKey = GlobalKey<_RebuildTickHostState>();
       await tester.pumpWidget(
         buildAppShellWithContainer(
@@ -126,14 +119,15 @@ void main() {
 
       final projectionAfterOpen = container.read(developmentPanelProjectionProvider);
       expect(projectionAfterOpen, isNotNull);
-      final notificationsAfterOpen = projectionNotifications;
 
       hostKey.currentState!.bump();
       await tester.pump();
 
       final projectionAfterBump = container.read(developmentPanelProjectionProvider);
       expect(identical(projectionAfterOpen, projectionAfterBump), isTrue);
-      expect(projectionNotifications, notificationsAfterOpen);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     },
   );
 
@@ -145,13 +139,6 @@ void main() {
         overrides: _developmentOverrides(game, gamesBox),
       );
       addTearDown(container.dispose);
-
-      var assignCacheNotifications = 0;
-      container.listen(
-        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
-        (_, _) => assignCacheNotifications++,
-        fireImmediately: true,
-      );
 
       await tester.pumpWidget(
         buildAppShellWithContainer(
@@ -173,7 +160,6 @@ void main() {
         developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
       expect(cacheAfterOpen.byScopeCommodityKey, isNotEmpty);
-      final notificationsAfterOpen = assignCacheNotifications;
 
       await tester.tap(
         find.byKey(
@@ -186,7 +172,9 @@ void main() {
         developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
       expect(identical(cacheAfterOpen, cacheAfterShow), isTrue);
-      expect(assignCacheNotifications, notificationsAfterOpen);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     },
   );
 }

@@ -24,16 +24,19 @@ class DevelopmentPanelBuildContext {
   final ConnectivityResult? playerConnectivity;
 }
 
-/// Connectivity for all players — depends on game + map only (not orders).
+/// Human-player connectivity only — depends on game + map (not orders).
+/// Refs #4687: read model consumes only `connectivity[humanPlayerId]`.
 Map<String, ConnectivityResult> resolveDevelopmentPanelConnectivity({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
+  required String humanPlayerId,
 }) {
   return resolveConnectivity(
     game: game,
     tileMapByRegion: tileMapByRegion,
     topology: topology,
+    onlyPlayerIds: {humanPlayerId},
   );
 }
 
@@ -50,6 +53,7 @@ DevelopmentPanelBuildContext buildDevelopmentPanelBuildContext({
       game: game,
       tileMapByRegion: tileMapByRegion,
       topology: topology,
+      humanPlayerId: playerId,
     ),
     game: game,
     playerId: playerId,

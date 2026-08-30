@@ -129,7 +129,10 @@ const _packageName = 'colonizethis_app';
 // (Refs #4663; measured 92_253).
 // raised for MAP20001 Build fort siege payoff gist (Refs #4668; measured 92_433).
 // raised for MAP20001 lazy narrow tabs + open tracing (Refs #4690; measured 92_502).
-const _maxMainLines = 92600;
+// raised for GAME80001 Development panel lifecycle + open-path perf (Refs #4687;
+// measured 92_679).
+// raised after #4687 lifecycle/session-cache merge (measured 92_949).
+const _maxMainLines = 93000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

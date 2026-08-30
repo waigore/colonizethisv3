@@ -15,6 +15,7 @@ import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import 'development_panel_keys.dart';
+import 'development_shell_map_pause_scope.dart';
 import 'development_screen_body.dart';
 
 class DevelopmentScreen extends ConsumerWidget {
@@ -40,35 +41,37 @@ class DevelopmentScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = appL10n(context);
     final bus = ref.read(appEventBusProvider);
-    return CtGameFeatureScreenShell(
-      game: game,
-      topBar: GameFeatureScreenTopBar.build(
-        key: DevelopmentPanelKeys.topBarKey,
-        title: topBarTitle,
-        iconAsset: topBarIconAsset,
-        trailing: CtActionTextButton(
-          key: DevelopmentPanelKeys.counselButtonKey,
-          onPressed: () {
-            bus.emit(
-              NavigateToRouteEvent(Routes.counsel, {
-                'game': game,
-                'humanPlayerId': humanPlayerId,
-                'counselTab': 'development',
-              }),
-            );
-          },
-          label: l10n.development_counsel,
+    return DevelopmentShellMapPauseScope(
+      child: CtGameFeatureScreenShell(
+        game: game,
+        topBar: GameFeatureScreenTopBar.build(
+          key: DevelopmentPanelKeys.topBarKey,
+          title: topBarTitle,
+          iconAsset: topBarIconAsset,
+          trailing: CtActionTextButton(
+            key: DevelopmentPanelKeys.counselButtonKey,
+            onPressed: () {
+              bus.emit(
+                NavigateToRouteEvent(Routes.counsel, {
+                  'game': game,
+                  'humanPlayerId': humanPlayerId,
+                  'counselTab': 'development',
+                }),
+              );
+            },
+            label: l10n.development_counsel,
+          ),
         ),
+        bodyBuilder: (context, shellRef, displayGame) {
+          final shell = shellRef.read(shellPlayerContextProvider);
+          final sentinel = observeNotDefinedSentinel(shell, 'Development');
+          if (sentinel != null) return sentinel;
+          return DevelopmentScreenBody(
+            game: displayGame,
+            humanPlayerId: humanPlayerId,
+          );
+        },
       ),
-      bodyBuilder: (context, shellRef, displayGame) {
-        final shell = shellRef.read(shellPlayerContextProvider);
-        final sentinel = observeNotDefinedSentinel(shell, 'Development');
-        if (sentinel != null) return sentinel;
-        return DevelopmentScreenBody(
-          game: displayGame,
-          humanPlayerId: humanPlayerId,
-        );
-      },
     );
   }
 }

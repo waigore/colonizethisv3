@@ -28,8 +28,10 @@ export 'development_panel_assign_row_state.dart'
     show resolveDevelopmentAssignRowState;
 export 'development_panel_assign_row_state_cache.dart'
     show
+        DevelopmentPanelAssignRowResolveInputs,
         DevelopmentPanelAssignRowStateCache,
         buildDevelopmentPanelAssignRowStateCache,
+        buildLazyDevelopmentPanelAssignRowStateCache,
         developmentPanelAssignRowStateKey;
 export 'development_panel_assign_types.dart'
     show DevelopmentAssignRowState, DevelopmentImproveAssignCandidate;

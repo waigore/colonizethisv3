@@ -25,6 +25,7 @@ void main() {
         game: fixture.game,
         tileMapByRegion: fixture.tileMapByRegion,
         topology: fixture.topology,
+        humanPlayerId: DevelopmentPanelOpenPathTimingFixture.playerId,
       );
       final beforeOrders = buildDevelopmentPanelBuildContextFromConnectivity(
         connectivity: connectivity,
@@ -79,6 +80,7 @@ void main() {
         game: scopedGame,
         tileMapByRegion: scopedTileMapByRegion,
         topology: fixture.topology,
+        humanPlayerId: DevelopmentPanelOpenPathTimingFixture.playerId,
       );
       final scopes = buildDevelopmentPanelRegionScopesForPlayer(
         game: scopedGame,

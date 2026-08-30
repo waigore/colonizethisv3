@@ -39,6 +39,7 @@ class DevelopmentScreenBody extends ConsumerStatefulWidget {
 class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
   final Set<String> _visitedRegionIds = {kRegionOldWorld};
   bool _readModelReady = false;
+  bool _loggedInteractiveReady = false;
 
   @override
   void initState() {
@@ -87,6 +88,11 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
     final projection = ref.watch(developmentPanelProjectionProvider);
     if (projection == null) {
       return Center(child: Text(l10n.development_mapDataUnavailable));
+    }
+
+    if (!_loggedInteractiveReady) {
+      _loggedInteractiveReady = true;
+      ctAppPerfInstant('development.interactiveReady');
     }
 
     final orders = ref.watch(currentOrdersProvider);
