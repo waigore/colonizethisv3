@@ -1,10 +1,12 @@
 // Responsive chrome, header, and shared body text styles for the province overlay.
 
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'province_sea_zone_detail_overlay_widget.dart';
 import 'province_sea_zone_detail_overlay_close_button.dart';
@@ -18,19 +20,21 @@ extension ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
     OverlayContent content,
   ) {
     final maxHeight = resolveOverlayMaxHeight(context, constraints, isNarrow);
-    return Padding(
-      padding: const EdgeInsets.all(CtSpacing.m),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: CtPanel(
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildOverlayHeader(context),
-              Flexible(child: buildOverlayBody(isNarrow, content)),
-            ],
+    return ProvinceOverlayInteractiveReadyMarker(
+      child: Padding(
+        padding: const EdgeInsets.all(CtSpacing.m),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: CtPanel(
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildOverlayHeader(context),
+                Flexible(child: buildOverlayBody(isNarrow, content)),
+              ],
+            ),
           ),
         ),
       ),
@@ -88,6 +92,7 @@ extension ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
   Widget buildOverlayBody(bool isNarrow, OverlayContent content) {
     if (isNarrow) {
       return CtTabStrip(
+        lazyTabBodies: true,
         tabLabels: content.tabLabels,
         tabViews: content.tabViews
             .map(
@@ -105,4 +110,30 @@ extension ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
       child: content.sections,
     );
   }
+}
+
+/// Logs [CtAppPerf.provinceOverlay.interactiveReady] once per overlay mount (Refs #4690).
+class ProvinceOverlayInteractiveReadyMarker extends StatefulWidget {
+  const ProvinceOverlayInteractiveReadyMarker({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<ProvinceOverlayInteractiveReadyMarker> createState() =>
+      _ProvinceOverlayInteractiveReadyMarkerState();
+}
+
+class _ProvinceOverlayInteractiveReadyMarkerState
+    extends State<ProvinceOverlayInteractiveReadyMarker> {
+  @override
+  void initState() {
+    super.initState();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ctAppPerfInstant('provinceOverlay.interactiveReady');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
