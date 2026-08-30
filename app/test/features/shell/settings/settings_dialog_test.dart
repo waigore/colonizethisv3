@@ -67,7 +67,7 @@ void main() {
     'settingsProvider setValue persists warnIdleCiviliansOnEndTurn in Hive',
     () async {
       final dir = await Directory.systemTemp.createTemp('ct_settings_warn_');
-      box = await openAppTestHiveBox(suiteId: 'settings_dialog', directory: dir, boxName: HiveBoxNames.settings);
+      final box = await openAppTestHiveBox(suiteId: 'settings_dialog', directory: dir, boxName: HiveBoxNames.settings);
       addTearDown(() async {
         await box.close();
         await Hive.deleteBoxFromDisk(HiveBoxNames.settings);

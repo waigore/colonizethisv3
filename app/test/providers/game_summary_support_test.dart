@@ -65,6 +65,7 @@ String _probe({
 }
 
 late final GameService _gameService;
+late Box<dynamic> box;
 
 void main() {
   suppressLogsForTests();
