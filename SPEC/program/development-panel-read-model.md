@@ -43,7 +43,11 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - `developmentPanelRegionScopesProvider` memoizes improvable scope rows and land extraction per region; invalidates on game/map/shell changes only (not draft orders).
 - `developmentPanelRegionModelProvider` composes cached scopes with order-dependent idle counts and assigned civilians.
 - `developmentPanelConnectivityProvider` memoizes `resolveConnectivity` separately from draft orders so assign/cancel live updates recompute idle counts without re-running connectivity scans.
-- `developmentPanelAssignRowStateCacheProvider` memoizes per-scope assign affordance (`resolveDevelopmentAssignRowState`) and per-region material-shortage commodity ids so highlight-only tab rebuilds do not re-scan assign affordance for every improvable row.
+- `developmentPanelAssignRowStateCacheProvider` uses **lazy** `rowStateFor` resolution (visible rows first; material-shortage scan deferred post-frame) so first-frame open does not resolve every improvable commodity; highlight-only tab rebuilds reuse cached row states (Refs #4687 Slice B).
+- Development panel projection providers use **`autoDispose`** so cached maps release when `GAME80001` pops (Refs #4687 Slice B).
+- **`developmentPanelSessionCacheProvider`** retains order-independent connectivity/scopes and order-dependent shared/assign caches across same-turn re-entry when game, draft orders, and fog revision are unchanged; `autoDispose` panel providers read through this session cache (Refs #4687 Slice C).
+- `DevelopmentPanelScopeList` uses **`ListView.builder`** so province scope cards build on demand (Refs #4687 Slice B).
+- `DevelopmentPanelMapPanel.didUpdateWidget` skips visibility digest work on highlight-only rebuilds (Refs #4687 Slice B).
 - `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
 
 Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs. Connectivity (`developmentPanelConnectivityProvider`) invalidates on game/map revision only — not on draft-order churn.
@@ -61,9 +65,21 @@ Representative fixture: dual-region save with two OW provinces (four improvable 
 | Synchronous read model on first frame | Post-frame `readModelReady` gate | Tab strip paints before connectivity/improvable scans |
 | Per-row material shortage scan on highlight rebuild | `developmentPanelAssignRowStateCacheProvider` + derived shortage set | Show-tile highlight `setState` does not re-run assign affordance per row (`development_panel_projection_rebuild_guard_test.dart`) |
 | Full improvable scope scan on assign/cancel draft churn | `developmentPanelRegionScopesProvider` order-independent memoization | Scope rows and extraction projection identity stable across order-only updates (provider unit test) |
-| Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + snapshot cache | Map defers one frame; highlight-only rebuilds reuse snapshot |
+| Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + session snapshot cache | Map defers one frame; re-open reuses `developmentPanelMapSnapshotProvider` when fog unchanged |
 
 DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/program/flutter-performance-tracing.md` § Development panel open path). Timing tests below remain the CI profiling anchor for AC2 (measurable µs reduction on read-model build path). **AC1 peer parity:** lazy Old World read-model open path must stay within **2×** the `ProductionScreenBody` synchronous prep surrogate on the same representative fixture (`development_panel_open_path_timing_test.dart`). That peer test is **complementary**; the standing game-app ceiling is **1 000 ms full load** including the panel minimap ([ui-surface-budget.md](ui-surface-budget.md)).
+
+### Open-path wall-clock budget (Refs #4687)
+
+- **1.0 s open-to-interactive** is a **profile/release** (non-debug) measurement on **Linux desktop and Android emulator** binding hosts. PR evidence uses DevTools `CtAppPerf.development*` markers including `development.interactiveReady`. **Not** enforced by debug-mode `flutter test` wall-clock assertions on CI runners.
+- **Repeated-entry stability** and **Flame lifecycle** are CI widget-test contracts (see UI spec ACs below).
+
+### Shell map pause and panel map lifecycle (Refs #4687)
+
+- While `GAME80001` is mounted, the live shell map (`MAP10001` / `GameMapArea`) **pauses** its `CtRegionMap` Flame engine via `shellMainMapPauseHoldProvider`.
+- On pop, the shell map **resumes** and continues consuming the current `Game` / draft-order revision from providers (live-invalidate; no stale assign/fog state).
+- Each panel `CtRegionMap` **pauses** its Flame engine on widget dispose so repeated open/close does not leave ticking engines.
+- `resolveDevelopmentPanelConnectivity` resolves **human-player connectivity only** (`onlyPlayerIds: {humanPlayerId}`); read-model Assign/Show/map consume no other-GP connectivity maps.
 
 ## Acceptance criteria
 
@@ -73,6 +89,10 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
 - Given two idle Builders and one with a pending work order, when idle counts compute, then `idleBuilderCount == 1`.
 - Given improvable grain on tiles `t_visible` (fullyVisible) and `t_hidden` (unknown) in the same owned scope, when the read model builds with `playerView`, then only `t_visible` contributes to the grain count and tile key set.
 - Given a Builder with pending improve and an Engineer with in-progress road work in region R, when assigned civilians build for R, then both units appear sorted by unit id with correct `workTarget` and `targetTileKey`.
+- Given `GAME80001` is mounted over the live game map, when the shell map Flame engine is inspected, then it is paused (`enginePaused`) until the panel route pops.
+- Given the player pops `GAME80001`, when the shell map renders again, then its Flame engine is resumed and reflects the current game and draft-order revision.
+- Given connectivity/scopes are already computed and game, draft orders, and fog have not changed, when the player re-opens `GAME80001` in the same turn, then panel providers reuse `developmentPanelSessionCacheProvider` entries (same object identity for connectivity, region scopes, and map snapshots in tests) so re-open avoids redundant scans.
+- Given the panel region map widget is disposed, when Flame engine state is inspected in tests, then the panel map engine is paused and no live ticker remains on a disposed panel map.
 
 ## Assign selection (Slice B)
 

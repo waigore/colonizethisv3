@@ -98,6 +98,45 @@ void main() {
       expect(args?['counselTab'], 'development');
       expect(args?['humanPlayerId'], playerId);
       expect(args?['game'], isA<Game>());
+
+      // Allow DevelopmentShellMapPauseScope post-frame release while the
+      // ProviderScope from pumpAppShell is still mounted (Refs #4687).
+      await pumpAppShell(
+        tester,
+        child: const SizedBox.shrink(),
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => DevelopmentPanelMapGameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          appEventBusProvider.overrideWith((ref) => bus),
+          shellPlayerContextProvider.overrideWithValue(
+            const ShellPlayerContext(
+              effectiveHumanPlayerId: playerId,
+              viewingPlayerId: playerId,
+              mapVisibilityMode: CtMapVisibilityMode.playerConstrained,
+              playerView: null,
+              omniscientDetail: false,
+              showPlayerChrome: true,
+              canMutateViaUi: true,
+              debugCommandTargetPlayerId: playerId,
+              inObservePhase: false,
+              observeBannerLabel: null,
+              treasuryNotDefined: false,
+              cargoNotDefined: false,
+            ),
+          ),
+        ],
+        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        viewport: const Size(900, 760),
+      );
+      await pumpSyncFrames(tester);
     },
   );
 }

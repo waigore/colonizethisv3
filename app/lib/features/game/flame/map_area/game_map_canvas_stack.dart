@@ -8,6 +8,7 @@ import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../../../../providers/shell_main_map_pause_provider.dart';
 import '../region_map/region_map_component.dart' show CtMapVisibilityMode;
 import '../../widgets/map_radial/game_map_tile_radial_host.dart';
 import 'game_map_canvas_stack_hover.dart';
@@ -100,6 +101,7 @@ class GameMapCanvasStack extends ConsumerWidget {
       mapProvincePanelProvider.select(mapCanvasHighlightSlice),
     );
     final inWorkTargetSelectionMode = validTileKeysForSelection != null;
+    final shellMainMapPaused = ref.watch(shellMainMapPauseHoldProvider) > 0;
     return Positioned.fill(
       child: Stack(
         children: [
@@ -152,6 +154,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                 inWorkTargetSelectionMode: inWorkTargetSelectionMode,
                 onTileHovered: onTileHovered,
                 onSecondary: onSecondary,
+                shellMainMapPaused: shellMainMapPaused,
               ),
             ),
           ),

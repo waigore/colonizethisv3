@@ -12,6 +12,49 @@ import '../../widgets/units/shared/region_section_header.dart';
 import 'development_panel_keys.dart';
 import 'development_panel_scope_commodity_rows.dart';
 
+enum _ScopeListEntryKind {
+  ownedHeader,
+  scopeCard,
+  purchasedHeader,
+  purchasedEmpty,
+  sectionGap,
+}
+
+class _ScopeListEntry {
+  const _ScopeListEntry._(this.kind, {this.scope});
+
+  const _ScopeListEntry.ownedHeader() : this._(_ScopeListEntryKind.ownedHeader);
+
+  const _ScopeListEntry.scopeCard(DevelopmentPanelScopeRow scope)
+    : this._(_ScopeListEntryKind.scopeCard, scope: scope);
+
+  const _ScopeListEntry.purchasedHeader()
+    : this._(_ScopeListEntryKind.purchasedHeader);
+
+  const _ScopeListEntry.purchasedEmpty()
+    : this._(_ScopeListEntryKind.purchasedEmpty);
+
+  const _ScopeListEntry.sectionGap() : this._(_ScopeListEntryKind.sectionGap);
+
+  final _ScopeListEntryKind kind;
+  final DevelopmentPanelScopeRow? scope;
+}
+
+List<_ScopeListEntry> _flattenScopeListEntries(
+  DevelopmentPanelRegionModel regionModel,
+) {
+  return [
+    const _ScopeListEntry.ownedHeader(),
+    ...regionModel.ownedScopes.map(_ScopeListEntry.scopeCard),
+    const _ScopeListEntry.sectionGap(),
+    const _ScopeListEntry.purchasedHeader(),
+    if (regionModel.purchasedScopes.isEmpty)
+      const _ScopeListEntry.purchasedEmpty()
+    else
+      ...regionModel.purchasedScopes.map(_ScopeListEntry.scopeCard),
+  ];
+}
+
 /// Province and purchased-land scope list for one region tab.
 class DevelopmentPanelScopeList extends StatelessWidget {
   const DevelopmentPanelScopeList({
@@ -36,52 +79,47 @@ class DevelopmentPanelScopeList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    return ListView(
-      children: [
-        RegionSectionHeader(
-          label: l10n.moveArmy_groupYourProvinces,
-          variant: RegionHeaderVariant.bottomBorderMuted,
-        ),
-        ...regionModel.ownedScopes.map(
-          (scope) => _ScopeCard(
-            l10n: l10n,
-            scope: scope,
-            onShowTiles: onShowTiles,
-            assignRowStateFor: assignRowStateFor,
-            onAssign: onAssign,
-            provinceDisplayNamesById: provinceDisplayNamesById,
-            nextYieldGistForTile: nextYieldGistForTile,
-          ),
-        ),
-        const SizedBox(height: CtSpacing.m),
-        RegionSectionHeader(
-          key: DevelopmentPanelKeys.purchasedSectionKey,
-          label: l10n.development_purchasedLand,
-          variant: RegionHeaderVariant.bottomBorderMuted,
-        ),
-        if (regionModel.purchasedScopes.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: CtSpacing.s),
-            child: Text(
-              '—',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: EditorialMonoclePalette.muted,
-              ),
-            ),
-          )
-        else
-          ...regionModel.purchasedScopes.map(
-            (scope) => _ScopeCard(
+    final entries = _flattenScopeListEntries(regionModel);
+    return ListView.builder(
+      itemCount: entries.length,
+      itemBuilder: (context, index) {
+        final entry = entries[index];
+        switch (entry.kind) {
+          case _ScopeListEntryKind.ownedHeader:
+            return RegionSectionHeader(
+              label: l10n.moveArmy_groupYourProvinces,
+              variant: RegionHeaderVariant.bottomBorderMuted,
+            );
+          case _ScopeListEntryKind.scopeCard:
+            return _ScopeCard(
               l10n: l10n,
-              scope: scope,
+              scope: entry.scope!,
               onShowTiles: onShowTiles,
               assignRowStateFor: assignRowStateFor,
               onAssign: onAssign,
               provinceDisplayNamesById: provinceDisplayNamesById,
               nextYieldGistForTile: nextYieldGistForTile,
-            ),
-          ),
-      ],
+            );
+          case _ScopeListEntryKind.purchasedHeader:
+            return RegionSectionHeader(
+              key: DevelopmentPanelKeys.purchasedSectionKey,
+              label: l10n.development_purchasedLand,
+              variant: RegionHeaderVariant.bottomBorderMuted,
+            );
+          case _ScopeListEntryKind.purchasedEmpty:
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: CtSpacing.s),
+              child: Text(
+                '—',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: EditorialMonoclePalette.muted,
+                ),
+              ),
+            );
+          case _ScopeListEntryKind.sectionGap:
+            return const SizedBox(height: CtSpacing.m);
+        }
+      },
     );
   }
 }
