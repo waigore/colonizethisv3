@@ -16,27 +16,27 @@ String _nLines(int count) =>
 
 void main() {
   group('runCheckAiContractsTestFileSize', () {
-    test('passes on current repo tree under 280 physical-line ceiling', () {
+    test('passes on current repo tree under 250 physical-line ceiling', () {
       expect(runCheckAiContractsTestFileSize('.'), 0);
     });
 
-    test('ceiling is 280 after #4368 Slice D', () {
-      expect(aiContractsTestFileSizeCeiling, 280);
+    test('ceiling is 250 after #4683 Slice D', () {
+      expect(aiContractsTestFileSizeCeiling, 250);
     });
 
     test('grandfather allowlist is empty', () {
       expect(aiContractsTestFileSizeGrandfatheredForTests, isEmpty);
     });
 
-    test('fails when a test file has 281 physical lines', () {
+    test('fails when a test file has 251 physical lines', () {
       final root = Directory.systemTemp.createTempSync(
-        'ai_contracts_test_size_281',
+        'ai_contracts_test_size_251',
       );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,
         'packages/colonizethis_ai_contracts/test/fat_test.dart',
-        _nLines(281),
+        _nLines(251),
       );
 
       final errors = <String>[];

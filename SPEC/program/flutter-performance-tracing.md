@@ -35,6 +35,14 @@ Markers use prefix **`CtAppPerf.`** (filter in the timeline).
 
 Filter `CtAppPerf.development` to isolate panel-open slices. Lazy OW-only open should show Old World `regionScopes` / `regionModel` before any New World counterparts.
 
+### Province sea-zone overlay open path (Refs #4690)
+
+| Marker | When |
+|--------|------|
+| `CtAppPerf.provinceOverlay.interactiveReady` | Post-frame after narrow/wide chrome + default Political tab body mount (instant). |
+
+Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on binding hosts (PR evidence); CI covers lazy-tab structural invariants, not debug wall-clock assertions.
+
 ---
 
 ## Log lines (app package, `info`)
