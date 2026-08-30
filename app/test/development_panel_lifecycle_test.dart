@@ -142,6 +142,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await tester.pump();
       expect(container.read(shellMainMapPauseHoldProvider), 0);
     },
   );
@@ -248,6 +249,7 @@ void main() {
           child: const MaterialApp(home: SizedBox.shrink()),
         ),
       );
+      await tester.pump();
       await tester.pump();
       expect(container.read(shellMainMapPauseHoldProvider), 0);
     },

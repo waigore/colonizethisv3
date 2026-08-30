@@ -2,8 +2,15 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
+    show CtMapVisibilityMode;
+import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -204,4 +211,42 @@ Future<Box<dynamic>> openDevelopmentPanelTestHiveBox({
 Future<void> pumpDevelopmentPanelReady(WidgetTester tester) async {
   await tester.pump();
   await tester.pump();
+}
+
+ShellPlayerContext developmentPanelProjectionShellContext() {
+  return const ShellPlayerContext(
+    effectiveHumanPlayerId: kPanelTestHumanPlayerId,
+    viewingPlayerId: kPanelTestHumanPlayerId,
+    mapVisibilityMode: CtMapVisibilityMode.playerConstrained,
+    playerView: null,
+    omniscientDetail: false,
+    showPlayerChrome: true,
+    canMutateViaUi: true,
+    debugCommandTargetPlayerId: kPanelTestHumanPlayerId,
+    inObservePhase: false,
+    observeBannerLabel: null,
+    treasuryNotDefined: false,
+    cargoNotDefined: false,
+  );
+}
+
+List<Override> developmentPanelProjectionProviderOverrides(
+  Game game, {
+  CurrentOrdersNotifier? ordersNotifier,
+}) {
+  return [
+    currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+    currentOrdersProvider.overrideWith(
+      () => ordersNotifier ?? CurrentOrdersNotifier(const Orders()),
+    ),
+    shellPlayerContextProvider.overrideWithValue(
+      developmentPanelProjectionShellContext(),
+    ),
+    gameServiceProvider.overrideWith(
+      (ref) => DevelopmentPanelMapGameService(
+        Hive.box<dynamic>(HiveBoxNames.games),
+        GameSaveAdapter(),
+      ),
+    ),
+  ];
 }

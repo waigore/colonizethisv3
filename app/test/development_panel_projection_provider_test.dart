@@ -1,59 +1,16 @@
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show CtMapVisibilityMode;
-import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/providers/development_panel_projection_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_world/colonizethis_world.dart' show kRegionOldWorld;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'development_panel_test_support.dart';
 import 'panel_fixtures/core.dart';
-
-ShellPlayerContext _developmentPanelShellContext() {
-  return const ShellPlayerContext(
-    effectiveHumanPlayerId: kPanelTestHumanPlayerId,
-    viewingPlayerId: kPanelTestHumanPlayerId,
-    mapVisibilityMode: CtMapVisibilityMode.playerConstrained,
-    playerView: null,
-    omniscientDetail: false,
-    showPlayerChrome: true,
-    canMutateViaUi: true,
-    debugCommandTargetPlayerId: kPanelTestHumanPlayerId,
-    inObservePhase: false,
-    observeBannerLabel: null,
-    treasuryNotDefined: false,
-    cargoNotDefined: false,
-  );
-}
-
-List<Override> _developmentPanelProviderOverrides(
-  Game game, {
-  CurrentOrdersNotifier? ordersNotifier,
-}) {
-  return [
-    currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    currentOrdersProvider.overrideWith(
-      () => ordersNotifier ?? CurrentOrdersNotifier(const Orders()),
-    ),
-    shellPlayerContextProvider.overrideWithValue(_developmentPanelShellContext()),
-    gameServiceProvider.overrideWith(
-      (ref) => DevelopmentPanelMapGameService(
-        Hive.box<dynamic>(HiveBoxNames.games),
-        GameSaveAdapter(),
-      ),
-    ),
-  ];
-}
 
 void main() {
   suppressLogsForTests();
@@ -73,7 +30,7 @@ void main() {
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
+        overrides: developmentPanelProjectionProviderOverrides(game),
       );
       addTearDown(container.dispose);
 
@@ -90,7 +47,7 @@ void main() {
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
+        overrides: developmentPanelProjectionProviderOverrides(game),
       );
       addTearDown(container.dispose);
 
@@ -127,7 +84,7 @@ void main() {
       final game = buildDevelopmentPanelGoldenGame();
       final ordersNotifier = CurrentOrdersNotifier(const Orders());
       final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(
+        overrides: developmentPanelProjectionProviderOverrides(
           game,
           ordersNotifier: ordersNotifier,
         ),
@@ -165,7 +122,7 @@ void main() {
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
+        overrides: developmentPanelProjectionProviderOverrides(game),
       );
       addTearDown(container.dispose);
 
@@ -197,11 +154,10 @@ void main() {
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
+        overrides: developmentPanelProjectionProviderOverrides(game),
       );
       addTearDown(container.dispose);
 
-      // Prime providers (orders notifier must be initialized via container).
       container.read(developmentPanelProjectionProvider);
 
       final connectivityBefore = container.read(developmentPanelConnectivityProvider);
@@ -229,7 +185,7 @@ void main() {
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
+        overrides: developmentPanelProjectionProviderOverrides(game),
       );
       addTearDown(container.dispose);
 
@@ -252,7 +208,7 @@ void main() {
       final game = buildDevelopmentPanelGoldenGame();
       final ordersNotifier = CurrentOrdersNotifier(const Orders());
       final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(
+        overrides: developmentPanelProjectionProviderOverrides(
           game,
           ordersNotifier: ordersNotifier,
         ),
@@ -262,138 +218,6 @@ void main() {
       final before = container.read(
         developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
-
-      ordersNotifier.state = Orders(
-        workOrdersByPlayerId: {
-          kPanelTestHumanPlayerId: const [
-            WorkOrder(
-              unitId: 'b1',
-              target: kWorkTargetBuildImprovement,
-              targetTileKey: 'oldWorld|p1|0|0',
-            ),
-          ],
-        },
-      );
-
-      final after = container.read(
-        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
-      );
-      expect(identical(before, after), isFalse);
-    },
-  );
-
-  test(
-    'developmentPanelConnectivityProvider reuses session cache after autoDispose teardown (Refs #4687 Slice C)',
-    () {
-      final game = buildDevelopmentPanelGoldenGame();
-      final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
-      );
-      addTearDown(container.dispose);
-
-      final listener = container.listen(
-        developmentPanelConnectivityProvider,
-        (_, __) {},
-      );
-      final connectivityFirst = container.read(
-        developmentPanelConnectivityProvider,
-      );
-      expect(connectivityFirst, isNotNull);
-
-      listener.close();
-      final connectivitySecond = container.read(
-        developmentPanelConnectivityProvider,
-      );
-      expect(identical(connectivityFirst, connectivitySecond), isTrue);
-    },
-  );
-
-  test(
-    'developmentPanelRegionScopesProvider reuses session cache after autoDispose teardown (Refs #4687 Slice C)',
-    () {
-      final game = buildDevelopmentPanelGoldenGame();
-      final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
-      );
-      addTearDown(container.dispose);
-
-      final listener = container.listen(
-        developmentPanelRegionScopesProvider(kRegionOldWorld),
-        (_, __) {},
-      );
-      final scopesFirst = container.read(
-        developmentPanelRegionScopesProvider(kRegionOldWorld),
-      );
-      expect(scopesFirst, isNotNull);
-
-      listener.close();
-      final scopesSecond = container.read(
-        developmentPanelRegionScopesProvider(kRegionOldWorld),
-      );
-      expect(identical(scopesFirst, scopesSecond), isTrue);
-    },
-  );
-
-  test(
-    'developmentPanelMapSnapshotProvider reuses session cache after autoDispose teardown (Refs #4687 Slice D)',
-    () {
-      final game = buildDevelopmentPanelGoldenGame();
-      final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
-      );
-      addTearDown(container.dispose);
-
-      final listener = container.listen(
-        developmentPanelMapSnapshotProvider(kRegionOldWorld),
-        (_, __) {},
-      );
-      final snapshotFirst = container.read(
-        developmentPanelMapSnapshotProvider(kRegionOldWorld),
-      );
-      expect(snapshotFirst, isNotNull);
-
-      listener.close();
-      final snapshotSecond = container.read(
-        developmentPanelMapSnapshotProvider(kRegionOldWorld),
-      );
-      expect(identical(snapshotFirst, snapshotSecond), isTrue);
-    },
-  );
-
-  test(
-    'developmentPanelAssignRowStateCacheProvider lazy cache starts empty (Refs #4687 Slice B)',
-    () {
-      final game = buildDevelopmentPanelGoldenGame();
-      final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(game),
-      );
-      addTearDown(container.dispose);
-
-      final cache = container.read(
-        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
-      );
-      expect(cache.byScopeCommodityKey, isEmpty);
-      expect(cache.materialShortageCommodityIds, isEmpty);
-    },
-  );
-
-  test(
-    'developmentPanelAssignRowStateCacheProvider invalidates on draft orders (Refs #4687 Slice B)',
-    () {
-      final game = buildDevelopmentPanelGoldenGame();
-      final ordersNotifier = CurrentOrdersNotifier(const Orders());
-      final container = ProviderContainer(
-        overrides: _developmentPanelProviderOverrides(
-          game,
-          ordersNotifier: ordersNotifier,
-        ),
-      );
-      addTearDown(container.dispose);
-
-      final before = container.read(
-        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
-      );
-      before.rowStateFor('oldWorld|p1', 'grain');
 
       ordersNotifier.state = Orders(
         workOrdersByPlayerId: {

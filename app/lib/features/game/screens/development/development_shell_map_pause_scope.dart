@@ -20,23 +20,28 @@ class DevelopmentShellMapPauseScope extends ConsumerStatefulWidget {
 
 class _DevelopmentShellMapPauseScopeState
     extends ConsumerState<DevelopmentShellMapPauseScope> {
-  ShellMainMapPauseHold? _pauseHold;
+  ShellMainMapPauseHold? _hold;
+  var _acquired = false;
 
   @override
   void initState() {
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _pauseHold = ref.read(shellMainMapPauseHoldProvider.notifier);
-      _pauseHold!.acquire();
+      _hold = ref.read(shellMainMapPauseHoldProvider.notifier);
+      _hold!.acquire();
+      _acquired = true;
     });
   }
 
   @override
   void dispose() {
-    final hold = _pauseHold;
-    if (hold != null) {
-      Future<void>.microtask(hold.release);
+    final hold = _hold;
+    final acquired = _acquired;
+    _hold = null;
+    _acquired = false;
+    if (acquired && hold != null) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => hold.release());
     }
     super.dispose();
   }
