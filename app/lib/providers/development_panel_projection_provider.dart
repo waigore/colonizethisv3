@@ -10,6 +10,7 @@ import 'package:colonizethis_world/colonizethis_world.dart'
     show ConnectivityResult, PlayerView, allProvinces, buildPlayerView;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/game/screens/development/development_panel_map_snapshot.dart';
 import '../features/game/widgets/shell/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
@@ -75,6 +76,7 @@ class DevelopmentPanelSessionCacheState {
     this.ordersRevision,
     this.sharedContext,
     this.assignRowCacheByRegion = const {},
+    this.mapSnapshotsByRegion = const {},
   });
 
   final DevelopmentPanelStaticSessionRevision? staticRevision;
@@ -85,6 +87,7 @@ class DevelopmentPanelSessionCacheState {
   final int? ordersRevision;
   final DevelopmentPanelBuildContext? sharedContext;
   final Map<String, DevelopmentPanelAssignRowStateCache> assignRowCacheByRegion;
+  final Map<String, DevelopmentPanelMapSnapshot> mapSnapshotsByRegion;
 }
 
 /// Mutable cross-visit cache holder (not a Notifier — stores run during provider build).
@@ -109,6 +112,7 @@ class DevelopmentPanelSessionCache {
       ordersRevision: state.ordersRevision,
       sharedContext: state.sharedContext,
       assignRowCacheByRegion: state.assignRowCacheByRegion,
+      mapSnapshotsByRegion: state.mapSnapshotsByRegion,
     );
   }
 
@@ -125,6 +129,7 @@ class DevelopmentPanelSessionCache {
       ordersRevision: state.ordersRevision,
       sharedContext: state.sharedContext,
       assignRowCacheByRegion: state.assignRowCacheByRegion,
+      mapSnapshotsByRegion: state.mapSnapshotsByRegion,
     );
   }
 
@@ -145,6 +150,7 @@ class DevelopmentPanelSessionCache {
       ordersRevision: state.ordersRevision,
       sharedContext: state.sharedContext,
       assignRowCacheByRegion: state.assignRowCacheByRegion,
+      mapSnapshotsByRegion: state.mapSnapshotsByRegion,
     );
   }
 
@@ -163,6 +169,7 @@ class DevelopmentPanelSessionCache {
       sharedContext: sharedContext,
       assignRowCacheByRegion:
           ordersChanged ? const {} : state.assignRowCacheByRegion,
+      mapSnapshotsByRegion: state.mapSnapshotsByRegion,
     );
   }
 
@@ -182,6 +189,28 @@ class DevelopmentPanelSessionCache {
       assignRowCacheByRegion: {
         ...state.assignRowCacheByRegion,
         regionId: cache,
+      },
+      mapSnapshotsByRegion: state.mapSnapshotsByRegion,
+    );
+  }
+
+  void storeMapSnapshot({
+    required DevelopmentPanelStaticSessionRevision revision,
+    required String regionId,
+    required DevelopmentPanelMapSnapshot snapshot,
+  }) {
+    _clearStaticIfMismatch(revision);
+    state = DevelopmentPanelSessionCacheState(
+      staticRevision: revision,
+      connectivity: state.connectivity,
+      staticContext: state.staticContext,
+      regionScopesByRegion: state.regionScopesByRegion,
+      ordersRevision: state.ordersRevision,
+      sharedContext: state.sharedContext,
+      assignRowCacheByRegion: state.assignRowCacheByRegion,
+      mapSnapshotsByRegion: {
+        ...state.mapSnapshotsByRegion,
+        regionId: snapshot,
       },
     );
   }
@@ -470,4 +499,43 @@ final developmentPanelAssignRowStateCacheProvider =
             cache: cache,
           );
       return cache;
+    });
+
+/// Per-region minimap view-data; invalidates on game/map/fog only (Refs #4687 Slice D).
+final developmentPanelMapSnapshotProvider =
+    Provider.autoDispose.family<DevelopmentPanelMapSnapshot?, String>((
+      ref,
+      regionId,
+    ) {
+      final ctx = ref.watch(developmentPanelStaticContextProvider);
+      if (ctx == null) return null;
+      final mapData = ref.read(gameServiceProvider).getMapData(ctx.game.id);
+      if (mapData == null) return null;
+      final staticRevision = developmentPanelStaticSessionRevision(
+        game: ctx.game,
+      );
+      final session = ref.read(developmentPanelSessionCacheProvider).state;
+      final cached = session.mapSnapshotsByRegion[regionId];
+      if (session.staticRevision == staticRevision && cached != null) {
+        return cached;
+      }
+      final snapshot = ctAppPerfSync(
+        'developmentPanel.mapSnapshot.$regionId',
+        () => buildDevelopmentPanelMapSnapshot(
+          game: ctx.game,
+          humanPlayerId: ctx.humanPlayerId,
+          regionId: regionId,
+          playerView: ctx.playerView,
+          tileMapByRegion: ctx.tileMapByRegion,
+          topologyByRegion: mapData.topologyByRegion,
+        ),
+      );
+      ref
+          .read(developmentPanelSessionCacheProvider)
+          .storeMapSnapshot(
+            revision: staticRevision,
+            regionId: regionId,
+            snapshot: snapshot,
+          );
+      return snapshot;
     });

@@ -33,6 +33,7 @@ Markers use prefix **`CtAppPerf.`** (filter in the timeline).
 | `CtAppPerf.developmentPanel.regionScopes.<regionId>` | Sync improvable scopes + extraction for one region. |
 | `CtAppPerf.developmentPanel.regionModel.<regionId>` | Sync compose of scopes + assigned civilians for one region. |
 | `CtAppPerf.developmentPanel.assignRowCache.<regionId>` | Sync assign-affordance cache for one region tab. |
+| `CtAppPerf.developmentPanel.mapSnapshot.<regionId>` | Sync `buildDevelopmentPanelMapSnapshot` for one region minimap. |
 
 Filter `CtAppPerf.development` to isolate panel-open slices. Lazy OW-only open should show Old World `regionScopes` / `regionModel` before any New World counterparts.
 

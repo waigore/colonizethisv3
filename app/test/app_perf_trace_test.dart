@@ -22,12 +22,14 @@ void main() {
       // SPEC/program/flutter-performance-tracing.md § Development panel open path.
       const markers = <String>[
         'development.readModelReady',
+        'development.interactiveReady',
         'developmentPanel.connectivity',
         'developmentPanel.staticContext',
         'developmentPanel.sharedContext',
         'developmentPanel.regionScopes.oldWorld',
         'developmentPanel.regionModel.oldWorld',
         'developmentPanel.assignRowCache.oldWorld',
+        'developmentPanel.mapSnapshot.oldWorld',
       ];
       for (final name in markers) {
         expect(name, startsWith('development'));

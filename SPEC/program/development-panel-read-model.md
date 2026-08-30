@@ -65,7 +65,7 @@ Representative fixture: dual-region save with two OW provinces (four improvable 
 | Synchronous read model on first frame | Post-frame `readModelReady` gate | Tab strip paints before connectivity/improvable scans |
 | Per-row material shortage scan on highlight rebuild | `developmentPanelAssignRowStateCacheProvider` + derived shortage set | Show-tile highlight `setState` does not re-run assign affordance per row (`development_panel_projection_rebuild_guard_test.dart`) |
 | Full improvable scope scan on assign/cancel draft churn | `developmentPanelRegionScopesProvider` order-independent memoization | Scope rows and extraction projection identity stable across order-only updates (provider unit test) |
-| Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + snapshot cache | Map defers one frame; highlight-only rebuilds reuse snapshot |
+| Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + session snapshot cache | Map defers one frame; re-open reuses `developmentPanelMapSnapshotProvider` when fog unchanged |
 
 DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/program/flutter-performance-tracing.md` § Development panel open path). Timing tests below remain the CI profiling anchor for AC2 (measurable µs reduction on read-model build path). **AC1 peer parity:** lazy Old World read-model open path must stay within **2×** the `ProductionScreenBody` synchronous prep surrogate on the same representative fixture (`development_panel_open_path_timing_test.dart`).
 
@@ -91,7 +91,7 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
 - Given a Builder with pending improve and an Engineer with in-progress road work in region R, when assigned civilians build for R, then both units appear sorted by unit id with correct `workTarget` and `targetTileKey`.
 - Given `GAME80001` is mounted over the live game map, when the shell map Flame engine is inspected, then it is paused (`enginePaused`) until the panel route pops.
 - Given the player pops `GAME80001`, when the shell map renders again, then its Flame engine is resumed and reflects the current game and draft-order revision.
-- Given connectivity/scopes are already computed and game, draft orders, and fog have not changed, when the player re-opens `GAME80001` in the same turn, then panel providers reuse `developmentPanelSessionCacheProvider` entries (same object identity for connectivity and region scopes in tests) so re-open avoids redundant scans.
+- Given connectivity/scopes are already computed and game, draft orders, and fog have not changed, when the player re-opens `GAME80001` in the same turn, then panel providers reuse `developmentPanelSessionCacheProvider` entries (same object identity for connectivity, region scopes, and map snapshots in tests) so re-open avoids redundant scans.
 - Given the panel region map widget is disposed, when Flame engine state is inspected in tests, then the panel map engine is paused and no live ticker remains on a disposed panel map.
 
 ## Assign selection (Slice B)

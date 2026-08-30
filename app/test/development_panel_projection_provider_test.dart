@@ -335,6 +335,32 @@ void main() {
   );
 
   test(
+    'developmentPanelMapSnapshotProvider reuses session cache after autoDispose teardown (Refs #4687 Slice D)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      final listener = container.listen(
+        developmentPanelMapSnapshotProvider(kRegionOldWorld),
+        (_, __) {},
+      );
+      final snapshotFirst = container.read(
+        developmentPanelMapSnapshotProvider(kRegionOldWorld),
+      );
+      expect(snapshotFirst, isNotNull);
+
+      listener.close();
+      final snapshotSecond = container.read(
+        developmentPanelMapSnapshotProvider(kRegionOldWorld),
+      );
+      expect(identical(snapshotFirst, snapshotSecond), isTrue);
+    },
+  );
+
+  test(
     'developmentPanelAssignRowStateCacheProvider lazy cache starts empty (Refs #4687 Slice B)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
