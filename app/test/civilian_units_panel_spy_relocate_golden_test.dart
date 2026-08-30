@@ -1,7 +1,7 @@
 // Widget golden coverage for Spy Relocate row chrome on UNIT10001 (Refs #4219).
 //
-// Pins Relocate action row, Spy-specific status copy (Reserve / Holding intel),
-// and editorial-monocle dark chrome for the spy stationing UX slice.
+// Pins Relocate action row, Spy-specific status copy (Reserve / Holding intel
+// with rival-GP research clause), and editorial-monocle dark chrome.
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
@@ -93,6 +93,7 @@ void main() {
       expect(find.byType(CivilianUnitsPanel), findsOneWidget);
       expect(find.text('Relocate'), findsOneWidget);
       expect(find.textContaining('Holding intel:'), findsOneWidget);
+      expect(find.textContaining('may speed research'), findsOneWidget);
       expectEditorialMonocleDarkChrome(tester);
 
       await expectLater(
