@@ -1,13 +1,16 @@
 import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
     show kRegionNewWorld, kRegionOldWorld;
+import 'package:flutter/foundation.dart' show kProfileMode, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../package_logger.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/development_panel_projection_provider.dart';
 import '../../../../providers/game_service_provider.dart';
@@ -37,6 +40,8 @@ class DevelopmentScreenBody extends ConsumerStatefulWidget {
 }
 
 class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
+  static final _log = packageLogger('perf');
+
   final Set<String> _visitedRegionIds = {kRegionOldWorld};
   bool _readModelReady = false;
   bool _loggedInteractiveReady = false;
@@ -44,6 +49,7 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
   @override
   void initState() {
     super.initState();
+    ctAppPerfSurfaceOpenBegin('development');
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ctAppPerfInstant('development.readModelReady');
@@ -92,7 +98,13 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
 
     if (!_loggedInteractiveReady) {
       _loggedInteractiveReady = true;
-      ctAppPerfInstant('development.interactiveReady');
+      final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady('development');
+      if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
+        _log.i(
+          'ui_surface_open surface=development elapsed_ms=$elapsedMs '
+          'budget_ms=$kUiSurfaceOpenBudgetMs',
+        );
+      }
     }
 
     final orders = ref.watch(currentOrdersProvider);

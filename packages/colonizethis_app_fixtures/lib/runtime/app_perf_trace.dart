@@ -12,3 +12,26 @@ void ctAppPerfInstant(String name) {
 T ctAppPerfSync<T>(String name, T Function() action) {
   return developer.Timeline.timeSync('$kAppPerfTimelinePrefix.$name', action);
 }
+
+/// Wall-clock segment for game-app UI surface open budgets (Refs #4687).
+///
+/// [surfaceId] matches the `CtAppPerf.<surfaceId>.*` marker family
+/// (e.g. `development` → `development.interactiveReady`).
+final Map<String, Stopwatch> _surfaceOpenSegments = <String, Stopwatch>{};
+
+/// Starts (or restarts) the open segment for [surfaceId].
+void ctAppPerfSurfaceOpenBegin(String surfaceId) {
+  _surfaceOpenSegments[surfaceId] = Stopwatch()..start();
+}
+
+/// Elapsed wall-clock ms since [ctAppPerfSurfaceOpenBegin] for [surfaceId].
+int? ctAppPerfSurfaceOpenElapsedMs(String surfaceId) {
+  return _surfaceOpenSegments[surfaceId]?.elapsedMilliseconds;
+}
+
+/// Emits [surfaceId].interactiveReady and returns elapsed ms when tracked.
+int? ctAppPerfSurfaceOpenInteractiveReady(String surfaceId) {
+  final elapsedMs = ctAppPerfSurfaceOpenElapsedMs(surfaceId);
+  ctAppPerfInstant('$surfaceId.interactiveReady');
+  return elapsedMs;
+}

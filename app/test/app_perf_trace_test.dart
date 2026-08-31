@@ -16,6 +16,15 @@ void main() {
     expect(() => ctAppPerfInstant('test.instant'), returnsNormally);
   });
 
+  test('ctAppPerfSurfaceOpen segment tracks elapsed ms (Refs #4687)', () {
+    ctAppPerfSurfaceOpenBegin('development');
+    expect(ctAppPerfSurfaceOpenElapsedMs('development'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('development');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('development.interactiveReady'), returnsNormally);
+  });
+
   test(
     'Development panel CtAppPerf marker names are DevTools-filterable (Refs #4175 Slice E AC2)',
     () {
