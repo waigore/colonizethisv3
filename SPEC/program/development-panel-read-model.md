@@ -71,7 +71,7 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
 
 ### Open-path wall-clock budget (Refs #4687)
 
-- **1.0 s open-to-interactive** is a **profile/release** (non-debug) measurement on **Linux desktop and Android emulator** binding hosts. PR evidence uses DevTools `CtAppPerf.development*` markers including `development.interactiveReady`. **Not** enforced by debug-mode `flutter test` wall-clock assertions on CI runners.
+- **1.0 s open-to-interactive** is a **profile/release** (non-debug) measurement on **Linux desktop and Android emulator** binding hosts. PR evidence uses DevTools `CtAppPerf.development*` markers including `development.interactiveReady` and the `ui_surface_open surface=development` info log (`SPEC/program/flutter-performance-tracing.md`). **Not** enforced by debug-mode `flutter test` wall-clock assertions on CI runners. CI surrogate: `app/test/development_panel_open_surface_budget_test.dart` (full-widget pump-to-interactive on golden fixture).
 - **Repeated-entry stability** and **Flame lifecycle** are CI widget-test contracts (see UI spec ACs below).
 
 ### Shell map pause and panel map lifecycle (Refs #4687)
