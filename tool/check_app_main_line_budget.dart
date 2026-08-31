@@ -133,7 +133,8 @@ const _packageName = 'colonizethis_app';
 // measured 92_679).
 // raised after #4687 lifecycle/session-cache merge (measured 92_949).
 // raised for spy research insight gist at station commit (Refs #4679; measured 93_112).
-const _maxMainLines = 93200;
+// raised for MAP20001 province read-model session cache (Refs #4690 Slice B; measured 93_307).
+const _maxMainLines = 93400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

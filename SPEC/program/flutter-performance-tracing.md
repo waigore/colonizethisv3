@@ -42,6 +42,8 @@ Filter `CtAppPerf.development` to isolate panel-open slices. Lazy OW-only open s
 | Marker | When |
 |--------|------|
 | `CtAppPerf.provinceOverlay.interactiveReady` | Post-frame after narrow/wide chrome + default Political tab body mount (instant). |
+| `CtAppPerf.provinceOverlay.humanConnectivity` | Sync human capital-link connectivity for overlay tile previews. |
+| `CtAppPerf.provinceOverlay.provinceReadModel.<displayId>` | Sync province-wide extraction/available/town-bonus bundle for one province/sea display id. |
 
 Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on binding hosts (PR evidence); CI covers lazy-tab structural invariants, not debug wall-clock assertions.
 

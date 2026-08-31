@@ -42,7 +42,11 @@ void main() {
   test(
     'Province overlay CtAppPerf marker names are DevTools-filterable (Refs #4690)',
     () {
-      const markers = <String>['provinceOverlay.interactiveReady'];
+      const markers = <String>[
+        'provinceOverlay.interactiveReady',
+        'provinceOverlay.humanConnectivity',
+        'provinceOverlay.provinceReadModel.oldWorld|p1',
+      ];
       for (final name in markers) {
         expect(name, startsWith('provinceOverlay'));
         expect(() => ctAppPerfInstant(name), returnsNormally);

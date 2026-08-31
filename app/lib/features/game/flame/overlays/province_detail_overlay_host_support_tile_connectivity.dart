@@ -193,6 +193,7 @@ ProvinceTileConnectivityDisplay? resolveProvinceDetailTileConnectivity({
   required String? selectedTileKey,
   required GameMapData? mapData,
   required bool isSeaZone,
+  ConnectivityResult? connectivityForHuman,
 }) {
   if (selectedTileKey == null) {
     return null;
@@ -207,11 +208,6 @@ ProvinceTileConnectivityDisplay? resolveProvinceDetailTileConnectivity({
     return null;
   }
   final cell = region.cellAt(coords.x, coords.y);
-  final connectivityForHuman = humanConnectivityPreview(
-    game: game,
-    humanPlayerId: humanPlayerId,
-    mapData: mapData,
-  );
   return provinceTileConnectivityDisplayPreview(
     game: game,
     humanPlayerId: humanPlayerId,
