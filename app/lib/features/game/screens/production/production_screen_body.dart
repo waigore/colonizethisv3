@@ -21,6 +21,7 @@ import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import 'production_screen.dart';
@@ -186,6 +187,10 @@ class ProductionScreenBody extends ConsumerWidget {
       openCounsel: openCounsel,
       openTradeMarket: openTradeMarket,
     );
+    final interactivePanel = CtAppPerfInteractiveReadyMarker(
+      markerName: 'production.interactiveReady',
+      child: productionPanel,
+    );
     if (kCtE2EEnabled) {
       updateCtE2eProductionPanelSnapshotIfEnabled(
         CtE2eProductionPanelSnapshot(
@@ -201,9 +206,9 @@ class ProductionScreenBody extends ConsumerWidget {
       );
       return KeyedSubtree(
         key: kCtE2EProductionPanelRootKey,
-        child: productionPanel,
+        child: interactivePanel,
       );
     }
-    return productionPanel;
+    return interactivePanel;
   }
 }

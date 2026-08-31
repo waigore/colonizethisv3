@@ -143,6 +143,14 @@ class DevelopmentPanelOpenPathTimingFixture {
   }
 
   void runProductionPanelOpenPathSurrogate() {
+    runProductionPanelOpenPathCore(includeCounselRanking: true);
+  }
+
+  void runProductionPanelOpenPathSurrogateWithoutCounsel() {
+    runProductionPanelOpenPathCore(includeCounselRanking: false);
+  }
+
+  void runProductionPanelOpenPathCore({required bool includeCounselRanking}) {
     final inputs = economyPreviewInputs(
       tileMapByRegion: tileMapByRegion,
       currentOrders: orders,
@@ -182,13 +190,15 @@ class DevelopmentPanelOpenPathTimingFixture {
       foodCounts: foodCounts,
       inputs: inputs,
     );
-    rankIndustryCounselRecommendations(
-      game: game,
-      playerId: playerId,
-      currentOrders: orders,
-      topology: topology,
-      tileMapByRegion: tileMapByRegion,
-    );
+    if (includeCounselRanking) {
+      rankIndustryCounselRecommendations(
+        game: game,
+        playerId: playerId,
+        currentOrders: orders,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+      );
+    }
   }
 }
 

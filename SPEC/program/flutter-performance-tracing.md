@@ -47,6 +47,16 @@ Filter `CtAppPerf.development` to isolate panel-open slices. Lazy OW-only open s
 
 Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on binding hosts (PR evidence); CI covers lazy-tab structural invariants, not debug wall-clock assertions.
 
+### Empire-rail panel open path (Refs #4688)
+
+| Marker | When |
+|--------|------|
+| `CtAppPerf.production.interactiveReady` | Post-frame after `GAME20001` chrome + Available/Allocation primary body mount (instant). |
+| `CtAppPerf.trade.interactiveReady` | Post-frame after `GAME60001` chrome + default Market tab body mount (instant). |
+| `CtAppPerf.development.*` | See § Development panel open path (`GAME80001`). |
+
+Filter `CtAppPerf.production` or `CtAppPerf.trade` for empire-rail DevTools sessions. Additional rail surfaces (`GAME30001`, `GAME40001`, `GAME70001`, `UNIT*`, `GAME90001` from rail) gain markers in follow-up slices. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
+
 ---
 
 ## Log lines (app package, `info`)
@@ -72,3 +82,5 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 - Given the app logger is configured at **info** for the app package, when a new game is created and the game-start intro runs, then log output includes `newGameAsync phase` lines with `step=` `0` through `4` and `game_intro` lines through `first_line_shown` on the success path.
 
 - Given the developer records a **profile** or **release** timeline while opening Development (`GAME80001`) from the empire rail, when they filter by `CtAppPerf.development`, then the timeline shows `development.readModelReady` and at least the Old World `connectivity` / `staticContext` / `regionScopes` / `regionModel` sync slices before any New World `regionScopes` / `regionModel` slices on first open.
+
+- Given the developer records a **profile** or **release** timeline while opening Production (`GAME20001`) or Trade (`GAME60001`) from the empire rail, when they filter by `CtAppPerf.production` or `CtAppPerf.trade`, then the timeline shows `production.interactiveReady` or `trade.interactiveReady` respectively after the first frame with the primary tab body mounted.

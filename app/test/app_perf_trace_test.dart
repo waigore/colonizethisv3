@@ -54,4 +54,18 @@ void main() {
       }
     },
   );
+
+  test(
+    'Empire-rail panel CtAppPerf marker names are DevTools-filterable (Refs #4688)',
+    () {
+      const markers = <String>[
+        'production.interactiveReady',
+        'trade.interactiveReady',
+      ];
+      for (final name in markers) {
+        expect(() => ctAppPerfInstant(name), returnsNormally);
+        expect(ctAppPerfSync(name, () => name.length), name.length);
+      }
+    },
+  );
 }

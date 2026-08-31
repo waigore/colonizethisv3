@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_tab_strip.dart';
@@ -44,30 +45,33 @@ class TradeScreenTabsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(CtSpacing.l),
-      child: CtPanel(
+    return CtAppPerfInteractiveReadyMarker(
+      markerName: 'trade.interactiveReady',
+      child: Padding(
         padding: const EdgeInsets.all(CtSpacing.l),
-        child: CtTabStrip(
-          initialTabIndex: initialTabIndex,
-          tabLabels: const <String>[
-            TradeScreenMarketKeys.marketTabLabel,
-            TradeScreenDealBookKeys.dealBookTabLabel,
-          ],
-          tabViews: <Widget>[
-            MarketTabContent(
-              key: TradeScreenMarketKeys.marketTabBodyKey,
-              game: game,
-              playerId: playerId,
-              canEdit: canEdit,
-              highlightCommodityId: highlightCommodityId,
-            ),
-            DealBookTabContent(
-              key: TradeScreenDealBookKeys.dealBookTabBodyKey,
-              game: game,
-              playerId: playerId,
-            ),
-          ],
+        child: CtPanel(
+          padding: const EdgeInsets.all(CtSpacing.l),
+          child: CtTabStrip(
+            initialTabIndex: initialTabIndex,
+            tabLabels: const <String>[
+              TradeScreenMarketKeys.marketTabLabel,
+              TradeScreenDealBookKeys.dealBookTabLabel,
+            ],
+            tabViews: <Widget>[
+              MarketTabContent(
+                key: TradeScreenMarketKeys.marketTabBodyKey,
+                game: game,
+                playerId: playerId,
+                canEdit: canEdit,
+                highlightCommodityId: highlightCommodityId,
+              ),
+              DealBookTabContent(
+                key: TradeScreenDealBookKeys.dealBookTabBodyKey,
+                game: game,
+                playerId: playerId,
+              ),
+            ],
+          ),
         ),
       ),
     );

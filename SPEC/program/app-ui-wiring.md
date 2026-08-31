@@ -14,6 +14,10 @@ Authoritative world and player-view updates happen primarily at **turn resolutio
 
 Opening a panel, dialog, overlay, or feature route in `colonizethis_app` is a **hard 1 000 ms** full-load budget (`kUiSurfaceOpenBudgetMs`): required calculations, minimaps, Yarn/Jenny, and assets must be ready, not chrome only. Dialog/panel **builders are factories**; construct the tree on the open event and **unmount** on `ClosePanelEvent` / pop. Do not keep unused `FlameGame`s or offstage maps. Normative detail: [ui-surface-budget.md](ui-surface-budget.md).
 
+#### Empire-rail panel open path (Refs #4688)
+
+Empire-rail surfaces (`GAME20001` Production, `GAME60001` Trade, `GAME80001` Development, `GAME30001` Diplomacy, `GAME40001` Technology, `GAME70001` Victory, `UNIT*` unit sheets, `GAME90001` Counsel from rail) share the same **1.0 s open-to-interactive** contract as map-attached overlays. **First open this session:** tap → interactive chrome + primary body ≤ 1 000 ms (profile/release on binding hosts). **Reopen same turn:** session read-model cache must avoid repeating first-open work (Slice 2+). **Dispose:** pop/dismiss unmounts controllers and panel `FlameGame`s; `clearActiveGameSession` drops turn-dependent caches. DevTools markers: [flutter-performance-tracing.md](flutter-performance-tracing.md) § Empire-rail panel open path. CI profiling anchors: `empire_rail_panel_open_path_timing_test.dart` (µs ratios; not a debug wall-clock gate).
+
 ### Turn resolution in progress (#2160 / #3989)
 
 While **`turnResolutionBlockingProvider`** is true (background turn resolution from the map), **bus-driven** navigation, dialogs, and unit panels must not open except **`ClosePanelEvent`** as documented in [app-event-bus.md](app-event-bus.md). The map uses local **`IgnorePointer`** for gameplay taps. The **pause control is disabled** and **`OpenPauseMenuPanelEvent` is suppressed** so load/exit cannot clear session memory mid-resolve ([save-load-session-clear.md](save-load-session-clear.md)). The hamburger / side-menu path may remain available for non-clearing debug affordances. Do not bypass this with direct **`Navigator`** calls for cross-cutting UI.
