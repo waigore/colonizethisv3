@@ -23,6 +23,12 @@ on:
 permissions:
   contents: read
 
+# One Android emulator per PR ref — concurrent AVD boots on the same runner pool
+# routinely miss the default boot deadline (Refs #4687, #4688).
+concurrency:
+  group: ui-surface-profile-android-emulator-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   development_panel_android:
     name: GAME80001 profile open (Android emulator)
@@ -62,6 +68,7 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
+          emulator-boot-timeout: 900
           script: |
             cd "$GITHUB_WORKSPACE"
             UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" bash tool/run_ui_surface_profile_evidence.sh development --host android
