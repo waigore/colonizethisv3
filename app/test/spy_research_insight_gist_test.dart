@@ -201,5 +201,127 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('enabled control shows already-grants-insight gist', (
+      tester,
+    ) async {
+      final game = demoGameForOverlay;
+      await tester.pumpWidget(
+        buildAppShell(
+          viewport: const Size(800, 640),
+          child: Scaffold(
+            body: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: demoRegionForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
+              humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
+              omniscientDetail: true,
+              stationSpy: (
+                showControl: true,
+                enabled: true,
+                tooltip: l10n.provinceOverlay_stationSpyAction,
+                gist: l10n.spyResearchInsight_alreadyGrantsInsightGist,
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(l10n.spyResearchInsight_alreadyGrantsInsightGist),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('enabled control omits gist on Minor Nation land', (
+      tester,
+    ) async {
+      final game = demoGameForOverlay;
+      await tester.pumpWidget(
+        buildAppShell(
+          viewport: const Size(800, 640),
+          child: Scaffold(
+            body: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: demoRegionForOverlay,
+              displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
+              humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
+              omniscientDetail: true,
+              stationSpy: (
+                showControl: true,
+                enabled: true,
+                tooltip: l10n.provinceOverlay_stationSpyAction,
+                gist: '',
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(kSpyResearchInsightGistKey), findsNothing);
+    });
+  });
+
+  group('UNIT10001 Relocate already-grants gist (Refs #4679)', () {
+    testWidgets('rival GP shortcut shows already-grants gist when court posted', (
+      tester,
+    ) async {
+      final game = buildPanelTestGame(
+        id: 'g_spy_already_insight',
+        players: [
+          Player(id: _human, displayName: 'Human', isHuman: true),
+          Player(id: _rival, displayName: 'Rival', isHuman: false),
+        ],
+        oldWorldProvinces: [
+          Province(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            displayName: 'Home',
+            ownerId: _human,
+          ),
+          Province(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            displayName: 'Rival Land',
+            ownerId: _rival,
+          ),
+        ],
+        oldWorldUnits: [
+          Unit(
+            id: 'spy1',
+            type: kUnitTypeSpy,
+            ownerId: _human,
+            locationProvinceId: 'oldWorld|p1',
+            tileKey: 'oldWorld|p1|0|0',
+          ),
+          Unit(
+            id: 'spy2',
+            type: kUnitTypeSpy,
+            ownerId: _human,
+            locationProvinceId: 'oldWorld|p2',
+            tileKey: _rivalTile,
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        buildCivilianPanel(
+          game: game,
+          humanPlayerId: _human,
+          spyOnly: true,
+          relocateShortcutTargetTileKey: _rivalTile,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(l10n.spyResearchInsight_alreadyGrantsInsightGist),
+        findsAtLeastNWidgets(1),
+      );
+    });
   });
 }

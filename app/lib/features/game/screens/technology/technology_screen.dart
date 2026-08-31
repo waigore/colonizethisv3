@@ -98,25 +98,23 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         if (sentinel != null) return sentinel;
         final displayPlayer = displayGame.playerById(widget.player.id)!;
         final canEdit = shell.canMutateViaUi;
+        final Widget tabBody;
         switch (_tab) {
           case TechnologyScreenTab.slots:
-            return CtAppPerfInteractiveReadyMarker(
-              markerName: 'technology.interactiveReady',
-              child: TechnologySlotsBody(
-                game: displayGame,
-                player: displayPlayer,
-                currentOrders: currentOrders,
-                onOrdersChanged: canEdit
-                    ? (next) {
-                        shellRef
-                            .read(currentOrdersProvider.notifier)
-                            .replaceAll(next);
-                      }
-                    : null,
-              ),
+            tabBody = TechnologySlotsBody(
+              game: displayGame,
+              player: displayPlayer,
+              currentOrders: currentOrders,
+              onOrdersChanged: canEdit
+                  ? (next) {
+                      shellRef
+                          .read(currentOrdersProvider.notifier)
+                          .replaceAll(next);
+                    }
+                  : null,
             );
           case TechnologyScreenTab.tree:
-            return TechnologyTreeBody(
+            tabBody = TechnologyTreeBody(
               game: displayGame,
               player: displayPlayer,
               currentOrders: currentOrders,
@@ -129,6 +127,11 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
                   : null,
             );
         }
+        return CtAppPerfInteractiveReadyMarker(
+          markerName: 'technology.interactiveReady',
+          surfaceOpenId: 'technology',
+          child: tabBody,
+        );
       },
     );
   }
