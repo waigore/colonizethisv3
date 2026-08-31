@@ -99,6 +99,7 @@ void main() {
           findsOneWidget,
         );
         expect(_countRegionMapGameWidgets(tester), 1);
+        final panelGame = _singleRegionMapGame(tester);
 
         await tester.pumpWidget(
           buildAppShell(
@@ -112,6 +113,7 @@ void main() {
         );
         await tester.pump();
         expect(_countRegionMapGameWidgets(tester), 0);
+        expect(panelGame.paused, isTrue);
       }
     },
   );
