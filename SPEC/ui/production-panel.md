@@ -159,7 +159,9 @@ The `Full availability (mobile)` use case must be pinned by `app/test/widgetbook
 ## Acceptance criteria (Performance — Refs #4688)
 
 - Given the player opens `GAME20001` on Linux desktop or Android emulator in **profile/release**, when they tap empire-rail **Production**, then `CtAppPerf.production.interactiveReady` appears within **1.0 s** wall-clock and Available + Allocation primary bodies are usable (manual/PR DevTools evidence on both binding hosts; not a debug CI wall-clock gate).
-- Given a seed-42 campaign fixture, when the production open-path surrogate runs without `rankIndustryCounselRecommendations`, then median µs per pass is measurably lower than the full surrogate including counsel ranking (`packages/colonizethis_economy/test/economy/empire_rail_panel_open_path_timing_test.dart`; CI profiling anchor for deferring counsel to `GAME90001` open in Slice 2).
+- Given a seed-42 campaign fixture, when the production open-path surrogate runs without `rankIndustryCounselRecommendations`, then median µs per pass is measurably lower than the full surrogate including counsel ranking (`packages/colonizethis_economy/test/economy/empire_rail_panel_open_path_timing_test.dart`; CI profiling anchor for deferring counsel ranking).
+- Given the player opens `GAME20001` before Next turn, when they pop with **← Map** and reopen with unchanged game/orders/allocation, then `productionPanelOpenPathProvider` reuses the session cache (`app/test/production_panel_session_cache_provider_test.dart`) and does not repeat stockpile preview / labour / forces-feeding work.
+- Given the player opens `GAME20001`, when the first frame paints, then `rankIndustryCounselRecommendations` is not required for `CtAppPerf.production.interactiveReady`; industry counsel stars may appear after the post-frame gate (`app/test/production_industry_counsel_deferred_test.dart`).
 
 ## Acceptance criteria
 

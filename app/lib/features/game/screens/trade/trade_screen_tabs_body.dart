@@ -53,6 +53,7 @@ class TradeScreenTabsBody extends StatelessWidget {
           padding: const EdgeInsets.all(CtSpacing.l),
           child: CtTabStrip(
             initialTabIndex: initialTabIndex,
+            lazyTabBodies: true,
             tabLabels: const <String>[
               TradeScreenMarketKeys.marketTabLabel,
               TradeScreenDealBookKeys.dealBookTabLabel,

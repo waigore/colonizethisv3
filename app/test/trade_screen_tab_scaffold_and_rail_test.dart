@@ -82,8 +82,58 @@ void main() {
     );
 
     testWidgets(
-      'both Market and Deal Book tab body keys are mounted (IndexedStack '
-      'keeps non-selected tab in tree, off-stage)',
+      'lazyTabBodies defers Deal Book until first tab selection (Refs #4688 Slice 2)',
+      (tester) async {
+        await pumpAndOpenTradeScreen(tester, tradeHost());
+
+        expect(
+          find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            TradeScreenDealBookKeys.dealBookTabBodyKey,
+            skipOffstage: false,
+          ),
+          findsNothing,
+          reason:
+              'lazyTabBodies must not mount the Deal Book body on first open '
+              'when the Market tab is selected.',
+        );
+      },
+    );
+
+    testWidgets(
+      'tapping the Deal Book label builds the Deal Book tab body (Refs #4688 Slice 2)',
+      (tester) async {
+        await pumpAndOpenTradeScreen(tester, tradeHost());
+
+        await tester.tap(find.text(TradeScreenDealBookKeys.dealBookTabLabel));
+        await tester.pump();
+
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'CtTabStrip uses lazyTabBodies on the trade screen (Refs #4688 Slice 2)',
+      (tester) async {
+        await pumpAndOpenTradeScreen(tester, tradeHost());
+
+        final stripFinder = find.descendant(
+          of: find.byKey(TradeScreenMarketKeys.tabsBodyKey),
+          matching: find.byType(CtTabStrip),
+        );
+        final CtTabStrip strip = tester.widget<CtTabStrip>(stripFinder);
+        expect(strip.lazyTabBodies, isTrue);
+      },
+    );
+
+    testWidgets(
+      'both Market and Deal Book tab body keys are mounted after visiting both tabs',
       (tester) async {
         await pumpAndOpenTradeScreen(tester, tradeHost());
 
@@ -94,26 +144,43 @@ void main() {
           findsOneWidget,
         );
 
-        // Non-selected Deal Book tab is wrapped in Visibility(visible:
-        // false) by IndexedStack and reads as off-stage to default
-        // finders. Asserting `skipOffstage: false` confirms the widget
-        // is still in the tree (state is preserved) — the contract that
-        // lets E5/E6 swap each tab body in place without remounting the
-        // tab strip.
+        await tester.tap(find.text(TradeScreenDealBookKeys.dealBookTabLabel));
+        await tester.pump();
+
+        expect(
+          find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            TradeScreenMarketKeys.marketTabBodyKey,
+            skipOffstage: false,
+          ),
+          findsOneWidget,
+          reason:
+              'After visiting both tabs, lazyTabBodies keeps the first tab '
+              'body mounted for fast re-selection.',
+        );
+      },
+    );
+
+    testWidgets(
+      'legacy IndexedStack contract: off-tab body is not in tree until first visit',
+      (tester) async {
+        await pumpAndOpenTradeScreen(tester, tradeHost());
+
+        expect(
+          find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
+          findsOneWidget,
+        );
+
         expect(
           find.byKey(
             TradeScreenDealBookKeys.dealBookTabBodyKey,
             skipOffstage: false,
           ),
-          findsOneWidget,
-          reason:
-              'IndexedStack mounts both tab bodies; the non-selected '
-              'Deal Book body must remain in the element tree so E6 can '
-              'replace it in place.',
+          findsNothing,
         );
-        // Conversely the off-stage Deal Book body must not be reachable
-        // from default (skipOffstage: true) finders — that is the
-        // visible/foregrounded contract for the default Market tab.
         expect(
           find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
           findsNothing,

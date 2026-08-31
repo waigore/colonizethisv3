@@ -495,6 +495,7 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 ## Acceptance criteria (Performance — Refs #4688)
 
 - Given the player opens `GAME60001` on Linux desktop or Android emulator in **profile/release**, when they tap empire-rail **Trade**, then `CtAppPerf.trade.interactiveReady` appears within **1.0 s** wall-clock and the default Market tab body is usable (manual/PR DevTools evidence on both binding hosts; not a debug CI wall-clock gate).
+- Given the player opens `GAME60001` with the default Market tab selected, when the first frame paints, then the Deal Book tab body is not built (`CtTabStrip.lazyTabBodies: true`; `app/test/trade_screen_tab_scaffold_and_rail_test.dart`, `app/test/trade_screen_initial_tab_index_e7_test.dart`).
 
 ## Acceptance criteria
 

@@ -48,12 +48,11 @@ void main() {
         expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsOneWidget);
         expect(find.byKey(TradeScreenDealBookKeys.dealBookContentKey), findsOneWidget);
 
-        // Off-stage (still in the IndexedStack): Market body. Found
-        // only when `skipOffstage: false` is explicitly passed.
+        // Off-tab Market body is not built until first visit (lazyTabBodies).
         expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsNothing);
         expect(
           find.byKey(TradeScreenMarketKeys.marketTabBodyKey, skipOffstage: false),
-          findsOneWidget,
+          findsNothing,
         );
       },
     );
@@ -69,7 +68,7 @@ void main() {
       expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsNothing);
       expect(
         find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey, skipOffstage: false),
-        findsOneWidget,
+        findsNothing,
       );
     });
 

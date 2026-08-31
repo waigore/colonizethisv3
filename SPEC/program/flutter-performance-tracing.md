@@ -51,8 +51,10 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 
 | Marker | When |
 |--------|------|
-| `CtAppPerf.production.interactiveReady` | Post-frame after `GAME20001` chrome + Available/Allocation primary body mount (instant). |
-| `CtAppPerf.trade.interactiveReady` | Post-frame after `GAME60001` chrome + default Market tab body mount (instant). |
+| `CtAppPerf.production.interactiveReady` | Post-frame after `GAME20001` chrome + Available/Allocation primary body mount (instant; counsel stars may follow in a later frame). |
+| `CtAppPerf.production.openPath` | Sync slice for stockpile preview, labour readiness, and forces feeding (`productionPanelOpenPathProvider`). |
+| `CtAppPerf.production.industryCounsel` | Deferred industry counsel ranking for Allocation stars (`productionPanelIndustryCounselProvider`). |
+| `CtAppPerf.trade.interactiveReady` | Post-frame after `GAME60001` chrome + default Market tab body mount (instant; Deal Book tab deferred via `lazyTabBodies`). |
 | `CtAppPerf.development.*` | See § Development panel open path (`GAME80001`). |
 
 Filter `CtAppPerf.production` or `CtAppPerf.trade` for empire-rail DevTools sessions. Additional rail surfaces (`GAME30001`, `GAME40001`, `GAME70001`, `UNIT*`, `GAME90001` from rail) gain markers in follow-up slices. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.

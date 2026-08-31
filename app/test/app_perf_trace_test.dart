@@ -60,6 +60,8 @@ void main() {
     () {
       const markers = <String>[
         'production.interactiveReady',
+        'production.openPath',
+        'production.industryCounsel',
         'trade.interactiveReady',
       ];
       for (final name in markers) {
