@@ -8,9 +8,10 @@ import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-import 'province_sea_zone_detail_overlay_widget.dart';
+import 'province_overlay_wide_lazy_sections.dart';
 import 'province_sea_zone_detail_overlay_close_button.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_widget.dart';
 
 extension ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
   Widget buildResponsivePanel(
@@ -105,9 +106,20 @@ extension ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
         contentPadding: const EdgeInsets.all(CtSpacing.ml),
       );
     }
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(CtSpacing.ml),
-      child: content.sections,
+    final lazyKey = GlobalKey<ProvinceOverlayWideLazySectionsState>();
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        lazyKey.currentState?.handleScroll(notification.metrics);
+        return false;
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(CtSpacing.ml),
+        child: ProvinceOverlayWideLazySections(
+          key: lazyKey,
+          sections: content.sectionSpecs,
+          eagerSectionCount: content.lazyWideDeferredFromIndex,
+        ),
+      ),
     );
   }
 }
