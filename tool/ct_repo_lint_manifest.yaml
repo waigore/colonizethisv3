@@ -2611,7 +2611,7 @@ rules:
 
   - rule_id: repo.app_test_file_size
     group: testing
-    title: "app/test files must stay at or below 350 physical lines (shrink-only allowlist; Refs #4305, #4352, #4606, #4642)"
+    title: "app/test files must stay at or below 330 physical lines (shrink-only allowlist; Refs #4305, #4352, #4606, #4642, #4680)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_file_size.dart

@@ -13,126 +13,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 
+import 'move_dialogs_specs_fleet_support.dart';
 import 'move_dialogs_specs_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('MoveFleetDialog (SPEC/ui/move-fleet-dialog.md)', () {
-    const playerId = 'gp_specs_fleet';
-    const originSea = 'sea_origin';
-    const adjacentSea = 'sea_adjacent';
-    const crossSea = 'sea_cross';
-    const capitalProvince = 'oldWorld|p_capital_specs';
-
-    MapTopology buildTopology() {
-      return const MapTopology(
-        nodes: [
-          TopologyNode(
-            id: originSea,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: adjacentSea,
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-          TopologyNode(
-            id: crossSea,
-            regionId: 'newWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [
-          TopologyEdge(id1: originSea, id2: adjacentSea),
-          TopologyEdge(id1: originSea, id2: crossSea),
-        ],
-      );
-    }
-
-    Game buildGame() {
-      return Game(
-        id: 'g_specs_fleet',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(
-                id: capitalProvince,
-                regionId: 'oldWorld',
-                ownerId: playerId,
-                displayName: 'Capital Port',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          portsByProvinceSeaboard: const {
-            'oldWorld|p_capital_specs|sea_origin':
-                'oldWorld|p_capital_specs|0|0',
-            'oldWorld|p_capital_specs|sea_adjacent':
-                'oldWorld|p_capital_specs|0|0',
-            'newWorld|p_cross|sea_cross': 'newWorld|p_cross|0|0',
-          },
-          seaZoneDisplayNameById: const {
-            'oldWorld|sea_origin': 'Origin Sea',
-            'oldWorld|sea_adjacent': 'Adjacent Sea',
-            'newWorld|sea_cross': 'Cross Sea',
-          },
-        ),
-        players: const [
-          Player(
-            id: playerId,
-            displayName: 'Specs Admiral',
-            isHuman: true,
-            capitalProvinceId: capitalProvince,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: capitalProvince,
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-      );
-    }
-
-    Fleet buildFleet() {
-      return Fleet(
-        id: 'fspecs',
-        ownerId: playerId,
-        regionId: 'oldWorld',
-        seaZoneId: originSea,
-        ships: const [ShipInstance(id: 'ship_specs', typeId: 'carrack')],
-      );
-    }
+    const playerId = moveFleetSpecsPlayerId;
+    const originSea = moveFleetSpecsOriginSea;
+    const adjacentSea = moveFleetSpecsAdjacentSea;
+    const crossSea = moveFleetSpecsCrossSea;
+    const capitalProvince = moveFleetSpecsCapitalProvince;
 
     Future<void> pumpDialog(
       WidgetTester tester, {
       required AppEventBus bus,
-    }) async {
-      final game = buildGame();
-      final topology = buildTopology();
-      final fleet = buildFleet();
-      await tester.pumpWidget(
-        moveDialogsSpecsFrameWithOpener(
-          (context) => () {
-            showDialog<void>(
-              context: context,
-              builder: (_) => MoveFleetDialog(
-                game: game,
-                topology: topology,
-                humanPlayerId: playerId,
-                fleet: fleet,
-                bus: bus,
-              ),
-            );
-          },
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-    }
+    }) =>
+        pumpMoveFleetSpecsDialog(tester, bus: bus);
 
     testWidgets(
       'with sea + dock destinations shows both section headers and titleWithDestinations',

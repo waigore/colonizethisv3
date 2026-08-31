@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
 
 import 'ct_region_map_test_support.dart';
+import 'ct_region_map_town_icon_cache_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -140,18 +141,18 @@ void main() {
 
     test('promoted level-1 assets match approved S9b candidate bytes', () async {
       for (final entry in kPromotedLevel1TownIconByteLengths.entries) {
-        final bytes = await _loadTownIconBytes(entry.key);
+        final bytes = await loadTownIconBytes(entry.key);
         expect(bytes.length, entry.value, reason: '${entry.key} must match promoted art');
-        final stats = await _loadTownIconStats(entry.key);
+        final stats = await loadTownIconStats(townIconCache, entry.key);
         expect(stats.opaqueCount, greaterThan(100), reason: '${entry.key} must be readable art');
       }
     });
 
     test('legacy level-1 assets match pre-#3892 hamlet bytes (S9a revert)', () async {
       for (final entry in kLegacyLevel1TownIconByteLengths.entries) {
-        final bytes = await _loadLegacyTownIconBytes(entry.key);
+        final bytes = await loadLegacyTownIconBytes(entry.key);
         expect(bytes.length, entry.value, reason: '${entry.key} legacy must match #3871 assets');
-        final stats = await _loadLegacyTownIconStats(entry.key);
+        final stats = await loadLegacyTownIconStats(entry.key);
         expect(stats.opaqueCount, greaterThan(100), reason: '${entry.key} legacy must be readable hamlet art');
       }
     });
@@ -160,7 +161,7 @@ void main() {
       test('$style opaque pixels strictly increase 2→4', () async {
         final opaqueCounts = <int>[];
         for (final level in [2, 3, 4]) {
-          final stats = await _loadTownIconStats('town_${style}_$level');
+          final stats = await loadTownIconStats(townIconCache, 'town_${style}_$level');
           opaqueCounts.add(stats.opaqueCount);
         }
         for (var i = 0; i < 2; i++) {
@@ -169,8 +170,8 @@ void main() {
       });
 
       test('$style level-1 bbox matches level-4 footprint within 6 px', () async {
-        final level1 = await _loadTownIconStats('town_${style}_1');
-        final level4 = await _loadTownIconStats('town_${style}_4');
+        final level1 = await loadTownIconStats(townIconCache, 'town_${style}_1');
+        final level4 = await loadTownIconStats(townIconCache, 'town_${style}_4');
 
         expect(
           (level1.bboxWidth - level4.bboxWidth).abs(),
@@ -201,8 +202,8 @@ void main() {
           : null);
 
       test('$style level-1 max column height is at least 75% of level 4', () async {
-        final level1 = await _loadTownIconStats('town_${style}_1');
-        final level4 = await _loadTownIconStats('town_${style}_4');
+        final level1 = await loadTownIconStats(townIconCache, 'town_${style}_1');
+        final level4 = await loadTownIconStats(townIconCache, 'town_${style}_4');
 
         expect(
           level1.maxColumnHeight,
@@ -212,9 +213,9 @@ void main() {
     }
 
     test('level-1 styles use distinct assets', () async {
-      final euro = await _loadTownIconBytes('town_euro_1');
-      final colonial = await _loadTownIconBytes('town_colonial_1');
-      final tribal = await _loadTownIconBytes('town_tribal_1');
+      final euro = await loadTownIconBytes('town_euro_1');
+      final colonial = await loadTownIconBytes('town_colonial_1');
+      final tribal = await loadTownIconBytes('town_tribal_1');
 
       expect(euro, isNot(equals(colonial)));
       expect(euro, isNot(equals(tribal)));
@@ -242,100 +243,3 @@ void main() {
   });
 }
 
-class _TownIconStats {
-  const _TownIconStats({
-    required this.opaqueCount,
-    required this.bboxMinX,
-    required this.bboxMinY,
-    required this.bboxWidth,
-    required this.bboxHeight,
-    required this.centerX,
-    required this.centerY,
-    required this.maxColumnHeight,
-  });
-
-  final int opaqueCount;
-  final int bboxMinX;
-  final int bboxMinY;
-  final int bboxWidth;
-  final int bboxHeight;
-  final double centerX;
-  final double centerY;
-  final int maxColumnHeight;
-}
-
-Future<Uint8List> _loadTownIconBytes(String iconId) async {
-  final path = townIconCache.assetPath(iconId);
-  final data = await rootBundle.load(path);
-  return data.buffer.asUint8List();
-}
-
-Future<Uint8List> _loadLegacyTownIconBytes(String iconId) async {
-  final path = TownIconCache.assetPathForId(
-    iconId,
-    useLegacyTownIcons: true,
-  );
-  final data = await rootBundle.load(path);
-  return data.buffer.asUint8List();
-}
-
-Future<_TownIconStats> _loadLegacyTownIconStats(String iconId) async {
-  final bytes = await _loadLegacyTownIconBytes(iconId);
-  return _statsFromPngBytes(bytes);
-}
-
-Future<_TownIconStats> _loadTownIconStats(String iconId) async {
-  final bytes = await _loadTownIconBytes(iconId);
-  return _statsFromPngBytes(bytes);
-}
-
-Future<_TownIconStats> _statsFromPngBytes(Uint8List bytes) async {
-  final image = await _decodePng(bytes);
-  expect(image.width, 64);
-  expect(image.height, 64);
-  final pixels = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-  image.dispose();
-  expect(pixels, isNotNull);
-
-  var opaque = 0;
-  var minX = 64;
-  var minY = 64;
-  var maxX = -1;
-  var maxY = -1;
-  var maxColumnHeight = 0;
-  for (var y = 0; y < 64; y++) {
-    var rowOpaque = 0;
-    for (var x = 0; x < 64; x++) {
-      final i = (y * 64 + x) * 4;
-      if (pixels!.getUint8(i + 3) == 0) continue;
-      opaque++;
-      rowOpaque++;
-      if (x < minX) minX = x;
-      if (y < minY) minY = y;
-      if (x > maxX) maxX = x;
-      if (y > maxY) maxY = y;
-    }
-    if (rowOpaque > maxColumnHeight) {
-      maxColumnHeight = rowOpaque;
-    }
-  }
-
-  final width = maxX - minX + 1;
-  final height = maxY - minY + 1;
-  return _TownIconStats(
-    opaqueCount: opaque,
-    bboxMinX: minX,
-    bboxMinY: minY,
-    bboxWidth: width,
-    bboxHeight: height,
-    centerX: (minX + maxX) / 2,
-    centerY: (minY + maxY) / 2,
-    maxColumnHeight: maxColumnHeight,
-  );
-}
-
-Future<ui.Image> _decodePng(Uint8List bytes) {
-  final completer = Completer<ui.Image>();
-  ui.decodeImageFromList(bytes, completer.complete);
-  return completer.future;
-}

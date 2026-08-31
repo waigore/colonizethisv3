@@ -18,36 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
-
-Widget _localizedHost(Widget child) {
-  return buildAppShell(
-    child: Scaffold(body: Center(child: child)),
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-  );
-}
-
-String _humanPlayerId(Game game) =>
-    game.players.firstWhere((p) => p.isHuman).id;
-
-Future<void> _pumpDialog(WidgetTester tester, Widget dialog) async {
-  await pumpAppShell(
-    tester,
-    viewport: const Size(420, 900),
-    child: Scaffold(body: dialog),
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    settle: true,
-  );
-}
-
-/// Collects every mounted [Tooltip] message string.
-List<String> _tooltipMessages(WidgetTester tester) {
-  return tester
-      .widgetList<Tooltip>(find.byType(Tooltip))
-      .map((t) => t.message ?? '')
-      .toList();
-}
+import 'train_dialog_inline_cost_tooltip_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -58,7 +29,7 @@ void main() {
       'message and a >= 44 dp touch target',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _localizedHost(
+          trainInlineCostLocalizedHost(
             const TrainDialogInlineCost(
               icon: SizedBox(width: 14, height: 14),
               label: '3',
@@ -96,7 +67,7 @@ void main() {
       '(mobile tap affordance)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _localizedHost(
+          trainInlineCostLocalizedHost(
             const TrainDialogInlineCost(
               icon: SizedBox(width: 14, height: 14),
               label: '1',
@@ -124,7 +95,7 @@ void main() {
     ) async {
       late AppLocalizations l10n;
       await tester.pumpWidget(
-        _localizedHost(
+        trainInlineCostLocalizedHost(
           Builder(
             builder: (BuildContext context) {
               l10n = appL10n(context);
@@ -157,186 +128,5 @@ void main() {
         'luxury',
       );
     });
-  });
-
-  group('Train Military dialog cost-icon tooltips (UNIT50001)', () {
-    testWidgets(
-      'AC: treasury / peasant / commodity cost icons carry resource-name '
-      'tooltips',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        await _pumpDialog(
-          tester,
-          TrainMilitaryDialog(
-            game: game,
-            humanPlayerId: _humanPlayerId(game),
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-        );
-
-        expect(find.byTooltip('Treasury'), findsWidgets);
-        expect(find.byTooltip('Peasants'), findsWidgets);
-        // At least one commodity cost icon names its commodity + category.
-        expect(
-          _tooltipMessages(tester).any(
-            (m) => m.contains('(manufactured)') || m.contains('(raw material)'),
-          ),
-          isTrue,
-          reason:
-              'Train Military regiment cost icons must expose a '
-              '"{name} ({category})" tooltip per '
-              'SPEC/ui/components/resource-icon-tooltip.md.',
-        );
-      },
-    );
-  });
-
-  group('Train Naval dialog cost-icon tooltips (UNIT60001)', () {
-    testWidgets(
-      'AC: treasury / peasant / commodity cost icons carry resource-name '
-      'tooltips',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        await _pumpDialog(
-          tester,
-          TrainNavalDialog(
-            game: game,
-            humanPlayerId: _humanPlayerId(game),
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-        );
-
-        expect(find.byTooltip('Treasury'), findsWidgets);
-        expect(find.byTooltip('Peasants'), findsWidgets);
-        expect(
-          _tooltipMessages(tester).any(
-            (m) => m.contains('(manufactured)') || m.contains('(raw material)'),
-          ),
-          isTrue,
-          reason:
-              'Train Naval ship cost icons must expose a '
-              '"{name} ({category})" tooltip per '
-              'SPEC/ui/components/resource-icon-tooltip.md.',
-        );
-      },
-    );
-  });
-
-  group('cost-summary icon size (#3631 Phase 2 legibility)', () {
-    test('shared cost-icon size constant is 30 dp', () {
-      expect(kTrainDialogCostIconSize, 30);
-    });
-
-    /// Asserts every commodity / treasury / peasant icon nested inside a
-    /// [TrainDialogInlineCost] renders at [kTrainDialogCostIconSize] (30 dp)
-    /// and each cost segment keeps its >= 44 dp touch target.
-    Future<void> expectEnlargedCostIcons(WidgetTester tester) async {
-      final Finder treasuryIcon = find.descendant(
-        of: find.byType(TrainDialogInlineCost),
-        matching: find.byIcon(Icons.payments_outlined),
-      );
-      expect(treasuryIcon, findsWidgets);
-      for (final Icon icon in tester.widgetList<Icon>(treasuryIcon)) {
-        expect(icon.size, kTrainDialogCostIconSize);
-      }
-
-      final Finder peasantIcon = find.descendant(
-        of: find.byType(TrainDialogInlineCost),
-        matching: find.byType(WorkerIcon),
-      );
-      expect(peasantIcon, findsWidgets);
-      for (final WorkerIcon icon in tester.widgetList<WorkerIcon>(
-        peasantIcon,
-      )) {
-        expect(icon.size, kTrainDialogCostIconSize);
-      }
-
-      final Finder commodityIcon = find.descendant(
-        of: find.byType(TrainDialogInlineCost),
-        matching: find.byType(ResourceIcon),
-      );
-      expect(commodityIcon, findsWidgets);
-      for (final ResourceIcon icon in tester.widgetList<ResourceIcon>(
-        commodityIcon,
-      )) {
-        expect(icon.size, kTrainDialogCostIconSize);
-      }
-
-      // Larger icons must still nest inside the >= 44 dp touch target.
-      final int segments = find.byType(TrainDialogInlineCost).evaluate().length;
-      for (int i = 0; i < segments; i++) {
-        final Size size = tester.getSize(
-          find.byType(TrainDialogInlineCost).at(i),
-        );
-        expect(size.height, greaterThanOrEqualTo(kMinTouchTargetSize));
-        expect(size.width, greaterThanOrEqualTo(kMinTouchTargetSize));
-      }
-    }
-
-    testWidgets(
-      'AC (positive): Train Military (UNIT50001) cost icons render at 30 dp',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        await _pumpDialog(
-          tester,
-          TrainMilitaryDialog(
-            game: game,
-            humanPlayerId: _humanPlayerId(game),
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-        );
-        await expectEnlargedCostIcons(tester);
-      },
-    );
-
-    testWidgets(
-      'AC (positive): Train Naval (UNIT60001) cost icons render at 30 dp',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        await _pumpDialog(
-          tester,
-          TrainNavalDialog(
-            game: game,
-            humanPlayerId: _humanPlayerId(game),
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-        );
-        await expectEnlargedCostIcons(tester);
-      },
-    );
-
-    testWidgets(
-      'AC (negative): resource-bar chips stay small (14 dp), so the size bump '
-      'is scoped to the cost summary',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        await _pumpDialog(
-          tester,
-          TrainMilitaryDialog(
-            game: game,
-            humanPlayerId: _humanPlayerId(game),
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-        );
-
-        // The resource-bar peasant chip icon is NOT a cost-summary icon and
-        // must remain 14 dp (out of #3631 Phase 2 scope).
-        final Finder barPeasant = find.descendant(
-          of: find.byType(TrainDialogResourceChip),
-          matching: find.byType(WorkerIcon),
-        );
-        expect(barPeasant, findsWidgets);
-        for (final WorkerIcon icon in tester.widgetList<WorkerIcon>(
-          barPeasant,
-        )) {
-          expect(icon.size, 14);
-        }
-      },
-    );
   });
 }

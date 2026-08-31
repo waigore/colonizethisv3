@@ -28,65 +28,8 @@ import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'app_test_hive_harness.dart';
+import 'game_session_clear_ui_path_support.dart';
 
-class _UiPathGameService extends GameService {
-  _UiPathGameService(super.box, super.adapter);
-
-  GameSaveSession? sessionToLoad;
-  List<LoadableSaveEntry> entries = const [];
-  bool autoSaveValid = false;
-
-  @override
-  List<LoadableSaveEntry> listLoadableSaves() => entries;
-
-  @override
-  bool hasValidAutoSave() => autoSaveValid;
-
-  @override
-  GameSaveSession? loadGameSession(String gameId) =>
-      sessionToLoad != null && sessionToLoad!.game.id == gameId
-      ? sessionToLoad
-      : null;
-
-  @override
-  GameSaveSession? loadAutoSaveSession() =>
-      autoSaveValid ? sessionToLoad : null;
-}
-
-Orders _draftOrders({required String unitType}) => Orders(
-  buildUnitOrdersByPlayerId: {
-    'england': [
-      BuildUnitOrder(
-        unitType: unitType,
-        isMilitary: false,
-        spawnProvinceId: 'oldWorld|p0',
-      ),
-    ],
-  },
-);
-
-GameSaveSession _sessionB({
-  required String id,
-  required String unitType,
-  required Map<String, int> desired,
-}) {
-  return GameSaveSession(
-    game: Game(
-      id: id,
-      worldState: const WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-      ),
-      players: const [
-        Player(id: 'england', displayName: 'England', isHuman: true),
-      ],
-    ),
-    draftOrders: _draftOrders(unitType: unitType),
-    productionDesiredOutputByRecipe: desired,
-    displayName: 'Save $id',
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -95,14 +38,14 @@ void main() {
   late Box<dynamic> gamesBox;
   late ProviderContainer container;
   late AppEventBus bus;
-  late _UiPathGameService service;
+  late UiPathGameService service;
 
   setUp(() async {
     hiveDir = await Directory.systemTemp.createTemp('ct_session_clear_ui_');
     gamesBox = await openAppTestHiveBox(suiteId: 'game_session_clear_ui_path', directory: hiveDir);
     AppEventBus.reset();
     bus = AppEventBus.create();
-    service = _UiPathGameService(gamesBox, GameSaveAdapter());
+    service = UiPathGameService(gamesBox, GameSaveAdapter());
     container = ProviderContainer(
       overrides: [
         gamesBoxProvider.overrideWithValue(gamesBox),
@@ -143,7 +86,7 @@ void main() {
     container.read(currentGameProvider.notifier).setGame(gameA);
     container
         .read(currentOrdersProvider.notifier)
-        .replaceAll(_draftOrders(unitType: 'farmer'));
+        .replaceAll(uiPathDraftOrders(unitType: 'farmer'));
     container
         .read(productionDesiredOutputProvider.notifier)
         .replaceAll(const {'grain': 9});
@@ -194,7 +137,7 @@ void main() {
     'Load Game dialog path: pre-dirty A then select B yields B-only session',
     (tester) async {
       dirtyA();
-      service.sessionToLoad = _sessionB(
+      service.sessionToLoad = uiPathSessionB(
         id: 'save_b',
         unitType: 'miner',
         desired: const {'iron': 1},
@@ -244,7 +187,7 @@ void main() {
     'Load from pause path: dirty A then confirm B emits ClosePanel and isolates',
     (tester) async {
       dirtyA();
-      service.sessionToLoad = _sessionB(
+      service.sessionToLoad = uiPathSessionB(
         id: 'save_b',
         unitType: 'miner',
         desired: const {'coal': 3},
@@ -297,7 +240,7 @@ void main() {
     'Resume path: pre-dirty session then resume auto-save yields envelope only',
     (tester) async {
       dirtyA();
-      service.sessionToLoad = _sessionB(
+      service.sessionToLoad = uiPathSessionB(
         id: 'auto_game',
         unitType: 'miner',
         desired: const {'iron': 7},

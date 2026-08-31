@@ -120,3 +120,28 @@ Future<void> pumpAndOpenTradeScreen(WidgetTester tester, Widget host) async {
   await tester.tap(find.text('open trade'));
   await pumpSettleCapped(tester);
 }
+
+Widget tradeScaffoldTabHost({
+  required Game game,
+  required Player humanPlayer,
+  required Box<dynamic> gamesBox,
+  bool globalObserve = false,
+}) =>
+    buildTradeRouteHost(
+      game: game,
+      humanPlayer: humanPlayer,
+      gamesBox: gamesBox,
+      globalObserve: globalObserve,
+    );
+
+Widget tradeScaffoldRailHost({
+  required Game game,
+  required Player humanPlayer,
+  required Box<dynamic> gamesBox,
+}) =>
+    buildTradeLeftRailHost(
+      game: game,
+      humanPlayer: humanPlayer,
+      gamesBox: gamesBox,
+    );
+
