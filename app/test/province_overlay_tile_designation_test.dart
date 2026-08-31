@@ -1,11 +1,3 @@
-// Pins the Tile-section town / capital designation line for
-// ProvinceSeaZoneDetailOverlay (Refs #3617).
-//
-// SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
-// § Province overlay content `Tile` — Tile town / capital designation, and
-// the matching § Acceptance criteria (Tile town designation line, Tile
-// capital designation line, Tile ordinary land tile — no designation, Tile
-// designation suppressed for sea / unrevealed, Tile designation uses
 // localized keys).
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
@@ -146,4 +138,193 @@ void main() {
     });
   });
 
+  group(
+    'ProvinceSeaZoneDetailOverlay Tile designation rendering (Refs #3617)',
+    () {
+      testWidgets('capital line renders between Terrain and Resource in fg '
+          '(AC capital designation line)', (WidgetTester tester) async {
+        final game = provinceOverlayWithFirstPlayerCapitalTile(
+          provinceOverlayDesignationDemoGame,
+          tileKey,
+        );
+        final expected = l10n.provinceOverlay_tileCapitalOf(
+          provinceOverlayProvinceDisplayName(game, provinceId),
+          game.players.first.displayName,
+        );
+
+        await pumpProvinceOverlayDesignation(
+          tester,
+          game: game,
+          provinceId: provinceId,
+          tileKey: tileKey,
+        );
+
+        final finder = find.text(expected);
+        expect(finder, findsOneWidget);
+        final Text row = tester.widget<Text>(finder);
+        expect(row.style?.color, EditorialMonoclePalette.fg);
+
+        final order = provinceOverlayTileTextDataInOrder(tester);
+        final terrainIdx = order.indexWhere((d) => d.startsWith('Terrain: '));
+        final designationIdx = order.indexOf(expected);
+        final resourceIdx = order.indexWhere((d) => d.startsWith('Resource: '));
+        expect(terrainIdx, greaterThanOrEqualTo(0));
+        expect(resourceIdx, greaterThan(terrainIdx));
+        expect(designationIdx, greaterThan(terrainIdx));
+        expect(designationIdx, lessThan(resourceIdx));
+      });
+
+      for (final c
+          in <
+            ({
+              String name,
+              Game Function() game,
+              void Function(WidgetTester, Game) assertUi,
+            })
+          >[
+            (
+              name:
+                  'town line renders for the province town tile '
+                  '(AC town designation line)',
+              game: () {
+                var g = provinceOverlayWithoutMatchingCapitals(
+                  provinceOverlayDesignationDemoGame,
+                );
+                return provinceOverlayWithProvinceTownTile(g, provinceId, tileKey);
+              },
+              assertUi: (tester, g) {
+                final expected = l10n.provinceOverlay_tileTownOf(
+                  provinceOverlayProvinceDisplayName(g, provinceId),
+                );
+                final finder = find.text(expected);
+                expect(finder, findsOneWidget);
+                expect(
+                  tester.widget<Text>(finder).style?.color,
+                  EditorialMonoclePalette.fg,
+                );
+              },
+            ),
+            (
+              name:
+                  'ordinary land tile renders no designation line '
+                  '(AC no designation)',
+              game: () {
+                var g = provinceOverlayWithoutMatchingCapitals(
+                  provinceOverlayDesignationDemoGame,
+                );
+                return provinceOverlayWithProvinceTownTile(
+                  g,
+                  provinceId,
+                  'oldWorld|__sentinel_town__|8881|8882',
+                );
+              },
+              assertUi: (tester, _) {
+                expect(find.textContaining('the capital of'), findsNothing);
+                expect(find.textContaining('The town of'), findsNothing);
+              },
+            ),
+          ]) {
+        testWidgets(c.name, (WidgetTester tester) async {
+          final game = c.game();
+          await pumpProvinceOverlayDesignation(
+            tester,
+            game: game,
+            provinceId: provinceId,
+            tileKey: tileKey,
+          );
+          c.assertUi(tester, game);
+        });
+      }
+
+      testWidgets('unrevealed selected tile renders no designation line '
+          '(AC suppressed for unrevealed)', (WidgetTester tester) async {
+        final game = provinceOverlayWithFirstPlayerCapitalTile(
+          provinceOverlayDesignationDemoGame,
+          tileKey,
+        );
+        final parts = tileKey.split('|');
+        final tx = int.parse(parts[parts.length - 2]);
+        final ty = int.parse(parts.last);
+        final region = provinceOverlayRegionWith(
+          visibilityForCell: (c) =>
+              c.x == tx && c.y == ty ? TileVisibility.unrevealed : c.visibility,
+        );
+
+        await pumpProvinceOverlayDesignation(
+          tester,
+          game: game,
+          provinceId: provinceId,
+          tileKey: tileKey,
+          region: region,
+        );
+
+        expect(find.textContaining('the capital of'), findsNothing);
+        expect(find.text('Terrain: ???'), findsOneWidget);
+      });
+    },
+  );
+
+  group('ProvinceSeaZoneDetailOverlay Tile designation goldens (Refs #3617)', () {
+    for (final c
+        in <
+          ({
+            String name,
+            String key,
+            String golden,
+            Game Function() game,
+            String Function(Game) expectedText,
+          })
+        >[
+          (
+            name:
+                'capital designation line golden (AC capital designation line)',
+            key: 'province_overlay_tile_capital_designation_golden',
+            golden: 'goldens/province_overlay_tile_capital_designation.png',
+            game: () => provinceOverlayWithFirstPlayerCapitalTile(
+              provinceOverlayDesignationDemoGame,
+              tileKey,
+            ),
+            expectedText: (g) => l10n.provinceOverlay_tileCapitalOf(
+              provinceOverlayProvinceDisplayName(g, provinceId),
+              g.players.first.displayName,
+            ),
+          ),
+          (
+            name: 'town designation line golden (AC town designation line)',
+            key: 'province_overlay_tile_town_designation_golden',
+            golden: 'goldens/province_overlay_tile_town_designation.png',
+            game: () {
+              var g = provinceOverlayWithoutMatchingCapitals(
+                provinceOverlayDesignationDemoGame,
+              );
+              return provinceOverlayWithProvinceTownTile(g, provinceId, tileKey);
+            },
+            expectedText: (g) => l10n.provinceOverlay_tileTownOf(
+              provinceOverlayProvinceDisplayName(g, provinceId),
+            ),
+          ),
+        ]) {
+      testWidgets(c.name, (WidgetTester tester) async {
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.binding.setSurfaceSize(const Size(600, 1000));
+        final boundaryKey = ValueKey<String>(c.key);
+        final game = c.game();
+
+        await tester.pumpWidget(
+          provinceOverlayDesignationGoldenHost(
+            game: game,
+            region: provinceOverlayDesignationDemoRegion,
+            displayId: provinceId,
+            selectedTileKey: tileKey,
+            boundaryKey: boundaryKey,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(c.expectedText(game)), findsOneWidget);
+
+        await expectLater(find.byKey(boundaryKey), matchesGoldenFile(c.golden));
+      });
+    }
+  });
 }

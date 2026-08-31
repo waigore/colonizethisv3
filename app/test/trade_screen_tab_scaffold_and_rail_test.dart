@@ -1,6 +1,3 @@
-// Widget tests for the TradeScreen scaffold slices
-// (Refs #2993 E1+E2+E3 chrome + E4 two-tab body). SPEC/ui/trade-screen.md.
-
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
@@ -16,7 +13,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-
 import 'package:colonizethis_app/config/constants.dart';
 import 'panel_test_fixtures.dart';
 import 'trade_screen_scaffold_test_support.dart';
@@ -45,11 +41,24 @@ void main() {
     gamesBox = await openAppTestHiveBox(suiteId: 'trade_screen_tabs_and_rail');
   });
 
+  Widget tradeHost({bool globalObserve = false}) => buildTradeRouteHost(
+    game: game,
+    humanPlayer: humanPlayer,
+    gamesBox: gamesBox,
+    globalObserve: globalObserve,
+  );
+
+  Widget railHost() => buildTradeLeftRailHost(
+    game: game,
+    humanPlayer: humanPlayer,
+    gamesBox: gamesBox,
+  );
+
   group('TradeScreen tab scaffold slice (Refs #2993 E4)', () {
     testWidgets(
       'tabs body hosts a CtTabStrip with literal Market + Deal Book labels in order',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         expect(find.byKey(TradeScreenMarketKeys.tabsBodyKey), findsOneWidget);
 
@@ -71,7 +80,7 @@ void main() {
     testWidgets(
       'lazyTabBodies defers Deal Book until first tab selection (Refs #4688 Slice 2)',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         expect(
           find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
@@ -93,7 +102,7 @@ void main() {
     testWidgets(
       'tapping the Deal Book label builds the Deal Book tab body (Refs #4688 Slice 2)',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         await tester.tap(find.text(TradeScreenDealBookKeys.dealBookTabLabel));
         await tester.pump();
@@ -108,7 +117,7 @@ void main() {
     testWidgets(
       'CtTabStrip uses lazyTabBodies on the trade screen (Refs #4688 Slice 2)',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         final stripFinder = find.descendant(
           of: find.byKey(TradeScreenMarketKeys.tabsBodyKey),
@@ -122,7 +131,7 @@ void main() {
     testWidgets(
       'both Market and Deal Book tab body keys are mounted after visiting both tabs',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         // Default selection foregrounds the Market tab; that body is on
         // stage and resolves under default `skipOffstage: true`.
@@ -154,7 +163,7 @@ void main() {
     testWidgets(
       'legacy IndexedStack contract: off-tab body is not in tree until first visit',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         expect(
           find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
@@ -179,7 +188,7 @@ void main() {
       'tapping the Deal Book label switches the foregrounded IndexedStack '
       'child to the Deal Book tab body',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         // Locate the IndexedStack created by CtTabStrip; verify default
         // selection is index 0 (Market).
@@ -225,7 +234,7 @@ void main() {
       'Deal Book tab body mounts the live ledger content (Refs #2993 E6) '
       'after the user taps the Deal Book label',
       (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeScaffoldTabHost(game: game, humanPlayer: humanPlayer, gamesBox: gamesBox, ));
+        await pumpAndOpenTradeScreen(tester, tradeHost());
 
         // Tap the Deal Book tab label to swap the on-stage child.
         final dealBookLabel = find.descendant(
@@ -273,5 +282,49 @@ void main() {
         );
       },
     );
+  });
+
+  group('GameMapEmpireLeftRail Trade button (Refs #2993 E3)', () {
+    testWidgets('rail exposes kEmpireTradeButtonKey between Production and '
+        'Development', (tester) async {
+      await tester.pumpWidget(railHost());
+      await pumpSettleCapped(tester);
+
+      final trade = find.byKey(kEmpireTradeButtonKey);
+      expect(trade, findsOneWidget);
+
+      final productionTopLeft = tester.getTopLeft(
+        find.byKey(kEmpireProductionButtonKey),
+      );
+      final tradeTopLeft = tester.getTopLeft(trade);
+      final developmentTopLeft = tester.getTopLeft(
+        find.byKey(kEmpireDevelopmentButtonKey),
+      );
+
+      // Vertical stack ordering: Production -> Trade -> Development.
+      expect(
+        tradeTopLeft.dy,
+        greaterThan(productionTopLeft.dy),
+        reason: 'Trade button sits below Production per SPEC #2993 R4.',
+      );
+      expect(
+        developmentTopLeft.dy,
+        greaterThan(tradeTopLeft.dy),
+        reason: 'Development sits below Trade per SPEC #4175.',
+      );
+    });
+
+    testWidgets('tapping Trade navigates to TradeScreen via Routes.generate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(railHost());
+      await pumpSettleCapped(tester);
+
+      await tester.tap(find.byKey(kEmpireTradeButtonKey));
+      await pumpSettleCapped(tester);
+
+      expect(find.byType(TradeScreen), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.topBarKey), findsOneWidget);
+    });
   });
 }

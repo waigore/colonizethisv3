@@ -1,16 +1,3 @@
-// Structural mockup-fidelity tests for the diplomacy panel chrome slices that
-// reconcile GAME30001 against SPEC/ui/mockups/GAME30001-diplomacy-panel.html
-// (Refs #3621):
-//
-//  - AC4 (§ Mode-bar chip chrome): each filter chip paints
-//    `CtGradients.actionButtonGradient` with a 1 px border — `--border`
-//    inactive, `--accent-dim` active.
-//  - AC7 (§ Outgoing economic diplomacy styling): economic lines render mono,
-//    `--accent-dim`, non-italic per mockup `.f-subsidy`.
-//  - AC8 (§ Section headings first-heading top rhythm): the first rendered
-//    section heading drops its top gap to 0; subsequent headings keep the
-//    `CtSpacing.l` leading gap.
-//
 // SPEC: SPEC/ui/diplomacy-panel.md § Mode bar (filter), § Per-faction row,
 // § Section headings, and § Acceptance criteria (Refs #3621).
 
@@ -30,7 +17,109 @@ import 'package:colonizethis_app/widgets/relation_meter.dart';
 
 import 'app_shell_harness.dart';
 import 'diplomacy_panel_test_support.dart';
-import 'diplomacy_panel_mockup_fidelity_support.dart';
+
+const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
+
+/// Solo human Great Power with no other discovered factions, so every section
+/// heading and the mode bar render against an otherwise empty list.
+Game _emptyStateGame() {
+  const ow = 'oldWorld';
+  final p1 = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'P1',
+    ownerId: 'gp1',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(provinces: [p1], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+  return Game(
+    id: 'diplo-fidelity-empty',
+    worldState: world,
+    players: const [player],
+    diplomacyRelations: const [],
+  );
+}
+
+/// Human GP `gp1` with a single discovered GP `gp2` whose relation [score]
+/// drives the one-word relation label and its level color.
+Game _gpRelationGame(int score) {
+  const ow = 'oldWorld';
+  final home = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'Home',
+    ownerId: 'gp1',
+  );
+  final rival = Province(
+    id: '$ow|p2',
+    regionId: ow,
+    displayName: 'Rival',
+    ownerId: 'gp2',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+    oldWorld: RegionData(provinces: [home, rival], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  return Game(
+    id: 'diplo-fidelity-relation-$score',
+    worldState: world,
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+    ],
+    diplomacyRelations: [
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', score: score),
+    ],
+  );
+}
+
+/// Human GP `gp1` pays an ongoing subsidy to GP `gp2`, so the `gp2` row
+/// renders the outgoing-subsidy economic line.
+Game _subsidyGame() {
+  const ow = 'oldWorld';
+  final home = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'Home',
+    ownerId: 'gp1',
+  );
+  final rival = Province(
+    id: '$ow|p2',
+    regionId: ow,
+    displayName: 'Rival',
+    ownerId: 'gp2',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
+    oldWorld: RegionData(provinces: [home, rival], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  return Game(
+    id: 'diplo-fidelity-subsidy',
+    worldState: world,
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2'),
+    ],
+    subsidyStates: const [
+      SubsidyState(payerId: 'gp1', targetId: 'gp2', percent: 15),
+    ],
+  );
+}
 
 Widget _panelHost(Game game) {
   return buildAppShell(
@@ -75,7 +164,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await bindSurface(tester);
-      await tester.pumpWidget(_panelHost(diplomacyMockupEmptyStateGame()));
+      await tester.pumpWidget(_panelHost(_emptyStateGame()));
       await pumpDiplomacyPanelBuilt(tester);
 
       // "Great Powers only" is inactive by default (default mode is `all`).
@@ -94,7 +183,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await bindSurface(tester);
-      await tester.pumpWidget(_panelHost(diplomacyMockupEmptyStateGame()));
+      await tester.pumpWidget(_panelHost(_emptyStateGame()));
       await pumpDiplomacyPanelBuilt(tester);
 
       // "All" is the active mode by default.
@@ -147,7 +236,7 @@ void main() {
 
     Future<void> pumpRelation(WidgetTester tester, int score) async {
       await bindSurface(tester);
-      await tester.pumpWidget(_panelHost(diplomacyMockupGpRelationGame(score)));
+      await tester.pumpWidget(_panelHost(_gpRelationGame(score)));
       await pumpDiplomacyPanelBuilt(tester);
     }
 
@@ -222,7 +311,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await bindSurface(tester);
-      await tester.pumpWidget(_panelHost(diplomacyMockupEmptyStateGame()));
+      await tester.pumpWidget(_panelHost(_emptyStateGame()));
       await pumpDiplomacyPanelBuilt(tester);
 
       // Default mode `all` renders Great Powers first, then Minor Nations.

@@ -1,6 +1,7 @@
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
@@ -174,4 +175,6 @@ void main() {
         expect(centers.single.worldCenterX, closeTo(expected.dx, 1e-6));
         expect(centers.single.worldCenterY, closeTo(expected.dy, 1e-6));
       },
-    );}
+    );
+  });
+}

@@ -1,4 +1,6 @@
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
@@ -11,16 +13,109 @@ import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.d
         kRegionMinimapToggleKey,
         kRegionMinimapZoomSliderKey;
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_box_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-
+import 'app_shell_harness.dart';
+import 'game_fixture.dart';
+import 'map_view_fixture.dart';
 import 'app_test_hive_harness.dart';
-import 'game_map_area_region_minimap_test_support.dart';
-
+({Game game, InitGameMapViewData mapViewData}) _loadMapAreaFixture() => (
+  game: loadSeed42Game(),
+  mapViewData: loadSeed42MapViewData(),
+);
+Future<void> _pumpUntilMinimapPaintVisible(WidgetTester tester) async {
+  const step = Duration(milliseconds: 50);
+  const maxSteps = 80;
+  for (var i = 0; i < maxSteps; i++) {
+    await tester.pump(step);
+    if (find.byKey(kRegionMinimapCustomPaintKey).evaluate().isNotEmpty) {
+      return;
+    }
+  }
+  fail(
+    'Minimap not visible within ${maxSteps * step.inMilliseconds}ms — '
+    'check GameMapArea / map stack.',
+  );
+}
+String _firstOldWorldTileKey(Game game) {
+  final m = game.worldState.tileKeysByRegionAndProvince['oldWorld'];
+  if (m == null) {
+    throw StateError('missing tileKeysByRegionAndProvince.oldWorld');
+  }
+  for (final keys in m.values) {
+    if (keys.isNotEmpty) return keys.first;
+  }
+  throw StateError('no tile keys under oldWorld');
+}
+/// [Positioned] wrapping [GameRegionMinimap] in [GameMapArea] (see `game_map_area.dart`).
+double? _minimapPositionedRight(WidgetTester tester) {
+  final ctx = tester.element(find.byType(GameRegionMinimap));
+  return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
+}
+double? _feedCardPositionedRight(WidgetTester tester) {
+  final ctx = tester.element(find.byType(PlayerTurnEventFeedCard));
+  return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
+}
+Future<({Game game, InitGameMapViewData mapViewData, AppEventBus bus})>
+_pumpMapAreaWithMinimap(
+  WidgetTester tester, {
+  required Box<dynamic> gamesBox,
+  Game? game,
+  Size? surfaceSize,
+}) async {
+  if (surfaceSize != null) {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(surfaceSize);
+  }
+  final init = _loadMapAreaFixture();
+  final resolvedGame = game ?? init.game;
+  final bus = AppEventBus.create();
+  addTearDown(bus.dispose);
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  await tester.pumpWidget(
+    buildAppShell(
+      overrides: [
+        appEventBusProvider.overrideWith((ref) => bus),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(resolvedGame),
+        ),
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith(
+          (ref) => GameService(gamesBox, GameSaveAdapter()),
+        ),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+        mapViewDataProvider.overrideWith((ref) => init.mapViewData),
+      ],
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en'),
+      child: Scaffold(
+        body: GameMapArea(
+          game: resolvedGame,
+          mapViewData: init.mapViewData,
+        ),
+      ),
+    ),
+  );
+  await _pumpUntilMinimapPaintVisible(tester);
+  return (game: resolvedGame, mapViewData: init.mapViewData, bus: bus);
+}
 void main() {
   suppressLogsForTests();
 
@@ -33,7 +128,7 @@ void main() {
   testWidgets('region minimap: toggle visibility and minimap bus pan', (
     WidgetTester tester,
   ) async {
-    final pumped = await pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
+    final pumped = await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
 
     expect(find.byKey(kRegionMinimapCustomPaintKey), findsOneWidget);
     final minimap = tester.widget<GameRegionMinimap>(
@@ -73,7 +168,7 @@ void main() {
   testWidgets('region minimap: tap emits camera center event for old world', (
     WidgetTester tester,
   ) async {
-    final pumped = await pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
+    final pumped = await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
     final centers = <RequestRegionMapCameraCenterWorldEvent>[];
     final sub = pumped.bus
         .on<RequestRegionMapCameraCenterWorldEvent>()
@@ -102,7 +197,7 @@ void main() {
   testWidgets('region minimap: drag pan deltas sum to world mapping', (
     WidgetTester tester,
   ) async {
-    final pumped = await pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
+    final pumped = await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
     final pans = <RequestRegionMapCameraPanWorldDeltaEvent>[];
     final sub = pumped.bus
         .on<RequestRegionMapCameraPanWorldDeltaEvent>()
@@ -146,7 +241,7 @@ void main() {
   testWidgets('region minimap: New World chip switches minimap region', (
     WidgetTester tester,
   ) async {
-    await pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
+    await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
 
     String regionId() => tester
         .widget<GameRegionMinimap>(find.byType(GameRegionMinimap))
@@ -166,13 +261,13 @@ void main() {
   testWidgets(
     'wide layout: minimap inset clears panel; feed toggle in GameMapControls',
     (WidgetTester tester) async {
-      final pumped = await pumpMapAreaWithMinimap(
+      final pumped = await _pumpMapAreaWithMinimap(
         tester,
         gamesBox: gamesBox,
         surfaceSize: const Size(900, 800),
       );
 
-      expect(minimapPositionedRight(tester), kGameMapWideStackRightGutter);
+      expect(_minimapPositionedRight(tester), kGameMapWideStackRightGutter);
       expect(
         find.descendant(
           of: find.byType(GameMapControls),
@@ -186,12 +281,12 @@ void main() {
       );
       container
           .read(mapProvincePanelProvider.notifier)
-          .reportMapTileTapped(firstOldWorldTileKeyForMinimap(pumped.game));
+          .reportMapTileTapped(_firstOldWorldTileKey(pumped.game));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(
-        minimapPositionedRight(tester),
+        _minimapPositionedRight(tester),
         gameMapWideOverlayRightInset(provincePanelOpen: true),
       );
     },
@@ -200,13 +295,13 @@ void main() {
   testWidgets(
     'wide layout: feed card Positioned.right clears province panel when open',
     (WidgetTester tester) async {
-      final init = loadMapAreaMinimapFixture();
+      final init = _loadMapAreaFixture();
       final feedGame = init.game.copyWith(
         mapViewState: init.game.mapViewState.copyWith(
           showPlayerTurnEventsFeed: true,
         ),
       );
-      await pumpMapAreaWithMinimap(
+      await _pumpMapAreaWithMinimap(
         tester,
         gamesBox: gamesBox,
         game: feedGame,
@@ -214,7 +309,7 @@ void main() {
       );
 
       expect(
-        feedCardPositionedRight(tester),
+        _feedCardPositionedRight(tester),
         gameMapWideOverlayRightInset(provincePanelOpen: false),
       );
 
@@ -223,13 +318,13 @@ void main() {
       );
       container
           .read(mapProvincePanelProvider.notifier)
-          .reportMapTileTapped(firstOldWorldTileKeyForMinimap(feedGame));
+          .reportMapTileTapped(_firstOldWorldTileKey(feedGame));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
       final openInset = gameMapWideOverlayRightInset(provincePanelOpen: true);
-      expect(feedCardPositionedRight(tester), openInset);
-      expect(minimapPositionedRight(tester), openInset);
+      expect(_feedCardPositionedRight(tester), openInset);
+      expect(_minimapPositionedRight(tester), openInset);
     },
   );
 }
