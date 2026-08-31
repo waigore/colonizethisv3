@@ -66,6 +66,7 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
 
     return CtAppPerfInteractiveReadyMarker(
       markerName: 'victory.interactiveReady',
+      surfaceOpenId: 'victory',
       child: SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(

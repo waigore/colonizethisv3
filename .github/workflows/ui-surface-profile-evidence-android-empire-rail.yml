@@ -1,7 +1,7 @@
-name: UI surface profile evidence (Android)
+name: UI surface profile evidence (Android empire-rail)
 
-# Profile/release open-to-interactive evidence for GAME80001 on Android emulator
-# binding host (Refs #4687). Complements local/Linux replay via
+# Profile/release open-to-interactive evidence for empire-rail panels on Android
+# emulator binding host (Refs #4688). Complements local/Linux replay via
 # tool/run_ui_surface_profile_evidence.sh.
 on:
   workflow_dispatch:
@@ -14,26 +14,27 @@ on:
     branches:
       - dev
     paths:
-      - 'app/integration_test/development_panel_surface_open_profile_test.dart'
-      - 'app/lib/features/game/screens/development/**'
+      - 'app/integration_test/*_surface_open_profile_test.dart'
+      - 'app/lib/features/game/screens/**'
+      - 'app/lib/widgets/ct_app_perf_interactive_ready_marker.dart'
       - 'packages/colonizethis_app_fixtures/lib/runtime/app_perf_trace.dart'
       - 'tool/run_ui_surface_profile_evidence.sh'
-      - '.github/workflows/ui-surface-profile-evidence-android.yml'
+      - '.github/workflows/ui-surface-profile-evidence-android-empire-rail.yml'
 
 permissions:
   contents: read
 
 # One Android emulator per PR ref — concurrent AVD boots on the same runner pool
-# routinely miss the default boot deadline (Refs #4687, #4688).
+# routinely miss the default boot deadline (Refs #4688).
 concurrency:
   group: ui-surface-profile-android-emulator-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
-  development_panel_android:
-    name: GAME80001 profile open (Android emulator)
+  empire_rail_android:
+    name: Empire-rail profile open (Android emulator)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -71,13 +72,12 @@ jobs:
           emulator-boot-timeout: 900
           script: |
             cd "$GITHUB_WORKSPACE"
-            UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" bash tool/run_ui_surface_profile_evidence.sh development --host android
-
-      - name: Upload profile evidence log
+            UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" bash tool/run_ui_surface_profile_evidence.sh all-empire-rail --host android
+      - name: Upload profile evidence logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-surface-profile-evidence-android-development
+          name: ui-surface-profile-evidence-android-empire-rail
           path: tmp/ui-surface-profile-evidence/
           retention-days: 14
 
@@ -85,6 +85,11 @@ jobs:
         if: success()
         run: |
           set -eu
-          log="$(find tmp/ui-surface-profile-evidence -name '*.log' -type f | sort | tail -1)"
-          echo "=== ui_surface_open lines (Android emulator) ==="
-          grep -E 'ui_surface_open surface=' "$log" || true
+          echo "=== ui_surface_open lines (Android emulator, empire-rail) ==="
+          find tmp/ui-surface-profile-evidence -name '*.log' -type f -print0 \
+            | sort -z \
+            | while IFS= read -r -d '' log; do
+                echo ""
+                echo "--- $log ---"
+                grep -E 'ui_surface_open surface=' "$log" || true
+              done
