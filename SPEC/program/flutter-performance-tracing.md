@@ -66,9 +66,14 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 | `CtAppPerf.technology.slotsOpenPath` | Sync Slots-tab preview bundle (`technologyPanelSlotsOpenPathProvider`). |
 | `CtAppPerf.victory.interactiveReady` | Post-frame after `GAME70001` chrome + standings + political minimap mount. |
 | `CtAppPerf.victory.openPath` | Sync standings, ownership colours, and OW minimap view-data bundle (`victoryPanelOpenPathProvider`). |
+| `CtAppPerf.counsel.interactiveReady` | Post-frame after `GAME90001` chrome + initial-tab body mount (instant; off-tabs deferred until first selection). |
+| `CtAppPerf.counsel.industryBuild` | Sync `rankIndustryCounselRecommendations` (`counselPanelSessionCacheProvider`). |
+| `CtAppPerf.counsel.tradeBuild` | Sync `rankTradeCounselRecommendationsForHuman` (`counselPanelSessionCacheProvider`). |
+| `CtAppPerf.counsel.militaryBuild` | Sync `rankMilitaryCounselRecommendations` (`counselPanelSessionCacheProvider`). |
+| `CtAppPerf.counsel.developmentBuild` | Sync `rankDevelopmentCounselRecommendations` (`counselPanelSessionCacheProvider`). |
 | `CtAppPerf.development.*` | See § Development panel open path (`GAME80001`). |
 
-Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppPerf.technology`, `CtAppPerf.victory`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. `GAME90001` Counsel-from-rail markers remain follow-up. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
+Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppPerf.technology`, `CtAppPerf.victory`, `CtAppPerf.counsel`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
 
 ---
 

@@ -1,15 +1,10 @@
 // Counsel screen tab strip and bodies. SPEC/ui/counsel-panel.md.
 
-import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_logic/industry_counsel_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'counsel_development_tab_body.dart';
-import 'counsel_industry_tab_body.dart';
-import 'counsel_military_tab_body.dart';
-import 'counsel_trade_tab_body.dart';
+import 'counsel_screen_tab_hosts.dart';
 
 enum CounselTab { industry, trade, military, development }
 
@@ -29,89 +24,100 @@ int counselTabInitialIndex(CounselTab tab) {
   };
 }
 
-class CounselScreenTabs extends StatelessWidget {
+class CounselScreenTabs extends StatefulWidget {
   const CounselScreenTabs({
     super.key,
     required this.initialTab,
     required this.l10n,
-    required this.industryRecommendations,
-    required this.tradeRecommendations,
-    required this.tradeBook,
-    required this.militaryRecommendations,
-    required this.militaryGame,
-    required this.developmentRecommendations,
+    required this.displayGame,
+    required this.humanPlayerId,
+    required this.mapContext,
     required this.highlightRecommendationId,
     required this.canEdit,
-    required this.industryCallbacks,
-    required this.tradeCallbacks,
-    required this.militaryCallbacks,
-    required this.developmentCallbacks,
   });
 
   final CounselTab initialTab;
   final AppLocalizations l10n;
-  final List<IndustryCounselRecommendation> industryRecommendations;
-  final List<TradeCounselRecommendation> tradeRecommendations;
-  final List<TradeOrder> tradeBook;
-  final List<MilitaryCounselRecommendation> militaryRecommendations;
-  final Game militaryGame;
-  final List<DevelopmentCounselRecommendation> developmentRecommendations;
+  final Game displayGame;
+  final String humanPlayerId;
+  final CounselPanelMapContext mapContext;
   final String? highlightRecommendationId;
   final bool canEdit;
-  final CounselIndustryCallbacks industryCallbacks;
-  final CounselTradeCallbacks tradeCallbacks;
-  final CounselMilitaryCallbacks militaryCallbacks;
-  final CounselDevelopmentCallbacks developmentCallbacks;
+
+  @override
+  State<CounselScreenTabs> createState() => _CounselScreenTabsState();
+}
+
+class _CounselScreenTabsState extends State<CounselScreenTabs> {
+  late final Set<int> _visitedTabIndexes = {
+    counselTabInitialIndex(widget.initialTab),
+  };
+
+  void _markTabVisited(int index) {
+    if (_visitedTabIndexes.contains(index)) return;
+    setState(() => _visitedTabIndexes.add(index));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final initialIndex = counselTabInitialIndex(widget.initialTab);
     return DefaultTabController(
       length: 4,
-      initialIndex: counselTabInitialIndex(initialTab),
+      initialIndex: initialIndex,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TabBar(
             isScrollable: true,
+            onTap: _markTabVisited,
             tabs: [
-              Tab(text: l10n.industryCounsel_tabIndustry),
-              Tab(text: l10n.tradeCounsel_tabTrade),
-              Tab(text: l10n.militaryCounsel_tabMilitary),
-              Tab(text: l10n.developmentCounsel_tabDevelopment),
+              Tab(text: widget.l10n.industryCounsel_tabIndustry),
+              Tab(text: widget.l10n.tradeCounsel_tabTrade),
+              Tab(text: widget.l10n.militaryCounsel_tabMilitary),
+              Tab(text: widget.l10n.developmentCounsel_tabDevelopment),
             ],
           ),
           Expanded(
             child: TabBarView(
               children: [
-                CounselIndustryTabBody(
-                  recommendations: industryRecommendations,
-                  highlightRecommendationId: highlightRecommendationId,
-                  l10n: l10n,
-                  canEdit: canEdit,
-                  callbacks: industryCallbacks,
+                CounselIndustryTabHost(
+                  displayGame: widget.displayGame,
+                  humanPlayerId: widget.humanPlayerId,
+                  topology: widget.mapContext.topology,
+                  tileMapByRegion: widget.mapContext.tileMapByRegion,
+                  highlightRecommendationId: widget.highlightRecommendationId,
+                  canEdit: widget.canEdit,
+                  l10n: widget.l10n,
+                  active: _visitedTabIndexes.contains(0),
                 ),
-                CounselTradeTabBody(
-                  recommendations: tradeRecommendations,
-                  book: tradeBook,
-                  highlightRecommendationId: highlightRecommendationId,
-                  l10n: l10n,
-                  canEdit: canEdit,
-                  callbacks: tradeCallbacks,
+                CounselTradeTabHost(
+                  displayGame: widget.displayGame,
+                  humanPlayerId: widget.humanPlayerId,
+                  topology: widget.mapContext.topology,
+                  tileMapByRegion: widget.mapContext.tileMapByRegion,
+                  highlightRecommendationId: widget.highlightRecommendationId,
+                  canEdit: widget.canEdit,
+                  l10n: widget.l10n,
+                  active: _visitedTabIndexes.contains(1),
                 ),
-                CounselMilitaryTabBody(
-                  game: militaryGame,
-                  recommendations: militaryRecommendations,
-                  highlightRecommendationId: highlightRecommendationId,
-                  l10n: l10n,
-                  canEdit: canEdit,
-                  callbacks: militaryCallbacks,
+                CounselMilitaryTabHost(
+                  displayGame: widget.displayGame,
+                  humanPlayerId: widget.humanPlayerId,
+                  topology: widget.mapContext.topology,
+                  highlightRecommendationId: widget.highlightRecommendationId,
+                  canEdit: widget.canEdit,
+                  l10n: widget.l10n,
+                  active: _visitedTabIndexes.contains(2),
                 ),
-                CounselDevelopmentTabBody(
-                  recommendations: developmentRecommendations,
-                  highlightRecommendationId: highlightRecommendationId,
-                  l10n: l10n,
-                  canEdit: canEdit,
-                  callbacks: developmentCallbacks,
+                CounselDevelopmentTabHost(
+                  displayGame: widget.displayGame,
+                  humanPlayerId: widget.humanPlayerId,
+                  topology: widget.mapContext.topology,
+                  tileMapByRegion: widget.mapContext.tileMapByRegion,
+                  highlightRecommendationId: widget.highlightRecommendationId,
+                  canEdit: widget.canEdit,
+                  l10n: widget.l10n,
+                  active: _visitedTabIndexes.contains(3),
                 ),
               ],
             ),

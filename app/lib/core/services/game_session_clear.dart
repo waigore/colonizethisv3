@@ -10,6 +10,7 @@ import 'package:colonizethis_app/providers/province_overlay_read_model_cache_pro
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/offline_queue_provider.dart';
+import 'package:colonizethis_app/providers/counsel_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/diplomacy_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/providers/production_panel_projection_provider.dart';
@@ -40,6 +41,7 @@ void clearActiveGameSession(ProviderContainer container) {
   container.read(provinceOverlayReadModelCacheProvider).reset();
   container.read(productionPanelSessionCacheProvider).reset();
   container.read(unitsPanelSessionCacheProvider).reset();
+  container.read(counselPanelSessionCacheProvider).reset();
   container.read(diplomacyPanelSessionCacheProvider).reset();
   container.read(victoryPanelSessionCacheProvider).reset();
   container.read(technologyPanelSessionCacheProvider).reset();

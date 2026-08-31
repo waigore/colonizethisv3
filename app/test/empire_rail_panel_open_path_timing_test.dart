@@ -5,6 +5,7 @@
 // panel test fixture. Not a debug wall-clock 1s assertion.
 
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_open_path.dart';
+import 'package:colonizethis_app/providers/counsel_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/diplomacy_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/technology_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/units_panel_session_cache_provider.dart';
@@ -336,6 +337,67 @@ void main() {
           game: game,
           player: player,
           orders: orders,
+        ),
+        iterations: iterations,
+      );
+
+      expect(warmMicros, lessThan(coldMicros));
+      expect(
+        (coldMicros - warmMicros) / coldMicros,
+        greaterThanOrEqualTo(0.5),
+        reason: 'cold=$coldMicrosµs warm=$warmMicrosµs',
+      );
+    },
+  );
+
+  test(
+    'cached counsel industry resolve is faster than cold build (Refs #4688 Slice 8)',
+    () {
+      const iterations = 20;
+      final game = buildMilitaryPanelTestGame();
+      const topology = MapTopology();
+      const orders = Orders();
+      const desiredOutput = <String, int>{};
+      final revision = counselPanelSessionRevision(
+        game: game,
+        orders: orders,
+        desiredOutputByRecipe: desiredOutput,
+        topology: topology,
+      );
+
+      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
+        () => resolveCounselIndustryRecommendations(
+          cache: CounselPanelSessionCache(),
+          revision: revision,
+          game: game,
+          playerId: kPanelTestHumanPlayerId,
+          currentOrders: orders,
+          topology: topology,
+          tileMapByRegion: const {},
+        ),
+        iterations: iterations,
+      );
+
+      final cache = CounselPanelSessionCache();
+      resolveCounselIndustryRecommendations(
+        cache: cache,
+        revision: revision,
+        game: game,
+        playerId: kPanelTestHumanPlayerId,
+        currentOrders: orders,
+        topology: topology,
+        tileMapByRegion: const {},
+      );
+
+      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
+        () => resolveCounselIndustryRecommendations(
+          cache: cache,
+          revision: revision,
+          game: game,
+          playerId: kPanelTestHumanPlayerId,
+          currentOrders: orders,
+          topology: topology,
+          tileMapByRegion: const {},
         ),
         iterations: iterations,
       );

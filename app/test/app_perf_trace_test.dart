@@ -74,6 +74,11 @@ void main() {
         'militaryUnits.treeBuild',
         'navalUnits.interactiveReady',
         'navalUnits.treeBuild',
+        'counsel.interactiveReady',
+        'counsel.industryBuild',
+        'counsel.tradeBuild',
+        'counsel.militaryBuild',
+        'counsel.developmentBuild',
       ];
       for (final name in markers) {
         expect(() => ctAppPerfInstant(name), returnsNormally);
