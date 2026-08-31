@@ -7,6 +7,7 @@ import '../../../../providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../providers/province_overlay_read_model_cache_provider.dart';
 import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/province_action_state_calculator.dart';
@@ -40,6 +41,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   required void Function(Iterable<String>?) onHighlightTiles,
   required VoidCallback onClose,
   required ct_models.AppEventBus bus,
+  ProvinceOverlaySessionCache? readModelCache,
   HomeFleetCargoSummary homeFleetCargo = const HomeFleetCargoSummary(
     used: 0,
     capacity: 0,
@@ -128,21 +130,29 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     offerPeaceTargetName: offerPeaceTargetName,
     bus: bus,
   );
-  final townProductionBonus = provinceTownProductionBonusPreview(
-    game: game,
-    provinceId: displayId,
-    mapData: mapData,
-  );
-  final extractionSnapshot = provinceExtractionSnapshotPreview(
-    game: game,
-    provinceId: displayId,
-    mapData: mapData,
-  );
-  final availableByCommodity = provinceAvailableResourceCountsPreview(
-    game: game,
-    provinceId: displayId,
-    mapData: mapData,
-  );
+  final provinceReadModel = readModelCache == null
+      ? buildProvinceOverlayProvinceReadModel(
+          game: game,
+          displayId: displayId,
+          mapData: mapData,
+        )
+      : resolveProvinceOverlayProvinceReadModel(
+          cache: readModelCache,
+          game: game,
+          displayId: displayId,
+          mapData: mapData,
+        );
+  final townProductionBonus = provinceReadModel.townProductionBonus;
+  final extractionSnapshot = provinceReadModel.extractionSnapshot;
+  final availableByCommodity = provinceReadModel.availableByCommodity;
+  final connectivityForHuman = readModelCache == null
+      ? null
+      : resolveProvinceOverlayHumanConnectivity(
+          cache: readModelCache,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          mapData: mapData,
+        );
   final tileConnectivity = resolveProvinceDetailTileConnectivity(
     game: game,
     region: region,
@@ -151,6 +161,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     selectedTileKey: selectedTileKey,
     mapData: mapData,
     isSeaZone: isSeaZone,
+    connectivityForHuman: connectivityForHuman,
   );
   final missions = buildProvinceDetailMissionOverlayControls(
     context: context,

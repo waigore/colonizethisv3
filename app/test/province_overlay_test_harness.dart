@@ -123,6 +123,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   Size? viewport,
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
+    key: ValueKey<String>(displayId),
     game: game,
     region: region ?? demoRegionForOverlay,
     displayId: displayId,

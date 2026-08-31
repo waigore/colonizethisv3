@@ -10,6 +10,7 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_app/providers/province_overlay_read_model_cache_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/offline_queue_provider.dart';
@@ -103,6 +104,19 @@ void main() {
       container
           .read(mapProvincePanelProvider.notifier)
           .reportMapTileTapped('oldWorld|p0|0|0');
+      container.read(provinceOverlayReadModelCacheProvider).storeProvinceReadModel(
+        revision: (
+          gameId: gameA.id,
+          turnNumber: gameA.worldState.turnState.turnNumber,
+          worldRevision: provinceOverlayWorldRevision(gameA),
+        ),
+        displayId: 'oldWorld|p0',
+        readModel: const ProvinceOverlayProvinceReadModel(
+          townProductionBonus: {},
+          extractionSnapshot: null,
+          availableByCommodity: {},
+        ),
+      );
       container.read(regionMinimapVisibleProvider.notifier).set(false);
       container.read(mapProvinceOverlayVisibleProvider.notifier).set(false);
       container.read(turnResolutionBlockingProvider.notifier).set(true);
@@ -127,6 +141,11 @@ void main() {
       expect(container.read(tribeFirstContactHeraldsShownProvider), isEmpty);
       expect(container.read(gameIdsWithIntroShownProvider), isEmpty);
       expect(container.read(mapProvincePanelProvider).overlayOpen, isFalse);
+      expect(
+        container.read(provinceOverlayReadModelCacheProvider).state
+            .provinceReadModelsByDisplayId,
+        isEmpty,
+      );
       expect(container.read(regionMinimapVisibleProvider), isTrue);
       expect(container.read(mapProvinceOverlayVisibleProvider), isTrue);
       expect(container.read(turnResolutionBlockingProvider), isFalse);

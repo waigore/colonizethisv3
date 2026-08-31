@@ -6,6 +6,7 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_app/providers/province_overlay_read_model_cache_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/offline_queue_provider.dart';
@@ -31,6 +32,7 @@ void clearActiveGameSession(ProviderContainer container) {
   container.read(tribeFirstContactHeraldsShownProvider.notifier).clear();
   container.read(gameIdsWithIntroShownProvider.notifier).clear();
   container.read(mapProvincePanelProvider.notifier).reset();
+  container.read(provinceOverlayReadModelCacheProvider).reset();
   container.read(regionMinimapVisibleProvider.notifier).reset();
   container.read(mapProvinceOverlayVisibleProvider.notifier).reset();
   container.read(mapProvinceOwnershipTintVisibleProvider.notifier).reset();

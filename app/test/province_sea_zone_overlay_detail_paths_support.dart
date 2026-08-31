@@ -77,3 +77,52 @@ firstRevealedLandOverlaySelection({
     coords: coords,
   );
 }
+
+/// Two distinct revealed land tiles in one province (MAP20001 tile-switch pins).
+({String provinceId, String firstTileKey, String secondTileKey})
+twoRevealedLandTilesInSameProvince({
+  required Game game,
+  required RegionMapViewData region,
+}) {
+  for (final entry
+      in game.worldState.tileKeysByRegionAndProvince[region.regionId]!.entries) {
+    final localId = entry.key.split('|').last;
+    final provinceIsLand = region.cells.any(
+      (cell) => !cell.isSea && cell.regionCellId == localId,
+    );
+    if (!provinceIsLand) {
+      continue;
+    }
+    String? firstTileKey;
+    String? secondTileKey;
+    for (final tileKey in entry.value) {
+      final coords = overlayTileCoordsFromKey(tileKey);
+      if (coords.x < 0 ||
+          coords.x >= region.width ||
+          coords.y < 0 ||
+          coords.y >= region.height) {
+        continue;
+      }
+      if (region.cellAt(coords.x, coords.y).visibility ==
+          TileVisibility.unrevealed) {
+        continue;
+      }
+      if (firstTileKey == null) {
+        firstTileKey = tileKey;
+        continue;
+      }
+      secondTileKey = tileKey;
+      break;
+    }
+    if (firstTileKey != null && secondTileKey != null) {
+      return (
+        provinceId: entry.key,
+        firstTileKey: firstTileKey,
+        secondTileKey: secondTileKey,
+      );
+    }
+  }
+  throw StateError(
+    'Test setup: no province in ${region.regionId} has two revealed land tiles.',
+  );
+}
