@@ -26,6 +26,8 @@ void main() {
       'Standalone — Civilian Station spy disabled (not occupiable)',
       'Standalone — Civilian Station spy hidden',
       'Standalone — Civilian Station spy enabled (320 dp)',
+      'Standalone — Civilian Station spy rival GP gist',
+      'Standalone — Civilian Station spy already insight gist',
     ]) {
       testWidgets('$useCaseName is wired into provinceOverlayDirectories', (
         WidgetTester tester,
@@ -82,6 +84,48 @@ void main() {
         ),
         findsNothing,
       );
+    });
+
+    testWidgets('rival GP gist story shows research gist at 320 dp', (
+      tester,
+    ) async {
+      final useCase = findWidgetbookUseCase(
+        provinceOverlayDirectories,
+        folderName: folderName,
+        useCaseName: 'Standalone — Civilian Station spy rival GP gist',
+      );
+      await pumpWidgetbookUseCaseAtSize(
+        tester,
+        useCase,
+        size: const Size(800, 640),
+      );
+      await tester.pumpAndSettle();
+      final gistFinder = find.text(l10n.spyResearchInsight_maySpeedResearchGist);
+      await tester.ensureVisible(gistFinder);
+      await tester.pump();
+      expect(gistFinder, findsOneWidget);
+    });
+
+    testWidgets('already insight gist story shows posted-court gist at 320 dp', (
+      tester,
+    ) async {
+      final useCase = findWidgetbookUseCase(
+        provinceOverlayDirectories,
+        folderName: folderName,
+        useCaseName: 'Standalone — Civilian Station spy already insight gist',
+      );
+      await pumpWidgetbookUseCaseAtSize(
+        tester,
+        useCase,
+        size: const Size(800, 640),
+      );
+      await tester.pumpAndSettle();
+      final gistFinder = find.text(
+        l10n.spyResearchInsight_alreadyGrantsInsightGist,
+      );
+      await tester.ensureVisible(gistFinder);
+      await tester.pump();
+      expect(gistFinder, findsOneWidget);
     });
   });
 }
