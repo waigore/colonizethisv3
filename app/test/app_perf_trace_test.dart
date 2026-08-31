@@ -25,6 +25,12 @@ void main() {
     expect(() => ctAppPerfInstant('development.interactiveReady'), returnsNormally);
   });
 
+  test('ctAppPerfSurfaceOpenBindingHost returns a non-empty label (Refs #4687)', () {
+    final host = ctAppPerfSurfaceOpenBindingHost();
+    expect(host, isNotEmpty);
+    expect(host, endsWith('_profile'));
+  });
+
   test(
     'ctAppPerfSurfaceOpenBindingHost returns a known profile label (Refs #4687)',
     () {

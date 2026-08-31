@@ -91,7 +91,8 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `game_intro asset_load end` | `dialogue` | After parse; includes `chars=` count. |
 | `game_intro dialogue_begin node=…` | `dialogue` | Before `startDialogue`. |
 | `game_intro first_line_shown` | `dialogue` | First non-null dialogue line in overlay. |
-| `ui_surface_open surface=development elapsed_ms=… budget_ms=…` | `perf` | Profile/release when `development.interactiveReady` fires (Refs #4687). |
+| `ui_surface_open surface=development elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `development.interactiveReady` fires (Refs #4687). |
+| `ui_surface_open surface=trade elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `trade.interactiveReady` fires (Refs #4688). |
 
 ---
 
