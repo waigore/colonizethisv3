@@ -72,6 +72,38 @@ void main() {
   });
 
   test(
+    'tradePanelSessionCacheProvider resets on clearActiveGameSession (Refs #4688 Slice 3)',
+    () {
+      final game = buildTradeTestGame(
+        stockpile: tradeableStockpileFilled(50),
+      );
+      final container = ProviderContainer(
+        overrides: tradePanelSessionCacheProviderOverrides(game, gamesBox),
+      );
+      addTearDown(container.dispose);
+
+      container.listen(
+        tradePanelTradeCounselHighlightsProvider,
+        (_, __) {},
+      );
+      expect(
+        container.read(tradePanelSessionCacheProvider).state.highlightsByCommodityId,
+        isNotNull,
+      );
+
+      container.read(tradePanelSessionCacheProvider).reset();
+      expect(
+        container.read(tradePanelSessionCacheProvider).state.highlightsByCommodityId,
+        isNull,
+      );
+      expect(
+        container.read(tradePanelSessionCacheProvider).state.revision,
+        isNull,
+      );
+    },
+  );
+
+  test(
     'tradePanelTradeCounselHighlightsProvider reuses session cache after autoDispose teardown (Refs #4688 Slice 3)',
     () {
       final game = buildTradeTestGame(
