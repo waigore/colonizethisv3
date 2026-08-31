@@ -66,6 +66,16 @@ _resolve_flutter() {
 
 FLUTTER="$(_resolve_flutter)"
 
+# Device id is the field between the first and second bullet on `flutter devices`
+# lines (e.g. `sdk gphone64 x86 64 (mobile) • emulator-5554 • android-x64`).
+# Do not use a fixed $N token — multi-word emulator names break that parse.
+_resolve_android_device_id() {
+  "$FLUTTER" devices 2>/dev/null | awk -F'•' '/android/ {
+    gsub(/^[ \t]+|[ \t]+$/, "", $2)
+    if ($2 != "") { print $2; exit }
+  }'
+}
+
 _resolve_device() {
   if [[ -n "$DEVICE" ]]; then
     echo "$DEVICE"
@@ -77,7 +87,7 @@ _resolve_device() {
       ;;
     android)
       local id
-      id="$("$FLUTTER" devices 2>/dev/null | awk '/• android/{print $5; exit}')"
+      id="$(_resolve_android_device_id)"
       if [[ -z "$id" ]]; then
         echo "ERROR: no Android device/emulator found. Launch one:" >&2
         echo "  flutter emulators --launch <avd_name>" >&2
@@ -88,7 +98,7 @@ _resolve_device() {
       ;;
     auto)
       if "$FLUTTER" devices 2>/dev/null | grep -q '• android'; then
-        "$FLUTTER" devices 2>/dev/null | awk '/• android/{print $5; exit}'
+        _resolve_android_device_id
       else
         echo "linux"
       fi
