@@ -65,9 +65,7 @@ jobs:
           disable-animations: true
           script: |
             cd "$GITHUB_WORKSPACE"
-            UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" \
-              bash tool/run_ui_surface_profile_evidence.sh all-empire-rail --host android
-
+            UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" bash tool/run_ui_surface_profile_evidence.sh all-empire-rail --host android
       - name: Upload profile evidence logs
         if: always()
         uses: actions/upload-artifact@v4
