@@ -25,80 +25,7 @@ import 'package:hive/hive.dart';
 import 'app_shell_harness.dart';
 import 'game_screen_test_support.dart';
 import 'panel_test_fixtures.dart';
-
-class _StubBox implements Box<dynamic> {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-final _gameScreenStubService =
-    GameService(_StubBox(), GameSaveAdapter());
-
-Widget _wrapShellScreen({
-  required AppEventBus bus,
-  required bool autoSaveAvailable,
-}) {
-  // Colonial ShellScreen specialization via buildAppShell (Refs #4035).
-  return buildAppShell(
-    theme: AppThemes.colonial,
-    navigatorKey: appNavigatorKey,
-    overrides: [
-      appEventBusProvider.overrideWith((ref) => bus),
-      mainMenuAutoSaveAvailableProvider.overrideWith(
-        (ref) => autoSaveAvailable,
-      ),
-    ],
-    shellWrapper: (Widget app) => AppEventHandlerScope(child: app),
-    child: const ShellScreen(),
-  );
-}
-
-Widget _wrapGameScreen({
-  required AppEventBus bus,
-  required Game game,
-  required bool victory,
-  bool calendarHalted = false,
-  bool blocking = false,
-  bool introShown = true,
-}) {
-  var activeGame = victory
-      ? game.copyWith(
-          victory: VictoryState(
-            winnerPlayerId: game.players.first.id,
-            type: VictoryType.military,
-            turnNumber: 12,
-          ),
-        )
-      : game;
-  if (calendarHalted) {
-    activeGame = activeGame.copyWith(calendarCampaignHalted: true);
-  }
-  return buildGameScreenHost(
-    gamesBox: _StubBox(),
-    game: activeGame,
-    mapViewData: null,
-    width: 900,
-    height: 700,
-    navigatorKey: appNavigatorKey,
-    introShownIds: introShown ? {activeGame.id} : <String>{},
-    includeHomeFleetCargo: false,
-    includeTreasury: false,
-    gameService: _gameScreenStubService,
-    eventBus: bus,
-    extraOverrides: [
-      turnResolutionBlockingProvider.overrideWith(
-        () => _StaticBlockingNotifier(blocking),
-      ),
-    ],
-  );
-}
-
-class _StaticBlockingNotifier extends StateToggleNotifier {
-  _StaticBlockingNotifier(this._initial) : super(false);
-  final bool _initial;
-  @override
-  bool build() => _initial;
-}
+import 'shell_game_screen_specs_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -110,7 +37,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapShellScreen(bus: bus, autoSaveAvailable: false),
+        wrapShellGameScreenSpecsShell(bus: bus, autoSaveAvailable: false),
       );
       await tester.pump();
 
@@ -130,7 +57,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapShellScreen(bus: bus, autoSaveAvailable: true),
+        wrapShellGameScreenSpecsShell(bus: bus, autoSaveAvailable: true),
       );
       await tester.pump();
 
@@ -151,7 +78,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        _wrapShellScreen(bus: bus, autoSaveAvailable: false),
+        wrapShellGameScreenSpecsShell(bus: bus, autoSaveAvailable: false),
       );
       await tester.pumpAndSettle();
 
@@ -182,7 +109,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapGameScreen(bus: bus, game: baseGame, victory: false),
+        wrapShellGameScreenSpecsGame(bus: bus, game: baseGame, victory: false),
       );
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -197,7 +124,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapGameScreen(bus: bus, game: baseGame, victory: true),
+        wrapShellGameScreenSpecsGame(bus: bus, game: baseGame, victory: true),
       );
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -226,7 +153,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapGameScreen(
+        wrapShellGameScreenSpecsGame(
           bus: bus,
           game: baseGame,
           victory: false,
@@ -256,7 +183,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapGameScreen(
+        wrapShellGameScreenSpecsGame(
           bus: bus,
           game: baseGame,
           victory: true,
@@ -276,7 +203,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapGameScreen(
+        wrapShellGameScreenSpecsGame(
           bus: bus,
           game: baseGame,
           victory: false,
@@ -298,7 +225,7 @@ void main() {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       await tester.pumpWidget(
-        _wrapGameScreen(
+        wrapShellGameScreenSpecsGame(
           bus: bus,
           game: baseGame,
           victory: false,
@@ -321,7 +248,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        _wrapGameScreen(bus: bus, game: baseGame, victory: false),
+        wrapShellGameScreenSpecsGame(bus: bus, game: baseGame, victory: false),
       );
       await tester.pump(const Duration(milliseconds: 200));
 

@@ -4,6 +4,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_body.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_keys.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -37,6 +38,7 @@ void main() {
     return buildAppShell(
       viewport: viewport,
       overrides: [
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
         gameServiceProvider.overrideWith(
           (ref) => VictoryPanelMapGameService(gamesBox, GameSaveAdapter()),
         ),

@@ -1,15 +1,13 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
     show pickUniqueGreatPowerLeaderByPowerScore;
-import 'package:colonizethis_map/colonizethis_map.dart'
-    show factionOwnershipColorMapForOldWorld;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/constants.dart';
-import '../../../../core/services/game_service/try_get_game_map_data.dart';
-import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/victory_panel_session_cache_provider.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import 'victory_conditions_block.dart';
 import 'victory_end_state_banner.dart';
 import 'victory_political_minimap.dart';
@@ -56,22 +54,20 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
   @override
   Widget build(BuildContext context) {
     final game = widget.game;
-    final standings = buildVictoryStandings(game);
-    final ownershipColors = factionOwnershipColorMapForOldWorld(game);
+    final openPath = ref.watch(victoryPanelOpenPathProvider);
+    if (openPath == null) {
+      return const SizedBox.shrink();
+    }
+    final standings = openPath.standings;
+    final ownershipColors = openPath.ownershipColors;
+    final owRegion = openPath.owRegion;
     final endState = _resolveEndState(game, appL10n(context));
     final textTheme = Theme.of(context).textTheme;
-    final mapData = tryGetGameMapData(
-      () => ref.read(gameServiceProvider).getMapData(game.id),
-    );
-    final owRegion = mapData == null
-        ? null
-        : buildVictoryOldWorldMapViewData(
-            game: game,
-            tileMapByRegion: mapData.tileMapByRegion,
-            topologyByRegion: mapData.topologyByRegion,
-          );
 
-    return SingleChildScrollView(
+    return CtAppPerfInteractiveReadyMarker(
+      markerName: 'victory.interactiveReady',
+      surfaceOpenId: 'victory',
+      child: SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -124,6 +120,7 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
           ),
         ],
       ),
+    ),
     );
   }
 

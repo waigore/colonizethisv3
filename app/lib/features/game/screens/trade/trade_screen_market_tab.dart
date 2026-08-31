@@ -44,25 +44,22 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/industry_counsel_api.dart'
-    show
-        rankTradeCounselRecommendationsForHuman,
-        tradeCounselHighlightsByCommodityId;
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show TradeCounselRecommendation;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../config/routes.dart';
-import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/app_event_bus_provider.dart';
-import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
+import '../../../../providers/trade_panel_session_cache_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
 import 'trade_screen_market_tab_build.dart';
 
-class MarketTabContent extends ConsumerWidget {
+class MarketTabContent extends ConsumerStatefulWidget {
   const MarketTabContent({
     super.key,
     required this.game,
@@ -114,7 +111,23 @@ class MarketTabContent extends ConsumerWidget {
   static const String incrementSemanticLabel = 'Increase quantity';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MarketTabContent> createState() => _MarketTabContentState();
+}
+
+class _MarketTabContentState extends ConsumerState<MarketTabContent> {
+  bool _tradeCounselReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _tradeCounselReady = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final Orders orders = ref.watch(currentOrdersProvider);
     final CurrentOrdersNotifier ordersNotifier = ref.read(
       currentOrdersProvider.notifier,
@@ -131,33 +144,19 @@ class MarketTabContent extends ConsumerWidget {
       }
     }
 
-    var topology = const MapTopology();
-    Map<String, TileMapResult> tileMapByRegion = const {};
-    final loaded = tryGetGameMapData(
-      () => ref.watch(gameServiceProvider).getMapData(game.id),
-    );
-    if (loaded != null) {
-      topology = loaded.combinedTopology;
-      tileMapByRegion = loaded.tileMapByRegion;
+    final Map<String, TradeCounselRecommendation> highlights;
+    if (_tradeCounselReady) {
+      highlights =
+          ref.watch(tradePanelTradeCounselHighlightsProvider) ?? const {};
+    } else {
+      highlights = const {};
     }
-    final productionAssignments = desiredOutputToAssignments(
-      desiredOutputByRecipe,
-    );
-    final tradeCounsel = rankTradeCounselRecommendationsForHuman(
-      game: game,
-      playerId: playerId,
-      productionAssignments: productionAssignments,
-      currentOrders: orders,
-      topology: topology,
-      tileMapByRegion: tileMapByRegion,
-    );
-    final highlights = tradeCounselHighlightsByCommodityId(tradeCounsel);
 
     void openTradeCounsel({String? highlightRecommendationId}) {
       bus.emit(
         NavigateToRouteEvent(Routes.counsel, {
-          'game': game,
-          'humanPlayerId': playerId,
+          'game': widget.game,
+          'humanPlayerId': widget.playerId,
           'counselTab': 'trade',
           if (highlightRecommendationId != null)
             'highlightRecommendationId': highlightRecommendationId,
@@ -165,14 +164,14 @@ class MarketTabContent extends ConsumerWidget {
       );
     }
 
-    return buildMarketTabBody(
+    return widget.buildMarketTabBody(
       context,
       orders: orders,
       ordersNotifier: ordersNotifier,
       desiredOutputByRecipe: desiredOutputByRecipe,
       readProjectedTreasuryDelta: readProjectedTreasuryDelta,
       tradeCounselHighlightsByCommodityId: highlights,
-      onOpenTradeCounsel: canEdit ? openTradeCounsel : null,
+      onOpenTradeCounsel: widget.canEdit ? openTradeCounsel : null,
     );
   }
 }

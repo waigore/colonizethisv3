@@ -214,6 +214,11 @@ class DevelopmentPanelSessionCache {
       },
     );
   }
+
+  /// Drops all cached projections when the active game session ends.
+  void reset() {
+    state = const DevelopmentPanelSessionCacheState();
+  }
 }
 
 final developmentPanelSessionCacheProvider =

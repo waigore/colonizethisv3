@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_constants.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
@@ -97,9 +98,10 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         if (sentinel != null) return sentinel;
         final displayPlayer = displayGame.playerById(widget.player.id)!;
         final canEdit = shell.canMutateViaUi;
+        final Widget tabBody;
         switch (_tab) {
           case TechnologyScreenTab.slots:
-            return TechnologySlotsBody(
+            tabBody = TechnologySlotsBody(
               game: displayGame,
               player: displayPlayer,
               currentOrders: currentOrders,
@@ -112,7 +114,7 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
                   : null,
             );
           case TechnologyScreenTab.tree:
-            return TechnologyTreeBody(
+            tabBody = TechnologyTreeBody(
               game: displayGame,
               player: displayPlayer,
               currentOrders: currentOrders,
@@ -125,6 +127,11 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
                   : null,
             );
         }
+        return CtAppPerfInteractiveReadyMarker(
+          markerName: 'technology.interactiveReady',
+          surfaceOpenId: 'technology',
+          child: tabBody,
+        );
       },
     );
   }
