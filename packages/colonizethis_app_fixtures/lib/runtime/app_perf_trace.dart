@@ -1,5 +1,8 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
 /// Flutter DevTools timeline markers for new-game → game-screen startup.
 /// Names are prefixed with [kAppPerfTimelinePrefix] for filtering (GitHub #1710,
 /// SPEC/program/flutter-performance-tracing.md).
@@ -34,4 +37,21 @@ int? ctAppPerfSurfaceOpenInteractiveReady(String surfaceId) {
   final elapsedMs = ctAppPerfSurfaceOpenElapsedMs(surfaceId);
   ctAppPerfInstant('$surfaceId.interactiveReady');
   return elapsedMs;
+}
+
+/// Binding-host label for profile/release `ui_surface_open` evidence (Refs #4687).
+///
+/// Values: `linux_desktop_profile`, `android_emulator_profile`, etc.
+String ctAppPerfSurfaceOpenBindingHost() {
+  if (kIsWeb) {
+    return 'web_profile';
+  }
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.android => 'android_emulator_profile',
+    TargetPlatform.iOS => 'ios_simulator_profile',
+    TargetPlatform.linux => 'linux_desktop_profile',
+    TargetPlatform.macOS => 'macos_desktop_profile',
+    TargetPlatform.windows => 'windows_desktop_profile',
+    TargetPlatform.fuchsia => 'fuchsia_profile',
+  };
 }

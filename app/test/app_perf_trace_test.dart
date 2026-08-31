@@ -34,6 +34,25 @@ void main() {
   });
 
   test(
+    'ctAppPerfSurfaceOpenBindingHost returns a known profile label (Refs #4687)',
+    () {
+      final host = ctAppPerfSurfaceOpenBindingHost();
+      expect(
+        host,
+        isIn(<String>[
+          'linux_desktop_profile',
+          'android_emulator_profile',
+          'ios_simulator_profile',
+          'macos_desktop_profile',
+          'windows_desktop_profile',
+          'web_profile',
+          'fuchsia_profile',
+        ]),
+      );
+    },
+  );
+
+  test(
     'Development panel CtAppPerf marker names are DevTools-filterable (Refs #4175 Slice E AC2)',
     () {
       // SPEC/program/flutter-performance-tracing.md § Development panel open path.

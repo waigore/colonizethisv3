@@ -100,9 +100,10 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
       _loggedInteractiveReady = true;
       final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady('development');
       if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
+        final host = ctAppPerfSurfaceOpenBindingHost();
         _log.i(
           'ui_surface_open surface=development elapsed_ms=$elapsedMs '
-          'budget_ms=$kUiSurfaceOpenBudgetMs',
+          'budget_ms=$kUiSurfaceOpenBudgetMs host=$host',
         );
       }
     }
