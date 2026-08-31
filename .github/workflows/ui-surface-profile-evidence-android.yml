@@ -64,8 +64,7 @@ jobs:
           disable-animations: true
           script: |
             cd "$GITHUB_WORKSPACE"
-            UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" \
-              bash tool/run_ui_surface_profile_evidence.sh development --host android
+            UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" bash tool/run_ui_surface_profile_evidence.sh development --host android
 
       - name: Upload profile evidence log
         if: always()
