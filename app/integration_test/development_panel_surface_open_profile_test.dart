@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/features/game/screens/development/development_panel_keys.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_screen_body.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -28,6 +29,7 @@ import '../test/panel_fixtures/core.dart';
 ///   --target=integration_test/development_panel_surface_open_profile_test.dart \
 ///   --profile -d linux`
 void main() {
+  suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   late Box<dynamic> gamesBox;
