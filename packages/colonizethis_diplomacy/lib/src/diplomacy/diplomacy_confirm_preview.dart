@@ -137,21 +137,39 @@ List<String> _establishOverture({
   required String targetDisplayName,
   required OvertureStage? stage,
 }) {
+  final targetIsMinorOrTribe = isMinorOrTribe(game, targetFactionId);
   return switch (stage) {
     OvertureStage.tradeConsulate => [
       'Cost: £$overtureConsulateCost if $targetDisplayName accepts.',
-      'Effect: Offers a Trade Consulate; treasury is charged only on acceptance.',
-      'Effect: If accepted, the overture advances to Consulate.',
+      if (targetIsMinorOrTribe) ...[
+        'Effect: If accepted, you may Explore and Prospect on '
+            "$targetDisplayName's land.",
+        'Effect: If accepted, your bids on $targetDisplayName\'s sales are '
+            'served before courts with no Consulate (after First right of '
+            'refusal).',
+      ] else ...[
+        'Effect: Offers a Trade Consulate; treasury is charged only on '
+            'acceptance.',
+      ],
+      'Effect: You may later offer an Embassy.',
     ],
     OvertureStage.embassy => [
       'Cost: £$overtureEmbassyCost if $targetDisplayName accepts.',
-      'Effect: Offers an Embassy; treasury is charged only on acceptance.',
-      'Effect: If accepted, the overture advances to Embassy.',
+      if (targetIsMinorOrTribe) ...[
+        'Effect: If accepted, Grant Aid, Set Subsidy, and Purchase land '
+            'become available toward $targetDisplayName.',
+        'Effect: If accepted, when another Great Power declares war on '
+            '$targetDisplayName, you may be asked to intervene.',
+      ] else ...[
+        'Effect: Offers an Embassy; treasury is charged only on acceptance.',
+      ],
+      'Effect: You may later offer a Non-Aggression Pact.',
     ],
     OvertureStage.nap => [
       'Cost: No treasury charge.',
-      'Effect: Offers a Non-Aggression Pact with $targetDisplayName.',
-      'Effect: If accepted, the overture advances to NAP.',
+      'Effect: If accepted, you may later offer Join Empire to '
+          '$targetDisplayName.',
+      'Effect: The pact does not by itself block Declare War.',
     ],
     OvertureStage.joinEmpire => _joinEmpire(
       game: game,

@@ -235,7 +235,7 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 - Given `OVL30001` phase 2 with a pending NAP offer,
   When the offer row renders,
-  Then a muted Accept Effect states that a Non-Aggression Pact with the offerer is established and there is no treasury charge, and a Reject Effect states that the offer lapses and the stage does not advance (no standing/score penalty; Refs #4387).
+  Then a muted Accept Effect states that a Non-Aggression Pact with the offerer is established, there is no treasury charge, and the pact does not by itself block Declare War; and a Reject Effect states that the offer lapses and the stage does not advance (no standing/score penalty; Refs #4387, #4682).
 
 - Given a pending Join Empire offer in phase 2,
   When the offer row renders,

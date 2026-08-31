@@ -54,7 +54,25 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     assertLines: (lines, body) {
       expect(body, contains('£$overtureConsulateCost'));
       expect('£'.allMatches(body).length, 1);
-      expect(body, contains('only on acceptance'));
+      expect(body.toLowerCase(), contains('explore'));
+      expect(body.toLowerCase(), contains('prospect'));
+      expect(body.toLowerCase(), contains('first right'));
+      expect(body, isNot(contains('-50')));
+      expect(body, isNot(contains('-10')));
+    },
+  ),
+  (
+    name: 'consulate overture toward GP omits explore and prospect',
+    order: const DiplomaticOrder(
+      type: DiplomaticOrderType.establishOverture,
+      targetFactionId: previewTargetGp,
+      overtureStage: OvertureStage.tradeConsulate,
+    ),
+    targetDisplayName: 'Spain',
+    assertLines: (lines, body) {
+      expect(body.toLowerCase(), isNot(contains('explore')));
+      expect(body.toLowerCase(), isNot(contains('prospect')));
+      expect(body.toLowerCase(), isNot(contains('purchase land')));
     },
   ),
   (
@@ -161,11 +179,14 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     assertLines: (lines, body) {
       expect(body, contains('£$overtureEmbassyCost'));
       expect('£'.allMatches(body).length, 1);
-      expect(body, contains('only on acceptance'));
+      expect(body.toLowerCase(), contains('grant aid'));
+      expect(body.toLowerCase(), contains('subsidy'));
+      expect(body.toLowerCase(), contains('purchase land'));
+      expect(body.toLowerCase(), contains('intervene'));
     },
   ),
   (
-    name: 'nap overture states free cost and pact offer',
+    name: 'nap overture states free cost and join empire path',
     order: const DiplomaticOrder(
       type: DiplomaticOrderType.establishOverture,
       targetFactionId: previewMinorId,
@@ -174,7 +195,8 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     targetDisplayName: 'Bavaria',
     assertLines: (lines, body) {
       expect(body, contains('No treasury charge'));
-      expect(body, contains('Non-Aggression Pact'));
+      expect(body.toLowerCase(), contains('join empire'));
+      expect(body.toLowerCase(), contains('declare war'));
       expect(lines.any((l) => l.startsWith('When:')), isFalse);
     },
   ),
