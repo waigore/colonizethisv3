@@ -96,7 +96,7 @@ final diplomacyPanelRowsProvider =
   final mapData = tryGetGameMapData(
     () => ref.watch(gameServiceProvider).getMapData(game.id),
   );
-  if (mapData == null) return null;
+  final topology = mapData?.combinedTopology ?? const MapTopology();
 
   final humanPlayerId = resolveShellPanelPlayerId(
     ref.watch(shellPlayerContextProvider),
@@ -105,7 +105,7 @@ final diplomacyPanelRowsProvider =
   return resolveDiplomacyPanelRows(
     cache: ref.read(diplomacyPanelSessionCacheProvider),
     game: game,
-    topology: mapData.combinedTopology,
+    topology: topology,
     humanPlayerId: humanPlayerId,
     orders: orders,
   );

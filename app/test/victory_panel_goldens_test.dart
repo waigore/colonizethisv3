@@ -4,6 +4,7 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_body.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_keys.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -248,6 +249,7 @@ void main() {
     'golden: wide side-by-side standings and minimap (Refs #4165 AC-12)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('victoryPanelWideLayoutGolden');
+      final game = buildVictoryPanelMapTestGame();
       await pumpGoldenHost(
         tester,
         boundaryKey: boundaryKey,
@@ -256,6 +258,7 @@ void main() {
         wrapInProviderScope: true,
         center: false,
         overrides: [
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
           gameServiceProvider.overrideWith(
             (ref) => VictoryPanelMapGameService(
               _victoryGoldenGamesBox,
@@ -267,7 +270,7 @@ void main() {
           width: kNarrowBreakpoint,
           height: 700,
           child: VictoryScreenBody(
-            game: buildVictoryPanelMapTestGame(),
+            game: game,
             humanPlayerId: kPanelTestHumanPlayerId,
           ),
         ),

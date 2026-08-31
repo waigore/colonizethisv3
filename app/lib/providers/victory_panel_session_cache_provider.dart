@@ -103,12 +103,11 @@ final victoryPanelOpenPathProvider =
   final mapData = tryGetGameMapData(
     () => ref.watch(gameServiceProvider).getMapData(game.id),
   );
-  if (mapData == null) return null;
 
   return resolveVictoryPanelOpenPath(
     cache: ref.read(victoryPanelSessionCacheProvider),
     game: game,
-    tileMapByRegion: mapData.tileMapByRegion,
-    topologyByRegion: mapData.topologyByRegion,
+    tileMapByRegion: mapData?.tileMapByRegion ?? const {},
+    topologyByRegion: mapData?.topologyByRegion ?? const {},
   );
 });

@@ -20,6 +20,7 @@ typedef UnitsPanelStaticSessionRevision = ({
 typedef UnitsPanelMilitarySessionRevision = ({
   UnitsPanelStaticSessionRevision staticRevision,
   String humanPlayerId,
+  int militaryContentRevision,
 });
 
 typedef UnitsPanelNavalSessionRevision = ({
@@ -95,6 +96,23 @@ UnitsPanelStaticSessionRevision unitsPanelStaticSessionRevision({
   );
 }
 
+int unitsPanelMilitaryContentRevision(Game game, String humanPlayerId) {
+  final armyHashes = <int>[];
+  for (final army in game.worldState.armies) {
+    if (army.ownerId != humanPlayerId) continue;
+    armyHashes.add(
+      Object.hash(
+        army.id,
+        army.isHomeArmy,
+        army.stationedProvinceId,
+        Object.hashAll(army.regimentUnitIds),
+      ),
+    );
+  }
+  armyHashes.sort();
+  return Object.hash(game.worldState.nextArmySeq, Object.hashAll(armyHashes));
+}
+
 UnitsPanelMilitarySessionRevision unitsPanelMilitarySessionRevision({
   required Game game,
   required String humanPlayerId,
@@ -102,6 +120,10 @@ UnitsPanelMilitarySessionRevision unitsPanelMilitarySessionRevision({
   return (
     staticRevision: unitsPanelStaticSessionRevision(game: game),
     humanPlayerId: humanPlayerId,
+    militaryContentRevision: unitsPanelMilitaryContentRevision(
+      game,
+      humanPlayerId,
+    ),
   );
 }
 
