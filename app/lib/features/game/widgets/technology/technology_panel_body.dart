@@ -14,6 +14,7 @@ import 'research_slot_finish_estimate.dart';
 import 'research_slot_preview.dart';
 import 'research_slot_preview_inputs.dart';
 import 'research_turn_funding_header.dart';
+import 'technology_panel_open_path.dart';
 import 'technology_panel_research_slots.dart';
 import 'technology_panel_widgets.dart';
 
@@ -24,29 +25,35 @@ Widget buildTechnologyPanelSlotsBody({
   required Player player,
   required Orders currentOrders,
   required void Function(Orders orders)? onOrdersChanged,
+  TechnologyPanelSlotsOpenPathSnapshot? slotsOpenPath,
 }) {
-  final researchedIds = sortedResearchedTechIds(player);
-  final progress = player.researchProgressByTechId ?? const <String, int>{};
-  final slots = player.researchSlots ?? 3;
+  final canEdit = onOrdersChanged != null;
+  final researchedIds = slotsOpenPath?.researchedIds ??
+      sortedResearchedTechIds(player);
+  final occupiedPreviewInputs = slotsOpenPath?.occupiedPreviewInputs ??
+      (canEdit
+          ? occupiedResearchSlotPreviewInputs(
+              game: game,
+              player: player,
+              currentOrders: currentOrders,
+            )
+          : const <ResearchSlotPreviewInput>[]);
+  final ResearchSlotsTurnPreview? slotsTurnPreview =
+      slotsOpenPath?.slotsTurnPreview ??
+          (canEdit
+              ? computeResearchSlotsTurnPreview(
+                  player: player,
+                  occupiedSlots: occupiedPreviewInputs,
+                )
+              : null);
   final humanPlayerId = player.id;
   final researchOrdersForPlayer = researchOrdersForTechnologyPlayer(
     currentOrders,
     humanPlayerId,
   );
-  final canEdit = onOrdersChanged != null;
-  final occupiedPreviewInputs = canEdit
-      ? occupiedResearchSlotPreviewInputs(
-          game: game,
-          player: player,
-          currentOrders: currentOrders,
-        )
-      : const <ResearchSlotPreviewInput>[];
-  final ResearchSlotsTurnPreview? slotsTurnPreview = canEdit
-      ? computeResearchSlotsTurnPreview(
-          player: player,
-          occupiedSlots: occupiedPreviewInputs,
-        )
-      : null;
+
+  final progress = player.researchProgressByTechId ?? const <String, int>{};
+  final slots = player.researchSlots ?? 3;
 
   return Column(
     mainAxisSize: MainAxisSize.min,
@@ -129,26 +136,6 @@ Widget buildTechnologyPanelSlotsBody({
       // SPEC/ui/technology-panel.md § Slots tab — section ordering.
     ],
   );
-}
-
-List<String> sortedResearchedTechIds(Player player) {
-  final techUnlocked = player.techUnlocked ?? const <String, bool>{};
-  final researchedIds = techUnlocked.entries
-      .where((entry) => entry.value)
-      .map((entry) => entry.key)
-      .toList();
-  researchedIds.sort(sortTechnologyTechIdsByEraThenName);
-  return researchedIds;
-}
-
-int sortTechnologyTechIdsByEraThenName(String a, String b) {
-  final eraA = techById(a)?.era ?? 999;
-  final eraB = techById(b)?.era ?? 999;
-  final eraCmp = eraA.compareTo(eraB);
-  if (eraCmp != 0) {
-    return eraCmp;
-  }
-  return techDisplayName(a).compareTo(techDisplayName(b));
 }
 
 List<ResearchOrder> researchOrdersForTechnologyPlayer(

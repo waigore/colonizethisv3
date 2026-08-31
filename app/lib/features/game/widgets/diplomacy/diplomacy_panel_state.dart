@@ -31,6 +31,7 @@ class DiplomacyPanel extends StatefulWidget with GamePanelMixin {
     required this.topology,
     required this.currentOrders,
     required this.bus,
+    this.rows,
     this.onClose,
     this.readOnly = false,
   });
@@ -43,6 +44,10 @@ class DiplomacyPanel extends StatefulWidget with GamePanelMixin {
   final String humanPlayerId;
   final MapTopology topology;
   final Orders currentOrders;
+
+  /// Pre-built rows from [diplomacyPanelRowsProvider]; when null, rows are
+  /// resolved synchronously on each build (Widgetbook / unit tests).
+  final List<DiplomacyRowData>? rows;
   @override
   final AppEventBus bus;
   final VoidCallback? onClose;
@@ -83,12 +88,14 @@ class DiplomacyPanelState extends State<DiplomacyPanel>
 
   @override
   Widget build(BuildContext context) {
-    final rows = buildDiplomacyRows(
-      widget.game,
-      widget.topology,
-      widget.humanPlayerId,
-      widget.currentOrders,
-    );
+    final rows =
+        widget.rows ??
+        buildDiplomacyRows(
+          widget.game,
+          widget.topology,
+          widget.humanPlayerId,
+          widget.currentOrders,
+        );
     final filtered = filterDiplomacyPanelRows(
       rows: rows,
       filterMode: _filterMode,

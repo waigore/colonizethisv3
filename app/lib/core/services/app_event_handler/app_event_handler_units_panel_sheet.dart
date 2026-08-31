@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../features/game/widgets/units/shared/units_panel_sheet_surface.dart';
 import '../../../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import '../../../providers/games_provider.dart';
+import '../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import 'app_event_handler.dart';
 
 /// Result of a unit-panel sheet body builder.
@@ -50,10 +51,13 @@ Future<void> appEventHandlerShowUnitsPanelSheet(
           applyCivilianE2eHeightOverride: applyCivilianE2eHeightOverride,
           e2eEnabled: kCtE2EEnabled,
         );
-        return UnitsPanelSheetSurface(
-          child: ConstrainedBox(
-            constraints: sheetConstraints,
-            child: panel,
+        return CtAppPerfInteractiveReadyMarker(
+          markerName: '${panelKind}Units.interactiveReady',
+          child: UnitsPanelSheetSurface(
+            child: ConstrainedBox(
+              constraints: sheetConstraints,
+              child: panel,
+            ),
           ),
         );
       },

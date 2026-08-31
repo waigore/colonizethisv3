@@ -137,7 +137,10 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 wide lazy sections + deferred section builders (Refs #4690 Slice C; measured 93_482).
 // raised after #4687 session-cache merge on dev (measured 93_501).
 // raised for MAP20001 surface-open budget tracing + CI surrogate (Refs #4690; measured 93_514).
-const _maxMainLines = 93514;
+// raised for empire-rail Slice 2 production session cache + deferred counsel (Refs #4688; measured 93_647).
+// raised for empire-rail Slices 3–7 session caches + interactiveReady markers (Refs #4688; measured 94_411).
+// raised for empire-rail Slice 8 counsel session cache + lazy tabs (Refs #4688; measured 94_915).
+const _maxMainLines = 95000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

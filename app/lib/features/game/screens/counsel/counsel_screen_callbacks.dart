@@ -45,7 +45,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
   required Map<String, TileMapResult> tileMapByRegion,
   required AppLocalizations l10n,
   required bool canEdit,
-  required TradeCounselBookResult tradeCounsel,
+  required TradeCounselBookResult Function() readTradeCounsel,
 }) {
   return CounselScreenTabCallbacks(
     industry: buildCounselIndustryCallbacks(
@@ -67,7 +67,7 @@ CounselScreenTabCallbacks buildCounselScreenTabCallbacks({
       humanPlayerId: humanPlayerId,
       l10n: l10n,
       canEdit: canEdit,
-      tradeCounsel: tradeCounsel,
+      readTradeCounsel: readTradeCounsel,
     ),
     military: buildCounselMilitaryCallbacks(
       context: context,

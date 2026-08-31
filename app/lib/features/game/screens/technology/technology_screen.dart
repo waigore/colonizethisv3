@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_constants.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
@@ -99,17 +100,20 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         final canEdit = shell.canMutateViaUi;
         switch (_tab) {
           case TechnologyScreenTab.slots:
-            return TechnologySlotsBody(
-              game: displayGame,
-              player: displayPlayer,
-              currentOrders: currentOrders,
-              onOrdersChanged: canEdit
-                  ? (next) {
-                      shellRef
-                          .read(currentOrdersProvider.notifier)
-                          .replaceAll(next);
-                    }
-                  : null,
+            return CtAppPerfInteractiveReadyMarker(
+              markerName: 'technology.interactiveReady',
+              child: TechnologySlotsBody(
+                game: displayGame,
+                player: displayPlayer,
+                currentOrders: currentOrders,
+                onOrdersChanged: canEdit
+                    ? (next) {
+                        shellRef
+                            .read(currentOrdersProvider.notifier)
+                            .replaceAll(next);
+                      }
+                    : null,
+              ),
             );
           case TechnologyScreenTab.tree:
             return TechnologyTreeBody(

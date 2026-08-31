@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_body.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_keys.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -16,6 +17,9 @@ void main() {
 
   Widget buildBody(Game game) {
     return buildAppShell(
+      overrides: [
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      ],
       child: Scaffold(
         body: VictoryScreenBody(
           game: game,
