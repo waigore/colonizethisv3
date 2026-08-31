@@ -6,6 +6,7 @@ import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -95,4 +96,10 @@ Future<void> tapTreasuryMarketDecrement(
     find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(commodityId)),
   );
   await tester.pump();
+}
+
+String bidBudgetIndicatorText(WidgetTester tester) {
+  return tester.widget<Text>(
+    find.byKey(TradeScreenMarketKeys.marketBidBudgetIndicatorKey),
+  ).data!;
 }
