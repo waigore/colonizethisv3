@@ -1,5 +1,5 @@
 // Full-widget open-to-interactive profiling anchors for empire-rail GAME* panels
-// and UNIT* bottom sheets (Refs #4688 Slices 10–11).
+// (Refs #4688 Slice 10).
 //
 // CI surrogate for profile/release DevTools sessions on binding hosts: measures
 // pump-to-interactive on the representative dual-region campaign fixture.
@@ -11,10 +11,6 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
-import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_sheet_surface.dart';
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
@@ -33,7 +29,6 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -296,146 +291,6 @@ void main() {
       mountPanel: mount,
       unmountPanel: unmount,
       interactiveProbe: find.text('Counsel'),
-    );
-  });
-
-  testWidgets('empire-rail UNIT20001 Military Units cold and warm open (Refs #4688)', (
-    WidgetTester tester,
-  ) async {
-    final game = buildMilitaryPanelTestGame();
-    final bus = AppEventBus.create();
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    Future<void> mount() async {
-      await tester.pumpWidget(
-        empireRailL10nShellWithContainer(
-          container: container,
-          child: buildPanelScaffoldShell(
-            UnitsPanelSheetSurface(
-              child: MilitaryUnitsPanel(
-                game: game,
-                humanPlayerId: kPanelTestHumanPlayerId,
-                bus: bus,
-                topology: const MapTopology(),
-                draftOrders: const Orders(),
-              ),
-            ),
-          ),
-        ),
-      );
-      await pumpSettleCapped(tester);
-    }
-
-    Future<void> unmount() async {
-      await tester.pumpWidget(
-        empireRailL10nShellWithContainer(
-          container: container,
-          child: const SizedBox.shrink(),
-        ),
-      );
-      await tester.pump();
-    }
-
-    await coldWarmEmpireRailPanelOpenCycle(
-      tester,
-      mountPanel: mount,
-      unmountPanel: unmount,
-      interactiveProbe: find.byType(MilitaryUnitsPanel),
-      expectWarmReuse: true,
-    );
-  });
-
-  testWidgets('empire-rail UNIT30001 Naval Units cold and warm open (Refs #4688)', (
-    WidgetTester tester,
-  ) async {
-    final game = buildNavalPanelTestGame();
-    final bus = AppEventBus.create();
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    Future<void> mount() async {
-      await tester.pumpWidget(
-        empireRailL10nShellWithContainer(
-          container: container,
-          child: buildPanelScaffoldShell(
-            UnitsPanelSheetSurface(
-              child: NavalUnitsPanel(
-                game: game,
-                humanPlayerId: kPanelTestHumanPlayerId,
-                bus: bus,
-                topology: const MapTopology(),
-                draftOrders: const Orders(),
-              ),
-            ),
-          ),
-        ),
-      );
-      await pumpSettleCapped(tester);
-    }
-
-    Future<void> unmount() async {
-      await tester.pumpWidget(
-        empireRailL10nShellWithContainer(
-          container: container,
-          child: const SizedBox.shrink(),
-        ),
-      );
-      await tester.pump();
-    }
-
-    await coldWarmEmpireRailPanelOpenCycle(
-      tester,
-      mountPanel: mount,
-      unmountPanel: unmount,
-      interactiveProbe: find.byType(NavalUnitsPanel),
-      expectWarmReuse: true,
-    );
-  });
-
-  testWidgets('empire-rail UNIT10001 Civilian Units cold and warm open (Refs #4688)', (
-    WidgetTester tester,
-  ) async {
-    final game = buildCivilianPanelTestGame();
-    final bus = AppEventBus.create();
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    Future<void> mount() async {
-      await tester.pumpWidget(
-        empireRailL10nShellWithContainer(
-          container: container,
-          child: buildPanelScaffoldShell(
-            UnitsPanelSheetSurface(
-              child: CivilianUnitsPanel(
-                game: game,
-                humanPlayerId: kPanelTestHumanPlayerId,
-                bus: bus,
-                currentOrders: const Orders(),
-              ),
-            ),
-          ),
-        ),
-      );
-      await pumpSettleCapped(tester);
-    }
-
-    Future<void> unmount() async {
-      await tester.pumpWidget(
-        empireRailL10nShellWithContainer(
-          container: container,
-          child: const SizedBox.shrink(),
-        ),
-      );
-      await tester.pump();
-    }
-
-    await coldWarmEmpireRailPanelOpenCycle(
-      tester,
-      mountPanel: mount,
-      unmountPanel: unmount,
-      interactiveProbe: find.byType(CivilianUnitsPanel),
-      expectWarmReuse: true,
     );
   });
 }

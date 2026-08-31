@@ -1,6 +1,7 @@
 // Shared pump helpers for empire-rail open surface budget tests (Refs #4688).
 
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_sheet_surface.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -57,6 +58,46 @@ Future<void> coldWarmEmpireRailPanelOpenCycle(
       reason: 'same-turn re-open should reuse session cache (cold=${coldMs}ms warm=${warmMs}ms)',
     );
   }
+}
+
+/// Cold/warm open cycle for UNIT* sheets mounted through [UnitsPanelSheetSurface].
+Future<void> coldWarmEmpireRailUnitsSheetOpenCycle(
+  WidgetTester tester, {
+  required Widget panel,
+  required Finder interactiveProbe,
+}) async {
+  final container = ProviderContainer();
+  addTearDown(container.dispose);
+
+  Future<void> mount() async {
+    await tester.pumpWidget(
+      empireRailL10nShellWithContainer(
+        container: container,
+        child: buildPanelScaffoldShell(
+          UnitsPanelSheetSurface(child: panel),
+        ),
+      ),
+    );
+    await pumpSettleCapped(tester);
+  }
+
+  Future<void> unmount() async {
+    await tester.pumpWidget(
+      empireRailL10nShellWithContainer(
+        container: container,
+        child: const SizedBox.shrink(),
+      ),
+    );
+    await tester.pump();
+  }
+
+  await coldWarmEmpireRailPanelOpenCycle(
+    tester,
+    mountPanel: mount,
+    unmountPanel: unmount,
+    interactiveProbe: interactiveProbe,
+    expectWarmReuse: true,
+  );
 }
 
 Widget empireRailL10nShell({
