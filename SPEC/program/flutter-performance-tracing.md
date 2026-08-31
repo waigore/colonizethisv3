@@ -55,6 +55,7 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 | `CtAppPerf.production.openPath` | Sync slice for stockpile preview, labour readiness, and forces feeding (`productionPanelOpenPathProvider`). |
 | `CtAppPerf.production.industryCounsel` | Deferred industry counsel ranking for Allocation stars (`productionPanelIndustryCounselProvider`). |
 | `CtAppPerf.trade.interactiveReady` | Post-frame after `GAME60001` chrome + default Market tab body mount (instant; Deal Book tab deferred via `lazyTabBodies`). |
+| `CtAppPerf.trade.counselBuild` | Deferred sync `rankTradeCounselRecommendationsForHuman` for Market counsel stars (`tradePanelSessionCacheProvider`). |
 | `CtAppPerf.civilianUnits.interactiveReady` | Post-frame after `UNIT10001` sheet chrome + primary list mount. |
 | `CtAppPerf.militaryUnits.interactiveReady` | Post-frame after `UNIT20001` sheet chrome + primary list mount. |
 | `CtAppPerf.militaryUnits.treeBuild` | Sync military tree assembly (`resolveUnitsPanelMilitaryGroups`). |
