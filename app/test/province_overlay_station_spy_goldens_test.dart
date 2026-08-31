@@ -1,4 +1,4 @@
-// Visual goldens for MAP20001 Civilian Station spy variants (Refs #4439).
+// Visual goldens for MAP20001 Civilian Station spy variants (Refs #4439, #4679).
 // SPEC/ui/province-sea-zone-detail-overlay.md § States and variants.
 
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
@@ -24,6 +24,10 @@ class _StationSpyGoldenCase {
     required this.showControl,
     required this.enabled,
     this.tooltip = '',
+    this.gist = '',
+    this.overlayWidth = 460,
+    this.surfaceWidth = 640,
+    this.surfaceHeight = 720,
   });
 
   final String name;
@@ -31,6 +35,10 @@ class _StationSpyGoldenCase {
   final bool showControl;
   final bool enabled;
   final String tooltip;
+  final String gist;
+  final double overlayWidth;
+  final double surfaceWidth;
+  final double surfaceHeight;
 }
 
 const List<_StationSpyGoldenCase> _cases = [
@@ -53,6 +61,34 @@ const List<_StationSpyGoldenCase> _cases = [
     showControl: false,
     enabled: false,
   ),
+  _StationSpyGoldenCase(
+    name: 'Civilian Station spy rival GP gist @ 320dp',
+    goldenFile: 'goldens/province_overlay_station_spy_rival_gist_320dp.png',
+    showControl: true,
+    enabled: true,
+    overlayWidth: 320,
+    surfaceWidth: 640,
+    surfaceHeight: 720,
+  ),
+  _StationSpyGoldenCase(
+    name: 'Civilian Station spy already insight gist @ 320dp',
+    goldenFile:
+        'goldens/province_overlay_station_spy_already_insight_gist_320dp.png',
+    showControl: true,
+    enabled: true,
+    overlayWidth: 320,
+    surfaceWidth: 640,
+    surfaceHeight: 720,
+  ),
+  _StationSpyGoldenCase(
+    name: 'Civilian Station spy minor land no gist @ 320dp',
+    goldenFile: 'goldens/province_overlay_station_spy_minor_no_gist_320dp.png',
+    showControl: true,
+    enabled: true,
+    overlayWidth: 320,
+    surfaceWidth: 640,
+    surfaceHeight: 720,
+  ),
 ];
 
 void main() {
@@ -61,10 +97,20 @@ void main() {
 
   for (final c in _cases) {
     testWidgets('golden: ${c.name} (Refs #4439)', (WidgetTester tester) async {
-      await configureGoldenSurface(tester, size: const Size(640, 720));
+      final gist = switch (c.name) {
+        'Civilian Station spy rival GP gist @ 320dp' =>
+          l10n.spyResearchInsight_maySpeedResearchGist,
+        'Civilian Station spy already insight gist @ 320dp' =>
+          l10n.spyResearchInsight_alreadyGrantsInsightGist,
+        _ => c.gist,
+      };
+      await configureGoldenSurface(
+        tester,
+        size: Size(c.surfaceWidth, c.surfaceHeight),
+      );
       configureGoldenView(
         tester,
-        physicalSize: const Size(640, 720),
+        physicalSize: Size(c.surfaceWidth, c.surfaceHeight),
         devicePixelRatio: 1.0,
       );
 
@@ -75,7 +121,7 @@ void main() {
           boundaryKey: boundaryKey,
           includeLocalizations: true,
           child: SizedBox(
-            width: 460,
+            width: c.overlayWidth,
             height: 680,
             child: ProvinceSeaZoneDetailOverlay(
               game: game,
@@ -89,7 +135,7 @@ void main() {
                 showControl: c.showControl,
                 enabled: c.enabled,
                 tooltip: c.tooltip,
-                gist: '',
+                gist: gist,
                 onTap: () {},
               ),
               onClose: () {},
@@ -103,9 +149,11 @@ void main() {
       final civilianHeader = find.text(
         l10n.provinceOverlay_sectionCivilian.toUpperCase(),
       );
-      expect(civilianHeader, findsOneWidget);
-      await tester.ensureVisible(civilianHeader);
-      await tester.pump();
+      if (c.overlayWidth >= 460) {
+        expect(civilianHeader, findsOneWidget);
+        await tester.ensureVisible(civilianHeader);
+        await tester.pump();
+      }
 
       final spyFinder = find.widgetWithText(
         CtActionTextButton,
@@ -119,6 +167,18 @@ void main() {
         await tester.pump();
       } else {
         expect(spyFinder, findsNothing);
+      }
+
+      if (gist.isNotEmpty) {
+        expect(find.text(gist), findsOneWidget);
+      } else if (c.showControl &&
+          c.enabled &&
+          c.name.contains('minor land no gist')) {
+        expect(find.text(l10n.spyResearchInsight_maySpeedResearchGist), findsNothing);
+        expect(
+          find.text(l10n.spyResearchInsight_alreadyGrantsInsightGist),
+          findsNothing,
+        );
       }
 
       await expectLater(
