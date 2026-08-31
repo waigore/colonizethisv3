@@ -55,9 +55,14 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 | `CtAppPerf.production.openPath` | Sync slice for stockpile preview, labour readiness, and forces feeding (`productionPanelOpenPathProvider`). |
 | `CtAppPerf.production.industryCounsel` | Deferred industry counsel ranking for Allocation stars (`productionPanelIndustryCounselProvider`). |
 | `CtAppPerf.trade.interactiveReady` | Post-frame after `GAME60001` chrome + default Market tab body mount (instant; Deal Book tab deferred via `lazyTabBodies`). |
+| `CtAppPerf.civilianUnits.interactiveReady` | Post-frame after `UNIT10001` sheet chrome + primary list mount. |
+| `CtAppPerf.militaryUnits.interactiveReady` | Post-frame after `UNIT20001` sheet chrome + primary list mount. |
+| `CtAppPerf.militaryUnits.treeBuild` | Sync military tree assembly (`resolveUnitsPanelMilitaryGroups`). |
+| `CtAppPerf.navalUnits.interactiveReady` | Post-frame after `UNIT30001` sheet chrome + primary list mount. |
+| `CtAppPerf.navalUnits.treeBuild` | Sync naval tree assembly (`resolveUnitsPanelNavalTree`). |
 | `CtAppPerf.development.*` | See § Development panel open path (`GAME80001`). |
 
-Filter `CtAppPerf.production` or `CtAppPerf.trade` for empire-rail DevTools sessions. Additional rail surfaces (`GAME30001`, `GAME40001`, `GAME70001`, `UNIT*`, `GAME90001` from rail) gain markers in follow-up slices. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
+Filter `CtAppPerf.production`, `CtAppPerf.trade`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. Additional route-hosted rail surfaces (`GAME30001`, `GAME40001`, `GAME70001`, `GAME90001` from rail) gain markers in follow-up slices. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
 
 ---
 

@@ -63,6 +63,11 @@ void main() {
         'production.openPath',
         'production.industryCounsel',
         'trade.interactiveReady',
+        'civilianUnits.interactiveReady',
+        'militaryUnits.interactiveReady',
+        'militaryUnits.treeBuild',
+        'navalUnits.interactiveReady',
+        'navalUnits.treeBuild',
       ];
       for (final name in markers) {
         expect(() => ctAppPerfInstant(name), returnsNormally);
