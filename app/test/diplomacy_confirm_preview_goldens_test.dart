@@ -158,7 +158,8 @@ void main() {
       expect(tester.takeException(), isNull);
       expectEditorialMonocleDarkChrome(tester);
       expect(find.textContaining('£$overtureConsulateCost'), findsOneWidget);
-      expect(find.textContaining('only on acceptance'), findsOneWidget);
+      expect(find.textContaining('Explore and Prospect'), findsOneWidget);
+      expect(find.textContaining('First right'), findsOneWidget);
 
       await expectLater(
         find.byKey(boundaryKey),

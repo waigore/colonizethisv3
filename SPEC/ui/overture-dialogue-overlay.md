@@ -235,15 +235,23 @@ No direct `AppEventBus` or `Navigator` usage in the overlay.
 
 - Given `OVL30001` phase 2 with a pending NAP offer,
   When the offer row renders,
-  Then a muted Accept Effect states that a Non-Aggression Pact with the offerer is established and there is no treasury charge, and a Reject Effect states that the offer lapses and the stage does not advance (no standing/score penalty; Refs #4387).
+  Then a muted Accept Effect states that a Non-Aggression Pact with the offerer is established, there is no treasury charge, and the pact does not by itself block Declare War; and a Reject Effect states that the offer lapses and the stage does not advance (no standing/score penalty; Refs #4387, #4682).
 
 - Given a pending Join Empire offer in phase 2,
   When the offer row renders,
   Then the Accept Effect states in plain language that the human realm is absorbed and provinces transfer to the offerer, with no raw `OvertureStage` enum or id in the copy.
 
-- Given Consulate or Embassy offers in phase 2,
-  When those rows render,
-  Then Accept Effects state the stage is established and that the human pays nothing.
+- Given `OVL30001` phase 2 with a pending Consulate offer from a Great Power toward a Minor/Tribe human target,
+  When the offer row renders,
+  Then the muted Accept Effect states that if accepted the offerer may Explore and Prospect on the human's land and that the human pays nothing (offerer charged only on accept); Reject Effect states the offer lapses and the stage does not advance (Refs #4682).
+
+- Given `OVL30001` phase 2 with a pending Consulate offer from a Great Power toward a Great Power human target,
+  When the offer row renders,
+  Then the Accept Effect states a Trade Consulate is established and the human pays nothing; it does not claim Explore, Prospect, or Purchase land on the human's provinces (Refs #4682).
+
+- Given `OVL30001` phase 2 with a pending Embassy offer from a Great Power toward a Minor/Tribe human target,
+  When the offer row renders,
+  Then the muted Accept Effect names Grant Aid, Set Subsidy, and Purchase land toward the human court and that the human pays nothing (Refs #4682).
 
 - Given Yarn intro or the degraded error Continue path,
   When those states render,

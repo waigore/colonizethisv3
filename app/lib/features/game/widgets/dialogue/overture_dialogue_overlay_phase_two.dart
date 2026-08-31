@@ -17,6 +17,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 Widget buildOverturePhaseTwoBody({
   required BuildContext context,
   required AppLocalizations l10n,
+  required Game game,
   required List<OvertureOffer> offers,
   required List<bool?> accepted,
   required String Function(String offererGpId) offererDisplayName,
@@ -58,6 +59,8 @@ Widget buildOverturePhaseTwoBody({
           final effects = buildIncomingOvertureEffectLines(
             offererDisplayName: offerer,
             stage: offer.stage,
+            game: game,
+            targetFactionId: offer.targetFactionId,
           );
           return OvertureOfferRow(
             rowIndex: i,

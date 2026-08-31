@@ -139,6 +139,7 @@ class OvertureDialogueOverlayState extends State<OvertureDialogueOverlay>
       body: buildOverturePhaseTwoBody(
         context: context,
         l10n: l10n,
+        game: widget.game,
         offers: widget.pendingOvertures,
         accepted: _accepted,
         offererDisplayName: _offererDisplayName,
