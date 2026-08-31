@@ -27,7 +27,7 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 - Refactor issue without a passing **Verification** comment (outcome **Complete**) on the issue, or whose merged state on `dev` has drifted from what was verified.
 - Art issue whose assets fail the vision checklist (placeholder look, seam breaks, off-palette vs peers, wrong geometry vs contract).
 - Any relevant suite red on `dev`; next-turn ACs exceeding the **15 s budget**.
-- **Gameplay/UI** (standing; **not** AC-gated): a touched **game-app** panel, dialog, or overlay that opens over **1 000 ms** for required content (calcs, minimaps, Yarn) or that leaves unused dialogs/widgets/`FlameGame`s mounted after close (`colonizethis-ui-surface-budget.mdc`). Refactor-only issues stay on the verification comment.
+- **Gameplay/UI** (standing; **not** AC-gated): a **touched** game-app panel, dialog, or overlay (introduced or modified by the issue) that opens over **1 000 ms** for required content (calcs, minimaps, Yarn) or that leaves unused dialogs/widgets/`FlameGame`s mounted after close (`colonizethis-ui-surface-budget.mdc`). Untouched grandfathered overflows are exempt. Refactor-only issues stay on the verification comment.
 
 **Never** change labels, milestones, or issue state — **`gh issue comment` only** (label transitions belong to `backlog-accept-agent`).
 

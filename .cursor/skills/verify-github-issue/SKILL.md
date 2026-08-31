@@ -19,7 +19,7 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 - Fix not on **`origin/dev`** (local-only or unmerged PR).
 - **UI issue** without passing widget golden + PNG proof on the issue comment.
 - Any golden test failure, missing golden mapping for a visual AC, or gist upload/embed failure.
-- **Game-app UI surface budget** (standing; **not** AC-gated): merged work under `app/lib/features|widgets|ui` / Flame host, or that references `SPEC/ui/` / screen IDs, must meet the hard 1 s full-load open budget and unmount unused dialogs/widgets/`FlameGame`s (`colonizethis-ui-surface-budget.mdc`, `SPEC/program/ui-surface-budget.md`) **even if the issue ACs omit it**. Exempt: ctdev-only. Missing timing/unmount evidence → **Gaps remain**.
+- **Game-app UI surface budget** (standing; **not** AC-gated): merged work that **introduces or modifies** a game-app panel, dialog, or overlay (under `app/lib/features|widgets|ui` / Flame host, or that references `SPEC/ui/` / screen IDs) must meet the hard 1 s full-load open budget and unmount unused dialogs/widgets/`FlameGame`s (`colonizethis-ui-surface-budget.mdc`, `SPEC/program/ui-surface-budget.md`) **even if the issue ACs omit it**. Exempt: ctdev-only; untouched surfaces that pre-date the issue (grandfathered overflows). Missing timing/unmount evidence for a **touched** surface → **Gaps remain**.
 - Issue that updates the player manual whose merged chapter(s) fail the **style + accuracy** audit below.
 
 **Never** change labels, milestones, or issue state — **`gh issue comment` only**.
@@ -54,11 +54,11 @@ Follow existing golden patterns: `AppThemes.editorialMonocle`, `suppressLogsForT
 
 ### Game-app UI surface budget (standing)
 
-Same UI definition as goldens. **Exempt:** ctdev-only (`SPEC/program/ctdev-app.md`).
+Apply only when the issue **introduces or modifies** a game-app panel, dialog, or overlay (same UI definition as goldens). **Exempt:** ctdev-only (`SPEC/program/ctdev-app.md`); untouched grandfathered overflows per `SPEC/program/ui-surface-budget.md` § Existing overflows.
 
-The 1 s clock includes **every required load** on that surface (projections, minimaps, Yarn/Jenny, required assets), not first chrome. Closed surfaces must be **unmounted**. Policy: `.cursor/rules/colonizethis-ui-surface-budget.mdc`; measurement: `SPEC/program/ui-surface-budget.md`.
+The 1 s clock includes **every required load** on that **touched** surface (projections, minimaps, Yarn/Jenny, required assets), not first chrome. Closed surfaces must be **unmounted**. Policy: `.cursor/rules/colonizethis-ui-surface-budget.mdc`; measurement: `SPEC/program/ui-surface-budget.md`.
 
-Evidence (at least one): open-path timing test using `kUiSurfaceOpenBudgetMs`; unmount test (panel/dialog keys / `GameWidget` / Jenny hosts **absent** after dismiss); or a recorded open on `dev` with wall-clock ≤ 1000 ms including required content. No evidence → **Gaps remain**.
+Evidence (at least one for each touched surface): open-path timing test using `kUiSurfaceOpenBudgetMs`; unmount test (panel/dialog keys / `GameWidget` / Jenny hosts **absent** after dismiss); or a recorded open on `dev` with wall-clock ≤ 1000 ms including required content. No evidence for a touched surface → **Gaps remain**. Non-UI issues or issues that do not touch game-app surfaces → row **`N/A: not game-app UI`**.
 
 ## Comment template
 
