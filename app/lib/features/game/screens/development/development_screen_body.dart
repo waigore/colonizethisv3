@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../package_logger.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/development_panel_projection_provider.dart';
 import '../../../../providers/game_service_provider.dart';
@@ -40,8 +39,6 @@ class DevelopmentScreenBody extends ConsumerStatefulWidget {
 }
 
 class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
-  static final _log = packageLogger('perf');
-
   final Set<String> _visitedRegionIds = {kRegionOldWorld};
   bool _readModelReady = false;
   bool _loggedInteractiveReady = false;
@@ -100,13 +97,7 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
       _loggedInteractiveReady = true;
       final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady('development');
       if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
-        final host = ctAppPerfSurfaceOpenBindingHost();
-        final line =
-            'ui_surface_open surface=development elapsed_ms=$elapsedMs '
-            'budget_ms=$kUiSurfaceOpenBudgetMs host=$host';
-        _log.i(line);
-        // stdout for profile `flutter drive` evidence capture (Refs #4687).
-        debugPrint(line);
+        ctAppPerfLogUiSurfaceOpen('development', elapsedMs);
       }
     }
 
