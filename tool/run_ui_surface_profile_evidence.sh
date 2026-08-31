@@ -225,6 +225,11 @@ _run_surface() {
     exit "$status"
   fi
 
+  if grep -qE 'Some tests failed|\+[0-9]+ -[1-9]' "$log"; then
+    echo "ERROR: integration tests failed for $surface. See $log" >&2
+    exit 1
+  fi
+
   if ! grep -q 'All tests passed' "$log"; then
     echo "ERROR: drive did not report All tests passed for $surface. See $log" >&2
     exit 1
