@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_constants.dart';
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../providers/game_service_provider.dart';
 import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
@@ -55,7 +57,11 @@ class CounselScreen extends ConsumerWidget {
         if (sentinel != null) return sentinel;
         final canEdit = shell.canMutateViaUi;
         final l10n = appL10n(context);
-        final mapContext = resolveCounselPanelMapContext(shellRef, displayGame);
+        final mapContext = counselPanelMapContextFromLoaded(
+          tryGetGameMapData(
+            () => shellRef.watch(gameServiceProvider).getMapData(displayGame.id),
+          ),
+        );
         return CtAppPerfInteractiveReadyMarker(
           markerName: 'counsel.interactiveReady',
           child: CounselScreenTabs(
