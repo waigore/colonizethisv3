@@ -15,6 +15,7 @@ import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/providers/production_panel_projection_provider.dart';
 import 'package:colonizethis_app/providers/units_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/victory_panel_session_cache_provider.dart';
+import 'package:colonizethis_app/providers/technology_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/region_minimap_provider.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -41,6 +42,7 @@ void clearActiveGameSession(ProviderContainer container) {
   container.read(unitsPanelSessionCacheProvider).reset();
   container.read(diplomacyPanelSessionCacheProvider).reset();
   container.read(victoryPanelSessionCacheProvider).reset();
+  container.read(technologyPanelSessionCacheProvider).reset();
   container.read(regionMinimapVisibleProvider.notifier).reset();
   container.read(mapProvinceOverlayVisibleProvider.notifier).reset();
   container.read(mapProvinceOwnershipTintVisibleProvider.notifier).reset();

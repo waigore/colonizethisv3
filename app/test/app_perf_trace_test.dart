@@ -66,6 +66,7 @@ void main() {
         'diplomacy.interactiveReady',
         'diplomacy.rowsBuild',
         'technology.interactiveReady',
+        'technology.slotsOpenPath',
         'victory.interactiveReady',
         'victory.openPath',
         'civilianUnits.interactiveReady',

@@ -63,6 +63,7 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 | `CtAppPerf.diplomacy.interactiveReady` | Post-frame after `GAME30001` chrome + faction-row list mount. |
 | `CtAppPerf.diplomacy.rowsBuild` | Sync `buildDiplomacyRows` in `diplomacyPanelRowsProvider`. |
 | `CtAppPerf.technology.interactiveReady` | Post-frame after `GAME40001` chrome + default Research Slots tab body mount (Tree tab deferred until selected). |
+| `CtAppPerf.technology.slotsOpenPath` | Sync Slots-tab preview bundle (`technologyPanelSlotsOpenPathProvider`). |
 | `CtAppPerf.victory.interactiveReady` | Post-frame after `GAME70001` chrome + standings + political minimap mount. |
 | `CtAppPerf.victory.openPath` | Sync standings, ownership colours, and OW minimap view-data bundle (`victoryPanelOpenPathProvider`). |
 | `CtAppPerf.development.*` | See § Development panel open path (`GAME80001`). |

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'technology_panel_body.dart';
+import 'technology_panel_open_path.dart';
 
 export 'technology_panel_constants.dart';
 export 'technology_panel_widgets.dart';
@@ -19,6 +20,7 @@ class TechnologyPanel extends StatelessWidget {
     required this.player,
     this.currentOrders = const Orders(),
     this.onOrdersChanged,
+    this.slotsOpenPath,
   });
 
   /// SPEC/ui/technology-panel.md — [UiScreenIds.technologyScreen]. Hosted by
@@ -29,6 +31,9 @@ class TechnologyPanel extends StatelessWidget {
   final Player player;
   final Orders currentOrders;
   final void Function(Orders orders)? onOrdersChanged;
+
+  /// Session-cached Slots-tab projections when hosted by [TechnologyScreen].
+  final TechnologyPanelSlotsOpenPathSnapshot? slotsOpenPath;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +48,7 @@ class TechnologyPanel extends StatelessWidget {
         player: player,
         currentOrders: currentOrders,
         onOrdersChanged: onOrdersChanged,
+        slotsOpenPath: slotsOpenPath,
       ),
     );
   }
