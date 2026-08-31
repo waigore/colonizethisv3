@@ -76,6 +76,7 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
   - **Android emulator:** `-d <emulator_id>` after `flutter emulators --launch <avd>` (or a connected device id from `flutter devices`).
   - **Operator replay:** `tool/run_ui_surface_profile_evidence.sh development --host <linux|android>` (see `docs/project-tools.md`) wraps the drive command and prints a PR-ready evidence table.
   - Capture cold open and same-turn warm re-open lines from drive stdout/logcat; `host=` must be `linux_desktop_profile` or `android_emulator_profile` respectively.
+  - **CI Android replay:** `.github/workflows/ui-surface-profile-evidence-android.yml` (manual dispatch or PR path trigger) runs the same harness on an API 34 emulator and uploads logs for PR/issue evidence.
 - **Repeated-entry stability** and **Flame lifecycle** are CI widget-test contracts (see UI spec ACs below).
 
 ### Shell map pause and panel map lifecycle (Refs #4687)
