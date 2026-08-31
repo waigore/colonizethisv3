@@ -1,4 +1,5 @@
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -16,8 +17,8 @@ List<ConfirmPreviewCase> overtureConfirmPreviewCases() => [
     assertLines: (lines, body) {
       expect(body, contains('£$overtureConsulateCost'));
       expect('£'.allMatches(body).length, 1);
-      expect(body.toLowerCase(), contains('explore'));
-      expect(body.toLowerCase(), contains('prospect'));
+      expect(body.toLowerCase(), contains(kWorkTargetExplore));
+      expect(body.toLowerCase(), contains(kWorkTargetProspect));
       expect(body.toLowerCase(), contains('first right'));
       expect(body, isNot(contains('-50')));
       expect(body, isNot(contains('-10')));
@@ -32,8 +33,8 @@ List<ConfirmPreviewCase> overtureConfirmPreviewCases() => [
     ),
     targetDisplayName: 'Spain',
     assertLines: (lines, body) {
-      expect(body.toLowerCase(), isNot(contains('explore')));
-      expect(body.toLowerCase(), isNot(contains('prospect')));
+      expect(body.toLowerCase(), isNot(contains(kWorkTargetExplore)));
+      expect(body.toLowerCase(), isNot(contains(kWorkTargetProspect)));
       expect(body.toLowerCase(), isNot(contains('purchase land')));
     },
   ),
