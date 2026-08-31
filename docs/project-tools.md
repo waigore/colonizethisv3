@@ -346,6 +346,23 @@ E2E_TIMING_OUT=./my_timing tool/run_e2e_timing.sh 3
 
 Output defaults to `.cursor/e2e-timing/` (gitignored). Paste the summary medians into the PR baseline/after table (Refs GitHub #2336 AC8–AC9).
 
+## run_ui_surface_profile_evidence.sh (UI surface open budget, #4687)
+
+Runs **profile/release** `flutter drive` for a game-app UI surface and extracts `ui_surface_open surface=… elapsed_ms=… budget_ms=1000 host=…` lines for PR wall-clock evidence on **Linux desktop** or **Android emulator** binding hosts. Spec: [SPEC/program/development-panel-read-model.md](../SPEC/program/development-panel-read-model.md) § Open-path wall-clock budget; harness: `app/integration_test/development_panel_surface_open_profile_test.dart`.
+
+**Invocation**
+
+```bash
+tool/run_ui_surface_profile_evidence.sh development
+tool/run_ui_surface_profile_evidence.sh development --host linux
+tool/run_ui_surface_profile_evidence.sh development --host android --device emulator-5554
+UI_SURFACE_PROFILE_OUT=tmp/profile-evidence tool/run_ui_surface_profile_evidence.sh development
+```
+
+Linux headless hosts use `xvfb-run` when `DISPLAY` is unset. Android: launch an AVD first (`flutter emulators --launch <name>`), then pass `--device` from `flutter devices`. The script fails if any captured line exceeds the 1 000 ms budget. Output logs default to `tmp/ui-surface-profile-evidence/` (gitignored).
+
+**CI (Android emulator):** `.github/workflows/ui-surface-profile-evidence-android.yml` runs on `workflow_dispatch` and on PRs that touch the development profile harness. Download the `ui-surface-profile-evidence-android-development` artifact for `ui_surface_open` lines with `host=android_emulator_profile`.
+
 ## compare_e2e_timing.sh (baseline vs after table, #2336)
 
 Reads two markdown summaries from `run_e2e_timing.sh` (capture one on `dev` tip, one on the PR branch) and prints a markdown table with per-test median deltas plus aggregate suite total and AC9 pass/fail (default **≥25%** aggregate reduction).

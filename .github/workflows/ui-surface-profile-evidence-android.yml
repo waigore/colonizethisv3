@@ -1,0 +1,83 @@
+name: UI surface profile evidence (Android)
+
+# Profile/release open-to-interactive evidence for GAME80001 on Android emulator
+# binding host (Refs #4687). Complements local/Linux replay via
+# tool/run_ui_surface_profile_evidence.sh.
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    branches:
+      - dev
+    paths:
+      - 'app/integration_test/development_panel_surface_open_profile_test.dart'
+      - 'app/lib/features/game/screens/development/**'
+      - 'packages/colonizethis_app_fixtures/lib/runtime/app_perf_trace.dart'
+      - 'tool/run_ui_surface_profile_evidence.sh'
+      - '.github/workflows/ui-surface-profile-evidence-android.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  development_panel_android:
+    name: GAME80001 profile open (Android emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.41.9'
+          cache: true
+
+      - name: Resolve dependencies (workspace)
+        run: dart pub get
+
+      - name: Precache Android artifacts
+        run: flutter precache --android
+
+      - name: Accept Android licenses
+        run: yes | flutter doctor --android-licenses
+
+      - name: Run profile evidence on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            cd "$GITHUB_WORKSPACE"
+            UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" bash tool/run_ui_surface_profile_evidence.sh development --host android
+
+      - name: Upload profile evidence log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-surface-profile-evidence-android-development
+          path: tmp/ui-surface-profile-evidence/
+          retention-days: 14
+
+      - name: Print evidence summary
+        if: success()
+        run: |
+          set -eu
+          log="$(find tmp/ui-surface-profile-evidence -name '*.log' -type f | sort | tail -1)"
+          echo "=== ui_surface_open lines (Android emulator) ==="
+          grep -E 'ui_surface_open surface=' "$log" || true

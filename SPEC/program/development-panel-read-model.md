@@ -74,7 +74,9 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
 - **1.0 s open-to-interactive** is a **profile/release** (non-debug) measurement on **Linux desktop and Android emulator** binding hosts. PR evidence uses DevTools `CtAppPerf.development*` markers including `development.interactiveReady` and the `ui_surface_open surface=development elapsed_ms=… budget_ms=1000 host=<binding_host>` info log (`SPEC/program/flutter-performance-tracing.md`). **Not** enforced by debug-mode `flutter test` wall-clock assertions on CI runners. CI surrogate: `app/test/development_panel_open_surface_budget_test.dart` (full-widget pump-to-interactive on golden fixture). **Binding-host replay harness:** `app/integration_test/development_panel_surface_open_profile_test.dart` via `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/development_panel_surface_open_profile_test.dart --profile -d <device>`:
   - **Linux desktop:** `-d linux` (xvfb acceptable on headless hosts).
   - **Android emulator:** `-d <emulator_id>` after `flutter emulators --launch <avd>` (or a connected device id from `flutter devices`).
+  - **Operator replay:** `tool/run_ui_surface_profile_evidence.sh development --host <linux|android>` (see `docs/project-tools.md`) wraps the drive command and prints a PR-ready evidence table.
   - Capture cold open and same-turn warm re-open lines from drive stdout/logcat; `host=` must be `linux_desktop_profile` or `android_emulator_profile` respectively.
+  - **CI Android replay:** `.github/workflows/ui-surface-profile-evidence-android.yml` (manual dispatch or PR path trigger) runs the same harness on an API 34 emulator and uploads logs for PR/issue evidence.
 - **Repeated-entry stability** and **Flame lifecycle** are CI widget-test contracts (see UI spec ACs below).
 
 ### Shell map pause and panel map lifecycle (Refs #4687)
