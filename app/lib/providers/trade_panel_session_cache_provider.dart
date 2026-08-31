@@ -9,6 +9,7 @@ import 'package:colonizethis_logic/industry_counsel_api.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/services/game_service/try_get_game_map_data.dart';
 import '../features/game/widgets/shell/shell_player_context.dart';
 import 'development_panel_projection_provider.dart'
     show developmentPanelOrdersRevision, developmentPanelWorldRevision;
@@ -76,7 +77,9 @@ final tradePanelTradeCounselHighlightsProvider = Provider.autoDispose<
   if (game == null) return null;
   final orders = ref.watch(currentOrdersProvider);
   final desiredOutputByRecipe = ref.watch(productionDesiredOutputProvider);
-  final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+  final mapData = tryGetGameMapData(
+    () => ref.watch(gameServiceProvider).getMapData(game.id),
+  );
   if (mapData == null) return null;
 
   final playerId = resolveShellPanelPlayerId(
