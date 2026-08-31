@@ -713,10 +713,11 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - **1.0 s open-to-interactive** is a **profile/release** measurement on Linux desktop and Android emulator. PR evidence uses DevTools `CtAppPerf.provinceOverlay.*` markers including `provinceOverlay.interactiveReady`. Not enforced by debug-mode `flutter test` wall-clock assertions on CI runners.
 - **Narrow layout:** `CtTabStrip.lazyTabBodies: true` — Political (index 0) builds on first open; Economic, Military, Civilian, and Naval bodies build on first tab selection; Tile (index 1) builds on first selection.
 - **Wide layout:** unchanged single scroll column (deferred section virtualization is a follow-up slice).
-- **Session read-model cache** and wide lazy sections are follow-up slices on the same issue.
+- **Session read-model cache:** `provinceOverlayReadModelCacheProvider` memoizes province-wide extraction, available counts, and town bonus per `displayId`, plus human connectivity, across overlay close within the same game turn; invalidated on turn/world revision and `clearActiveGameSession`. Wide lazy sections are a follow-up slice.
 
 ### Acceptance criteria (performance)
 
+- Given the overlay is closed and the player taps the **same** province before Next turn with unchanged game/orders/fog, when it reopens, then `resolveProvinceOverlayProvinceReadModel` returns the same cached object identity for province-wide extraction/availability/town bonus (`app/test/province_overlay_read_model_cache_test.dart`).
 - Given narrow `MAP20001` on a representative campaign fixture, when the overlay first opens on the Political tab, then Economic / Military / Civilian / Naval tab bodies are not built until first selected (`app/test/province_overlay_lazy_open_test.dart`).
 - Given the overlay mounts in profile/release, when chrome + Political paint, then `CtAppPerf.provinceOverlay.interactiveReady` is emitted once per mount (DevTools filter `CtAppPerf.provinceOverlay`).
 

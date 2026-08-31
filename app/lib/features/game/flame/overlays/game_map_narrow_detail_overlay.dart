@@ -9,6 +9,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import '../../../../providers/province_overlay_read_model_cache_provider.dart';
 import '../caches/per_player_army_move_picker_cache.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import 'province_detail_overlay_host_support.dart';
@@ -93,6 +94,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         onHighlightTiles: hostArgs.onHighlightTiles,
         onClose: hostArgs.onClose,
         bus: hostArgs.bus,
+        readModelCache: ref.read(provinceOverlayReadModelCacheProvider),
         homeFleetCargo: ref.watch(homeFleetCargoSummaryProvider),
       ),
     );
