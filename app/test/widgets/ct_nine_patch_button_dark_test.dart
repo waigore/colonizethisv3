@@ -1,5 +1,3 @@
-// Widget tests for the dark editorial-monocle visual contract on
-// `CtNinePatchButton` (`Refs #2859` S2 / R1). Verifies the AC set:
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

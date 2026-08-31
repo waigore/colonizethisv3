@@ -29,23 +29,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-
 import 'app_shell_harness.dart';
 import 'game_fixture.dart';
 import 'map_view_fixture.dart';
 import 'app_test_hive_harness.dart';
-
-/// Loads the committed seed-42 `Game` + map-view fixtures instead of paying the
-/// ~7-11s `getDebugInitGameResult()` procedural map generation per isolate. This
-/// suite mounts the minimap chrome and reads only structural map data
-/// (`tileKeysByRegionAndProvince`, region geometry), so the cheap decode is
-/// sufficient (Refs #3656).
 ({Game game, InitGameMapViewData mapViewData}) _loadMapAreaFixture() => (
   game: loadSeed42Game(),
   mapViewData: loadSeed42MapViewData(),
 );
-
-/// Avoid open-ended [pumpAndSettle] (animations/shell work can hang tests).
 Future<void> _pumpUntilMinimapPaintVisible(WidgetTester tester) async {
   const step = Duration(milliseconds: 50);
   const maxSteps = 80;
@@ -60,7 +51,6 @@ Future<void> _pumpUntilMinimapPaintVisible(WidgetTester tester) async {
     'check GameMapArea / map stack.',
   );
 }
-
 String _firstOldWorldTileKey(Game game) {
   final m = game.worldState.tileKeysByRegionAndProvince['oldWorld'];
   if (m == null) {
@@ -71,18 +61,15 @@ String _firstOldWorldTileKey(Game game) {
   }
   throw StateError('no tile keys under oldWorld');
 }
-
 /// [Positioned] wrapping [GameRegionMinimap] in [GameMapArea] (see `game_map_area.dart`).
 double? _minimapPositionedRight(WidgetTester tester) {
   final ctx = tester.element(find.byType(GameRegionMinimap));
   return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
 }
-
 double? _feedCardPositionedRight(WidgetTester tester) {
   final ctx = tester.element(find.byType(PlayerTurnEventFeedCard));
   return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
 }
-
 Future<({Game game, InitGameMapViewData mapViewData, AppEventBus bus})>
 _pumpMapAreaWithMinimap(
   WidgetTester tester, {
@@ -129,7 +116,6 @@ _pumpMapAreaWithMinimap(
   await _pumpUntilMinimapPaintVisible(tester);
   return (game: resolvedGame, mapViewData: init.mapViewData, bus: bus);
 }
-
 void main() {
   suppressLogsForTests();
 

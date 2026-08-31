@@ -1,5 +1,3 @@
-// Blockade capital-link player copy (Refs #4516).
-
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
@@ -13,7 +11,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'app_shell_harness.dart';
 import 'naval_mission_goldens_test_support.dart';
 import 'panel_test_fixtures.dart';

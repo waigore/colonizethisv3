@@ -106,3 +106,32 @@ Future<void> pumpTechnologyPanelGolden(
     child: hosted,
   );
 }
+
+Player technologyPanelOccupancyPlayer({
+  required Map<int, ResearchSlotAssignment> assignments,
+  Map<String, int> progress = const <String, int>{},
+}) {
+  return Player(
+    id: 'p1',
+    displayName: 'P1',
+    isHuman: true,
+    treasury: 8000,
+    researchSlots: 3,
+    techUnlocked: const <String, bool>{},
+    researchProgressByTechId: progress,
+    researchSlotAssignments: assignments,
+  );
+}
+
+Game technologyPanelOccupancyGame(Player player) {
+  return Game(
+    id: 'occupancy-test',
+    worldState: const WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: [player],
+  );
+}
+

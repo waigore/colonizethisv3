@@ -1,20 +1,13 @@
-// Pins level- and style-aware town map icons and townDevelopmentLevel floor (Refs #3870).
-
 import 'dart:async';
 import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
-
 import 'ct_region_map_test_support.dart';
-
 void main() {
   suppressLogsForTests();
-
   group('Town icon cache', () {
     test('town icon policy uses 16 style/level variants plus port', () {
       expect(kTownIconIds, contains('port'));
@@ -24,12 +17,10 @@ void main() {
       expect(kTownIconIds, isNot(contains('town_inland_64')));
       expect(kTownIconIds.length, 16);
     });
-
     test('town and port render sizes follow spec', () {
       expect(TownIconCache.townIconSize, equals(64.0));
       expect(TownIconCache.portIconSize, equals(64.0));
     });
-
     test('S10 destination sizes strictly increase by level (Refs #3870)', () {
       expect(TownIconCache.townIconDestinationSize(1), 48.0);
       expect(TownIconCache.townIconDestinationSize(2), 56.0);
@@ -49,12 +40,10 @@ void main() {
         isNot(equals(TownIconCache.townIconDestinationSize(3))),
       );
     });
-
     test('S10 clamps out-of-range levels to 1–4 destination sizes', () {
       expect(TownIconCache.townIconDestinationSize(0), 48.0);
       expect(TownIconCache.townIconDestinationSize(99), 64.0);
     });
-
     test('townIconIdForMarker resolves style and level', () {
       expect(
         TownIconCache.townIconIdForMarker(

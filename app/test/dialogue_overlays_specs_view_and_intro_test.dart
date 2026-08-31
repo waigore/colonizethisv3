@@ -1,16 +1,3 @@
-/// Pins SPEC/ui contracts for the dialogue Jenny-adapter and the three
-/// pixel-art dialogue overlays.
-///
-/// Tracks:
-///
-/// - `SPEC/ui/ct-dialogue-view.md` (Jenny `DialogueView` subclass that drives
-///   line / choice presentation via `onStateChanged`, `advanceLine`,
-///   `selectOption`).
-/// - `SPEC/ui/game-start-intro-overlay.md` (modal blocking overlay that runs
-///   the `game_start_intro` Yarn node and notifies the host via
-///   `onDismissed`).
-/// - `SPEC/ui/overture-dialogue-overlay.md` (modal blocking overlay that lets
-///   the human-controlled faction Accept / Reject each pending
 ///   `OvertureOffer` and Submit `OvertureDecision`s via `onDecisions`).
 /// - `SPEC/ui/call-to-arms-dialogue-overlay.md` (modal blocking overlay that
 ///   lets the human-controlled faction Join / Refuse each pending
