@@ -60,9 +60,14 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 | `CtAppPerf.militaryUnits.treeBuild` | Sync military tree assembly (`resolveUnitsPanelMilitaryGroups`). |
 | `CtAppPerf.navalUnits.interactiveReady` | Post-frame after `UNIT30001` sheet chrome + primary list mount. |
 | `CtAppPerf.navalUnits.treeBuild` | Sync naval tree assembly (`resolveUnitsPanelNavalTree`). |
+| `CtAppPerf.diplomacy.interactiveReady` | Post-frame after `GAME30001` chrome + faction-row list mount. |
+| `CtAppPerf.diplomacy.rowsBuild` | Sync `buildDiplomacyRows` in `diplomacyPanelRowsProvider`. |
+| `CtAppPerf.technology.interactiveReady` | Post-frame after `GAME40001` chrome + default Research Slots tab body mount (Tree tab deferred until selected). |
+| `CtAppPerf.victory.interactiveReady` | Post-frame after `GAME70001` chrome + standings + political minimap mount. |
+| `CtAppPerf.victory.openPath` | Sync standings, ownership colours, and OW minimap view-data bundle (`victoryPanelOpenPathProvider`). |
 | `CtAppPerf.development.*` | See § Development panel open path (`GAME80001`). |
 
-Filter `CtAppPerf.production`, `CtAppPerf.trade`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. Additional route-hosted rail surfaces (`GAME30001`, `GAME40001`, `GAME70001`, `GAME90001` from rail) gain markers in follow-up slices. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
+Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppPerf.technology`, `CtAppPerf.victory`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. `GAME90001` Counsel-from-rail markers remain follow-up. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
 
 ---
 

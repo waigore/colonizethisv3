@@ -10,9 +10,11 @@ import 'package:colonizethis_app/providers/province_overlay_read_model_cache_pro
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
 import 'package:colonizethis_app/providers/offline_queue_provider.dart';
+import 'package:colonizethis_app/providers/diplomacy_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/providers/production_panel_projection_provider.dart';
 import 'package:colonizethis_app/providers/units_panel_session_cache_provider.dart';
+import 'package:colonizethis_app/providers/victory_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/region_minimap_provider.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -37,6 +39,8 @@ void clearActiveGameSession(ProviderContainer container) {
   container.read(provinceOverlayReadModelCacheProvider).reset();
   container.read(productionPanelSessionCacheProvider).reset();
   container.read(unitsPanelSessionCacheProvider).reset();
+  container.read(diplomacyPanelSessionCacheProvider).reset();
+  container.read(victoryPanelSessionCacheProvider).reset();
   container.read(regionMinimapVisibleProvider.notifier).reset();
   container.read(mapProvinceOverlayVisibleProvider.notifier).reset();
   container.read(mapProvinceOwnershipTintVisibleProvider.notifier).reset();

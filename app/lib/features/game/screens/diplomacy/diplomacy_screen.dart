@@ -13,7 +13,9 @@ import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/diplomacy_panel_session_cache_provider.dart';
 import '../../../../widgets/ct_action_text_button.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
@@ -93,18 +95,26 @@ class DiplomacyScreen extends ConsumerWidget {
           topology = loaded.combinedTopology;
         }
         final readOnly = !shell.canMutateViaUi;
-        return GrantOrSubsidyListener(
-          bus: bus,
-          game: displayGame,
-          humanPlayerId: humanPlayerId,
-          readOnly: readOnly,
-          child: DiplomacyPanel(
+        final rows = shellRef.watch(diplomacyPanelRowsProvider);
+        if (rows == null) {
+          return const SizedBox.shrink();
+        }
+        return CtAppPerfInteractiveReadyMarker(
+          markerName: 'diplomacy.interactiveReady',
+          child: GrantOrSubsidyListener(
+            bus: bus,
             game: displayGame,
             humanPlayerId: humanPlayerId,
-            topology: topology,
-            currentOrders: orders,
-            bus: bus,
             readOnly: readOnly,
+            child: DiplomacyPanel(
+              game: displayGame,
+              humanPlayerId: humanPlayerId,
+              topology: topology,
+              currentOrders: orders,
+              rows: rows,
+              bus: bus,
+              readOnly: readOnly,
+            ),
           ),
         );
       },
