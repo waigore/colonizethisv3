@@ -91,7 +91,7 @@ DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/pro
 - Given a Builder with pending improve and an Engineer with in-progress road work in region R, when assigned civilians build for R, then both units appear sorted by unit id with correct `workTarget` and `targetTileKey`.
 - Given `GAME80001` is mounted over the live game map, when the shell map Flame engine is inspected, then it is paused (`enginePaused`) until the panel route pops.
 - Given the player pops `GAME80001`, when the shell map renders again, then its Flame engine is resumed and reflects the current game and draft-order revision.
-- Given connectivity/scopes are already computed and game, draft orders, and fog have not changed, when the player re-opens `GAME80001` in the same turn, then panel providers reuse `developmentPanelSessionCacheProvider` entries (same object identity for connectivity, region scopes, and map snapshots in tests) so re-open avoids redundant scans.
+- Given connectivity/scopes are already computed and game, draft orders, and fog have not changed, when the player re-opens `GAME80001` in the same turn, then panel providers reuse `developmentPanelSessionCacheProvider` entries (same object identity for connectivity, region scopes, and map snapshots in tests) so re-open avoids redundant scans. CI profiling anchors: `app/test/development_panel_open_path_timing_test.dart` (≥50% warm vs cold on golden fixture; not a debug wall-clock 1s gate).
 - Given the panel region map widget is disposed, when Flame engine state is inspected in tests, then the panel map engine is paused and no live ticker remains on a disposed panel map.
 
 ## Assign selection (Slice B)
