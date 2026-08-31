@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Profile/release open-to-interactive evidence for game-app UI surfaces (Refs #4687).
+# Profile/release open-to-interactive evidence for game-app UI surfaces (Refs #4687, #4688).
 #
 # Captures `ui_surface_open surface=<id> elapsed_ms=… budget_ms=1000 host=…` lines
 # from `flutter drive --profile` for PR wall-clock evidence on binding hosts.
 #
 # Usage from repo root:
-#   tool/run_ui_surface_profile_evidence.sh development
-#   tool/run_ui_surface_profile_evidence.sh development --host linux
+#   tool/run_ui_surface_profile_evidence.sh trade
+#   tool/run_ui_surface_profile_evidence.sh all-empire-rail --host linux
 #   tool/run_ui_surface_profile_evidence.sh development --host android --device emulator-5554
-#   UI_SURFACE_PROFILE_OUT=tmp/profile-evidence tool/run_ui_surface_profile_evidence.sh development
+#   UI_SURFACE_PROFILE_OUT=tmp/profile-evidence tool/run_ui_surface_profile_evidence.sh trade
 #
 # Linux desktop (headless): uses xvfb-run when DISPLAY is unset.
 # Android emulator: launch an AVD first (`flutter emulators --launch <name>`), then pass
@@ -34,7 +34,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     -h | --help)
-      sed -n '1,18p' "$0"
+      sed -n '1,22p' "$0"
       exit 0
       ;;
     *)
@@ -44,17 +44,47 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-case "$SURFACE" in
-  development)
-    TARGET="integration_test/development_panel_surface_open_profile_test.dart"
-    EXPECTED_HOST_LINUX="linux_desktop_profile"
-    EXPECTED_HOST_ANDROID="android_emulator_profile"
-    ;;
-  *)
-    echo "Unsupported surface: $SURFACE (supported: development)" >&2
-    exit 2
-    ;;
-esac
+_surface_target() {
+  case "$1" in
+    development)
+      echo "integration_test/development_panel_surface_open_profile_test.dart"
+      ;;
+    trade)
+      echo "integration_test/trade_panel_surface_open_profile_test.dart"
+      ;;
+    production)
+      echo "integration_test/production_panel_surface_open_profile_test.dart"
+      ;;
+    technology)
+      echo "integration_test/technology_panel_surface_open_profile_test.dart"
+      ;;
+    diplomacy)
+      echo "integration_test/diplomacy_panel_surface_open_profile_test.dart"
+      ;;
+    victory)
+      echo "integration_test/victory_panel_surface_open_profile_test.dart"
+      ;;
+    counsel)
+      echo "integration_test/counsel_panel_surface_open_profile_test.dart"
+      ;;
+    units)
+      echo "integration_test/units_panels_surface_open_profile_test.dart"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+ALL_EMPIRE_RAIL_SURFACES=(
+  trade
+  production
+  technology
+  diplomacy
+  victory
+  counsel
+  units
+)
 
 _resolve_flutter() {
   if [[ -n "${FLUTTER_BIN:-}" ]]; then
@@ -110,61 +140,73 @@ _resolve_device() {
   esac
 }
 
-DEVICE_ID="$(_resolve_device)"
-mkdir -p "$OUT_DIR"
-stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-log="$OUT_DIR/${SURFACE}_${DEVICE_ID}_${stamp}.log"
+_run_surface() {
+  local surface="$1"
+  local target
+  target="$(_surface_target "$surface")" || {
+    echo "Unsupported surface: $surface" >&2
+    exit 2
+  }
 
-cd "$ROOT/app"
-"$FLUTTER" pub get >/dev/null
+  local device_id="$(_resolve_device)"
+  mkdir -p "$OUT_DIR"
+  local stamp
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  local log="$OUT_DIR/${surface}_${device_id}_${stamp}.log"
 
-if [[ "$DEVICE_ID" == "linux" ]]; then
-  "$FLUTTER" config --enable-linux-desktop >/dev/null 2>&1 || true
-  if [[ -z "${DISPLAY:-}" ]] && command -v xvfb-run >/dev/null; then
-    RUNNER=(xvfb-run -a "$FLUTTER")
+  cd "$ROOT/app"
+  "$FLUTTER" pub get >/dev/null
+
+  local -a runner
+  if [[ "$device_id" == "linux" ]]; then
+    "$FLUTTER" config --enable-linux-desktop >/dev/null 2>&1 || true
+    if [[ -z "${DISPLAY:-}" ]] && command -v xvfb-run >/dev/null; then
+      runner=(xvfb-run -a "$FLUTTER")
+    else
+      runner=("$FLUTTER")
+    fi
   else
-    RUNNER=("$FLUTTER")
+    runner=("$FLUTTER")
   fi
-else
-  RUNNER=("$FLUTTER")
-fi
 
-echo "Running profile drive: surface=$SURFACE device=$DEVICE_ID log=$log"
-set +e
-"${RUNNER[@]}" drive \
-  --driver=test_driver/integration_test.dart \
-  --target="$TARGET" \
-  --profile \
-  -d "$DEVICE_ID" \
-  --no-pub >"$log" 2>&1
-status=$?
-set -e
+  echo "Running profile drive: surface=$surface device=$device_id log=$log"
+  set +e
+  "${runner[@]}" drive \
+    --driver=test_driver/integration_test.dart \
+    --target="$target" \
+    --profile \
+    -d "$device_id" \
+    --no-pub >"$log" 2>&1
+  local status=$?
+  set -e
 
-echo ""
-echo "=== ui_surface_open lines ==="
-grep -E 'ui_surface_open surface=' "$log" || true
+  echo ""
+  echo "=== ui_surface_open lines ($surface) ==="
+  grep -E 'ui_surface_open surface=' "$log" || true
 
-if [[ $status -ne 0 ]]; then
-  echo "ERROR: flutter drive failed (exit $status). See $log" >&2
-  exit "$status"
-fi
+  if [[ $status -ne 0 ]]; then
+    echo "ERROR: flutter drive failed for $surface (exit $status). See $log" >&2
+    exit "$status"
+  fi
 
-if ! grep -q 'All tests passed' "$log"; then
-  echo "ERROR: drive did not report All tests passed. See $log" >&2
-  exit 1
-fi
+  if ! grep -q 'All tests passed' "$log"; then
+    echo "ERROR: drive did not report All tests passed for $surface. See $log" >&2
+    exit 1
+  fi
 
-export UI_SURFACE_PROFILE_LOG="$log"
-python3 - <<'PY'
+  export UI_SURFACE_PROFILE_LOG="$log"
+  export UI_SURFACE_PROFILE_SURFACE="$surface"
+  python3 - <<'PY'
 import os
 import re
 import sys
 from pathlib import Path
 
+surface = os.environ["UI_SURFACE_PROFILE_SURFACE"]
 log = Path(os.environ["UI_SURFACE_PROFILE_LOG"]).read_text()
 lines = [m.group(0) for m in re.finditer(r"ui_surface_open surface=\S+[^\n]*", log)]
 if not lines:
-    print("ERROR: no ui_surface_open lines in log", file=sys.stderr)
+    print(f"ERROR: no ui_surface_open lines in log for {surface}", file=sys.stderr)
     sys.exit(1)
 
 budget = 1000
@@ -175,13 +217,13 @@ for line in lines:
         violations.append(line)
 
 if violations:
-    print("ERROR: open-to-interactive exceeded budget:", file=sys.stderr)
+    print(f"ERROR: open-to-interactive exceeded budget for {surface}:", file=sys.stderr)
     for v in violations:
         print(f"  {v}", file=sys.stderr)
     sys.exit(1)
 
 print("")
-print("Evidence summary (paste into PR / issue comment):")
+print(f"Evidence summary — {surface} (paste into PR / issue comment):")
 print("")
 print("| Scenario | ui_surface_open line |")
 print("|----------|----------------------|")
@@ -190,5 +232,18 @@ for i, line in enumerate(lines):
     print(f"| {label} | `{line}` |")
 PY
 
-echo ""
-echo "Wrote full log: $log"
+  echo ""
+  echo "Wrote full log: $log"
+}
+
+if [[ "$SURFACE" == "all-empire-rail" ]]; then
+  for s in "${ALL_EMPIRE_RAIL_SURFACES[@]}"; do
+    _run_surface "$s"
+    echo ""
+    echo "---"
+    echo ""
+  done
+  exit 0
+fi
+
+_run_surface "$SURFACE"

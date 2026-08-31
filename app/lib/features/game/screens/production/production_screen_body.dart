@@ -188,6 +188,7 @@ class _ProductionScreenBodyState extends ConsumerState<ProductionScreenBody> {
     );
     final interactivePanel = CtAppPerfInteractiveReadyMarker(
       markerName: 'production.interactiveReady',
+      surfaceOpenId: 'production',
       child: productionPanel,
     );
     if (kCtE2EEnabled) {
