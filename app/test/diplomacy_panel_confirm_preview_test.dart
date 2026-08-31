@@ -4,6 +4,7 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -97,8 +98,8 @@ void main() {
       final confirm = await confirmFuture;
       final body = confirm.message;
       expect(body, contains('£$overtureConsulateCost'));
-      expect(body.toLowerCase(), contains('explore'));
-      expect(body.toLowerCase(), contains('prospect'));
+      expect(body.toLowerCase(), contains(kWorkTargetExplore));
+      expect(body.toLowerCase(), contains(kWorkTargetProspect));
       expect(body, isNot(contains('Confirm Consulate against')));
     },
   );
