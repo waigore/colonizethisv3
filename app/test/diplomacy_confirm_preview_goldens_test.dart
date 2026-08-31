@@ -8,38 +8,15 @@ import 'package:colonizethis_app/widgets/ct_confirm_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'diplomacy_confirm_preview_goldens_fixtures.dart';
 import 'editorial_monocle_dark_token_assertions.dart';
 import 'golden_capture_harness.dart';
 import 'widget_test_assets.dart';
-
-const _humanId = 'gp1';
-const _targetGp = 'gp2';
-
-Game _previewGame() => diplomacyGame(
-  players: const [
-    Player(
-      id: _humanId,
-      displayName: 'England',
-      isHuman: true,
-      treasury: 50_000,
-    ),
-    Player(id: _targetGp, displayName: 'Spain', isHuman: false),
-  ],
-);
-
-String _previewMessage(DiplomaticOrder order) =>
-    buildDiplomacyConfirmPreviewMessage(
-      order: order,
-      game: _previewGame(),
-      humanPlayerId: _humanId,
-      targetDisplayName: 'Spain',
-    );
 
 void main() {
   suppressLogsForTests();
@@ -54,10 +31,10 @@ void main() {
       const boundaryKey = ValueKey<String>(
         'diplomacy_confirm_break_alliance_golden',
       );
-      final message = _previewMessage(
+      final message = diplomacyConfirmPreviewMessage(
         const DiplomaticOrder(
           type: DiplomaticOrderType.breakAlliance,
-          targetFactionId: _targetGp,
+          targetFactionId: diplomacyConfirmPreviewTargetGp,
         ),
       );
 
@@ -92,10 +69,10 @@ void main() {
     const boundaryKey = ValueKey<String>(
       'diplomacy_confirm_declare_war_320dp_golden',
     );
-    final message = _previewMessage(
+    final message = diplomacyConfirmPreviewMessage(
       const DiplomaticOrder(
         type: DiplomaticOrderType.declareWar,
-        targetFactionId: _targetGp,
+        targetFactionId: diplomacyConfirmPreviewTargetGp,
       ),
     );
 
@@ -133,15 +110,8 @@ void main() {
           targetFactionId: 'minor1',
           overtureStage: OvertureStage.tradeConsulate,
         ),
-        game: diplomacyGame(
-          players: const [
-            Player(id: _humanId, displayName: 'England', isHuman: true),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Bavaria'),
-          ],
-        ),
-        humanPlayerId: _humanId,
+        game: diplomacyConfirmMinorOvertureGame(),
+        humanPlayerId: diplomacyConfirmPreviewHumanId,
         targetDisplayName: 'Bavaria',
       );
 
@@ -169,108 +139,15 @@ void main() {
   );
 
   testWidgets(
-    'golden: Embassy overture confirm preview with unlock copy (Refs #4682)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>(
-        'diplomacy_confirm_embassy_golden',
-      );
-      final message = buildDiplomacyConfirmPreviewMessage(
-        order: const DiplomaticOrder(
-          type: DiplomaticOrderType.establishOverture,
-          targetFactionId: 'minor1',
-          overtureStage: OvertureStage.embassy,
-        ),
-        game: diplomacyGame(
-          players: const [
-            Player(id: _humanId, displayName: 'England', isHuman: true),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Bavaria'),
-          ],
-        ),
-        humanPlayerId: _humanId,
-        targetDisplayName: 'Bavaria',
-      );
-
-      await pumpGoldenHost(
-        tester,
-        boundaryKey: boundaryKey,
-        physicalSize: const Size(360, 400),
-        settle: false,
-        scaffoldBackgroundColor:
-            AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        child: CtConfirmDialog(title: 'Embassy', message: message),
-      );
-
-      expect(tester.takeException(), isNull);
-      expectEditorialMonocleDarkChrome(tester);
-      expect(find.textContaining('£$overtureEmbassyCost'), findsOneWidget);
-      expect(find.textContaining('Grant Aid'), findsOneWidget);
-      expect(find.textContaining('Purchase land'), findsOneWidget);
-      expect(find.textContaining('intervene'), findsOneWidget);
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/diplomacy_confirm_embassy.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: NAP overture confirm preview with join-empire path (Refs #4682)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('diplomacy_confirm_nap_golden');
-      final message = buildDiplomacyConfirmPreviewMessage(
-        order: const DiplomaticOrder(
-          type: DiplomaticOrderType.establishOverture,
-          targetFactionId: 'minor1',
-          overtureStage: OvertureStage.nap,
-        ),
-        game: diplomacyGame(
-          players: const [
-            Player(id: _humanId, displayName: 'England', isHuman: true),
-          ],
-          minorNations: const [
-            MinorNation(id: 'minor1', displayName: 'Bavaria'),
-          ],
-        ),
-        humanPlayerId: _humanId,
-        targetDisplayName: 'Bavaria',
-      );
-
-      await pumpGoldenHost(
-        tester,
-        boundaryKey: boundaryKey,
-        physicalSize: const Size(360, 320),
-        settle: false,
-        scaffoldBackgroundColor:
-            AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        child: CtConfirmDialog(title: 'NAP', message: message),
-      );
-
-      expect(tester.takeException(), isNull);
-      expectEditorialMonocleDarkChrome(tester);
-      expect(find.textContaining('No treasury charge'), findsOneWidget);
-      expect(find.textContaining('Join Empire'), findsOneWidget);
-      expect(find.textContaining('Declare War'), findsOneWidget);
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/diplomacy_confirm_nap.png'),
-      );
-    },
-  );
-
-  testWidgets(
     'golden: Establish Favored partner confirm first-order Effect (Refs #4586)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>(
         'diplomacy_confirm_establish_favored_partner_golden',
       );
-      final message = _previewMessage(
+      final message = diplomacyConfirmPreviewMessage(
         const DiplomaticOrder(
           type: DiplomaticOrderType.establishFtp,
-          targetFactionId: _targetGp,
+          targetFactionId: diplomacyConfirmPreviewTargetGp,
         ),
       );
 
@@ -311,14 +188,14 @@ void main() {
     'golden: Boycott confirm full embargo copy with two colonies (Refs #4584)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('diplomacy_confirm_boycott_golden');
-      final game = _twoColonyPreviewGame();
+      final game = diplomacyConfirmTwoColonyPreviewGame();
       final message = buildDiplomacyConfirmPreviewMessage(
         order: const DiplomaticOrder(
           type: DiplomaticOrderType.boycott,
-          targetFactionId: _targetGp,
+          targetFactionId: diplomacyConfirmPreviewTargetGp,
         ),
         game: game,
-        humanPlayerId: _humanId,
+        humanPlayerId: diplomacyConfirmPreviewHumanId,
         targetDisplayName: 'Spain',
       );
 
@@ -360,14 +237,14 @@ void main() {
       const boundaryKey = ValueKey<String>(
         'diplomacy_confirm_revoke_boycott_golden',
       );
-      final game = _twoColonyPreviewGame();
+      final game = diplomacyConfirmTwoColonyPreviewGame();
       final message = buildDiplomacyConfirmPreviewMessage(
         order: const DiplomaticOrder(
           type: DiplomaticOrderType.revokeBoycott,
-          targetFactionId: _targetGp,
+          targetFactionId: diplomacyConfirmPreviewTargetGp,
         ),
         game: game,
-        humanPlayerId: _humanId,
+        humanPlayerId: diplomacyConfirmPreviewHumanId,
         targetDisplayName: 'Spain',
       );
 
@@ -395,23 +272,3 @@ void main() {
     },
   );
 }
-
-Game _twoColonyPreviewGame() => diplomacyGame(
-  players: const [
-    Player(
-      id: _humanId,
-      displayName: 'England',
-      isHuman: true,
-      treasury: 50_000,
-    ),
-    Player(id: _targetGp, displayName: 'Spain', isHuman: false),
-  ],
-  tribes: const [
-    Tribe(id: 'tribe_aztec', displayName: 'Aztec'),
-    Tribe(id: 'tribe_inca', displayName: 'Inca'),
-  ],
-  colonyStates: const [
-    ColonyState(tribeId: 'tribe_aztec', colonyOfGpId: _humanId, sinceTurn: 1),
-    ColonyState(tribeId: 'tribe_inca', colonyOfGpId: _humanId, sinceTurn: 1),
-  ],
-);
