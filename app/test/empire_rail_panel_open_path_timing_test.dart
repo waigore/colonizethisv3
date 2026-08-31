@@ -244,4 +244,52 @@ void main() {
       );
     },
   );
+
+  test(
+    'cached civilian open path resolve is faster than cold build (Refs #4688 Slice 6)',
+    () {
+      const iterations = 20;
+      final game = buildCivilianPanelTestGame();
+      const ownerIds = {kPanelTestHumanPlayerId};
+      const orders = Orders();
+
+      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
+        () => resolveCivilianUnitsPanelOpenPath(
+          cache: UnitsPanelSessionCache(),
+          game: game,
+          ownerIds: ownerIds,
+          currentOrders: orders,
+          useSessionCache: false,
+        ),
+        iterations: iterations,
+      );
+
+      final cache = UnitsPanelSessionCache();
+      resolveCivilianUnitsPanelOpenPath(
+        cache: cache,
+        game: game,
+        ownerIds: ownerIds,
+        currentOrders: orders,
+        useSessionCache: true,
+      );
+
+      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
+        () => resolveCivilianUnitsPanelOpenPath(
+          cache: cache,
+          game: game,
+          ownerIds: ownerIds,
+          currentOrders: orders,
+          useSessionCache: true,
+        ),
+        iterations: iterations,
+      );
+
+      expect(warmMicros, lessThan(coldMicros));
+      expect(
+        (coldMicros - warmMicros) / coldMicros,
+        greaterThanOrEqualTo(0.5),
+        reason: 'cold=$coldMicrosµs warm=$warmMicrosµs',
+      );
+    },
+  );
 }

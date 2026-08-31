@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/widgets/panels/tree_builders/military_tree_builder.dart';
 import '../features/game/widgets/panels/tree_builders/naval_tree_builder.dart';
+import '../features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'development_panel_projection_provider.dart'
     show developmentPanelOrdersRevision, developmentPanelWorldRevision;
 
@@ -35,18 +36,40 @@ typedef NavalTreeSnapshot = List<
       List<NavalTreeLocationNode> locations,
     })>;
 
+typedef UnitsPanelCivilianSessionRevision = ({
+  UnitsPanelStaticSessionRevision staticRevision,
+  String ownerIdsKey,
+  int ordersRevision,
+});
+
+class CivilianUnitsPanelOpenPathSnapshot {
+  const CivilianUnitsPanelOpenPathSnapshot({
+    required this.provinceNames,
+    required this.oldWorldUnits,
+    required this.newWorldUnits,
+  });
+
+  final Map<String, String> provinceNames;
+  final List<Unit> oldWorldUnits;
+  final List<Unit> newWorldUnits;
+}
+
 class UnitsPanelSessionCacheState {
   const UnitsPanelSessionCacheState({
     this.militaryRevision,
     this.militaryGroups,
     this.navalRevision,
     this.navalTree,
+    this.civilianRevision,
+    this.civilianOpenPath,
   });
 
   final UnitsPanelMilitarySessionRevision? militaryRevision;
   final List<RegionMilitaryGroup>? militaryGroups;
   final UnitsPanelNavalSessionRevision? navalRevision;
   final NavalTreeSnapshot? navalTree;
+  final UnitsPanelCivilianSessionRevision? civilianRevision;
+  final CivilianUnitsPanelOpenPathSnapshot? civilianOpenPath;
 }
 
 /// Cross-visit cache for UNIT* panel tree projections (Refs #4688 Slice 3).
@@ -96,6 +119,44 @@ UnitsPanelNavalSessionRevision unitsPanelNavalSessionRevision({
   );
 }
 
+String unitsPanelOwnerIdsCacheKey(Set<String> ownerIds) {
+  final sorted = ownerIds.toList()..sort();
+  return sorted.join('|');
+}
+
+UnitsPanelCivilianSessionRevision unitsPanelCivilianSessionRevision({
+  required Game game,
+  required Set<String> ownerIds,
+  required Orders currentOrders,
+}) {
+  return (
+    staticRevision: unitsPanelStaticSessionRevision(game: game),
+    ownerIdsKey: unitsPanelOwnerIdsCacheKey(ownerIds),
+    ordersRevision: developmentPanelOrdersRevision(currentOrders),
+  );
+}
+
+/// True for empire-rail `UNIT10001` opens without tile/role shortcut filters.
+bool civilianUnitsPanelSessionCacheEligible({
+  String? tileScopeTileKey,
+  bool explorerOnly = false,
+  bool builderOnly = false,
+  bool engineerOnly = false,
+  bool railBuilderOnly = false,
+  bool merchantOnly = false,
+  bool spyOnly = false,
+}) {
+  final tileScopeActive =
+      tileScopeTileKey != null && tileScopeTileKey.isNotEmpty;
+  return !tileScopeActive &&
+      !explorerOnly &&
+      !builderOnly &&
+      !engineerOnly &&
+      !railBuilderOnly &&
+      !merchantOnly &&
+      !spyOnly;
+}
+
 List<RegionMilitaryGroup> resolveUnitsPanelMilitaryGroups({
   required UnitsPanelSessionCache cache,
   required Game game,
@@ -118,6 +179,8 @@ List<RegionMilitaryGroup> resolveUnitsPanelMilitaryGroups({
     militaryGroups: groups,
     navalRevision: cache.state.navalRevision,
     navalTree: cache.state.navalTree,
+    civilianRevision: cache.state.civilianRevision,
+    civilianOpenPath: cache.state.civilianOpenPath,
   );
   return groups;
 }
@@ -160,6 +223,66 @@ NavalTreeSnapshot resolveUnitsPanelNavalTree({
     militaryGroups: cache.state.militaryGroups,
     navalRevision: revision,
     navalTree: tree,
+    civilianRevision: cache.state.civilianRevision,
+    civilianOpenPath: cache.state.civilianOpenPath,
   );
   return tree;
+}
+
+CivilianUnitsPanelOpenPathSnapshot resolveCivilianUnitsPanelOpenPath({
+  required UnitsPanelSessionCache cache,
+  required Game game,
+  required Set<String> ownerIds,
+  required Orders currentOrders,
+  required bool useSessionCache,
+}) {
+  final revision = unitsPanelCivilianSessionRevision(
+    game: game,
+    ownerIds: ownerIds,
+    currentOrders: currentOrders,
+  );
+  if (useSessionCache &&
+      cache.state.civilianRevision == revision &&
+      cache.state.civilianOpenPath != null) {
+    return cache.state.civilianOpenPath!;
+  }
+
+  final provinceNames = ctAppPerfSync(
+    'civilianUnits.provinceNames',
+    () => provinceNamesByPrefixedId(game),
+  );
+  final oldWorldUnits = ctAppPerfSync(
+    'civilianUnits.oldWorldList',
+    () => civilianUnitsInRegionForOwners(
+      game.worldState.oldWorld.units,
+      ownerIds,
+      provinceNames,
+      currentOrders,
+    ),
+  );
+  final newWorldUnits = ctAppPerfSync(
+    'civilianUnits.newWorldList',
+    () => civilianUnitsInRegionForOwners(
+      game.worldState.newWorld.units,
+      ownerIds,
+      provinceNames,
+      currentOrders,
+    ),
+  );
+  final snapshot = CivilianUnitsPanelOpenPathSnapshot(
+    provinceNames: provinceNames,
+    oldWorldUnits: oldWorldUnits,
+    newWorldUnits: newWorldUnits,
+  );
+  if (useSessionCache) {
+    cache.state = UnitsPanelSessionCacheState(
+      militaryRevision: cache.state.militaryRevision,
+      militaryGroups: cache.state.militaryGroups,
+      navalRevision: cache.state.navalRevision,
+      navalTree: cache.state.navalTree,
+      civilianRevision: revision,
+      civilianOpenPath: snapshot,
+    );
+  }
+  return snapshot;
 }

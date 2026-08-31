@@ -82,4 +82,48 @@ void main() {
       expect(cache.state.militaryGroups, isNull);
     },
   );
+
+  test(
+    'resolveCivilianUnitsPanelOpenPath reuses session cache across calls (Refs #4688 Slice 6)',
+    () {
+      final game = buildCivilianPanelTestGame();
+      final cache = UnitsPanelSessionCache();
+      const ownerIds = {kPanelTestHumanPlayerId};
+      final first = resolveCivilianUnitsPanelOpenPath(
+        cache: cache,
+        game: game,
+        ownerIds: ownerIds,
+        currentOrders: const Orders(),
+        useSessionCache: true,
+      );
+      expect(first.oldWorldUnits, isNotEmpty);
+      expect(first.newWorldUnits, isNotEmpty);
+
+      final second = resolveCivilianUnitsPanelOpenPath(
+        cache: cache,
+        game: game,
+        ownerIds: ownerIds,
+        currentOrders: const Orders(),
+        useSessionCache: true,
+      );
+      expect(identical(first, second), isTrue);
+    },
+  );
+
+  test(
+    'civilianUnitsPanelSessionCacheEligible is false for tile-scoped opens (Refs #4688 Slice 6)',
+    () {
+      expect(
+        civilianUnitsPanelSessionCacheEligible(
+          tileScopeTileKey: 'oldWorld|p1|0|0',
+        ),
+        isFalse,
+      );
+      expect(civilianUnitsPanelSessionCacheEligible(), isTrue);
+      expect(
+        civilianUnitsPanelSessionCacheEligible(explorerOnly: true),
+        isFalse,
+      );
+    },
+  );
 }
