@@ -53,6 +53,7 @@ Future<void> appEventHandlerShowUnitsPanelSheet(
         );
         return CtAppPerfInteractiveReadyMarker(
           markerName: '${panelKind}Units.interactiveReady',
+          surfaceOpenId: '${panelKind}Units',
           child: UnitsPanelSheetSurface(
             child: ConstrainedBox(
               constraints: sheetConstraints,

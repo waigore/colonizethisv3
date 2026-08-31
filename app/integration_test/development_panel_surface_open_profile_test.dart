@@ -25,12 +25,15 @@ import '../test/panel_fixtures/core.dart';
 /// Profile/release open-to-interactive measurement for GAME80001 (Refs #4687).
 ///
 /// **Linux desktop binding host:**
+/// `tool/run_ui_surface_profile_evidence.sh development --host linux`
+/// or manually:
 /// `cd app && xvfb-run -a flutter drive --driver=test_driver/integration_test.dart \
 ///   --target=integration_test/development_panel_surface_open_profile_test.dart \
 ///   --profile -d linux`
 ///
 /// **Android emulator binding host:**
-/// `cd app && flutter emulators --launch <avd_name>`
+/// `tool/run_ui_surface_profile_evidence.sh development --host android --device <emulator_id>`
+/// or manually after `flutter emulators --launch <avd_name>`:
 /// `flutter drive --driver=test_driver/integration_test.dart \
 ///   --target=integration_test/development_panel_surface_open_profile_test.dart \
 ///   --profile -d <emulator_device_id>`

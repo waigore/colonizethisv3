@@ -2,8 +2,16 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import unittest
+
+_UI_SURFACE_OPEN = re.compile(r"ui_surface_open surface=\S+[^\n]*")
+
+
+def _extract_ui_surface_open_lines(log_text: str) -> list[str]:
+    """Mirror post-drive evidence extraction in run_ui_surface_profile_evidence.sh."""
+    return [m.group(0) for m in _UI_SURFACE_OPEN.finditer(log_text)]
 
 
 _AWK = (
@@ -55,6 +63,28 @@ class RunUiSurfaceProfileEvidenceTests(unittest.TestCase):
             _resolve_android_device_id_from_devices_output(output),
             "emulator-5554",
         )
+
+    def test_extracts_ui_surface_open_from_android_logcat_section(self) -> None:
+        log = "\n".join(
+            [
+                "Running profile drive...",
+                "All tests passed!",
+                "",
+                "=== adb logcat (ui_surface_open) ===",
+                (
+                    "I/flutter (12345): ui_surface_open surface=development "
+                    "elapsed_ms=412 budget_ms=1000 host=android_emulator_profile"
+                ),
+                (
+                    "I/flutter (12345): ui_surface_open surface=development "
+                    "elapsed_ms=88 budget_ms=1000 host=android_emulator_profile warm=1"
+                ),
+            ]
+        )
+        lines = _extract_ui_surface_open_lines(log)
+        self.assertEqual(len(lines), 2)
+        self.assertIn("host=android_emulator_profile", lines[0])
+        self.assertIn("warm=1", lines[1])
 
 
 if __name__ == "__main__":

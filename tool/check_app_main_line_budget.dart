@@ -141,6 +141,8 @@ const _packageName = 'colonizethis_app';
 // raised for empire-rail Slices 3–7 session caches + interactiveReady markers (Refs #4688; measured 94_411).
 // raised for empire-rail Slice 8 counsel session cache + lazy tabs (Refs #4688; measured 94_915).
 // raised for MAP20001 wide lazy sections + open tracing on dev merge (Refs #4690; measured 95_117).
+// raised for empire-rail Trade session cache + deferred counsel (Refs #4688 Slice 3; measured 95_055).
+// raised for empire-rail surfaceOpenId + profile harness wiring (Refs #4688; measured 95_102).
 const _maxMainLines = 95500;
 
 int runCheckAppMainLineBudget(

@@ -47,6 +47,7 @@ class TradeScreenTabsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return CtAppPerfInteractiveReadyMarker(
       markerName: 'trade.interactiveReady',
+      surfaceOpenId: 'trade',
       child: Padding(
         padding: const EdgeInsets.all(CtSpacing.l),
         child: CtPanel(

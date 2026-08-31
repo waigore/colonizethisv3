@@ -101,6 +101,7 @@ class DiplomacyScreen extends ConsumerWidget {
         }
         return CtAppPerfInteractiveReadyMarker(
           markerName: 'diplomacy.interactiveReady',
+          surfaceOpenId: 'diplomacy',
           child: GrantOrSubsidyListener(
             bus: bus,
             game: displayGame,

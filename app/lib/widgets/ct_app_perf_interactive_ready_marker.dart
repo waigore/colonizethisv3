@@ -1,20 +1,28 @@
 import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:flutter/foundation.dart' show kProfileMode, kReleaseMode;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
+import '../package_logger.dart';
+
 /// Emits one [CtAppPerf] instant marker after the first frame with [child] mounted.
 ///
-/// Use for empire-rail and overlay surfaces where `interactiveReady` marks
-/// chrome + primary body paint (Refs #4688, #4690).
+/// When [surfaceOpenId] is set, also tracks wall-clock open-to-interactive and
+/// logs `ui_surface_open` on profile/release binding hosts (Refs #4687, #4688).
 class CtAppPerfInteractiveReadyMarker extends StatefulWidget {
   const CtAppPerfInteractiveReadyMarker({
     super.key,
     required this.markerName,
     required this.child,
+    this.surfaceOpenId,
   });
 
   final String markerName;
   final Widget child;
+
+  /// Optional surface id for wall-clock segment tracking (e.g. `trade`).
+  final String? surfaceOpenId;
 
   @override
   State<CtAppPerfInteractiveReadyMarker> createState() =>
@@ -23,11 +31,31 @@ class CtAppPerfInteractiveReadyMarker extends StatefulWidget {
 
 class _CtAppPerfInteractiveReadyMarkerState
     extends State<CtAppPerfInteractiveReadyMarker> {
+  static final _log = packageLogger('perf');
+
   @override
   void initState() {
     super.initState();
+    final surfaceOpenId = widget.surfaceOpenId;
+    if (surfaceOpenId != null) {
+      ctAppPerfSurfaceOpenBegin(surfaceOpenId);
+    }
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final surfaceOpenId = widget.surfaceOpenId;
+      if (surfaceOpenId != null) {
+        final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady(surfaceOpenId);
+        if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
+          final host = ctAppPerfSurfaceOpenBindingHost();
+          final line =
+              'ui_surface_open surface=$surfaceOpenId elapsed_ms=$elapsedMs '
+              'budget_ms=$kUiSurfaceOpenBudgetMs host=$host';
+          _log.i(line);
+          // stdout for profile `flutter drive` evidence capture (Refs #4687, #4688).
+          debugPrint(line);
+        }
+        return;
+      }
       ctAppPerfInstant(widget.markerName);
     });
   }
