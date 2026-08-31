@@ -3,12 +3,6 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/industry_counsel_api.dart'
     show rankIndustryCounselRecommendations;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_turn/colonizethis_turn.dart'
-    show
-        economyPreviewInputs,
-        forcesFeedingForPlayer,
-        labourReadinessForPlayer,
-        previewStockpileNetDeltaByCommodityForPlayer;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
@@ -98,50 +92,17 @@ class _ProductionScreenBodyState extends ConsumerState<ProductionScreenBody> {
       labourReadiness = openPath.labourReadiness;
       forcesFeeding = openPath.forcesFeeding;
     } else {
-      netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
-        game: widget.displayGame,
-        topology: panelTopology,
-        playerId: displayPlayer.id,
-        inputs: economyPreviewInputs(
-          tileMapByRegion: panelTileMaps,
-          currentOrders: currentOrders,
-          defaultAssignmentsByPlayerId: {
-            displayPlayer.id: assignedRecipesFromDesiredOutput(
-              desiredOutputByRecipe,
-            ),
-          },
-        ),
-      );
-      final regimentCounts = regimentTypeCountsForPlayer(
-        widget.displayGame.worldState,
-        displayPlayer.id,
-      );
-      final shipCounts = shipTypeCountsForPlayer(
-        widget.displayGame.worldState,
-        displayPlayer.id,
-      );
-      final foodCounts = MilitaryNavyFoodCounts(
-        regimentCountsById: regimentCounts,
-        shipCountsById: shipCounts,
-      );
-      final previewInputs = economyPreviewInputs(
-        tileMapByRegion: panelTileMaps,
+      final openPath = buildProductionPanelOpenPathWithoutSessionCache(
+        displayGame: widget.displayGame,
+        displayPlayer: displayPlayer,
+        panelTopology: panelTopology,
+        panelTileMaps: panelTileMaps,
         currentOrders: currentOrders,
+        desiredOutputByRecipe: desiredOutputByRecipe,
       );
-      labourReadiness = labourReadinessForPlayer(
-        game: widget.displayGame,
-        topology: panelTopology,
-        playerId: displayPlayer.id,
-        foodCounts: foodCounts,
-        inputs: previewInputs,
-      );
-      forcesFeeding = forcesFeedingForPlayer(
-        game: widget.displayGame,
-        topology: panelTopology,
-        playerId: displayPlayer.id,
-        foodCounts: foodCounts,
-        inputs: previewInputs,
-      );
+      netDeltasByCommodity = openPath.netDeltasByCommodity;
+      labourReadiness = openPath.labourReadiness;
+      forcesFeeding = openPath.forcesFeeding;
     }
 
     final Map<String, IndustryCounselRecommendation>
