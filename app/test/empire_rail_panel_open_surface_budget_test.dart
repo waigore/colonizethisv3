@@ -33,6 +33,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -303,11 +304,13 @@ void main() {
   ) async {
     final game = buildMilitaryPanelTestGame();
     final bus = AppEventBus.create();
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        empireRailL10nShell(
-          overrides: const [],
+        empireRailL10nShellWithContainer(
+          container: container,
           child: buildPanelScaffoldShell(
             UnitsPanelSheetSurface(
               child: MilitaryUnitsPanel(
@@ -326,8 +329,8 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        empireRailL10nShell(
-          overrides: const [],
+        empireRailL10nShellWithContainer(
+          container: container,
           child: const SizedBox.shrink(),
         ),
       );
@@ -339,6 +342,7 @@ void main() {
       mountPanel: mount,
       unmountPanel: unmount,
       interactiveProbe: find.byType(MilitaryUnitsPanel),
+      expectWarmReuse: true,
     );
   });
 
@@ -347,11 +351,13 @@ void main() {
   ) async {
     final game = buildNavalPanelTestGame();
     final bus = AppEventBus.create();
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        empireRailL10nShell(
-          overrides: const [],
+        empireRailL10nShellWithContainer(
+          container: container,
           child: buildPanelScaffoldShell(
             UnitsPanelSheetSurface(
               child: NavalUnitsPanel(
@@ -370,8 +376,8 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        empireRailL10nShell(
-          overrides: const [],
+        empireRailL10nShellWithContainer(
+          container: container,
           child: const SizedBox.shrink(),
         ),
       );
@@ -383,6 +389,7 @@ void main() {
       mountPanel: mount,
       unmountPanel: unmount,
       interactiveProbe: find.byType(NavalUnitsPanel),
+      expectWarmReuse: true,
     );
   });
 
@@ -391,11 +398,13 @@ void main() {
   ) async {
     final game = buildCivilianPanelTestGame();
     final bus = AppEventBus.create();
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        empireRailL10nShell(
-          overrides: const [],
+        empireRailL10nShellWithContainer(
+          container: container,
           child: buildPanelScaffoldShell(
             UnitsPanelSheetSurface(
               child: CivilianUnitsPanel(
@@ -413,8 +422,8 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        empireRailL10nShell(
-          overrides: const [],
+        empireRailL10nShellWithContainer(
+          container: container,
           child: const SizedBox.shrink(),
         ),
       );
@@ -426,6 +435,7 @@ void main() {
       mountPanel: mount,
       unmountPanel: unmount,
       interactiveProbe: find.byType(CivilianUnitsPanel),
+      expectWarmReuse: true,
     );
   });
 }

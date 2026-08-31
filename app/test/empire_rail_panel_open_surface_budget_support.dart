@@ -4,8 +4,10 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -31,6 +33,7 @@ Future<void> coldWarmEmpireRailPanelOpenCycle(
   required Future<void> Function() mountPanel,
   required Future<void> Function() unmountPanel,
   required Finder interactiveProbe,
+  bool expectWarmReuse = false,
 }) async {
   final coldMs = await openEmpireRailPanelToInteractiveMs(
     tester,
@@ -47,6 +50,13 @@ Future<void> coldWarmEmpireRailPanelOpenCycle(
     interactiveProbe: interactiveProbe,
   );
   expect(warmMs, greaterThan(0));
+  if (expectWarmReuse) {
+    expect(
+      warmMs,
+      lessThanOrEqualTo(coldMs),
+      reason: 'same-turn re-open should reuse session cache (cold=${coldMs}ms warm=${warmMs}ms)',
+    );
+  }
 }
 
 Widget empireRailL10nShell({
@@ -55,6 +65,19 @@ Widget empireRailL10nShell({
 }) {
   return buildAppShell(
     overrides: overrides,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en'),
+    child: child,
+  );
+}
+
+Widget empireRailL10nShellWithContainer({
+  required ProviderContainer container,
+  required Widget child,
+}) {
+  return buildAppShellWithContainer(
+    container: container,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en'),
