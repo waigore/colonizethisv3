@@ -169,6 +169,99 @@ void main() {
   );
 
   testWidgets(
+    'golden: Embassy overture confirm preview with unlock copy (Refs #4682)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_confirm_embassy_golden',
+      );
+      final message = buildDiplomacyConfirmPreviewMessage(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: 'minor1',
+          overtureStage: OvertureStage.embassy,
+        ),
+        game: diplomacyGame(
+          players: const [
+            Player(id: _humanId, displayName: 'England', isHuman: true),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Bavaria'),
+          ],
+        ),
+        humanPlayerId: _humanId,
+        targetDisplayName: 'Bavaria',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(360, 400),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(title: 'Embassy', message: message),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('£$overtureEmbassyCost'), findsOneWidget);
+      expect(find.textContaining('Grant Aid'), findsOneWidget);
+      expect(find.textContaining('Purchase land'), findsOneWidget);
+      expect(find.textContaining('intervene'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_confirm_embassy.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: NAP overture confirm preview with join-empire path (Refs #4682)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('diplomacy_confirm_nap_golden');
+      final message = buildDiplomacyConfirmPreviewMessage(
+        order: const DiplomaticOrder(
+          type: DiplomaticOrderType.establishOverture,
+          targetFactionId: 'minor1',
+          overtureStage: OvertureStage.nap,
+        ),
+        game: diplomacyGame(
+          players: const [
+            Player(id: _humanId, displayName: 'England', isHuman: true),
+          ],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Bavaria'),
+          ],
+        ),
+        humanPlayerId: _humanId,
+        targetDisplayName: 'Bavaria',
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(360, 320),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(title: 'NAP', message: message),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('No treasury charge'), findsOneWidget);
+      expect(find.textContaining('Join Empire'), findsOneWidget);
+      expect(find.textContaining('Declare War'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/diplomacy_confirm_nap.png'),
+      );
+    },
+  );
+
+  testWidgets(
     'golden: Establish Favored partner confirm first-order Effect (Refs #4586)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>(
