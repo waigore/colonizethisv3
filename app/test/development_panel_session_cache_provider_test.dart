@@ -158,4 +158,29 @@ void main() {
       expect(identical(before, after), isFalse);
     },
   );
+
+  test(
+    'DevelopmentPanelSessionCache.reset drops cached projections (Refs #4687)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: developmentPanelProjectionProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      container.listen(
+        developmentPanelConnectivityProvider,
+        (_, __) {},
+      );
+      container.read(developmentPanelConnectivityProvider);
+      final cache = container.read(developmentPanelSessionCacheProvider);
+      expect(cache.state.connectivity, isNotNull);
+
+      cache.reset();
+      expect(cache.state.connectivity, isNull);
+      expect(cache.state.staticContext, isNull);
+      expect(cache.state.regionScopesByRegion, isEmpty);
+      expect(cache.state.mapSnapshotsByRegion, isEmpty);
+    },
+  );
 }

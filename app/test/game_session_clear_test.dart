@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_session_clear.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/development_panel_projection_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -117,6 +118,15 @@ void main() {
           availableByCommodity: {},
         ),
       );
+      container.listen(
+        developmentPanelConnectivityProvider,
+        (_, __) {},
+      );
+      container.read(developmentPanelConnectivityProvider);
+      expect(
+        container.read(developmentPanelSessionCacheProvider).state.connectivity,
+        isNotNull,
+      );
       container.read(regionMinimapVisibleProvider.notifier).set(false);
       container.read(mapProvinceOverlayVisibleProvider.notifier).set(false);
       container.read(turnResolutionBlockingProvider.notifier).set(true);
@@ -145,6 +155,10 @@ void main() {
         container.read(provinceOverlayReadModelCacheProvider).state
             .provinceReadModelsByDisplayId,
         isEmpty,
+      );
+      expect(
+        container.read(developmentPanelSessionCacheProvider).state.connectivity,
+        isNull,
       );
       expect(container.read(regionMinimapVisibleProvider), isTrue);
       expect(container.read(mapProvinceOverlayVisibleProvider), isTrue);
