@@ -446,6 +446,28 @@ dart test test/check_economy_test_wall_clock_test.dart --reporter=compact
 
 ---
 
+## run_ui_surface_profile_evidence.sh (UI surface open wall-clock evidence)
+
+Profile/release `flutter drive` harness for game-app UI **open-to-interactive** wall-clock evidence on Linux desktop and Android emulator binding hosts (Refs #4687, #4688). Captures `ui_surface_open surface=<id> elapsed_ms=… budget_ms=1000 host=…` lines and validates each is ≤ 1 000 ms.
+
+**Invocation (repo root)**
+
+```bash
+tool/run_ui_surface_profile_evidence.sh trade --host linux
+tool/run_ui_surface_profile_evidence.sh all-empire-rail --host linux
+tool/run_ui_surface_profile_evidence.sh development --host android --device emulator-5554
+```
+
+**Surfaces:** `development`, `trade`, `production`, `technology`, `diplomacy`, `victory`, `counsel`, `units`, or `all-empire-rail` (runs trade through units in sequence).
+
+**Options:** `--host linux|android|auto` (default `auto`: Android emulator when present, else Linux). `--device <id>` overrides auto-detect. `UI_SURFACE_PROFILE_OUT` sets log directory (default `tmp/ui-surface-profile-evidence/`).
+
+**Linux headless:** Uses `xvfb-run` when `DISPLAY` is unset.
+
+**Android CI:** `.github/workflows/ui-surface-profile-evidence-android.yml` (GAME80001, Refs #4687) and `.github/workflows/ui-surface-profile-evidence-android-empire-rail.yml` (empire-rail panels, Refs #4688) upload evidence logs as CI artifacts.
+
+---
+
 ## scripts/nightly_dev_to_android_pr.sh (nightly APK PR)
 
 Creates a PR from `dev` → `build/app/android` for nightly APK builds. Merging that PR triggers the app Android build. The PR **source** is always `dev` (per GitHub workflow rules).

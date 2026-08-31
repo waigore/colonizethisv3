@@ -78,13 +78,15 @@ Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppP
 
 **Binding-host replay harness (Refs #4688):**
 
-- **Production (`GAME20001`):** `app/integration_test/production_panel_surface_open_profile_test.dart` via `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/production_panel_surface_open_profile_test.dart --profile -d <device>` (Linux desktop: `-d linux` with xvfb on headless hosts; Android emulator: `-d <emulator_id>`). Capture cold open and same-turn warm re-open `ui_surface_open surface=production … host=linux_desktop_profile` or `host=android_emulator_profile` lines.
-- **Trade (`GAME60001`):** `app/integration_test/trade_panel_surface_open_profile_test.dart` (same drive flags; `surface=trade`).
-- **Technology (`GAME40001`):** `app/integration_test/technology_panel_surface_open_profile_test.dart` (same drive flags; `surface=technology`).
-- **Diplomacy (`GAME30001`):** `app/integration_test/diplomacy_panel_surface_open_profile_test.dart` (same drive flags; `surface=diplomacy`).
-- **Victory (`GAME70001`):** `app/integration_test/victory_panel_surface_open_profile_test.dart` (same drive flags; `surface=victory`).
-- **Counsel (`GAME90001`):** `app/integration_test/counsel_panel_surface_open_profile_test.dart` (same drive flags; `surface=counsel`).
-- **Unit sheets (`UNIT10001` / `UNIT20001` / `UNIT30001`):** `app/integration_test/units_panels_surface_open_profile_test.dart` (same drive flags; `surface=civilianUnits`, `surface=militaryUnits`, or `surface=navalUnits`).
+Operator wrapper: `tool/run_ui_surface_profile_evidence.sh <surface> [--host linux|android|auto]` from repo root. Use `all-empire-rail` to run trade through units in one session. Android CI artifact: `ui-surface-profile-evidence-android-empire-rail` (workflow `.github/workflows/ui-surface-profile-evidence-android-empire-rail.yml`).
+
+- **Production (`GAME20001`):** `tool/run_ui_surface_profile_evidence.sh production` → `app/integration_test/production_panel_surface_open_profile_test.dart`. Capture cold open and same-turn warm re-open `ui_surface_open surface=production … host=linux_desktop_profile` or `host=android_emulator_profile` lines.
+- **Trade (`GAME60001`):** `tool/run_ui_surface_profile_evidence.sh trade` (`surface=trade`).
+- **Technology (`GAME40001`):** `tool/run_ui_surface_profile_evidence.sh technology` (`surface=technology`).
+- **Diplomacy (`GAME30001`):** `tool/run_ui_surface_profile_evidence.sh diplomacy` (`surface=diplomacy`).
+- **Victory (`GAME70001`):** `tool/run_ui_surface_profile_evidence.sh victory` (`surface=victory`).
+- **Counsel (`GAME90001`):** `tool/run_ui_surface_profile_evidence.sh counsel` (`surface=counsel`).
+- **Unit sheets (`UNIT10001` / `UNIT20001` / `UNIT30001`):** `tool/run_ui_surface_profile_evidence.sh units` (`surface=civilianUnits`, `surface=militaryUnits`, or `surface=navalUnits`).
 
 ---
 
