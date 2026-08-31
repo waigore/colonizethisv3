@@ -714,12 +714,14 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - **Narrow layout:** `CtTabStrip.lazyTabBodies: true` — Political (index 0) builds on first open; Economic, Military, Civilian, and Naval bodies build on first tab selection; Tile (index 1) builds on first selection.
 - **Wide layout:** unchanged single scroll column (deferred section virtualization is a follow-up slice).
 - **Session read-model cache:** `provinceOverlayReadModelCacheProvider` memoizes province-wide extraction, available counts, and town bonus per `displayId`, plus human connectivity, across overlay close within the same game turn; invalidated on turn/world revision and `clearActiveGameSession`. Wide lazy sections are a follow-up slice.
+- **Same-province tile switch:** overlay root is keyed by `displayId` so `CtTabStrip` state and `ProvinceOverlayInteractiveReadyMarker` survive tile-key updates within one province; province-wide read-model work reuses the session cache (`resolveProvinceOverlayProvinceReadModel`).
 
 ### Acceptance criteria (performance)
 
 - Given the overlay is closed and the player taps the **same** province before Next turn with unchanged game/orders/fog, when it reopens, then `resolveProvinceOverlayProvinceReadModel` returns the same cached object identity for province-wide extraction/availability/town bonus (`app/test/province_overlay_read_model_cache_test.dart`).
+- Given the overlay is open and the player taps another tile in the **same** province, when the Tile section updates, then unvisited narrow tabs stay deferred and province-wide read-model cache entries are reused (`app/test/province_overlay_same_province_tile_switch_test.dart`).
 - Given narrow `MAP20001` on a representative campaign fixture, when the overlay first opens on the Political tab, then Economic / Military / Civilian / Naval tab bodies are not built until first selected (`app/test/province_overlay_lazy_open_test.dart`).
-- Given the overlay mounts in profile/release, when chrome + Political paint, then `CtAppPerf.provinceOverlay.interactiveReady` is emitted once per mount (DevTools filter `CtAppPerf.provinceOverlay`).
+- Given the overlay mounts in profile/release, when chrome + Political paint, then `CtAppPerf.provinceOverlay.interactiveReady` is emitted once per mount (DevTools filter `CtAppPerf.provinceOverlay`); same-province tile switches do not remount the keyed overlay root.
 
 ---
 

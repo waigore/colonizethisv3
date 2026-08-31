@@ -57,6 +57,7 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
   required ProvinceOwnerStandingOfferPeaceState offerPeaceState,
 }) {
   return ProvinceSeaZoneDetailOverlay(
+    key: ValueKey<String>(displayId),
     game: game,
     region: region,
     displayId: displayId,
