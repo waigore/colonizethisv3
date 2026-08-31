@@ -27,7 +27,7 @@ permissions:
 # routinely miss the default boot deadline (Refs #4687, #4688).
 concurrency:
   group: ui-surface-profile-android-emulator-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   development_panel_android:
