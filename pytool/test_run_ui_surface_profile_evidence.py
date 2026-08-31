@@ -103,6 +103,15 @@ class RunUiSurfaceProfileEvidenceTests(unittest.TestCase):
         self.assertIn("host=android_emulator_profile", lines[0])
         self.assertIn("warm=1", lines[1])
 
+    def test_drive_log_some_tests_failed_pattern(self) -> None:
+        log = "\n".join(
+            [
+                "I/flutter (3629): 00:11 +0 -2: Some tests failed.",
+                "All tests passed.",
+            ]
+        )
+        self.assertRegex(log, r"Some tests failed|\+[0-9]+ -[1-9]")
+
 
 if __name__ == "__main__":
     unittest.main()
