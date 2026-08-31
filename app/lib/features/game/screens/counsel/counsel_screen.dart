@@ -64,6 +64,7 @@ class CounselScreen extends ConsumerWidget {
         );
         return CtAppPerfInteractiveReadyMarker(
           markerName: 'counsel.interactiveReady',
+          surfaceOpenId: 'counsel',
           child: CounselScreenTabs(
             initialTab: initialTab,
             l10n: l10n,

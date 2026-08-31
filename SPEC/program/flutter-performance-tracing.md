@@ -83,6 +83,8 @@ Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppP
 - **Technology (`GAME40001`):** `app/integration_test/technology_panel_surface_open_profile_test.dart` (same drive flags; `surface=technology`).
 - **Diplomacy (`GAME30001`):** `app/integration_test/diplomacy_panel_surface_open_profile_test.dart` (same drive flags; `surface=diplomacy`).
 - **Victory (`GAME70001`):** `app/integration_test/victory_panel_surface_open_profile_test.dart` (same drive flags; `surface=victory`).
+- **Counsel (`GAME90001`):** `app/integration_test/counsel_panel_surface_open_profile_test.dart` (same drive flags; `surface=counsel`).
+- **Unit sheets (`UNIT10001` / `UNIT20001` / `UNIT30001`):** `app/integration_test/units_panels_surface_open_profile_test.dart` (same drive flags; `surface=civilianUnits`, `surface=militaryUnits`, or `surface=navalUnits`).
 
 ---
 
@@ -105,6 +107,10 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `ui_surface_open surface=technology elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `technology.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=diplomacy elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `diplomacy.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=victory elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `victory.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=counsel elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `counsel.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=civilianUnits elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `civilianUnits.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=militaryUnits elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `militaryUnits.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=navalUnits elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `navalUnits.interactiveReady` fires (Refs #4688). |
 
 ---
 

@@ -70,6 +70,27 @@ void main() {
     expect(() => ctAppPerfInstant('victory.interactiveReady'), returnsNormally);
   });
 
+  test('ctAppPerfSurfaceOpen segment tracks counsel surface (Refs #4688)', () {
+    ctAppPerfSurfaceOpenBegin('counsel');
+    expect(ctAppPerfSurfaceOpenElapsedMs('counsel'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('counsel');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('counsel.interactiveReady'), returnsNormally);
+  });
+
+  test('ctAppPerfSurfaceOpen segment tracks militaryUnits surface (Refs #4688)', () {
+    ctAppPerfSurfaceOpenBegin('militaryUnits');
+    expect(ctAppPerfSurfaceOpenElapsedMs('militaryUnits'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('militaryUnits');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(
+      () => ctAppPerfInstant('militaryUnits.interactiveReady'),
+      returnsNormally,
+    );
+  });
+
   test('ctAppPerfSurfaceOpenBindingHost returns a non-empty label (Refs #4687)', () {
     final host = ctAppPerfSurfaceOpenBindingHost();
     expect(host, isNotEmpty);
