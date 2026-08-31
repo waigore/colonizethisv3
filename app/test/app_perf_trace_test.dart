@@ -34,6 +34,42 @@ void main() {
     expect(() => ctAppPerfInstant('production.interactiveReady'), returnsNormally);
   });
 
+  test('ctAppPerfSurfaceOpen segment tracks trade surface (Refs #4688)', () {
+    ctAppPerfSurfaceOpenBegin('trade');
+    expect(ctAppPerfSurfaceOpenElapsedMs('trade'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('trade');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('trade.interactiveReady'), returnsNormally);
+  });
+
+  test('ctAppPerfSurfaceOpen segment tracks technology surface (Refs #4688)', () {
+    ctAppPerfSurfaceOpenBegin('technology');
+    expect(ctAppPerfSurfaceOpenElapsedMs('technology'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('technology');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('technology.interactiveReady'), returnsNormally);
+  });
+
+  test('ctAppPerfSurfaceOpen segment tracks diplomacy surface (Refs #4688)', () {
+    ctAppPerfSurfaceOpenBegin('diplomacy');
+    expect(ctAppPerfSurfaceOpenElapsedMs('diplomacy'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('diplomacy');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('diplomacy.interactiveReady'), returnsNormally);
+  });
+
+  test('ctAppPerfSurfaceOpen segment tracks victory surface (Refs #4688)', () {
+    ctAppPerfSurfaceOpenBegin('victory');
+    expect(ctAppPerfSurfaceOpenElapsedMs('victory'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('victory');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('victory.interactiveReady'), returnsNormally);
+  });
+
   test('ctAppPerfSurfaceOpenBindingHost returns a non-empty label (Refs #4687)', () {
     final host = ctAppPerfSurfaceOpenBindingHost();
     expect(host, isNotEmpty);

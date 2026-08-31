@@ -80,6 +80,9 @@ Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppP
 
 - **Production (`GAME20001`):** `app/integration_test/production_panel_surface_open_profile_test.dart` via `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/production_panel_surface_open_profile_test.dart --profile -d <device>` (Linux desktop: `-d linux` with xvfb on headless hosts; Android emulator: `-d <emulator_id>`). Capture cold open and same-turn warm re-open `ui_surface_open surface=production … host=linux_desktop_profile` or `host=android_emulator_profile` lines.
 - **Trade (`GAME60001`):** `app/integration_test/trade_panel_surface_open_profile_test.dart` (same drive flags; `surface=trade`).
+- **Technology (`GAME40001`):** `app/integration_test/technology_panel_surface_open_profile_test.dart` (same drive flags; `surface=technology`).
+- **Diplomacy (`GAME30001`):** `app/integration_test/diplomacy_panel_surface_open_profile_test.dart` (same drive flags; `surface=diplomacy`).
+- **Victory (`GAME70001`):** `app/integration_test/victory_panel_surface_open_profile_test.dart` (same drive flags; `surface=victory`).
 
 ---
 
@@ -99,6 +102,9 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `ui_surface_open surface=development elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `development.interactiveReady` fires (Refs #4687). |
 | `ui_surface_open surface=production elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `production.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=trade elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `trade.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=technology elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `technology.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=diplomacy elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `diplomacy.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=victory elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `victory.interactiveReady` fires (Refs #4688). |
 
 ---
 
