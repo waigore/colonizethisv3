@@ -7,7 +7,6 @@ import 'package:colonizethis_logic/industry_counsel_api.dart'
         rankTradeCounselRecommendationsForHuman,
         tradeCounselHighlightsByCommodityId;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/widgets/shell/shell_player_context.dart';

@@ -3,6 +3,7 @@ import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen_contract_market.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/foundation.dart' show kProfileMode, kReleaseMode;
 import 'package:flutter/material.dart';
