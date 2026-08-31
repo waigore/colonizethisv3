@@ -4,10 +4,7 @@
 // military/naval tree resolve is measurably cheaper than a cold build on the
 // panel test fixture. Not a debug wall-clock 1s assertion.
 
-import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_open_path.dart';
-import 'package:colonizethis_app/providers/counsel_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/diplomacy_panel_session_cache_provider.dart';
-import 'package:colonizethis_app/providers/technology_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/units_panel_session_cache_provider.dart';
 import 'package:colonizethis_app/providers/victory_panel_session_cache_provider.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -17,33 +14,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'empire_rail_panel_open_path_timing_fixture.dart';
 import 'panel_test_fixtures.dart';
-
-int _empireRailOpenPathTimeMicros(
-  void Function() fn, {
-  required int iterations,
-}) {
-  for (var i = 0; i < 3; i++) {
-    fn();
-  }
-  final sw = Stopwatch()..start();
-  for (var i = 0; i < iterations; i++) {
-    fn();
-  }
-  sw.stop();
-  return sw.elapsedMicroseconds ~/ iterations;
-}
-
-int _empireRailOpenPathTimeMicrosMedian(
-  void Function() fn, {
-  required int iterations,
-}) {
-  final samples = <int>[
-    for (var run = 0; run < 3; run++)
-      _empireRailOpenPathTimeMicros(fn, iterations: iterations),
-  ]..sort();
-  return samples[1];
-}
 
 void main() {
   suppressLogsForTests();
@@ -53,7 +25,7 @@ void main() {
     () {
       const iterations = 20;
       final game = buildMilitaryPanelTestGame();
-      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
+      final coldMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveUnitsPanelMilitaryGroups(
           cache: UnitsPanelSessionCache(),
           game: game,
@@ -69,7 +41,7 @@ void main() {
         humanPlayerId: kPanelTestHumanPlayerId,
       );
 
-      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
+      final warmMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveUnitsPanelMilitaryGroups(
           cache: cache,
           game: game,
@@ -103,7 +75,7 @@ void main() {
       const iterations = 20;
       final game = buildNavalPanelTestGame();
       final l10n = lookupAppLocalizations(const Locale('en'));
-      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
+      final coldMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveUnitsPanelNavalTree(
           cache: UnitsPanelSessionCache(),
           game: game,
@@ -125,7 +97,7 @@ void main() {
         l10n: l10n,
       );
 
-      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
+      final warmMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveUnitsPanelNavalTree(
           cache: cache,
           game: game,
@@ -165,7 +137,7 @@ void main() {
       const orders = Orders();
       const humanPlayerId = kPanelTestHumanPlayerId;
 
-      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
+      final coldMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveDiplomacyPanelRows(
           cache: DiplomacyPanelSessionCache(),
           game: game,
@@ -185,7 +157,7 @@ void main() {
         orders: orders,
       );
 
-      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
+      final warmMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveDiplomacyPanelRows(
           cache: cache,
           game: game,
@@ -211,7 +183,7 @@ void main() {
       const iterations = 20;
       final game = buildMilitaryPanelTestGame();
 
-      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
+      final coldMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveVictoryPanelOpenPath(
           cache: VictoryPanelSessionCache(),
           game: game,
@@ -229,175 +201,12 @@ void main() {
         topologyByRegion: const <String, MapTopology>{},
       );
 
-      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
+      final warmMicros = empireRailOpenPathTimeMicrosMedian(
         () => resolveVictoryPanelOpenPath(
           cache: cache,
           game: game,
           tileMapByRegion: const <String, TileMapResult>{},
           topologyByRegion: const <String, MapTopology>{},
-        ),
-        iterations: iterations,
-      );
-
-      expect(warmMicros, lessThan(coldMicros));
-      expect(
-        (coldMicros - warmMicros) / coldMicros,
-        greaterThanOrEqualTo(0.5),
-        reason: 'cold=$coldMicrosµs warm=$warmMicrosµs',
-      );
-    },
-  );
-
-  test(
-    'cached civilian open path resolve is faster than cold build (Refs #4688 Slice 6)',
-    () {
-      const iterations = 20;
-      final game = buildCivilianPanelTestGame();
-      const ownerIds = {kPanelTestHumanPlayerId};
-      const orders = Orders();
-
-      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
-        () => resolveCivilianUnitsPanelOpenPath(
-          cache: UnitsPanelSessionCache(),
-          game: game,
-          ownerIds: ownerIds,
-          currentOrders: orders,
-          useSessionCache: false,
-        ),
-        iterations: iterations,
-      );
-
-      final cache = UnitsPanelSessionCache();
-      resolveCivilianUnitsPanelOpenPath(
-        cache: cache,
-        game: game,
-        ownerIds: ownerIds,
-        currentOrders: orders,
-        useSessionCache: true,
-      );
-
-      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
-        () => resolveCivilianUnitsPanelOpenPath(
-          cache: cache,
-          game: game,
-          ownerIds: ownerIds,
-          currentOrders: orders,
-          useSessionCache: true,
-        ),
-        iterations: iterations,
-      );
-
-      expect(warmMicros, lessThan(coldMicros));
-      expect(
-        (coldMicros - warmMicros) / coldMicros,
-        greaterThanOrEqualTo(0.5),
-        reason: 'cold=$coldMicrosµs warm=$warmMicrosµs',
-      );
-    },
-  );
-
-  test(
-    'cached technology slots open path is faster than cold build (Refs #4688 Slice 7)',
-    () {
-      const iterations = 20;
-      final game = buildTechnologyPanelTestGame();
-      final player = game.players.first;
-      const orders = Orders();
-      final revision = technologyPanelSessionRevision(
-        game: game,
-        humanPlayerId: player.id,
-        orders: orders,
-        canEdit: true,
-      );
-
-      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
-        () => resolveTechnologyPanelSlotsOpenPath(
-          cache: TechnologyPanelSessionCache(),
-          revision: revision,
-          game: game,
-          player: player,
-          orders: orders,
-        ),
-        iterations: iterations,
-      );
-
-      final cache = TechnologyPanelSessionCache();
-      resolveTechnologyPanelSlotsOpenPath(
-        cache: cache,
-        revision: revision,
-        game: game,
-        player: player,
-        orders: orders,
-      );
-
-      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
-        () => resolveTechnologyPanelSlotsOpenPath(
-          cache: cache,
-          revision: revision,
-          game: game,
-          player: player,
-          orders: orders,
-        ),
-        iterations: iterations,
-      );
-
-      expect(warmMicros, lessThan(coldMicros));
-      expect(
-        (coldMicros - warmMicros) / coldMicros,
-        greaterThanOrEqualTo(0.5),
-        reason: 'cold=$coldMicrosµs warm=$warmMicrosµs',
-      );
-    },
-  );
-
-  test(
-    'cached counsel industry resolve is faster than cold build (Refs #4688 Slice 8)',
-    () {
-      const iterations = 20;
-      final game = buildMilitaryPanelTestGame();
-      const topology = MapTopology();
-      const orders = Orders();
-      const desiredOutput = <String, int>{};
-      final revision = counselPanelSessionRevision(
-        game: game,
-        orders: orders,
-        desiredOutputByRecipe: desiredOutput,
-        topology: topology,
-      );
-
-      final coldMicros = _empireRailOpenPathTimeMicrosMedian(
-        () => resolveCounselIndustryRecommendations(
-          cache: CounselPanelSessionCache(),
-          revision: revision,
-          game: game,
-          playerId: kPanelTestHumanPlayerId,
-          currentOrders: orders,
-          topology: topology,
-          tileMapByRegion: const {},
-        ),
-        iterations: iterations,
-      );
-
-      final cache = CounselPanelSessionCache();
-      resolveCounselIndustryRecommendations(
-        cache: cache,
-        revision: revision,
-        game: game,
-        playerId: kPanelTestHumanPlayerId,
-        currentOrders: orders,
-        topology: topology,
-        tileMapByRegion: const {},
-      );
-
-      final warmMicros = _empireRailOpenPathTimeMicrosMedian(
-        () => resolveCounselIndustryRecommendations(
-          cache: cache,
-          revision: revision,
-          game: game,
-          playerId: kPanelTestHumanPlayerId,
-          currentOrders: orders,
-          topology: topology,
-          tileMapByRegion: const {},
         ),
         iterations: iterations,
       );
