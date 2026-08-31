@@ -63,10 +63,9 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            set -euo pipefail
             cd "$GITHUB_WORKSPACE"
             UI_SURFACE_PROFILE_OUT="$GITHUB_WORKSPACE/tmp/ui-surface-profile-evidence" \
-              tool/run_ui_surface_profile_evidence.sh development --host android
+              bash tool/run_ui_surface_profile_evidence.sh development --host android
 
       - name: Upload profile evidence log
         if: always()
@@ -79,7 +78,7 @@ jobs:
       - name: Print evidence summary
         if: success()
         run: |
-          set -euo pipefail
+          set -eu
           log="$(find tmp/ui-surface-profile-evidence -name '*.log' -type f | sort | tail -1)"
           echo "=== ui_surface_open lines (Android emulator) ==="
           grep -E 'ui_surface_open surface=' "$log" || true
