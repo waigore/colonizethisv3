@@ -1,6 +1,9 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../../providers/units_panel_session_cache_provider.dart';
 
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
@@ -19,7 +22,14 @@ mixin MilitaryUnitsPanelBuild
     on BaseUnitsPanelState<MilitaryUnitsPanel>, MilitaryUnitsPanelDialogs {
   Widget buildMilitaryUnitsPanel(BuildContext context) {
     final l10n = appL10n(context);
-    final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
+    final cache = ProviderScope.containerOf(context).read(
+      unitsPanelSessionCacheProvider,
+    );
+    final groups = resolveUnitsPanelMilitaryGroups(
+      cache: cache,
+      game: widget.game,
+      humanPlayerId: widget.humanPlayerId,
+    );
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;
     final readOnly = widget.readOnly;

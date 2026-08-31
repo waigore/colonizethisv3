@@ -77,11 +77,13 @@ CounselTradeCallbacks buildCounselTradeCallbacks({
   required String humanPlayerId,
   required AppLocalizations l10n,
   required bool canEdit,
-  required TradeCounselBookResult tradeCounsel,
+  required TradeCounselBookResult Function() readTradeCounsel,
 }) {
   return CounselTradeCallbacks(
-    onApplyBook: canEdit && tradeCounsel.book.isNotEmpty
+    onApplyBook: canEdit
         ? () {
+            final tradeCounsel = readTradeCounsel();
+            if (tradeCounsel.book.isEmpty) return;
             final orders = readCurrentOrders();
             final next = tradeCounselOrdersAfterApplyBook(
               currentOrders: orders,

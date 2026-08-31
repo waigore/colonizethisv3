@@ -13,6 +13,7 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
 import '../../../../../providers/games_provider.dart';
+import '../../../../../providers/units_panel_session_cache_provider.dart';
 import '../shared/units_panel_shell.dart';
 import 'civilian_units_panel.dart';
 import 'civilian_units_panel_list.dart';
@@ -26,25 +27,32 @@ mixin CivilianUnitsPanelBuild
         CivilianUnitsPanelList {
   Widget buildCivilianUnitsPanel(BuildContext context) {
     final l10n = appL10n(context);
-    final provinceNames = provinceNamesByPrefixedId(widget.game);
     final ownerIds = widget.civilianOwnerIds ?? {widget.humanPlayerId};
+    final useSessionCache = civilianUnitsPanelSessionCacheEligible(
+      tileScopeTileKey: widget.tileScopeTileKey,
+      explorerOnly: widget.explorerOnly,
+      builderOnly: widget.builderOnly,
+      engineerOnly: widget.engineerOnly,
+      railBuilderOnly: widget.railBuilderOnly,
+      merchantOnly: widget.merchantOnly,
+      spyOnly: widget.spyOnly,
+    );
+    final cache = ProviderScope.containerOf(context).read(
+      unitsPanelSessionCacheProvider,
+    );
+    final openPath = resolveCivilianUnitsPanelOpenPath(
+      cache: cache,
+      game: widget.game,
+      ownerIds: ownerIds,
+      currentOrders: widget.currentOrders,
+      useSessionCache: useSessionCache,
+    );
+    final provinceNames = openPath.provinceNames;
     final multiOwner = ownerIds.length > 1;
-    final ow = civilianUnitsInRegionForOwners(
-      widget.game.worldState.oldWorld.units,
-      ownerIds,
-      provinceNames,
-      widget.currentOrders,
-    );
-    final nw = civilianUnitsInRegionForOwners(
-      widget.game.worldState.newWorld.units,
-      ownerIds,
-      provinceNames,
-      widget.currentOrders,
-    );
     final scopeTileKey = widget.tileScopeTileKey;
     final tileScopeActive = scopeTileKey != null && scopeTileKey.isNotEmpty;
     final scopedOw = scopedCivilianUnits(
-      ow,
+      openPath.oldWorldUnits,
       tileScopeTileKey: scopeTileKey,
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
@@ -54,7 +62,7 @@ mixin CivilianUnitsPanelBuild
       spyOnly: widget.spyOnly,
     );
     final scopedNw = scopedCivilianUnits(
-      nw,
+      openPath.newWorldUnits,
       tileScopeTileKey: scopeTileKey,
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,

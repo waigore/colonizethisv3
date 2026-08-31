@@ -1,6 +1,7 @@
 // Victory panel golden harness helpers (Refs #4352).
 
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_body.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,9 @@ Future<void> pumpVictoryPanelBodyGolden(
     includeLocalizations: true,
     wrapInProviderScope: true,
     center: false,
+    overrides: [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+    ],
     child: SizedBox(
       width: viewport.width,
       height: viewport.height,

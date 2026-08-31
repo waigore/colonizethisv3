@@ -63,4 +63,36 @@ void main() {
       }
     },
   );
+
+  test(
+    'Empire-rail panel CtAppPerf marker names are DevTools-filterable (Refs #4688)',
+    () {
+      const markers = <String>[
+        'production.interactiveReady',
+        'production.openPath',
+        'production.industryCounsel',
+        'trade.interactiveReady',
+        'diplomacy.interactiveReady',
+        'diplomacy.rowsBuild',
+        'technology.interactiveReady',
+        'technology.slotsOpenPath',
+        'victory.interactiveReady',
+        'victory.openPath',
+        'civilianUnits.interactiveReady',
+        'militaryUnits.interactiveReady',
+        'militaryUnits.treeBuild',
+        'navalUnits.interactiveReady',
+        'navalUnits.treeBuild',
+        'counsel.interactiveReady',
+        'counsel.industryBuild',
+        'counsel.tradeBuild',
+        'counsel.militaryBuild',
+        'counsel.developmentBuild',
+      ];
+      for (final name in markers) {
+        expect(() => ctAppPerfInstant(name), returnsNormally);
+        expect(ctAppPerfSync(name, () => name.length), name.length);
+      }
+    },
+  );
 }

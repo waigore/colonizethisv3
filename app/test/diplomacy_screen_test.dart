@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_screen.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
@@ -37,6 +38,9 @@ void main() {
 
   Widget buildScreen({required Game game, required String humanPlayerId}) {
     return buildAppShell(
+      overrides: [
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      ],
       child: Navigator(
         pages: [
           MaterialPage(
