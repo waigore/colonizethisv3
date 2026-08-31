@@ -20,10 +20,19 @@ import '../test/widget_test_pumps.dart';
 
 /// Profile/release open-to-interactive measurement for GAME60001 (Refs #4688).
 ///
-/// Run on Linux desktop binding host:
-/// `cd app && flutter drive --driver=test_driver/integration_test.dart \
+/// **Linux desktop binding host:**
+/// `cd app && xvfb-run -a flutter drive --driver=test_driver/integration_test.dart \
 ///   --target=integration_test/trade_panel_surface_open_profile_test.dart \
 ///   --profile -d linux`
+///
+/// **Android emulator binding host:**
+/// `cd app && flutter emulators --launch <avd_name>`
+/// `flutter drive --driver=test_driver/integration_test.dart \
+///   --target=integration_test/trade_panel_surface_open_profile_test.dart \
+///   --profile -d <emulator_device_id>`
+///
+/// Attach `ui_surface_open surface=trade … host=linux_desktop_profile` or
+/// `host=android_emulator_profile` from drive output / logcat for PR evidence.
 void main() {
   suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
