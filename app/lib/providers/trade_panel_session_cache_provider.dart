@@ -80,13 +80,20 @@ final tradePanelTradeCounselHighlightsProvider = Provider.autoDispose<
   final mapData = tryGetGameMapData(
     () => ref.watch(gameServiceProvider).getMapData(game.id),
   );
-  if (mapData == null) return null;
 
   final playerId = resolveShellPanelPlayerId(
     ref.watch(shellPlayerContextProvider),
     game,
   );
-  final topology = mapData.combinedTopology;
+  final MapTopology topology;
+  final Map<String, TileMapResult> tileMapByRegion;
+  if (mapData != null) {
+    topology = mapData.combinedTopology;
+    tileMapByRegion = mapData.tileMapByRegion;
+  } else {
+    topology = MapTopology();
+    tileMapByRegion = const {};
+  }
   final revision = tradePanelSessionRevision(
     game: game,
     playerId: playerId,
@@ -110,7 +117,7 @@ final tradePanelTradeCounselHighlightsProvider = Provider.autoDispose<
       productionAssignments: productionAssignments,
       currentOrders: orders,
       topology: topology,
-      tileMapByRegion: mapData.tileMapByRegion,
+      tileMapByRegion: tileMapByRegion,
     ),
   );
   final highlights = tradeCounselHighlightsByCommodityId(tradeCounsel);
