@@ -86,6 +86,24 @@ class RunUiSurfaceProfileEvidenceTests(unittest.TestCase):
         self.assertIn("host=android_emulator_profile", lines[0])
         self.assertIn("warm=1", lines[1])
 
+    def test_relative_out_dir_resolves_from_repo_root(self) -> None:
+        """Mirror OUT_DIR normalization before cd app/ in the shell script."""
+        result = subprocess.run(
+            [
+                "bash",
+                "-c",
+                (
+                    'ROOT="/tmp/fake-root"; OUT_DIR="tmp/evidence"; '
+                    'case "$OUT_DIR" in /*) ;; *) OUT_DIR="$ROOT/$OUT_DIR" ;; esac; '
+                    'echo "$OUT_DIR"'
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        self.assertEqual(result.stdout.strip(), "/tmp/fake-root/tmp/evidence")
+
 
 if __name__ == "__main__":
     unittest.main()

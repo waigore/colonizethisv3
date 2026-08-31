@@ -24,6 +24,11 @@ shift || true
 HOST="auto"
 DEVICE=""
 OUT_DIR="${UI_SURFACE_PROFILE_OUT:-$ROOT/tmp/ui-surface-profile-evidence}"
+# Resolve before `cd app` so relative UI_SURFACE_PROFILE_OUT paths still write correctly.
+case "$OUT_DIR" in
+  /*) ;;
+  *) OUT_DIR="$ROOT/$OUT_DIR" ;;
+esac
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
