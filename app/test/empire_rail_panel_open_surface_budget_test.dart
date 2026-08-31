@@ -23,56 +23,20 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'app_test_hive_harness.dart';
 import 'development_panel_test_support.dart';
+import 'empire_rail_panel_open_surface_budget_support.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
-
-Future<int> _openToInteractiveMs(
-  WidgetTester tester, {
-  required Future<void> Function() mountPanel,
-  required Finder interactiveProbe,
-}) async {
-  final sw = Stopwatch()..start();
-  await mountPanel();
-  expect(interactiveProbe, findsOneWidget);
-  sw.stop();
-  return sw.elapsedMilliseconds;
-}
-
-Future<void> _coldWarmOpenCycle(
-  WidgetTester tester, {
-  required Future<void> Function() mountPanel,
-  required Future<void> Function() unmountPanel,
-  required Finder interactiveProbe,
-}) async {
-  final coldMs = await _openToInteractiveMs(
-    tester,
-    mountPanel: mountPanel,
-    interactiveProbe: interactiveProbe,
-  );
-  expect(coldMs, greaterThan(0));
-
-  await unmountPanel();
-
-  final warmMs = await _openToInteractiveMs(
-    tester,
-    mountPanel: mountPanel,
-    interactiveProbe: interactiveProbe,
-  );
-  expect(warmMs, greaterThan(0));
-}
 
 void main() {
   suppressLogsForTests();
@@ -87,39 +51,16 @@ void main() {
     await gamesBox.close();
   });
 
-  Widget _l10nShell({
-    required List<Override> overrides,
-    required Widget child,
-  }) {
-    return buildAppShell(
-      overrides: overrides,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en'),
-      child: child,
-    );
-  }
-
-  List<Override> _productionOverrides(Game game) => [
-    gamesBoxProvider.overrideWith((ref) => gamesBox),
-    ...developmentPanelProjectionProviderOverrides(game),
-    appEventBusProvider.overrideWith((ref) {
-      final bus = AppEventBus.create();
-      ref.onDispose(bus.dispose);
-      return bus;
-    }),
-  ];
-
   testWidgets('empire-rail GAME20001 Production cold and warm open (Refs #4688)', (
     WidgetTester tester,
   ) async {
     final game = buildDevelopmentPanelGoldenGame();
     final player = game.playerById(kPanelTestHumanPlayerId)!;
-    final overrides = _productionOverrides(game);
+    final overrides = productionPanelOverrides(game, gamesBox);
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        _l10nShell(
+        empireRailL10nShell(
           overrides: overrides,
           child: ProductionScreen(
             game: game,
@@ -133,12 +74,12 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        _l10nShell(overrides: overrides, child: const SizedBox.shrink()),
+        empireRailL10nShell(overrides: overrides, child: const SizedBox.shrink()),
       );
       await tester.pump();
     }
 
-    await _coldWarmOpenCycle(
+    await coldWarmEmpireRailPanelOpenCycle(
       tester,
       mountPanel: mount,
       unmountPanel: unmount,
@@ -160,7 +101,7 @@ void main() {
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        _l10nShell(
+        empireRailL10nShell(
           overrides: overrides,
           child: TradeScreen(game: game, player: player),
         ),
@@ -170,12 +111,12 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        _l10nShell(overrides: overrides, child: const SizedBox.shrink()),
+        empireRailL10nShell(overrides: overrides, child: const SizedBox.shrink()),
       );
       await tester.pump();
     }
 
-    await _coldWarmOpenCycle(
+    await coldWarmEmpireRailPanelOpenCycle(
       tester,
       mountPanel: mount,
       unmountPanel: unmount,
@@ -194,7 +135,7 @@ void main() {
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        _l10nShell(
+        empireRailL10nShell(
           overrides: overrides,
           child: DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
         ),
@@ -204,12 +145,12 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        _l10nShell(overrides: overrides, child: const SizedBox.shrink()),
+        empireRailL10nShell(overrides: overrides, child: const SizedBox.shrink()),
       );
       await tester.pump();
     }
 
-    await _coldWarmOpenCycle(
+    await coldWarmEmpireRailPanelOpenCycle(
       tester,
       mountPanel: mount,
       unmountPanel: unmount,
@@ -236,7 +177,7 @@ void main() {
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        _l10nShell(
+        empireRailL10nShell(
           overrides: overrides,
           child: TechnologyScreen(game: game, player: player),
         ),
@@ -246,12 +187,12 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        _l10nShell(overrides: overrides, child: const SizedBox.shrink()),
+        empireRailL10nShell(overrides: overrides, child: const SizedBox.shrink()),
       );
       await tester.pump();
     }
 
-    await _coldWarmOpenCycle(
+    await coldWarmEmpireRailPanelOpenCycle(
       tester,
       mountPanel: mount,
       unmountPanel: unmount,
@@ -269,7 +210,7 @@ void main() {
 
     Future<void> mount() async {
       await tester.pumpWidget(
-        _l10nShell(
+        empireRailL10nShell(
           overrides: overrides,
           child: Scaffold(
             body: VictoryScreenBody(
@@ -284,12 +225,12 @@ void main() {
 
     Future<void> unmount() async {
       await tester.pumpWidget(
-        _l10nShell(overrides: overrides, child: const SizedBox.shrink()),
+        empireRailL10nShell(overrides: overrides, child: const SizedBox.shrink()),
       );
       await tester.pump();
     }
 
-    await _coldWarmOpenCycle(
+    await coldWarmEmpireRailPanelOpenCycle(
       tester,
       mountPanel: mount,
       unmountPanel: unmount,
@@ -344,7 +285,7 @@ void main() {
       await tester.pump();
     }
 
-    await _coldWarmOpenCycle(
+    await coldWarmEmpireRailPanelOpenCycle(
       tester,
       mountPanel: mount,
       unmountPanel: unmount,
