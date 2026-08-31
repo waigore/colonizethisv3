@@ -1,4 +1,4 @@
-// Industry and Trade lazy tab hosts for `GAME90001` (Refs #4688 Slice 8).
+// Military and Development lazy tab hosts for `GAME90001` (Refs #4688 Slice 8).
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -10,17 +10,16 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/counsel_panel_session_cache_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
-import 'counsel_industry_tab_body.dart';
-import 'counsel_screen_callbacks_industry.dart';
-import 'counsel_trade_tab_body.dart';
+import 'counsel_development_tab_body.dart';
+import 'counsel_military_tab_body.dart';
+import 'counsel_screen_callbacks_military.dart';
 
-class CounselIndustryTabHost extends ConsumerWidget {
-  const CounselIndustryTabHost({
+class CounselMilitaryTabHost extends ConsumerWidget {
+  const CounselMilitaryTabHost({
     super.key,
     required this.displayGame,
     required this.humanPlayerId,
     required this.topology,
-    required this.tileMapByRegion,
     required this.highlightRecommendationId,
     required this.canEdit,
     required this.l10n,
@@ -30,7 +29,6 @@ class CounselIndustryTabHost extends ConsumerWidget {
   final Game displayGame;
   final String humanPlayerId;
   final MapTopology topology;
-  final Map<String, TileMapResult> tileMapByRegion;
   final String? highlightRecommendationId;
   final bool canEdit;
   final AppLocalizations l10n;
@@ -49,30 +47,26 @@ class CounselIndustryTabHost extends ConsumerWidget {
       desiredOutputByRecipe: desiredOutput,
       topology: topology,
     );
-    final recommendations = resolveCounselIndustryRecommendations(
+    final recommendations = resolveCounselMilitaryRecommendations(
       cache: ref.read(counselPanelSessionCacheProvider),
       revision: revision,
       game: displayGame,
       playerId: humanPlayerId,
       currentOrders: currentOrders,
       topology: topology,
-      tileMapByRegion: tileMapByRegion,
     );
-    return CounselIndustryTabBody(
+    return CounselMilitaryTabBody(
+      game: displayGame,
       recommendations: recommendations,
       highlightRecommendationId: highlightRecommendationId,
       l10n: l10n,
       canEdit: canEdit,
-      callbacks: buildCounselIndustryCallbacks(
+      callbacks: buildCounselMilitaryCallbacks(
+        context: context,
         bus: ref.read(appEventBusProvider),
         readCurrentOrders: () => ref.read(currentOrdersProvider),
         replaceCurrentOrders: (next) =>
             ref.read(currentOrdersProvider.notifier).replaceAll(next),
-        readProductionDesiredOutput: () =>
-            ref.read(productionDesiredOutputProvider),
-        replaceProductionDesiredOutput: (next) => ref
-            .read(productionDesiredOutputProvider.notifier)
-            .replaceAll(next),
         displayGame: displayGame,
         humanPlayerId: humanPlayerId,
         topology: topology,
@@ -83,8 +77,8 @@ class CounselIndustryTabHost extends ConsumerWidget {
   }
 }
 
-class CounselTradeTabHost extends ConsumerWidget {
-  const CounselTradeTabHost({
+class CounselDevelopmentTabHost extends ConsumerWidget {
+  const CounselDevelopmentTabHost({
     super.key,
     required this.displayGame,
     required this.humanPlayerId,
@@ -118,7 +112,7 @@ class CounselTradeTabHost extends ConsumerWidget {
       desiredOutputByRecipe: desiredOutput,
       topology: topology,
     );
-    final tradeCounsel = resolveCounselTradeBook(
+    final recommendations = resolveCounselDevelopmentRecommendations(
       cache: ref.read(counselPanelSessionCacheProvider),
       revision: revision,
       game: displayGame,
@@ -126,23 +120,21 @@ class CounselTradeTabHost extends ConsumerWidget {
       currentOrders: currentOrders,
       topology: topology,
       tileMapByRegion: tileMapByRegion,
-      productionAssignments: desiredOutputToAssignments(desiredOutput),
     );
-    return CounselTradeTabBody(
-      recommendations: tradeCounsel.recommendations,
-      book: tradeCounsel.book,
+    return CounselDevelopmentTabBody(
+      recommendations: recommendations,
       highlightRecommendationId: highlightRecommendationId,
       l10n: l10n,
       canEdit: canEdit,
-      callbacks: buildCounselTradeCallbacks(
+      callbacks: buildCounselDevelopmentCallbacks(
         bus: ref.read(appEventBusProvider),
         readCurrentOrders: () => ref.read(currentOrdersProvider),
-        replaceCurrentOrders: (next) =>
-            ref.read(currentOrdersProvider.notifier).replaceAll(next),
+        displayGame: displayGame,
         humanPlayerId: humanPlayerId,
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
         l10n: l10n,
         canEdit: canEdit,
-        readTradeCounsel: () => tradeCounsel,
       ),
     );
   }

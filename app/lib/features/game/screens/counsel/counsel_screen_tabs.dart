@@ -4,7 +4,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'counsel_panel_map_context.dart';
 import 'counsel_screen_tab_hosts.dart';
+import 'counsel_screen_tab_hosts_military.dart';
 
 enum CounselTab { industry, trade, military, development }
 

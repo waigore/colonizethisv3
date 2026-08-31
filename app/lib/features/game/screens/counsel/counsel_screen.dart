@@ -14,7 +14,7 @@ import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
-import 'counsel_screen_tab_hosts.dart';
+import 'counsel_panel_map_context.dart';
 import 'counsel_screen_tabs.dart';
 
 class CounselScreen extends ConsumerWidget {
