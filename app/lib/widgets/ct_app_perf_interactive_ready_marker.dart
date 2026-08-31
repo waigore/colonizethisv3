@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart' show kProfileMode, kReleaseMode;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
-import '../package_logger.dart';
-
 /// Emits one [CtAppPerf] instant marker after the first frame with [child] mounted.
 ///
 /// When [surfaceOpenId] is set, also tracks wall-clock open-to-interactive and
@@ -31,8 +29,6 @@ class CtAppPerfInteractiveReadyMarker extends StatefulWidget {
 
 class _CtAppPerfInteractiveReadyMarkerState
     extends State<CtAppPerfInteractiveReadyMarker> {
-  static final _log = packageLogger('perf');
-
   @override
   void initState() {
     super.initState();
@@ -46,11 +42,6 @@ class _CtAppPerfInteractiveReadyMarkerState
       if (surfaceOpenId != null) {
         final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady(surfaceOpenId);
         if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
-          final line =
-              'ui_surface_open surface=$surfaceOpenId elapsed_ms=$elapsedMs '
-              'budget_ms=$kUiSurfaceOpenBudgetMs '
-              'host=${ctAppPerfSurfaceOpenBindingHost()}';
-          _log.i(line);
           ctAppPerfLogUiSurfaceOpen(surfaceOpenId, elapsedMs);
         }
         return;

@@ -1,12 +1,10 @@
 import 'dart:developer' as developer;
+import 'dart:io' show stdout;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, kProfileMode, kReleaseMode,
         TargetPlatform;
-
-final CtLogger _perfLog = CtLogger('perf');
 
 /// Flutter DevTools timeline markers for new-game → game-screen startup.
 /// Names are prefixed with [kAppPerfTimelinePrefix] for filtering (GitHub #1710,
@@ -46,8 +44,10 @@ int? ctAppPerfSurfaceOpenInteractiveReady(String surfaceId) {
 
 /// Emits `ui_surface_open` for profile/release evidence capture (Refs #4687, #4688).
 ///
-/// Routed through [CtLogger] `perf` so Linux `flutter drive` stdout and Android
-/// logcat remain greppable without `avoid_print` suppressions.
+/// Writes a single greppable line to binding-host stdout (Linux `flutter drive`
+/// replay) and Android logcat via `stdout.writeln`, bypassing
+/// [suppressLogsForTests] which silences [CtLogger]. Web profile hosts fall
+/// back to [developer.log].
 void ctAppPerfLogUiSurfaceOpen(
   String surfaceId,
   int elapsedMs, {
@@ -61,7 +61,11 @@ void ctAppPerfLogUiSurfaceOpen(
   final line =
       'ui_surface_open surface=$surfaceId elapsed_ms=$elapsedMs '
       'budget_ms=$kUiSurfaceOpenBudgetMs host=$host$warmSuffix';
-  _perfLog.i(line);
+  if (kIsWeb) {
+    developer.log(line, name: 'perf');
+    return;
+  }
+  stdout.writeln(line);
 }
 
 /// Binding-host label for profile/release `ui_surface_open` evidence (Refs #4687).
