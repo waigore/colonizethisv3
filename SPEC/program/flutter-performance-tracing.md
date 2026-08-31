@@ -76,6 +76,11 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 
 Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppPerf.technology`, `CtAppPerf.victory`, `CtAppPerf.counsel`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart` and full-widget pump-to-interactive surrogates in `app/test/empire_rail_panel_open_surface_budget_test.dart` — not debug wall-clock assertions.
 
+**Binding-host replay harness (Refs #4688):**
+
+- **Production (`GAME20001`):** `app/integration_test/production_panel_surface_open_profile_test.dart` via `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/production_panel_surface_open_profile_test.dart --profile -d <device>` (Linux desktop: `-d linux` with xvfb on headless hosts; Android emulator: `-d <emulator_id>`). Capture cold open and same-turn warm re-open `ui_surface_open surface=production … host=linux_desktop_profile` or `host=android_emulator_profile` lines.
+- **Trade (`GAME60001`):** `app/integration_test/trade_panel_surface_open_profile_test.dart` (same drive flags; `surface=trade`).
+
 ---
 
 ## Log lines (app package, `info`)
@@ -92,6 +97,7 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `game_intro dialogue_begin node=…` | `dialogue` | Before `startDialogue`. |
 | `game_intro first_line_shown` | `dialogue` | First non-null dialogue line in overlay. |
 | `ui_surface_open surface=development elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `development.interactiveReady` fires (Refs #4687). |
+| `ui_surface_open surface=production elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `production.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=trade elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `trade.interactiveReady` fires (Refs #4688). |
 
 ---

@@ -25,6 +25,15 @@ void main() {
     expect(() => ctAppPerfInstant('development.interactiveReady'), returnsNormally);
   });
 
+  test('ctAppPerfSurfaceOpen segment tracks production surface (Refs #4688)', () {
+    ctAppPerfSurfaceOpenBegin('production');
+    expect(ctAppPerfSurfaceOpenElapsedMs('production'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('production');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('production.interactiveReady'), returnsNormally);
+  });
+
   test('ctAppPerfSurfaceOpenBindingHost returns a non-empty label (Refs #4687)', () {
     final host = ctAppPerfSurfaceOpenBindingHost();
     expect(host, isNotEmpty);
