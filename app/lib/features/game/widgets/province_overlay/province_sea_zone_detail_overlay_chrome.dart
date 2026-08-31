@@ -2,9 +2,13 @@
 
 import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show kUiSurfaceOpenBudgetMs;
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
+import 'package:flutter/foundation.dart' show kProfileMode, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -137,12 +141,21 @@ class ProvinceOverlayInteractiveReadyMarker extends StatefulWidget {
 
 class _ProvinceOverlayInteractiveReadyMarkerState
     extends State<ProvinceOverlayInteractiveReadyMarker> {
+  static final _log = packageLogger('perf');
+
   @override
   void initState() {
     super.initState();
+    ctAppPerfSurfaceOpenBegin('provinceOverlay');
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ctAppPerfInstant('provinceOverlay.interactiveReady');
+      final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady('provinceOverlay');
+      if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
+        _log.i(
+          'ui_surface_open surface=provinceOverlay elapsed_ms=$elapsedMs '
+          'budget_ms=$kUiSurfaceOpenBudgetMs',
+        );
+      }
     });
   }
 

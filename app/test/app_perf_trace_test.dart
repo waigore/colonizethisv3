@@ -25,6 +25,14 @@ void main() {
     expect(() => ctAppPerfInstant('development.interactiveReady'), returnsNormally);
   });
 
+  test('ctAppPerfSurfaceOpen segment tracks elapsed ms for provinceOverlay (Refs #4690)', () {
+    ctAppPerfSurfaceOpenBegin('provinceOverlay');
+    expect(ctAppPerfSurfaceOpenElapsedMs('provinceOverlay'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('provinceOverlay');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+  });
+
   test(
     'Development panel CtAppPerf marker names are DevTools-filterable (Refs #4175 Slice E AC2)',
     () {

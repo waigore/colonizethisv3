@@ -711,7 +711,7 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 
 ## Open-path performance (Refs #4690)
 
-- **1.0 s open-to-interactive** is a **profile/release** measurement on Linux desktop and Android emulator. PR evidence uses DevTools `CtAppPerf.provinceOverlay.*` markers including `provinceOverlay.interactiveReady`. Not enforced by debug-mode `flutter test` wall-clock assertions on CI runners.
+- **1.0 s open-to-interactive** is a **profile/release** measurement on Linux desktop and Android emulator. PR evidence uses DevTools `CtAppPerf.provinceOverlay.*` markers including `provinceOverlay.interactiveReady` and the `ui_surface_open surface=provinceOverlay` info log (`SPEC/program/flutter-performance-tracing.md`). Not enforced by debug-mode `flutter test` wall-clock assertions on CI runners. CI surrogate: `app/test/province_overlay_open_surface_budget_test.dart` (full-widget pump-to-interactive on seed-42 fixture).
 - **Narrow layout:** `CtTabStrip.lazyTabBodies: true` — Political (index 0) builds on first open; Economic, Military, Civilian, and Naval bodies build on first tab selection; Tile (index 1) builds on first selection.
 - **Wide layout:** `ProvinceOverlayWideLazySections` paints Political + Tile on first open; Economic / Military / Civilian / Naval section bodies build when scrolled into view (headers remain visible as scroll targets).
 - **Session read-model cache:** `provinceOverlayReadModelCacheProvider` memoizes province-wide extraction, available counts, and town bonus per `displayId`, plus human connectivity, across overlay close within the same game turn; invalidated on turn/world revision and `clearActiveGameSession`.
