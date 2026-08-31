@@ -1,8 +1,3 @@
-// Pins the resource-icon tooltip convention for the shared
-// SPEC: `SPEC/ui/components/resource-icon-tooltip.md`,
-// `SPEC/ui/components/train-dialog-chrome.md`,
-// `SPEC/ui/train-military-dialog.md`, `SPEC/ui/train-naval-dialog.md`.
-// Refs #3631.
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/production/commodity_ui_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
@@ -15,10 +10,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
-
 Widget _localizedHost(Widget child) {
   return buildAppShell(
     child: Scaffold(body: Center(child: child)),
@@ -26,10 +19,8 @@ Widget _localizedHost(Widget child) {
     supportedLocales: AppLocalizations.supportedLocales,
   );
 }
-
 String _humanPlayerId(Game game) =>
     game.players.firstWhere((p) => p.isHuman).id;
-
 Future<void> _pumpDialog(WidgetTester tester, Widget dialog) async {
   await pumpAppShell(
     tester,
@@ -40,15 +31,12 @@ Future<void> _pumpDialog(WidgetTester tester, Widget dialog) async {
     settle: true,
   );
 }
-
-/// Collects every mounted [Tooltip] message string.
 List<String> _tooltipMessages(WidgetTester tester) {
   return tester
       .widgetList<Tooltip>(find.byType(Tooltip))
       .map((t) => t.message ?? '')
       .toList();
 }
-
 void main() {
   suppressLogsForTests();
 

@@ -11,7 +11,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-
 import 'game_map_area_event_feed_test_fixtures.dart';
 import 'app_test_hive_harness.dart';
 

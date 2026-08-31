@@ -1,6 +1,3 @@
-// Shared harness and pump helpers for `game_map_area_event_feed_*` suites
-// (Refs #4146, #4305 — keeps event-feed widget tests under the 500-line gate).
-
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
@@ -18,24 +15,18 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-
 import 'app_shell_harness.dart';
 import 'map_view_test_fixtures.dart';
 import 'panel_test_fixtures.dart';
-
 class MapAreaHost extends StatefulWidget {
   const MapAreaHost({super.key, required this.game, required this.mapViewData});
-
   final Game game;
   final InitGameMapViewData mapViewData;
-
   @override
   State<MapAreaHost> createState() => _MapAreaHostState();
 }
-
 class _MapAreaHostState extends State<MapAreaHost> {
   bool _showMapArea = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,13 +49,11 @@ class _MapAreaHostState extends State<MapAreaHost> {
     );
   }
 }
-
 class EventFeedHarness {
   EventFeedHarness(this.game, this.mapViewData, this.bus)
     : humanId = game.players.firstWhere((p) => p.isHuman).id {
     opponentId = game.players.firstWhere((p) => p.id != humanId).id;
   }
-
   final Game game;
   final InitGameMapViewData mapViewData;
   final AppEventBus bus;

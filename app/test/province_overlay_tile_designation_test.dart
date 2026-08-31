@@ -1,11 +1,3 @@
-// Pins the Tile-section town / capital designation line for
-// ProvinceSeaZoneDetailOverlay (Refs #3617).
-//
-// SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
-// § Province overlay content `Tile` — Tile town / capital designation, and
-// the matching § Acceptance criteria (Tile town designation line, Tile
-// capital designation line, Tile ordinary land tile — no designation, Tile
-// designation suppressed for sea / unrevealed, Tile designation uses
 // localized keys).
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;

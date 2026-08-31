@@ -7,58 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 
-import 'app_shell_harness.dart';
-
-Widget _host(Widget child, {ThemeData? themeOverride}) {
-  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-  // Theme overrides for bare/light ThemeData guards wrap [child] so
-  // MaterialApp stays canonical (same pattern as ct_dialog_shell_test).
-  final Widget body = themeOverride == null
-      ? child
-      : Theme(data: themeOverride, child: child);
-  return buildAppShell(child: Scaffold(body: body));
-}
-
-/// Locates the inner [Container] widget that paints the tab chrome for
-/// the tab labelled [label]. Each tab in the strip is `Padding > Container`
-/// — `find.text(label)` returns the inner [Text]; we walk back up to the
-/// nearest enclosing [Container].
-Container _tabContainerForLabel(WidgetTester tester, String label) {
-  final Finder labelFinder = find.text(label);
-  final Element labelElement = tester.element(labelFinder);
-  Container? container;
-  labelElement.visitAncestorElements((Element ancestor) {
-    final Widget widget = ancestor.widget;
-    if (widget is Container) {
-      container = widget;
-      return false;
-    }
-    return true;
-  });
-  if (container == null) {
-    throw StateError('No Container ancestor for tab label "$label"');
-  }
-  return container!;
-}
-
-BoxDecoration _tabDecoration(WidgetTester tester, String label) {
-  final Container container = _tabContainerForLabel(tester, label);
-  final Decoration? decoration = container.decoration;
-  if (decoration is! BoxDecoration) {
-    throw StateError(
-      'Tab container for "$label" decoration is not BoxDecoration (got '
-      '${decoration.runtimeType})',
-    );
-  }
-  return decoration;
-}
+import 'ct_tab_strip_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   testWidgets('CtTabStrip builds and shows first tab label and content', (WidgetTester tester) async {
     await tester.pumpWidget(
-      _host(
+      ctTabStripTestHost(
         SizedBox(
           height: 200,
           child: CtTabStrip(
@@ -80,7 +36,7 @@ void main() {
 
   testWidgets('CtTabStrip tap switches to second tab content', (WidgetTester tester) async {
     await tester.pumpWidget(
-      _host(
+      ctTabStripTestHost(
         SizedBox(
           height: 200,
           child: CtTabStrip(
@@ -103,7 +59,7 @@ void main() {
 
   testWidgets('CtTabStrip applies contentPadding', (WidgetTester tester) async {
     await tester.pumpWidget(
-      _host(
+      ctTabStripTestHost(
         SizedBox(
           height: 200,
           child: CtTabStrip(
@@ -118,28 +74,12 @@ void main() {
   });
 
   group('CtTabStrip dark editorial-monocle palette (Refs #2865 S3)', () {
-    Widget harness({
-      required List<String> labels,
-      ThemeData? themeOverride,
-    }) {
-      final List<Widget> views = labels
-          .map((String l) => Text('Body $l', key: ValueKey<String>('body-$l')))
-          .toList(growable: false);
-      return _host(
-        SizedBox(
-          height: 200,
-          child: CtTabStrip(tabLabels: labels, tabViews: views),
-        ),
-        themeOverride: themeOverride,
-      );
-    }
-
     testWidgets(
       'selected tab paints accent border, accentDim background, accentBright label',
       (WidgetTester tester) async {
-        await tester.pumpWidget(harness(labels: const ['First', 'Second']));
+        await tester.pumpWidget(ctTabStripPaletteHarness(labels: const ['First', 'Second']));
 
-        final BoxDecoration selected = _tabDecoration(tester, 'First');
+        final BoxDecoration selected = ctTabStripDecoration(tester, 'First');
         expect(
           selected.color,
           EditorialMonoclePalette.accentDim
@@ -172,9 +112,9 @@ void main() {
     testWidgets(
       'unselected tab paints accentDim border, surface background, muted label',
       (WidgetTester tester) async {
-        await tester.pumpWidget(harness(labels: const ['First', 'Second']));
+        await tester.pumpWidget(ctTabStripPaletteHarness(labels: const ['First', 'Second']));
 
-        final BoxDecoration unselected = _tabDecoration(tester, 'Second');
+        final BoxDecoration unselected = ctTabStripDecoration(tester, 'Second');
         expect(
           unselected.color,
           EditorialMonoclePalette.surface
@@ -210,14 +150,14 @@ void main() {
         // Material default (not editorialMonocle ColorScheme aliases of the
         // same OKLCH tokens), while CtTabStrip still paints palette tokens.
         await tester.pumpWidget(
-          harness(
+          ctTabStripPaletteHarness(
             labels: const ['First', 'Second'],
             themeOverride: ThemeData.light(),
           ),
         );
 
-        final BoxDecoration selected = _tabDecoration(tester, 'First');
-        final BoxDecoration unselected = _tabDecoration(tester, 'Second');
+        final BoxDecoration selected = ctTabStripDecoration(tester, 'First');
+        final BoxDecoration unselected = ctTabStripDecoration(tester, 'Second');
         final ColorScheme materialScheme =
             Theme.of(tester.element(find.text('First'))).colorScheme;
 
@@ -244,13 +184,13 @@ void main() {
     testWidgets(
       'selection swap: tapping the second tab swaps the selected/unselected palettes',
       (WidgetTester tester) async {
-        await tester.pumpWidget(harness(labels: const ['First', 'Second']));
+        await tester.pumpWidget(ctTabStripPaletteHarness(labels: const ['First', 'Second']));
 
         await tester.tap(find.text('Second'));
         await tester.pump();
 
-        final BoxDecoration newlySelected = _tabDecoration(tester, 'Second');
-        final BoxDecoration newlyUnselected = _tabDecoration(tester, 'First');
+        final BoxDecoration newlySelected = ctTabStripDecoration(tester, 'Second');
+        final BoxDecoration newlyUnselected = ctTabStripDecoration(tester, 'First');
 
         expect(
           newlySelected.border?.top.color,
@@ -288,7 +228,7 @@ void main() {
     (WidgetTester tester) async {
       var secondaryBuilds = 0;
       await tester.pumpWidget(
-        _host(
+        ctTabStripTestHost(
           SizedBox(
             height: 200,
             child: CtTabStrip(
@@ -324,7 +264,7 @@ void main() {
     (WidgetTester tester) async {
       var lastIndex = -1;
       await tester.pumpWidget(
-        _host(
+        ctTabStripTestHost(
           SizedBox(
             height: 200,
             child: CtTabStrip(

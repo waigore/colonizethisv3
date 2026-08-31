@@ -30,39 +30,12 @@ void main() {
     techB = rootIds.length > 1 ? rootIds[1] : techA;
   });
 
-  Player buildPlayer({
-    required Map<int, ResearchSlotAssignment> assignments,
-    Map<String, int> progress = const <String, int>{},
-  }) {
-    return Player(
-      id: 'p1',
-      displayName: 'P1',
-      isHuman: true,
-      treasury: 8000,
-      researchSlots: 3,
-      techUnlocked: const <String, bool>{},
-      researchProgressByTechId: progress,
-      researchSlotAssignments: assignments,
-    );
-  }
-
-  Game buildGame(Player player) {
-    return Game(
-      id: 'occupancy-test',
-      worldState: const WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-      ),
-      players: [player],
-    );
-  }
 
   group('Slot occupancy from persisted assignments (Refs #3512)', () {
     testWidgets(
       'persisted assignment renders in its slot with no fresh order',
       (tester) async {
-        final player = buildPlayer(
+        final player = technologyPanelOccupancyPlayer(
           assignments: {
             0: ResearchSlotAssignment(
               techId: techA,
@@ -71,7 +44,7 @@ void main() {
           },
           progress: <String, int>{techA: 600},
         );
-        final game = buildGame(player);
+        final game = technologyPanelOccupancyGame(player);
 
         await pumpTechnologyPanel(
           tester,
@@ -95,7 +68,7 @@ void main() {
     testWidgets('fresh non-empty order overrides the persisted assignment', (
       tester,
     ) async {
-      final player = buildPlayer(
+      final player = technologyPanelOccupancyPlayer(
         assignments: {
           0: ResearchSlotAssignment(
             techId: techA,
@@ -103,7 +76,7 @@ void main() {
           ),
         },
       );
-      final game = buildGame(player);
+      final game = technologyPanelOccupancyGame(player);
       final orders = Orders(
         researchOrdersByPlayerId: {
           player.id: [
@@ -133,7 +106,7 @@ void main() {
     testWidgets('empty-techId order frees a persisted slot in the UI', (
       tester,
     ) async {
-      final player = buildPlayer(
+      final player = technologyPanelOccupancyPlayer(
         assignments: {
           0: ResearchSlotAssignment(
             techId: techA,
@@ -142,7 +115,7 @@ void main() {
         },
         progress: <String, int>{techA: 300},
       );
-      final game = buildGame(player);
+      final game = technologyPanelOccupancyGame(player);
       final orders = Orders(
         researchOrdersByPlayerId: {
           player.id: [
@@ -171,7 +144,7 @@ void main() {
     testWidgets('no standalone In-Progress block when progress is non-empty', (
       tester,
     ) async {
-      final player = buildPlayer(
+      final player = technologyPanelOccupancyPlayer(
         assignments: {
           0: ResearchSlotAssignment(
             techId: techA,
@@ -180,7 +153,7 @@ void main() {
         },
         progress: <String, int>{techA: 600},
       );
-      final game = buildGame(player);
+      final game = technologyPanelOccupancyGame(player);
 
       await pumpTechnologyPanel(
         tester,
@@ -198,7 +171,7 @@ void main() {
     testWidgets('cancel with progress warns and only frees slot on confirm', (
       tester,
     ) async {
-      final player = buildPlayer(
+      final player = technologyPanelOccupancyPlayer(
         assignments: {
           0: ResearchSlotAssignment(
             techId: techA,
@@ -207,7 +180,7 @@ void main() {
         },
         progress: <String, int>{techA: 600},
       );
-      final game = buildGame(player);
+      final game = technologyPanelOccupancyGame(player);
       Orders? dispatched;
 
       await pumpTechnologyPanel(
@@ -237,7 +210,7 @@ void main() {
     testWidgets('cancel with progress aborts when player keeps researching', (
       tester,
     ) async {
-      final player = buildPlayer(
+      final player = technologyPanelOccupancyPlayer(
         assignments: {
           0: ResearchSlotAssignment(
             techId: techA,
@@ -246,7 +219,7 @@ void main() {
         },
         progress: <String, int>{techA: 600},
       );
-      final game = buildGame(player);
+      final game = technologyPanelOccupancyGame(player);
       Orders? dispatched;
 
       await pumpTechnologyPanel(
@@ -271,7 +244,7 @@ void main() {
     testWidgets('cancel with zero progress frees slot without a warning', (
       tester,
     ) async {
-      final player = buildPlayer(
+      final player = technologyPanelOccupancyPlayer(
         assignments: {
           0: ResearchSlotAssignment(
             techId: techA,
@@ -279,7 +252,7 @@ void main() {
           ),
         },
       );
-      final game = buildGame(player);
+      final game = technologyPanelOccupancyGame(player);
       Orders? dispatched;
 
       await pumpTechnologyPanel(

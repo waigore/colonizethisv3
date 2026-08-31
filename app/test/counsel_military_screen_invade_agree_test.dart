@@ -30,124 +30,8 @@ import 'app_shell_harness.dart';
 import 'panel_fixtures/core.dart';
 import 'widget_test_pumps.dart';
 import 'app_test_hive_harness.dart';
+import 'counsel_military_screen_invade_agree_support.dart';
 
-const _counselMilitaryInvadeGameId = 'counsel-military-invade-screen-test';
-const _rivalId = 'gp2';
-const _fromProvince = 'oldWorld|p1';
-const _invadeProvince = 'oldWorld|p2';
-
-final MapTopology _counselMilitaryInvadeTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: _fromProvince,
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: _invadeProvince,
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: const [
-    TopologyEdge(id1: _fromProvince, id2: _invadeProvince),
-  ],
-);
-
-class CounselMilitaryInvadeMapGameService extends GameService {
-  CounselMilitaryInvadeMapGameService(super.box, super.adapter);
-
-  @override
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
-    if (gameId != _counselMilitaryInvadeGameId) return null;
-    return (
-      combinedTopology: _counselMilitaryInvadeTopology,
-      tileMapByRegion: const {},
-      topologyByRegion: const {},
-      warpLinks: null,
-    );
-  }
-}
-
-Game buildCounselMilitaryInvadeScreenGame({required bool atWar}) {
-  const human = kPanelTestHumanPlayerId;
-  final armyId = fieldArmyIdFor(human, _fromProvince);
-  return buildPanelTestGame(
-    id: _counselMilitaryInvadeGameId,
-    players: [
-      Player(
-        id: human,
-        displayName: 'Human',
-        isHuman: true,
-        capitalProvinceId: _fromProvince,
-        stockpile: const Stockpile()
-            .applyDelta('grain', 20)
-            .applyDelta('meat', 20),
-      ),
-      const Player(id: _rivalId, displayName: 'Rival', isHuman: false),
-    ],
-    oldWorldProvinces: const [
-      Province(
-        id: _fromProvince,
-        regionId: 'oldWorld',
-        ownerId: human,
-        displayName: 'Origin',
-      ),
-      Province(
-        id: _invadeProvince,
-        regionId: 'oldWorld',
-        ownerId: _rivalId,
-        displayName: 'Enemy Border',
-      ),
-    ],
-    oldWorldUnits: [
-      Unit(
-        id: 'u1',
-        type: kPanelTestRegimentType,
-        ownerId: human,
-        locationProvinceId: _fromProvince,
-      ),
-    ],
-    armies: [
-      Army(
-        id: armyId,
-        ownerId: human,
-        regionId: 'oldWorld',
-        stationedProvinceId: _fromProvince,
-        regimentUnitIds: const ['u1'],
-        isHomeArmy: false,
-      ),
-    ],
-    tileKeysByRegionAndProvince: const {
-      'oldWorld': {
-        _fromProvince: ['oldWorld|p1|0|0'],
-        _invadeProvince: ['oldWorld|p2|0|0'],
-      },
-    },
-    playerVisibilityByTile: const {
-      human: {
-        'oldWorld|p1|0|0': 'fullyVisible',
-        'oldWorld|p2|0|0': 'fullyVisible',
-      },
-    },
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: human,
-        factionId2: _rivalId,
-        state: atWar ? RelationState.atWar : RelationState.atPeace,
-        score: atWar ? 20 : 50,
-        sinceTurn: 0,
-        lastInteractionTurn: 0,
-      ),
-    ],
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -218,7 +102,7 @@ void main() {
 
   Finder invadeAgreeFinder(String armyId) {
     return find.byKey(
-      ValueKey<String>('counsel_agree_military_invade_invade:$armyId:$_invadeProvince'),
+      ValueKey<String>('counsel_agree_military_invade_invade:$armyId:$kCounselMilitaryInvadeProvince'),
     );
   }
 
@@ -227,7 +111,7 @@ void main() {
     (WidgetTester tester) async {
       const human = kPanelTestHumanPlayerId;
       final game = buildCounselMilitaryInvadeScreenGame(atWar: true);
-      final armyId = fieldArmyIdFor(human, _fromProvince);
+      final armyId = fieldArmyIdFor(human, kCounselMilitaryInvadeFromProvince);
       final bus = AppEventBus.create();
       final container = ProviderContainer(
         overrides: counselInvadeOverrides(game: game, bus: bus),
@@ -253,7 +137,7 @@ void main() {
       final moves = orders.armyMoveOrdersByPlayerId[human] ?? const [];
       expect(moves, hasLength(1));
       expect(moves.single.armyId, armyId);
-      expect(moves.single.destinationProvinceId, _invadeProvince);
+      expect(moves.single.destinationProvinceId, kCounselMilitaryInvadeProvince);
       expect(orders.diplomaticOrdersByPlayerId[human], isNull);
     },
   );
@@ -263,7 +147,7 @@ void main() {
     (WidgetTester tester) async {
       const human = kPanelTestHumanPlayerId;
       final game = buildCounselMilitaryInvadeScreenGame(atWar: false);
-      final armyId = fieldArmyIdFor(human, _fromProvince);
+      final armyId = fieldArmyIdFor(human, kCounselMilitaryInvadeFromProvince);
       final bus = AppEventBus.create();
       final container = ProviderContainer(
         overrides: counselInvadeOverrides(game: game, bus: bus),
@@ -292,11 +176,11 @@ void main() {
       final diplo = orders.diplomaticOrdersByPlayerId[human] ?? const [];
       expect(diplo, hasLength(1));
       expect(diplo.single.type, DiplomaticOrderType.declareWar);
-      expect(diplo.single.targetFactionId, _rivalId);
+      expect(diplo.single.targetFactionId, kCounselMilitaryInvadeRivalId);
 
       final moves = orders.armyMoveOrdersByPlayerId[human] ?? const [];
       expect(moves, hasLength(1));
-      expect(moves.single.destinationProvinceId, _invadeProvince);
+      expect(moves.single.destinationProvinceId, kCounselMilitaryInvadeProvince);
     },
   );
 
@@ -305,7 +189,7 @@ void main() {
     (WidgetTester tester) async {
       const human = kPanelTestHumanPlayerId;
       final game = buildCounselMilitaryInvadeScreenGame(atWar: false);
-      final armyId = fieldArmyIdFor(human, _fromProvince);
+      final armyId = fieldArmyIdFor(human, kCounselMilitaryInvadeFromProvince);
       final bus = AppEventBus.create();
       final container = ProviderContainer(
         overrides: counselInvadeOverrides(game: game, bus: bus),

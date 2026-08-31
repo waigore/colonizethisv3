@@ -1,16 +1,3 @@
-// Structural mockup-fidelity tests for the diplomacy panel chrome slices that
-// reconcile GAME30001 against SPEC/ui/mockups/GAME30001-diplomacy-panel.html
-// (Refs #3621):
-//
-//  - AC4 (§ Mode-bar chip chrome): each filter chip paints
-//    `CtGradients.actionButtonGradient` with a 1 px border — `--border`
-//    inactive, `--accent-dim` active.
-//  - AC7 (§ Outgoing economic diplomacy styling): economic lines render mono,
-//    `--accent-dim`, non-italic per mockup `.f-subsidy`.
-//  - AC8 (§ Section headings first-heading top rhythm): the first rendered
-//    section heading drops its top gap to 0; subsequent headings keep the
-//    `CtSpacing.l` leading gap.
-//
 // SPEC: SPEC/ui/diplomacy-panel.md § Mode bar (filter), § Per-faction row,
 // § Section headings, and § Acceptance criteria (Refs #3621).
 

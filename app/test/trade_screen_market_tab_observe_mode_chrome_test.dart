@@ -1,4 +1,3 @@
-// Widget tests for the Trade Market tab observe-mode chrome parity
 // (Refs #3093 — observe-mode rendering parity slice).
 //
 // SPEC/ui/trade-screen.md § Market tab — observe-mode chrome parity

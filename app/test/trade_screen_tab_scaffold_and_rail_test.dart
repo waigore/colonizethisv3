@@ -1,6 +1,3 @@
-// Widget tests for the TradeScreen scaffold slices
-// (Refs #2993 E1+E2+E3 chrome + E4 two-tab body). SPEC/ui/trade-screen.md.
-
 import 'package:colonizethis_app/config/route_paths.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
@@ -16,7 +13,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-
 import 'package:colonizethis_app/config/constants.dart';
 import 'panel_test_fixtures.dart';
 import 'trade_screen_scaffold_test_support.dart';

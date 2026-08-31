@@ -1,8 +1,3 @@
-// Widget tests for the Trade Market tab treasury bid-budget header (Refs
-// #4186).
-//
-// SPEC/ui/trade-screen.md § Market tab — treasury bid budget indicator.
-
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
@@ -15,20 +10,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
-
 import 'trade_screen_test_support.dart';
-
 const String _humanPlayerId = kTradeTestHumanPlayerId;
-
 const CommodityId _timber = 'timber';
 const CommodityId _iron = 'iron';
-
 String _bidBudgetIndicatorText(WidgetTester tester) {
   return tester.widget<Text>(
     find.byKey(TradeScreenMarketKeys.marketBidBudgetIndicatorKey),
   ).data!;
 }
-
 Override _treasurySummaryOverride(Game game, int nonBidProjectedDelta) {
   final Player player = game.players.first;
   return treasurySummaryProvider.overrideWith((ref) {
@@ -45,10 +35,8 @@ Override _treasurySummaryOverride(Game game, int nonBidProjectedDelta) {
     );
   });
 }
-
 void main() {
   suppressLogsForTests();
-
   group('TradeScreen Market tab bid-budget header (Refs #4186)', () {
     testWidgets(
       'treasury 100, no staged bids → indicator reads Bid budget: 100 of 100',
@@ -57,7 +45,6 @@ void main() {
           tester,
           game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
         );
-
         expect(_bidBudgetIndicatorText(tester), 'Bid budget: 100 of 100');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),
@@ -65,7 +52,6 @@ void main() {
         );
       },
     );
-
     testWidgets(
       'treasury 100, staged Bid timber qty 3 (spend 90) → indicator reads '
       'Bid budget: 10 of 100',
@@ -86,7 +72,6 @@ void main() {
             },
           ),
         );
-
         expect(_bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),
@@ -94,7 +79,6 @@ void main() {
         );
       },
     );
-
     testWidgets(
       'treasury 90, staged Bid timber qty 3 (spend 90) → R == 0 shows warning',
       (tester) async {
@@ -114,7 +98,6 @@ void main() {
             },
           ),
         );
-
         expect(_bidBudgetIndicatorText(tester), 'Bid budget: 0 of 90');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),
@@ -126,7 +109,6 @@ void main() {
         );
       },
     );
-
     testWidgets(
       'treasury 50, non-bid pending cost 60 → budget 0 with no bids shows '
       'warning (B == 0, S == 0)',
@@ -140,7 +122,6 @@ void main() {
           game: game,
           extraOverrides: <Override>[_treasurySummaryOverride(game, -60)],
         );
-
         expect(_bidBudgetIndicatorText(tester), 'Bid budget: 0 of 0');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),

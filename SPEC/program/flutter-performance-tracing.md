@@ -73,7 +73,7 @@ Filter `CtAppPerf.provinceOverlay` for MAP20001 open-path DevTools sessions. The
 | `CtAppPerf.counsel.developmentBuild` | Sync `rankDevelopmentCounselRecommendations` (`counselPanelSessionCacheProvider`). |
 | `CtAppPerf.development.*` | See § Development panel open path (`GAME80001`). |
 
-Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppPerf.technology`, `CtAppPerf.victory`, `CtAppPerf.counsel`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart`, not debug wall-clock assertions.
+Filter `CtAppPerf.production`, `CtAppPerf.trade`, `CtAppPerf.diplomacy`, `CtAppPerf.technology`, `CtAppPerf.victory`, `CtAppPerf.counsel`, or `CtAppPerf.*Units` for empire-rail DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on Linux desktop and Android emulator (PR DevTools evidence); CI uses µs profiling anchors in `empire_rail_panel_open_path_timing_test.dart` and full-widget pump-to-interactive surrogates in `app/test/empire_rail_panel_open_surface_budget_test.dart` — not debug wall-clock assertions.
 
 ---
 

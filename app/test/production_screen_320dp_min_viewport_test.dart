@@ -1,7 +1,3 @@
-// Pin the 320 dp minimum-viewport contract for the in-game
-// `ProductionScreen` (`UiScreenIds.productionScreen`) full-screen feature
-// surface — extending the existing screen-, panel-, dialog-, and
-// unit-panel-level pins (`mobile_320dp_min_viewport_test.dart`,
 // `panels_320dp_min_viewport_test.dart`,
 // `dialogs_320dp_min_viewport_test.dart`,
 // `unit_panels_320dp_min_viewport_test.dart`,
