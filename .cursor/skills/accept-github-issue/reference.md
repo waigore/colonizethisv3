@@ -29,7 +29,7 @@ Works on macOS and Linux hosts; the app ships desktop runners (`app/macos/`, `ap
 5. Drive with `dart_flutter_driver`: `waitFor`/`waitForTappable` before every `tap` (visibility-first per `colonizethis-e2e-ui-stability.mdc`); `enter_text`, `scrollIntoView`, `get_text`, `get_offset` for assertions; `screenshot` at every visual **Then** step → save under `tmp/accept-issue-<n>/`.
 6. New-game flow: Main Menu → New Game → configure per AC → start → map. Mirror the key sequences documented in `app/integration_test/new_game_*_e2e_test.dart`.
 7. Next-turn ACs: sustained resolution **> 15 s** is a defect (`colonizethis-turn-resolution-budget.mdc`).
-8. Game-app panel/dialog/overlay opens: required content (calcs, minimaps, Yarn) must be ready within **1 000 ms**; dismiss must unmount the subtree (`colonizethis-ui-surface-budget.mdc`). Applies even when the issue ACs omit it.
+8. Game-app panel/dialog/overlay opens: for surfaces **introduced or modified** by the issue, required content (calcs, minimaps, Yarn) must be ready within **1 000 ms**; dismiss must unmount the subtree (`colonizethis-ui-surface-budget.mdc`). Untouched grandfathered overflows are exempt. Applies even when the issue ACs omit it.
 9. `dart_get_runtime_errors` before finishing; `dart_stop_app(pid)` when done.
 
 If MCP tools are absent: fall back to A.3/A.4 and note it in the comment.
