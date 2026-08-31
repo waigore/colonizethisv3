@@ -446,6 +446,29 @@ dart test test/check_economy_test_wall_clock_test.dart --reporter=compact
 
 ---
 
+## run_ui_surface_profile_evidence.sh (UI surface open budget, #4687 / #4690)
+
+Runs **profile/release** `flutter drive` for a game-app UI surface and extracts `ui_surface_open surface=… elapsed_ms=… budget_ms=1000 host=…` lines for PR wall-clock evidence on **Linux desktop** or **Android emulator** binding hosts.
+
+| Surface | Integration test | Screen |
+|---------|------------------|--------|
+| `development` | `app/integration_test/development_panel_surface_open_profile_test.dart` | `GAME80001` |
+| `provinceOverlay` | `app/integration_test/province_overlay_surface_open_profile_test.dart` | `MAP20001` |
+
+**Invocation**
+
+```bash
+tool/run_ui_surface_profile_evidence.sh development
+tool/run_ui_surface_profile_evidence.sh provinceOverlay
+tool/run_ui_surface_profile_evidence.sh provinceOverlay --host linux
+tool/run_ui_surface_profile_evidence.sh provinceOverlay --host android --device emulator-5554
+UI_SURFACE_PROFILE_OUT=tmp/profile-evidence tool/run_ui_surface_profile_evidence.sh provinceOverlay
+```
+
+Linux headless hosts use `xvfb-run` when `DISPLAY` is unset. Android: launch an AVD first (`flutter emulators --launch <name>`), then pass `--device` from `flutter devices`. The script fails if any captured line exceeds the 1 000 ms budget. Output logs default to `tmp/ui-surface-profile-evidence/` (gitignored).
+
+---
+
 ## scripts/nightly_dev_to_android_pr.sh (nightly APK PR)
 
 Creates a PR from `dev` → `build/app/android` for nightly APK builds. Merging that PR triggers the app Android build. The PR **source** is always `dev` (per GitHub workflow rules).

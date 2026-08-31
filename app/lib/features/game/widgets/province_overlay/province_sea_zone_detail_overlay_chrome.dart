@@ -8,7 +8,8 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
-import 'package:flutter/foundation.dart' show kProfileMode, kReleaseMode;
+import 'package:flutter/foundation.dart'
+    show debugPrint, kProfileMode, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -151,10 +152,13 @@ class _ProvinceOverlayInteractiveReadyMarkerState
       if (!mounted) return;
       final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady('provinceOverlay');
       if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
-        _log.i(
-          'ui_surface_open surface=provinceOverlay elapsed_ms=$elapsedMs '
-          'budget_ms=$kUiSurfaceOpenBudgetMs',
-        );
+        final host = ctAppPerfSurfaceOpenBindingHost();
+        final line =
+            'ui_surface_open surface=provinceOverlay elapsed_ms=$elapsedMs '
+            'budget_ms=$kUiSurfaceOpenBudgetMs host=$host';
+        _log.i(line);
+        // stdout for profile `flutter drive` evidence capture (Refs #4690).
+        debugPrint(line);
       }
     });
   }

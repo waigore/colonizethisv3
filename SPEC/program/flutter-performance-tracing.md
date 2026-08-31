@@ -93,6 +93,24 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `ui_surface_open surface=development elapsed_ms=… budget_ms=…` | `perf` | Profile/release when `development.interactiveReady` fires (Refs #4687). |
 | `ui_surface_open surface=provinceOverlay elapsed_ms=… budget_ms=…` | `perf` | Profile/release when `provinceOverlay.interactiveReady` fires (Refs #4690). |
 
+**Binding-host replay (MAP20001, Refs #4690):**
+
+```bash
+# Linux desktop (headless)
+tool/run_ui_surface_profile_evidence.sh provinceOverlay --host linux
+
+# Android emulator (after `flutter emulators --launch <avd>`)
+tool/run_ui_surface_profile_evidence.sh provinceOverlay --host android --device <emulator_id>
+```
+
+Direct `flutter drive` (from `app/`):
+
+```bash
+xvfb-run -a flutter drive --driver=test_driver/integration_test.dart \
+  --target=integration_test/province_overlay_surface_open_profile_test.dart \
+  --profile -d linux
+```
+
 ---
 
 ## Acceptance criteria
