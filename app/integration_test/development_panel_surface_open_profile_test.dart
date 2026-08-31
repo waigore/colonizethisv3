@@ -24,10 +24,19 @@ import '../test/panel_fixtures/core.dart';
 
 /// Profile/release open-to-interactive measurement for GAME80001 (Refs #4687).
 ///
-/// Run on Linux desktop binding host:
-/// `cd app && flutter drive --driver=test_driver/integration_test.dart \
+/// **Linux desktop binding host:**
+/// `cd app && xvfb-run -a flutter drive --driver=test_driver/integration_test.dart \
 ///   --target=integration_test/development_panel_surface_open_profile_test.dart \
 ///   --profile -d linux`
+///
+/// **Android emulator binding host:**
+/// `cd app && flutter emulators --launch <avd_name>`
+/// `flutter drive --driver=test_driver/integration_test.dart \
+///   --target=integration_test/development_panel_surface_open_profile_test.dart \
+///   --profile -d <emulator_device_id>`
+///
+/// Attach `ui_surface_open surface=development … host=linux_desktop_profile` or
+/// `host=android_emulator_profile` from drive output / logcat for PR evidence.
 void main() {
   suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +55,7 @@ void main() {
   });
 
   testWidgets(
-    'GAME80001 interactiveReady within 1s on profile/release Linux host',
+    'GAME80001 interactiveReady within 1s on profile/release binding host',
     (WidgetTester tester) async {
       final game = buildDevelopmentPanelGoldenGame();
       final overrides = <Override>[
