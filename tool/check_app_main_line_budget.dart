@@ -136,7 +136,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 province read-model session cache (Refs #4690 Slice B; measured 93_307).
 // raised for empire-rail Slice 2 production session cache + deferred counsel (Refs #4688; measured 93_647).
 // raised for empire-rail Slices 3–7 session caches + interactiveReady markers (Refs #4688; measured 94_411).
-const _maxMainLines = 94500;
+// raised for empire-rail Slice 8 counsel session cache + lazy tabs (Refs #4688; measured 94_915).
+const _maxMainLines = 95000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
