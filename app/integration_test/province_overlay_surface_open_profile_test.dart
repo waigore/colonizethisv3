@@ -77,8 +77,9 @@ void main() {
       expect(elapsedMs, isNotNull);
 
       if (kProfileMode || kReleaseMode) {
+        ctAppPerfLogUiSurfaceOpen('provinceOverlay', elapsedMs!);
         expect(
-          elapsedMs!,
+          elapsedMs,
           lessThanOrEqualTo(kUiSurfaceOpenBudgetMs),
           reason:
               'MAP20001 open-to-interactive exceeded $kUiSurfaceOpenBudgetMs ms',
@@ -100,8 +101,9 @@ void main() {
       final warmMs = ctAppPerfSurfaceOpenElapsedMs('provinceOverlay');
       expect(warmMs, isNotNull);
       if (kProfileMode || kReleaseMode) {
+        ctAppPerfLogUiSurfaceOpen('provinceOverlay', warmMs!, warm: true);
         expect(
-          warmMs!,
+          warmMs,
           lessThanOrEqualTo(kUiSurfaceOpenBudgetMs),
         );
       }
