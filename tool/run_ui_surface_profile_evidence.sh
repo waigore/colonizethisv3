@@ -199,6 +199,8 @@ _run_surface() {
     {
       echo ""
       echo "=== adb logcat (ui_surface_open) ==="
+      "$adb_bin" -s "$device_id" logcat -d -s flutter:I 2>/dev/null \
+        | grep -E 'ui_surface_open surface=' || \
       "$adb_bin" -s "$device_id" logcat -d 2>/dev/null \
         | grep -E 'ui_surface_open surface=' || true
     } >>"$log"

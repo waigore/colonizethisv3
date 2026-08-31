@@ -1,7 +1,9 @@
 import 'dart:developer' as developer;
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show debugPrint, defaultTargetPlatform, kIsWeb, kProfileMode, kReleaseMode,
+        TargetPlatform;
 
 /// Flutter DevTools timeline markers for new-game → game-screen startup.
 /// Names are prefixed with [kAppPerfTimelinePrefix] for filtering (GitHub #1710,
@@ -37,6 +39,27 @@ int? ctAppPerfSurfaceOpenInteractiveReady(String surfaceId) {
   final elapsedMs = ctAppPerfSurfaceOpenElapsedMs(surfaceId);
   ctAppPerfInstant('$surfaceId.interactiveReady');
   return elapsedMs;
+}
+
+/// Emits `ui_surface_open` for profile/release evidence capture (Refs #4687, #4688).
+///
+/// [debugPrint] reaches logcat on Android; [print] reaches `flutter drive` stdout.
+void ctAppPerfLogUiSurfaceOpen(
+  String surfaceId,
+  int elapsedMs, {
+  bool warm = false,
+}) {
+  if (!kProfileMode && !kReleaseMode) {
+    return;
+  }
+  final host = ctAppPerfSurfaceOpenBindingHost();
+  final warmSuffix = warm ? ' warm=1' : '';
+  final line =
+      'ui_surface_open surface=$surfaceId elapsed_ms=$elapsedMs '
+      'budget_ms=$kUiSurfaceOpenBudgetMs host=$host$warmSuffix';
+  debugPrint(line);
+  // ignore: avoid_print — intentional profile evidence on binding hosts.
+  print(line);
 }
 
 /// Binding-host label for profile/release `ui_surface_open` evidence (Refs #4687).

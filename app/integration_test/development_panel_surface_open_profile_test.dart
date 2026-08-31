@@ -101,8 +101,9 @@ void main() {
       expect(elapsedMs, isNotNull);
 
       if (kProfileMode || kReleaseMode) {
+        ctAppPerfLogUiSurfaceOpen('development', elapsedMs!);
         expect(
-          elapsedMs!,
+          elapsedMs,
           lessThanOrEqualTo(kUiSurfaceOpenBudgetMs),
           reason:
               'GAME80001 open-to-interactive exceeded $kUiSurfaceOpenBudgetMs ms',
@@ -165,8 +166,9 @@ void main() {
       final warmMs = await openOnce();
       expect(warmMs, isNotNull);
       if (kProfileMode || kReleaseMode) {
+        ctAppPerfLogUiSurfaceOpen('development', warmMs!, warm: true);
         expect(
-          warmMs!,
+          warmMs,
           lessThanOrEqualTo(kUiSurfaceOpenBudgetMs),
         );
       }

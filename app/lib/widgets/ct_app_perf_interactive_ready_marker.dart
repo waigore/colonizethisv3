@@ -46,13 +46,12 @@ class _CtAppPerfInteractiveReadyMarkerState
       if (surfaceOpenId != null) {
         final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady(surfaceOpenId);
         if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
-          final host = ctAppPerfSurfaceOpenBindingHost();
           final line =
               'ui_surface_open surface=$surfaceOpenId elapsed_ms=$elapsedMs '
-              'budget_ms=$kUiSurfaceOpenBudgetMs host=$host';
+              'budget_ms=$kUiSurfaceOpenBudgetMs '
+              'host=${ctAppPerfSurfaceOpenBindingHost()}';
           _log.i(line);
-          // stdout for profile `flutter drive` evidence capture (Refs #4687, #4688).
-          debugPrint(line);
+          ctAppPerfLogUiSurfaceOpen(surfaceOpenId, elapsedMs);
         }
         return;
       }

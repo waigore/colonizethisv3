@@ -5,7 +5,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
     show kRegionNewWorld, kRegionOldWorld;
-import 'package:flutter/foundation.dart' show debugPrint, kProfileMode, kReleaseMode;
+import 'package:flutter/foundation.dart' show kProfileMode, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,13 +100,12 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
       _loggedInteractiveReady = true;
       final elapsedMs = ctAppPerfSurfaceOpenInteractiveReady('development');
       if ((kProfileMode || kReleaseMode) && elapsedMs != null) {
-        final host = ctAppPerfSurfaceOpenBindingHost();
         final line =
             'ui_surface_open surface=development elapsed_ms=$elapsedMs '
-            'budget_ms=$kUiSurfaceOpenBudgetMs host=$host';
+            'budget_ms=$kUiSurfaceOpenBudgetMs '
+            'host=${ctAppPerfSurfaceOpenBindingHost()}';
         _log.i(line);
-        // stdout for profile `flutter drive` evidence capture (Refs #4687).
-        debugPrint(line);
+        ctAppPerfLogUiSurfaceOpen('development', elapsedMs);
       }
     }
 
