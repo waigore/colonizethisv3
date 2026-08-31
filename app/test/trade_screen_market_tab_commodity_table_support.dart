@@ -1,9 +1,14 @@
 // Market tab commodity-table section helpers (Refs #4352).
 
+import 'package:colonizethis_app/config/app_constants.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'trade_screen_test_support.dart';
 
 List<Commodity> tradeMarketTradeableCommodities() => <Commodity>[
       for (final Commodity c in CommodityCatalog.all)
@@ -82,4 +87,70 @@ void expectTradeMarketCrossSectionBoundaries(WidgetTester tester) {
   );
   expect(lastRawRow.dy, lessThan(mfgHeader.dy));
   expect(mfgHeader.dy, lessThan(firstMfgRow.dy));
+}
+
+Future<void> pumpObserveModeChromeMarket(WidgetTester tester) async {
+  await pumpTradeScreenWithContainer(
+    tester,
+    game: buildTradeTestGame(
+      id: 'test_trade_screen_market_tab_observe_mode_chrome',
+      stockpile: tradeableStockpileFilled(99),
+    ),
+    canMutateViaUi: false,
+  );
+}
+
+void expectObserveModeSectionHeadersMounted(WidgetTester tester) {
+  final marketTab = find.byKey(TradeScreenMarketKeys.marketTabBodyKey);
+  expect(marketTab, findsOneWidget);
+  for (final Key sectionKey in <Key>[
+    TradeScreenMarketKeys.marketSectionFoodKey,
+    TradeScreenMarketKeys.marketSectionRawMaterialsKey,
+    TradeScreenMarketKeys.marketSectionManufacturedKey,
+  ]) {
+    expect(
+      find.descendant(of: marketTab, matching: find.byKey(sectionKey)),
+      findsOneWidget,
+    );
+  }
+}
+
+void expectObserveModeRowIconsMounted(WidgetTester tester) {
+  final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
+  expect(list, findsOneWidget);
+  for (final Commodity c in tradeMarketTradeableCommodities()) {
+    final iconFinder = find.descendant(
+      of: list,
+      matching: find.byKey(TradeScreenMarketKeys.marketRowResourceIconKey(c.id)),
+    );
+    expect(iconFinder, findsOneWidget);
+    final ResourceIcon icon = tester.widget<ResourceIcon>(iconFinder);
+    expect(icon.size, TradeScreenMarketKeys.marketRowResourceIconSize);
+
+    final coinFinder = find.descendant(
+      of: list,
+      matching: find.byKey(TradeScreenMarketKeys.marketRowPriceCoinIconKey(c.id)),
+    );
+    expect(coinFinder, findsOneWidget);
+    final StrictAssetIcon coin = tester.widget<StrictAssetIcon>(coinFinder);
+    expect(coin.width, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
+    expect(coin.height, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
+  }
+}
+
+void expectObserveModeSellableReadoutsMounted(
+  WidgetTester tester, {
+  required int qty,
+}) {
+  final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
+  for (final Commodity c in tradeMarketTradeableCommodities()) {
+    final sellableFinder = find.descendant(
+      of: list,
+      matching: find.byKey(TradeScreenMarketKeys.marketRowSellableReadoutKey(c.id)),
+    );
+    expect(sellableFinder, findsOneWidget);
+    final Text sellable = tester.widget<Text>(sellableFinder);
+    // ignore: avoid_hardcoded_strings_in_widgets
+    expect(sellable.data, '($qty)');
+  }
 }

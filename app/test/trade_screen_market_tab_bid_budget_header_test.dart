@@ -1,40 +1,15 @@
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+
+import 'trade_screen_market_tab_treasury_bid_cap_support.dart';
 import 'trade_screen_test_support.dart';
-const String _humanPlayerId = kTradeTestHumanPlayerId;
-const CommodityId _timber = 'timber';
-const CommodityId _iron = 'iron';
-String _bidBudgetIndicatorText(WidgetTester tester) {
-  return tester.widget<Text>(
-    find.byKey(TradeScreenMarketKeys.marketBidBudgetIndicatorKey),
-  ).data!;
-}
-Override _treasurySummaryOverride(Game game, int nonBidProjectedDelta) {
-  final Player player = game.players.first;
-  return treasurySummaryProvider.overrideWith((ref) {
-    final Orders orders = ref.watch(currentOrdersProvider);
-    final int bidSpend = stagedBidTotalSpendByPlayer(
-      orders: orders,
-      playerId: _humanPlayerId,
-      game: game,
-      resourceRules: ResourceRules.defaultRules,
-    );
-    return TreasurySummary(
-      treasury: player.treasury,
-      projectedDelta: nonBidProjectedDelta - bidSpend,
-    );
-  });
-}
+
 void main() {
   suppressLogsForTests();
   group('TradeScreen Market tab bid-budget header (Refs #4186)', () {
@@ -43,9 +18,12 @@ void main() {
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
+          game: buildTradeTestGame(
+            treasury: 100,
+            prices: const {kTreasuryBidTimber: 30},
+          ),
         );
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 100 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 100 of 100');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),
           findsNothing,
@@ -58,21 +36,17 @@ void main() {
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.bid,
-                  quantity: 3,
-                  priority: 1,
-                ),
-              ],
-            },
+          game: buildTradeTestGame(
+            treasury: 100,
+            prices: const {kTreasuryBidTimber: 30},
+          ),
+          initialOrders: stagedTreasuryTradeOrders(
+            commodityId: kTreasuryBidTimber,
+            type: TradeOrderType.bid,
+            quantity: 3,
           ),
         );
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),
           findsNothing,
@@ -84,21 +58,17 @@ void main() {
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(treasury: 90, prices: const {_timber: 30}),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.bid,
-                  quantity: 3,
-                  priority: 1,
-                ),
-              ],
-            },
+          game: buildTradeTestGame(
+            treasury: 90,
+            prices: const {kTreasuryBidTimber: 30},
+          ),
+          initialOrders: stagedTreasuryTradeOrders(
+            commodityId: kTreasuryBidTimber,
+            type: TradeOrderType.bid,
+            quantity: 3,
           ),
         );
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 0 of 90');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 0 of 90');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),
           findsOneWidget,
@@ -115,14 +85,14 @@ void main() {
       (tester) async {
         final Game game = buildTradeTestGame(
           treasury: 50,
-          prices: const {_timber: 30},
+          prices: const {kTreasuryBidTimber: 30},
         );
         await pumpTradeScreenWithContainer(
           tester,
           game: game,
-          extraOverrides: <Override>[_treasurySummaryOverride(game, -60)],
+          extraOverrides: <Override>[treasuryBidSummaryOverride(game, -60)],
         );
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 0 of 0');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 0 of 0');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidBudgetWarningKey),
           findsOneWidget,
@@ -136,15 +106,15 @@ void main() {
       (tester) async {
         final Game game = buildTradeTestGame(
           treasury: 100,
-          prices: const {_timber: 30},
+          prices: const {kTreasuryBidTimber: 30},
         );
         await pumpTradeScreenWithContainer(
           tester,
           game: game,
-          extraOverrides: <Override>[_treasurySummaryOverride(game, -40)],
+          extraOverrides: <Override>[treasuryBidSummaryOverride(game, -40)],
         );
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 60 of 60');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 60 of 60');
       },
     );
 
@@ -156,24 +126,17 @@ void main() {
           tester,
           game: buildTradeTestGame(
             treasury: 50,
-            prices: const {_timber: 30},
-            stockpile: const {_timber: 10},
+            prices: const {kTreasuryBidTimber: 30},
+            stockpile: const {kTreasuryBidTimber: 10},
           ),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.offer,
-                  quantity: 4,
-                  priority: 1,
-                ),
-              ],
-            },
+          initialOrders: stagedTreasuryTradeOrders(
+            commodityId: kTreasuryBidTimber,
+            type: TradeOrderType.offer,
+            quantity: 4,
           ),
         );
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 50 of 50');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 50 of 50');
       },
     );
 
@@ -182,29 +145,22 @@ void main() {
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.bid,
-                  quantity: 1,
-                  priority: 1,
-                ),
-              ],
-            },
+          game: buildTradeTestGame(
+            treasury: 100,
+            prices: const {kTreasuryBidTimber: 30},
+          ),
+          initialOrders: stagedTreasuryTradeOrders(
+            commodityId: kTreasuryBidTimber,
+            type: TradeOrderType.bid,
+            quantity: 1,
           ),
         );
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 70 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 70 of 100');
 
-        await tester.tap(
-          find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
-        );
-        await tester.pump();
+        await tapTreasuryMarketIncrement(tester, kTreasuryBidTimber);
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 40 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 40 of 100');
       },
     );
 
@@ -213,7 +169,10 @@ void main() {
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
+          game: buildTradeTestGame(
+            treasury: 100,
+            prices: const {kTreasuryBidTimber: 30},
+          ),
         );
 
         expect(
@@ -237,18 +196,18 @@ void main() {
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
+          game: buildTradeTestGame(
+            treasury: 100,
+            prices: const {kTreasuryBidTimber: 30},
+          ),
           canMutateViaUi: false,
         );
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 100 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 100 of 100');
 
-        await tester.tap(
-          find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
-        );
-        await tester.pump();
+        await tapTreasuryMarketBid(tester, kTreasuryBidTimber);
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 100 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 100 of 100');
       },
     );
 
@@ -257,40 +216,24 @@ void main() {
       (tester) async {
         final ProviderContainer container = await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.bid,
-                  quantity: 3,
-                  priority: 1,
-                ),
-              ],
-            },
+          game: buildTradeTestGame(
+            treasury: 100,
+            prices: const {kTreasuryBidTimber: 30},
+          ),
+          initialOrders: stagedTreasuryTradeOrders(
+            commodityId: kTreasuryBidTimber,
+            type: TradeOrderType.bid,
+            quantity: 3,
           ),
         );
 
-        await tester.tap(
-          find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
-        );
-        await tester.pump();
+        await tapTreasuryMarketIncrement(tester, kTreasuryBidTimber);
 
-        final Orders orders = container.read(currentOrdersProvider);
-        final List<TradeOrder>? list =
-            orders.tradeOrdersByPlayerId[_humanPlayerId];
-        TradeOrder? staged;
-        if (list != null) {
-          for (final TradeOrder o in list) {
-            if (o.commodityId == _timber) {
-              staged = o;
-              break;
-            }
-          }
-        }
-        expect(staged?.quantity, 3);
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
+        expect(
+          stagedTreasuryBidOrder(container, kTreasuryBidTimber)?.quantity,
+          3,
+        );
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
       },
     );
 
@@ -302,28 +245,20 @@ void main() {
           tester,
           game: buildTradeTestGame(
             treasury: 100,
-            prices: const {_timber: 30, _iron: 80},
+            prices: const {kTreasuryBidTimber: 30, kTreasuryBidIron: 80},
           ),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.bid,
-                  quantity: 3,
-                  priority: 1,
-                ),
-              ],
-            },
+          initialOrders: stagedTreasuryTradeOrders(
+            commodityId: kTreasuryBidTimber,
+            type: TradeOrderType.bid,
+            quantity: 3,
           ),
         );
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
 
-        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_iron)));
-        await tester.pump();
+        await tapTreasuryMarketBid(tester, kTreasuryBidIron);
 
-        expect(_bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
+        expect(bidBudgetIndicatorText(tester), 'Bid budget: 10 of 100');
       },
     );
   });
