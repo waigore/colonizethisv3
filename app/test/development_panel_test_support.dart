@@ -88,6 +88,21 @@ class DevelopmentPanelMapGameService extends GameService {
     ),
   };
 
+  static ({
+    MapTopology combinedTopology,
+    Map<String, TileMapResult> tileMapByRegion,
+    Map<String, MapTopology> topologyByRegion,
+    List<WarpLink>? warpLinks,
+  })
+  goldenMapData() {
+    return (
+      combinedTopology: developmentPanelMapCombinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+      topologyByRegion: _topologyByRegion,
+      warpLinks: null,
+    );
+  }
+
   @override
   ({
     MapTopology combinedTopology,
@@ -97,12 +112,7 @@ class DevelopmentPanelMapGameService extends GameService {
   })?
   getMapData(String gameId) {
     if (gameId != kDevelopmentPanelMapTestGameId) return null;
-    return (
-      combinedTopology: developmentPanelMapCombinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-      warpLinks: null,
-    );
+    return goldenMapData();
   }
 }
 
