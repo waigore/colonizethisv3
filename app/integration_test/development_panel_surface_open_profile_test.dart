@@ -88,13 +88,7 @@ void main() {
       final elapsedMs = ctAppPerfSurfaceOpenElapsedMs('development');
       expect(elapsedMs, isNotNull);
 
-      // Binding-host evidence line (profile/release only; see enforcement boundary).
       if (kProfileMode || kReleaseMode) {
-        // ignore: avoid_print, profile measurement host output for PR evidence
-        print(
-          'ui_surface_open surface=development elapsed_ms=$elapsedMs '
-          'budget_ms=$kUiSurfaceOpenBudgetMs host=linux_desktop_profile',
-        );
         expect(
           elapsedMs!,
           lessThanOrEqualTo(kUiSurfaceOpenBudgetMs),
@@ -159,11 +153,6 @@ void main() {
       final warmMs = await openOnce();
       expect(warmMs, isNotNull);
       if (kProfileMode || kReleaseMode) {
-        // ignore: avoid_print, profile measurement host output for PR evidence
-        print(
-          'ui_surface_open surface=development elapsed_ms=$warmMs '
-          'budget_ms=$kUiSurfaceOpenBudgetMs host=linux_desktop_profile warm=1',
-        );
         expect(
           warmMs!,
           lessThanOrEqualTo(kUiSurfaceOpenBudgetMs),
