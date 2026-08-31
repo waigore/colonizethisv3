@@ -94,6 +94,14 @@ _resolve_flutter() {
   command -v flutter 2>/dev/null || echo "flutter"
 }
 
+_resolve_adb() {
+  if [[ -n "${ADB_BIN:-}" ]]; then
+    echo "$ADB_BIN"
+    return
+  fi
+  command -v adb 2>/dev/null || echo "adb"
+}
+
 FLUTTER="$(_resolve_flutter)"
 
 # Device id is the field between the first and second bullet on `flutter devices`
@@ -169,6 +177,13 @@ _run_surface() {
     runner=("$FLUTTER")
   fi
 
+  local adb_bin=""
+  if [[ "$device_id" != "linux" ]]; then
+    adb_bin="$(_resolve_adb)"
+    # debugPrint on Android goes to logcat, not flutter drive stdout (Refs #4687).
+    "$adb_bin" -s "$device_id" logcat -c 2>/dev/null || true
+  fi
+
   echo "Running profile drive: surface=$surface device=$device_id log=$log"
   set +e
   "${runner[@]}" drive \
@@ -179,6 +194,15 @@ _run_surface() {
     --no-pub >"$log" 2>&1
   local status=$?
   set -e
+
+  if [[ -n "$adb_bin" ]]; then
+    {
+      echo ""
+      echo "=== adb logcat (ui_surface_open) ==="
+      "$adb_bin" -s "$device_id" logcat -d 2>/dev/null \
+        | grep -E 'ui_surface_open surface=' || true
+    } >>"$log"
+  fi
 
   echo ""
   echo "=== ui_surface_open lines ($surface) ==="
