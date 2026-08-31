@@ -722,6 +722,8 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - Given the overlay is open and the player taps another tile in the **same** province, when the Tile section updates, then unvisited narrow tabs stay deferred and province-wide read-model cache entries are reused (`app/test/province_overlay_same_province_tile_switch_test.dart`).
 - Given narrow `MAP20001` on a representative campaign fixture, when the overlay first opens on the Political tab, then Economic / Military / Civilian / Naval tab bodies are not built until first selected (`app/test/province_overlay_lazy_open_test.dart`).
 - Given the overlay mounts in profile/release, when chrome + Political paint, then `CtAppPerf.provinceOverlay.interactiveReady` is emitted once per mount (DevTools filter `CtAppPerf.provinceOverlay`); same-province tile switches do not remount the keyed overlay root.
+- Given a seed-42 campaign fixture, when `resolveProvinceOverlayProvinceReadModel` reuses a warm session cache, then median µs per resolve is at least **50%** lower than a cold `buildProvinceOverlayProvinceReadModel` on the same fixture (`app/test/province_overlay_open_path_timing_test.dart`; CI profiling anchor, not a debug wall-clock 1s gate).
+- Given narrow `MAP20001` on the seed-42 fixture, when the overlay is mounted and unmounted **10** times without Next turn, then no stacked `ProvinceSeaZoneDetailOverlay` or `ProvinceOverlayInteractiveReadyMarker` widgets remain after each pop (`app/test/province_overlay_lifecycle_test.dart`).
 
 ---
 
