@@ -20,6 +20,8 @@ import 'widget_test_pumps.dart';
 void main() {
   suppressLogsForTests();
 
+  setUpAll(() => tradeE8InitRouteHostHive(suiteId: 'trade_screen_e8_cargo'));
+
   group('AC #5 — Cross-commodity cargo cap: capacity 10 with attempted bids '
       'totalling 12 across commodities clamps the indicator to 0, caps the '
       'offending stepper, and mounts the warning (#2993 E8 (e))', () {
