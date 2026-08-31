@@ -5,6 +5,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'diplomacy_confirm_preview_cases.dart';
 import 'diplomacy_confirm_preview_label_orders.dart';
+import 'diplomacy_confirm_preview_shared.dart';
 
 void main() {
   Game baseGame() => diplomacyGame(

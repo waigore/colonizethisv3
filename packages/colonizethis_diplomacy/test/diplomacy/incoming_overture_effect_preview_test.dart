@@ -11,12 +11,13 @@ void main() {
         stage: stage,
       );
 
-  test('NAP accept states pact and no treasury charge', () {
+  test('NAP accept states pact, no treasury charge, and war not blocked', () {
     final lines = linesFor(OvertureStage.nap);
     expect(lines.acceptEffect, startsWith('Effect:'));
     expect(lines.acceptEffect, contains('Non-Aggression Pact'));
     expect(lines.acceptEffect, contains(offerer));
     expect(lines.acceptEffect.toLowerCase(), contains('treasury'));
+    expect(lines.acceptEffect.toLowerCase(), contains('declare war'));
     expect(lines.acceptEffect, isNot(contains('joinEmpire')));
     expect(lines.acceptEffect, isNot(contains('OvertureStage')));
   });

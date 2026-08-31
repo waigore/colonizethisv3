@@ -1,7 +1,8 @@
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'diplomacy_confirm_preview_cases.dart' show previewTargetGp, previewMinorId;
+import 'diplomacy_confirm_preview_shared.dart'
+    show previewMinorId, previewTargetGp;
 
 List<DiplomaticOrder> structuredLabelOrders() => const [
   DiplomaticOrder(
