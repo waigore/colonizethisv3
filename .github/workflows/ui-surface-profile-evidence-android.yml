@@ -86,5 +86,12 @@ jobs:
         run: |
           set -eu
           log="$(find tmp/ui-surface-profile-evidence -name '*.log' -type f | sort | tail -1)"
+          if [[ -z "$log" || ! -f "$log" ]]; then
+            echo "ERROR: no profile evidence log under tmp/ui-surface-profile-evidence" >&2
+            exit 1
+          fi
           echo "=== ui_surface_open lines (Android emulator) ==="
-          grep -E 'ui_surface_open surface=' "$log" || true
+          if ! grep -E 'ui_surface_open surface=' "$log"; then
+            echo "ERROR: no ui_surface_open lines in $log" >&2
+            exit 1
+          fi
