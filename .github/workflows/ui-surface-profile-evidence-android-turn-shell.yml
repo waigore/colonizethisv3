@@ -29,10 +29,11 @@ on:
 permissions:
   contents: read
 
-# One Android emulator per PR ref — concurrent AVD boots on the same runner pool
-# routinely miss the default boot deadline (Refs #4715).
+# Turn-shell Android evidence uses its own concurrency group so an in-flight
+# empire-rail or GAME80001 job on the same PR does not cancel or block it
+# (Refs #4715).
 concurrency:
-  group: ui-surface-profile-android-emulator-${{ github.event.pull_request.number || github.ref }}
+  group: ui-surface-profile-android-turn-shell-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
