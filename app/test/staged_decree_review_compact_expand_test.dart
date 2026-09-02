@@ -85,12 +85,12 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Civilian work (1)'), findsOneWidget);
-      expect(find.textContaining('Explorer'), findsNothing);
+      expect(find.textContaining(kUnitTypeExplorer), findsNothing);
 
       await tester.tap(find.text('Review decrees'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Explorer'), findsOneWidget);
+      expect(find.textContaining(kUnitTypeExplorer), findsOneWidget);
     },
   );
 
