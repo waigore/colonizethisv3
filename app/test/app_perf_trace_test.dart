@@ -186,4 +186,25 @@ void main() {
       }
     },
   );
+
+  test(
+    'Turn-shell CtAppPerf marker names are DevTools-filterable (Refs #4715)',
+    () {
+      const markers = <String>[
+        'nextTurnConfirm.interactiveReady',
+        'turnNews.interactiveReady',
+        'playerTurnEventFeed.interactiveReady',
+      ];
+      for (final name in markers) {
+        expect(() => ctAppPerfInstant(name), returnsNormally);
+        expect(ctAppPerfSync(name, () => name.length), name.length);
+      }
+      for (final surfaceId in ['nextTurnConfirm', 'turnNews', 'playerTurnEventFeed']) {
+        ctAppPerfSurfaceOpenBegin(surfaceId);
+        final elapsed = ctAppPerfSurfaceOpenInteractiveReady(surfaceId);
+        expect(elapsed, isNotNull);
+        expect(elapsed, greaterThanOrEqualTo(0));
+      }
+    },
+  );
 }

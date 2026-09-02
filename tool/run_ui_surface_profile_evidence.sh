@@ -7,6 +7,7 @@
 # Usage from repo root:
 #   tool/run_ui_surface_profile_evidence.sh trade
 #   tool/run_ui_surface_profile_evidence.sh all-empire-rail --host linux
+#   tool/run_ui_surface_profile_evidence.sh turn-shell --host linux
 #   tool/run_ui_surface_profile_evidence.sh development --host android --device emulator-5554
 #   UI_SURFACE_PROFILE_OUT=tmp/profile-evidence tool/run_ui_surface_profile_evidence.sh trade
 #
@@ -69,6 +70,9 @@ _surface_target() {
       ;;
     units)
       echo "integration_test/units_panels_surface_open_profile_test.dart"
+      ;;
+    turn-shell)
+      echo "integration_test/turn_shell_surface_open_profile_test.dart"
       ;;
     *)
       return 1

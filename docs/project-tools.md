@@ -475,7 +475,7 @@ tool/run_ui_surface_profile_evidence.sh all-empire-rail --host linux
 tool/run_ui_surface_profile_evidence.sh development --host android --device emulator-5554
 ```
 
-**Surfaces:** `development`, `trade`, `production`, `technology`, `diplomacy`, `victory`, `counsel`, `units`, or `all-empire-rail` (runs trade through units in sequence).
+**Surfaces:** `development`, `trade`, `production`, `technology`, `diplomacy`, `victory`, `counsel`, `units`, `all-empire-rail` (runs trade through units in sequence), or `turn-shell` (DLG60001 + DLG50001 + OVL70001 profile harness; Refs #4715).
 
 **Options:** `--host linux|android|auto` (default `auto`: Android emulator when present, else Linux). `--device <id>` overrides auto-detect. `UI_SURFACE_PROFILE_OUT` sets log directory (default `tmp/ui-surface-profile-evidence/`).
 

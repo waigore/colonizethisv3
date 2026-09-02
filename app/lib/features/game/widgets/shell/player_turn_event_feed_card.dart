@@ -2,6 +2,7 @@ import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/constants.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
@@ -60,36 +61,40 @@ class PlayerTurnEventFeedCard extends StatelessWidget {
     final double cardWidth = narrow
         ? resolveNarrowWidth(MediaQuery.sizeOf(context).width)
         : kGameMapWideProvinceSidePanelWidth;
-    return SizedBox(
-      width: cardWidth,
-      child: DecoratedBox(
-        key: surfaceKey,
-        decoration: BoxDecoration(
-          gradient: CtGradients.panelGradient,
-          border: Border.all(
-            color: EditorialMonoclePalette.accentDim,
-            width: borderWidth,
+    return CtAppPerfInteractiveReadyMarker(
+      markerName: 'playerTurnEventFeed.interactiveReady',
+      surfaceOpenId: 'playerTurnEventFeed',
+      child: SizedBox(
+        width: cardWidth,
+        child: DecoratedBox(
+          key: surfaceKey,
+          decoration: BoxDecoration(
+            gradient: CtGradients.panelGradient,
+            border: Border.all(
+              color: EditorialMonoclePalette.accentDim,
+              width: borderWidth,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: contentPadding,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: maxContentHeight),
-            child: entries.isEmpty
-                ? Text(emptyLabel, style: emptyStyle)
-                : CtEventFeedEntriesList(
-                    entries: entries
-                        .map(
-                          (PlayerTurnEventFeedEntry e) => CtEventFeedEntry(
-                            text: e.text,
-                            onTap: e.onTap,
-                            linkAffordance: e.linkAffordance,
-                          ),
-                        )
-                        .toList(growable: false),
-                    bodyStyle: bodyStyle,
-                    narrowBreakpoint: kNarrowBreakpoint,
-                  ),
+          child: Padding(
+            padding: contentPadding,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: maxContentHeight),
+              child: entries.isEmpty
+                  ? Text(emptyLabel, style: emptyStyle)
+                  : CtEventFeedEntriesList(
+                      entries: entries
+                          .map(
+                            (PlayerTurnEventFeedEntry e) => CtEventFeedEntry(
+                              text: e.text,
+                              onTap: e.onTap,
+                              linkAffordance: e.linkAffordance,
+                            ),
+                          )
+                          .toList(growable: false),
+                      bodyStyle: bodyStyle,
+                      narrowBreakpoint: kNarrowBreakpoint,
+                    ),
+            ),
           ),
         ),
       ),

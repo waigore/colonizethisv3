@@ -3,6 +3,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
@@ -97,10 +98,13 @@ class _NextTurnConfirmationDialogState
         .copyWith(color: EditorialMonoclePalette.muted);
     return CtDialogShell(
       maxHeight: (_showWarning || _showStaged) ? 520 : 600,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: CtAppPerfInteractiveReadyMarker(
+        markerName: 'nextTurnConfirm.interactiveReady',
+        surfaceOpenId: 'nextTurnConfirm',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Text(l10n.game_nextTurnConfirm_title, style: titleStyle),
           const SizedBox(height: CtSpacing.m),
           Text(
@@ -198,6 +202,7 @@ class _NextTurnConfirmationDialogState
             ],
           ),
         ],
+        ),
       ),
     );
   }

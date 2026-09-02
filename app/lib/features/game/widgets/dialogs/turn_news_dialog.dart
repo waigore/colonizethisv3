@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
@@ -41,14 +42,18 @@ class TurnNewsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CtDialogShell(
-      child: _TurnNewsDialogContent(
-        game: game,
-        digest: digest,
-        newTurnNumber: newTurnNumber,
-        courtSummary: courtSummary,
-        spyReportCount: spyReportCount,
-        onOpenIntelligence: onOpenIntelligence,
-        onOpenEvents: onOpenEvents,
+      child: CtAppPerfInteractiveReadyMarker(
+        markerName: 'turnNews.interactiveReady',
+        surfaceOpenId: 'turnNews',
+        child: _TurnNewsDialogContent(
+          game: game,
+          digest: digest,
+          newTurnNumber: newTurnNumber,
+          courtSummary: courtSummary,
+          spyReportCount: spyReportCount,
+          onOpenIntelligence: onOpenIntelligence,
+          onOpenEvents: onOpenEvents,
+        ),
       ),
     );
   }
