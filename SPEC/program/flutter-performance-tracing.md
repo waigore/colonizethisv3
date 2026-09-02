@@ -116,6 +116,7 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `game_intro dialogue_begin node=…` | `dialogue` | Before `startDialogue`. |
 | `game_intro first_line_shown` | `dialogue` | First non-null dialogue line in overlay. |
 | `ui_surface_open surface=development elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `development.interactiveReady` fires (Refs #4687). |
+| `ui_surface_open surface=provinceOverlay elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `provinceOverlay.interactiveReady` fires (Refs #4690). |
 | `ui_surface_open surface=production elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `production.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=trade elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `trade.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=technology elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `technology.interactiveReady` fires (Refs #4688). |
@@ -128,6 +129,24 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `ui_surface_open surface=nextTurnConfirm elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `nextTurnConfirm.interactiveReady` fires (Refs #4715). |
 | `ui_surface_open surface=turnNews elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `turnNews.interactiveReady` fires (Refs #4715). |
 | `ui_surface_open surface=playerTurnEventFeed elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `playerTurnEventFeed.interactiveReady` fires (Refs #4715). |
+
+**Binding-host replay (MAP20001, Refs #4690):**
+
+```bash
+# Linux desktop (headless)
+tool/run_ui_surface_profile_evidence.sh provinceOverlay --host linux
+
+# Android emulator (after `flutter emulators --launch <avd>`)
+tool/run_ui_surface_profile_evidence.sh provinceOverlay --host android --device <emulator_id>
+```
+
+Direct `flutter drive` (from `app/`):
+
+```bash
+xvfb-run -a flutter drive --driver=test_driver/integration_test.dart \
+  --target=integration_test/province_overlay_surface_open_profile_test.dart \
+  --profile -d linux
+```
 
 ---
 

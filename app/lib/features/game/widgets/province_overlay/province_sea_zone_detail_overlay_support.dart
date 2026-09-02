@@ -2,6 +2,7 @@
 /// de-parted cluster (Refs #4117).
 library;
 
+import 'province_overlay_wide_lazy_sections.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -63,13 +64,19 @@ ProvinceActionStates provinceOverlayInlineActions({
 class OverlayContent {
   OverlayContent({
     required this.tabLabels,
-    required this.tabViews,
-    required this.sections,
-  });
+    required this.sectionSpecs,
+    this.lazyWideDeferredFromIndex = 2,
+  }) : assert(tabLabels.length == sectionSpecs.length);
 
   final List<String> tabLabels;
-  final List<Widget> tabViews;
-  final Widget sections;
+  final List<OverlaySectionSpec> sectionSpecs;
+  final int lazyWideDeferredFromIndex;
+
+  List<Widget> get tabViews => sectionSpecs
+      .map(
+        (spec) => OverlayDeferredSectionBody(builder: spec.builder),
+      )
+      .toList();
 }
 
 bool isProvinceSeaZoneOverlaySeaZone(RegionMapViewData region, String id) {
@@ -175,12 +182,12 @@ kProvinceOverlayCounterEspionageHidden = (
 /// Tab labels, narrow tab views, and wide stacked sections for a province.
 OverlayContent overlayProvinceSectionBundle({
   required AppLocalizations l10n,
-  required Widget political,
-  required Widget tileSection,
-  required Widget economic,
-  required Widget military,
-  required Widget civilian,
-  required Widget naval,
+  required Widget Function() political,
+  required Widget Function() tileSection,
+  required Widget Function() economic,
+  required Widget Function() military,
+  required Widget Function() civilian,
+  required Widget Function() naval,
 }) {
   return OverlayContent(
     tabLabels: [
@@ -191,11 +198,31 @@ OverlayContent overlayProvinceSectionBundle({
       l10n.provinceOverlay_sectionCivilian,
       l10n.provinceOverlay_sectionNaval,
     ],
-    tabViews: [political, tileSection, economic, military, civilian, naval],
-    sections: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [political, tileSection, economic, military, civilian, naval],
-    ),
+    sectionSpecs: [
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionPolitical,
+        builder: political,
+      ),
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionTile,
+        builder: tileSection,
+      ),
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionEconomic,
+        builder: economic,
+      ),
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionMilitary,
+        builder: military,
+      ),
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionCivilian,
+        builder: civilian,
+      ),
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionNaval,
+        builder: naval,
+      ),
+    ],
   );
 }

@@ -1,6 +1,7 @@
 // Shared Widgetbook story lookup and viewport pump helpers for
 // `widgetbook_*_test.dart` pins. Refs #3847 / #4035 / #4117 slice F.
 
+import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
@@ -44,4 +45,22 @@ Future<void> pumpWidgetbookUseCaseAtSize(
     child: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
   );
   await tester.pump(const Duration(milliseconds: 16));
+}
+
+/// Scroll wide MAP20001 layout until [sectionTitle] mounts its deferred body
+/// (Refs #4690 wide lazy sections).
+Future<void> revealProvinceOverlayWideSection(
+  WidgetTester tester, {
+  required String sectionTitle,
+}) async {
+  await tester.scrollUntilVisible(
+    find.byWidgetPredicate(
+      (widget) =>
+          widget is CtSectionLabel && widget.text == sectionTitle,
+    ),
+    120,
+    scrollable: find.byType(Scrollable),
+  );
+  await tester.pump();
+  await tester.pump();
 }

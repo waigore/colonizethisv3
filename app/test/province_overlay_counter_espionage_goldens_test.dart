@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'golden_capture_harness.dart';
+import 'widgetbook_test_harness.dart' show revealProvinceOverlayWideSection;
 
 class _CounterEspionageGoldenCase {
   const _CounterEspionageGoldenCase({
@@ -103,12 +104,10 @@ void main() {
       await pumpForGolden(tester);
       expect(tester.takeException(), isNull);
 
-      final civilianHeader = find.text(
-        l10n.provinceOverlay_sectionCivilian.toUpperCase(),
+      await revealProvinceOverlayWideSection(
+        tester,
+        sectionTitle: l10n.provinceOverlay_sectionCivilian,
       );
-      expect(civilianHeader, findsOneWidget);
-      await tester.ensureVisible(civilianHeader);
-      await tester.pump();
 
       final actionFinder = find.widgetWithText(
         CtActionTextButton,

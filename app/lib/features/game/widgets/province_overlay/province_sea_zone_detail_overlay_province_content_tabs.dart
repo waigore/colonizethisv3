@@ -8,12 +8,12 @@ import 'province_sea_zone_detail_overlay_support.dart';
 
 OverlayContent assembleProvinceOverlayTabContent({
   required AppLocalizations l10n,
-  required Widget political,
-  required Widget tileSection,
-  required Widget economic,
-  required Widget militarySection,
-  required Widget civilianSection,
-  required Widget naval,
+  required Widget Function() political,
+  required Widget Function() tileSection,
+  required Widget Function() economic,
+  required Widget Function() militarySection,
+  required Widget Function() civilianSection,
+  required Widget Function() naval,
 }) {
   return overlayProvinceSectionBundle(
     l10n: l10n,

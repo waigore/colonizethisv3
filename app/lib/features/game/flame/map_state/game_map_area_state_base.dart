@@ -44,6 +44,7 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   ct_models.MapViewState mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> pendingPlayerTurnEvents = [];
   List<ct_models.GameToUIEvent> resolvedPlayerTurnEvents = const [];
+  int? playerTurnFeedCommittedTurnNumber;
   bool isTurnResolving = false;
   StreamSubscription<TurnResolutionProgressEvent>? turnResolutionProgressSub;
 

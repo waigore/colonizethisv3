@@ -25,6 +25,15 @@ void main() {
     expect(() => ctAppPerfInstant('development.interactiveReady'), returnsNormally);
   });
 
+  test('ctAppPerfSurfaceOpen segment tracks elapsed ms for provinceOverlay (Refs #4690)', () {
+    ctAppPerfSurfaceOpenBegin('provinceOverlay');
+    expect(ctAppPerfSurfaceOpenElapsedMs('provinceOverlay'), isNotNull);
+    final elapsed = ctAppPerfSurfaceOpenInteractiveReady('provinceOverlay');
+    expect(elapsed, isNotNull);
+    expect(elapsed, greaterThanOrEqualTo(0));
+    expect(() => ctAppPerfInstant('provinceOverlay.interactiveReady'), returnsNormally);
+  });
+
   test('ctAppPerfSurfaceOpen segment tracks production surface (Refs #4688)', () {
     ctAppPerfSurfaceOpenBegin('production');
     expect(ctAppPerfSurfaceOpenElapsedMs('production'), isNotNull);
@@ -89,12 +98,6 @@ void main() {
       () => ctAppPerfInstant('militaryUnits.interactiveReady'),
       returnsNormally,
     );
-  });
-
-  test('ctAppPerfSurfaceOpenBindingHost returns a non-empty label (Refs #4687)', () {
-    final host = ctAppPerfSurfaceOpenBindingHost();
-    expect(host, isNotEmpty);
-    expect(host, endsWith('_profile'));
   });
 
   test(

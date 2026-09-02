@@ -6,6 +6,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
+import 'province_overlay_wide_lazy_sections.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 
 bool provinceContentIsFullyUnrevealed({
@@ -25,14 +26,11 @@ bool provinceContentIsFullyUnrevealed({
 }
 
 OverlayContent provinceContentUnrevealed({required AppLocalizations l10n}) {
-  final politicalObs = buildOverlaySection(
-    l10n.provinceOverlay_sectionPolitical,
+  Widget obfuscatedSection(String title) => buildOverlaySection(
+    title,
     overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
   );
-  final tileObs = buildOverlaySection(
-    l10n.provinceOverlay_sectionTile,
-    overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
-  );
+
   final obfuscatedSectionTitles = <String>[
     l10n.provinceOverlay_sectionPolitical,
     l10n.provinceOverlay_sectionTile,
@@ -41,29 +39,14 @@ OverlayContent provinceContentUnrevealed({required AppLocalizations l10n}) {
     l10n.provinceOverlay_sectionCivilian,
     l10n.provinceOverlay_sectionNaval,
   ];
-  final sections = Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
+  return OverlayContent(
+    tabLabels: obfuscatedSectionTitles,
+    sectionSpecs: [
       for (final title in obfuscatedSectionTitles)
-        buildOverlaySection(
-          title,
-          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
+        OverlaySectionSpec(
+          title: title,
+          builder: () => obfuscatedSection(title),
         ),
     ],
-  );
-  final tabLabels = obfuscatedSectionTitles;
-  final tabViews = [
-    politicalObs,
-    tileObs,
-    OverlayObfuscatedSection(l10n: l10n),
-    OverlayObfuscatedSection(l10n: l10n),
-    OverlayObfuscatedSection(l10n: l10n),
-    OverlayObfuscatedSection(l10n: l10n),
-  ];
-  return OverlayContent(
-    tabLabels: tabLabels,
-    tabViews: tabViews,
-    sections: sections,
   );
 }

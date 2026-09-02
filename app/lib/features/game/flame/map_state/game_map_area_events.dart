@@ -7,6 +7,7 @@ import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_selection.dart';
 import 'game_map_area_last_turn_playback.dart';
+import 'player_turn_event_feed_session_cache.dart';
 
 /// App-event-bus handlers for [GameMapArea]: filtering combat/diplomacy/
 /// discovery/overture events to the viewing player and buffering them for the
@@ -30,7 +31,14 @@ mixin GameMapAreaEvents
         pendingPlayerTurnEvents,
       );
       pendingPlayerTurnEvents.clear();
+      playerTurnFeedCommittedTurnNumber = event.turnNumber;
     });
+    final spyLineCount = _spyDigestLineCountForFeedBadge();
+    PlayerTurnEventFeedSessionCache.invalidateForTurnCommit(
+      gameId: widget.game.id,
+      committedTurnNumber: event.turnNumber,
+      badgeCount: resolvedPlayerTurnEvents.length + spyLineCount,
+    );
     // Event emits before provider apply; load saved game for overlay/news
     // gates (same source as GameToUIBusListener news omit).
     final loaded = ref.read(gameServiceProvider).loadGame(event.gameId);
@@ -176,5 +184,17 @@ mixin GameMapAreaEvents
       return;
     }
     pendingPlayerTurnEvents.add(event);
+  }
+
+  int _spyDigestLineCountForFeedBadge() {
+    final digest = widget.game.lastTurnIntelligenceDigest;
+    if (digest == null) {
+      return 0;
+    }
+    var count = 0;
+    for (final block in digest.spyReportsFor(mapPlayerId)) {
+      count += block.lines.length;
+    }
+    return count;
   }
 }
