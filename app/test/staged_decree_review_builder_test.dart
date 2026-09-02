@@ -65,12 +65,31 @@ void main() {
     expect(review.families, hasLength(1));
     expect(review.families.single.family, StagedDecreeFamily.civilianWork);
     expect(review.families.single.familyLabel, 'Civilian work');
+    expect(review.families.single.count, 1);
+    expect(review.families.single.rows, isEmpty);
+    final expanded = expandStagedDecreeReview(
+      compact: review,
+      orders: const Orders(
+        workOrdersByPlayerId: {
+          _human: [
+            WorkOrder(
+              unitId: 'e1',
+              target: kWorkTargetExplore,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      ),
+      humanPlayerId: _human,
+      l10n: _l10n,
+      game: game,
+    );
     expect(
-      review.families.single.rows.single.label,
+      expanded.families.single.rows.single.label,
       contains(kUnitTypeExplorer),
     );
     expect(
-      review.families.single.rows.single.label,
+      expanded.families.single.rows.single.label,
       isNot(contains('WorkOrder')),
     );
   });
@@ -102,6 +121,43 @@ void main() {
       StagedDecreeFamily.trade,
     ]);
     expect(review.families.map((g) => g.count), [1, 1]);
+    expect(review.families.every((g) => g.rows.isEmpty), isTrue);
+  });
+
+  test('compact review expands row labels on demand (Refs #4715)', () {
+    final orders = Orders(
+      armyMoveOrdersByPlayerId: const {
+        _human: [
+          ArmyMoveOrder(armyId: 'a1', destinationProvinceId: 'oldWorld|p1'),
+        ],
+      },
+      tradeOrdersByPlayerId: {
+        _human: [
+          TradeOrder(
+            commodityId: CommodityCatalog.grain.id,
+            type: TradeOrderType.bid,
+            quantity: 10,
+            priority: 1,
+          ),
+        ],
+      },
+    );
+    final compact = buildStagedDecreeReview(
+      orders: orders,
+      humanPlayerId: _human,
+      l10n: _l10n,
+    );
+    expect(compact.families.every((g) => g.rows.isEmpty), isTrue);
+    final expanded = expandStagedDecreeReview(
+      compact: compact,
+      orders: orders,
+      humanPlayerId: _human,
+      l10n: _l10n,
+    );
+    expect(expanded.families.every((g) => g.rowsExpanded), isTrue);
+    expect(expanded.families.singleWhere(
+      (g) => g.family == StagedDecreeFamily.trade,
+    ).rows.single.label, contains('Grain'));
   });
 
   test('empty and unfunded research slots are omitted (UXD-001)', () {
@@ -152,7 +208,29 @@ void main() {
     expect(review.families, hasLength(1));
     expect(review.families.single.family, StagedDecreeFamily.research);
     expect(review.families.single.count, 1);
-    expect(review.families.single.rows.single.label, contains('Crop Rotation'));
+    expect(review.families.single.rows, isEmpty);
+    final expanded = expandStagedDecreeReview(
+      compact: review,
+      orders: const Orders(
+        researchOrdersByPlayerId: {
+          _human: [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: kTechIdCropRotation,
+              funding: ResearchFundingLevel.high,
+            ),
+            ResearchOrder(
+              slotIndex: 1,
+              techId: '',
+              funding: ResearchFundingLevel.none,
+            ),
+          ],
+        },
+      ),
+      humanPlayerId: _human,
+      l10n: _l10n,
+    );
+    expect(expanded.families.single.rows.single.label, contains('Crop Rotation'));
   });
 
   test('idle Spies are not synthesized as staged rows (UXD-002)', () {

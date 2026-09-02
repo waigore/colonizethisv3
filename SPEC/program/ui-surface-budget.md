@@ -36,7 +36,7 @@ Selecting a tab **not** on this allowlist starts a **new** 1 000 ms segment for 
 
 ## Existing overflows
 
-Surfaces that already exceed 1 000 ms before this policy lands are **grandfathered** for unrelated verification: track them as separate follow-up performance defects (for example #4688, #4690). The standing verify/accept gate hard-fails only when the issue under verification **touches or introduces** a surface whose open path exceeds the budget.
+Surfaces that already exceed 1 000 ms before this policy lands are **grandfathered** for unrelated verification: track them as separate follow-up performance defects (for example #4688, #4690, #4715). The standing verify/accept gate hard-fails only when the issue under verification **touches or introduces** a surface whose open path exceeds the budget.
 
 ## Measured segment (summary)
 

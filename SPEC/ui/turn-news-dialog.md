@@ -38,6 +38,18 @@ The dialog renders under the editorial-monocle dark theme catalog (`SPEC/ui/pixe
 - **Given** the player taps **open Events** on the court block, **when** the tap is handled, **then** the UI layer pops `DLG50001` and sets `showPlayerTurnEventsFeed == true` on the loaded game without opening the feed on ordinary **Close**.
 - **Given** Widgetbook **Turn news** includes **Empty digest + court**, **Gazette + court**, and **Court + spy footer**, **when** `app/test/widgetbook_turn_news_court_variants_test.dart` runs, **then** each use case is wired into `turnNewsDialogDirectories` and pumps without exceptions (Refs #4532).
 - **Given** `DLG50001` empty gazette with court block or court + spy footer under `AppThemes.editorialMonocle`, **when** `app/test/turn_news_dialog_goldens_test.dart` captures each keyed `RepaintBoundary`, **then** each `matchesGoldenFile` baseline under `app/test/goldens/turn_news_court*.png` matches the committed PNG (Refs #4532).
+- **Open-path marker (Refs #4715):** Given `DLG50001` mounts in profile/release, **when** the first frame after title + gazette or empty copy + **Close** paints, **then** `CtAppPerf.turnNews.interactiveReady` fires once and `ui_surface_open surface=turnNews` is logged on binding hosts.
+
+## Open-path performance (Refs #4715)
+
+- **Required on open:** title, gazette lines or empty-state copy, optional **Your court** block, optional spy footer, and **Close**. Turn-event feed formatting is not required for this surface.
+- **Tracing:** `CtAppPerfInteractiveReadyMarker` with `surfaceOpenId: turnNews` wraps the dialog body.
+- **CI surrogate:** `app/test/turn_shell_surface_open_surface_budget_test.dart`.
+
+## Mount / dispose (Refs #4715)
+
+- **Mount:** `showDialog` via `OpenDialogEvent` / `buildTurnNewsDialog` after turn resolution when `victory == null`. Digest and court summary are passed in event params (not rebuilt from full feed mapping).
+- **Dispose:** **Close** or **open Events** pops the dialog and unmounts `TurnNewsDialog` plus its marker. Ten-cycle guard: `app/test/turn_shell_lifecycle_test.dart`.
 
 ## Copy
 

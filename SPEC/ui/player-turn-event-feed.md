@@ -168,6 +168,17 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given a `GameTabBar` rendered with a trailing news toggle, when The UI layer lays out the bar, then the region tabs are start-aligned (left in LTR) inside an `Expanded` scroll area, the treasury, cargo hold, and news toggle are end-aligned in that order, and the news toggle has a `GameTabBar.clusterTrailingGap` (4 dp) leading gap from the cargo hold indicator (mockup `.tabbar` / `.tabbar-spacer`; issue #2861 M1).
 - Given a wide-layout map shell with `mapViewState.showPlayerTurnEventsFeed = true`, `shell.showPlayerChrome = true`, and no victory set, when The UI layer builds the map `Stack`, then the `GameMapPlayersBar` child is positioned **earlier** in the `Stack.children` list than the `PlayerTurnEventFeedCard` child, so the open feed card paints **above** the players bar and player chips never obscure it (mockup z-order: news card 7 > players bar 5; issue #2861 M4).
 
+## Open-path performance (Refs #4715)
+
+- **Required on open:** card chrome and either the committed event rows or empty-state copy. Full feed mapping while the card is hidden is out of scope for this surface (see issue #4715 Slice 3).
+- **Tracing:** `CtAppPerfInteractiveReadyMarker` with `surfaceOpenId: playerTurnEventFeed` wraps `PlayerTurnEventFeedCard`. Profile/release emits `ui_surface_open surface=playerTurnEventFeed …` on binding hosts.
+- **CI surrogate:** `app/test/turn_shell_surface_open_surface_budget_test.dart`.
+
+## Mount / dispose (Refs #4715)
+
+- **Mount:** `PlayerTurnEventFeedCard` mounts only when `mapViewState.showPlayerTurnEventsFeed == true` (newspaper toggle or **open Events** from `DLG50001`). `GameMapArea` skips full `buildCtTurnFeedEntries` while hidden; badge count uses a cheap buffer length.
+- **Dispose:** Hiding the feed (`SizedBox.shrink` in `game_map_area_build_map_stack_chrome.dart`) unmounts the card and marker. `PlayerTurnEventFeedSessionCache` may retain the last committed row batch until the next `TurnResolutionCompleteEvent`. Ten-cycle guard: `app/test/turn_shell_lifecycle_test.dart`.
+
 ### Card and toggle chrome (dark editorial-monocle; issue #2861 S7)
 
 - Given the floating feed card renders with at least one entry, when the UI builds the card chrome, then the card’s `DecoratedBox` paints `CtGradients.panelGradient` and a 1 dp `Border.all(color: EditorialMonoclePalette.accentDim, width: 1)`; the legacy `Material(color: Colors.black…)` chrome does not paint inside the card subtree.

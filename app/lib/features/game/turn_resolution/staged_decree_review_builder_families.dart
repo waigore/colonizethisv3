@@ -22,6 +22,7 @@ StagedDecreeFamilyGroup stagedDecreeWorkFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.civilianWork,
     familyLabel: l10n.game_nextTurnConfirm_familyCivilianWork,
+    count: list.length,
     rows: [
       for (var i = 0; i < list.length; i++)
         StagedDecreeRow(
@@ -50,6 +51,7 @@ StagedDecreeFamilyGroup stagedDecreeRelocateFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.spyRelocate,
     familyLabel: l10n.game_nextTurnConfirm_familySpyRelocate,
+    count: list.length,
     rows: [
       for (var i = 0; i < list.length; i++)
         StagedDecreeRow(
@@ -78,6 +80,7 @@ StagedDecreeFamilyGroup stagedDecreeArmyFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.armyMoves,
     familyLabel: l10n.game_nextTurnConfirm_familyArmyMoves,
+    count: list.length,
     rows: [
       for (var i = 0; i < list.length; i++)
         StagedDecreeRow(
@@ -126,6 +129,7 @@ StagedDecreeFamilyGroup stagedDecreeFleetFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.fleet,
     familyLabel: l10n.game_nextTurnConfirm_familyFleet,
+    count: rows.length,
     rows: rows,
   );
 }
@@ -141,6 +145,7 @@ StagedDecreeFamilyGroup stagedDecreeTrainFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.trainingBuilds,
     familyLabel: l10n.game_nextTurnConfirm_familyTraining,
+    count: list.length,
     rows: [
       for (var i = 0; i < list.length; i++)
         StagedDecreeRow(
@@ -166,6 +171,7 @@ StagedDecreeFamilyGroup stagedDecreeLabourFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.labourRecruit,
     familyLabel: l10n.game_nextTurnConfirm_familyLabour,
+    count: list.length,
     rows: [
       for (var i = 0; i < list.length; i++)
         StagedDecreeRow(
@@ -194,6 +200,7 @@ StagedDecreeFamilyGroup stagedDecreeDiplomacyFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.diplomacy,
     familyLabel: l10n.game_nextTurnConfirm_familyDiplomacy,
+    count: list.length,
     rows: [
       for (var i = 0; i < list.length; i++)
         StagedDecreeRow(

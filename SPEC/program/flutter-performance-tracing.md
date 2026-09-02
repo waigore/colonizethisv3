@@ -88,6 +88,18 @@ Operator wrapper: `tool/run_ui_surface_profile_evidence.sh <surface> [--host lin
 - **Counsel (`GAME90001`):** `tool/run_ui_surface_profile_evidence.sh counsel` (`surface=counsel`).
 - **Unit sheets (`UNIT10001` / `UNIT20001` / `UNIT30001`):** `tool/run_ui_surface_profile_evidence.sh units` (`surface=civilianUnits`, `surface=militaryUnits`, or `surface=navalUnits`).
 
+### Turn-shell surfaces open path (Refs #4715)
+
+| Marker | When |
+|--------|------|
+| `CtAppPerf.nextTurnConfirm.interactiveReady` | Post-frame after `DLG60001` title, body, compact staged summary (when present), idle-civilian rows (when warn variant), and **Yes** / **No** mount (instant). |
+| `CtAppPerf.turnNews.interactiveReady` | Post-frame after `DLG50001` title, gazette or empty copy, optional court block, and **Close** mount (instant). |
+| `CtAppPerf.playerTurnEventFeed.interactiveReady` | Post-frame after `OVL70001` card chrome and row list or empty copy mount (instant). |
+
+Filter `CtAppPerf.nextTurnConfirm`, `CtAppPerf.turnNews`, or `CtAppPerf.playerTurnEventFeed` for turn-shell DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on binding hosts (PR evidence); CI uses full-widget pump-to-interactive surrogates in `app/test/turn_shell_surface_open_surface_budget_test.dart` — not debug wall-clock assertions.
+
+**Binding-host replay harness (Refs #4715):** `tool/run_ui_surface_profile_evidence.sh turn-shell` → `app/integration_test/turn_shell_surface_open_profile_test.dart`. Capture `ui_surface_open surface=nextTurnConfirm`, `surface=turnNews`, and `surface=playerTurnEventFeed` lines with `host=linux_desktop_profile` or `host=android_emulator_profile`. Android CI artifact: `ui-surface-profile-evidence-android-turn-shell` (workflow `.github/workflows/ui-surface-profile-evidence-android-turn-shell.yml`).
+
 ---
 
 ## Log lines (app package, `info`)
@@ -114,6 +126,9 @@ Correlate with session buffer / grep. Messages omit repeating the logger prefix 
 | `ui_surface_open surface=civilianUnits elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `civilianUnits.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=militaryUnits elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `militaryUnits.interactiveReady` fires (Refs #4688). |
 | `ui_surface_open surface=navalUnits elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `navalUnits.interactiveReady` fires (Refs #4688). |
+| `ui_surface_open surface=nextTurnConfirm elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `nextTurnConfirm.interactiveReady` fires (Refs #4715). |
+| `ui_surface_open surface=turnNews elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `turnNews.interactiveReady` fires (Refs #4715). |
+| `ui_surface_open surface=playerTurnEventFeed elapsed_ms=… budget_ms=… host=…` | `perf` | Profile/release when `playerTurnEventFeed.interactiveReady` fires (Refs #4715). |
 
 **Binding-host replay (MAP20001, Refs #4690):**
 

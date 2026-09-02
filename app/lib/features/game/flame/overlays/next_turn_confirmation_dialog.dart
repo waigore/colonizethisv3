@@ -3,6 +3,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../widgets/ct_app_perf_interactive_ready_marker.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
@@ -35,6 +36,7 @@ Future<NextTurnConfirmationResult?> showNextTurnConfirmationDialog(
   required int currentTurn,
   List<CivilianMissingWorkOrderEntry> civiliansMissingWork = const [],
   StagedDecreeReview stagedReview = StagedDecreeReview.empty,
+  ExpandStagedDecreeReview? expandStagedReview,
   void Function(CivilianMissingWorkOrderEntry entry)? onGoToCivilian,
   void Function(StagedDecreeFamily family)? onGoToStagedFamily,
 }) async {
@@ -44,6 +46,7 @@ Future<NextTurnConfirmationResult?> showNextTurnConfirmationDialog(
       currentTurn: currentTurn,
       civiliansMissingWork: civiliansMissingWork,
       stagedReview: stagedReview,
+      expandStagedReview: expandStagedReview,
       onGoToCivilian: onGoToCivilian,
       onGoToStagedFamily: onGoToStagedFamily,
     ),
@@ -60,6 +63,7 @@ class NextTurnConfirmationDialog extends StatefulWidget {
     required this.currentTurn,
     this.civiliansMissingWork = const [],
     this.stagedReview = StagedDecreeReview.empty,
+    this.expandStagedReview,
     this.onGoToCivilian,
     this.onGoToStagedFamily,
   });
@@ -69,6 +73,7 @@ class NextTurnConfirmationDialog extends StatefulWidget {
   final int currentTurn;
   final List<CivilianMissingWorkOrderEntry> civiliansMissingWork;
   final StagedDecreeReview stagedReview;
+  final ExpandStagedDecreeReview? expandStagedReview;
   final void Function(CivilianMissingWorkOrderEntry entry)? onGoToCivilian;
   final void Function(StagedDecreeFamily family)? onGoToStagedFamily;
 
@@ -97,10 +102,13 @@ class _NextTurnConfirmationDialogState
         .copyWith(color: EditorialMonoclePalette.muted);
     return CtDialogShell(
       maxHeight: (_showWarning || _showStaged) ? 520 : 600,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: CtAppPerfInteractiveReadyMarker(
+        markerName: 'nextTurnConfirm.interactiveReady',
+        surfaceOpenId: 'nextTurnConfirm',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Text(l10n.game_nextTurnConfirm_title, style: titleStyle),
           const SizedBox(height: CtSpacing.m),
           Text(
@@ -111,6 +119,7 @@ class _NextTurnConfirmationDialogState
             review: widget.stagedReview,
             bodyStyle: bodyStyle,
             mutedStyle: mutedStyle,
+            onExpandReview: widget.expandStagedReview,
             onGoToFamily: widget.onGoToStagedFamily == null
                 ? null
                 : (family) {
@@ -198,6 +207,7 @@ class _NextTurnConfirmationDialogState
             ],
           ),
         ],
+        ),
       ),
     );
   }

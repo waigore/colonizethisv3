@@ -143,7 +143,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 wide lazy sections + open tracing on dev merge (Refs #4690; measured 95_117).
 // raised for empire-rail Trade session cache + deferred counsel (Refs #4688 Slice 3; measured 95_055).
 // raised for empire-rail surfaceOpenId + profile harness wiring (Refs #4688; measured 95_102).
-const _maxMainLines = 95500;
+// raised for turn-shell surface-open tracing, deferred decree copy, feed cache (Refs #4715; measured 95_819).
+const _maxMainLines = 96000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

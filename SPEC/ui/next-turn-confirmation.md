@@ -115,3 +115,14 @@ Idle-civilian warnings remain in scope for **work-order** civilians (not Spy por
 - The existing turn number should be shown in the confirmation dialog body text.
 - Research end-turn readiness: out of scope per **UXD-001** ([ux-design-decisions.md](ux-design-decisions.md)).
 - Staged-decree review: [staged-decree-review.md](components/staged-decree-review.md); Widgetbook folder **Next Turn Confirmation** adds **Staged — one family** and **Staged — multi-family** use cases.
+
+## Open-path performance (Refs #4715)
+
+- **Required on open:** title, turn body, **Yes** / **No**, and compact **Staged this turn** family counts when the human draft is non-empty. Expanded per-decree rows and **Review decrees** detail are not required on first paint. Idle-civilian warning rows are required on first open when the warn preference is on and qualifying civilians exist.
+- **Tracing:** `CtAppPerfInteractiveReadyMarker` with `surfaceOpenId: nextTurnConfirm` wraps the dialog body. Profile/release emits `ui_surface_open surface=nextTurnConfirm …` (see [flutter-performance-tracing.md](../program/flutter-performance-tracing.md) § Turn-shell surfaces).
+- **CI surrogate:** `app/test/turn_shell_surface_open_surface_budget_test.dart` pumps compact staged summary without expanded rows; not a debug wall-clock 1 s gate.
+
+## Mount / dispose (Refs #4715)
+
+- **Mount:** `showDialog` from `confirmNextTurnWithIdleCivilianWarning` when the player taps **Next turn** on `GAME10001` / `MAP10001`. No prebuilt dialog host; the route is not pushed.
+- **Dispose:** `Navigator.pop` on **Yes** / **No** (or unconfirmed pop from staged-decree locate) unmounts `NextTurnConfirmationDialog` and its `CtAppPerfInteractiveReadyMarker`. Ten-cycle guard: `app/test/turn_shell_lifecycle_test.dart`.

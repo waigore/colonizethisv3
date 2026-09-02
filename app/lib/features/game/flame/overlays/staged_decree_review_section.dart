@@ -10,6 +10,8 @@ import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
+typedef ExpandStagedDecreeReview = StagedDecreeReview Function();
+
 /// Hosts the staged-decree summary. Returns [SizedBox.shrink] when [review]
 /// is empty so the empty-draft confirm stays simple.
 class StagedDecreeReviewSection extends StatefulWidget {
@@ -19,12 +21,14 @@ class StagedDecreeReviewSection extends StatefulWidget {
     required this.bodyStyle,
     required this.mutedStyle,
     this.onGoToFamily,
+    this.onExpandReview,
   });
 
   final StagedDecreeReview review;
   final TextStyle bodyStyle;
   final TextStyle mutedStyle;
   final void Function(StagedDecreeFamily family)? onGoToFamily;
+  final ExpandStagedDecreeReview? onExpandReview;
 
   @override
   State<StagedDecreeReviewSection> createState() =>
@@ -33,6 +37,20 @@ class StagedDecreeReviewSection extends StatefulWidget {
 
 class _StagedDecreeReviewSectionState extends State<StagedDecreeReviewSection> {
   bool _expanded = false;
+  StagedDecreeReview? _expandedReview;
+
+  void _toggleExpanded() {
+    if (!_expanded && widget.onExpandReview != null) {
+      final cached = _expandedReview;
+      final expanded = cached ?? widget.onExpandReview!();
+      setState(() {
+        _expandedReview = expanded;
+        _expanded = true;
+      });
+      return;
+    }
+    setState(() => _expanded = !_expanded);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +58,10 @@ class _StagedDecreeReviewSectionState extends State<StagedDecreeReviewSection> {
       return const SizedBox.shrink();
     }
     final l10n = appL10n(context);
-    final summary = widget.review.families
+    final review = _expanded && _expandedReview != null
+        ? _expandedReview!
+        : widget.review;
+    final summary = review.families
         .map(
           (g) => l10n.game_nextTurnConfirm_familyCount(g.familyLabel, g.count),
         )
@@ -60,7 +81,7 @@ class _StagedDecreeReviewSectionState extends State<StagedDecreeReviewSection> {
           label: _expanded
               ? l10n.game_nextTurnConfirm_hideDecrees
               : l10n.game_nextTurnConfirm_reviewDecrees,
-          onPressed: () => setState(() => _expanded = !_expanded),
+          onPressed: _toggleExpanded,
         ),
         if (_expanded) ...[
           const SizedBox(height: CtSpacing.m),
@@ -70,7 +91,7 @@ class _StagedDecreeReviewSectionState extends State<StagedDecreeReviewSection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final group in widget.review.families)
+                  for (final group in review.families)
                     _StagedFamilyBlock(
                       group: group,
                       bodyStyle: widget.bodyStyle,

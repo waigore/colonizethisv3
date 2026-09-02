@@ -16,18 +16,21 @@ on:
     paths:
       - 'app/integration_test/development_panel_surface_open_profile_test.dart'
       - 'app/lib/features/game/screens/development/**'
-      - 'packages/colonizethis_app_fixtures/lib/runtime/app_perf_trace.dart'
-      - 'tool/run_ui_surface_profile_evidence.sh'
+      # Shared perf marker/script omitted — turn-shell (#4715) and empire-rail
+      # (#4688) workflows own those paths; avoid a 120-minute GAME80001 batch
+      # ahead of surface-specific Android evidence on unrelated PRs (Refs #4715).
       - '.github/workflows/ui-surface-profile-evidence-android.yml'
 
 permissions:
   contents: read
 
 # One Android emulator per PR ref — concurrent AVD boots on the same runner pool
-# routinely miss the default boot deadline (Refs #4687, #4688).
+# routinely miss the default boot deadline (Refs #4687, #4688). Queue instead of
+# cancel so turn-shell / empire-rail evidence on the same PR is not dropped
+# (Refs #4715).
 concurrency:
   group: ui-surface-profile-android-emulator-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   development_panel_android:

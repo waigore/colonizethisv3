@@ -252,6 +252,38 @@ void main() {
   );
 
   testWidgets(
+    'Player turn event feed skips row formatting while hidden on rebuild',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness();
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(
+        tester,
+        harness,
+        [
+          AppResearchCompleteEvent(
+            playerId: harness.humanId,
+            techId: kTechIdCropRotation,
+            turnNumber: 1,
+          ),
+        ],
+        turnNumber: 2,
+        openFeed: false,
+      );
+
+      final researchLine =
+          'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked';
+      expect(find.textContaining(researchLine), findsNothing);
+      expect(find.text('1'), findsOneWidget);
+
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(find.textContaining(researchLine), findsNothing);
+      expect(find.text('1'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'Player turn event feed toggles visibility and replaces prior turn batch',
     (WidgetTester tester) async {
       final harness = newEventFeedHarness(disposeBus: false);

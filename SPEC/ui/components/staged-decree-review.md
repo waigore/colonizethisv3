@@ -40,6 +40,10 @@ Catalog: `CtSectionLabel`, `CtActionTextButton`, `CtIconAction`. No Material `Ex
 
 Family order (fixed): civilian work, spy relocate, army moves, fleet moves/missions, training/builds, labour recruit, diplomacy, trade, research.
 
+**Open-path (Refs #4715):** `buildStagedDecreeReview` supplies compact family counts only. Per-decree row labels are built when the player expands **Review decrees** via `expandStagedDecreeReview` (same-turn re-open may reuse `StagedDecreeReviewSessionCache`).
+
+**Mount / dispose:** Lives inside `DLG60001`; unmounts with the parent confirm dialog. Expanded rows are local `_expanded` state only — no Offstage retention after pop.
+
 Research rows include only orders with non-empty tech id **and** funding ≠ None.
 
 Copy uses display names (work target, army/fleet labels, tech, commodity, diplomacy action, worker tier). Never raw order class or enum names (`ArmyMoveOrder`, `declareWar`).

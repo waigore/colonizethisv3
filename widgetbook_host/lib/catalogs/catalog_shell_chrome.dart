@@ -370,6 +370,7 @@ List<WidgetbookNode> get nextTurnConfirmationDialogDirectories => [
               StagedDecreeFamilyGroup(
                 family: StagedDecreeFamily.armyMoves,
                 familyLabel: 'Army moves',
+                count: 1,
                 rows: [StagedDecreeRow(id: 'a1', label: 'Army a1 → Alpha')],
               ),
             ],
@@ -385,11 +386,13 @@ List<WidgetbookNode> get nextTurnConfirmationDialogDirectories => [
               StagedDecreeFamilyGroup(
                 family: StagedDecreeFamily.civilianWork,
                 familyLabel: 'Civilian work',
+                count: 1,
                 rows: [StagedDecreeRow(id: 'w1', label: 'Explorer: Explore')],
               ),
               StagedDecreeFamilyGroup(
                 family: StagedDecreeFamily.trade,
                 familyLabel: 'Trade',
+                count: 1,
                 rows: [StagedDecreeRow(id: 't1', label: 'Bid Grain × 10')],
               ),
             ],

@@ -66,7 +66,10 @@ mixin GameMapAreaBuild
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final treasuryCommitted = ref.watch(treasuryCommittedSpendProvider);
     final labourFeedingSummary = ref.watch(labourFeedingHudSummaryProvider);
-    final feedEntries = buildFeedEntries();
+    final feedVisible =
+        shell.showPlayerChrome && mapViewState.showPlayerTurnEventsFeed;
+    final feedEntries = feedEntriesForMapBuild(feedVisible: feedVisible);
+    final feedBadgeCount = cheapFeedBadgeCount();
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
     final raceFocusId = widget.game.victory != null
         ? null
@@ -112,7 +115,7 @@ mixin GameMapAreaBuild
           treasuryNotDefined: treasurySummary.notDefined,
           treasuryCommittedLines: treasuryCommitted.lines,
           observeBannerLabel: shell.observeBannerLabel,
-          playerTurnEventsFeedCount: feedEntries.length,
+          playerTurnEventsFeedCount: feedBadgeCount,
           playerTurnEventsFeedNotDefined: !shell.showPlayerChrome,
           showPlayerTurnEventsFeed: mapViewState.showPlayerTurnEventsFeed,
           onTogglePlayerTurnEventsFeed: togglePlayerTurnEventsFeedVisibility,

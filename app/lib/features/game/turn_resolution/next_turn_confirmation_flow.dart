@@ -9,6 +9,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'staged_decree_go_to.dart';
 import 'staged_decree_review_builder.dart';
+import 'staged_decree_review_session_cache.dart';
 
 /// Shared end-turn confirmation for map and Flame-canvas entry points.
 ///
@@ -41,6 +42,24 @@ Future<bool> confirmNextTurnWithIdleCivilianWarning({
     currentTurn: currentTurn,
     civiliansMissingWork: warnIdleCiviliansEnabled ? missing : const [],
     stagedReview: stagedReview,
+    expandStagedReview: () {
+      final cached = StagedDecreeReviewSessionCache.readExpandedFor(orders);
+      if (cached != null) {
+        return cached;
+      }
+      final expanded = expandStagedDecreeReview(
+        compact: stagedReview,
+        orders: orders,
+        humanPlayerId: humanPlayerId,
+        l10n: appL10n(context),
+        game: game,
+      );
+      StagedDecreeReviewSessionCache.storeExpanded(
+        orders: orders,
+        expanded: expanded,
+      );
+      return expanded;
+    },
     onGoToCivilian: (entry) {
       bus.emit(
         LocateMapTileEvent(tileKey: entry.tileKey, regionId: entry.regionId),
