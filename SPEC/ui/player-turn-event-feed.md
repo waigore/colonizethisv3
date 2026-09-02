@@ -174,6 +174,11 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - **Tracing:** `CtAppPerfInteractiveReadyMarker` with `surfaceOpenId: playerTurnEventFeed` wraps `PlayerTurnEventFeedCard`. Profile/release emits `ui_surface_open surface=playerTurnEventFeed …` on binding hosts.
 - **CI surrogate:** `app/test/turn_shell_surface_open_surface_budget_test.dart`.
 
+## Mount / dispose (Refs #4715)
+
+- **Mount:** `PlayerTurnEventFeedCard` mounts only when `mapViewState.showPlayerTurnEventsFeed == true` (newspaper toggle or **open Events** from `DLG50001`). `GameMapArea` skips full `buildCtTurnFeedEntries` while hidden; badge count uses a cheap buffer length.
+- **Dispose:** Hiding the feed (`SizedBox.shrink` in `game_map_area_build_map_stack_chrome.dart`) unmounts the card and marker. `PlayerTurnEventFeedSessionCache` may retain the last committed row batch until the next `TurnResolutionCompleteEvent`. Ten-cycle guard: `app/test/turn_shell_lifecycle_test.dart`.
+
 ### Card and toggle chrome (dark editorial-monocle; issue #2861 S7)
 
 - Given the floating feed card renders with at least one entry, when the UI builds the card chrome, then the card’s `DecoratedBox` paints `CtGradients.panelGradient` and a 1 dp `Border.all(color: EditorialMonoclePalette.accentDim, width: 1)`; the legacy `Material(color: Colors.black…)` chrome does not paint inside the card subtree.

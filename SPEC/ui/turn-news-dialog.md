@@ -46,6 +46,11 @@ The dialog renders under the editorial-monocle dark theme catalog (`SPEC/ui/pixe
 - **Tracing:** `CtAppPerfInteractiveReadyMarker` with `surfaceOpenId: turnNews` wraps the dialog body.
 - **CI surrogate:** `app/test/turn_shell_surface_open_surface_budget_test.dart`.
 
+## Mount / dispose (Refs #4715)
+
+- **Mount:** `showDialog` via `OpenDialogEvent` / `buildTurnNewsDialog` after turn resolution when `victory == null`. Digest and court summary are passed in event params (not rebuilt from full feed mapping).
+- **Dispose:** **Close** or **open Events** pops the dialog and unmounts `TurnNewsDialog` plus its marker. Ten-cycle guard: `app/test/turn_shell_lifecycle_test.dart`.
+
 ## Copy
 
 Neutral diplomacy wording (no invented aggressor). Province ids in logic remain prefixed; UI may show `displayName` when present. **Province captured** bullets are only produced for **faction-to-faction** handovers (both previous and new owner non-empty); see [turn-news-digest.md](../program/turn-news-digest.md) and [world-model.md](../game/world-model.md) § Invariants.
