@@ -41,6 +41,48 @@ const OvertureOffer _portugalJoin = OvertureOffer(
   stage: OvertureStage.joinEmpire,
 );
 
+const OvertureOffer _spainConsulateGp = OvertureOffer(
+  offererGpId: 'gp2',
+  targetFactionId: 'gp1',
+  stage: OvertureStage.tradeConsulate,
+);
+
+const OvertureOffer _spainConsulateMinor = OvertureOffer(
+  offererGpId: 'gp2',
+  targetFactionId: 'minor1',
+  stage: OvertureStage.tradeConsulate,
+);
+
+const OvertureOffer _spainEmbassyGp = OvertureOffer(
+  offererGpId: 'gp2',
+  targetFactionId: 'gp1',
+  stage: OvertureStage.embassy,
+);
+
+const OvertureOffer _spainEmbassyMinor = OvertureOffer(
+  offererGpId: 'gp2',
+  targetFactionId: 'minor1',
+  stage: OvertureStage.embassy,
+);
+
+Game _overtureGameWithMinor() {
+  return const Game(
+    id: 'overture_choice_effects_goldens_minor',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: [
+      Player(id: 'gp1', displayName: 'England', isHuman: true, treasury: 0),
+      Player(id: 'gp2', displayName: 'Spain', isHuman: false, treasury: 0),
+    ],
+    minorNations: [
+      MinorNation(id: 'minor1', displayName: 'Bavaria'),
+    ],
+  );
+}
+
 const Widget _overlayChild = ColoredBox(
   color: Color(0xFF101014),
   child: SizedBox.expand(),
@@ -51,6 +93,7 @@ Future<void> _pumpOverlayGolden(
   required Key boundaryKey,
   required Size physicalSize,
   required List<OvertureOffer> offers,
+  Game? game,
 }) async {
   await pumpGoldenHost(
     tester,
@@ -60,7 +103,7 @@ Future<void> _pumpOverlayGolden(
     includeLocalizations: true,
     scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
     child: OvertureDialogueOverlay(
-      game: _overtureGame(),
+      game: game ?? _overtureGame(),
       pendingOvertures: offers,
       skipIntroForTest: true,
       onDecisions: (_) {},
@@ -143,6 +186,84 @@ void main() {
       matchesGoldenFile('goldens/overture_choice_effects_join_empire.png'),
     );
   });
+
+  testWidgets(
+    'golden: Consulate Accept Effect GP and Minor targets (Refs #4682)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'overture_choice_effects_consulate_golden',
+      );
+      await _pumpOverlayGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(kMinViewportWidth, 720),
+        offers: const [_spainConsulateGp, _spainConsulateMinor],
+        game: _overtureGameWithMinor(),
+      );
+
+      final gpExpected = buildIncomingOvertureEffectLines(
+        offererDisplayName: 'Spain',
+        stage: OvertureStage.tradeConsulate,
+        game: _overtureGameWithMinor(),
+        targetFactionId: 'gp1',
+      );
+      final minorExpected = buildIncomingOvertureEffectLines(
+        offererDisplayName: 'Spain',
+        stage: OvertureStage.tradeConsulate,
+        game: _overtureGameWithMinor(),
+        targetFactionId: 'minor1',
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text(gpExpected.acceptEffect), findsOneWidget);
+      expect(find.text(minorExpected.acceptEffect), findsOneWidget);
+      expect(find.textContaining('Explore and Prospect'), findsOneWidget);
+      expect(find.textContaining('Trade Consulate'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/overture_choice_effects_consulate.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: Embassy Accept Effect GP and Minor targets (Refs #4682)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'overture_choice_effects_embassy_golden',
+      );
+      await _pumpOverlayGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(kMinViewportWidth, 720),
+        offers: const [_spainEmbassyGp, _spainEmbassyMinor],
+        game: _overtureGameWithMinor(),
+      );
+
+      final gpExpected = buildIncomingOvertureEffectLines(
+        offererDisplayName: 'Spain',
+        stage: OvertureStage.embassy,
+        game: _overtureGameWithMinor(),
+        targetFactionId: 'gp1',
+      );
+      final minorExpected = buildIncomingOvertureEffectLines(
+        offererDisplayName: 'Spain',
+        stage: OvertureStage.embassy,
+        game: _overtureGameWithMinor(),
+        targetFactionId: 'minor1',
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text(gpExpected.acceptEffect), findsOneWidget);
+      expect(find.text(minorExpected.acceptEffect), findsOneWidget);
+      expect(find.textContaining('Grant Aid'), findsOneWidget);
+      expect(find.textContaining('Embassy with Spain'), findsOneWidget);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/overture_choice_effects_embassy.png'),
+      );
+    },
+  );
 
   testWidgets('golden: NAP + Join Empire Effect wrap @ 320dp (Refs #4387)', (
     WidgetTester tester,
