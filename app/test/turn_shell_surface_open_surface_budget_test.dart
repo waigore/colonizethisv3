@@ -8,6 +8,8 @@
 
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/game/turn_resolution/staged_decree_review.dart';
+import 'package:colonizethis_logic/civilian_intel_api.dart'
+    show CivilianMissingWorkOrderEntry;
 import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -61,6 +63,50 @@ void main() {
       expect(find.text('End turn?'), findsOneWidget);
       expect(find.text('Yes'), findsOneWidget);
       expect(find.text('No'), findsOneWidget);
+      expect(elapsedMs, greaterThan(0));
+      expect(ctAppPerfSurfaceOpenElapsedMs('nextTurnConfirm'), isNotNull);
+    },
+  );
+
+  testWidgets(
+    'DLG60001 idle-civilian warning on first open with compact staged summary (Refs #4715 AC3)',
+    (WidgetTester tester) async {
+      const staged = StagedDecreeReview(
+        families: [
+          StagedDecreeFamilyGroup(
+            family: StagedDecreeFamily.diplomacy,
+            familyLabel: 'Diplomacy',
+            count: 1,
+            rows: [
+              StagedDecreeRow(id: 'd1', label: 'Offer peace to France'),
+            ],
+          ),
+        ],
+      );
+      const idleCivilian = CivilianMissingWorkOrderEntry(
+        unitId: 'e1',
+        type: 'explorer',
+        tileKey: 'oldWorld|p1|0|0',
+        regionId: 'oldWorld',
+        locationLabel: 'Old World — Alpha',
+      );
+      final elapsedMs = await pumpToInteractive(
+        tester,
+        const NextTurnConfirmationDialog(
+          currentTurn: 4,
+          stagedReview: staged,
+          civiliansMissingWork: [idleCivilian],
+        ),
+      );
+      expect(
+        find.text('These civilians have no work order for the next turn:'),
+        findsOneWidget,
+      );
+      expect(find.text('explorer'), findsOneWidget);
+      expect(find.text('No work order'), findsOneWidget);
+      expect(find.text('STAGED THIS TURN'), findsOneWidget);
+      expect(find.text('Diplomacy (1)'), findsOneWidget);
+      expect(find.text('Offer peace to France'), findsNothing);
       expect(elapsedMs, greaterThan(0));
       expect(ctAppPerfSurfaceOpenElapsedMs('nextTurnConfirm'), isNotNull);
     },
