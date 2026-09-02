@@ -1,6 +1,7 @@
 // Session cache + compact expand path for DLG60001 staged review (Refs #4715).
 
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/turn_resolution/staged_decree_review.dart';
 import 'package:colonizethis_app/features/game/turn_resolution/staged_decree_review_builder.dart';
 import 'package:colonizethis_app/features/game/turn_resolution/staged_decree_review_session_cache.dart';
@@ -24,7 +25,7 @@ void main() {
   tearDown(StagedDecreeReviewSessionCache.clear);
 
   testWidgets(
-    'Given compact staged review When Review decrees expands Then rows render',
+    'Given compact staged review When Review decrees expands Then rows render and Yes stays enabled (Refs #4715 AC2)',
     (WidgetTester tester) async {
       final game = buildPanelTestGame(
         oldWorldProvinces: const [
@@ -91,6 +92,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining(kUnitTypeExplorer), findsOneWidget);
+      final yesButton = tester.widget<CtNinePatchButton>(
+        find.widgetWithText(CtNinePatchButton, 'Yes'),
+      );
+      expect(yesButton.onPressed, isNotNull);
     },
   );
 

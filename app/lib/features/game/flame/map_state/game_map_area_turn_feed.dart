@@ -123,8 +123,9 @@ mixin GameMapAreaTurnFeed
             )
             .toList();
     final digest = widget.game.lastTurnIntelligenceDigest;
-    if (digest == null)
+    if (digest == null) {
       return List<PlayerTurnEventFeedEntry>.unmodifiable(mapped);
+    }
     final l10n = appL10n(context);
     for (final block in digest.spyReportsFor(mapPlayerId)) {
       for (final line in block.lines) {
