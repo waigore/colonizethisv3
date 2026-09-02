@@ -1,8 +1,10 @@
 import 'package:colonizethis_app/features/game/flame/map_state/player_turn_event_feed_session_cache.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
   tearDown(PlayerTurnEventFeedSessionCache.clear);
 
   test('invalidateForTurnCommit clears formatted rows but keeps badge count', () {
