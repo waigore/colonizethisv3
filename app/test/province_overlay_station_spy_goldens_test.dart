@@ -3,6 +3,7 @@
 
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
@@ -16,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'golden_capture_harness.dart';
+import 'widgetbook_test_harness.dart' show revealProvinceOverlayWideSection;
 
 class _StationSpyGoldenCase {
   const _StationSpyGoldenCase({
@@ -146,13 +148,15 @@ void main() {
       await pumpForGolden(tester);
       expect(tester.takeException(), isNull);
 
-      final civilianHeader = find.text(
-        l10n.provinceOverlay_sectionCivilian.toUpperCase(),
-      );
-      if (c.overlayWidth >= 460) {
-        expect(civilianHeader, findsOneWidget);
-        await tester.ensureVisible(civilianHeader);
+      if (find.byType(CtTabStrip).evaluate().isNotEmpty) {
+        await tester.tap(find.text(l10n.provinceOverlay_sectionCivilian));
         await tester.pump();
+        await tester.pump();
+      } else {
+        await revealProvinceOverlayWideSection(
+          tester,
+          sectionTitle: l10n.provinceOverlay_sectionCivilian,
+        );
       }
 
       final spyFinder = find.widgetWithText(

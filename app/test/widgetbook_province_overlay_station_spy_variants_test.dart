@@ -55,6 +55,10 @@ void main() {
         size: const Size(800, 640),
       );
       await tester.pumpAndSettle();
+      await revealProvinceOverlayWideSection(
+        tester,
+        sectionTitle: l10n.provinceOverlay_sectionCivilian,
+      );
       final action = tester.widget<CtActionTextButton>(
         find.widgetWithText(
           CtActionTextButton,
@@ -100,6 +104,10 @@ void main() {
         size: const Size(800, 640),
       );
       await tester.pumpAndSettle();
+      await revealProvinceOverlayWideSection(
+        tester,
+        sectionTitle: l10n.provinceOverlay_sectionCivilian,
+      );
       final gistFinder = find.text(l10n.spyResearchInsight_maySpeedResearchGist);
       await tester.ensureVisible(gistFinder);
       await tester.pump();
@@ -120,6 +128,10 @@ void main() {
         size: const Size(800, 640),
       );
       await tester.pumpAndSettle();
+      await revealProvinceOverlayWideSection(
+        tester,
+        sectionTitle: l10n.provinceOverlay_sectionCivilian,
+      );
       final gistFinder = find.text(
         l10n.spyResearchInsight_alreadyGrantsInsightGist,
       );

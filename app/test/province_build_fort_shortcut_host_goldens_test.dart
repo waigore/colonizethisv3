@@ -13,6 +13,7 @@ import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
+import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_gist_line.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -251,6 +252,23 @@ void main() {
         .read(mapProvincePanelProvider.notifier)
         .reportMapTileTapped(_kTileKey);
     await pumpForGolden(tester);
+    expect(find.byKey(const Key('overlay_close')), findsOneWidget);
+    final tabStrip = find.byType(CtTabStrip);
+    if (tabStrip.evaluate().isEmpty) {
+      final militaryHeader = find.text('MILITARY');
+      expect(militaryHeader, findsOneWidget);
+      await tester.ensureVisible(militaryHeader);
+      await tester.pump();
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -200));
+      await pumpForGolden(tester);
+    } else {
+      final militaryTab = find.text('Military');
+      expect(militaryTab, findsOneWidget);
+      await tester.ensureVisible(militaryTab);
+      await tester.pump();
+      await tester.tap(militaryTab);
+      await pumpForGolden(tester);
+    }
   }
 
   testWidgets(

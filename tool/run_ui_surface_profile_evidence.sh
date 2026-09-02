@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# Profile/release open-to-interactive evidence for game-app UI surfaces (Refs #4687, #4688).
+# Profile/release open-to-interactive evidence for game-app UI surfaces (Refs #4687, #4688, #4690).
 #
 # Captures `ui_surface_open surface=<id> elapsed_ms=… budget_ms=1000 host=…` lines
 # from `flutter drive --profile` for PR wall-clock evidence on binding hosts.
 #
 # Usage from repo root:
+#   tool/run_ui_surface_profile_evidence.sh development
+#   tool/run_ui_surface_profile_evidence.sh provinceOverlay
 #   tool/run_ui_surface_profile_evidence.sh trade
 #   tool/run_ui_surface_profile_evidence.sh all-empire-rail --host linux
 #   tool/run_ui_surface_profile_evidence.sh development --host android --device emulator-5554
-#   UI_SURFACE_PROFILE_OUT=tmp/profile-evidence tool/run_ui_surface_profile_evidence.sh trade
+#   UI_SURFACE_PROFILE_OUT=tmp/profile-evidence tool/run_ui_surface_profile_evidence.sh provinceOverlay
 #
 # Linux desktop (headless): uses xvfb-run when DISPLAY is unset.
 # Android emulator: launch an AVD first (`flutter emulators --launch <name>`), then pass
@@ -22,6 +24,11 @@ shift || true
 HOST="auto"
 DEVICE=""
 OUT_DIR="${UI_SURFACE_PROFILE_OUT:-$ROOT/tmp/ui-surface-profile-evidence}"
+# Resolve before `cd app` so relative UI_SURFACE_PROFILE_OUT paths still write correctly.
+case "$OUT_DIR" in
+  /*) ;;
+  *) OUT_DIR="$ROOT/$OUT_DIR" ;;
+esac
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -34,7 +41,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     -h | --help)
-      sed -n '1,22p' "$0"
+      sed -n '1,24p' "$0"
       exit 0
       ;;
     *)
@@ -48,6 +55,9 @@ _surface_target() {
   case "$1" in
     development)
       echo "integration_test/development_panel_surface_open_profile_test.dart"
+      ;;
+    provinceOverlay)
+      echo "integration_test/province_overlay_surface_open_profile_test.dart"
       ;;
     trade)
       echo "integration_test/trade_panel_surface_open_profile_test.dart"

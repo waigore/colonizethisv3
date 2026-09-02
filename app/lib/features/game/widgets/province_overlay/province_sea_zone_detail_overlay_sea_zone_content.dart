@@ -14,6 +14,7 @@ import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
     show ProvinceTransferToHomeFleetOverlayControls;
+import 'province_overlay_wide_lazy_sections.dart';
 import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'sea_zone_name_resolver.dart';
@@ -63,15 +64,19 @@ OverlayContent seaZoneContent({
       l10n.provinceOverlay_sectionNaval,
       overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
-    final sections = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [politicalObs, navalObs],
-    );
     return OverlayContent(
       tabLabels: tabLabels,
-      tabViews: [politicalObs, navalObs],
-      sections: sections,
+      lazyWideDeferredFromIndex: tabLabels.length,
+      sectionSpecs: [
+        OverlaySectionSpec(
+          title: l10n.provinceOverlay_sectionPolitical,
+          builder: () => politicalObs,
+        ),
+        OverlaySectionSpec(
+          title: l10n.provinceOverlay_sectionNaval,
+          builder: () => navalObs,
+        ),
+      ],
     );
   }
 
@@ -120,15 +125,18 @@ OverlayContent seaZoneContent({
     l10n.provinceOverlay_sectionPolitical,
     l10n.provinceOverlay_sectionNaval,
   ];
-  final tabViews = [political, naval];
-  final sections = Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [political, naval],
-  );
   return OverlayContent(
     tabLabels: tabLabels,
-    tabViews: tabViews,
-    sections: sections,
+    lazyWideDeferredFromIndex: tabLabels.length,
+    sectionSpecs: [
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionPolitical,
+        builder: () => political,
+      ),
+      OverlaySectionSpec(
+        title: l10n.provinceOverlay_sectionNaval,
+        builder: () => naval,
+      ),
+    ],
   );
 }

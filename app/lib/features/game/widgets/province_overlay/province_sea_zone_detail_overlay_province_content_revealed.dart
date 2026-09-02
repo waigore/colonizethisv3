@@ -217,7 +217,7 @@ OverlayContent provinceContentRevealed({
     byResImprovable: tileIntel.byResImprovable,
     resourceKeysSorted: tileIntel.resourceKeysSorted,
     selectedTileKey: selectedTileKey,
-    political: political,
-    tileSection: tileSection,
+    political: () => political,
+    tileSection: () => tileSection,
   );
 }

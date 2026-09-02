@@ -465,17 +465,19 @@ dart test test/check_economy_test_wall_clock_test.dart --reporter=compact
 
 ## run_ui_surface_profile_evidence.sh (UI surface open wall-clock evidence)
 
-Profile/release `flutter drive` harness for game-app UI **open-to-interactive** wall-clock evidence on Linux desktop and Android emulator binding hosts (Refs #4687, #4688). Captures `ui_surface_open surface=<id> elapsed_ms=… budget_ms=1000 host=…` lines and validates each is ≤ 1 000 ms.
+Profile/release `flutter drive` harness for game-app UI **open-to-interactive** wall-clock evidence on Linux desktop and Android emulator binding hosts (Refs #4687, #4688, #4690). Captures `ui_surface_open surface=<id> elapsed_ms=… budget_ms=1000 host=…` lines and validates each is ≤ 1 000 ms. On Android, `debugPrint` evidence is merged from `adb logcat` after the drive completes.
 
 **Invocation (repo root)**
 
 ```bash
+tool/run_ui_surface_profile_evidence.sh development
+tool/run_ui_surface_profile_evidence.sh provinceOverlay --host linux
 tool/run_ui_surface_profile_evidence.sh trade --host linux
 tool/run_ui_surface_profile_evidence.sh all-empire-rail --host linux
 tool/run_ui_surface_profile_evidence.sh development --host android --device emulator-5554
 ```
 
-**Surfaces:** `development`, `trade`, `production`, `technology`, `diplomacy`, `victory`, `counsel`, `units`, or `all-empire-rail` (runs trade through units in sequence).
+**Surfaces:** `development` (`GAME80001`), `provinceOverlay` (`MAP20001`), `trade`, `production`, `technology`, `diplomacy`, `victory`, `counsel`, `units`, or `all-empire-rail` (runs trade through units in sequence).
 
 **Options:** `--host linux|android|auto` (default `auto`: Android emulator when present, else Linux). `--device <id>` overrides auto-detect. `UI_SURFACE_PROFILE_OUT` sets log directory (default `tmp/ui-surface-profile-evidence/`).
 

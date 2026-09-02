@@ -108,6 +108,11 @@ void main() {
         onTransferToHomeFleetTap: () => tapped = true,
       ),
     );
+    final navalHeader = find.text(
+      l10n.provinceOverlay_sectionNaval.toUpperCase(),
+    );
+    await tester.ensureVisible(navalHeader);
+    await tester.pump();
     final finder = find.widgetWithText(
       CtActionTextButton,
       l10n.provinceOverlay_transferToHomeFleetAction,
