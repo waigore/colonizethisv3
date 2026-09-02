@@ -16,8 +16,9 @@ on:
     paths:
       - 'app/integration_test/development_panel_surface_open_profile_test.dart'
       - 'app/lib/features/game/screens/development/**'
-      - 'packages/colonizethis_app_fixtures/lib/runtime/app_perf_trace.dart'
-      - 'tool/run_ui_surface_profile_evidence.sh'
+      # Shared perf marker/script omitted — turn-shell (#4715) and empire-rail
+      # (#4688) workflows own those paths; avoid a 120-minute GAME80001 batch
+      # ahead of surface-specific Android evidence on unrelated PRs (Refs #4715).
       - '.github/workflows/ui-surface-profile-evidence-android.yml'
 
 permissions:
