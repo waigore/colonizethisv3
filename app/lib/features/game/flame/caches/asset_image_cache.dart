@@ -5,6 +5,12 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+/// Android/iOS emulators decode large map atlas PNGs unreliably under parallel
+/// decode fan-out (Refs #4687 profile evidence CI).
+bool isLowMemoryMapAssetHost() =>
+    defaultTargetPlatform == TargetPlatform.android ||
+    defaultTargetPlatform == TargetPlatform.iOS;
+
 final _log = packageLogger();
 
 /// Canonical PNG-from-asset decode helper for the Flame layer.
@@ -72,7 +78,13 @@ abstract class AssetImageCache {
     if (_isLoaded || _isLoading) return;
     _isLoading = true;
     try {
-      await Future.wait(assetIds.map(_loadOne));
+      if (isLowMemoryMapAssetHost()) {
+        for (final assetId in assetIds) {
+          await _loadOne(assetId);
+        }
+      } else {
+        await Future.wait(assetIds.map(_loadOne));
+      }
       _isLoaded = true;
       _log.i('Loaded ${_images.length} $loadLogLabel');
     } catch (e, stackTrace) {

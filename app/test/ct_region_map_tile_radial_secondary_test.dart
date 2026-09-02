@@ -21,6 +21,7 @@ Future<void> _waitForMap(WidgetTester tester) async {
 
 void main() {
   suppressLogsForTests();
+  setUpAll(warmCtRegionMapCachesForTests);
 
   testWidgets(
     'secondary hit on a bare tile reports a tile key and skips MAP20001',
@@ -81,6 +82,7 @@ void main() {
       onMapTileTappedForDetail: (tk) => detailTileKey = tk,
       onMapTileSecondaryForRadial: (tk, _) => secondaryTileKey = tk,
     );
+    await _waitForMap(tester);
     await tapCtRegionMap(tester);
     expect(detailTileKey, isNotNull);
     expect(secondaryTileKey, isNull);

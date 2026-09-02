@@ -64,6 +64,23 @@ class RunUiSurfaceProfileEvidenceTests(unittest.TestCase):
             "emulator-5554",
         )
 
+    def test_extracts_ui_surface_open_from_developer_log_logcat(self) -> None:
+        log = "\n".join(
+            [
+                "Running profile drive...",
+                "All tests passed!",
+                "",
+                "=== adb logcat (ui_surface_open) ===",
+                (
+                    "[perf] ui_surface_open surface=development "
+                    "elapsed_ms=412 budget_ms=1000 host=android_emulator_profile"
+                ),
+            ]
+        )
+        lines = _extract_ui_surface_open_lines(log)
+        self.assertEqual(len(lines), 1)
+        self.assertIn("host=android_emulator_profile", lines[0])
+
     def test_extracts_ui_surface_open_from_android_logcat_section(self) -> None:
         log = "\n".join(
             [
@@ -103,6 +120,15 @@ class RunUiSurfaceProfileEvidenceTests(unittest.TestCase):
             check=True,
         )
         self.assertEqual(result.stdout.strip(), "/tmp/fake-root/tmp/evidence")
+
+    def test_drive_log_some_tests_failed_pattern(self) -> None:
+        log = "\n".join(
+            [
+                "I/flutter (3629): 00:11 +0 -2: Some tests failed.",
+                "All tests passed.",
+            ]
+        )
+        self.assertRegex(log, r"Some tests failed|\+[0-9]+ -[1-9]")
 
 
 if __name__ == "__main__":

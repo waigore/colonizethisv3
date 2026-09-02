@@ -11,14 +11,24 @@ import 'package:hive/hive.dart';
 
 /// Opens an isolated Hive box for widget tests.
 ///
-/// Default directory is `./.dart_tool/test_hive_$suiteId` when [directory] is
-/// null. Pass [boxName] for non-games boxes (e.g. [HiveBoxNames.settings]).
+/// Default directory is `./.dart_tool/test_hive_$suiteId` on desktop hosts when
+/// [directory] is null. On Android/iOS integration-test devices the app cwd is
+/// read-only, so a unique [Directory.systemTemp] subdir is used instead
+/// (Refs #4687 profile evidence on emulator).
 Future<Box<dynamic>> openAppTestHiveBox({
   required String suiteId,
   String boxName = HiveBoxNames.games,
   Directory? directory,
 }) async {
-  final hivePath = directory?.path ?? './.dart_tool/test_hive_$suiteId';
+  final String hivePath;
+  if (directory != null) {
+    hivePath = directory.path;
+  } else if (Platform.isAndroid || Platform.isIOS) {
+    final tempDir = await Directory.systemTemp.createTemp('ct_test_hive_$suiteId');
+    hivePath = tempDir.path;
+  } else {
+    hivePath = './.dart_tool/test_hive_$suiteId';
+  }
   Hive.init(hivePath);
   return Hive.openBox<dynamic>(boxName);
 }

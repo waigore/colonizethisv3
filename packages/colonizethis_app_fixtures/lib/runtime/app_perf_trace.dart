@@ -42,7 +42,7 @@ int? ctAppPerfSurfaceOpenInteractiveReady(String surfaceId) {
   return elapsedMs;
 }
 
-/// Emits `ui_surface_open` for profile/release evidence capture (Refs #4687, #4690).
+/// Emits `ui_surface_open` for profile/release evidence capture (Refs #4687, #4688, #4690).
 ///
 /// Writes a single greppable line to binding-host stdout (Linux `flutter drive`
 /// replay) and Android logcat via `stdout.writeln`, bypassing

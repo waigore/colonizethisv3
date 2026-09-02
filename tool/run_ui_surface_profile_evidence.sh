@@ -209,8 +209,12 @@ _run_surface() {
     {
       echo ""
       echo "=== adb logcat (ui_surface_open) ==="
+      "$adb_bin" -s "$device_id" logcat -d -s flutter:I 2>/dev/null \
+        | grep -E 'ui_surface_open surface=' || \
       "$adb_bin" -s "$device_id" logcat -d 2>/dev/null \
-        | grep -E 'ui_surface_open surface=' || true
+        | grep -E 'ui_surface_open surface=' || \
+      "$adb_bin" -s "$device_id" logcat -d 2>/dev/null \
+        | grep -E '\[perf\] ui_surface_open surface=' || true
     } >>"$log"
   fi
 
@@ -221,6 +225,11 @@ _run_surface() {
   if [[ $status -ne 0 ]]; then
     echo "ERROR: flutter drive failed for $surface (exit $status). See $log" >&2
     exit "$status"
+  fi
+
+  if grep -qE 'Some tests failed|\+[0-9]+ -[1-9]' "$log"; then
+    echo "ERROR: integration tests failed for $surface. See $log" >&2
+    exit 1
   fi
 
   if ! grep -q 'All tests passed' "$log"; then

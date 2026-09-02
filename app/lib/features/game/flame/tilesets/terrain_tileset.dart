@@ -32,36 +32,64 @@ class TerrainTilesetCache {
       await MapTerrainConfig.ensureLoaded(
         assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
       );
-      await Future.wait([
-        _loadWangTileset(
+      if (isLowMemoryMapAssetHost()) {
+        await _loadWangTileset(
           'sea_plains',
           seaTerrainId,
           plainsTerrainId,
           (tileset) => _seaPlainsTileset = tileset,
-        ),
-        _loadWangTileset(
+        );
+        await _loadWangTileset(
           'sea_desert',
           seaTerrainId,
           desertTerrainId,
           (tileset) => _seaDesertTileset = tileset,
-        ),
-        _loadWangTileset(
+        );
+        await _loadWangTileset(
           'plains_desert',
           plainsTerrainId,
           desertTerrainId,
           (tileset) => _plainsDesertTileset = tileset,
-        ),
-      ]);
+        );
+        await _loadStandaloneTileRequired(tilePlainsGrain, 'plains_grain');
+        await _loadStandaloneTileRequired(tilePlainsMeat, 'plains_meat');
+        await _loadStandaloneTileRequired(tilePlainsHorses, 'plains_horses');
+        await _loadStandaloneTileRequired(tilePlainsSugarCane, 'plains_sugar_cane');
+        await _loadStandaloneTileRequired(tilePlainsTobacco, 'plains_tobacco');
+        await _loadStandaloneTileRequired(tilePlainsCotton, 'plains_cotton');
+        await _loadStandaloneTileRequired(tilePlainsSpices, 'plains_spices');
+      } else {
+        await Future.wait([
+          _loadWangTileset(
+            'sea_plains',
+            seaTerrainId,
+            plainsTerrainId,
+            (tileset) => _seaPlainsTileset = tileset,
+          ),
+          _loadWangTileset(
+            'sea_desert',
+            seaTerrainId,
+            desertTerrainId,
+            (tileset) => _seaDesertTileset = tileset,
+          ),
+          _loadWangTileset(
+            'plains_desert',
+            plainsTerrainId,
+            desertTerrainId,
+            (tileset) => _plainsDesertTileset = tileset,
+          ),
+        ]);
 
-      await Future.wait([
-        _loadStandaloneTileRequired(tilePlainsGrain, 'plains_grain'),
-        _loadStandaloneTileRequired(tilePlainsMeat, 'plains_meat'),
-        _loadStandaloneTileRequired(tilePlainsHorses, 'plains_horses'),
-        _loadStandaloneTileRequired(tilePlainsSugarCane, 'plains_sugar_cane'),
-        _loadStandaloneTileRequired(tilePlainsTobacco, 'plains_tobacco'),
-        _loadStandaloneTileRequired(tilePlainsCotton, 'plains_cotton'),
-        _loadStandaloneTileRequired(tilePlainsSpices, 'plains_spices'),
-      ]);
+        await Future.wait([
+          _loadStandaloneTileRequired(tilePlainsGrain, 'plains_grain'),
+          _loadStandaloneTileRequired(tilePlainsMeat, 'plains_meat'),
+          _loadStandaloneTileRequired(tilePlainsHorses, 'plains_horses'),
+          _loadStandaloneTileRequired(tilePlainsSugarCane, 'plains_sugar_cane'),
+          _loadStandaloneTileRequired(tilePlainsTobacco, 'plains_tobacco'),
+          _loadStandaloneTileRequired(tilePlainsCotton, 'plains_cotton'),
+          _loadStandaloneTileRequired(tilePlainsSpices, 'plains_spices'),
+        ]);
+      }
 
       for (final item in const <(String tileId, String assetStem)>[
         (tileHardwoodForest, 'hardwood_forest'),

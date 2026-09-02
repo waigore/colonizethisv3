@@ -5,6 +5,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
+import '../caches/asset_image_cache.dart';
 import '../caches/civilian_icon_cache.dart';
 import '../caches/fleet_icon_cache.dart';
 import '../caches/province_label_icon_cache.dart';
@@ -47,14 +48,23 @@ final regionMapComponentLifecycleLog = packageLogger();
 Future<void> ctRegionMapComponentAfterSuperOnLoad(
   CtRegionMapComponent component,
 ) async {
-  await Future.wait([
-    terrainTilesetCache.load(),
-    transportOverlayTilesetCache.load(),
-    resourceIconCache.load(),
-    civilianIconCache.load(),
-    townIconCache.load(),
-    provinceLabelIconCache.load(),
-  ]);
+  if (isLowMemoryMapAssetHost()) {
+    await terrainTilesetCache.load();
+    await transportOverlayTilesetCache.load();
+    await resourceIconCache.load();
+    await civilianIconCache.load();
+    await townIconCache.load();
+    await provinceLabelIconCache.load();
+  } else {
+    await Future.wait([
+      terrainTilesetCache.load(),
+      transportOverlayTilesetCache.load(),
+      resourceIconCache.load(),
+      civilianIconCache.load(),
+      townIconCache.load(),
+      provinceLabelIconCache.load(),
+    ]);
+  }
   unawaited(
     fleetIconCache.load().catchError((Object _, StackTrace stackTrace) {}),
   );

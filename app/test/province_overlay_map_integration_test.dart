@@ -12,11 +12,25 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
+import 'package:colonizethis_app/widgets/ct_region_map_state.dart';
 
+import 'ct_region_map_test_support.dart';
 import 'province_overlay_core_test_support.dart';
+
+Future<void> _waitForCtRegionMapReady(WidgetTester tester) async {
+  final game = tester.state<CtRegionMapState>(find.byType(CtRegionMap)).game;
+  for (var i = 0; i < 40; i++) {
+    if (game.state.mapLoaded && game.size.x > 0 && game.size.y > 0) {
+      return;
+    }
+    await tester.pump(const Duration(milliseconds: 16));
+  }
+}
 
 void main() {
   suppressLogsForTests();
+
+  setUpAll(warmCtRegionMapCachesForTests);
 
   group('ProvinceSeaZoneDetailOverlay with map', () {
     testWidgets('AC: Map orange selection may persist after overlay closes', (
@@ -51,7 +65,8 @@ void main() {
       expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('overlay_close')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       expect(overlayOpen, isFalse);
       expect(selectedTk, isNotEmpty);
@@ -94,17 +109,17 @@ void main() {
           ),
         );
         await tester.pump();
+        await _waitForCtRegionMapReady(tester);
 
         expect(overlayOpen, isFalse);
-        final mapFinder = find.byType(CtRegionMap);
-        await tester.tap(mapFinder);
+        await tapCtRegionMap(tester);
         await tester.pump();
 
         expect(selectedTileKey, isNotNull);
         expect(overlayOpen, isTrue);
         expect(selectedTileKey!, startsWith('${region.regionId}|'));
 
-        await tester.tap(mapFinder);
+        await tapCtRegionMap(tester);
         await tester.pump();
         expect(overlayOpen, isTrue);
 
