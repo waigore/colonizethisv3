@@ -14,10 +14,23 @@ on:
     branches:
       - dev
     paths:
-      - 'app/integration_test/*_surface_open_profile_test.dart'
-      - 'app/lib/features/game/screens/**'
+      # Empire-rail surfaces only — exclude GAME80001 (development) and MAP20001
+      # (provinceOverlay) so shared perf/script edits do not queue a 90-minute
+      # all-empire-rail batch ahead of surface-specific Android evidence (Refs #4687).
+      - 'app/integration_test/trade_panel_surface_open_profile_test.dart'
+      - 'app/integration_test/production_panel_surface_open_profile_test.dart'
+      - 'app/integration_test/technology_panel_surface_open_profile_test.dart'
+      - 'app/integration_test/diplomacy_panel_surface_open_profile_test.dart'
+      - 'app/integration_test/victory_panel_surface_open_profile_test.dart'
+      - 'app/integration_test/counsel_panel_surface_open_profile_test.dart'
+      - 'app/integration_test/units_panels_surface_open_profile_test.dart'
+      - 'app/lib/features/game/screens/production/**'
+      - 'app/lib/features/game/screens/trade/**'
+      - 'app/lib/features/game/screens/technology/**'
+      - 'app/lib/features/game/screens/diplomacy/**'
+      - 'app/lib/features/game/screens/victory/**'
+      - 'app/lib/features/game/screens/counsel/**'
       - 'app/lib/widgets/ct_app_perf_interactive_ready_marker.dart'
-      - 'packages/colonizethis_app_fixtures/lib/runtime/app_perf_trace.dart'
       - 'tool/run_ui_surface_profile_evidence.sh'
       - '.github/workflows/ui-surface-profile-evidence-android-empire-rail.yml'
 

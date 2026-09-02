@@ -73,9 +73,11 @@ void main() {
 
     harness.bus.emit(const ToggleDebugConsolePanelEvent());
     await tester.pump();
+    await tester.pump();
     expect(find.byType(DebugConsoleOverlayPanel), findsOneWidget);
 
     harness.bus.emit(const CloseDebugConsolePanelEvent());
+    await tester.pump();
     await tester.pump();
     expect(find.byType(DebugConsoleOverlayPanel), findsNothing);
   });
