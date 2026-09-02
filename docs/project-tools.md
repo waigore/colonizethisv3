@@ -483,7 +483,7 @@ tool/run_ui_surface_profile_evidence.sh development --host android --device emul
 
 **Linux headless:** Uses `xvfb-run` when `DISPLAY` is unset.
 
-**Android CI:** `.github/workflows/ui-surface-profile-evidence-android.yml` (GAME80001, Refs #4687) and `.github/workflows/ui-surface-profile-evidence-android-empire-rail.yml` (empire-rail panels, Refs #4688) upload evidence logs as CI artifacts.
+**Android CI:** `.github/workflows/ui-surface-profile-evidence-android.yml` (GAME80001, Refs #4687), `.github/workflows/ui-surface-profile-evidence-android-empire-rail.yml` (empire-rail panels, Refs #4688), and `.github/workflows/ui-surface-profile-evidence-android-turn-shell.yml` (DLG60001 / DLG50001 / OVL70001, Refs #4715) upload evidence logs as CI artifacts.
 
 ---
 

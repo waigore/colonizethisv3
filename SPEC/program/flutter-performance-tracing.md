@@ -98,7 +98,7 @@ Operator wrapper: `tool/run_ui_surface_profile_evidence.sh <surface> [--host lin
 
 Filter `CtAppPerf.nextTurnConfirm`, `CtAppPerf.turnNews`, or `CtAppPerf.playerTurnEventFeed` for turn-shell DevTools sessions. The **1.0 s open-to-interactive** wall-clock gate is profile/release on binding hosts (PR evidence); CI uses full-widget pump-to-interactive surrogates in `app/test/turn_shell_surface_open_surface_budget_test.dart` — not debug wall-clock assertions.
 
-**Binding-host replay harness (Refs #4715):** `tool/run_ui_surface_profile_evidence.sh turn-shell` → `app/integration_test/turn_shell_surface_open_profile_test.dart`. Capture `ui_surface_open surface=nextTurnConfirm`, `surface=turnNews`, and `surface=playerTurnEventFeed` lines with `host=linux_desktop_profile` or `host=android_emulator_profile`.
+**Binding-host replay harness (Refs #4715):** `tool/run_ui_surface_profile_evidence.sh turn-shell` → `app/integration_test/turn_shell_surface_open_profile_test.dart`. Capture `ui_surface_open surface=nextTurnConfirm`, `surface=turnNews`, and `surface=playerTurnEventFeed` lines with `host=linux_desktop_profile` or `host=android_emulator_profile`. Android CI artifact: `ui-surface-profile-evidence-android-turn-shell` (workflow `.github/workflows/ui-surface-profile-evidence-android-turn-shell.yml`).
 
 ---
 
