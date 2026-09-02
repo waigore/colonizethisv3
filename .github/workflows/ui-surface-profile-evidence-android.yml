@@ -24,10 +24,12 @@ permissions:
   contents: read
 
 # One Android emulator per PR ref — concurrent AVD boots on the same runner pool
-# routinely miss the default boot deadline (Refs #4687, #4688).
+# routinely miss the default boot deadline (Refs #4687, #4688). Queue instead of
+# cancel so turn-shell / empire-rail evidence on the same PR is not dropped
+# (Refs #4715).
 concurrency:
   group: ui-surface-profile-android-emulator-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   development_panel_android:

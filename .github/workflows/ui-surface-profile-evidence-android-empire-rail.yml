@@ -30,8 +30,9 @@ on:
       - 'app/lib/features/game/screens/diplomacy/**'
       - 'app/lib/features/game/screens/victory/**'
       - 'app/lib/features/game/screens/counsel/**'
-      - 'app/lib/widgets/ct_app_perf_interactive_ready_marker.dart'
-      - 'tool/run_ui_surface_profile_evidence.sh'
+      # Shared perf marker/script omitted — turn-shell (#4715) and GAME80001 (#4687)
+      # workflows own those paths; avoid a 90-minute empire-rail batch ahead of
+      # surface-specific Android evidence on unrelated PRs (Refs #4688).
       - '.github/workflows/ui-surface-profile-evidence-android-empire-rail.yml'
 
 permissions:
