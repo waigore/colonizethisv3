@@ -36,6 +36,7 @@ Future<NextTurnConfirmationResult?> showNextTurnConfirmationDialog(
   required int currentTurn,
   List<CivilianMissingWorkOrderEntry> civiliansMissingWork = const [],
   StagedDecreeReview stagedReview = StagedDecreeReview.empty,
+  ExpandStagedDecreeReview? expandStagedReview,
   void Function(CivilianMissingWorkOrderEntry entry)? onGoToCivilian,
   void Function(StagedDecreeFamily family)? onGoToStagedFamily,
 }) async {
@@ -45,6 +46,7 @@ Future<NextTurnConfirmationResult?> showNextTurnConfirmationDialog(
       currentTurn: currentTurn,
       civiliansMissingWork: civiliansMissingWork,
       stagedReview: stagedReview,
+      expandStagedReview: expandStagedReview,
       onGoToCivilian: onGoToCivilian,
       onGoToStagedFamily: onGoToStagedFamily,
     ),
@@ -61,6 +63,7 @@ class NextTurnConfirmationDialog extends StatefulWidget {
     required this.currentTurn,
     this.civiliansMissingWork = const [],
     this.stagedReview = StagedDecreeReview.empty,
+    this.expandStagedReview,
     this.onGoToCivilian,
     this.onGoToStagedFamily,
   });
@@ -70,6 +73,7 @@ class NextTurnConfirmationDialog extends StatefulWidget {
   final int currentTurn;
   final List<CivilianMissingWorkOrderEntry> civiliansMissingWork;
   final StagedDecreeReview stagedReview;
+  final ExpandStagedDecreeReview? expandStagedReview;
   final void Function(CivilianMissingWorkOrderEntry entry)? onGoToCivilian;
   final void Function(StagedDecreeFamily family)? onGoToStagedFamily;
 
@@ -115,6 +119,7 @@ class _NextTurnConfirmationDialogState
             review: widget.stagedReview,
             bodyStyle: bodyStyle,
             mutedStyle: mutedStyle,
+            onExpandReview: widget.expandStagedReview,
             onGoToFamily: widget.onGoToStagedFamily == null
                 ? null
                 : (family) {

@@ -74,6 +74,7 @@ void main() {
           StagedDecreeFamilyGroup(
             family: StagedDecreeFamily.civilianWork,
             familyLabel: 'Civilian work',
+            count: 1,
             rows: [
               StagedDecreeRow(id: 'w1', label: 'Explorer — explore Bavaria'),
             ],

@@ -15,6 +15,7 @@ StagedDecreeFamilyGroup stagedDecreeTradeFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.trade,
     familyLabel: l10n.game_nextTurnConfirm_familyTrade,
+    count: list.length,
     rows: [
       for (var i = 0; i < list.length; i++)
         StagedDecreeRow(
@@ -48,6 +49,7 @@ StagedDecreeFamilyGroup stagedDecreeResearchFamily(
   return StagedDecreeFamilyGroup(
     family: StagedDecreeFamily.research,
     familyLabel: l10n.game_nextTurnConfirm_familyResearch,
+    count: listed.length,
     rows: [
       for (var i = 0; i < listed.length; i++)
         StagedDecreeRow(

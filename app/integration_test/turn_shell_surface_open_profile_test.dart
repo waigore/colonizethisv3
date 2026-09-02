@@ -65,6 +65,7 @@ void main() {
                   StagedDecreeFamilyGroup(
                     family: StagedDecreeFamily.diplomacy,
                     familyLabel: 'Diplomacy',
+                    count: 1,
                     rows: [
                       StagedDecreeRow(
                         id: 'd1',

@@ -24,18 +24,23 @@ class StagedDecreeRow {
 }
 
 /// One family with count > 0.
+///
+/// Compact open-path snapshots set [count] without [rows]; expanded review fills
+/// [rows] when the player activates **Review decrees** (Refs #4715).
 class StagedDecreeFamilyGroup {
   const StagedDecreeFamilyGroup({
     required this.family,
     required this.familyLabel,
-    required this.rows,
+    required this.count,
+    this.rows = const [],
   });
 
   final StagedDecreeFamily family;
   final String familyLabel;
+  final int count;
   final List<StagedDecreeRow> rows;
 
-  int get count => rows.length;
+  bool get rowsExpanded => rows.length == count;
 }
 
 /// Snapshot passed into `DLG60001`. Empty when no listed decrees.
