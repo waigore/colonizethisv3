@@ -11,8 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/services/game_service/try_get_game_map_data.dart';
 import '../features/game/widgets/shell/shell_player_context.dart';
-import 'development_panel_projection_provider.dart'
-    show developmentPanelOrdersRevision, developmentPanelWorldRevision;
+import 'panel_session_revision.dart'
+    show panelOrdersRevision, panelWorldRevision;
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 import 'production_allocation_provider.dart';
@@ -62,8 +62,8 @@ TradePanelSessionRevision tradePanelSessionRevision({
   return (
     gameId: game.id,
     turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: developmentPanelWorldRevision(game),
-    ordersRevision: developmentPanelOrdersRevision(orders),
+    worldRevision: panelWorldRevision(game),
+    ordersRevision: panelOrdersRevision(orders),
     desiredOutputRevision: productionDesiredOutputRevision(desiredOutputByRecipe),
     topologyRevision: Object.hashAll(topology.nodes.map((node) => node.id)),
     playerId: playerId,

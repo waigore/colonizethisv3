@@ -9,8 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/game_service/try_get_game_map_data.dart';
 import '../features/game/screens/victory/victory_political_minimap.dart';
 import '../features/game/screens/victory/victory_standings.dart';
-import 'development_panel_projection_provider.dart'
-    show developmentPanelWorldRevision;
+import 'panel_session_revision.dart' show panelWorldRevision;
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
@@ -60,7 +59,7 @@ VictoryPanelSessionRevision victoryPanelSessionRevision({required Game game}) {
   return (
     gameId: game.id,
     turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: developmentPanelWorldRevision(game),
+    worldRevision: panelWorldRevision(game),
   );
 }
 
