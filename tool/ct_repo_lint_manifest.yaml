@@ -1262,6 +1262,14 @@ rules:
     script: tool/check_app_core_services_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.app_providers_file_size
+    group: structure
+    title: app/lib/providers files must stay at or below 250 physical lines (Refs #4720)
+    spec: SPEC/program/app-providers-file-size.md
+    runner: dart
+    script: tool/check_app_providers_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.app_turn_resolution_file_size
     group: structure
     title: app/lib/features/game/turn_resolution files must stay at or below 250 physical lines (Refs #4512, #4582, #4606)

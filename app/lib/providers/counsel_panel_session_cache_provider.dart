@@ -14,8 +14,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'development_panel_projection_provider.dart'
-    show developmentPanelOrdersRevision, developmentPanelWorldRevision;
+import 'panel_session_revision.dart'
+    show panelOrdersRevision, panelWorldRevision;
 import 'production_panel_projection_provider.dart'
     show productionDesiredOutputRevision;
 
@@ -72,8 +72,8 @@ CounselPanelSessionRevision counselPanelSessionRevision({
   return (
     gameId: game.id,
     turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: developmentPanelWorldRevision(game),
-    ordersRevision: developmentPanelOrdersRevision(orders),
+    worldRevision: panelWorldRevision(game),
+    ordersRevision: panelOrdersRevision(orders),
     desiredOutputRevision: productionDesiredOutputRevision(desiredOutputByRecipe),
     topologyRevision: Object.hashAll(topology.nodes.map((node) => node.id)),
   );
