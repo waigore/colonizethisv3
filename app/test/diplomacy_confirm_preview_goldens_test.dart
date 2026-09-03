@@ -26,7 +26,7 @@ void main() {
   });
 
   testWidgets(
-    'golden: Break Alliance confirm preview with immediate timing (Refs #4181)',
+    'golden: Break Alliance confirm preview with immediate timing and lock (Refs #4181, #4719)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>(
         'diplomacy_confirm_break_alliance_golden',
@@ -54,11 +54,55 @@ void main() {
       expect(find.text('Break Alliance'), findsOneWidget);
       expect(find.textContaining('When:'), findsOneWidget);
       expect(find.textContaining('immediately'), findsOneWidget);
+      expect(find.textContaining('Until next turn'), findsOneWidget);
+      expect(find.textContaining('Favored Trading Partner'), findsOneWidget);
+      expect(find.textContaining('Declare War'), findsOneWidget);
+      expect(find.textContaining('Offer Peace'), findsOneWidget);
+      expect(find.textContaining('lock clears next turn'), findsOneWidget);
+      expect(find.textContaining('Boycott'), findsNothing);
       expect(find.byType(CtNinePatchButton), findsNWidgets(2));
 
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/diplomacy_confirm_break_alliance.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: Break Alliance confirm preview @ 320dp (Refs #4719)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>(
+        'diplomacy_confirm_break_alliance_320dp_golden',
+      );
+      final message = diplomacyConfirmPreviewMessage(
+        const DiplomaticOrder(
+          type: DiplomaticOrderType.breakAlliance,
+          targetFactionId: diplomacyConfirmPreviewTargetGp,
+        ),
+      );
+
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(kMinViewportWidth, 420),
+        settle: false,
+        scaffoldBackgroundColor:
+            AppThemes.editorialMonocle.scaffoldBackgroundColor,
+        child: CtConfirmDialog(title: 'Break Alliance', message: message),
+      );
+
+      expect(tester.takeException(), isNull);
+      expectEditorialMonocleDarkChrome(tester);
+      expect(find.textContaining('Until next turn'), findsOneWidget);
+      expect(find.textContaining('lock clears next turn'), findsOneWidget);
+      expect(find.textContaining('Boycott'), findsNothing);
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile(
+          'goldens/diplomacy_confirm_break_alliance_320dp.png',
+        ),
       );
     },
   );

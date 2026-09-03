@@ -103,6 +103,10 @@ List<String> _breakAlliance(String target) => [
   'When: The treaty ends immediately on confirm.',
   'Effect: Your standing with $target falls sharply.',
   'Effect: Other Great Powers take a lesser hit to standing with you.',
+  'Effect: Until next turn, you cannot offer Alliance, an overture, '
+      'Favored Trading Partner, Grant Aid, or Set Subsidy toward $target.',
+  'Effect: Declare War and Offer Peace remain available this turn; '
+      'the lock clears next turn.',
 ];
 
 List<String> _establishFtp(String target) =>

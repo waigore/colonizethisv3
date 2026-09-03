@@ -8,7 +8,7 @@ import 'diplomacy_confirm_preview_shared.dart';
 
 List<ConfirmPreviewCase> confirmPreviewCases() => [
   (
-    name: 'break alliance includes immediate timing line only',
+    name: 'break alliance includes immediate timing and rest-of-turn lock',
     order: const DiplomaticOrder(
       type: DiplomaticOrderType.breakAlliance,
       targetFactionId: previewTargetGp,
@@ -17,8 +17,22 @@ List<ConfirmPreviewCase> confirmPreviewCases() => [
     assertLines: (lines, body) {
       expect(lines.any((l) => l.startsWith('When:')), isTrue);
       expect(lines.any((l) => l.contains('immediately')), isTrue);
+      expect(body.toLowerCase(), contains('until next turn'));
+      expect(body, contains('Alliance'));
+      expect(body.toLowerCase(), contains('overture'));
+      expect(body, contains('Favored Trading Partner'));
+      expect(body.toLowerCase(), contains('grant aid'));
+      expect(body.toLowerCase(), contains('set subsidy'));
+      expect(body, contains('Spain'));
+      expect(body, contains('Declare War'));
+      expect(body, contains('Offer Peace'));
+      expect(body.toLowerCase(), contains('lock clears next turn'));
+      expect(body.toLowerCase(), isNot(contains('boycott')));
       expect(lines.any((l) => l.contains('-50')), isFalse);
       expect(lines.any((l) => l.contains('-10')), isFalse);
+      expect(body, isNot(contains('allianceBreakCooldowns')));
+      expect(body, isNot(contains('sinceTurn')));
+      expect(body, isNot(contains('formalAlliance')));
     },
   ),
   (
