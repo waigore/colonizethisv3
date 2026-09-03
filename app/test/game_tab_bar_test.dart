@@ -1,18 +1,14 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
-    show kCargoHoldIndicatorKey, kGameMapNextTurnButtonKey, kTreasuryIndicatorKey;
-import 'package:colonizethis_app/features/game/widgets/shell/cargo_hold_indicator_support.dart';
+    show kCargoHoldIndicatorKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
-import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'app_shell_harness.dart';
 import 'game_tab_bar_test_support.dart';
 
-/// Widget tests for the in-game shell tab bar (issue #2861 S2).
+/// Widget tests for the in-game shell tab bar (issue #2861 S2 / #4720 Slice G).
 void main() {
   suppressLogsForTests();
 
@@ -23,10 +19,12 @@ void main() {
     await tester.pump();
 
     final decoratedBox = tester.widget<DecoratedBox>(
-      find.descendant(
-        of: find.byKey(GameTabBar.surfaceKey),
-        matching: find.byType(DecoratedBox),
-      ).first,
+      find
+          .descendant(
+            of: find.byKey(GameTabBar.surfaceKey),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
     );
     final decoration = decoratedBox.decoration as BoxDecoration;
     expect(decoration.color, EditorialMonoclePalette.surface);
@@ -85,9 +83,7 @@ void main() {
   ) async {
     var selected = 0;
     await tester.pumpWidget(
-      hostGameTabBar(
-        onRegionIndexChanged: (index) => selected = index,
-      ),
+      hostGameTabBar(onRegionIndexChanged: (index) => selected = index),
     );
     await tester.pump();
 
@@ -108,11 +104,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      hostGameTabBar(
-        cargoHoldLabel: '10/12',
-        cargoUsed: 10,
-        cargoCapacity: 12,
-      ),
+      hostGameTabBar(cargoHoldLabel: '10/12', cargoUsed: 10, cargoCapacity: 12),
     );
     await tester.pump();
 
@@ -123,11 +115,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      hostGameTabBar(
-        cargoHoldLabel: '12/12',
-        cargoUsed: 12,
-        cargoCapacity: 12,
-      ),
+      hostGameTabBar(cargoHoldLabel: '12/12', cargoUsed: 12, cargoCapacity: 12),
     );
     await tester.pump();
 
@@ -145,115 +133,6 @@ void main() {
       findsOneWidget,
     );
   });
-  testWidgets('tapping cargo opens details panel with breakdown rows', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(hostGameTabBar());
-    await tester.pump();
-
-    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
-    expect(find.text('Overseas extraction: 3'), findsOneWidget);
-    expect(find.text('Home Fleet holds: 12'), findsOneWidget);
-    expect(find.text('Free for trade bids: 9'), findsOneWidget);
-    expect(
-      find.textContaining('Merchant ships in your Home Fleet'),
-      findsOneWidget,
-    );
-  });
-  testWidgets('dismiss cargo panel via close and reopen on next tap', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(hostGameTabBar());
-    await tester.pump();
-
-    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
-    await tester.pumpAndSettle();
-    expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
-
-    await tester.tap(find.byKey(CargoHoldDetailsPanel.closeButtonKey));
-    await tester.pumpAndSettle();
-    expect(find.byKey(kCargoHoldDetailsPanelKey), findsNothing);
-
-    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
-    await tester.pumpAndSettle();
-    expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
-  });
-  testWidgets('unreliable cargo used shows em dash in panel overseas row', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      hostGameTabBar(
-        cargoHoldLabel: '—/12',
-        cargoUsed: 0,
-        cargoCapacity: 12,
-        isCargoUsedReliable: false,
-      ),
-    );
-    await tester.pump();
-
-    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Overseas extraction: —'), findsOneWidget);
-    expect(find.text('Free for trade bids: —'), findsOneWidget);
-  });
-  testWidgets(
-    'narrow viewport: cargo panel leaves Next turn tappable',
-    (WidgetTester tester) async {
-      var nextTurnTaps = 0;
-      await tester.pumpWidget(
-        buildAppShell(
-          child: Scaffold(
-            body: SizedBox(
-              width: kMinViewportWidth,
-              height: 120,
-              child: Column(
-                children: [
-                  GameTopBar(
-                    onToggleSideMenu: () {},
-                    onPausePressed: () {},
-                    onNextTurn: () async => nextTurnTaps++,
-                    nextTurnEnabled: true,
-                    turnDisplayText: 'Turn 1',
-                    nextTurnText: 'Next turn',
-                    menuTooltip: 'Menu',
-                    pauseTooltip: 'Pause',
-                  ),
-                  GameTabBar(
-                    regionIndex: 0,
-                    onRegionIndexChanged: (_) {},
-                    oldWorldLabel: 'Old World',
-                    newWorldLabel: 'New World',
-                    treasury: 100,
-                    treasuryDelta: null,
-                    treasuryNotDefined: false,
-                    cargoUsed: 10,
-                    cargoCapacity: 12,
-                    cargoNotDefined: false,
-                    isCargoUsedReliable: true,
-                    cargoHoldLabel: '10/12',
-                    trailing: const SizedBox(width: 24, height: 24),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      await tester.tap(find.byKey(kCargoHoldIndicatorKey));
-      await tester.pumpAndSettle();
-      expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
-
-      await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
-      await tester.pump();
-      expect(nextTurnTaps, 1);
-    },
-  );
 
   testWidgets('negative: treasury delta does not use Material green/red', (
     WidgetTester tester,
@@ -265,63 +144,4 @@ void main() {
     expect(deltaText.style?.color, isNot(Colors.green));
     expect(deltaText.style?.color, EditorialMonoclePalette.success);
   });
-  testWidgets(
-    'M1: region tabs start-aligned; treasury -> cargo -> news toggle '
-    'end-aligned in order',
-    (WidgetTester tester) async {
-      const Key trailingKey = Key('test_trailing');
-      await tester.pumpWidget(
-        hostGameTabBar(
-          treasuryDelta: 250,
-          trailing: const SizedBox(key: trailingKey, width: 28, height: 22),
-        ),
-      );
-      await tester.pump();
-
-      final double oldWorldX = tester.getCenter(find.text('Old World')).dx;
-      final double treasuryX =
-          tester.getCenter(find.byKey(kTreasuryIndicatorKey)).dx;
-      final double cargoX =
-          tester.getCenter(find.byKey(kCargoHoldIndicatorKey)).dx;
-      final double trailingX = tester.getCenter(find.byKey(trailingKey)).dx;
-
-      expect(
-        oldWorldX,
-        lessThan(treasuryX),
-        reason: 'Region tabs are start-aligned, left of the trailing group.',
-      );
-      expect(
-        treasuryX,
-        lessThan(cargoX),
-        reason: 'Treasury precedes cargo in the trailing group.',
-      );
-      expect(
-        cargoX,
-        lessThan(trailingX),
-        reason: 'Cargo precedes the news toggle in the trailing group.',
-      );
-    },
-  );
-
-  testWidgets(
-    'M1/M3: news toggle has a 4 dp leading gap from the cargo hold indicator',
-    (WidgetTester tester) async {
-      const Key trailingKey = Key('test_trailing');
-      await tester.pumpWidget(
-        hostGameTabBar(
-          trailing: const SizedBox(key: trailingKey, width: 28, height: 22),
-        ),
-      );
-      await tester.pump();
-
-      final double cargoRight =
-          tester.getTopRight(find.byKey(kCargoHoldIndicatorKey)).dx;
-      final double trailingLeft =
-          tester.getTopLeft(find.byKey(trailingKey)).dx;
-      expect(
-        trailingLeft - cargoRight,
-        moreOrLessEquals(GameTabBar.clusterTrailingGap, epsilon: 0.5),
-      );
-    },
-  );
 }

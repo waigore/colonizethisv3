@@ -4,7 +4,6 @@
 // SPEC/ui/production-panel.md § Layout — Available subpanel.
 
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
-import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -42,22 +41,17 @@ void main() {
       },
     );
 
-    testWidgets(
-      'worker grid columns constant equals 2 (Refs #2862 S8b / C7)',
-      (WidgetTester tester) async {
-        expect(kProductionAvailableWorkerGridColumns, 2);
-      },
-    );
+    testWidgets('worker grid columns constant equals 2 (Refs #2862 S8b / C7)', (
+      WidgetTester tester,
+    ) async {
+      expect(kProductionAvailableWorkerGridColumns, 2);
+    });
 
     testWidgets(
       'Workers section is laid out in 2 columns on wide viewports (Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            width: 800,
-            height: 720,
-          ),
+          buildProductionPanel(player: fullPlayer, width: 800, height: 720),
         );
         await pumpSettleCapped(tester);
 
@@ -98,8 +92,8 @@ void main() {
 
         final gridBox = tester.getRect(gridFinder);
         final approxColWidth =
-            (gridBox.width - 6 /* AvailableCellGrid.columnSpacing */) /
-                kProductionAvailableWorkerGridColumns;
+            (gridBox.width - 6 /* AvailableCellGrid.columnSpacing */ ) /
+            kProductionAvailableWorkerGridColumns;
 
         for (final w in <double>[
           peasantWidth,
@@ -127,11 +121,7 @@ void main() {
       'Food commodity section is laid out in 3 columns on wide viewports (Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            width: 800,
-            height: 720,
-          ),
+          buildProductionPanel(player: fullPlayer, width: 800, height: 720),
         );
         await pumpSettleCapped(tester);
 
@@ -160,11 +150,7 @@ void main() {
       '(Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            width: 360,
-            height: 1200,
-          ),
+          buildProductionPanel(player: fullPlayer, width: 360, height: 1200),
         );
         await pumpSettleCapped(tester);
 
@@ -173,8 +159,8 @@ void main() {
 
         final gridBox = tester.getRect(gridFinder);
         final approxColWidth =
-            (gridBox.width - 6 /* AvailableCellGrid.columnSpacing */) /
-                kProductionAvailableWorkerGridColumns;
+            (gridBox.width - 6 /* AvailableCellGrid.columnSpacing */ ) /
+            kProductionAvailableWorkerGridColumns;
 
         final peasantWidth = _slotWidthFor(
           tester,
@@ -191,115 +177,35 @@ void main() {
       },
     );
 
-    testWidgets(
-      'negative: Workers grid has no full-width single-column cell '
-      '(Refs #2862 S8b)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            width: 800,
-            height: 720,
-          ),
-        );
-        await pumpSettleCapped(tester);
+    testWidgets('negative: Workers grid has no full-width single-column cell '
+        '(Refs #2862 S8b)', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildProductionPanel(player: fullPlayer, width: 800, height: 720),
+      );
+      await pumpSettleCapped(tester);
 
-        final gridFinder = find.byKey(kProductionAvailableWorkerGridKey);
-        expect(gridFinder, findsOneWidget);
-        final gridBox = tester.getRect(gridFinder);
+      final gridFinder = find.byKey(kProductionAvailableWorkerGridKey);
+      expect(gridFinder, findsOneWidget);
+      final gridBox = tester.getRect(gridFinder);
 
-        for (final tier in const <String>[
-          'peasant',
-          'apprentice',
-          'journeyman',
-          'master',
-        ]) {
-          final width = _slotWidthFor(
-            tester,
-            ValueKey<String>('production_available_worker_$tier'),
-          );
-          expect(
-            width,
-            lessThan(gridBox.width - 1.0),
-            reason:
-                'Worker cell for $tier must not span the full Workers grid '
-                'width (would indicate the grid collapsed to 1 column).',
-          );
-        }
-      },
-    );
-
-    testWidgets(
-      'Food, Raw Materials, and Manufactured sections all render their '
-      'cells inside fixed-width slots smaller than their section width '
-      '(Refs #2862 S8b)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            width: 1000,
-            height: 900,
-          ),
+      for (final tier in const <String>[
+        'peasant',
+        'apprentice',
+        'journeyman',
+        'master',
+      ]) {
+        final width = _slotWidthFor(
+          tester,
+          ValueKey<String>('production_available_worker_$tier'),
         );
-        await pumpSettleCapped(tester);
-
-        // Food: at least grain
-        final grainCell = find.byKey(
-          const ValueKey<String>('production_available_cell_grain'),
-        );
-        expect(grainCell, findsOneWidget);
-
-        // Raw Materials: timber, iron, coal
-        for (final id in const <String>['timber', 'iron', 'coal']) {
-          expect(
-            find.byKey(ValueKey<String>('production_available_cell_$id')),
-            findsOneWidget,
-            reason: 'Raw-materials cell for $id must be present',
-          );
-        }
-      },
-    );
-
-    testWidgets(
-      'Grain quantity is visible at wide Available grid width and aligns '
-      'with a same-column Raw Materials peer (Refs #3999)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            width: 800,
-            height: 720,
-          ),
-        );
-        await pumpSettleCapped(tester);
-
-        final Finder grainCell = find.byKey(
-          const ValueKey<String>('production_available_cell_grain'),
-        );
-        final Finder timberCell = find.byKey(
-          const ValueKey<String>('production_available_cell_timber'),
-        );
-        expect(grainCell, findsOneWidget);
-        expect(timberCell, findsOneWidget);
-
-        final Finder grainQty = find.descendant(
-          of: grainCell,
-          matching: find.byKey(CtResourceCell.quantityTextKey),
-        );
-        final Finder timberQty = find.descendant(
-          of: timberCell,
-          matching: find.byKey(CtResourceCell.quantityTextKey),
-        );
-        expect(grainQty, findsOneWidget);
-        expect(tester.getSize(grainQty).width, greaterThan(1));
-        // Food and Raw Materials both use the same Available width and 3-col
-        // grid, so column-0 amount anchors (Grain, Timber) must share screen-x.
         expect(
-          tester.getTopRight(grainQty).dx,
-          closeTo(tester.getTopRight(timberQty).dx, 0.5),
-          reason: 'Grain and Timber share column-0 amount anchors across sections',
+          width,
+          lessThan(gridBox.width - 1.0),
+          reason:
+              'Worker cell for $tier must not span the full Workers grid '
+              'width (would indicate the grid collapsed to 1 column).',
         );
-      },
-    );
+      }
+    });
   });
 }

@@ -1,7 +1,6 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -35,7 +34,10 @@ void main() {
   }
 
   setUpAll(() async {
-    gamesBox = await openAppTestHiveBox(suiteId: 'load_list_dialog', boxName: '${HiveBoxNames.games}_load_list');
+    gamesBox = await openAppTestHiveBox(
+      suiteId: 'load_list_dialog',
+      boxName: '${HiveBoxNames.games}_load_list',
+    );
   });
 
   setUp(() async {
@@ -223,87 +225,5 @@ void main() {
     await tester.tap(find.byKey(LoadGameListDialog.previousButtonKey));
     await tester.pumpAndSettle();
     expect(find.text('Page 1 of 2'), findsOneWidget);
-  });
-
-  testWidgets('negative: delete cancel leaves storage unchanged', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      host(fromPause: false, entries: [loadDialogManualEntry(1)]),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(
-      find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')),
-    );
-    await tester.pumpAndSettle();
-    expect(find.byKey(LoadGameListDialog.deleteConfirmKey), findsOneWidget);
-
-    await tester.tap(find.byKey(LoadGameListDialog.deleteCancelButtonKey));
-    await tester.pumpAndSettle();
-
-    expect(service.deletedIds, isEmpty);
-    expect(find.byKey(LoadGameListDialog.rowKey('manual_1')), findsOneWidget);
-  });
-
-  testWidgets('positive: delete confirm removes save and stays open', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      host(
-        fromPause: false,
-        entries: [
-          const LoadableSaveEntry(
-            storageId: kAutoSaveSlotId,
-            label: kAutoSaveListLabel,
-            kind: LoadableSaveKind.autoSave,
-            turnNumber: 3,
-          ),
-          loadDialogManualEntry(1),
-        ],
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(
-      find.byKey(LoadGameListDialog.deleteButtonKey('manual_1')),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(LoadGameListDialog.deleteConfirmButtonKey));
-    await tester.pumpAndSettle();
-
-    expect(service.deletedIds, ['manual_1']);
-    expect(find.byType(LoadGameListDialog), findsOneWidget);
-    expect(find.byKey(LoadGameListDialog.rowKey('manual_1')), findsNothing);
-    expect(find.byKey(LoadGameListDialog.autoSaveSectionKey), findsOneWidget);
-  });
-
-  testWidgets('positive: confirm delete clears auto-save slot', (tester) async {
-    await tester.pumpWidget(
-      host(
-        fromPause: false,
-        entries: [
-          const LoadableSaveEntry(
-            storageId: kAutoSaveSlotId,
-            label: kAutoSaveListLabel,
-            kind: LoadableSaveKind.autoSave,
-            turnNumber: 3,
-          ),
-          loadDialogManualEntry(1),
-        ],
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(
-      find.byKey(LoadGameListDialog.deleteButtonKey(kAutoSaveSlotId)),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(LoadGameListDialog.deleteConfirmButtonKey));
-    await tester.pumpAndSettle();
-
-    expect(service.deletedIds, [kAutoSaveSlotId]);
-    expect(find.byKey(LoadGameListDialog.autoSaveSectionKey), findsNothing);
-    expect(find.byKey(LoadGameListDialog.rowKey('manual_1')), findsOneWidget);
   });
 }

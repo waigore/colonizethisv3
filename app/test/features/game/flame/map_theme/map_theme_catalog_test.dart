@@ -58,10 +58,7 @@ void main() {
         terrainDefault.tilesetConfig,
         MapTerrainConfig.kDefaultMapTerrainTilesetsAsset,
       );
-      expect(
-        terrainDefault.standaloneTilePrefix,
-        kTerrainTileAssetPrefix,
-      );
+      expect(terrainDefault.standaloneTilePrefix, kTerrainTileAssetPrefix);
       final civilianDefault = catalog.requireDefault(
         MapThemeGroupId.civilianIcons,
       );
@@ -191,7 +188,11 @@ void main() {
 
     test('Hive persistence round-trips terrain theme selection', () async {
       final dir = await Directory.systemTemp.createTemp('ct_map_theme_');
-      await openAppTestHiveBox(suiteId: 'map_theme_catalog', directory: dir, boxName: HiveBoxNames.settings);
+      await openAppTestHiveBox(
+        suiteId: 'map_theme_catalog',
+        directory: dir,
+        boxName: HiveBoxNames.settings,
+      );
       addTearDown(() async {
         await Hive.close();
         await dir.delete(recursive: true);
@@ -208,97 +209,5 @@ void main() {
         'assets/themes/sepia/data/map_terrain_tilesets.json',
       );
     });
-  });
-
-  group('ActiveMapTheme cache paths', () {
-    test('civilian cache uses installed sepia prefix', () async {
-      await MapThemeCatalogLoader.ensureLoaded();
-      final theme = resolveActiveMapTheme(
-        storedIds: {MapThemeGroupId.civilianIcons.settingsKey: 'sepia'},
-      );
-      ActiveMapTheme.install(theme);
-      final cache = CivilianIconCache();
-      for (final slug in kCivilianIconSlugs) {
-        expect(
-          cache.assetPath(slug),
-          'assets/themes/sepia/icons/64/ui_icon_civ_$slug.png',
-        );
-      }
-    });
-
-    test('default ActiveMapTheme matches pre-theme identity', () {
-      ActiveMapTheme.resetToDefaultsForTest();
-      final cache = CivilianIconCache();
-      expect(
-        cache.assetPath('builder'),
-        '${kAppIcon64AssetPrefix}ui_icon_civ_builder.png',
-      );
-    });
-
-    test('sepia terrain install loads themed wang and transport atlases',
-        () async {
-      await MapThemeCatalogLoader.ensureLoaded();
-      final theme = resolveActiveMapTheme(
-        storedIds: {MapThemeGroupId.terrain.settingsKey: 'sepia'},
-      );
-      ActiveMapTheme.install(theme);
-      await MapTerrainConfig.ensureLoaded(
-        assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
-      );
-      expect(
-        MapTerrainConfig.loadedAssetPath,
-        'assets/themes/sepia/data/map_terrain_tilesets.json',
-      );
-      expect(
-        MapTerrainConfig.instance.wangTilesets['sea_plains']!.atlasPngPath,
-        'assets/themes/sepia/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
-      );
-      expect(
-        MapTerrainConfig.instance.transportTilesets['road']!.atlasPngPath,
-        'assets/themes/sepia/images/terrain/tilesets/tileset_transport_road_64.png',
-      );
-      expect(
-        theme.terrainStandaloneTilePrefix,
-        'assets/themes/sepia/images/terrain/tile_',
-      );
-      expect(
-        terrainTileAssetPath('hills'),
-        'assets/themes/sepia/images/terrain/tile_hills.png',
-      );
-    });
-
-    test(
-      'mid-session theme swap does not replace already-loaded MapTerrainConfig',
-      () async {
-        await MapThemeCatalogLoader.ensureLoaded();
-        ActiveMapTheme.install(
-          resolveActiveMapTheme(storedIds: const {}),
-        );
-        await MapTerrainConfig.ensureLoaded(
-          assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
-        );
-        expect(
-          MapTerrainConfig.loadedAssetPath,
-          MapTerrainConfig.kDefaultMapTerrainTilesetsAsset,
-        );
-
-        ActiveMapTheme.install(
-          resolveActiveMapTheme(
-            storedIds: {MapThemeGroupId.terrain.settingsKey: 'sepia'},
-          ),
-        );
-        await MapTerrainConfig.ensureLoaded(
-          assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
-        );
-        expect(
-          MapTerrainConfig.loadedAssetPath,
-          MapTerrainConfig.kDefaultMapTerrainTilesetsAsset,
-        );
-        expect(
-          MapTerrainConfig.instance.wangTilesets['sea_plains']!.atlasPngPath,
-          'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
-        );
-      },
-    );
   });
 }

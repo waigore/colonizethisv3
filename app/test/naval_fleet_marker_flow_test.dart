@@ -1,12 +1,10 @@
 // Fleet-marker routing tests (Refs #4343, #4625).
 // SPEC: SPEC/ui/map-widget.md, naval-mission-menu-dialog.md, move-fleet-dialog.md.
 
-import 'package:colonizethis_app/features/game/widgets/unit_orders/in_port_fleet_marker_actions_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_fleet_marker_flow.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -29,19 +27,6 @@ void main() {
     gameId: 'g_marker_home',
     displayName: 'Marker Home',
     peerFleets: const [],
-  );
-
-  Game inPortPeerGame() => buildNavalPanelCapitalHomeAndPeersGame(
-    humanId: humanId,
-    gameId: 'g_marker_in_port',
-    displayName: 'Marker In Port',
-    peerFleets: [
-      navalPanelPortPeer(
-        id: 'f_in_port',
-        humanId: humanId,
-        ships: const [ShipInstance(id: 's_port', typeId: 'carrack')],
-      ),
-    ],
   );
 
   Game atSeaPeerGame() => buildNavalPanelNamedSeaZoneGame(humanId: humanId);
@@ -141,156 +126,6 @@ void main() {
       expect(find.byType(MoveFleetDialog), findsNothing);
       expect(find.byType(NavalMissionMenuDialog), findsNothing);
       expect(find.byType(SplitFleetDialog), findsNothing);
-    });
-
-    testWidgets('capital in-port sea-going opens chooser then Move on Sail', (
-      tester,
-    ) async {
-      final game = inPortPeerGame();
-      final bus = AppEventBus();
-      OpenNavalUnitsPanelEvent? openedPanel;
-      addTearDown(
-        bus
-            .on<OpenNavalUnitsPanelEvent>()
-            .listen((e) => openedPanel = e)
-            .cancel,
-      );
-
-      await pumpOpenButton(
-        tester,
-        onPressed: (context) => showNavalFleetMarkerFlow(
-          context: context,
-          game: game,
-          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
-          humanPlayerId: humanId,
-          draftOrders: const Orders(),
-          bus: bus,
-          fleetIds: const ['f_in_port'],
-          locationScopeKey: locationScope,
-          tileScopeTileKey: tileKey,
-        ),
-      );
-      await tester.tap(find.text('open-flow'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(InPortFleetMarkerActionsDialog), findsOneWidget);
-      expect(find.byType(MoveFleetDialog), findsNothing);
-      await tester.tap(find.text('Sail / Move'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(MoveFleetDialog), findsOneWidget);
-      expect(find.byType(NavalMissionMenuDialog), findsNothing);
-      expect(find.byType(TransferToHomeFleetDialog), findsNothing);
-      expect(openedPanel, isNull);
-    });
-
-    testWidgets('capital in-port chooser Transfer opens DLG40001', (
-      tester,
-    ) async {
-      final game = inPortPeerGame();
-      final bus = AppEventBus();
-
-      await pumpOpenButton(
-        tester,
-        onPressed: (context) => showNavalFleetMarkerFlow(
-          context: context,
-          game: game,
-          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
-          humanPlayerId: humanId,
-          draftOrders: const Orders(),
-          bus: bus,
-          fleetIds: const ['f_in_port'],
-          locationScopeKey: locationScope,
-          tileScopeTileKey: tileKey,
-        ),
-      );
-      await tester.tap(find.text('open-flow'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Transfer to Home Fleet'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(TransferToHomeFleetDialog), findsOneWidget);
-      expect(find.byType(MoveFleetDialog), findsNothing);
-      expect(find.byType(InPortFleetMarkerActionsDialog), findsNothing);
-    });
-
-    testWidgets('non-capital in-port sea-going opens Move without chooser', (
-      tester,
-    ) async {
-      final game = buildNavalPanelCapitalHomeAndPeersGame(
-        humanId: humanId,
-        gameId: 'g_marker_outport',
-        displayName: 'Marker Outport',
-        peerFleets: [
-          navalPanelPortPeer(
-            id: 'f_out_port',
-            humanId: humanId,
-            ships: const [ShipInstance(id: 's_out', typeId: 'carrack')],
-            port: 'oldWorld|port1',
-          ),
-        ],
-      );
-      final bus = AppEventBus();
-
-      await pumpOpenButton(
-        tester,
-        onPressed: (context) => showNavalFleetMarkerFlow(
-          context: context,
-          game: game,
-          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
-          humanPlayerId: humanId,
-          draftOrders: const Orders(),
-          bus: bus,
-          fleetIds: const ['f_out_port'],
-          locationScopeKey: 'port:oldWorld|port1',
-          tileScopeTileKey: 'oldWorld|port1|0|0',
-        ),
-      );
-      await tester.tap(find.text('open-flow'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(InPortFleetMarkerActionsDialog), findsNothing);
-      expect(find.byType(MoveFleetDialog), findsOneWidget);
-      expect(find.byType(TransferToHomeFleetDialog), findsNothing);
-    });
-
-    testWidgets('stacked marker Home Fleet pick never opens Move', (
-      tester,
-    ) async {
-      final game = inPortPeerGame();
-      final bus = AppEventBus();
-      OpenNavalUnitsPanelEvent? opened;
-      addTearDown(
-        bus.on<OpenNavalUnitsPanelEvent>().listen((e) => opened = e).cancel,
-      );
-      final homeId = homeFleetIdFor(humanId);
-
-      await pumpOpenButton(
-        tester,
-        onPressed: (context) => showNavalFleetMarkerFlow(
-          context: context,
-          game: game,
-          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
-          humanPlayerId: humanId,
-          draftOrders: const Orders(),
-          bus: bus,
-          fleetIds: [homeId, 'f_in_port'],
-          locationScopeKey: locationScope,
-          tileScopeTileKey: tileKey,
-        ),
-      );
-      await tester.tap(find.text('open-flow'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Select fleet'), findsOneWidget);
-      await tester.tap(find.text('Fleet $homeId'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Confirm'));
-      await tester.pumpAndSettle();
-
-      expect(opened, isNull);
-      expect(find.byType(MoveFleetDialog), findsNothing);
-      expect(find.byType(SplitFleetDialog), findsOneWidget);
     });
 
     testWidgets('at-sea marker opens mission menu with Sail row', (

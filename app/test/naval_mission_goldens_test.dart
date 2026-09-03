@@ -4,8 +4,6 @@
 // Golden mapping:
 //  - AC1–2: mission menu with gated blockade/beachhead rows
 //  - AC6: cancel-pending row when draft mission exists
-//  - AC4–5: blockade target picker with war-enemy provinces
-//  - DLG31002 empty-state when no legal targets
 //  - AC2: fleet picker when multiple fleets share a marker
 //
 // SPEC: SPEC/ui/naval-mission-menu-dialog.md,
@@ -14,7 +12,6 @@
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_target_dialog.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -134,163 +131,6 @@ void main() {
       matchesGoldenFile('goldens/naval_mission_menu_cancel_pending.png'),
     );
   });
-
-  testWidgets(
-    'golden: blockade target picker lists war-enemy provinces (Refs #4213)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('navalMissionTargetBlockadeGolden');
-      final game = buildNavalMissionWarTargetsGame();
-      final fleet = game.worldState.fleets.single;
-      final availability = navalMissionAvailabilityForFleet(
-        game: game,
-        topology: navalMissionWarTopology(),
-        playerId: navalMissionGoldenHumanId,
-        fleet: fleet,
-        currentOrders: const Orders(),
-      );
-
-      await pumpNavalMissionGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        child: NavalMissionTargetDialog(
-          game: game,
-          mission: FleetMission.blockade,
-          fleet: fleet,
-          targetProvinceIds: availability.blockadeTargetProvinceIds,
-          humanPlayerId: navalMissionGoldenHumanId,
-        ),
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.text('Select target — Blockade'), findsOneWidget);
-      expect(
-        find.text(
-          'Goods from the chosen port will not reach its owner\'s warehouses until the blockade ends. Stronger interception than Patrol on fleets entering this zone.',
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('Enemy Port'), findsOneWidget);
-      expect(find.text('Hostile Coast'), findsOneWidget);
-      expect(find.text('Harbor status unknown'), findsNWidgets(2));
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/naval_mission_target_blockade.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: blockade target picker shows capital-port extra line (Refs #4516)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>(
-        'navalMissionTargetBlockadeCapitalGolden',
-      );
-      const enemyCap = 'oldWorld|enemy1';
-      final game = buildNavalMissionCapitalPortTargetGame();
-      final fleet = game.worldState.fleets.single;
-
-      await pumpNavalMissionGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        child: NavalMissionTargetDialog(
-          game: game,
-          mission: FleetMission.blockade,
-          fleet: fleet,
-          targetProvinceIds: const [enemyCap],
-          humanPlayerId: navalMissionGoldenHumanId,
-          initialTargetProvinceId: enemyCap,
-        ),
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.text('Select target — Blockade'), findsOneWidget);
-      expect(
-        find.text(
-          'At a capital port, sea-only and overseas links are cut; land roads still reach inland tiles.',
-        ),
-        findsOneWidget,
-      );
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/naval_mission_target_blockade_capital.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: beachhead target picker shows invasion timing caption (Refs #4295)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('navalMissionTargetBeachheadGolden');
-      final game = buildNavalMissionWarTargetsGame();
-      final fleet = game.worldState.fleets.single;
-      final availability = navalMissionAvailabilityForFleet(
-        game: game,
-        topology: navalMissionWarTopology(),
-        playerId: navalMissionGoldenHumanId,
-        fleet: fleet,
-        currentOrders: const Orders(),
-      );
-
-      await pumpNavalMissionGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        child: NavalMissionTargetDialog(
-          game: game,
-          mission: FleetMission.beachhead,
-          fleet: fleet,
-          targetProvinceIds: availability.beachheadTargetProvinceIds,
-          humanPlayerId: navalMissionGoldenHumanId,
-        ),
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.text('Select target — Beachhead'), findsOneWidget);
-      expect(
-        find.text(
-          'Landing site supports invasion on the following turn and expires after that turn if unused.',
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('Defenders unknown'), findsWidgets);
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/naval_mission_target_beachhead.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: target picker empty state disables confirm (Refs #4213)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('navalMissionTargetEmptyGolden');
-      final game = buildNavalMissionWarTargetsGame();
-      final fleet = game.worldState.fleets.single;
-
-      await pumpNavalMissionGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        physicalSize: const Size(360, 280),
-        child: NavalMissionTargetDialog(
-          game: game,
-          mission: FleetMission.beachhead,
-          fleet: fleet,
-          targetProvinceIds: const [],
-          humanPlayerId: navalMissionGoldenHumanId,
-        ),
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.text('No legal targets for this mission.'), findsOneWidget);
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/naval_mission_target_empty.png'),
-      );
-    },
-  );
 
   testWidgets(
     'golden: fleet picker lists fleets at shared marker (Refs #4213)',

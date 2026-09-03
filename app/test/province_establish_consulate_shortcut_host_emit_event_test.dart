@@ -1,5 +1,3 @@
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
-import 'package:colonizethis_app/config/constants.dart' show HiveBoxNames;
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
@@ -10,9 +8,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart' show buildPlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -22,124 +18,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
-import 'province_shortcut_host_emit_fixtures.dart';
+import 'province_establish_consulate_shortcut_host_emit_support.dart';
 import 'app_test_hive_harness.dart';
-
-const _gameId = 'g_consulate_shortcut';
-const _humanId = 'gp1';
-const _minorId = 'minor1';
-const _provinceId = 'oldWorld|p1';
-const _tileKey = 'oldWorld|p1|0|0';
-
-final _topology = provinceShortcutHostCombinedTopology(includeSea: false);
-
-final _tileMaps = provinceShortcutHostTileMapByRegion(
-  terrainGrid: const [
-    [TerrainType.hills],
-  ],
-  resourceGrid: const [
-    [null],
-  ],
-);
-
-class _ConsulateGameService extends GameService {
-  _ConsulateGameService(super.box, super.adapter);
-
-  @override
-  GameMapData? getMapData(String gameId) {
-    if (gameId != _gameId) return null;
-    return (
-      combinedTopology: _topology,
-      tileMapByRegion: _tileMaps,
-      topologyByRegion: {'oldWorld': _topology},
-      warpLinks: null,
-    );
-  }
-}
-
-Game _game({bool expertise = true}) => Game(
-  id: _gameId,
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(
-      provinces: const [
-        Province(
-          id: _provinceId,
-          regionId: 'oldWorld',
-          ownerId: _minorId,
-          displayName: 'Bavaria Province',
-        ),
-      ],
-      units: const [],
-    ),
-    newWorld: const RegionData(provinces: [], units: []),
-    tileKeysByRegionAndProvince: const {
-      'oldWorld': {
-        _provinceId: [_tileKey],
-      },
-    },
-    playerVisibilityByTile: const {
-      _humanId: {_tileKey: 'fullyVisible'},
-    },
-  ),
-  players: [
-    Player(
-      id: _humanId,
-      displayName: 'Human',
-      isHuman: true,
-      treasury: 5000,
-      techUnlocked: expertise
-          ? const {kTechIdDiplomaticExpertise: true}
-          : const {},
-    ),
-  ],
-  minorNations: const [MinorNation(id: _minorId, displayName: 'Bavaria')],
-  tribes: const [],
-);
-
-RegionMapViewData _region() => RegionMapViewData(
-  regionId: 'oldWorld',
-  width: 1,
-  height: 1,
-  cellSize: 16,
-  cells: const [
-    CellViewData(
-      x: 0,
-      y: 0,
-      regionCellId: 'p1',
-      isSea: false,
-      terrainType: TerrainType.hills,
-      ownerFactionId: _minorId,
-      provinceDisplayName: 'Bavaria Province',
-      visibility: TileVisibility.visible,
-    ),
-  ],
-  capitalMarkers: const [],
-  portMarkers: const [],
-  factionColors: const {},
-  greatPowerFactionIds: const {_humanId},
-  terrainColors: const {},
-  provincePoliticalOwnerByPrefixedProvinceId: const {_provinceId: _minorId},
-);
-
-const _consulateOrder = DiplomaticOrder(
-  type: DiplomaticOrderType.establishOverture,
-  targetFactionId: _minorId,
-  overtureStage: OvertureStage.tradeConsulate,
-);
-
-Orders _pending() => const Orders(
-  diplomaticOrdersByPlayerId: {
-    _humanId: [_consulateOrder],
-  },
-);
-
-typedef _HostCase = ({bool wide, Size size, Type type});
-
-const _hosts = [
-  (wide: true, size: Size(720, 720), type: GameMapProvinceDetailSidePanel),
-  (wide: false, size: Size(360, 640), type: GameMapNarrowDetailOverlaySlot),
-];
 
 void main() {
   suppressLogsForTests();
@@ -152,21 +32,25 @@ void main() {
 
   Future<AppEventBus> pumpHost(
     WidgetTester tester, {
-    required _HostCase host,
+    required ConsulateShortcutHostCase host,
     required Game game,
     Orders orders = const Orders(),
   }) async {
     final bus = AppEventBus.create();
     addTearDown(bus.dispose);
-    final view = buildPlayerView(game, _topology, _humanId);
+    final view = buildPlayerView(
+      game,
+      consulateShortcutTopology,
+      kConsulateShortcutHumanId,
+    );
     final body = host.wide
         ? Center(
             child: SizedBox(
               width: 320,
               child: GameMapProvinceDetailSidePanel(
                 game: game,
-                region: _region(),
-                humanPlayerId: _humanId,
+                region: consulateShortcutRegion(),
+                humanPlayerId: kConsulateShortcutHumanId,
                 playerView: view,
                 workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
               ),
@@ -176,8 +60,8 @@ void main() {
             alignment: Alignment.bottomCenter,
             child: GameMapNarrowDetailOverlaySlot(
               game: game,
-              region: _region(),
-              humanPlayerId: _humanId,
+              region: consulateShortcutRegion(),
+              humanPlayerId: kConsulateShortcutHumanId,
               playerView: view,
               workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
             ),
@@ -188,7 +72,7 @@ void main() {
       overrides: [
         gamesBoxProvider.overrideWith((ref) => gamesBox),
         gameServiceProvider.overrideWith(
-          (ref) => _ConsulateGameService(gamesBox, GameSaveAdapter()),
+          (ref) => ConsulateShortcutGameService(gamesBox, GameSaveAdapter()),
         ),
         appEventBusProvider.overrideWith((ref) => bus),
         currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -197,9 +81,9 @@ void main() {
       child: Scaffold(body: body),
     );
     final context = tester.element(find.byType(host.type));
-    ProviderScope.containerOf(
-      context,
-    ).read(mapProvincePanelProvider.notifier).reportMapTileTapped(_tileKey);
+    ProviderScope.containerOf(context)
+        .read(mapProvincePanelProvider.notifier)
+        .reportMapTileTapped(kConsulateShortcutTileKey);
     await tester.pumpAndSettle();
     return bus;
   }
@@ -208,11 +92,15 @@ void main() {
     (widget) => widget is CtActionTextButton && widget.label == label,
   );
 
-  for (final host in _hosts) {
+  for (final host in kConsulateShortcutHosts) {
     testWidgets(
       '${host.wide ? 'wide' : 'narrow'} host emits confirm then appends Consulate',
       (tester) async {
-        final bus = await pumpHost(tester, host: host, game: _game());
+        final bus = await pumpHost(
+          tester,
+          host: host,
+          game: consulateShortcutGame(),
+        );
         final confirmFuture = bus.on<ConfirmDialogEvent>().first.timeout(
           const Duration(seconds: 2),
         );
@@ -231,17 +119,21 @@ void main() {
 
         confirm.result(true);
         final append = await appendFuture;
-        expect(append.playerId, _humanId);
+        expect(append.playerId, kConsulateShortcutHumanId);
         expect(append.order.type, DiplomaticOrderType.establishOverture);
         expect(append.order.overtureStage, OvertureStage.tradeConsulate);
-        expect(append.order.targetFactionId, _minorId);
+        expect(append.order.targetFactionId, kConsulateShortcutMinorId);
         expect(find.byType(host.type), findsOneWidget);
       },
     );
   }
 
   testWidgets('dismissing Consulate confirm appends nothing', (tester) async {
-    final bus = await pumpHost(tester, host: _hosts.first, game: _game());
+    final bus = await pumpHost(
+      tester,
+      host: kConsulateShortcutHosts.first,
+      game: consulateShortcutGame(),
+    );
     final confirms = <ConfirmDialogEvent>[];
     final appends = <AppendDiplomaticOrderRequestedEvent>[];
     final confirmSub = bus.on<ConfirmDialogEvent>().listen(confirms.add);
@@ -261,9 +153,9 @@ void main() {
   testWidgets('pending control emits remove without confirm', (tester) async {
     final bus = await pumpHost(
       tester,
-      host: _hosts.first,
-      game: _game(),
-      orders: _pending(),
+      host: kConsulateShortcutHosts.first,
+      game: consulateShortcutGame(),
+      orders: consulateShortcutPending(),
     );
     final removes = <RemoveDiplomaticOrderRequestedEvent>[];
     final confirms = <ConfirmDialogEvent>[];
@@ -280,9 +172,9 @@ void main() {
     await tester.pump();
     expect(confirms, isEmpty);
     expect(removes, hasLength(1));
-    expect(removes.single.playerId, _humanId);
+    expect(removes.single.playerId, kConsulateShortcutHumanId);
     expect(removes.single.type, DiplomaticOrderType.establishOverture);
-    expect(removes.single.targetFactionId, _minorId);
+    expect(removes.single.targetFactionId, kConsulateShortcutMinorId);
   });
 
   testWidgets(
@@ -290,8 +182,8 @@ void main() {
     (tester) async {
       final bus = await pumpHost(
         tester,
-        host: _hosts.first,
-        game: _game(expertise: false),
+        host: kConsulateShortcutHosts.first,
+        game: consulateShortcutGame(expertise: false),
       );
       final confirms = <ConfirmDialogEvent>[];
       final sub = bus.on<ConfirmDialogEvent>().listen(confirms.add);
