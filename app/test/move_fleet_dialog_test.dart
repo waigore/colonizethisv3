@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 
+import 'move_fleet_dialog_fixtures.dart';
 import 'move_fleet_dialog_test_support.dart';
 
 void main() {

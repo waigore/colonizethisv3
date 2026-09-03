@@ -6,6 +6,7 @@ export 'panel_fixtures/civilian.dart';
 export 'panel_fixtures/core.dart';
 export 'panel_fixtures/diplomacy.dart';
 export 'panel_fixtures/game_map.dart';
+export 'panel_fixtures/game_map_event_feed.dart';
 export 'panel_fixtures/grant.dart';
 export 'panel_fixtures/military.dart';
 export 'panel_fixtures/naval.dart';

@@ -3,4 +3,5 @@
 // SPEC: SPEC/ui/naval-units-panel.md; SPEC/program/repo-lint.md.
 
 export 'naval_units_panel_interaction_tile_helpers.dart';
+export 'naval_units_panel_interaction_combine_helpers.dart';
 export 'naval_units_panel_interaction_scoped_helpers.dart';

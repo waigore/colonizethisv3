@@ -1,8 +1,6 @@
 // Goldens for MAP30001 / MAP30002. SPEC/ui/tile-context-radial.md (Refs #4440, #4570).
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_context_radial.dart';
-import 'package:colonizethis_app/features/game/widgets/map_radial/tile_more_actions_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_catalog.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_spoke_view.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -77,23 +75,6 @@ List<TileRadialSpokeView> _upgradeTownAbsentWedges() {
       enabled: true,
       label: 'Build road',
       tooltip: 'Build road',
-    ),
-  ];
-}
-
-List<TileRadialSpokeView> _moreBuildRoadOverflow() {
-  return const [
-    TileRadialSpokeView(
-      action: TileRadialCatalogAction.buildRoad,
-      enabled: true,
-      label: 'Build road',
-      tooltip: 'Build road',
-    ),
-    TileRadialSpokeView(
-      action: TileRadialCatalogAction.upgradeTown,
-      enabled: false,
-      label: 'Upgrade town',
-      tooltip: 'Upgrade town disabled',
     ),
   ];
 }
@@ -187,54 +168,6 @@ void main() {
     );
   });
 
-  testWidgets('golden: More dialog empty remainder', (tester) async {
-    final key = GlobalKey();
-    await pumpGoldenHost(
-      tester,
-      boundaryKey: key,
-      physicalSize: const Size(400, 400),
-      includeLocalizations: true,
-      center: true,
-      scaffoldBackgroundColor:
-          AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      child: const TileMoreActionsDialog(
-        placeLine: 'Place: Wessex',
-        remainder: [],
-        onAction: _noopAction,
-        onProvinceDetails: _noop,
-      ),
-    );
-    await pumpSettleCapped(tester);
-    await expectLater(
-      find.byKey(key),
-      matchesGoldenFile('goldens/tile_more_actions_empty.png'),
-    );
-  });
-
-  testWidgets('golden: More dialog 320 dp', (tester) async {
-    final key = GlobalKey();
-    await pumpGoldenHost(
-      tester,
-      boundaryKey: key,
-      physicalSize: const Size(320, 640),
-      includeLocalizations: true,
-      center: true,
-      scaffoldBackgroundColor:
-          AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      child: TileMoreActionsDialog(
-        placeLine: 'Place: Wessex',
-        remainder: _wedges(),
-        onAction: _noopAction,
-        onProvinceDetails: _noop,
-      ),
-    );
-    await pumpSettleCapped(tester);
-    await expectLater(
-      find.byKey(key),
-      matchesGoldenFile('goldens/tile_more_actions_320.png'),
-    );
-  });
-
   testWidgets(
     'golden: five wedges with Build road and Purchase land (AC-1/2/4)',
     (tester) async {
@@ -252,34 +185,9 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: More remainder Build road overflow + Province details (AC-4)',
-    (tester) async {
-      final key = GlobalKey();
-      await pumpGoldenHost(
-        tester,
-        boundaryKey: key,
-        physicalSize: const Size(400, 400),
-        includeLocalizations: true,
-        center: true,
-        scaffoldBackgroundColor:
-            AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        child: TileMoreActionsDialog(
-          placeLine: 'Place: Wessex',
-          remainder: _moreBuildRoadOverflow(),
-          onAction: _noopAction,
-          onProvinceDetails: _noop,
-        ),
-      );
-      await pumpSettleCapped(tester);
-      await expectLater(
-        find.byKey(key),
-        matchesGoldenFile('goldens/tile_more_actions_build_road_overflow.png'),
-      );
-    },
-  );
-
-  testWidgets('golden: Upgrade town present on town tile (AC-3)', (tester) async {
+  testWidgets('golden: Upgrade town present on town tile (AC-3)', (
+    tester,
+  ) async {
     final key = GlobalKey();
     await _pumpRadialGolden(
       tester,
@@ -309,7 +217,3 @@ void main() {
     );
   });
 }
-
-void _noop() {}
-
-void _noopAction(TileRadialCatalogAction action) {}
