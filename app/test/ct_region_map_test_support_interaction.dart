@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEvent, AppEventBus;
 import 'package:flutter/gestures.dart';
@@ -9,8 +11,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
-
-import 'ct_region_map_test_support_core.dart';
 
 Finder ctRegionMapFinder() => find.byType(CtRegionMap);
 
@@ -66,4 +66,64 @@ Future<int> countLoadedCtRegionMapResourceIconAssets() async {
     } catch (_) {}
   }
   return loaded;
+}
+
+/// Gold-star silhouette checks for the capital map icon (Refs #4021 densify).
+Future<void> expectCapitalStarSilhouette(ByteData data) async {
+  expect(data.lengthInBytes, greaterThan(0));
+  final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+  final frame = await codec.getNextFrame();
+  final image = frame.image;
+  final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+  expect(bytes, isNotNull);
+  final rgba = bytes!.buffer.asUint8List();
+  expect(rgba.length, image.width * image.height * 4);
+
+  var opaqueCount = 0;
+  var goldCount = 0;
+  var minX = image.width;
+  var minY = image.height;
+  var maxX = -1;
+  var maxY = -1;
+  for (var y = 0; y < image.height; y++) {
+    for (var x = 0; x < image.width; x++) {
+      final i = (y * image.width + x) * 4;
+      final r = rgba[i];
+      final g = rgba[i + 1];
+      final b = rgba[i + 2];
+      final a = rgba[i + 3];
+      if (a < 200) continue;
+      opaqueCount++;
+      if (r >= 150 && g >= 110 && b <= 120 && r >= g) goldCount++;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+
+  expect(opaqueCount, greaterThan(20));
+  expect(goldCount / opaqueCount, greaterThan(0.20));
+  final boxWidth = (maxX - minX + 1).toDouble();
+  final boxHeight = (maxY - minY + 1).toDouble();
+  expect(boxWidth, greaterThan(6));
+  expect(boxHeight, greaterThan(6));
+  expect(opaqueCount / (boxWidth * boxHeight), lessThan(0.75));
+
+  final rowCounts = List<int>.filled(image.height, 0);
+  final colCounts = List<int>.filled(image.width, 0);
+  for (var y = minY; y <= maxY; y++) {
+    for (var x = minX; x <= maxX; x++) {
+      final i = (y * image.width + x) * 4;
+      if (rgba[i + 3] < 200) continue;
+      rowCounts[y]++;
+      colCounts[x]++;
+    }
+  }
+  final midRow = (minY + maxY) ~/ 2;
+  final midCol = (minX + maxX) ~/ 2;
+  expect(rowCounts[midRow], greaterThan(rowCounts[minY] * 2));
+  expect(rowCounts[midRow], greaterThan(rowCounts[maxY] * 2));
+  expect(colCounts[midCol], greaterThan(colCounts[minX] * 2));
+  expect(colCounts[midCol], greaterThan(colCounts[maxX] * 2));
 }

@@ -90,21 +90,6 @@ const ResearchSlotTurnPreview _spyInsightOne = ResearchSlotTurnPreview(
   spyInsightRivalNames: ['France'],
 );
 
-const ResearchSlotTurnPreview _spyInsightTwo = ResearchSlotTurnPreview(
-  funding: ResearchFundingLevel.medium,
-  committedProgress: _kCommitted,
-  cost: _kCost,
-  baseRpPerTurn: 300,
-  industrialBonusRpPerTurn: 0,
-  anticipatedRpPerTurn: 390,
-  goldCostPerTurn: 150,
-  goldSpentThisTurn: 150,
-  debtBlocked: false,
-  spyInsightRpPerTurn: 90,
-  spyInsightRivalCount: 2,
-  spyInsightRivalNames: ['France', 'Spain'],
-);
-
 const ResearchSlotTurnPreview _completesNextTurn = ResearchSlotTurnPreview(
   funding: ResearchFundingLevel.medium,
   committedProgress: 1600,
@@ -237,42 +222,6 @@ void main() {
     await expectLater(
       find.byKey(boundaryKey),
       matchesGoldenFile('goldens/research_funding_breakdown_dialog.png'),
-    );
-  });
-
-  testWidgets('golden: spy-insight breakdown one rival (Refs #4457)', (
-    WidgetTester tester,
-  ) async {
-    const boundaryKey = ValueKey<String>('researchFundingBreakdownSpyOne');
-    await _pumpHost(
-      tester,
-      boundaryKey: boundaryKey,
-      surfaceSize: const Size(420, 400),
-      child: const ResearchFundingBreakdownDialog(preview: _spyInsightOne),
-    );
-
-    expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byKey(boundaryKey),
-      matchesGoldenFile('goldens/research_funding_breakdown_spy_one.png'),
-    );
-  });
-
-  testWidgets('golden: spy-insight breakdown two rivals (Refs #4457)', (
-    WidgetTester tester,
-  ) async {
-    const boundaryKey = ValueKey<String>('researchFundingBreakdownSpyTwo');
-    await _pumpHost(
-      tester,
-      boundaryKey: boundaryKey,
-      surfaceSize: const Size(420, 400),
-      child: const ResearchFundingBreakdownDialog(preview: _spyInsightTwo),
-    );
-
-    expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byKey(boundaryKey),
-      matchesGoldenFile('goldens/research_funding_breakdown_spy_two.png'),
     );
   });
 

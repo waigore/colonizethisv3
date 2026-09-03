@@ -1,25 +1,15 @@
-import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/debug_console_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
-import 'panel_test_fixtures.dart';
 import 'app_test_hive_harness.dart';
+import 'game_map_empire_left_rail_narrow_support.dart';
+import 'panel_test_fixtures.dart';
 
 /// Narrow-layout contract for [GameMapEmpireLeftRail] (issue #2870 S3).
 ///
@@ -50,252 +40,194 @@ void main() {
     gamesBox = await openAppTestHiveBox(suiteId: 'empire_rail_narrow');
   });
 
-  String humanId() => game.players.where((p) => p.isHuman).isNotEmpty
-      ? game.players.where((p) => p.isHuman).first.id
-      : game.players.first.id;
+  group('GameMapEmpireLeftRail narrow layout (Refs #2870 S3)', () {
+    testWidgets('positive: narrow rail buttons paint a 26 x 26 dp surface', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        railScaffold(game: game, gamesBox: gamesBox, narrow: true),
+      );
+      await tester.pumpAndSettle();
 
-  overrides({bool debugConsoleEnabled = false}) => [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        availableWorkTargetIdsForUnitProvider.overrideWith(
-          (ref, _) => const <String>[],
-        ),
-        appEventBusProvider.overrideWith((ref) {
-          final bus = AppEventBus.create();
-          ref.onDispose(bus.dispose);
-          return bus;
-        }),
-        debugConsoleEnabledProvider.overrideWithValue(debugConsoleEnabled),
-      ];
+      expect(GameMapEmpireLeftRail.narrowButtonSize, 26.0);
+      for (final key in railButtonKeys) {
+        final size = tester.getSize(find.byKey(key));
+        expect(
+          size.width,
+          26.0,
+          reason: 'Narrow rail button $key must paint a 26 dp wide tap target',
+        );
+        expect(
+          size.height,
+          26.0,
+          reason: 'Narrow rail button $key must paint a 26 dp tall tap target',
+        );
+      }
+    });
 
-  Widget railScaffold({
-    required bool narrow,
-    bool debugConsoleEnabled = false,
-  }) {
-    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-    return buildAppShell(
-      overrides: overrides(debugConsoleEnabled: debugConsoleEnabled),
-      navigatorKey: appNavigatorKey,
-      shellWrapper: (app) => AppEventHandlerScope(child: app),
-      child: Scaffold(
-        body: Stack(
-          children: <Widget>[
-            Positioned(
-              left: 20,
-              top: 0,
-              child: GameMapEmpireLeftRail(
-                game: game,
-                humanPlayerId: humanId(),
-                narrow: narrow,
-              ),
-            ),
-          ],
-        ),
-      ),
+    testWidgets(
+      'positive: narrow rail buttons render with 2 dp vertical gaps',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          railScaffold(game: game, gamesBox: gamesBox, narrow: true),
+        );
+        await tester.pumpAndSettle();
+
+        expect(GameMapEmpireLeftRail.narrowRowGap, 2.0);
+        for (var i = 1; i < railButtonKeys.length; i++) {
+          final aBottom = tester
+              .getRect(find.byKey(railButtonKeys[i - 1]))
+              .bottom;
+          final bTop = tester.getRect(find.byKey(railButtonKeys[i])).top;
+          expect(
+            bTop - aBottom,
+            2.0,
+            reason:
+                'Narrow rail button ${railButtonKeys[i]} must sit 2 dp below '
+                '${railButtonKeys[i - 1]}',
+          );
+        }
+      },
     );
-  }
 
-  const List<Key> railButtonKeys = <Key>[
-    kEmpireProductionButtonKey,
-    kEmpireTradeButtonKey,
-    kEmpireDevelopmentButtonKey,
-    kEmpireCivilianUnitsButtonKey,
-    kEmpireMilitaryUnitsButtonKey,
-    kEmpireNavalUnitsButtonKey,
-    kEmpireDiplomacyButtonKey,
-    kEmpireTechnologyButtonKey,
-    kEmpireVictoryButtonKey,
-  ];
-
-  group(
-    'GameMapEmpireLeftRail narrow layout (Refs #2870 S3)',
-    () {
-      testWidgets(
-        'positive: narrow rail buttons paint a 26 x 26 dp surface',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(railScaffold(narrow: true));
-          await tester.pumpAndSettle();
-
-          expect(GameMapEmpireLeftRail.narrowButtonSize, 26.0);
-          for (final key in railButtonKeys) {
-            final size = tester.getSize(find.byKey(key));
-            expect(
-              size.width,
-              26.0,
-              reason:
-                  'Narrow rail button $key must paint a 26 dp wide tap target',
-            );
-            expect(
-              size.height,
-              26.0,
-              reason:
-                  'Narrow rail button $key must paint a 26 dp tall tap target',
-            );
-          }
-        },
+    testWidgets('positive: narrow rail icon glyph is unchanged at 24 x 24 dp', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        railScaffold(game: game, gamesBox: gamesBox, narrow: true),
       );
+      await tester.pumpAndSettle();
 
-      testWidgets(
-        'positive: narrow rail buttons render with 2 dp vertical gaps',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(railScaffold(narrow: true));
-          await tester.pumpAndSettle();
+      expect(GameMapEmpireLeftRail.iconSize, 24.0);
+      for (final key in railButtonKeys) {
+        final iconFinder = find.descendant(
+          of: find.byKey(key),
+          matching: find.byType(StrictAssetIcon),
+        );
+        expect(iconFinder, findsOneWidget);
+        final icon = tester.widget<StrictAssetIcon>(iconFinder);
+        expect(
+          icon.width,
+          24.0,
+          reason: 'Narrow rail icon for $key must remain 24 dp wide',
+        );
+        expect(
+          icon.height,
+          24.0,
+          reason: 'Narrow rail icon for $key must remain 24 dp tall',
+        );
+      }
+    });
 
-          expect(GameMapEmpireLeftRail.narrowRowGap, 2.0);
-          for (var i = 1; i < railButtonKeys.length; i++) {
-            final aBottom = tester
-                .getRect(find.byKey(railButtonKeys[i - 1]))
-                .bottom;
-            final bTop = tester.getRect(find.byKey(railButtonKeys[i])).top;
-            expect(
-              bTop - aBottom,
-              2.0,
-              reason:
-                  'Narrow rail button ${railButtonKeys[i]} must sit 2 dp below '
-                  '${railButtonKeys[i - 1]}',
-            );
-          }
-        },
-      );
+    testWidgets(
+      'positive: narrow rail suppresses Tooltip widgets under every button',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          railScaffold(game: game, gamesBox: gamesBox, narrow: true),
+        );
+        await tester.pumpAndSettle();
 
-      testWidgets(
-        'positive: narrow rail icon glyph is unchanged at 24 x 24 dp',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(railScaffold(narrow: true));
-          await tester.pumpAndSettle();
+        for (final key in railButtonKeys) {
+          final tooltipFinder = find.ancestor(
+            of: find.byKey(key),
+            matching: find.byType(Tooltip),
+          );
+          expect(
+            tooltipFinder,
+            findsNothing,
+            reason:
+                'Narrow rail button $key must not be wrapped in a Tooltip '
+                '(touch-only viewports have no hover cursor)',
+          );
+        }
+      },
+    );
 
-          expect(GameMapEmpireLeftRail.iconSize, 24.0);
-          for (final key in railButtonKeys) {
-            final iconFinder = find.descendant(
-              of: find.byKey(key),
-              matching: find.byType(StrictAssetIcon),
-            );
-            expect(iconFinder, findsOneWidget);
-            final icon = tester.widget<StrictAssetIcon>(iconFinder);
-            expect(
-              icon.width,
-              24.0,
-              reason: 'Narrow rail icon for $key must remain 24 dp wide',
-            );
-            expect(
-              icon.height,
-              24.0,
-              reason: 'Narrow rail icon for $key must remain 24 dp tall',
-            );
-          }
-        },
-      );
+    testWidgets(
+      'positive: narrow rail preserves Semantics(button: true, label)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          railScaffold(game: game, gamesBox: gamesBox, narrow: true),
+        );
+        await tester.pumpAndSettle();
 
-      testWidgets(
-        'positive: narrow rail suppresses Tooltip widgets under every button',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(railScaffold(narrow: true));
-          await tester.pumpAndSettle();
+        final Map<Key, String> expectedLabels = <Key, String>{
+          kEmpireProductionButtonKey: 'Production',
+          kEmpireTradeButtonKey: 'Trade',
+          kEmpireDevelopmentButtonKey: 'Development',
+          kEmpireCivilianUnitsButtonKey: 'Civilian Units',
+          kEmpireMilitaryUnitsButtonKey: 'Military Units',
+          kEmpireNavalUnitsButtonKey: 'Naval Units',
+          kEmpireDiplomacyButtonKey: 'Diplomacy',
+          kEmpireTechnologyButtonKey: 'Technology',
+          kEmpireVictoryButtonKey: 'Victory',
+        };
 
-          for (final key in railButtonKeys) {
-            final tooltipFinder = find.ancestor(
-              of: find.byKey(key),
-              matching: find.byType(Tooltip),
-            );
-            expect(
-              tooltipFinder,
-              findsNothing,
-              reason:
-                  'Narrow rail button $key must not be wrapped in a Tooltip '
-                  '(touch-only viewports have no hover cursor)',
-            );
-          }
-        },
-      );
+        for (final entry in expectedLabels.entries) {
+          final semanticsFinder = find.ancestor(
+            of: find.byKey(entry.key),
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Semantics &&
+                  widget.properties.button == true &&
+                  widget.properties.label == entry.value,
+            ),
+          );
+          expect(
+            semanticsFinder,
+            findsOneWidget,
+            reason:
+                'Narrow rail button ${entry.key} must still expose '
+                'Semantics(button: true, label: "${entry.value}") for a11y',
+          );
+        }
+      },
+    );
 
-      testWidgets(
-        'positive: narrow rail preserves Semantics(button: true, label)',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(railScaffold(narrow: true));
-          await tester.pumpAndSettle();
+    testWidgets(
+      'negative: wide rail (narrow: false) keeps 36 x 36 dp + Tooltip baseline',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          railScaffold(game: game, gamesBox: gamesBox, narrow: false),
+        );
+        await tester.pumpAndSettle();
 
-          final Map<Key, String> expectedLabels = <Key, String>{
-            kEmpireProductionButtonKey: 'Production',
-            kEmpireTradeButtonKey: 'Trade',
-            kEmpireDevelopmentButtonKey: 'Development',
-            kEmpireCivilianUnitsButtonKey: 'Civilian Units',
-            kEmpireMilitaryUnitsButtonKey: 'Military Units',
-            kEmpireNavalUnitsButtonKey: 'Naval Units',
-            kEmpireDiplomacyButtonKey: 'Diplomacy',
-            kEmpireTechnologyButtonKey: 'Technology',
-            kEmpireVictoryButtonKey: 'Victory',
-          };
-
-          for (final entry in expectedLabels.entries) {
-            final semanticsFinder = find.ancestor(
-              of: find.byKey(entry.key),
-              matching: find.byWidgetPredicate(
-                (widget) =>
-                    widget is Semantics &&
-                    widget.properties.button == true &&
-                    widget.properties.label == entry.value,
-              ),
-            );
-            expect(
-              semanticsFinder,
-              findsOneWidget,
-              reason:
-                  'Narrow rail button ${entry.key} must still expose '
-                  'Semantics(button: true, label: "${entry.value}") for a11y',
-            );
-          }
-        },
-      );
-
-      testWidgets(
-        'negative: wide rail (narrow: false) keeps 36 x 36 dp + Tooltip baseline',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(railScaffold(narrow: false));
-          await tester.pumpAndSettle();
-
-          for (final key in railButtonKeys) {
-            final size = tester.getSize(find.byKey(key));
-            expect(
-              size.width,
-              GameMapEmpireLeftRail.buttonSize,
-              reason: 'Wide rail button $key must remain 36 dp wide',
-            );
-            expect(
-              size.height,
-              GameMapEmpireLeftRail.buttonSize,
-              reason: 'Wide rail button $key must remain 36 dp tall',
-            );
-            final tooltipFinder = find.ancestor(
-              of: find.byKey(key),
-              matching: find.byType(Tooltip),
-            );
-            expect(
-              tooltipFinder,
-              findsOneWidget,
-              reason:
-                  'Wide rail button $key must still wrap its glyph in a Tooltip',
-            );
-          }
-          for (var i = 1; i < railButtonKeys.length; i++) {
-            final aBottom = tester
-                .getRect(find.byKey(railButtonKeys[i - 1]))
-                .bottom;
-            final bTop = tester.getRect(find.byKey(railButtonKeys[i])).top;
-            expect(
-              bTop - aBottom,
-              GameMapEmpireLeftRail.rowGap,
-              reason:
-                  'Wide rail button ${railButtonKeys[i]} must keep the 3 dp gap',
-            );
-          }
-        },
-      );
-    },
-  );
+        for (final key in railButtonKeys) {
+          final size = tester.getSize(find.byKey(key));
+          expect(
+            size.width,
+            GameMapEmpireLeftRail.buttonSize,
+            reason: 'Wide rail button $key must remain 36 dp wide',
+          );
+          expect(
+            size.height,
+            GameMapEmpireLeftRail.buttonSize,
+            reason: 'Wide rail button $key must remain 36 dp tall',
+          );
+          final tooltipFinder = find.ancestor(
+            of: find.byKey(key),
+            matching: find.byType(Tooltip),
+          );
+          expect(
+            tooltipFinder,
+            findsOneWidget,
+            reason:
+                'Wide rail button $key must still wrap its glyph in a Tooltip',
+          );
+        }
+        for (var i = 1; i < railButtonKeys.length; i++) {
+          final aBottom = tester
+              .getRect(find.byKey(railButtonKeys[i - 1]))
+              .bottom;
+          final bTop = tester.getRect(find.byKey(railButtonKeys[i])).top;
+          expect(
+            bTop - aBottom,
+            GameMapEmpireLeftRail.rowGap,
+            reason:
+                'Wide rail button ${railButtonKeys[i]} must keep the 3 dp gap',
+          );
+        }
+      },
+    );
+  });
 }
