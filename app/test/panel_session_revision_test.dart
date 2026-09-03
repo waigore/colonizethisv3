@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/providers/development_panel_projection_provider.dart';
 import 'package:colonizethis_app/providers/panel_session_revision.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -8,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'panel_fixtures/core.dart';
 
 void main() {
+  suppressLogsForTests();
   test(
     'panelWorldRevision matches developmentPanelWorldRevision (Refs #4720 AC2)',
     () {
