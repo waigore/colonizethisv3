@@ -1,127 +1,16 @@
-// Pin the 320 dp minimum-viewport contract for the `QuickBattleScreen`
-// (CMPT20001) tactical mini-game screen — extending the existing screen-,
-// panel-, dialog-, and unit-panel-level pins
-// (`mobile_320dp_min_viewport_test.dart`, `panels_320dp_min_viewport_test.dart`,
-// `dialogs_320dp_min_viewport_test.dart`,
-// `unit_panels_320dp_min_viewport_test.dart`,
-// `trade_screen_320dp_min_viewport_test.dart`,
-// `technology_screen_320dp_min_viewport_test.dart`,
-// `diplomacy_detail_screen_320dp_min_viewport_test.dart`) to the in-game
-// Quick Battle screen surfaced when the player picks Quick Battle from
-// `CombatModeChoiceDialog` or when a capital siege forces it.
+// Pin the 320 dp minimum-viewport contract for `QuickBattleScreen`
+// (CMPT20001) — non-interactive result view.
+// Interactive round-phase + wide sentinel live in
+// `quick_battle_screen_320dp_min_viewport_interactive_test.dart`.
 //
-// `QuickBattleScreen` (`app/lib/features/game/screens/combat/quick_battle_screen.dart`)
-// mounts its chrome via [CtDialogShell] with `maxWidth: 400` and
-// `maxHeight: 500`. At `kMinViewportWidth` (320 dp) the outer
-// `Dialog.insetPadding: 16` dominates the configured `maxWidth`, so the
-// available content area collapses to ~288 dp. Both the round phase
-// (round-counter `Text` + `QuickBattleDeploymentView` `CtPanel` + `Wrap`
-// of lane/line rows + either the `QuickBattleActionSelector` `Wrap` of
-// five `CtNinePatchButton` chips or the single `Resolve (Auto)` button)
-// and the result phase (`Battle Result: …` title + optional captured
-// banner + two casualty rows + trailing right-aligned `Continue` action)
-// must still lay out without `RenderFlex` overflow per the SPEC ACs
-// (`SPEC/ui/mobile-adaptation.md` § 7 and
-// `SPEC/ui/quick-battle-screen.md` § Acceptance Criteria).
-//
-// Each positive test asserts:
-//
-//  * `WidgetTester.takeException()` is `null` so no `RenderFlex` overflow
-//    exception (which Flutter surfaces via `FlutterError.onError`)
-//    escapes the framework — the contract every other
-//    `*_320dp_min_viewport_test.dart` file relies on.
-//  * Each label the SPEC layout / wireframe declares for the rendered
-//    phase is present in the widget tree.
-//  * The fallback affordance for the opposite phase is not mounted (the
-//    interactive path mounts the action `Wrap` but not `Resolve (Auto)`;
-//    the non-interactive path auto-resolves on `initState` so the result
-//    view replaces both the round-counter and the auto-resolve button).
-//
-// The wide negative control at 1024 × 768 dp pumps the non-interactive
-// variant against the same fixture so a regression in the host overflow
-// contract upstream of `QuickBattleScreen` itself would still surface.
-//
-// SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
-// SPEC: `SPEC/ui/quick-battle-screen.md` § Layout / wireframe and
-// § Acceptance Criteria (320 dp positive + wide regression pins).
-// Refs #2870 S10 (no horizontal overflow at 320 dp on every covered
-// screen).
+// SPEC: `SPEC/ui/mobile-adaptation.md` § 7; `SPEC/ui/quick-battle-screen.md`.
+// Refs #2870 S10.
 
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'dialogs_320dp_min_viewport_support.dart';
-
-/// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
-/// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
-/// existing screen-, panel-, dialog-, and unit-panel-level pin files.
-const Size _kMinViewport = kDialogs320MinViewport;
-
-/// Wide regression sentinel — comfortably above every per-screen
-/// breakpoint so the same screen renders its default chrome. Mirrors
-/// the contract used by `mobile_320dp_min_viewport_test.dart`,
-/// `panels_320dp_min_viewport_test.dart`,
-/// `dialogs_320dp_min_viewport_test.dart`,
-/// `unit_panels_320dp_min_viewport_test.dart`,
-/// `trade_screen_320dp_min_viewport_test.dart`, and
-/// `diplomacy_detail_screen_320dp_min_viewport_test.dart`.
-const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
-
-/// Minimal two-faction Quick Battle input matching the existing
-/// `quick_battle_screen_test.dart` fixture (one CENTER + FRONT group per
-/// side, `maxRounds = 3`). The 2 vs 1 unit count keeps the resolver
-/// output deterministic enough that the "Battle Result: …" winner
-/// sentence and both casualty rows must render in the result view.
-QuickBattleInput _input() {
-  return const QuickBattleInput(
-    attackerFactionId: 'gp1',
-    defenderFactionId: 'gp2',
-    attackerDeployment: QuickBattleDeployment(
-      groups: [
-        QuickBattleGroup(
-          lane: QuickBattleLane.center,
-          line: QuickBattleLine.front,
-          unitIds: ['a1', 'a2'],
-          cohesion: 3,
-        ),
-      ],
-    ),
-    defenderDeployment: QuickBattleDeployment(
-      groups: [
-        QuickBattleGroup(
-          lane: QuickBattleLane.center,
-          line: QuickBattleLine.front,
-          unitIds: ['d1'],
-          cohesion: 3,
-        ),
-      ],
-    ),
-    provinceId: 'oldWorld|p1',
-    regionId: 'oldWorld',
-    maxRounds: 3,
-  );
-}
-
-Future<void> _pumpQuickBattleScreen(
-  WidgetTester tester, {
-  required Size size,
-  required bool interactive,
-  ValueChanged<QuickBattleResult>? onComplete,
-}) async {
-  await pumpDialogs320At(
-    tester,
-    QuickBattleScreen(
-      input: _input(),
-      onComplete: onComplete ?? (_) {},
-      interactive: interactive,
-    ),
-    size: size,
-  );
-}
+import 'quick_battle_screen_320dp_min_viewport_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -133,9 +22,9 @@ void main() {
       'RenderFlex overflow exception, Battle Result winner sentence + '
       'both casualty rows + Continue render',
       (WidgetTester tester) async {
-        await _pumpQuickBattleScreen(
+        await pumpQuickBattleScreen320(
           tester,
-          size: _kMinViewport,
+          size: kQuickBattle320MinViewport,
           interactive: false,
         );
 
@@ -190,9 +79,9 @@ void main() {
     ) async {
       int completeCount = 0;
       QuickBattleResult? lastResult;
-      await _pumpQuickBattleScreen(
+      await pumpQuickBattleScreen320(
         tester,
-        size: _kMinViewport,
+        size: kQuickBattle320MinViewport,
         interactive: false,
         onComplete: (r) {
           completeCount += 1;
@@ -216,88 +105,6 @@ void main() {
             'does not break the result-view dismissal contract.',
       );
       expect(lastResult, isNotNull);
-    });
-  });
-
-  group('SPEC/ui/mobile-adaptation.md § 7 — QuickBattleScreen interactive '
-      '(round phase) @ 320 dp (Refs #2870 S10)', () {
-    testWidgets(
-      'AC (positive) QuickBattleScreen interactive: true @ 320×640: no '
-      'RenderFlex overflow exception, round-counter title + '
-      'QuickBattleActionSelector Command Points header + every action '
-      'Wrap child render, and the Resolve (Auto) fallback is absent',
-      (WidgetTester tester) async {
-        await _pumpQuickBattleScreen(
-          tester,
-          size: _kMinViewport,
-          interactive: true,
-        );
-
-        expect(
-          tester.takeException(),
-          isNull,
-          reason:
-              'SPEC/ui/mobile-adaptation.md § 7: QuickBattleScreen '
-              '(interactive: true, round phase) MUST NOT emit a '
-              'RenderFlex overflow exception at kMinViewportWidth '
-              '(320 dp). The round-counter Text, the '
-              'QuickBattleDeploymentView CtPanel + Wrap of lane/line '
-              'rows, and the QuickBattleActionSelector Wrap of five '
-              'CtNinePatchButton chips (Volley Fire / Defend / '
-              'Maneuver / Fall Back / Assault) MUST lay out within '
-              'the ~288 dp CtDialogShell content column without '
-              'horizontal overflow — the action chips MUST flow onto '
-              'extra runs rather than overflowing the row.',
-        );
-
-        // Round-counter title resolves to `Quick Battle — Round 1 / 3`
-        // per `l10n.quickBattle_round(1, 3)` and the fixture's
-        // `maxRounds = 3`.
-        expect(
-          find.textContaining('Quick Battle — Round 1 / 3'),
-          findsOneWidget,
-        );
-
-        // QuickBattleActionSelector header from
-        // `l10n.quickBattle_commandPoints(3)` MUST render so the
-        // Wrap of action chips is actually exercised at narrow
-        // widths.
-        expect(find.textContaining('Command Points: 3'), findsOneWidget);
-
-        // Every action chip from SPEC/ui/quick-battle-screen.md
-        // § Layout / wireframe — Round phase MUST mount at 320 dp
-        // (label rendered via `l10n.quickBattle_actionWithCost(...)`
-        // so `find.textContaining` matches the label fragment
-        // before the CP suffix).
-        expect(find.textContaining('Volley Fire'), findsOneWidget);
-        expect(find.textContaining('Defend'), findsOneWidget);
-        expect(find.textContaining('Maneuver'), findsOneWidget);
-        expect(find.textContaining('Fall Back'), findsOneWidget);
-        expect(find.textContaining('Assault'), findsOneWidget);
-
-        // Non-interactive fallback button MUST be absent so the
-        // interactive branch from SPEC § States and variants is
-        // actually exercised (negative AC).
-        expect(find.text('Resolve (Auto)'), findsNothing);
-      },
-    );
-  });
-
-  group('SPEC/ui/mobile-adaptation.md § 7 — QuickBattleScreen wide '
-      'regression sentinel (Refs #2870 S10)', () {
-    testWidgets('Negative control: QuickBattleScreen interactive: false @ '
-        '1024×768 also pumps without exception (regression sentinel '
-        'for the overflow contract — keeps the 320 dp positive pins '
-        'meaningful)', (WidgetTester tester) async {
-      await _pumpQuickBattleScreen(
-        tester,
-        size: _kWideRegressionViewport,
-        interactive: false,
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.textContaining('Battle Result:'), findsOneWidget);
-      expect(find.text('Continue'), findsOneWidget);
     });
   });
 }

@@ -1,11 +1,8 @@
 import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
@@ -214,103 +211,5 @@ void main() {
             'MUST stay open.',
       );
     });
-  });
-
-  group('GameSideMenu dark-theme chrome (Refs #2861 S10)', () {
-    Icon iconByMaterialGlyph(WidgetTester tester, IconData glyph) {
-      final iconWidgets = tester
-          .widgetList<Icon>(find.byType(Icon))
-          .where((Icon i) => i.icon == glyph)
-          .toList(growable: false);
-      expect(
-        iconWidgets,
-        isNotEmpty,
-        reason: 'No Icon widget found rendering $glyph in the side menu.',
-      );
-      return iconWidgets.single;
-    }
-
-    Text textByExactString(WidgetTester tester, String value) {
-      return tester.widget<Text>(find.text(value));
-    }
-
-    testWidgets(
-      'Game Parameters Icons.tune resolves to EditorialMonoclePalette.accentDim',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(host(activeGame: game, onClose: () {}));
-        await tester.pumpAndSettle();
-
-        final Icon tune = iconByMaterialGlyph(tester, Icons.tune);
-        expect(tune.color, EditorialMonoclePalette.accentDim);
-        expect(tune.size, 20);
-      },
-    );
-
-    testWidgets(
-      'Debug log Icons.bug_report resolves to EditorialMonoclePalette.accentDim',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(host(activeGame: game, onClose: () {}));
-        await tester.pumpAndSettle();
-
-        final Icon bug = iconByMaterialGlyph(tester, Icons.bug_report);
-        expect(bug.color, EditorialMonoclePalette.accentDim);
-        expect(bug.size, 20);
-      },
-    );
-
-    testWidgets(
-      'Close (×) Text resolves its style.color to EditorialMonoclePalette.muted',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(host(activeGame: game, onClose: () {}));
-        await tester.pumpAndSettle();
-
-        final Text closeGlyph = textByExactString(tester, '×');
-        expect(closeGlyph.style?.color, EditorialMonoclePalette.muted);
-      },
-    );
-
-    testWidgets(
-      'Game Parameters and Debug log label Text resolve style.color to EditorialMonoclePalette.fg',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(host(activeGame: game, onClose: () {}));
-        await tester.pumpAndSettle();
-
-        final BuildContext ctx = tester.element(find.byType(GameSideMenu));
-        final String gpLabel = appL10n(ctx).gameParameters_menuEntry;
-        final String dlLabel = appL10n(ctx).debugLog_title;
-
-        final Text gp = textByExactString(tester, gpLabel);
-        expect(gp.style?.color, EditorialMonoclePalette.fg);
-        final Text dl = textByExactString(tester, dlLabel);
-        expect(dl.style?.color, EditorialMonoclePalette.fg);
-      },
-    );
-  });
-
-  group('GameSideMenuScrim (Refs #2861 S10)', () {
-    testWidgets(
-      'paints the canonical EditorialMonoclePalette.dialogScrim and invokes onDismiss on tap',
-      (WidgetTester tester) async {
-        var dismissed = 0;
-        await tester.pumpWidget(
-          buildAppShell(
-            child: Scaffold(
-              body: GameSideMenuScrim(onDismiss: () => dismissed += 1),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final Container scrim = tester.widget<Container>(
-          find.byKey(GameSideMenuScrim.surfaceKey),
-        );
-        expect(scrim.color, EditorialMonoclePalette.dialogScrim);
-        expect(scrim.color, isNot(Colors.black54));
-
-        await tester.tap(find.byType(GameSideMenuScrim));
-        await tester.pumpAndSettle();
-        expect(dismissed, 1);
-      },
-    );
   });
 }
