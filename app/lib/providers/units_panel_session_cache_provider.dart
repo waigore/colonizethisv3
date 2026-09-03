@@ -8,8 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/game/widgets/panels/tree_builders/military_tree_builder.dart';
 import '../features/game/widgets/panels/tree_builders/naval_tree_builder.dart';
 import '../features/game/widgets/units/civilian/civilian_units_sort.dart';
-import 'development_panel_projection_provider.dart'
-    show developmentPanelOrdersRevision, developmentPanelWorldRevision;
+import 'panel_session_revision.dart'
+    show panelOrdersRevision, panelWorldRevision;
 
 typedef UnitsPanelStaticSessionRevision = ({
   String gameId,
@@ -92,7 +92,7 @@ UnitsPanelStaticSessionRevision unitsPanelStaticSessionRevision({
   return (
     gameId: game.id,
     turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: developmentPanelWorldRevision(game),
+    worldRevision: panelWorldRevision(game),
   );
 }
 
@@ -136,7 +136,7 @@ UnitsPanelNavalSessionRevision unitsPanelNavalSessionRevision({
   return (
     staticRevision: unitsPanelStaticSessionRevision(game: game),
     humanPlayerId: humanPlayerId,
-    ordersRevision: developmentPanelOrdersRevision(draftOrders),
+    ordersRevision: panelOrdersRevision(draftOrders),
     locationScopeKeyFilter: locationScopeKeyFilter,
   );
 }
@@ -154,7 +154,7 @@ UnitsPanelCivilianSessionRevision unitsPanelCivilianSessionRevision({
   return (
     staticRevision: unitsPanelStaticSessionRevision(game: game),
     ownerIdsKey: unitsPanelOwnerIdsCacheKey(ownerIds),
-    ordersRevision: developmentPanelOrdersRevision(currentOrders),
+    ordersRevision: panelOrdersRevision(currentOrders),
   );
 }
 

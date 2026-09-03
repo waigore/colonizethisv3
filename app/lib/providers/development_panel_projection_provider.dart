@@ -14,6 +14,7 @@ import '../features/game/screens/development/development_panel_map_snapshot.dart
 import '../features/game/widgets/shell/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
+import 'panel_session_revision.dart';
 
 /// Shared Development panel inputs memoized across [DevelopmentScreenBody] rebuilds
 /// when game, orders, map data, or shell player context change. Refs #4175 Slice E.
@@ -226,14 +227,7 @@ final developmentPanelSessionCacheProvider =
   (ref) => DevelopmentPanelSessionCache(),
 );
 
-int developmentPanelWorldRevision(Game game) {
-  return Object.hash(
-    game.worldState.turnState.turnNumber,
-    game.worldState.purchasedTilesByTileKey.length,
-    game.worldState.tileKeysByRegionAndProvince.length,
-    game.players.length,
-  );
-}
+int developmentPanelWorldRevision(Game game) => panelWorldRevision(game);
 
 DevelopmentPanelStaticSessionRevision developmentPanelStaticSessionRevision({
   required Game game,
@@ -245,19 +239,8 @@ DevelopmentPanelStaticSessionRevision developmentPanelStaticSessionRevision({
   );
 }
 
-int developmentPanelOrdersRevision(Orders orders) {
-  final workHashes = <int>[];
-  for (final entry in orders.workOrdersByPlayerId.entries) {
-    workHashes.add(Object.hash(entry.key, entry.value.length));
-    for (final order in entry.value) {
-      workHashes.add(
-        Object.hash(order.unitId, order.target, order.targetTileKey),
-      );
-    }
-  }
-  workHashes.sort();
-  return Object.hashAll(workHashes);
-}
+int developmentPanelOrdersRevision(Orders orders) =>
+    panelOrdersRevision(orders);
 
 DevelopmentPanelFullSessionRevision developmentPanelFullSessionRevision({
   required Game game,
