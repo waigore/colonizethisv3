@@ -2,6 +2,33 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
+  String get techEffectSummary_extraction_of_precious_metals_0 =>
+      'Improves: Gold/silver extraction cap to 3';
+
+  @override
+  String get techEffectSummary_extraction_of_precious_metals_1 =>
+      'Unlocks: Amalgamation Process (with Dynamite)';
+
+  @override
+  String get techEffectSummary_field_artillery_tactics_0 =>
+      'Improves: Light Artillery regiment upgrade path';
+
+  @override
+  String get techEffectSummary_geological_prospecting_0 =>
+      'Improves: Gems/diamonds extraction cap to 4';
+
+  @override
+  String get techEffectSummary_geological_prospecting_1 =>
+      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
+
+  @override
+  String get techEffectSummary_hat_production_0 =>
+      'Enables: Fur hats luxury production for Master-tier worker consumption';
+
+  @override
+  String get techEffectSummary_hat_production_1 => 'Unlocks: Master Artisans';
+
+  @override
   String mapControls_treasury_details_current(String amount) {
     return 'Treasury: $amount';
   }
