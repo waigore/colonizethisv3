@@ -197,6 +197,41 @@ void main() {
     );
 
     testWidgets(
+      '320 dp affordance copy wraps without overflow or ellipsis (Refs #4717)',
+      (WidgetTester tester) async {
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          width: 320,
+          height: 640,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.textContaining('Up to'), findsWidgets);
+        expect(find.textContaining('limited by'), findsWidgets);
+
+        final affordanceTexts = tester
+            .widgetList<Text>(
+              find.descendant(
+                of: find.byType(Tooltip),
+                matching: find.byType(Text),
+              ),
+            )
+            .where(
+              (t) =>
+                  t.data != null &&
+                  (t.data!.contains('Up to') ||
+                      t.data!.contains('Cannot run')),
+            );
+        expect(affordanceTexts, isNotEmpty);
+        expect(
+          affordanceTexts.every((t) => t.overflow != TextOverflow.ellipsis),
+          isTrue,
+        );
+      },
+    );
+
+    testWidgets(
       'Full availability: sliders enable comfort headroom at default allocation',
       (WidgetTester tester) async {
         await pumpProductionPanelSettled(tester, player: fullPlayer);
