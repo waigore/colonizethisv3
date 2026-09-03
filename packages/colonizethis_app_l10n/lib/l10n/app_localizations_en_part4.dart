@@ -446,9 +446,35 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
       'Your armies are very short on rations — they will fight much weaker this turn.';
 
   @override
-  String production_recipeAffordance(int max, String limiting) {
-    return '$max · $limiting';
+  String production_recipeAffordanceUpToLimitedByCommodity(
+    int max,
+    String commodity,
+  ) {
+    return 'Up to $max, limited by $commodity';
   }
+
+  @override
+  String production_recipeAffordanceUpToLimitedByLabour(int max) {
+    return 'Up to $max, limited by labour this turn';
+  }
+
+  @override
+  String production_recipeAffordanceUpToLimitedByPanelCap(int max) {
+    return 'Up to $max, limited by the per-turn panel cap';
+  }
+
+  @override
+  String production_recipeAffordanceCannotRunShortOfCommodity(String commodity) {
+    return 'Cannot run — short of $commodity';
+  }
+
+  @override
+  String get production_recipeAffordanceCannotRunNotEnoughLabour =>
+      'Cannot run — not enough labour left this turn';
+
+  @override
+  String get production_recipeAffordanceTooltip =>
+      'How many whole batches you can still ask for this turn after other recipes — not your whole warehouse.';
 
   @override
   String production_totalLabour(int required, int effective) {

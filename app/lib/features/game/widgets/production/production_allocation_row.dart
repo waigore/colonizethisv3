@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'production_recipe_affordance.dart';
+import 'production_recipe_affordance_copy.dart';
 import 'production_allocation_row_controls.dart';
 import 'production_industry_counsel_star.dart';
 
@@ -79,19 +80,32 @@ class ProductionAllocationRow extends StatelessWidget {
       children: [
         Expanded(flex: 2, child: buildRecipeLabel(recipe, locked)),
         ?headerCounselStar,
-        Expanded(
-          flex: 1,
-          child: Text(
-            l10n.production_recipeAffordance(
-              maxAchievable,
-              rowAffordance.limitingLabel,
-            ),
-            textAlign: TextAlign.right,
-            style: theme.textTheme.labelSmall,
-            overflow: TextOverflow.ellipsis,
+        if (!locked)
+          Expanded(
+            flex: 1,
+            child: _buildAffordanceReadout(rowAffordance, maxAchievable),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildAffordanceReadout(
+    RecipeAffordance rowAffordance,
+    int maxAchievable,
+  ) {
+    final copy = formatProductionRecipeAffordanceCopy(
+      l10n: l10n,
+      affordance: rowAffordance,
+      maxAchievable: maxAchievable,
+    );
+    return Tooltip(
+      message: copy.tooltipMessage,
+      child: Text(
+        copy.displayText,
+        textAlign: TextAlign.right,
+        style: theme.textTheme.labelSmall,
+        semanticsLabel: copy.semanticsLabel,
+      ),
     );
   }
 

@@ -10,6 +10,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_recipe_affordance.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_recipe_affordance_copy.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 String _recipeLabelText(ProductionRecipe recipe) {
@@ -65,10 +66,15 @@ void addProductionPanelAllocationTexts(
     out.add(_recipeLabelText(recipe));
     if (locked) {
       out.add(l10n.production_recipeLocked);
+    } else {
+      out.add(
+        formatProductionRecipeAffordanceCopy(
+          l10n: l10n,
+          affordance: affordance,
+          maxAchievable: maxAchievable,
+        ).displayText,
+      );
     }
-    out.add(
-      l10n.production_recipeAffordance(maxAchievable, affordance.limitingLabel),
-    );
     out.add(desired.toString());
   }
 

@@ -36,7 +36,8 @@ All props except `locked` are `required`. Constants: `kProductionAllocationSlide
 ProductionAllocationRowChrome(padding: 8/8)
   Column(min, start)
     Row(start) -- header: Expanded(flex 2, buildRecipeLabel(recipe, locked))
-                          Expanded(flex 1, Text(max · bottleneck, right))
+                          [optional counsel star]
+                          Expanded(flex 1, unlocked only: Tooltip + Text(affordance copy, right, wraps))
     Row(center) -- body (locked: wrapped in IgnorePointer + Opacity(0.4))
         Expanded(CtSlider(value, max: sliderMax, divisions, comfortHeadroomActive))
         Row(min)
@@ -60,7 +61,8 @@ Buttons are separated by `SizedBox(width: 4)`; each paints `ProductionStepButton
 5. **Long-press repeat (± only).** `ProductionAllocationStepButton` uses `GestureDetector` long-press (~500 ms, `kProductionAllocationRepeatInitialDelay`) + `Timer.periodic` at `kProductionAllocationRepeatInterval` (125 ms), stopping at bounds/release/dispose. Maximize and Clear are single-tap.
 6. **Comfort headroom.** The slider's `comfortHeadroomActive` comes from `recipeAllocationComfortHeadroomActive(...)` per [`production-panel.md`](../production-panel.md) § *Comfort headroom (slider track)*.
 7. **Stateless.** `ProductionAllocationRow` is `StatelessWidget`; only `ProductionAllocationStepButton` holds a `Timer?` for repeats.
-8. **Locked (tech-gated) rows.** Host sets `locked` from `ProductionRecipesCatalog.isRecipeAvailableForPlayer(recipe, player.techUnlocked)`. When locked, `maxAchievable` is `0`, `buildRecipeLabel` appends the `--muted` `production_recipeLocked` marker, and the body Row is wrapped in `IgnorePointer` + `Opacity(kProductionRecipeLockedOpacity = 0.4)`; the row stays mounted.
+8. **Locked (tech-gated) rows.** Host sets `locked` from `ProductionRecipesCatalog.isRecipeAvailableForPlayer(recipe, player.techUnlocked)`. When locked, `maxAchievable` is `0`, `buildRecipeLabel` appends the `--muted` `production_recipeLocked` marker, the **right-aligned affordance is omitted**, and the body Row is wrapped in `IgnorePointer` + `Opacity(kProductionRecipeLockedOpacity = 0.4)`; the row stays mounted.
+9. **Affordance copy (unlocked rows).** `formatProductionRecipeAffordanceCopy` builds player-facing default text from `computeRecipeAffordance` (`Up to N` / `Cannot run` + limiter phrasing). Desktop hover and mobile long-press on the affordance show a one-sentence `Tooltip`; `semanticsLabel` appends the same sentence.
 
 ---
 
@@ -96,7 +98,8 @@ The Labour Controls reuse only `ProductionStepButtonSurface`, not this composite
 - **Given** the user taps maximize, **When** committed, **Then** the map sets `recipe.id == affordance.maxDesiredOutput`; clear with `desired > 0` removes `recipe.id`.
 - **Given** `maxAchievable == 0`, **When** the row builds, **Then** the slider renders `max == 0`, `divisions == 1`, and every action button is `enabled == false`.
 - **Given** the row is mounted, **When** settled, **Then** exactly one `ProductionAllocationRowChrome` ancestor paints `CtGradients.rowGradient` inside a 1 dp `EditorialMonoclePalette.accentDim` border.
-- **Given** `locked == true`, **When** the row builds, **Then** the header shows the localized `production_recipeLocked` marker, the body Row is wrapped in `IgnorePointer` + `Opacity(0.4)`, affordance reads max `0`, and every action button is `enabled == false`.
+- **Given** `locked == true`, **When** the row builds, **Then** the header shows the localized `production_recipeLocked` marker, the right-aligned affordance is **omitted**, the body Row is wrapped in `IgnorePointer` + `Opacity(0.4)`, affordance reads max `0`, and every action button is `enabled == false`.
+- **Given** `locked == false` and `maxAchievable > 0`, **When** the row builds, **Then** the header shows player-facing affordance copy (`Up to N, limited by …`) inside a `Tooltip`, and the text wraps without ellipsis.
 
 ---
 

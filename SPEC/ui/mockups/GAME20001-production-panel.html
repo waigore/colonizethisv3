@@ -241,7 +241,7 @@ function makeRecipeRow(r){
   return `<div class="recipe-row">
     <div class="recipe-header">
       <span class="r-title"><span class="out-icon">${outIcon}</span><span class="out-name">${displayName}</span><span class="inputs">(${iconDef.input})</span></span>
-      <span class="r-cap">${max} &middot; <span>${bottleneck}</span></span>
+      <span class="r-cap">Up to ${max}, limited by <span>${bottleneck}</span></span>
     </div>
     <div class="recipe-slider-row">
       <input type="range" min="0" max="${max}" value="${d}" oninput="updateDesired('${r.id}',this.value)">
