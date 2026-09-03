@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/widgets/shell/shell_player_context.dart';
 import '../features/game/widgets/technology/technology_panel_open_path.dart';
-import 'development_panel_projection_provider.dart'
-    show developmentPanelOrdersRevision, developmentPanelWorldRevision;
+import 'panel_session_revision.dart'
+    show panelOrdersRevision, panelWorldRevision;
 import 'games_provider.dart';
 
 final technologyPanelSessionCacheProvider = Provider<TechnologyPanelSessionCache>(
@@ -21,9 +21,9 @@ TechnologyPanelSessionRevision technologyPanelSessionRevision({
   return (
     gameId: game.id,
     turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: developmentPanelWorldRevision(game),
+    worldRevision: panelWorldRevision(game),
     humanPlayerId: humanPlayerId,
-    ordersRevision: developmentPanelOrdersRevision(orders),
+    ordersRevision: panelOrdersRevision(orders),
     canEdit: canEdit,
   );
 }
