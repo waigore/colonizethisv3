@@ -3422,8 +3422,26 @@ abstract class AppLocalizations {
   /// Soft warn when land feeding coverage is below 0.5 at invasion/combat.
   String get forcesFood_landUnderfedSevereWarning;
 
-  /// Recipe affordance line (max output and limiting factor label).
-  String production_recipeAffordance(int max, String limiting);
+  /// Allocation row affordance when batches are limited by an input commodity.
+  String production_recipeAffordanceUpToLimitedByCommodity(
+    int max,
+    String commodity,
+  );
+
+  /// Allocation row affordance when batches are limited by labour this turn.
+  String production_recipeAffordanceUpToLimitedByLabour(int max);
+
+  /// Allocation row affordance when the per-turn panel cap binds first.
+  String production_recipeAffordanceUpToLimitedByPanelCap(int max);
+
+  /// Allocation row affordance when an unlocked recipe cannot run (input short).
+  String production_recipeAffordanceCannotRunShortOfCommodity(String commodity);
+
+  /// Allocation row affordance when an unlocked recipe cannot run (labour short).
+  String get production_recipeAffordanceCannotRunNotEnoughLabour;
+
+  /// Tooltip and semantics suffix for Allocation recipe affordance readout.
+  String get production_recipeAffordanceTooltip;
 
   /// Total labour required vs effective in allocation panel.
   String production_totalLabour(int required, int effective);

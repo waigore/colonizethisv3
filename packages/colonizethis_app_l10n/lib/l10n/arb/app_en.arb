@@ -5683,17 +5683,52 @@
   "@forcesFood_landUnderfedSevereWarning": {
     "description": "Soft warn at invasion/combat decision points when land feeding coverage is below 0.5."
   },
-  "production_recipeAffordance": "{max} · {limiting}",
-  "@production_recipeAffordance": {
-    "description": "Recipe affordance line (max output and limiting factor label).",
+  "production_recipeAffordanceUpToLimitedByCommodity": "Up to {max}, limited by {commodity}",
+  "@production_recipeAffordanceUpToLimitedByCommodity": {
+    "description": "Allocation row affordance when the player can still ask for whole batches limited by an input commodity.",
     "placeholders": {
       "max": {
         "type": "int"
       },
-      "limiting": {
+      "commodity": {
         "type": "String"
       }
     }
+  },
+  "production_recipeAffordanceUpToLimitedByLabour": "Up to {max}, limited by labour this turn",
+  "@production_recipeAffordanceUpToLimitedByLabour": {
+    "description": "Allocation row affordance when the player can still ask for whole batches limited by labour.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "production_recipeAffordanceUpToLimitedByPanelCap": "Up to {max}, limited by the per-turn panel cap",
+  "@production_recipeAffordanceUpToLimitedByPanelCap": {
+    "description": "Allocation row affordance when the slider ceiling binds before stock or labour.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "production_recipeAffordanceCannotRunShortOfCommodity": "Cannot run — short of {commodity}",
+  "@production_recipeAffordanceCannotRunShortOfCommodity": {
+    "description": "Allocation row affordance when an unlocked recipe cannot run because an input is short.",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      }
+    }
+  },
+  "production_recipeAffordanceCannotRunNotEnoughLabour": "Cannot run — not enough labour left this turn",
+  "@production_recipeAffordanceCannotRunNotEnoughLabour": {
+    "description": "Allocation row affordance when an unlocked recipe cannot run because labour is exhausted or committed elsewhere."
+  },
+  "production_recipeAffordanceTooltip": "How many whole batches you can still ask for this turn after other recipes — not your whole warehouse.",
+  "@production_recipeAffordanceTooltip": {
+    "description": "Tooltip and semantics suffix for Allocation recipe affordance readout."
   },
   "production_totalLabour": "Total labour: {required} / {effective}",
   "@production_totalLabour": {

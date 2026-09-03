@@ -446,9 +446,35 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
       'Your armies are very short on rations — they will fight much weaker this turn.';
 
   @override
-  String production_recipeAffordance(int max, String limiting) {
-    return '$max · $limiting';
+  String production_recipeAffordanceUpToLimitedByCommodity(
+    int max,
+    String commodity,
+  ) {
+    return 'Up to $max, limited by $commodity';
   }
+
+  @override
+  String production_recipeAffordanceUpToLimitedByLabour(int max) {
+    return 'Up to $max, limited by labour this turn';
+  }
+
+  @override
+  String production_recipeAffordanceUpToLimitedByPanelCap(int max) {
+    return 'Up to $max, limited by the per-turn panel cap';
+  }
+
+  @override
+  String production_recipeAffordanceCannotRunShortOfCommodity(String commodity) {
+    return 'Cannot run — short of $commodity';
+  }
+
+  @override
+  String get production_recipeAffordanceCannotRunNotEnoughLabour =>
+      'Cannot run — not enough labour left this turn';
+
+  @override
+  String get production_recipeAffordanceTooltip =>
+      'How many whole batches you can still ask for this turn after other recipes — not your whole warehouse.';
 
   @override
   String production_totalLabour(int required, int effective) {
@@ -965,31 +991,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
   String get techEffectSummary_explosives_1 =>
       'Prerequisite for: Elite Military Training';
-
-  @override
-  String get techEffectSummary_extraction_of_precious_metals_0 =>
-      'Improves: Gold/silver extraction cap to 3';
-
-  @override
-  String get techEffectSummary_extraction_of_precious_metals_1 =>
-      'Unlocks: Amalgamation Process (with Dynamite)';
-
-  @override
-  String get techEffectSummary_field_artillery_tactics_0 =>
-      'Improves: Light Artillery regiment upgrade path';
-
-  @override
-  String get techEffectSummary_geological_prospecting_0 =>
-      'Improves: Gems/diamonds extraction cap to 4';
-
-  @override
-  String get techEffectSummary_geological_prospecting_1 =>
-      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
-
-  @override
-  String get techEffectSummary_hat_production_0 =>
-      'Enables: Fur hats luxury production for Master-tier worker consumption';
-
-  @override
-  String get techEffectSummary_hat_production_1 => 'Unlocks: Master Artisans';
 }

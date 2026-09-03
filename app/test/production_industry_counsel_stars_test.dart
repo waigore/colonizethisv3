@@ -27,6 +27,9 @@ IndustryCounselRecommendation _produceRecommendation(
   );
 }
 
+const _lumberCounselStarKey =
+    ValueKey<String>('production_industry_counsel_star_lumber_from_timber');
+
 const _threeStarRecipeIds = [
   'lumber_from_timber',
   'paper_from_timber',
@@ -124,7 +127,9 @@ void main() {
       );
       await pumpSettleCapped(tester);
 
-      await tester.tap(find.byType(ProductionIndustryCounselStar));
+      final star = find.byKey(_lumberCounselStarKey);
+      await tester.ensureVisible(star);
+      await tester.tap(star);
       await pumpSettleCapped(tester);
 
       expect(openedHighlightId, 'produce:lumber_from_timber');
@@ -186,7 +191,7 @@ void main() {
       await pumpSettleCapped(tester);
 
       final semantics = tester.getSemantics(
-        find.byKey(const ValueKey<String>('production_industry_counsel_star')),
+        find.byKey(_lumberCounselStarKey),
       );
       expect(
         semantics.label,
@@ -258,13 +263,15 @@ void main() {
 
       expect(find.byType(ProductionIndustryCounselStar), findsOneWidget);
 
-      await tester.tap(find.byType(ProductionIndustryCounselStar));
+      final star = find.byKey(_lumberCounselStarKey);
+      await tester.ensureVisible(star);
+      await tester.tap(star);
       await pumpSettleCapped(tester);
       expect(openedHighlightId, 'produce:lumber_from_timber');
 
-      await tester.tap(
-        find.widgetWithText(CtActionTextButton, 'Counsel'),
-      );
+      final counselButton = find.widgetWithText(CtActionTextButton, 'Counsel');
+      await tester.ensureVisible(counselButton);
+      await tester.tap(counselButton);
       await pumpSettleCapped(tester);
       expect(openedHighlightId, isNull);
     });

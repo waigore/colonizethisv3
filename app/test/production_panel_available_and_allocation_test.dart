@@ -138,18 +138,6 @@ void main() {
     );
 
     testWidgets(
-      'Allocation rows show right-aligned affordance max · bottleneck',
-      (WidgetTester tester) async {
-        await pumpProductionPanelSettled(tester, player: fullPlayer);
-
-        expect(
-          find.textContaining('·'),
-          findsAtLeastNWidgets(ProductionRecipesCatalog.all.length),
-        );
-      },
-    );
-
-    testWidgets(
       'Full availability: sliders enable comfort headroom at default allocation',
       (WidgetTester tester) async {
         await pumpProductionPanelSettled(tester, player: fullPlayer);
