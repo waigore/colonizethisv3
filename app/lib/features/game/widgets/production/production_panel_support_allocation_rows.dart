@@ -106,6 +106,7 @@ List<Widget> productionAllocationRows({
         counselRecommendation.briefReasonKey,
       );
       counselStar = ProductionIndustryCounselStar(
+        recipeId: recipe.id,
         briefMessage: brief,
         semanticLabel: l10n.production_industryCounselStarSemantic(brief),
         onOpenCounsel: () => onOpenCounsel(

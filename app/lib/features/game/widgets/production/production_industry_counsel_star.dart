@@ -5,10 +5,13 @@ import 'package:flutter/material.dart';
 class ProductionIndustryCounselStar extends StatelessWidget {
   const ProductionIndustryCounselStar({
     super.key,
+    required this.recipeId,
     required this.briefMessage,
     required this.semanticLabel,
     required this.onOpenCounsel,
   });
+
+  final String recipeId;
 
   final String briefMessage;
   final String semanticLabel;
@@ -22,7 +25,7 @@ class ProductionIndustryCounselStar extends StatelessWidget {
       child: Tooltip(
         message: briefMessage,
         child: InkWell(
-          key: const ValueKey<String>('production_industry_counsel_star'),
+          key: ValueKey<String>('production_industry_counsel_star_$recipeId'),
           onTap: onOpenCounsel,
           borderRadius: BorderRadius.circular(4),
           child: Padding(

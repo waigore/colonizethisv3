@@ -10,19 +10,28 @@ const int kProductionAllocationSliderCap = 50;
 
 /// Stock- and labour-based affordance for one recipe row (panel slider cap).
 /// SPEC/ui/production-panel.md
+/// Internal limiting-label token when labour is the tightest constraint.
+const String kRecipeAffordanceLabourLabel = 'Labour';
+
 final class RecipeAffordance {
   const RecipeAffordance({
     required this.maxDesiredOutput,
     required this.limitingLabel,
+    this.capLimited = false,
   });
 
   /// Desired output units allowed for this recipe (same cap as the slider).
   final int maxDesiredOutput;
 
-  /// Commodity display name or `Labour` for the tightest constraint before
-  /// [kProductionAllocationSliderCap] (ties: first recipe input in catalog
-  /// map order, then labour).
+  /// Commodity display name or [kRecipeAffordanceLabourLabel] for the tightest
+  /// constraint before [kProductionAllocationSliderCap] (ties: first recipe
+  /// input in catalog map order, then labour).
   final String limitingLabel;
+
+  /// When `true`, [maxDesiredOutput] is clamped to
+  /// [kProductionAllocationSliderCap] while the unconstrained batch count would
+  /// exceed that cap — copy should name the panel cap, not [limitingLabel].
+  final bool capLimited;
 }
 
 int _remainingLabourForRecipe({
@@ -89,12 +98,18 @@ RecipeAffordance computeRecipeAffordance({
   );
 
   if (labourPerOutput <= 0) {
-    return const RecipeAffordance(maxDesiredOutput: 0, limitingLabel: 'Labour');
+    return const RecipeAffordance(
+      maxDesiredOutput: 0,
+      limitingLabel: kRecipeAffordanceLabourLabel,
+    );
   }
 
   var maxByLabour = remainingLabour ~/ labourPerOutput;
   if (maxByLabour <= 0) {
-    return const RecipeAffordance(maxDesiredOutput: 0, limitingLabel: 'Labour');
+    return const RecipeAffordance(
+      maxDesiredOutput: 0,
+      limitingLabel: kRecipeAffordanceLabourLabel,
+    );
   }
 
   final remainingStock = _remainingStockByCommodity(
@@ -132,12 +147,13 @@ RecipeAffordance computeRecipeAffordance({
       break;
     }
   }
-  limitingLabel ??= 'Labour';
+  limitingLabel ??= kRecipeAffordanceLabourLabel;
 
   final capped = trueMax.clamp(0, sliderCap);
   return RecipeAffordance(
     maxDesiredOutput: capped,
     limitingLabel: limitingLabel,
+    capLimited: trueMax > sliderCap,
   );
 }
 

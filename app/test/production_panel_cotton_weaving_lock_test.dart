@@ -68,6 +68,43 @@ void main() {
     );
 
     testWidgets(
+      'locked recipe omits right-aligned affordance copy (Refs #4717)',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildProductionPanel(player: lockedPlayer(), height: 600),
+        );
+        await pumpSettleCapped(tester);
+        final l10n = lookupAppLocalizations(const Locale('en'));
+
+        expect(
+          find.descendant(
+            of: find.byKey(cottonRowKey),
+            matching: find.textContaining('Up to'),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: find.byKey(cottonRowKey),
+            matching: find.textContaining('Cannot run'),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: find.byKey(cottonRowKey),
+            matching: find.byWidgetPredicate(
+              (Widget w) =>
+                  w is Tooltip &&
+                  w.message == l10n.production_recipeAffordanceTooltip,
+            ),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
       'locked recipe slider sub-row is wrapped in IgnorePointer + Opacity(0.4)',
       (WidgetTester tester) async {
         await tester.pumpWidget(

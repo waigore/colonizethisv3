@@ -28,7 +28,7 @@ Future<void> pumpProductionPanelSettled(
   VoidCallback? onOpenCommodityBreakdown,
   void Function(String commodityId)? onOpenTradeMarket,
   double width = 800,
-  double height = 500,
+  double height = 900,
 }) async {
   await tester.pumpWidget(
     buildProductionPanel(
@@ -58,7 +58,9 @@ Future<void> tapProductionAllocationSemantic(
   required String semanticLabel,
   required int recipeIndex,
 }) async {
-  await tester.tap(find.bySemanticsLabel(semanticLabel).at(recipeIndex));
+  final finder = find.bySemanticsLabel(semanticLabel).at(recipeIndex);
+  await tester.ensureVisible(finder);
+  await tester.tap(finder);
   await pumpSyncFrames(tester);
 }
 

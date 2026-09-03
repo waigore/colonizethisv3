@@ -114,4 +114,35 @@ void main() {
       );
     });
   });
+
+  group('computeRecipeAffordance capLimited (Refs #4717)', () {
+    test('sets capLimited when unconstrained batches exceed slider cap', () {
+      final recipe = ProductionRecipesCatalog.byId['lumber_from_timber']!;
+      final stockpile = const Stockpile().applyDelta('timber', 200);
+      final affordance = computeRecipeAffordance(
+        recipe: recipe,
+        stockpile: stockpile,
+        desiredOutputByRecipe: const {},
+        effectiveLabour: 200,
+      );
+
+      expect(affordance.maxDesiredOutput, kProductionAllocationSliderCap);
+      expect(affordance.capLimited, isTrue);
+      expect(affordance.limitingLabel, 'timber');
+    });
+
+    test('does not set capLimited when unconstrained batches equal slider cap', () {
+      final recipe = ProductionRecipesCatalog.byId['lumber_from_timber']!;
+      final stockpile = const Stockpile().applyDelta('timber', 100);
+      final affordance = computeRecipeAffordance(
+        recipe: recipe,
+        stockpile: stockpile,
+        desiredOutputByRecipe: const {},
+        effectiveLabour: 200,
+      );
+
+      expect(affordance.maxDesiredOutput, 50);
+      expect(affordance.capLimited, isFalse);
+    });
+  });
 }
