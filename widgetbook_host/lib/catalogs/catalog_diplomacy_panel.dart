@@ -87,6 +87,10 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
         builder: (context) => _declareWarConfirmNamedAllyStory(),
       ),
       WidgetbookUseCase(
+        name: 'Break Alliance confirm — rest-of-turn lock',
+        builder: (context) => _breakAllianceConfirmRestOfTurnLockStory(),
+      ),
+      WidgetbookUseCase(
         name: 'Boycott confirm — two named colonies',
         builder: (context) => boycottConfirmTwoColoniesStory(),
       ),
@@ -281,6 +285,39 @@ Widget _relativePowerLineStory(List<int> percents, {double? maxWidth}) {
           ],
         ),
       ),
+    ),
+  );
+}
+
+Widget _breakAllianceConfirmRestOfTurnLockStory() {
+  const humanId = 'gp1';
+  const spainId = 'gp2';
+  final game = Game(
+    id: 'wb-break-alliance-confirm',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    players: const [
+      Player(id: humanId, displayName: 'Portugal', isHuman: true),
+      Player(id: spainId, displayName: 'Spain', isHuman: false),
+    ],
+  );
+  final message = buildDiplomacyConfirmPreviewMessage(
+    order: const DiplomaticOrder(
+      type: DiplomaticOrderType.breakAlliance,
+      targetFactionId: spainId,
+    ),
+    game: game,
+    humanPlayerId: humanId,
+    targetDisplayName: 'Spain',
+  );
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: Center(
+      child: CtConfirmDialog(title: 'Break Alliance', message: message),
     ),
   );
 }
