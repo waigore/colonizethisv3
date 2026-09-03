@@ -14,112 +14,15 @@
 // province_overlay_economic_section_dark_tokens_test.dart and the
 // prospection/exclusion pins in province_sea_zone_resource_labels_test.dart.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'province_overlay_economic_row_order_coords_support.dart';
 import 'province_overlay_test_harness.dart';
-
-const _regionId = 'oldWorld';
-const _localProvinceId = 'pEconRowOrder';
-const _humanPlayerId = 'gp1';
-String get _fullProvinceId => '$_regionId|$_localProvinceId';
-
-String _tileKey(int x, int y) => '$_fullProvinceId|$x|$y';
-
-RegionMapViewData _regionWithGrainCells(
-  List<({int x, int y})> coords, {
-  required int width,
-  required int height,
-}) {
-  final cells = <CellViewData>[
-    for (final c in coords)
-      CellViewData(
-        x: c.x,
-        y: c.y,
-        regionCellId: _localProvinceId,
-        isSea: false,
-        terrainTypeId: 'plains',
-        resourceId: 'grain',
-        visibility: TileVisibility.visible,
-      ),
-  ];
-  return RegionMapViewData(
-    regionId: _regionId,
-    width: width,
-    height: height,
-    cellSize: 32,
-    cells: cells,
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: const {_humanPlayerId},
-    terrainColors: const {},
-  );
-}
-
-Game _gameWithGrainTiles({
-  required List<String> tileKeys,
-  required Map<String, int> improvementByTile,
-}) {
-  final visibility = <String, String>{
-    for (final tk in tileKeys) tk: 'fullyVisible',
-  };
-  final prospected = <String>{...tileKeys};
-  return Game(
-    id: 'economic_row_order_test',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _fullProvinceId,
-            regionId: _regionId,
-            ownerId: _humanPlayerId,
-            displayName: 'EconRowOrder',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        _regionId: {_fullProvinceId: tileKeys},
-      },
-      resourceByTileKey: {for (final tk in tileKeys) tk: 'grain'},
-      playerVisibilityByTile: {_humanPlayerId: visibility},
-      playerProspectedTiles: {_humanPlayerId: prospected},
-      tileState: TileMapState(improvementByTile: improvementByTile),
-    ),
-    players: const [
-      Player(
-        id: _humanPlayerId,
-        displayName: 'Human',
-        isHuman: true,
-        treasury: 0,
-      ),
-    ],
-  );
-}
-
-PlayerView _omniscientViewForTiles(Iterable<String> keys) {
-  return PlayerView(
-    playerId: _humanPlayerId,
-    player: const Player(
-      id: _humanPlayerId,
-      displayName: 'Human',
-      isHuman: true,
-      treasury: 0,
-    ),
-    ownUnitsById: const {},
-    provincesById: const {},
-    visibilityByTile: {for (final k in keys) k: VisibilityLevel.fullyVisible},
-    prospectedTiles: const {},
-    diplomacyByOtherId: const {},
-  );
-}
 
 Widget _overlay({
   required Game game,
@@ -130,9 +33,9 @@ Widget _overlay({
   return buildProvinceOverlayDarkThemeShell(
     game: game,
     region: region,
-    displayId: _fullProvinceId,
+    displayId: kEconRowOrderFullProvinceId,
     selectedTileKey: selectedTileKey,
-    humanPlayerId: _humanPlayerId,
+    humanPlayerId: kEconRowOrderHumanPlayerId,
     playerView: playerView,
     shellWidth: 800,
   );
@@ -169,75 +72,75 @@ void main() {
     'ProvinceSeaZoneDetailOverlay Economic section row content '
     '(SPEC § Economic improved-before-improvable order + omit coordinates)',
     () {
-      testWidgets(
-        'improved row renders before improvable row within the same '
-        'resource bucket',
-        (WidgetTester tester) async {
-          final improvedTk = _tileKey(0, 0);
-          final improvableTk = _tileKey(1, 0);
-          final game = _gameWithGrainTiles(
-            tileKeys: [improvedTk, improvableTk],
-            improvementByTile: {improvedTk: 2},
-          );
-          // Dense row-major grid (cellAt(x, y) == cells[y * width + x]).
-          final region = _regionWithGrainCells(
-            [(x: 0, y: 0), (x: 1, y: 0)],
-            width: 2,
-            height: 1,
-          );
+      testWidgets('improved row renders before improvable row within the same '
+          'resource bucket', (WidgetTester tester) async {
+        final improvedTk = econRowOrderTileKey(0, 0);
+        final improvableTk = econRowOrderTileKey(1, 0);
+        final game = econRowOrderGameWithGrainTiles(
+          tileKeys: [improvedTk, improvableTk],
+          improvementByTile: {improvedTk: 2},
+        );
+        // Dense row-major grid (cellAt(x, y) == cells[y * width + x]).
+        final region = econRowOrderRegionWithGrainCells(
+          [(x: 0, y: 0), (x: 1, y: 0)],
+          width: 2,
+          height: 1,
+        );
 
-          await tester.pumpWidget(
-            _overlay(
-              game: game,
-              region: region,
-              selectedTileKey: improvedTk,
-              playerView: _omniscientViewForTiles([improvedTk, improvableTk]),
-            ),
-          );
-          await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _overlay(
+            game: game,
+            region: region,
+            selectedTileKey: improvedTk,
+            playerView: econRowOrderOmniscientViewForTiles([
+              improvedTk,
+              improvableTk,
+            ]),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-          final improved = _improvedRowLabelFinder();
-          final improvable = _improvableRowLabelFinder();
-          expect(
-            improved,
-            findsOneWidget,
-            reason:
-                'Test setup: improvementByTile[$improvedTk] = 2 must render '
-                'one "{terrain}/Grain with {impBase}" improved row.',
-          );
-          expect(
-            improvable,
-            findsOneWidget,
-            reason:
-                'Test setup: the unimproved grain tile $improvableTk must '
-                'render one "{terrain}/Grain (improvable)" row.',
-          );
+        final improved = _improvedRowLabelFinder();
+        final improvable = _improvableRowLabelFinder();
+        expect(
+          improved,
+          findsOneWidget,
+          reason:
+              'Test setup: improvementByTile[$improvedTk] = 2 must render '
+              'one "{terrain}/Grain with {impBase}" improved row.',
+        );
+        expect(
+          improvable,
+          findsOneWidget,
+          reason:
+              'Test setup: the unimproved grain tile $improvableTk must '
+              'render one "{terrain}/Grain (improvable)" row.',
+        );
 
-          final double improvedDy = tester.getCenter(improved).dy;
-          final double improvableDy = tester.getCenter(improvable).dy;
-          expect(
-            improvedDy,
-            lessThan(improvableDy),
-            reason:
-                'SPEC § "Economic improved before improvable order": within '
-                'a single resource bucket the UI layer lists improved tiles '
-                'first and improvable terrain rows after, so the improved '
-                'row must sit above the improvable row in the section column.',
-          );
-        },
-      );
+        final double improvedDy = tester.getCenter(improved).dy;
+        final double improvableDy = tester.getCenter(improvable).dy;
+        expect(
+          improvedDy,
+          lessThan(improvableDy),
+          reason:
+              'SPEC § "Economic improved before improvable order": within '
+              'a single resource bucket the UI layer lists improved tiles '
+              'first and improvable terrain rows after, so the improved '
+              'row must sit above the improvable row in the section column.',
+        );
+      });
 
       testWidgets(
         'economic improved and improvable row text omits tile coordinates',
         (WidgetTester tester) async {
-          final improvedTk = _tileKey(0, 0);
-          final improvableTk = _tileKey(1, 0);
-          final game = _gameWithGrainTiles(
+          final improvedTk = econRowOrderTileKey(0, 0);
+          final improvableTk = econRowOrderTileKey(1, 0);
+          final game = econRowOrderGameWithGrainTiles(
             tileKeys: [improvedTk, improvableTk],
             improvementByTile: {improvedTk: 2},
           );
           // Dense row-major grid (cellAt(x, y) == cells[y * width + x]).
-          final region = _regionWithGrainCells(
+          final region = econRowOrderRegionWithGrainCells(
             [(x: 0, y: 0), (x: 1, y: 0)],
             width: 2,
             height: 1,
@@ -248,7 +151,10 @@ void main() {
               game: game,
               region: region,
               selectedTileKey: improvedTk,
-              playerView: _omniscientViewForTiles([improvedTk, improvableTk]),
+              playerView: econRowOrderOmniscientViewForTiles([
+                improvedTk,
+                improvableTk,
+              ]),
             ),
           );
           await tester.pumpAndSettle();

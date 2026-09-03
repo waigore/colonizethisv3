@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'naval_panel_combine_tables.dart';
 import 'naval_units_panel_host_helpers.dart';
 import 'naval_units_panel_scoped_harness.dart';
+import 'naval_units_panel_interaction_combine_helpers.dart';
 import 'naval_units_panel_interaction_tile_helpers.dart';
 import 'naval_units_panel_test_scenarios.dart';
 import 'naval_units_panel_wire_helpers.dart';
