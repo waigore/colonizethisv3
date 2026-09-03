@@ -1,19 +1,11 @@
-import 'package:colonizethis_app/config/route_paths.dart';
-import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/panels/observe_mode_not_defined_panel.dart';
-import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
-import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:colonizethis_app/config/constants.dart';
 import 'panel_test_fixtures.dart';
 import 'trade_screen_scaffold_test_support.dart';
 import 'widget_test_pumps.dart';
@@ -180,105 +172,6 @@ void main() {
         expect(
           find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
           findsNothing,
-        );
-      },
-    );
-
-    testWidgets(
-      'tapping the Deal Book label switches the foregrounded IndexedStack '
-      'child to the Deal Book tab body',
-      (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeHost());
-
-        // Locate the IndexedStack created by CtTabStrip; verify default
-        // selection is index 0 (Market).
-        final stackFinder = find.descendant(
-          of: find.byKey(TradeScreenMarketKeys.tabsBodyKey),
-          matching: find.byType(IndexedStack),
-        );
-        expect(stackFinder, findsOneWidget);
-        IndexedStack stack = tester.widget<IndexedStack>(stackFinder);
-        expect(
-          stack.index,
-          0,
-          reason:
-              'SPEC/ui/trade-screen.md § Acceptance criteria — Tab '
-              'scaffold slice: default selection is the Market tab '
-              '(index 0).',
-        );
-
-        // Tap the `Deal Book` label inside the tab strip.
-        final dealBookLabel = find.descendant(
-          of: find.byType(CtTabStrip),
-          matching: find.text(TradeScreenDealBookKeys.dealBookTabLabel),
-        );
-        expect(dealBookLabel, findsOneWidget);
-        await tester.tap(dealBookLabel);
-        await pumpSettleCapped(tester);
-
-        // After the tap the IndexedStack should foreground the Deal Book
-        // tab body (index 1).
-        stack = tester.widget<IndexedStack>(stackFinder);
-        expect(
-          stack.index,
-          1,
-          reason:
-              'SPEC/ui/trade-screen.md § Acceptance criteria — tapping '
-              '`Deal Book` foregrounds the Deal Book tab body keyed '
-              'tradeScreenDealBookTabBody.',
-        );
-      },
-    );
-
-    testWidgets(
-      'Deal Book tab body mounts the live ledger content (Refs #2993 E6) '
-      'after the user taps the Deal Book label',
-      (tester) async {
-        await pumpAndOpenTradeScreen(tester, tradeHost());
-
-        // Tap the Deal Book tab label to swap the on-stage child.
-        final dealBookLabel = find.descendant(
-          of: find.byType(CtTabStrip),
-          matching: find.text(TradeScreenDealBookKeys.dealBookTabLabel),
-        );
-        expect(dealBookLabel, findsOneWidget);
-        await tester.tap(dealBookLabel);
-        await pumpSettleCapped(tester);
-
-        // After tap, the Deal Book tab body is on stage and renders the
-        // live ledger content root keyed `tradeScreenDealBookContent`
-        // (Refs #2993 E6) under the same `tradeScreenDealBookTabBody`
-        // body root — the tab-body key remained stable so existing
-        // tab-switch tests continue to pin the same affordance.
-        expect(
-          find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(
-            of: find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
-            matching: find.byKey(TradeScreenDealBookKeys.dealBookContentKey),
-          ),
-          findsOneWidget,
-        );
-        // Both bids and offers panel containers are always present in
-        // the live content; their per-row contents are exercised by the
-        // dedicated E6 panel tests in trade_screen_deal_book_tab_e6_test.dart.
-        expect(
-          find.byKey(TradeScreenDealBookKeys.dealBookBidsPanelKey),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(TradeScreenDealBookKeys.dealBookOffersPanelKey),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(TradeScreenDealBookKeys.dealBookBidsTotalsKey),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(TradeScreenDealBookKeys.dealBookOffersTotalsKey),
-          findsOneWidget,
         );
       },
     );

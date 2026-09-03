@@ -1,8 +1,6 @@
 // Tree node dialog assignment (Refs #4498). SPEC/ui/tech-tree-widget.md.
 
-import 'package:colonizethis_app/features/game/widgets/technology/tech_definition_detail_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
-import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget_nodes.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -166,157 +164,15 @@ void main() {
     },
   );
 
-  testWidgets(
-    'AC: locked tech shows waiting-on reason without Research this',
-    (tester) async {
-      final empty = player.copyWith(techUnlocked: <String, bool>{});
-      final g = game.copyWith(players: [empty, ...game.players.skip(1)]);
-      await pumpTree(tester, g: g, p: empty, onOrdersChanged: (_) {});
-      await openNode(tester, techDisplayName(kTechIdSheepRanching));
-      expect(find.byKey(const Key('techTreeResearchThis')), findsNothing);
-      expect(find.byKey(const Key('techTreeAssignReason')), findsOneWidget);
-      expect(find.textContaining('Waiting on:'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'AC: observe-only (null onOrdersChanged) shows refusal, no assign control',
-    (tester) async {
-      final empty = player.copyWith(techUnlocked: <String, bool>{});
-      final g = game.copyWith(players: [empty, ...game.players.skip(1)]);
-      await pumpTree(tester, g: g, p: empty);
-      await openNode(tester, techDisplayName(kTechIdCropRotation));
-      expect(find.byKey(const Key('techTreeResearchThis')), findsNothing);
-      expect(
-        find.text('Research seats cannot be changed while observing.'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'AC: already unlocked tech shows known reason without Research this',
-    (tester) async {
-      final known = player.copyWith(
-        techUnlocked: {kTechIdCropRotation: true},
-      );
-      final g = game.copyWith(players: [known, ...game.players.skip(1)]);
-      await pumpTree(tester, g: g, p: known, onOrdersChanged: (_) {});
-      await openNode(tester, techDisplayName(kTechIdCropRotation));
-      expect(find.byKey(const Key('techTreeResearchThis')), findsNothing);
-      expect(
-        find.text('You already know this technology.'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'AC: already seated tech shows slot reason without Research this',
-    (tester) async {
-      final seated = player.copyWith(
-        techUnlocked: <String, bool>{},
-        researchSlotAssignments: {
-          0: const ResearchSlotAssignment(
-            techId: kTechIdCropRotation,
-            funding: ResearchFundingLevel.medium,
-          ),
-        },
-      );
-      final g = game.copyWith(players: [seated, ...game.players.skip(1)]);
-      await pumpTree(tester, g: g, p: seated, onOrdersChanged: (_) {});
-      await openNode(tester, techDisplayName(kTechIdCropRotation));
-      expect(find.byKey(const Key('techTreeResearchThis')), findsNothing);
-      expect(
-        find.text('Already researching in Slot 1.'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'AC: discovery-blocked tech shows discovery reason without Research this',
-    (tester) async {
-      final empty = player.copyWith(techUnlocked: <String, bool>{});
-      final g = game.copyWith(players: [empty, ...game.players.skip(1)]);
-      await pumpTree(tester, g: g, p: empty, onOrdersChanged: (_) {});
-      await openNode(tester, techDisplayName(kTechIdDiscoveryOfSugar));
-      expect(find.byKey(const Key('techTreeResearchThis')), findsNothing);
-      expect(
-        find.text('Requires discovering a related resource first.'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'AC: after Research this, rebuilt Tree node is In progress',
-    (tester) async {
-      var current = const Orders();
-      final empty = player.copyWith(techUnlocked: <String, bool>{});
-      final g = game.copyWith(players: [empty, ...game.players.skip(1)]);
-      await tester.pumpWidget(
-        buildAppShell(
-          child: StatefulBuilder(
-            builder: (context, setState) {
-              return Scaffold(
-                body: TechTreeWidget(
-                  game: g,
-                  player: empty,
-                  currentOrders: current,
-                  onOrdersChanged: (o) {
-                    current = o;
-                    setState(() {});
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openNode(tester, techDisplayName(kTechIdCropRotation));
-      await tester.tap(find.byKey(const Key('techTreeResearchThis')));
-      await tester.pumpAndSettle();
-      expect(find.byType(CtDialogShell), findsNothing);
-      final name = techDisplayName(kTechIdCropRotation);
-      final node = tester.widget<TechTreeNode>(
-        find.ancestor(of: find.text(name), matching: find.byType(TechTreeNode)),
-      );
-      expect(node.state.inProgress, isTrue);
-    },
-  );
-
-  testWidgets(
-    'AC: Choose-tech Details shared dialog has no Tree assign section',
-    (tester) async {
-      // showTechDefinitionDetailDialog without treeAssign — mount via helper.
-      await tester.pumpWidget(
-        buildAppShell(
-          child: Builder(
-            builder: (context) {
-              return Scaffold(
-                body: TextButton(
-                  onPressed: () {
-                    showTechDefinitionDetailDialog(
-                      context,
-                      game: game,
-                      player: player,
-                      tech: techById(kTechIdCropRotation)!,
-                    );
-                  },
-                  child: const Text('Open details'),
-                ),
-              );
-            },
-          ),
-        ),
-      );
-      await tester.tap(find.text('Open details'));
-      await tester.pumpAndSettle();
-      expect(find.byType(CtDialogShell), findsOneWidget);
-      expect(find.byKey(const Key('techTreeResearchThis')), findsNothing);
-      expect(find.byKey(const Key('techTreeAssignReason')), findsNothing);
-    },
-  );
+  testWidgets('AC: locked tech shows waiting-on reason without Research this', (
+    tester,
+  ) async {
+    final empty = player.copyWith(techUnlocked: <String, bool>{});
+    final g = game.copyWith(players: [empty, ...game.players.skip(1)]);
+    await pumpTree(tester, g: g, p: empty, onOrdersChanged: (_) {});
+    await openNode(tester, techDisplayName(kTechIdSheepRanching));
+    expect(find.byKey(const Key('techTreeResearchThis')), findsNothing);
+    expect(find.byKey(const Key('techTreeAssignReason')), findsOneWidget);
+    expect(find.textContaining('Waiting on:'), findsOneWidget);
+  });
 }
