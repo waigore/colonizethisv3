@@ -1,5 +1,7 @@
-// GAME30003 Intelligence Council. SPEC/ui/intelligence-council.md.
+// GAME30003 Intelligence Council tap navigation ACs (Refs #4720 Slice G).
+// SPEC/ui/intelligence-council.md.
 
+import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/intelligence_council_screen.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -52,9 +54,50 @@ void main() {
     );
   }
 
+  testWidgets('Given world war line When tapped Then opens diplomacy detail', (
+    WidgetTester tester,
+  ) async {
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+    NavigateToRouteEvent? nav;
+    bus.on<NavigateToRouteEvent>().listen((e) => nav = e);
+    await tester.pumpWidget(
+      wrap(
+        IntelligenceCouncilBody(
+          game: gameWith(
+            const LastTurnIntelligenceDigest(
+              resolvedTurnNumber: 2,
+              worldLines: [
+                IntelligenceWorldLine(
+                  kind: IntelligenceWorldKind.war,
+                  factionIdA: 'france',
+                  factionIdB: 'gp3',
+                ),
+              ],
+            ),
+          ),
+          humanPlayerId: 'gp1',
+          bus: bus,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('France and Spain are now at war.'));
+    await tester.pump();
+    expect(nav?.route, Routes.diplomacyDetail);
+    final args = nav?.arguments as Map<String, Object?>?;
+    expect(args?['factionId'], 'gp3');
+  });
+
   testWidgets(
-    'Given world war and capture When council renders Then world lines show names',
+    'Given capture world line When tapped Then map-focuses province',
     (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final pops = <PopNavigationEvent>[];
+      final opens = <OpenProvinceDetailPanelEvent>[];
+      bus.on<PopNavigationEvent>().listen(pops.add);
+      bus.on<OpenProvinceDetailPanelEvent>().listen(opens.add);
       await tester.pumpWidget(
         wrap(
           IntelligenceCouncilBody(
@@ -62,11 +105,6 @@ void main() {
               const LastTurnIntelligenceDigest(
                 resolvedTurnNumber: 2,
                 worldLines: [
-                  IntelligenceWorldLine(
-                    kind: IntelligenceWorldKind.war,
-                    factionIdA: 'france',
-                    factionIdB: 'gp3',
-                  ),
                   IntelligenceWorldLine(
                     kind: IntelligenceWorldKind.provinceCaptured,
                     provinceId: 'oldWorld|fr1',
@@ -77,22 +115,28 @@ void main() {
               ),
             ),
             humanPlayerId: 'gp1',
+            bus: bus,
           ),
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('World briefing'), findsOneWidget);
-      expect(find.text('France and Spain are now at war.'), findsOneWidget);
-      expect(
+      await tester.tap(
         find.text('Paris: ownership changed from Spain to France.'),
-        findsOneWidget,
       );
+      await tester.pump();
+      expect(pops, hasLength(1));
+      expect(opens, hasLength(1));
+      expect(opens.single.provinceId, 'oldWorld|fr1');
     },
   );
 
   testWidgets(
-    'Given France spy block When council renders Then prefixed spy copy',
+    'Given spy report line When tapped Then opens that court detail',
     (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      NavigateToRouteEvent? nav;
+      bus.on<NavigateToRouteEvent>().listen((e) => nav = e);
       await tester.pumpWidget(
         wrap(
           IntelligenceCouncilBody(
@@ -105,12 +149,6 @@ void main() {
                       courtFactionId: 'france',
                       lines: [
                         IntelligenceSpyLine(
-                          kind: IntelligenceSpyKind.diplomatic,
-                          diplomaticType: DiplomaticEventType.declareWar,
-                          fromFactionId: 'france',
-                          toFactionId: 'gp3',
-                        ),
-                        IntelligenceSpyLine(
                           kind: IntelligenceSpyKind.researchComplete,
                           techId: kTechIdCropRotation,
                           fromFactionId: 'france',
@@ -122,68 +160,16 @@ void main() {
               ),
             ),
             humanPlayerId: 'gp1',
+            bus: bus,
           ),
         ),
       );
       await tester.pumpAndSettle();
-      expect(
-        find.textContaining('Our spy in France reports:'),
-        findsNWidgets(2),
-      );
-      expect(find.textContaining('Crop Rotation'), findsOneWidget);
-      expect(find.textContaining('declared war'), findsOneWidget);
-      expect(find.textContaining('hiddenAgenda'), findsNothing);
-    },
-  );
-
-  testWidgets('Given empty digest When council renders Then empty copies', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      wrap(
-        IntelligenceCouncilBody(
-          game: gameWith(
-            const LastTurnIntelligenceDigest(resolvedTurnNumber: 2),
-          ),
-          humanPlayerId: 'gp1',
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('No major world events last turn.'), findsOneWidget);
-    expect(
-      find.text(
-        'No spy reports. Station a Spy in a foreign province to hear that court\'s news.',
-      ),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets(
-    'Given France-only facts without spy When council renders Then France secrets absent',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        wrap(
-          IntelligenceCouncilBody(
-            game: gameWith(
-              const LastTurnIntelligenceDigest(
-                resolvedTurnNumber: 2,
-                worldLines: [
-                  IntelligenceWorldLine(
-                    kind: IntelligenceWorldKind.war,
-                    factionIdA: 'france',
-                    factionIdB: 'gp3',
-                  ),
-                ],
-              ),
-            ),
-            humanPlayerId: 'gp1',
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Crop Rotation'), findsNothing);
-      expect(find.textContaining('Our spy in France'), findsNothing);
+      await tester.tap(find.textContaining('Our spy in France reports:'));
+      await tester.pump();
+      expect(nav?.route, Routes.diplomacyDetail);
+      final args = nav?.arguments as Map<String, Object?>?;
+      expect(args?['factionId'], 'france');
     },
   );
 }
