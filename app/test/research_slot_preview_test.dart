@@ -16,10 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_preview.dart';
 
-Player _player({
-  int treasury = 0,
-  Map<String, bool>? techUnlocked,
-}) {
+Player _player({int treasury = 0, Map<String, bool>? techUnlocked}) {
   return Player(
     id: 'p1',
     displayName: 'Tester',
@@ -58,55 +55,56 @@ void main() {
       expect(preview.showsAnticipatedSegment, isFalse);
     });
 
-    test('positive: Medium funding with ample treasury applies full RP/gold', () {
-      final preview = computeResearchSlotTurnPreview(
-        player: _player(treasury: 10000),
-        tech: _tech(cost: 1800),
-        committedProgress: 0,
-        funding: ResearchFundingLevel.medium,
-      );
+    test(
+      'positive: Medium funding with ample treasury applies full RP/gold',
+      () {
+        final preview = computeResearchSlotTurnPreview(
+          player: _player(treasury: 10000),
+          tech: _tech(cost: 1800),
+          committedProgress: 0,
+          funding: ResearchFundingLevel.medium,
+        );
 
-      expect(preview.baseRpPerTurn, researchPointsMedium);
-      expect(preview.industrialBonusRpPerTurn, 0);
-      expect(preview.hasIndustrialBonus, isFalse);
-      expect(preview.anticipatedRpPerTurn, researchPointsMedium);
-      expect(preview.effectiveRpPerTurn, researchPointsMedium);
-      expect(preview.goldCostPerTurn, researchTreasuryCostMedium);
-      expect(preview.goldSpentThisTurn, researchTreasuryCostMedium);
-      expect(preview.debtBlocked, isFalse);
-      expect(preview.showsAnticipatedSegment, isTrue);
-    });
+        expect(preview.baseRpPerTurn, researchPointsMedium);
+        expect(preview.industrialBonusRpPerTurn, 0);
+        expect(preview.hasIndustrialBonus, isFalse);
+        expect(preview.anticipatedRpPerTurn, researchPointsMedium);
+        expect(preview.effectiveRpPerTurn, researchPointsMedium);
+        expect(preview.goldCostPerTurn, researchTreasuryCostMedium);
+        expect(preview.goldSpentThisTurn, researchTreasuryCostMedium);
+        expect(preview.debtBlocked, isFalse);
+        expect(preview.showsAnticipatedSegment, isTrue);
+      },
+    );
 
     test(
-        'negative: spend below the debt floor blocks RP/gold but keeps the cost',
-        () {
-      // No money_lending => max debt 0; treasury 0 - 150 = -150 < 0.
-      final preview = computeResearchSlotTurnPreview(
-        player: _player(treasury: 0),
-        tech: _tech(),
-        committedProgress: 0,
-        funding: ResearchFundingLevel.medium,
-      );
+      'negative: spend below the debt floor blocks RP/gold but keeps the cost',
+      () {
+        // No money_lending => max debt 0; treasury 0 - 150 = -150 < 0.
+        final preview = computeResearchSlotTurnPreview(
+          player: _player(treasury: 0),
+          tech: _tech(),
+          committedProgress: 0,
+          funding: ResearchFundingLevel.medium,
+        );
 
-      expect(preview.debtBlocked, isTrue);
-      expect(preview.anticipatedRpPerTurn, 0);
-      expect(preview.goldSpentThisTurn, 0);
-      // The per-turn cost and the effective RP are still surfaced for the
-      // breakdown dialog even though nothing is applied.
-      expect(preview.goldCostPerTurn, researchTreasuryCostMedium);
-      expect(preview.effectiveRpPerTurn, researchPointsMedium);
-      expect(preview.showsAnticipatedSegment, isFalse);
-    });
+        expect(preview.debtBlocked, isTrue);
+        expect(preview.anticipatedRpPerTurn, 0);
+        expect(preview.goldSpentThisTurn, 0);
+        // The per-turn cost and the effective RP are still surfaced for the
+        // breakdown dialog even though nothing is applied.
+        expect(preview.goldCostPerTurn, researchTreasuryCostMedium);
+        expect(preview.effectiveRpPerTurn, researchPointsMedium);
+        expect(preview.showsAnticipatedSegment, isFalse);
+      },
+    );
 
     test('positive: banking raises the debt floor so the spend is allowed', () {
       // banking => max debt 1000; treasury 0 - 150 = -150 >= -1000.
       final preview = computeResearchSlotTurnPreview(
         player: _player(
           treasury: 0,
-          techUnlocked: const {
-            kTechIdMoneyLending: true,
-            kTechIdBanking: true,
-          },
+          techUnlocked: const {kTechIdMoneyLending: true, kTechIdBanking: true},
         ),
         tech: _tech(),
         committedProgress: 0,
@@ -118,8 +116,7 @@ void main() {
       expect(preview.goldSpentThisTurn, researchTreasuryCostMedium);
     });
 
-    test(
-        'positive: industrial funding adds +20% RP for a military tech', () {
+    test('positive: industrial funding adds +20% RP for a military tech', () {
       final preview = computeResearchSlotTurnPreview(
         player: _player(
           treasury: 10000,
@@ -136,10 +133,7 @@ void main() {
         preview.industrialBonusRpPerTurn,
         (researchPointsMedium * 1.2).floor() - researchPointsMedium,
       );
-      expect(
-        preview.effectiveRpPerTurn,
-        (researchPointsMedium * 1.2).floor(),
-      );
+      expect(preview.effectiveRpPerTurn, (researchPointsMedium * 1.2).floor());
       expect(
         preview.anticipatedRpPerTurn,
         (researchPointsMedium * 1.2).floor(),
@@ -162,148 +156,40 @@ void main() {
       expect(preview.effectiveRpPerTurn, researchPointsMedium);
     });
 
-    test('positive: progress fractions derive from committed + anticipated RP',
-        () {
-      final preview = computeResearchSlotTurnPreview(
-        player: _player(treasury: 10000),
-        tech: _tech(cost: 1000),
-        committedProgress: 400,
-        funding: ResearchFundingLevel.medium,
-      );
-
-      expect(preview.committedFraction, closeTo(0.4, 1e-9));
-      expect(preview.anticipatedFraction, closeTo(0.3, 1e-9));
-    });
-
-    test('positive: anticipated fraction is capped to the remaining bar width',
-        () {
-      // committed 900/1000 leaves 100 RP of headroom; Medium adds 300 RP, so
-      // the anticipated segment must clamp to 0.1 (not overflow past 100%).
-      final preview = computeResearchSlotTurnPreview(
-        player: _player(treasury: 10000),
-        tech: _tech(cost: 1000),
-        committedProgress: 900,
-        funding: ResearchFundingLevel.medium,
-      );
-
-      expect(preview.committedFraction, closeTo(0.9, 1e-9));
-      expect(preview.anticipatedFraction, closeTo(0.1, 1e-9));
-      expect(
-        preview.committedFraction + preview.anticipatedFraction,
-        lessThanOrEqualTo(1.0 + 1e-9),
-      );
-    });
-  });
-
-  group('computeResearchSlotsTurnPreview', () {
     test(
-        'positive: sequential walk blocks later slot when treasury exhausted',
-        () {
-      final tech = _tech();
-      final preview = computeResearchSlotsTurnPreview(
-        player: _player(treasury: 200),
-        occupiedSlots: [
-          ResearchSlotPreviewInput(
-            slotIndex: 0,
-            tech: tech,
-            committedProgress: 0,
-            funding: ResearchFundingLevel.medium,
-          ),
-          ResearchSlotPreviewInput(
-            slotIndex: 1,
-            tech: tech,
-            committedProgress: 0,
-            funding: ResearchFundingLevel.medium,
-          ),
-        ],
-      );
+      'positive: progress fractions derive from committed + anticipated RP',
+      () {
+        final preview = computeResearchSlotTurnPreview(
+          player: _player(treasury: 10000),
+          tech: _tech(cost: 1000),
+          committedProgress: 400,
+          funding: ResearchFundingLevel.medium,
+        );
 
-      expect(preview.bySlotIndex[0]!.goldSpentThisTurn, researchTreasuryCostMedium);
-      expect(preview.bySlotIndex[0]!.anticipatedRpPerTurn, researchPointsMedium);
-      expect(preview.bySlotIndex[0]!.sequentialBlocked, isFalse);
+        expect(preview.committedFraction, closeTo(0.4, 1e-9));
+        expect(preview.anticipatedFraction, closeTo(0.3, 1e-9));
+      },
+    );
 
-      expect(preview.bySlotIndex[1]!.goldSpentThisTurn, 0);
-      expect(preview.bySlotIndex[1]!.anticipatedRpPerTurn, 0);
-      expect(preview.bySlotIndex[1]!.debtBlocked, isTrue);
-      expect(preview.bySlotIndex[1]!.sequentialBlocked, isTrue);
+    test(
+      'positive: anticipated fraction is capped to the remaining bar width',
+      () {
+        // committed 900/1000 leaves 100 RP of headroom; Medium adds 300 RP, so
+        // the anticipated segment must clamp to 0.1 (not overflow past 100%).
+        final preview = computeResearchSlotTurnPreview(
+          player: _player(treasury: 10000),
+          tech: _tech(cost: 1000),
+          committedProgress: 900,
+          funding: ResearchFundingLevel.medium,
+        );
 
-      expect(preview.totalGoldSpent, researchTreasuryCostMedium);
-      expect(preview.totalRp, researchPointsMedium);
-      expect(preview.hasSpend, isTrue);
-    });
-
-    test('positive: ample treasury sums all slot spends in header totals', () {
-      final tech = _tech();
-      final preview = computeResearchSlotsTurnPreview(
-        player: _player(treasury: 8000),
-        occupiedSlots: [
-          ResearchSlotPreviewInput(
-            slotIndex: 0,
-            tech: tech,
-            committedProgress: 0,
-            funding: ResearchFundingLevel.medium,
-          ),
-          ResearchSlotPreviewInput(
-            slotIndex: 1,
-            tech: tech,
-            committedProgress: 0,
-            funding: ResearchFundingLevel.low,
-          ),
-        ],
-      );
-
-      final slot0 = preview.bySlotIndex[0]!;
-      final slot1 = preview.bySlotIndex[1]!;
-      expect(
-        preview.totalGoldSpent,
-        slot0.goldSpentThisTurn + slot1.goldSpentThisTurn,
-      );
-      expect(
-        preview.totalRp,
-        slot0.anticipatedRpPerTurn + slot1.anticipatedRpPerTurn,
-      );
-    });
-
-    test('negative: independent single-slot preview over-estimates later slots',
-        () {
-      final tech = _tech();
-      final independentSlot1 = computeResearchSlotTurnPreview(
-        player: _player(treasury: 200),
-        tech: tech,
-        committedProgress: 0,
-        funding: ResearchFundingLevel.medium,
-      );
-      final sequential = computeResearchSlotsTurnPreview(
-        player: _player(treasury: 200),
-        occupiedSlots: [
-          ResearchSlotPreviewInput(
-            slotIndex: 0,
-            tech: tech,
-            committedProgress: 0,
-            funding: ResearchFundingLevel.medium,
-          ),
-          ResearchSlotPreviewInput(
-            slotIndex: 1,
-            tech: tech,
-            committedProgress: 0,
-            funding: ResearchFundingLevel.medium,
-          ),
-        ],
-      );
-
-      expect(independentSlot1.anticipatedRpPerTurn, researchPointsMedium);
-      expect(sequential.bySlotIndex[1]!.anticipatedRpPerTurn, 0);
-    });
-
-    test('positive: empty occupied list yields no spend summary', () {
-      final preview = computeResearchSlotsTurnPreview(
-        player: _player(treasury: 500),
-        occupiedSlots: const [],
-      );
-
-      expect(preview.hasSpend, isFalse);
-      expect(preview.totalGoldSpent, 0);
-      expect(preview.totalRp, 0);
-    });
+        expect(preview.committedFraction, closeTo(0.9, 1e-9));
+        expect(preview.anticipatedFraction, closeTo(0.1, 1e-9));
+        expect(
+          preview.committedFraction + preview.anticipatedFraction,
+          lessThanOrEqualTo(1.0 + 1e-9),
+        );
+      },
+    );
   });
 }

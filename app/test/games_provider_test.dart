@@ -38,7 +38,10 @@ void main() {
   test('empty-state provider reads when no games / no current game', () async {
     final container = gamesProviderTestContainer();
     expect(await container.read(gameListIdsProvider.future), isEmpty);
-    expect(container.read(availableWorkTargetIdsForUnitProvider('u1')), isEmpty);
+    expect(
+      container.read(availableWorkTargetIdsForUnitProvider('u1')),
+      isEmpty,
+    );
     expect(container.read(devExclusiveReservedWorkTileKeysProvider), isEmpty);
   });
 
@@ -47,7 +50,10 @@ void main() {
     final gameService = container.read(gameServiceProvider);
     expect(gameService, isA<GameService>());
 
-    final game = gamesProviderCreateStandardGame(gameService, 'games_provider_derived');
+    final game = gamesProviderCreateStandardGame(
+      gameService,
+      'games_provider_derived',
+    );
     container.read(currentGameProvider.notifier).setGame(game);
 
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
@@ -121,6 +127,7 @@ void main() {
       final m = e.message;
       if (m is String) logMessages.add(m);
     }
+
     Logger.addLogListener(onLog);
     addTearDown(() => Logger.removeLogListener(onLog));
 
@@ -230,93 +237,4 @@ void main() {
     diplomacy.clear();
     expect(container.read(pendingDiplomacyProvider), isNull);
   });
-
-  test(
-    'panel-open provider latency median stays within 1.5x from early to late fixture',
-    () {
-      const explorerId = 'explorer_1';
-      const humanId = 'gp1';
-      const startTileKey = 'oldWorld|p0|0|0';
-      final earlyGame = gamesProviderExplorerFixture(
-        id: 'games_provider_perf_early',
-        provinceCount: 5,
-        tilesPerProvince: 4,
-      );
-      final lateGame = gamesProviderExplorerFixture(
-        id: 'games_provider_perf_late',
-        provinceCount: 30,
-        tilesPerProvince: 12,
-      );
-
-      final earlyContainer = gamesProviderTestContainer();
-      earlyContainer.read(currentGameProvider.notifier).setGame(earlyGame);
-      earlyContainer
-          .read(currentOrdersProvider.notifier)
-          .replaceAll(
-            const Orders(
-              workOrdersByPlayerId: {
-                humanId: [
-                  WorkOrder(
-                    unitId: explorerId,
-                    target: kWorkTargetExplore,
-                    targetTileKey: startTileKey,
-                  ),
-                ],
-              },
-            ),
-          );
-
-      final lateContainer = gamesProviderTestContainer();
-      lateContainer.read(currentGameProvider.notifier).setGame(lateGame);
-      lateContainer
-          .read(currentOrdersProvider.notifier)
-          .replaceAll(
-            const Orders(
-              workOrdersByPlayerId: {
-                humanId: [
-                  WorkOrder(
-                    unitId: explorerId,
-                    target: kWorkTargetExplore,
-                    targetTileKey: startTileKey,
-                  ),
-                ],
-              },
-            ),
-          );
-
-      for (var i = 0; i < 5; i++) {
-        earlyContainer.read(availableWorkTargetIdsForUnitProvider(explorerId));
-        lateContainer.read(availableWorkTargetIdsForUnitProvider(explorerId));
-      }
-
-      final earlyDurations = <Duration>[];
-      final lateDurations = <Duration>[];
-      for (var i = 0; i < 25; i++) {
-        var sw = Stopwatch()..start();
-        earlyContainer.read(availableWorkTargetIdsForUnitProvider(explorerId));
-        sw.stop();
-        earlyDurations.add(sw.elapsed);
-
-        sw = Stopwatch()..start();
-        lateContainer.read(availableWorkTargetIdsForUnitProvider(explorerId));
-        sw.stop();
-        lateDurations.add(sw.elapsed);
-      }
-
-      final earlyMedian = gamesProviderMedianDuration(earlyDurations);
-      final lateMedian = gamesProviderMedianDuration(lateDurations);
-      final denominator = earlyMedian.inMicroseconds == 0
-          ? 1
-          : earlyMedian.inMicroseconds;
-      final ratio = lateMedian.inMicroseconds / denominator;
-
-      expect(
-        ratio,
-        lessThanOrEqualTo(1.5),
-        reason:
-            'Late fixture panel-open availability should remain <=1.5x early '
-            'fixture median latency (Refs #2133 AC6).',
-      );
-    },
-  );
 }

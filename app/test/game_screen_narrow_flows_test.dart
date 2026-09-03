@@ -1,9 +1,7 @@
 // In-game shell flows. SPEC/ui/in-game-shell-narrow.md, next-turn / pause / back.
 
 import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData;
@@ -42,19 +40,6 @@ void main() {
         height: height,
         navigatorKey: appNavigatorKey,
       );
-
-  Widget buildShellToGameFlow({
-    required double width,
-    required double height,
-    TargetPlatform platform = TargetPlatform.android,
-  }) => buildGameScreenShellToGameFlow(
-    gamesBox: gamesBox,
-    game: baseGame,
-    mapViewData: lightMapViewData,
-    width: width,
-    height: height,
-    platform: platform,
-  );
 
   group('GameScreen — Next turn confirmation', () {
     testWidgets(
@@ -194,111 +179,6 @@ void main() {
           findsNothing,
         );
         expect(find.byType(GameScreen), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 20)),
-    );
-  });
-
-  group('GameScreen — Android back exit confirmation', () {
-    testWidgets(
-      'AC: pressing back shows pixel-style confirm dialog',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
-        await tester.pump();
-
-        await tester.binding.handlePopRoute();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(find.byType(CtDialogShell), findsOneWidget);
-        expect(find.text('Exit game?'), findsOneWidget);
-        expect(
-          find.text('Your current progress will be lost if not saved.'),
-          findsOneWidget,
-        );
-        expect(find.text('Cancel'), findsOneWidget);
-        expect(find.text('Exit'), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 20)),
-    );
-
-    testWidgets(
-      'AC: tapping Cancel dismisses dialog and stays on game',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
-        await tester.pump();
-
-        await tester.binding.handlePopRoute();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-        await tester.tap(find.text('Cancel'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(find.byType(CtDialogShell), findsNothing);
-        expect(find.byType(GameScreen), findsOneWidget);
-        expect(find.text('Main Menu'), findsNothing);
-      },
-      timeout: const Timeout(Duration(seconds: 20)),
-    );
-
-    testWidgets(
-      'AC: tapping outside dialog dismisses and stays on game',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
-        await tester.pump();
-
-        await tester.binding.handlePopRoute();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-        await tester.tapAt(const Offset(4, 4));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(find.byType(CtDialogShell), findsNothing);
-        expect(find.byType(GameScreen), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 20)),
-    );
-
-    testWidgets(
-      'AC: tapping Exit navigates to main menu route',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(buildShellToGameFlow(width: 800, height: 600));
-        await tester.pump();
-
-        await tester.binding.handlePopRoute();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-        await tester.tap(find.text('Exit'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(find.text('Main Menu'), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 20)),
-    );
-
-    testWidgets(
-      'AC: Android back (platform-configured) shows exit confirm before leaving game',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildShellToGameFlow(
-            width: 800,
-            height: 600,
-            platform: TargetPlatform.android,
-          ),
-        );
-        await tester.pump();
-
-        await tester.binding.handlePopRoute();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(find.byType(CtDialogShell), findsOneWidget);
-        expect(find.text('Exit game?'), findsOneWidget);
-        expect(find.text('Cancel'), findsOneWidget);
-        expect(find.text('Exit'), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

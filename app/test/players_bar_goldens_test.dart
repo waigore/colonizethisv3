@@ -1,16 +1,12 @@
 // Widget goldens for the in-game Players bar visual acceptance criteria
-// (Refs #3898). Pixel baselines live under `app/test/goldens/` and are
-// asserted with `matchesGoldenFile`, following the committed golden harness
-// pattern (`tech_gp_pennant_goldens_test.dart`, `diplomacy_panel_goldens_test.dart`):
-// a keyed `RepaintBoundary` wraps each surface, deterministic fixtures pin
-// GP ownership and power scores, and `AppThemes.editorialMonocle` supplies the
-// dark-theme chrome.
+// (Refs #3898 / #4720 Slice G). Pixel baselines live under `app/test/goldens/`
+// and are asserted with `matchesGoldenFile`.
 //
 // AC mapping:
 //  - AC4  wide chip column sorted by power score with human GP bold accent
-//  - AC3  tab-bar trailing cluster: players toggle immediately left of news
 //  - AC8  narrow players bar below feed anchor (embedded column contract)
-//  - Toggle chrome on/off states for `PlayersBarToggleButton`
+// Toggle chrome: `players_bar_toggle_goldens_test.dart`
+// Tab-bar trailing cluster: `players_bar_tab_bar_trailing_goldens_test.dart`
 //
 // SPEC: `SPEC/ui/empire-overview.md` § Players bar / § Players bar toggle.
 
@@ -22,15 +18,8 @@ import 'golden_capture_harness.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
-    show
-        kGameMapPlayerChipKeyPrefix,
-        kGameMapPlayersBarKey,
-        kPlayersBarToggleButtonKey,
-        kPlayerTurnFeedToggleButtonKey;
+    show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
-import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
-import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
-import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
 
 import 'panel_test_fixtures.dart';
 
@@ -137,129 +126,6 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/players_bar_wide_chips_highlighted.png'),
-      );
-    },
-  );
-
-  testWidgets('golden: players bar toggle chrome on and off (Refs #3898)', (
-    WidgetTester tester,
-  ) async {
-    const onBoundaryKey = ValueKey<String>('players_bar_toggle_on');
-    const offBoundaryKey = ValueKey<String>('players_bar_toggle_off');
-
-    await tester.pumpWidget(
-      _goldenHost(
-        boundaryKey: onBoundaryKey,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PlayersBarToggleButton(
-                tooltip: 'Show players bar',
-                showPlayersBar: true,
-                onPressed: () {},
-              ),
-              const SizedBox(width: 8),
-              PlayersBarToggleButton(
-                tooltip: 'Hide players bar',
-                showPlayersBar: false,
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    await pumpForGolden(tester, settle: false);
-
-    expect(find.byKey(kPlayersBarToggleButtonKey), findsNWidgets(2));
-
-    await expectLater(
-      find.byKey(onBoundaryKey),
-      matchesGoldenFile('goldens/players_bar_toggle_on_off.png'),
-    );
-
-    // Re-pump off-only surface for a dedicated inactive-state baseline.
-    await tester.pumpWidget(
-      _goldenHost(
-        boundaryKey: offBoundaryKey,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: PlayersBarToggleButton(
-            tooltip: 'Hide players bar',
-            showPlayersBar: false,
-            onPressed: () {},
-          ),
-        ),
-      ),
-    );
-    await pumpForGolden(tester, settle: false);
-
-    await expectLater(
-      find.byKey(offBoundaryKey),
-      matchesGoldenFile('goldens/players_bar_toggle_off.png'),
-    );
-  });
-
-  testWidgets(
-    'golden: tab bar trailing cluster players toggle before news (Refs #3898 AC3)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('players_bar_tab_bar_trailing');
-      const surfaceWidth = 420.0;
-
-      await tester.pumpWidget(
-        _goldenHost(
-          boundaryKey: boundaryKey,
-          surfaceSize: const Size(surfaceWidth, GameTabBar.height),
-          child: GameTabBar(
-            regionIndex: 0,
-            onRegionIndexChanged: (_) {},
-            oldWorldLabel: 'Old World',
-            newWorldLabel: 'New World',
-            treasury: 12_345,
-            treasuryDelta: 100,
-            treasuryNotDefined: false,
-            cargoUsed: 2,
-            cargoCapacity: 8,
-            cargoNotDefined: false,
-            isCargoUsedReliable: true,
-            cargoHoldLabel: 'Cargo 2/8',
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                PlayersBarToggleButton(
-                  tooltip: 'Show players bar',
-                  showPlayersBar: true,
-                  onPressed: () {},
-                ),
-                const SizedBox(width: GameTabBar.clusterTrailingGap),
-                PlayerTurnEventsFeedToggleButton(
-                  eventCount: 2,
-                  tooltip: 'Turn events (2)',
-                  showFeed: false,
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-      await pumpForGolden(tester, settle: false);
-
-      expect(find.byKey(kPlayersBarToggleButtonKey), findsOneWidget);
-      expect(find.byKey(kPlayerTurnFeedToggleButtonKey), findsOneWidget);
-      final playersOffset = tester.getTopLeft(
-        find.byKey(kPlayersBarToggleButtonKey),
-      );
-      final newsOffset = tester.getTopLeft(
-        find.byKey(kPlayerTurnFeedToggleButtonKey),
-      );
-      expect(playersOffset.dx, lessThan(newsOffset.dx));
-
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/players_bar_tab_bar_trailing_cluster.png'),
       );
     },
   );

@@ -2,25 +2,21 @@
 // SPEC/ui/counsel-panel.md — Military tab route args and read-only gating.
 
 import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen.dart';
-import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen_tabs.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -72,7 +68,9 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    gamesBox = await openAppTestHiveBox(suiteId: 'counsel_military_screen_train');
+    gamesBox = await openAppTestHiveBox(
+      suiteId: 'counsel_military_screen_train',
+    );
   });
 
   tearDownAll(() async {
@@ -114,37 +112,6 @@ void main() {
         ),
       ),
     ];
-  }
-
-  Future<void> pumpCounselScreen(
-    WidgetTester tester, {
-    required Game game,
-    required AppEventBus bus,
-    CounselTab initialTab = CounselTab.industry,
-    CurrentOrdersNotifier? ordersNotifier,
-    GameService? gameService,
-    bool canMutateViaUi = true,
-  }) async {
-    final playerId = game.players.first.id;
-    await pumpAppShell(
-      tester,
-      overrides: counselScreenOverrides(
-        game: game,
-        bus: bus,
-        ordersNotifier: ordersNotifier,
-        gameService: gameService,
-        canMutateViaUi: canMutateViaUi,
-      ),
-      navigatorKey: appNavigatorKey,
-      onGenerateRoute: Routes.generate,
-      shellWrapper: (app) => AppEventHandlerScope(child: app),
-      child: CounselScreen(
-        game: game,
-        humanPlayerId: playerId,
-        initialTab: initialTab,
-      ),
-    );
-    await pumpSettleCapped(tester);
   }
 
   Game buildTrainCounselScreenGame({required int peasants}) {
@@ -251,65 +218,6 @@ void main() {
       expect(builds.every((o) => o.unitType == unitType), isTrue);
       expect(builds.every((o) => o.isMilitary), isTrue);
       expect(builds.every((o) => o.spawnProvinceId == 'oldWorld|cap'), isTrue);
-    },
-  );
-
-  testWidgets(
-    'train Agree emits snackbar when recommendation is no longer affordable (Refs #4307)',
-    (WidgetTester tester) async {
-      const human = kPanelTestHumanPlayerId;
-      const capProvince = 'oldWorld|cap';
-      const unitType = 'peasant_levies';
-      final game = buildTrainCounselScreenGame(peasants: 2);
-      final bus = AppEventBus.create();
-      final snackbars = <ShowSnackBarEvent>[];
-      bus.on<ShowSnackBarEvent>().listen(snackbars.add);
-      final ordersNotifier = CurrentOrdersNotifier(const Orders());
-
-      await pumpCounselScreen(
-        tester,
-        game: game,
-        bus: bus,
-        ordersNotifier: ordersNotifier,
-        gameService: CounselMilitaryTrainMapGameService(
-          gamesBox,
-          GameSaveAdapter(),
-        ),
-        initialTab: CounselTab.military,
-      );
-
-      final agree = find.byKey(
-        ValueKey<String>('counsel_agree_military_train_$unitType'),
-      );
-      expect(agree, findsOneWidget);
-
-      ordersNotifier.replaceAll(
-        Orders(
-          buildUnitOrdersByPlayerId: {
-            human: [
-              BuildUnitOrder(
-                unitType: unitType,
-                isMilitary: true,
-                spawnProvinceId: capProvince,
-              ),
-              BuildUnitOrder(
-                unitType: unitType,
-                isMilitary: true,
-                spawnProvinceId: capProvince,
-              ),
-            ],
-          },
-        ),
-      );
-
-      await tester.tap(agree);
-      await pumpSettleCapped(tester);
-
-      expect(snackbars, hasLength(1));
-      expect(
-        snackbars.single.message,
-        'Cannot raise those units right now — check treasury, stockpile, peasants, and queued orders.',
-      );
     },
   );
 }

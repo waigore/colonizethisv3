@@ -1,20 +1,18 @@
-// Tests for runNewGameSetupAfterLeaderPick (Refs #2626).
+// Tests for runNewGameSetupAfterLeaderPick (Refs #2626 / #4720 Slice G).
 //
 // AC: `new_game_setup_flow.dart` no longer reads `appNavigatorKey.currentContext`;
 // the navigator key is received as an explicit `GlobalKey<NavigatorState>`
-// parameter; new-game progress/error dialogs open, retry, and dismiss
-// identically. SPEC/program/app-ui-wiring.md; SPEC/ui/game-initializing.md.
+// parameter; new-game progress dialogs open identically.
+// Spinner/error visual contract: new_game_setup_flow_visual_contract_test.
+// SPEC/program/app-ui-wiring.md; SPEC/ui/game-initializing.md.
 
 import 'dart:async';
 
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -142,7 +140,8 @@ void main() {
         buildAppShellWithContainer(
           container: container,
           navigatorKey: injectedKey,
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           child: const Scaffold(body: Text('shell')),
         ),
@@ -170,159 +169,6 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(stubService.createCallCount, 1);
-    },
-  );
-
-  testWidgets(
-    'runNewGameSetupAfterLeaderPick progress dialog renders a 48px `--accent` '
-    'spinner (Refs #2867 game initializing visual contract)',
-    (WidgetTester tester) async {
-      final injectedKey = GlobalKey<NavigatorState>();
-      final container = ProviderContainer(
-        overrides: [
-          gameServiceProvider.overrideWith((ref) => stubService),
-          appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        // Editorial shell via buildAppShellWithContainer (Refs #4035).
-        buildAppShellWithContainer(
-          container: container,
-          navigatorKey: injectedKey,
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          child: const Scaffold(body: Text('shell')),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.runAsync(() async {
-        unawaited(
-          runNewGameSetupAfterLeaderPick(
-            navigatorKey: injectedKey,
-            container: container,
-            templateConfig: templateConfig(),
-          ),
-        );
-        // Pump until the progress dialog has mounted but before the stub
-        // service post-frame `_run()` finishes (mounted but spinner still up).
-        for (var i = 0; i < 3; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 5));
-        }
-      });
-      await tester.pump();
-
-      final indicator = tester.widget<CtLoadingIndicator>(
-        find.byType(CtLoadingIndicator),
-      );
-      expect(indicator.size, 48, reason: 'SPEC: 48px ring');
-      expect(
-        indicator.color,
-        EditorialMonoclePalette.accent,
-        reason: 'SPEC: --accent top border',
-      );
-
-      // Drain the rest of the flow so the test exits cleanly.
-      await tester.runAsync(() async {
-        for (var i = 0; i < 20; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 10));
-        }
-      });
-      await tester.pumpAndSettle();
-    },
-  );
-
-  testWidgets(
-    'runNewGameSetupAfterLeaderPick error dialog renders the error card with '
-    'a 1px `--danger` border (Refs #2867 failure visual contract)',
-    (WidgetTester tester) async {
-      stubService.throwOnCreate = true;
-      final injectedKey = GlobalKey<NavigatorState>();
-      final container = ProviderContainer(
-        overrides: [
-          gameServiceProvider.overrideWith((ref) => stubService),
-          appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        // Editorial shell via buildAppShellWithContainer (Refs #4035).
-        buildAppShellWithContainer(
-          container: container,
-          navigatorKey: injectedKey,
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          child: const Scaffold(body: Text('shell')),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      unawaited(
-        runNewGameSetupAfterLeaderPick(
-          navigatorKey: injectedKey,
-          container: container,
-          templateConfig: templateConfig(),
-        ),
-      );
-
-      // Drive the flow until the error dialog opens (progress dialog throws,
-      // gets dismissed, error dialog is showDialog'd).
-      await tester.runAsync(() async {
-        for (var i = 0; i < 40; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 10));
-        }
-      });
-      await tester.pumpAndSettle();
-
-      // The "Could not create game" title must be visible in the error
-      // dialog (positive: title rendered).
-      expect(find.text('Could not create game'), findsOneWidget);
-
-      // Find any DecoratedBox painted with a 1px --danger border. Multiple
-      // DecoratedBoxes may exist in the tree (CtDialogShell paints its own
-      // chrome); the error-card border is the one that matches both
-      // width: 1 and color: EditorialMonoclePalette.danger.
-      final decoratedBoxes = tester.widgetList<DecoratedBox>(
-        find.byType(DecoratedBox),
-      );
-      final dangerBordered = decoratedBoxes.where((box) {
-        final deco = box.decoration;
-        if (deco is! BoxDecoration) {
-          return false;
-        }
-        final border = deco.border;
-        if (border is! Border) {
-          return false;
-        }
-        return border.top.color == EditorialMonoclePalette.danger &&
-            border.top.width == 1 &&
-            border.bottom.color == EditorialMonoclePalette.danger &&
-            border.left.color == EditorialMonoclePalette.danger &&
-            border.right.color == EditorialMonoclePalette.danger;
-      });
-      expect(
-        dangerBordered.isNotEmpty,
-        isTrue,
-        reason: 'error card must paint a 1px --danger border on all sides',
-      );
-
-      // Negative path: when the error card is absent (no error in the
-      // success-path tests above), no danger-bordered DecoratedBox is
-      // rendered. We rely on the absence assertion implicitly: the
-      // success-path tests do not pump this danger color, and this test
-      // exercises the failure-only widget.
-
-      // Dismiss the error dialog so the test exits cleanly.
-      await tester.tap(find.text('Close'));
-      await tester.runAsync(() async {
-        for (var i = 0; i < 5; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 10));
-        }
-      });
-      await tester.pumpAndSettle();
     },
   );
 }
