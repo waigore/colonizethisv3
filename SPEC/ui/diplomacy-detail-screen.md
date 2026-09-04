@@ -155,6 +155,10 @@ History ordering: `(turn desc, intraTurnIndex desc)` via `diplomaticHistoryForPa
   When the widget builds,
   Then the UI layer renders at least one `Card` whose body includes text from `formatDiplomaticEvent` for that event.
 
+- **Join Empire history Tribe colony (Refs #4729):** Given a `joinEmpireResolved` event whose `toFactionId` is a Tribe still on the map (or listed in `Game.colonyStates`), when `formatDiplomaticEvent` renders for `GAME30002`, then the UI layer does not say the Tribe was absorbed and instead uses colony / land-stayed-theirs copy.
+
+- **Join Empire history Minor/GP absorb (Refs #4729):** Given a `joinEmpireResolved` event whose target is a Minor Nation or Great Power absorption, when `formatDiplomaticEvent` renders, then the UI layer describes absorption (land, armies, and fleets transferred).
+
 - Given the `CtTopBar` back button is visible,
   When the user taps it,
   Then the UI layer emits exactly one `PopNavigationEvent` on `appEventBusProvider`.

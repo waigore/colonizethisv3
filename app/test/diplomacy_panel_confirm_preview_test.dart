@@ -116,8 +116,9 @@ void main() {
         tall: true,
       );
       final body = confirm.message.toLowerCase();
-      expect(body, contains('join your realm'));
-      expect(body, isNot(contains('province')));
+      expect(body, contains('absorbed'));
+      expect(body, contains('leave the map'));
+      expect(body, isNot(contains(RegExp(r'\d+\s+province'))));
     },
   );
 
@@ -130,7 +131,11 @@ void main() {
         actionFinder: find.text('Join Empire').last,
         tall: true,
       );
-      expect(confirm.message.toLowerCase(), contains('colony'));
+      final body = confirm.message.toLowerCase();
+      expect(body, contains('colony'));
+      expect(body, contains('own ownership'));
+      expect(body, isNot(contains('absorbed')));
+      expect(confirm.message, contains('31 Old World provinces'));
       expect(confirm.message, isNot(contains('Confirm Join Empire against')));
     },
   );

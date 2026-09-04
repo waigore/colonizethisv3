@@ -238,6 +238,7 @@ part 'catalog_panels_generals.dart';
 part 'catalog_panels_intervention.dart';
 part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_boycott_confirm.dart';
+part 'catalog_diplomacy_join_empire_confirm.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_intelligence_council.dart';
 part 'catalog_screens_combat.dart';

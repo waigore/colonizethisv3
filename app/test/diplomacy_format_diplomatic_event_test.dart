@@ -112,16 +112,56 @@ void main() {
     );
   });
 
-  test('joinEmpireResolved', () {
+  test('joinEmpireResolved absorbs GP or Minor', () {
     final g = minimalGame();
-    expect(
-      formatDiplomaticEvent(
-        ev(DiplomaticEventType.joinEmpireResolved),
-        g,
-        humanId,
-      ),
-      contains('absorbed'),
+    final s = formatDiplomaticEvent(
+      ev(DiplomaticEventType.joinEmpireResolved),
+      g,
+      humanId,
     );
+    expect(s, contains('absorbed'));
+    expect(s.toLowerCase(), contains('land'));
+    expect(s.toLowerCase(), contains('armies'));
+    expect(s.toLowerCase(), contains('fleets'));
+  });
+
+  test('joinEmpireResolved tribe colony does not say absorbed', () {
+    const tribeId = 'tribe_aztec';
+    final g = Game(
+      id: 'fmt-colony',
+      worldState: const WorldState(
+        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(),
+        newWorld: RegionData(),
+      ),
+      turnTimeMapping: TurnTimeMapping.gdd01,
+      players: const [
+        Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
+      ],
+      tribes: const [Tribe(id: tribeId, displayName: 'Aztec')],
+      colonyStates: const [
+        ColonyState(tribeId: tribeId, colonyOfGpId: humanId, sinceTurn: 1),
+      ],
+      diplomacyRelations: [
+        DiplomacyRelation(
+          factionId1: humanId,
+          factionId2: tribeId,
+          score: 80,
+          state: RelationState.atPeace,
+        ),
+      ],
+    );
+    final s = formatDiplomaticEvent(
+      ev(
+        DiplomaticEventType.joinEmpireResolved,
+        toId: tribeId,
+      ),
+      g,
+      humanId,
+    );
+    expect(s.toLowerCase(), contains('colony'));
+    expect(s.toLowerCase(), contains('land stayed theirs'));
+    expect(s.toLowerCase(), isNot(contains('absorbed')));
   });
 
   test('grantAidApplied', () {

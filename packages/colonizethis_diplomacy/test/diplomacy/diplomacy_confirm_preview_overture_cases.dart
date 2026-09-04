@@ -47,9 +47,16 @@ List<ConfirmPreviewCase> overtureConfirmPreviewCases() => [
     ),
     targetDisplayName: 'Bavaria',
     assertLines: (lines, body) {
-      expect(body, contains('join your realm'));
+      expect(body.toLowerCase(), contains('absorbed'));
+      expect(body.toLowerCase(), contains('land'));
+      expect(body.toLowerCase(), contains('armies'));
+      expect(body.toLowerCase(), contains('fleets'));
+      expect(body.toLowerCase(), contains('leave the map'));
       expect(body, contains('£'));
-      expect(body.toLowerCase(), isNot(contains('province')));
+      expect('£'.allMatches(body).length, 1);
+      expect(body, isNot(contains(RegExp(r'\d+\s+province', caseSensitive: false))));
+      expect(body, isNot(contains('-50')));
+      expect(body, isNot(contains('-10')));
     },
   ),
   (
@@ -61,7 +68,15 @@ List<ConfirmPreviewCase> overtureConfirmPreviewCases() => [
     ),
     targetDisplayName: 'Aztec',
     assertLines: (lines, body) {
-      expect(body, contains('colony'));
+      expect(body.toLowerCase(), contains('colony'));
+      expect(body.toLowerCase(), contains('own ownership'));
+      expect(body.toLowerCase(), contains('does not become yours'));
+      expect(body, contains('31 Old World provinces'));
+      expect(body.toLowerCase(), isNot(contains('absorbed')));
+      expect(body.toLowerCase(), isNot(contains('provinces transfer')));
+      expect(body, contains('£'));
+      expect('£'.allMatches(body).length, 1);
+      expect(body, isNot(contains(RegExp(r'\d+\s+province', caseSensitive: false))));
     },
   ),
   (
@@ -74,7 +89,12 @@ List<ConfirmPreviewCase> overtureConfirmPreviewCases() => [
     targetDisplayName: 'Spain',
     assertLines: (lines, body) {
       expect(body, contains('nearly defeated'));
-      expect(body, contains('absorbed'));
+      expect(body.toLowerCase(), contains('absorbed'));
+      expect(body.toLowerCase(), contains('land'));
+      expect(body.toLowerCase(), contains('armies'));
+      expect(body.toLowerCase(), contains('fleets'));
+      expect(body.toLowerCase(), contains('leaves the map'));
+      expect(body, contains('No treasury charge'));
       expect(body, isNot(contains('£')));
     },
   ),
