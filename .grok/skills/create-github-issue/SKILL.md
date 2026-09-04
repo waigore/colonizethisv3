@@ -14,4 +14,4 @@ description: |-
 
 Source of truth: `.cursor/skills/create-github-issue/SKILL.md`
 
-Read the complete file and follow its strict read-only scope, mandatory clarification step, investigation, drafting, and gh creation/fallback workflow exactly.
+Read the full file and follow it exactly.

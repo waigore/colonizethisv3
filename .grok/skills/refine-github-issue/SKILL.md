@@ -13,4 +13,4 @@ description: |-
 
 Source of truth: `.cursor/skills/refine-github-issue/SKILL.md`
 
-Read the full file and follow its non-negotiables, feedback inventory/evaluation, body update rules, reporting, and quality bar exactly. Related skills noted inside point to review-github-issue and verify-github-issue.
+Read the full file and follow it exactly.

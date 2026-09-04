@@ -28,9 +28,8 @@ Works on macOS and Linux hosts; the app ships desktop runners (`app/macos/`, `ap
 4. `dart_get_widget_tree(summaryOnly: true)` → discover real keys/text. **Never guess locators** — prefer the stable `k*Key` constants used by `app/integration_test/` and `packages/colonizethis_app_e2e_support/lib/` (e.g. `kHomeToCapitalButtonKey`).
 5. Drive with `dart_flutter_driver`: `waitFor`/`waitForTappable` before every `tap` (visibility-first per `colonizethis-e2e-ui-stability.mdc`); `enter_text`, `scrollIntoView`, `get_text`, `get_offset` for assertions; `screenshot` at every visual **Then** step → save under `tmp/accept-issue-<n>/`.
 6. New-game flow: Main Menu → New Game → configure per AC → start → map. Mirror the key sequences documented in `app/integration_test/new_game_*_e2e_test.dart`.
-7. Next-turn ACs: sustained resolution **> 15 s** is a defect (`colonizethis-turn-resolution-budget.mdc`).
-8. Game-app panel/dialog/overlay opens: for surfaces **introduced or modified** by the issue, required content (calcs, minimaps, Yarn) must be ready within **1 000 ms**; dismiss must unmount the subtree (`colonizethis-ui-surface-budget.mdc`). Untouched grandfathered overflows are exempt. Applies even when the issue ACs omit it.
-9. `dart_get_runtime_errors` before finishing; `dart_stop_app(pid)` when done.
+7. Next-turn ACs: sustained resolution over the turn-resolution budget is a defect (`colonizethis-turn-resolution-budget.mdc`). Touched game-app surfaces: standing 1 s open + unmount per `SKILL.md`.
+8. `dart_get_runtime_errors` before finishing; `dart_stop_app(pid)` when done.
 
 If MCP tools are absent: fall back to A.3/A.4 and note it in the comment.
 
@@ -100,7 +99,7 @@ Verification **Complete** + merged state matches → **ACCEPT**, citing the veri
 ### C.1 Contract checks
 
 - Files exist at contracted paths (e.g. `app/assets/images/terrain/tilesets/<name>.png` + `.json` sidecar); dimensions/layout match the contract (e.g. 256×256 for a 4×4 × 64 px atlas).
-- Run the issue's contracted tests, e.g. `cd app && flutter test test/transport_overlay_assets_test.dart test/transport_overlay_tileset_cache_test.dart`.
+- Run the issue's contracted tests (`cd app && flutter test test/<file>.dart`).
 
 ### C.2 Vision checklist (built-in vision)
 
@@ -117,4 +116,4 @@ Record per-file verdicts in the comment; embed the atlas (and seam-join crops) v
 
 ### C.3 In-situ check (when the asset renders in-game)
 
-Launch the app (A.2), reach a map state rendering the asset (e.g. terrain + improvements + roads layer over connected road/rail), screenshot, confirm aesthetic fit and seams in situ. Satisfies "manual QA" AC bullets like #1819's.
+Launch the app (A.2), reach a map state rendering the asset, screenshot, confirm aesthetic fit and seams in situ.

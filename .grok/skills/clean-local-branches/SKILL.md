@@ -7,4 +7,4 @@ description: Deletes local git branch refs that are not the primary development 
 
 Source of truth: `.cursor/skills/clean-local-branches/SKILL.md`
 
-Read the full file and follow its rules, preconditions, and prohibitions exactly.
+Read the full file and follow it exactly.

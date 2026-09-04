@@ -7,4 +7,4 @@ description: Autonomously runs suggest-player-ux-improvements then files one Git
 
 Source of truth: `.cursor/skills/improve-ux-agent/SKILL.md`
 
-Read the full file and strictly follow its no-clarification policy and required dependencies on `suggest-player-ux-improvements` then `create-github-issue` (plus their cross-references).
+Read the full file and follow it exactly.

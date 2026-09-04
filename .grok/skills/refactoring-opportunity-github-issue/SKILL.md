@@ -5,6 +5,7 @@ description: Analyzes `app/` or one `packages/*` workspace package on the latest
 
 **Thin Grok shim** (repo `.grok/skills/`).
 
-Source of truth: `.cursor/skills/refactoring-opportunity-github-issue/SKILL.md` (plus its `references/ci-and-rules.md`).
+Source of truth: `.cursor/skills/refactoring-opportunity-github-issue/SKILL.md`
 
-Read the SKILL.md in full plus the references file it cites. Follow the strict scope (app/ or single packages/*), dev baseline sync, de-dupe, rule loading, analysis, CI proposal, and issue drafting/filing process exactly. Related skills (create-github-issue, document-app-ui, review-github-issue, verify-github-issue) are called out inside the authoritative copy.
+Read the full file and follow it exactly.
+Also read: `.cursor/skills/refactoring-opportunity-github-issue/references/ci-and-rules.md`.

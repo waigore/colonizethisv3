@@ -9,7 +9,9 @@ description: |-
   - user: "Check whether #1819's road tiles pass" → vision-inspect atlases vs ACs and peer tilesets
 ---
 
-**Thin OpenCode shim.** Source of truth: `.cursor/skills/accept-github-issue/SKILL.md`
+**Thin Grok shim** (repo `.grok/skills/`).
 
-Read that file and follow it exactly.
+Source of truth: `.cursor/skills/accept-github-issue/SKILL.md`
+
+Read the full file and follow it exactly.
 Also read: `.cursor/skills/accept-github-issue/reference.md`.

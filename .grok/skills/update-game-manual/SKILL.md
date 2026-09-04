@@ -7,4 +7,4 @@ description: Updates the ColonizeThis player game manual under docs/manual/ when
 
 Source of truth: `.cursor/skills/update-game-manual/SKILL.md`
 
-Read the full file and follow its authority (`docs/manual/STYLE_GUIDE.md`, `colonizethis-game-manual.mdc`), path→chapter mapping via `## Sources` footers, tone/reading-level/player-angle rules, and checklist exactly. The reading-level gate is a hard fail.
+Read the full file and follow it exactly.
