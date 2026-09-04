@@ -144,6 +144,7 @@ const _packageName = 'colonizethis_app';
 // raised for empire-rail Trade session cache + deferred counsel (Refs #4688 Slice 3; measured 95_055).
 // raised for empire-rail surfaceOpenId + profile harness wiring (Refs #4688; measured 95_102).
 // raised for turn-shell surface-open tracing, deferred decree copy, feed cache (Refs #4715; measured 95_819).
+// raised for research-complete Events feed tech effect gist (Refs #4724; measured 96_018).
 // raised for GAME80001 feedstock deep-link from Production/Counsel (Refs #4725; measured 96_324).
 const _maxMainLines = 96500;
 

@@ -2,14 +2,19 @@
 
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kPlayerTurnFeedToggleButtonKey;
+import 'package:colonizethis_app/features/game/widgets/technology/tech_effect_summary.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show kTechIdCropRotation, techDisplayName;
+    show kTechIdCropRotation;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'game_map_area_event_feed_harness_support.dart';
+
+String expectedCropRotationResearchCompleteLine() =>
+    formatResearchCompleteFeedLine(AppLocalizationsEn(), kTechIdCropRotation);
 
 Future<void> expectEventFeedToggleReplacesBatch(
   WidgetTester tester, {
@@ -27,8 +32,7 @@ Future<void> expectEventFeedToggleReplacesBatch(
     harness: harness,
     mediaQuerySize: const Size(500, 900),
   );
-  final researchLine =
-      'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked';
+  final researchLine = expectedCropRotationResearchCompleteLine();
   final researchFinder = find.textContaining(researchLine);
 
   await commitEventFeedTurnEvents(

@@ -25,7 +25,10 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
             entries: [
               PlayerTurnEventFeedEntry(
                 // ignore: avoid_hardcoded_strings_in_widgets
-                text: 'Research complete: Crop Rotation unlocked',
+                text:
+                    'Research complete: Crop Rotation unlocked · '
+                    'Unlocks: Sheep Ranching, Animal Husbandry, and '
+                    'Steppe Horsemen research paths',
                 linkAffordance: true,
                 onTap: () {},
               ),

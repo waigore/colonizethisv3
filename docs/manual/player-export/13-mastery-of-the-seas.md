@@ -14,7 +14,7 @@ The **Old World** and the **New World** are the two maps. The New World is the o
 
 1. On **Game screen**, tap **Naval Units** on the left of the map to open **Naval units panel**.
 2. Tap **Train** to open **Train naval dialog** (header **Train Naval**).
-3. Each ship requires treasury, its listed materials, and one available **Peasant** (one worker spent to build a ship). The **Peasants** chip shows how many remain free after peasants already promised to queued worker training or regiment builds; when some are promised, a short line under the chips names that promise. Tap the **Peasants** chip for a short family breakdown. **+** will not raise a count past the free peasant total. Each row also shows its **role** (**Merchant** or **Warship**) and a one-line summary — cargo holds for merchants, combat role for warships — so you can choose hulls before committing. The dialog subtracts pending choices from its resource bar, so queue only ships the realm can afford together.
+3. Each ship requires treasury, its listed materials, and one available **Peasant** (one worker spent to build a ship). The **Peasants** chip shows how many remain free after peasants already promised to queued worker training or regiment builds; when some are promised, a short line under the chips names that promise. Tap the **Peasants** chip for a short family breakdown. **+** will not raise a count past the free peasant total. Each row also shows its **role** (**Merchant** or **Warship**) and a one-line summary — cargo holds for merchants, combat role for warships — plus **food upkeep per turn** (from the catalog; two food each turn today) so you can see ongoing warehouse cost before committing. The dialog subtracts pending choices from its resource bar, so queue only ships the realm can afford together.
 4. A locked row names its required technology. Research it before queuing the hull; the **Carrack** is the sole starting merchant and needs no technology.
 5. Close the dialog to queue the chosen ships. After you confirm **Next turn**, the game deducts the costs and the new hulls appear in the Home Fleet at the capital. You see them when that finishes — not when you close the dialog.
 
@@ -59,6 +59,13 @@ When you split the Home Fleet, a line under the transfer lists how many cargo ho
 1. In **Naval units panel**, check two or more fleets that share the same port or the same sea.
 2. Tap **Combine** at the top of the panel.
 3. Those fleets merge immediately. If the Home Fleet is among the checked fleets, the other checked fleets join it. Empty non-Home fleets are removed.
+4. When the checked pair is exactly the Home Fleet plus one eligible sea-going source, the panel may open **Transfer to home fleet** so you can move only some ships into the Home Fleet instead of all of them.
+
+You can also combine from the map without opening the panel:
+
+1. Tap a tile in a port or sea where two or more of your fleets already sit, so **Province sea-zone overlay** opens on **Naval**.
+2. Tap **Combine**. Confirm lists each fleet and the ship mix; the survivor’s mission becomes none.
+3. Confirm merges every human fleet in that viewed port or sea into one fleet. This path never opens **Transfer to home fleet** — for a subset into the Home Fleet, use **Transfer to Home Fleet** on the overlay or the panel path above.
 
 ### Send a squadron to sea from the map
 

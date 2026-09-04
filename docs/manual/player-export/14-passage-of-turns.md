@@ -64,7 +64,7 @@ Use the feed with turn news: the dialog is the formal summary; the feed keeps re
 
 Tap a line for the matching place or screen:
 
-1. When a technology finishes researching, its feed line shows the tech by name. Tap it to open **Technology screen** on the Slots tab and choose your next project.
+1. When a technology finishes researching, its feed line shows the tech by name and up to two short lines that say what the unlock does (the same plain wording as **Choose tech**). Tap it to open **Technology screen** on the Slots tab and choose your next project.
 2. Diplomacy and overture lines open the other nation’s **Diplomacy detail screen**. Spy-caught and spy-defected rows also open that court’s **Diplomacy detail screen**.
 3. Spy report lines (the same **Our spy in {court} reports:** wording as Intelligence) open **Intelligence Council** or that court’s **Diplomacy detail screen**.
 4. Completed work orders open **Civilian units panel** focused on the person who finished the task.
