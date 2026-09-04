@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/diplomacy_format_diplomatic_event_fixtures.dart';
+import 'diplomacy_format_diplomatic_event_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
