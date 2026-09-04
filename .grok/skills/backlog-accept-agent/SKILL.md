@@ -9,6 +9,8 @@ description: |-
   - user: "Move the acceptance queue forward" → select, execute acceptance, post comment, move label
 ---
 
-**Thin OpenCode shim.** Source of truth: `.cursor/skills/backlog-accept-agent/SKILL.md`
+**Thin Grok shim** (repo `.grok/skills/`).
 
-Read that file and follow it exactly.
+Source of truth: `.cursor/skills/backlog-accept-agent/SKILL.md`
+
+Read the full file and follow it exactly.

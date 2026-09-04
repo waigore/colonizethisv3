@@ -7,4 +7,4 @@ description: Reports ColonizeThis codebase size using pytool/project_stats.py wi
 
 Source of truth: `.cursor/skills/report-codebase-size/SKILL.md`
 
-Read the full file and run the canonical `pytool/project_stats.py --root . --json` (or python fallback). Report exactly per its rules and template; do not estimate.
+Read the full file and follow it exactly.

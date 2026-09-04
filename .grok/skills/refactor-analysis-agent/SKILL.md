@@ -7,4 +7,4 @@ description: Autonomously selects one ColonizeThis target (`app/` or a single `p
 
 Source of truth: `.cursor/skills/refactor-analysis-agent/SKILL.md`
 
-Read the full file and strictly follow its target-selection policy and required dependency on refactoring-opportunity-github-issue (plus cross-references).
+Read the full file and follow it exactly.

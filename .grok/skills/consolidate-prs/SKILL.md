@@ -7,4 +7,4 @@ description: Collapses multiple open pull requests that target the same GitHub i
 
 Source of truth: `.cursor/skills/consolidate-prs/SKILL.md`
 
-Read the full file (including its required dependencies section). Follow its non-negotiables, workflow (especially the mandatory use of fix-pr for stalled PRs and clean-local-branches), and output requirements exactly. Honor all `.cursor/skills/` cross-references inside it.
+Read the full file and follow it exactly.

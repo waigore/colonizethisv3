@@ -7,4 +7,4 @@ description: Picks one open GitHub issue labeled backlog:verification, applies v
 
 Source of truth: `.cursor/skills/backlog-verify-agent/SKILL.md`
 
-Read the full authoritative file and apply its workflow + strict dependency on verify-github-issue exactly.
+Read the full file and follow it exactly.

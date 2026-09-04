@@ -5,6 +5,7 @@ description: Implements work from a GitHub issue number or URL after validating 
 
 **Thin Grok shim** (repo `.grok/skills/`).
 
-Source of truth: `.cursor/skills/implement-github-issue/SKILL.md` (plus its sibling `reference.md`).
+Source of truth: `.cursor/skills/implement-github-issue/SKILL.md`
 
-Read the full SKILL.md and reference.md. Enforce the non-negotiables (SPEC, one PR per issue targeting dev, conventional title with Refs #N, test gates, etc.), issue quality gate, scope triage, and full workflow exactly.
+Read the full file and follow it exactly.
+Also read: `.cursor/skills/implement-github-issue/reference.md`.

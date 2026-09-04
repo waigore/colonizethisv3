@@ -1,1 +1,8 @@
-../../../.cursor/skills/merge-dev-into-android-build/SKILL.md
+---
+name: merge-dev-into-android-build
+description: Creates and merges a pull request from dev into build/app/android to trigger Android APK build workflows. Use when the user asks to produce an Android APK build via branch merge, especially when conflicts may occur and should be resolved in favor of dev.
+---
+
+**Thin OpenCode shim.** Source of truth: `.cursor/skills/merge-dev-into-android-build/SKILL.md`
+
+Read that file and follow it exactly.

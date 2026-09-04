@@ -14,4 +14,4 @@ description: |-
 
 Source of truth: `.cursor/skills/review-github-issue/SKILL.md`
 
-Read the full file (including its boundary table vs verify-github-issue, workflow, priority framing, and output template). Follow the non-negotiables and "primary analysis first, conditional deep trace only when needed" rule exactly. Note its sync comment with the opencode copy is preserved in the source.
+Read the full file and follow it exactly.

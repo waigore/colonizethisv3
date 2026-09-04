@@ -7,4 +7,4 @@ description: Creates and merges a pull request from dev into build/app/android t
 
 Source of truth: `.cursor/skills/merge-dev-into-android-build/SKILL.md`
 
-Read the full file and execute its preflight, merge resolution favoring dev, PR creation/merge, and verification steps exactly.
+Read the full file and follow it exactly.

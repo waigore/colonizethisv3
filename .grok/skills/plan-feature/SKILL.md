@@ -7,4 +7,4 @@ description: Plans a user-provided feature idea by reading SPEC and code (read-o
 
 Source of truth: `.cursor/skills/plan-feature/SKILL.md`
 
-Read the full file (strict read-only scope, architectural alignment notes, workflow through gh issue creation or fallback, and quality bar). Follow all related-skill pointers inside it (create-github-issue, document-app-ui, verify-github-issue).
+Read the full file and follow it exactly.

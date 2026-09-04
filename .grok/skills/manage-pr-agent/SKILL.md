@@ -7,4 +7,4 @@ description: Keeps open pull requests moving through CI and GitHub workflows in 
 
 Source of truth: `.cursor/skills/manage-pr-agent/SKILL.md`
 
-Read the full file. Strictly apply its required dependencies (consolidate-prs + fix-pr), non-negotiables, 4-phase workflow (discover, consolidate, maintain quota of 2, end), and detailed output report format. Never wait for CI/merges.
+Read the full file and follow it exactly.

@@ -7,4 +7,4 @@ description: Reviews one ColonizeThis player game-manual chapter for STYLE_GUIDE
 
 Source of truth: `.cursor/skills/review-game-manual-agent/SKILL.md`
 
-Read the full file and follow it exactly: one chapter, STYLE_GUIDE for style, cited SPECs plus `SPEC/ui/screen-registry.md` for accuracy, `create-github-issue` filing with **no** user clarifications, no handbook edits.
+Read the full file and follow it exactly.

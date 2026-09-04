@@ -1,10 +1,9 @@
 ---
 name: player-playthrough
-description: Runs bounded agent playtests (modes A–E) via Marionette and player handbook export; writes playthrough report. Use after export-player-manual.
+description: Runs bounded agent playtests (modes A–E) against the ColonizeThis debug app using Marionette MCP and the player handbook export only. Produces a structured playthrough report (gameplay, UX, AI, handbook gaps); does not auto-file GitHub issues. Use after export-player-manual when validating playability.
 ---
 
-**Thin OpenCode shim** (repo `.opencode/skills/`).
+**Thin OpenCode shim.** Source of truth: `.cursor/skills/player-playthrough/SKILL.md`
 
-Source of truth: `.cursor/skills/player-playthrough/SKILL.md`
-
-Read the full file and follow `SPEC/program/player-playthrough.md` and [reference.md](../../.cursor/skills/player-playthrough/reference.md) exactly.
+Read that file and follow it exactly.
+Also read: `.cursor/skills/player-playthrough/reference.md`.

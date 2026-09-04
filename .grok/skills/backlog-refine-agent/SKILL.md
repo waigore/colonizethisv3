@@ -7,4 +7,4 @@ description: Picks one open GitHub issue labeled backlog:refinement, applies ref
 
 Source of truth: `.cursor/skills/backlog-refine-agent/SKILL.md`
 
-Read that file in full, then follow its workflow and required dependency on refine-github-issue exactly (including all cross-references to other `.cursor/skills/` files).
+Read the full file and follow it exactly.
