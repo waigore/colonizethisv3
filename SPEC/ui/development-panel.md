@@ -99,6 +99,7 @@ Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `d
 - Given `GAME80001` opens with `highlightCommodityId` (and optional `highlightTileKey`) matching an improvable row (Refs #4725), when the first frame paints, then the matching region tab is selected, **Show** highlight (and selected tile when a key is known) is applied, the matching assign row is scrolled into view with inbound chrome, and **Assign** is not invoked.
 - Given no improvable row matches the inbound commodity (Refs #4725), when Development opens from that navigate, then the UI layer still shows `GAME80001` with copy that names that good, and no work order is staged.
 - Given `canMutateViaUi == false` and inbound highlight args (Refs #4725), when Development opens, then the panel lands focused read-only and **Assign** stays unavailable.
+- Given inbound highlight and inbound-miss hosts under `AppThemes.editorialMonocle` at `360 × 640` (Refs #4725), when `app/test/development_inbound_highlight_goldens_test.dart` captures each keyed `RepaintBoundary`, then the UI layer matches `app/test/goldens/development_inbound_highlight_360x640.png` and `app/test/goldens/development_inbound_no_match_360x640.png`.
 
 ## Acceptance criteria (Slice D)
 
