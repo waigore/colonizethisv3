@@ -187,7 +187,10 @@ void main() {
           hostPlayerTurnFeedCard(
             entries: <PlayerTurnEventFeedEntry>[
               PlayerTurnEventFeedEntry(
-                text: 'Research complete: Crop Rotation unlocked',
+                text:
+                    'Research complete: Crop Rotation unlocked · '
+                    'Unlocks: Sheep Ranching, Animal Husbandry, and '
+                    'Steppe Horsemen research paths',
                 linkAffordance: true,
                 onTap: () => tapped = true,
               ),
@@ -197,7 +200,7 @@ void main() {
         await tester.pump();
 
         expect(find.byIcon(Icons.chevron_right), findsOneWidget);
-        await tester.tap(find.text('Research complete: Crop Rotation unlocked'));
+        await tester.tap(find.textContaining('Crop Rotation unlocked'));
         await tester.pump();
         expect(tapped, isTrue);
       },
@@ -212,7 +215,10 @@ void main() {
             child: hostPlayerTurnFeedCard(
               entries: <PlayerTurnEventFeedEntry>[
                 PlayerTurnEventFeedEntry(
-                  text: 'Research complete: Crop Rotation unlocked',
+                  text:
+                      'Research complete: Crop Rotation unlocked · '
+                      'Unlocks: Sheep Ranching, Animal Husbandry, and '
+                      'Steppe Horsemen research paths',
                   linkAffordance: true,
                   onTap: () {},
                 ),

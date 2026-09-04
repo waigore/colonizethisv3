@@ -61,6 +61,8 @@ Four outcomes are possible: **attacker victory** (defender eliminated, province 
 
 ### Sieges and forts
 
+When you raise a fort from the town tile (Chapter 6), enabled **Build fort** on **Province sea-zone overlay**, the tile radial, or the Engineer row names the next fight posture — **Open field** to **Wood fort siege**, and so on — and how many turns the work takes before you assign.
+
 A fort makes the battle a siege:
 
 | Fort | Auto-Resolve wall soak | Quick Battle damage reduction | Emplaced guns |
