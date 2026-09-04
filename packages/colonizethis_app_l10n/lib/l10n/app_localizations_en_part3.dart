@@ -8,6 +8,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get development_noImprovableResources => 'No improvable resources';
 
   @override
+  String development_noMatchForInboundCommodity(String name) =>
+      'No improvable land for $name';
+
+  @override
   String get development_materialsShortageForAssign =>
       'Materials shortage for assign:';
 
@@ -261,6 +265,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String production_availableOpenTradeSemantic(String name) =>
       'Open Trade for $name';
+
+  @override
+  String production_affordanceOpenDevelopmentSemantic(String name) =>
+      'Open Development for $name';
 
   @override
   String get production_food => 'Food';
@@ -983,14 +991,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_cancelEstablishConsulateAction => 'Cancel';
-
-  @override
-  String provinceOverlay_noConsulateWith(String owner) {
-    return 'No consulate with $owner';
-  }
-
-  @override
-  String provinceOverlay_establishConsulateDisabledSemantics(String reason) {
-    return 'Establish Consulate unavailable: $reason';
-  }
 }

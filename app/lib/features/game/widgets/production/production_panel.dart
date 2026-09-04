@@ -33,6 +33,7 @@ class ProductionPanel extends StatelessWidget {
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
     this.onOpenTradeMarket,
+    this.onOpenDevelopment,
   });
 
   /// SPEC/ui/production-panel.md — [UiScreenIds.productionScreen]. Hosted by
@@ -67,6 +68,7 @@ class ProductionPanel extends StatelessWidget {
 
   final ProductionOpenCounselCallback? onOpenCounsel;
   final void Function(String commodityId)? onOpenTradeMarket;
+  final void Function(String commodityId)? onOpenDevelopment;
 
   static Set<String> get _inputCommodityIds {
     final inputIds = <String>{};
@@ -112,6 +114,7 @@ class ProductionPanel extends StatelessWidget {
       starredProduceRecommendationsByRecipeId:
           starredProduceRecommendationsByRecipeId,
       onOpenCounsel: onOpenCounsel,
+      onOpenDevelopment: onOpenDevelopment,
     );
 
     if (isNarrow) {

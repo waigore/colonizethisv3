@@ -2,6 +2,16 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
+  String provinceOverlay_noConsulateWith(String owner) {
+    return 'No consulate with $owner';
+  }
+
+  @override
+  String provinceOverlay_establishConsulateDisabledSemantics(String reason) {
+    return 'Establish Consulate unavailable: $reason';
+  }
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }
@@ -983,12 +993,4 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
   String get techEffectSummary_excessive_fur_harvesting_1 =>
       'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
-
-  @override
-  String get techEffectSummary_explosives_0 =>
-      'Improves: Musketeers regiment upgrade path';
-
-  @override
-  String get techEffectSummary_explosives_1 =>
-      'Prerequisite for: Elite Military Training';
 }

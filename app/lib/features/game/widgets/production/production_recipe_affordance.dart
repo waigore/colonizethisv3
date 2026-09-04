@@ -17,6 +17,7 @@ final class RecipeAffordance {
   const RecipeAffordance({
     required this.maxDesiredOutput,
     required this.limitingLabel,
+    this.limitingCommodityId,
     this.capLimited = false,
   });
 
@@ -27,6 +28,11 @@ final class RecipeAffordance {
   /// constraint before [kProductionAllocationSliderCap] (ties: first recipe
   /// input in catalog map order, then labour).
   final String limitingLabel;
+
+  /// Stable catalog commodity id when an input is the bottleneck; null for
+  /// labour. Used for Development deep-link (Refs #4725); do not derive from
+  /// [limitingLabel].
+  final String? limitingCommodityId;
 
   /// When `true`, [maxDesiredOutput] is clamped to
   /// [kProductionAllocationSliderCap] while the unconstrained batch count would
@@ -134,6 +140,7 @@ RecipeAffordance computeRecipeAffordance({
   }
 
   String? limitingLabel;
+  String? limitingCommodityId;
   for (final entry in recipe.inputQuantities.entries) {
     final perUnit = entry.value;
     if (perUnit <= 0) {
@@ -141,6 +148,7 @@ RecipeAffordance computeRecipeAffordance({
     }
     final runs = runsPerInput[entry.key] ?? 0;
     if (runs == trueMax) {
+      limitingCommodityId = entry.key;
       limitingLabel = l10n == null
           ? entry.key
           : commodityDisplayName(l10n, entry.key);
@@ -153,6 +161,7 @@ RecipeAffordance computeRecipeAffordance({
   return RecipeAffordance(
     maxDesiredOutput: capped,
     limitingLabel: limitingLabel,
+    limitingCommodityId: limitingCommodityId,
     capLimited: trueMax > sliderCap,
   );
 }

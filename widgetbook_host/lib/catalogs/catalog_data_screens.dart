@@ -629,17 +629,36 @@ Widget _developmentPanelStoryHost({
   );
 }
 
-Widget _developmentPanelStory({required Game game, required Orders orders}) {
+Widget _developmentPanelStory({
+  required Game game,
+  required Orders orders,
+  String? highlightCommodityId,
+  String? highlightTileKey,
+}) {
   return _developmentPanelStoryHost(
     game: game,
     orders: orders,
-    child: DevelopmentScreen(game: game, humanPlayerId: 'gp1'),
+    child: DevelopmentScreen(
+      game: game,
+      humanPlayerId: 'gp1',
+      highlightCommodityId: highlightCommodityId,
+      highlightTileKey: highlightTileKey,
+    ),
   );
 }
 
 Widget _developmentPanelDefaultStory() {
   final game = _developmentPanelStoryGame();
   return _developmentPanelStory(game: game, orders: const Orders());
+}
+
+Widget _developmentPanelInboundHighlightStory() {
+  final game = _developmentPanelAssignPreviewStoryGame();
+  return _developmentPanelStory(
+    game: game,
+    orders: const Orders(),
+    highlightCommodityId: 'grain',
+  );
 }
 
 Widget _developmentPanelFogVisibilityStory() {
@@ -756,6 +775,15 @@ List<WidgetbookNode> get developmentScreenDirectories => [
           'not bound to the capital · '
           'After this work: still none — not bound to the capital',
         ),
+      ),
+      WidgetbookUseCase(
+        name: 'Inbound highlight from Production/Counsel',
+        builder: (context) => _developmentPanelInboundHighlightStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Inbound highlight from Production/Counsel (mobile)',
+        builder: (context) =>
+            mobileViewport(context, _developmentPanelInboundHighlightStory()),
       ),
     ],
   ),

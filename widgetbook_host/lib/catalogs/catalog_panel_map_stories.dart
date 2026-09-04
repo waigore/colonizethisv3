@@ -219,6 +219,7 @@ class ProductionPanelStory extends StatelessWidget {
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
     this.onOpenTradeMarket,
+    this.onOpenDevelopment,
   });
 
   /// When set, used instead of the full/partial demo player.
@@ -232,6 +233,7 @@ class ProductionPanelStory extends StatelessWidget {
 
   final ProductionOpenCounselCallback? onOpenCounsel;
   final void Function(String commodityId)? onOpenTradeMarket;
+  final void Function(String commodityId)? onOpenDevelopment;
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +254,7 @@ class ProductionPanelStory extends StatelessWidget {
                   starredProduceRecommendationsByRecipeId,
               onOpenCounsel: onOpenCounsel,
               onOpenTradeMarket: onOpenTradeMarket,
+              onOpenDevelopment: onOpenDevelopment,
             ),
           ),
         ),
@@ -278,6 +281,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
     this.onOpenTradeMarket,
+    this.onOpenDevelopment,
   });
 
   final Player? playerOverride;
@@ -286,6 +290,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
   starredProduceRecommendationsByRecipeId;
   final ProductionOpenCounselCallback? onOpenCounsel;
   final void Function(String commodityId)? onOpenTradeMarket;
+  final void Function(String commodityId)? onOpenDevelopment;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -397,6 +402,7 @@ class ProductionPanelStoryBody extends ConsumerWidget {
           starredProduceRecommendationsByRecipeId,
       onOpenCounsel: onOpenCounsel,
       onOpenTradeMarket: onOpenTradeMarket,
+      onOpenDevelopment: onOpenDevelopment,
     );
   }
 }

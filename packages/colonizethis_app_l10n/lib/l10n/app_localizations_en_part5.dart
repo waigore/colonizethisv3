@@ -2,6 +2,14 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
+  String get techEffectSummary_explosives_0 =>
+      'Improves: Musketeers regiment upgrade path';
+
+  @override
+  String get techEffectSummary_explosives_1 =>
+      'Prerequisite for: Elite Military Training';
+
+  @override
   String get techEffectSummary_extraction_of_precious_metals_0 =>
       'Improves: Gold/silver extraction cap to 3';
 

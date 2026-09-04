@@ -30,7 +30,7 @@ Disabled Assign: existing plain refusal tooltip only (no Builder / insufficient 
 
 | Control | When enabled | Outcome |
 |---------|--------------|---------|
-| Show | Always on improvable rows | Highlights the commodity’s tile keys on the panel map (`secondaryHighlightTileKeys`). When a candidate exists, also sets `selectedTileKey` to that auto-pick so it is distinguishable. Preview line stays visible when Assign is enabled. |
+| Show | Always on improvable rows | Highlights the commodity’s tile keys on the panel map (`secondaryHighlightTileKeys`). When a candidate exists, also sets `selectedTileKey` to that auto-pick so it is distinguishable. Preview line stays visible when Assign is enabled. Inbound Production/Counsel focus (Refs #4725) reuses this path with optional `highlightTileKey` as `selectedTileKey` and does not auto-tap Assign. |
 | Assign (connected) | Candidate valid and affordable | One tap commits pending `build_improvement` (idle Builder by unit id; tile order connected → lower level → tile key). No extra confirm. |
 | Assign (disconnected) | Same, `isCapitalConnected == false` | Opens warn dialog. Dialog may repeat the same preview line; it is not the only place those facts appear. |
 | Improve anyway | Dialog | Commits pending `build_improvement` only. |

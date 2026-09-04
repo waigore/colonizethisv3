@@ -20,7 +20,7 @@ final class CounselIndustryCallbacks {
 
   final VoidCallback? onApplyProduceAllocation;
   final void Function(WorkerTier tier)? onAgreeTrain;
-  final VoidCallback? onOpenDevelopment;
+  final void Function(UnblockFeedstockDeepLink?)? onOpenDevelopment;
 }
 
 class CounselIndustryTabBody extends StatelessWidget {
@@ -165,9 +165,9 @@ class CounselIndustryRecommendationCard extends StatelessWidget {
   }
 
   Widget? _buildPrimaryAction(AppLocalizations l10n) {
-    if (!canEdit) return null;
     switch (recommendation.kind) {
       case IndustryCounselRecommendationKind.produceRecipe:
+        if (!canEdit) return null;
         final onPressed = callbacks.onApplyProduceAllocation;
         if (onPressed == null) return null;
         return CtNinePatchButton(
@@ -176,6 +176,7 @@ class CounselIndustryRecommendationCard extends StatelessWidget {
           child: Text(l10n.industryCounsel_action_applyProduceAllocation),
         );
       case IndustryCounselRecommendationKind.trainWorker:
+        if (!canEdit) return null;
         final tier = recommendation.trainTier;
         final onAgree = callbacks.onAgreeTrain;
         if (tier == null || onAgree == null) return null;
@@ -189,7 +190,7 @@ class CounselIndustryRecommendationCard extends StatelessWidget {
         if (onOpen == null) return null;
         return CtNinePatchButton(
           key: const ValueKey<String>('counsel_open_development'),
-          onPressed: onOpen,
+          onPressed: () => onOpen(recommendation.feedstockDeepLink),
           child: Text(l10n.industryCounsel_action_openDevelopment),
         );
     }

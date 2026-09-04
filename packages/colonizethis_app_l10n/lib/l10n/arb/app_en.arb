@@ -3103,6 +3103,15 @@
   "@development_noImprovableResources": {
     "description": "Empty improvable row under a province scope in the Development panel."
   },
+  "development_noMatchForInboundCommodity": "No improvable land for {name}",
+  "@development_noMatchForInboundCommodity": {
+    "description": "Banner when Development opens focused on a commodity with no matching improvable row (Refs #4725).",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "development_materialsShortageForAssign": "Materials shortage for assign:",
   "@development_materialsShortageForAssign": {
     "description": "Overview warning when assign-time material costs cannot be met."
@@ -3243,6 +3252,15 @@
   "production_availableOpenTradeSemantic": "Open Trade for {name}",
   "@production_availableOpenTradeSemantic": {
     "description": "Semantics label for tapping a tradeable Available cell to open Trade Market.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "production_affordanceOpenDevelopmentSemantic": "Open Development for {name}",
+  "@production_affordanceOpenDevelopmentSemantic": {
+    "description": "Semantics label for tapping a commodity-limited Allocation affordance to open Development (Refs #4725).",
     "placeholders": {
       "name": {
         "type": "String"

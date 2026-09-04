@@ -187,11 +187,15 @@ void main() {
           l10n: lookupAppLocalizations(const Locale('en')),
           canEdit: true,
           callbacks: CounselIndustryCallbacks(
-            onOpenDevelopment: () {
+            onOpenDevelopment: (deepLink) {
               bus.emit(
                 NavigateToRouteEvent(Routes.development, {
                   'game': game,
                   'humanPlayerId': game.players.first.id,
+                  if (deepLink != null)
+                    'highlightCommodityId': deepLink.commodityId,
+                  if (deepLink?.highlightTileKey != null)
+                    'highlightTileKey': deepLink!.highlightTileKey,
                 }),
               );
             },
@@ -207,6 +211,8 @@ void main() {
 
       expect(navEvents, hasLength(1));
       expect(navEvents.single.route, RoutePaths.development);
+      final args = navEvents.single.arguments! as Map<String, Object?>;
+      expect(args['highlightCommodityId'], 'timber');
       expect(UiScreenIds.developmentScreen, 'GAME80001');
     },
   );

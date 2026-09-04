@@ -71,7 +71,7 @@ void main() {
     final stubCallbacks = CounselIndustryCallbacks(
       onApplyProduceAllocation: _noop,
       onAgreeTrain: _noopTier,
-      onOpenDevelopment: _noop,
+      onOpenDevelopment: _noopLink,
     );
 
     testWidgets('editable produce card shows apply allocation button', (
@@ -160,7 +160,7 @@ void main() {
         buildTab(
           recommendations: [_feedstockRec()],
           callbacks: CounselIndustryCallbacks(
-            onOpenDevelopment: () => opened = true,
+            onOpenDevelopment: (_) => opened = true,
           ),
         ),
       );
@@ -195,3 +195,5 @@ void main() {
 void _noop() {}
 
 void _noopTier(WorkerTier _) {}
+
+void _noopLink(UnblockFeedstockDeepLink? _) {}

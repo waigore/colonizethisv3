@@ -16,6 +16,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../config/constants.dart';
 import '../../../../providers/development_panel_projection_provider.dart';
 import '../../../../widgets/ct_spacing.dart';
+import 'development_inbound_highlight.dart';
 import 'development_panel_keys.dart';
 import 'development_panel_map_panel.dart';
 import 'development_panel_overview.dart';
@@ -37,6 +38,8 @@ class DevelopmentRegionTab extends ConsumerStatefulWidget {
     required this.provinceDisplayNamesById,
     required this.canEdit,
     required this.onAssign,
+    this.inboundHighlightCommodityId,
+    this.inboundHighlightTileKey,
   });
 
   final Game game;
@@ -51,6 +54,8 @@ class DevelopmentRegionTab extends ConsumerStatefulWidget {
   final Map<String, String> provinceDisplayNamesById;
   final bool canEdit;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
+  final String? inboundHighlightCommodityId;
+  final String? inboundHighlightTileKey;
 
   @override
   ConsumerState<DevelopmentRegionTab> createState() =>
@@ -62,11 +67,13 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
   String? _selectedHighlightTileKey;
   Set<String> _materialShortageCommodityIds = const {};
   Object? _shortageScanKey;
+  bool _inboundShowApplied = false;
 
   @override
   void initState() {
     super.initState();
     _scheduleMaterialShortageScan();
+    _scheduleInboundShowIfNeeded();
   }
 
   @override
@@ -82,6 +89,36 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
     if (_shortageScanKey != scanKey) {
       _scheduleMaterialShortageScan();
     }
+    if (oldWidget.inboundHighlightCommodityId !=
+            widget.inboundHighlightCommodityId ||
+        oldWidget.inboundHighlightTileKey != widget.inboundHighlightTileKey ||
+        oldWidget.regionModel != widget.regionModel) {
+      _inboundShowApplied = false;
+      _scheduleInboundShowIfNeeded();
+    }
+  }
+
+  void _scheduleInboundShowIfNeeded() {
+    final commodityId = widget.inboundHighlightCommodityId;
+    if (commodityId == null || _inboundShowApplied) return;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _inboundShowApplied) return;
+      final match = findFirstDevelopmentImprovableCommodity(
+        regionModel: widget.regionModel,
+        commodityId: commodityId,
+      );
+      if (match == null) return;
+      final tileKeys = match.row.tileKeys.toSet();
+      final inboundTile = widget.inboundHighlightTileKey;
+      final selected = inboundTile != null && tileKeys.contains(inboundTile)
+          ? inboundTile
+          : null;
+      setState(() {
+        _highlightTileKeys = tileKeys;
+        _selectedHighlightTileKey = selected;
+        _inboundShowApplied = true;
+      });
+    });
   }
 
   void _scheduleMaterialShortageScan() {
@@ -150,6 +187,7 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
       assignRowStateFor: _assignRowStateFor,
       onAssign: widget.onAssign,
       provinceDisplayNamesById: widget.provinceDisplayNamesById,
+      inboundHighlightCommodityId: widget.inboundHighlightCommodityId,
       nextYieldGistForTile: (tileKey) => buildImprovementNextYieldGistForTile(
         l10n: appL10n(context),
         game: widget.game,
