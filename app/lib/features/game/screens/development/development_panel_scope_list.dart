@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../../widgets/ct_spacing.dart';
 
 import '../../widgets/units/shared/region_section_header.dart';
+import 'development_inbound_highlight.dart';
 import 'development_panel_keys.dart';
 import 'development_panel_scope_commodity_rows.dart';
 
@@ -65,6 +66,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
     required this.onAssign,
     required this.provinceDisplayNamesById,
     this.nextYieldGistForTile,
+    this.inboundHighlightCommodityId,
   });
 
   final DevelopmentPanelRegionModel regionModel;
@@ -75,6 +77,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
   final Map<String, String> provinceDisplayNamesById;
   final String? Function(String tileKey)? nextYieldGistForTile;
+  final String? inboundHighlightCommodityId;
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +102,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
               onAssign: onAssign,
               provinceDisplayNamesById: provinceDisplayNamesById,
               nextYieldGistForTile: nextYieldGistForTile,
+              inboundHighlightCommodityId: inboundHighlightCommodityId,
             );
           case _ScopeListEntryKind.purchasedHeader:
             return RegionSectionHeader(
@@ -133,6 +137,7 @@ class _ScopeCard extends StatelessWidget {
     required this.onAssign,
     required this.provinceDisplayNamesById,
     this.nextYieldGistForTile,
+    this.inboundHighlightCommodityId,
   });
 
   final AppLocalizations l10n;
@@ -145,6 +150,7 @@ class _ScopeCard extends StatelessWidget {
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
   final Map<String, String> provinceDisplayNamesById;
   final String? Function(String tileKey)? nextYieldGistForTile;
+  final String? inboundHighlightCommodityId;
 
   @override
   Widget build(BuildContext context) {
@@ -177,8 +183,8 @@ class _ScopeCard extends StatelessWidget {
               ),
             )
           else
-            ...scope.improvableCommodities.map(
-              (row) => DevelopmentImprovableCommodityRowView(
+            ...scope.improvableCommodities.map((row) {
+              final rowView = DevelopmentImprovableCommodityRowView(
                 l10n: l10n,
                 scopeKey: scope.scopeKey,
                 row: row,
@@ -188,8 +194,15 @@ class _ScopeCard extends StatelessWidget {
                 onAssign: onAssign,
                 provinceDisplayNamesById: provinceDisplayNamesById,
                 nextYieldGistForTile: nextYieldGistForTile,
-              ),
-            ),
+              );
+              return DevelopmentInboundCommodityHighlight(
+                commodityId: row.commodityId,
+                highlighted:
+                    inboundHighlightCommodityId != null &&
+                    row.commodityId == inboundHighlightCommodityId,
+                child: rowView,
+              );
+            }),
         ],
       ),
     );

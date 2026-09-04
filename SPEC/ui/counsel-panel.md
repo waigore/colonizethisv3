@@ -57,14 +57,14 @@ CtGameFeatureScreenShell
 | Tab **Industry** / **Trade** / **Military** / **Development** | Always | `DefaultTabController` | Switches tab body. |
 | **Apply recommended industry allocation** | Produce rec + `canMutateViaUi` | — | Merges `industryCounselCoreDesiredOutputByRecipe` into `productionDesiredOutputProvider`; recipes outside snapshot unchanged. |
 | **Agree** (train) | Train rec + editable | — | Appends one `RecruitWorkerOrder` when `suggestRecruitWorkerOrders` still accepts tier; else `ShowSnackBarEvent` with failure copy. |
-| **Open Development** | Feedstock unblock rec + editable | `NavigateToRouteEvent(Routes.development, …)` | Opens `GAME80001`; no auto-improve order. |
+| **Open Development** | Feedstock unblock rec (always, including `canMutateViaUi == false`) | `NavigateToRouteEvent(Routes.development, {game, humanPlayerId, highlightCommodityId, highlightTileKey?})` via `onOpenDevelopment(UnblockFeedstockDeepLink?)` | Opens `GAME80001` focused on that feedstock; no auto-improve order. Null deep-link → open without inbound highlight. |
 | **Apply recommended market book** | Non-empty trade book + `canMutateViaUi` | — | Replaces entire `tradeOrdersByPlayerId[human]` with counsel book snapshot. |
 | **Agree** (trade line) | Trade rec + editable | — | Stages/replaces that commodity via `applyTradeOrderForPlayer`; clears opposite direction on same commodity; else `ShowSnackBarEvent`. |
 | **Agree** (military train) | Train rec + editable | — | Appends that many `BuildUnitOrder`s when still affordable; else `ShowSnackBarEvent`. |
 | **Agree** (military invade) | Invade rec + editable | `ArmyMoveRequestedEvent` or inline draft apply | Stages `ArmyMoveOrder`; when declare war required, shows existing invasion confirm dialog first; on proceed stages `declareWar` + move; on cancel no change. |
 | **Agree** (development port) | Build port rec + editable | — | Stages one Engineer `WorkOrder(build_port)` on recommended tile when still valid/affordable; else `ShowSnackBarEvent`. |
 
-Read-only while turn resolution blocking (`canMutateViaUi == false`): no primary actions on any tab.
+Read-only while turn resolution blocking (`canMutateViaUi == false`): no mutating Agree/Apply actions on any tab. **Open Development** remains available as navigate-only (parity with Production Available → Trade); `GAME80001` opens read-only.
 
 ## Industry tab
 
@@ -126,7 +126,8 @@ Read-only while turn resolution blocking (`canMutateViaUi == false`): no primary
 - Given a produce recommendation and editable state, when the player taps **Apply recommended industry allocation**, then all recipe desired outputs from the core assignment snapshot are written to `productionDesiredOutputProvider` and recipes outside the snapshot are unchanged.
 - Given a train recommendation still affordable, when the player taps **Agree**, then one `RecruitWorkerOrder` for that tier is queued.
 - Given a train recommendation no longer affordable, when the player taps **Agree**, then no order is queued and a plain-language snackbar is shown.
-- Given unblock feedstock rec, when the player taps **Open Development**, then Development opens and no produce/train order is auto-committed.
+- Given unblock feedstock rec with `feedstockDeepLink` commodity/tile, when the player taps **Open Development**, then `onOpenDevelopment` receives that deep-link, navigate includes `highlightCommodityId` / optional `highlightTileKey`, and no produce/train/improve order is auto-committed.
+- Given unblock feedstock rec and `canMutateViaUi == false`, when the player taps **Open Development**, then Development still opens focused (read-only).
 - Given the human opens Counsel from Trade Market, when the screen builds, then the Trade tab is selected and lists the full trade book or the trade empty-state copy.
 - Given navigation with `highlightRecommendationId` and Trade tab, when the Trade tab opens, then that line is visually emphasized.
 - Given a non-empty trade book and editable state, when the player taps **Apply recommended market book**, then `tradeOrdersByPlayerId[human]` equals the counsel book exactly.

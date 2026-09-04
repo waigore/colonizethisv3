@@ -133,8 +133,12 @@ class Routes {
       case RoutePaths.development:
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) =>
-              DevelopmentScreen(game: game, humanPlayerId: humanPlayerId),
+          builder: (_) => DevelopmentScreen(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            highlightCommodityId: args['highlightCommodityId'] as String?,
+            highlightTileKey: args['highlightTileKey'] as String?,
+          ),
         );
       case RoutePaths.counsel:
         return MaterialPageRoute<void>(

@@ -142,6 +142,7 @@ ProductionPanel buildProductionScreenPanel({
   starredProduceRecommendationsByRecipeId,
   required void Function({String? highlightRecommendationId}) openCounsel,
   required void Function(String commodityId) openTradeMarket,
+  required void Function(String commodityId) openDevelopment,
 }) {
   return ProductionPanel(
     game: displayGame,
@@ -176,5 +177,6 @@ ProductionPanel buildProductionScreenPanel({
         starredProduceRecommendationsByRecipeId,
     onOpenCounsel: openCounsel,
     onOpenTradeMarket: openTradeMarket,
+    onOpenDevelopment: openDevelopment,
   );
 }

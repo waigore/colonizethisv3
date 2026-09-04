@@ -10,6 +10,7 @@
 // SPEC: SPEC/ui/counsel-panel.md § Acceptance criteria.
 
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_industry_tab_body.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -24,7 +25,7 @@ void main() {
   final stubCallbacks = CounselIndustryCallbacks(
     onApplyProduceAllocation: _noop,
     onAgreeTrain: _noopTier,
-    onOpenDevelopment: _noop,
+    onOpenDevelopment: _noopLink,
   );
 
   Future<void> pumpCounselGolden(
@@ -122,12 +123,13 @@ void main() {
         child: counselIndustryTabGoldenHost(
           recommendations: counselTestDefaultRecommendations(),
           canEdit: false,
+          callbacks: CounselIndustryCallbacks(onOpenDevelopment: _noopLink),
         ),
       );
 
       expect(find.text('Apply recommended industry allocation'), findsNothing);
       expect(find.text('Agree'), findsNothing);
-      expect(find.text('Open Development'), findsNothing);
+      expect(find.text('Open Development'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
@@ -140,3 +142,5 @@ void main() {
 void _noop() {}
 
 void _noopTier(WorkerTier _) {}
+
+void _noopLink(UnblockFeedstockDeepLink? _) {}

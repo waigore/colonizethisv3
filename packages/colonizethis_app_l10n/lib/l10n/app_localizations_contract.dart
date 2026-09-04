@@ -1688,6 +1688,7 @@ abstract class AppLocalizations {
 
   /// Empty improvable row under a province scope in the Development panel.
   String get development_noImprovableResources;
+  String development_noMatchForInboundCommodity(String name);
 
   /// Overview warning when assign-time material costs cannot be met.
   String get development_materialsShortageForAssign;
@@ -2058,6 +2059,7 @@ abstract class AppLocalizations {
 
   /// Semantics label for opening Trade from a tradeable Available cell.
   String production_availableOpenTradeSemantic(String name);
+  String production_affordanceOpenDevelopmentSemantic(String name);
 
   /// Production panel category heading.
   String get production_food;

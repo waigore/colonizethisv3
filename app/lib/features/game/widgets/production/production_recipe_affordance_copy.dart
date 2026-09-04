@@ -19,6 +19,12 @@ final class ProductionRecipeAffordanceCopy {
 bool recipeAffordanceIsLabourLimited(RecipeAffordance affordance) =>
     affordance.limitingLabel == kRecipeAffordanceLabourLabel;
 
+/// Navigate-iff for Allocation → Development (Refs #4725).
+bool recipeAffordanceOpensDevelopment(RecipeAffordance affordance) =>
+    !affordance.capLimited &&
+    !recipeAffordanceIsLabourLimited(affordance) &&
+    affordance.limitingCommodityId != null;
+
 ProductionRecipeAffordanceCopy formatProductionRecipeAffordanceCopy({
   required AppLocalizations l10n,
   required RecipeAffordance affordance,

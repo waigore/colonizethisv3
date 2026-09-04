@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'production_affordance_development_cell.dart';
 import 'production_recipe_affordance.dart';
 import 'production_recipe_affordance_copy.dart';
 import 'production_allocation_row_controls.dart';
@@ -31,6 +32,7 @@ class ProductionAllocationRow extends StatelessWidget {
     this.locked = false,
     this.canEditLabour = true,
     this.counselStar,
+    this.onOpenDevelopment,
   });
 
   final ProductionRecipe recipe;
@@ -50,6 +52,9 @@ class ProductionAllocationRow extends StatelessWidget {
 
   /// Optional industry counsel star for this recipe row.
   final ProductionIndustryCounselStar? counselStar;
+
+  /// When set, commodity-navigable affordance lines open Development (Refs #4725).
+  final void Function(String commodityId)? onOpenDevelopment;
 
   int get desiredOutput => desiredOutputByRecipe[recipe.id] ?? 0;
 
@@ -98,14 +103,31 @@ class ProductionAllocationRow extends StatelessWidget {
       affordance: rowAffordance,
       maxAchievable: maxAchievable,
     );
+    final text = Text(
+      copy.displayText,
+      textAlign: TextAlign.right,
+      style: theme.textTheme.labelSmall,
+      semanticsLabel: copy.semanticsLabel,
+    );
+    final openDevelopment = onOpenDevelopment;
+    final commodityId = rowAffordance.limitingCommodityId;
+    if (openDevelopment != null &&
+        recipeAffordanceOpensDevelopment(rowAffordance) &&
+        commodityId != null) {
+      final openSemantic = l10n.production_affordanceOpenDevelopmentSemantic(
+        rowAffordance.limitingLabel,
+      );
+      return ProductionAffordanceDevelopmentCell(
+        key: ValueKey<String>('production_affordance_${recipe.id}'),
+        onOpenDevelopment: () => openDevelopment(commodityId),
+        tooltip: '${copy.tooltipMessage} $openSemantic',
+        semanticLabel: '${copy.semanticsLabel} $openSemantic',
+        child: text,
+      );
+    }
     return Tooltip(
       message: copy.tooltipMessage,
-      child: Text(
-        copy.displayText,
-        textAlign: TextAlign.right,
-        style: theme.textTheme.labelSmall,
-        semanticsLabel: copy.semanticsLabel,
-      ),
+      child: text,
     );
   }
 

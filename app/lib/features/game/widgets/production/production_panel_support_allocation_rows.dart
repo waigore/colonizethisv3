@@ -77,6 +77,7 @@ List<Widget> productionAllocationRows({
   starredProduceRecommendationsByRecipeId,
   required ProductionOpenCounselCallback? onOpenCounsel,
   required ThemeData theme,
+  void Function(String commodityId)? onOpenDevelopment,
 }) {
   final recipes = ProductionRecipesCatalog.all;
   if (recipes.isEmpty) {
@@ -136,6 +137,7 @@ List<Widget> productionAllocationRows({
           locked: locked,
           canEditLabour: canEditLabour,
           counselStar: counselStar,
+          onOpenDevelopment: onOpenDevelopment,
         ),
       ),
     );

@@ -150,6 +150,16 @@ class _ProductionScreenBodyState extends ConsumerState<ProductionScreenBody> {
       );
     }
 
+    void openDevelopment(String commodityId) {
+      bus.emit(
+        NavigateToRouteEvent(Routes.development, {
+          'game': widget.displayGame,
+          'humanPlayerId': displayPlayer.id,
+          'highlightCommodityId': commodityId,
+        }),
+      );
+    }
+
     final labourCallbacks = productionScreenLabourCallbacks(
       canEdit: canEdit,
       playerId: displayPlayer.id,
@@ -185,6 +195,7 @@ class _ProductionScreenBodyState extends ConsumerState<ProductionScreenBody> {
           starredProduceRecommendationsByRecipeId,
       openCounsel: openCounsel,
       openTradeMarket: openTradeMarket,
+      openDevelopment: openDevelopment,
     );
     final interactivePanel = CtAppPerfInteractiveReadyMarker(
       markerName: 'production.interactiveReady',

@@ -23,6 +23,8 @@ class DevelopmentScreen extends ConsumerWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    this.highlightCommodityId,
+    this.highlightTileKey,
   });
 
   /// SPEC/ui/development-panel.md — [UiScreenIds.developmentScreen].
@@ -36,6 +38,8 @@ class DevelopmentScreen extends ConsumerWidget {
 
   final Game game;
   final String humanPlayerId;
+  final String? highlightCommodityId;
+  final String? highlightTileKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,6 +73,8 @@ class DevelopmentScreen extends ConsumerWidget {
           return DevelopmentScreenBody(
             game: displayGame,
             humanPlayerId: humanPlayerId,
+            highlightCommodityId: highlightCommodityId,
+            highlightTileKey: highlightTileKey,
           );
         },
       ),

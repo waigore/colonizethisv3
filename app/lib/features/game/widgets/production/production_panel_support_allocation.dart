@@ -26,6 +26,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
     this.canEditLabour = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
+    this.onOpenDevelopment,
     super.key,
   });
 
@@ -38,6 +39,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
   final Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId;
   final ProductionOpenCounselCallback? onOpenCounsel;
+  final void Function(String commodityId)? onOpenDevelopment;
 
   int _computeTotalRequiredLabour() {
     return desiredOutputByRecipe.entries.fold<int>(0, (sum, entry) {
@@ -128,6 +130,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
                   starredProduceRecommendationsByRecipeId,
               onOpenCounsel: onOpenCounsel,
               theme: theme,
+              onOpenDevelopment: onOpenDevelopment,
             ),
             ..._buildLabourSummary(
               theme,

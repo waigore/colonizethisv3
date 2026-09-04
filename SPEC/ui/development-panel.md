@@ -9,7 +9,18 @@
 ## Trigger conditions
 
 - **Empire rail:** `development` button emits `NavigateToRouteEvent(Routes.development, {game, humanPlayerId})`.
+- **Production Allocation affordance (Refs #4725):** commodity-limited unlocked row emits `NavigateToRouteEvent(Routes.development, {game, humanPlayerId, highlightCommodityId})` when navigate-iff holds (see [production-panel.md](production-panel.md) § Affordance → Development).
+- **Industry Counsel Open Development (Refs #4725):** feedstock card emits the same route with `highlightCommodityId` and optional `highlightTileKey` from `UnblockFeedstockDeepLink`.
 - **Back:** `CtTopBar` `← Map` pops to game map.
+
+### Inbound route args (Refs #4725)
+
+| Arg | Type | Required | Description |
+|-----|------|----------|-------------|
+| `highlightCommodityId` | `String?` | no | When set, select the OW/NW tab that contains a matching improvable row (or the tile’s region when `highlightTileKey` is set); run **Show** for that commodity; scroll the matching assign row into view with inbound highlight chrome. Does **not** auto-tap **Assign** or stage a `WorkOrder`. |
+| `highlightTileKey` | `String?` | no | When set with a matching improvable row, used as `selectedTileKey` on the panel map (must be in that row’s tile set when applied). |
+
+**Empty matching set:** Development still opens. Panel copy names the inbound good; no work order is staged.
 
 ---
 
@@ -49,6 +60,7 @@ Below idle Builder/Engineer counts, when the active region has Builders or Engin
 | Counsel (header) | Emits `NavigateToRouteEvent(Routes.counsel, counselTab: 'development')` for [counsel-panel.md](counsel-panel.md) Development tab (Refs #4332). |
 | Show / Assign | See [development-assign-row.md](components/development-assign-row.md). Connected Assign is one tap; disconnected opens Improve anyway / Road first / Cancel. |
 | Region tab | Switches list + map region. |
+| Inbound highlight (first frame) | When `highlightCommodityId` is set: pick region tab (tile region, else first region with a matching improvable row, else OW); apply **Show** for that commodity (+ `selectedTileKey` when `highlightTileKey` is known); scroll matching row into view. **Assign** is not invoked. Observe / `canMutateViaUi == false` still lands focused; **Assign** stays unavailable. |
 
 Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `development_panel_assign.dart`; Road first: `development_panel_road_first.dart` in `colonizethis_orders`. Road-step BFS: [capital-and-connectivity.md](../game/capital-and-connectivity.md).
 
@@ -65,6 +77,8 @@ Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `d
 | Assign preview enabled | Enabled Assign row shows place, `1 → 2`, and lumber + cast iron cost (Refs #4472). |
 | Assign preview enabled (mobile) | Same preview wraps at 320–360 dp; Show/Assign stay tappable. |
 | Disconnected dialog | Road first disabled reason + Improve anyway affordance. |
+| Inbound highlight from Production/Counsel (Refs #4725) | `DevelopmentScreen` with `highlightCommodityId: timber` (and optional tile); focused commodity row + Show chrome. |
+| Inbound highlight (mobile) | Same inbound story at 320–360 dp. |
 
 ---
 
@@ -82,6 +96,9 @@ Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `d
 - Given a legal Engineer road step and idle Engineer with materials, when **Road first** is chosen, then only a pending `build_road` WorkOrder is committed.
 - Given **Road first** is impossible, when the dialog opens, then **Road first** is disabled with a plain reason; **Cancel** leaves no new order.
 - Given no idle Builder, when a row would Assign, then **Assign** is disabled with a plain-language reason.
+- Given `GAME80001` opens with `highlightCommodityId` (and optional `highlightTileKey`) matching an improvable row (Refs #4725), when the first frame paints, then the matching region tab is selected, **Show** highlight (and selected tile when a key is known) is applied, the matching assign row is scrolled into view with inbound chrome, and **Assign** is not invoked.
+- Given no improvable row matches the inbound commodity (Refs #4725), when Development opens from that navigate, then the UI layer still shows `GAME80001` with copy that names that good, and no work order is staged.
+- Given `canMutateViaUi == false` and inbound highlight args (Refs #4725), when Development opens, then the panel lands focused read-only and **Assign** stays unavailable.
 
 ## Acceptance criteria (Slice D)
 
