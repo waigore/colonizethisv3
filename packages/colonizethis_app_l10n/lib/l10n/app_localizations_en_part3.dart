@@ -991,14 +991,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_cancelEstablishConsulateAction => 'Cancel';
-
-  @override
-  String provinceOverlay_noConsulateWith(String owner) {
-    return 'No consulate with $owner';
-  }
-
-  @override
-  String provinceOverlay_establishConsulateDisabledSemantics(String reason) {
-    return 'Establish Consulate unavailable: $reason';
-  }
 }
