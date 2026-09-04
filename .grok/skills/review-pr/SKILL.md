@@ -7,4 +7,4 @@ description: Reviews an open pull request against issue alignment, acceptance-cr
 
 Source of truth: `.cursor/skills/review-pr/SKILL.md`
 
-Read the full file. Apply the exact non-negotiables (strict YES/CONDITIONAL YES/NO with rules on when conditional is allowed), required checklist order, scoring, and output format (including mandatory PR comment publication).
+Read the full file and follow it exactly.

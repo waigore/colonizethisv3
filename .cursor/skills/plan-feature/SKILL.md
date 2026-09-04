@@ -5,98 +5,34 @@ description: Plans a user-provided feature idea by reading SPEC and code (read-o
 
 # Plan a feature and open a capturing GitHub issue (read-only)
 
-## Scope (strict)
+Conventions: [shared.md](../shared.md). Filing mechanics: [create-github-issue](../create-github-issue/SKILL.md) §§ 6–7 (`gh issue create --body-file`, fallback).
 
-- **Do not** change the repository: no new/edited specs, code, tests, config, or tooling.
-- **Do** read SPEC and implementation to ground the plan; **do** ask focused clarification questions when requirements are underspecified, ambiguous, or contradictory.
-- **Do** attempt to **create one GitHub issue** with the full plan. If creation fails, output title and body for manual filing (same pattern as sibling skills).
+## Scope
 
-If the user asks to implement the feature or update specs, stop following this skill and use normal workflow (**AGENTS.md**, **CONTRIBUTING.md**, SPEC-first rules).
+- Do not change the repo. Read SPEC/code. Ask focused clarification questions when requirements are underspecified, ambiguous, or contradictory (interactive by design).
+- Create one GitHub issue with the plan. If the user asks to implement or edit SPEC, stop and use the normal implementation workflow.
 
-## Architectural alignment (ColonizeThis)
+## Design alignment
 
-When proposing design:
-
-- **Reuse first:** Prefer extending existing modules, services, Flame components, and UI patterns over parallel structures or duplicated logic.
-- **Authoritative docs:** Game/AI behavior → `SPEC/game/` (GDD); architecture → `SPEC/program/` (TDD); derive UI/AI sub-specs from those. Cite **file paths and sections** in the issue where they support or constrain the feature.
-- **Stack boundaries:** Keep Flutter UI and Flame simulation concerns separated; cross-panel UI via **AppEventBus** (not ad hoc `Ref`/callback chains across panels)—see `.cursor/rules/` and `SPEC/program/app-ui-wiring.md`.
-- **Player-app UI documentation:** New or changed screens, dialogs, or overlays require stable screen IDs, exhaustive layout/behavior/variant specs, and Widgetbook linkage per `.cursor/rules/colonizethis-ui-documentation.mdc` and `SPEC/ui/screen-registry.md`. Planning issues should list those deliverables as subtasks/ACs; execution uses **`document-app-ui`** (`.cursor/skills/document-app-ui/SKILL.md`; OpenCode: `.opencode/skills/document-app-ui/SKILL.md`). Style/pixel-art stays in `colonizethis-ui-design.mdc`. Game-app surfaces inherit the standing 1 s full-load + dispose contract (`colonizethis-ui-surface-budget.mdc`); do not propose extra always-mounted dialogs or `FlameGame`s. Do not require every issue to duplicate that AC.
-- **Player manual:** When the feature changes **player UX or gameplay** (what the player can do, see, or be told), planning issues must name target chapter(s), add a **Manual follow-up** subtask, and include a testable AC for `docs/manual/` update (or justified non-update). Execution uses **`update-game-manual`** (`.cursor/skills/update-game-manual/SKILL.md`; policy: `.cursor/rules/colonizethis-game-manual.mdc`). Map chapters via `docs/manual/index.md` ToC or `## Sources` footers.
-- **World model:** Province identity uses **(regionId, provinceId)** or prefixed ids—never a bare province id alone when relevant.
-- **New abstractions:** If nothing fits, **suggest** a minimal new abstraction in the issue (name, responsibility, where it would live, what it replaces or sits beside) and flag **SPEC impact** (none / clarification / new section required before implementation).
-
-## When this applies
-
-The user provides a **feature idea** plus **initial requirements** and wants:
-
-- Context from **specs and code** without edits
-- A **broken-down plan** (subtasks, dependencies for non-trivial work)
-- **Clear gaps** resolved via short Q&A in chat when needed
-- A **single GitHub issue** as the handoff artifact (not implementation)
+Reuse existing modules/UI patterns. Cite GDD (`SPEC/game/`) / TDD (`SPEC/program/`). Flutter UI vs Flame simulation stay separated; cross-panel via AppEventBus (`SPEC/program/app-ui-wiring.md`). New/changed screens: subtasks/ACs for [document-app-ui](../document-app-ui/SKILL.md). Player UX/gameplay: [update-game-manual](../update-game-manual/SKILL.md) (name chapters). Province identity is `(regionId, provinceId)` or prefixed ids. New abstractions only when nothing fits; flag SPEC impact.
 
 ## Workflow
 
-### 1. Capture the ask
+1. **Capture** problem/outcome, constraints, inputs, open questions (mark unknowns).
+2. **Clarify** only what unblocks planning. Spell out why it matters and options/tradeoffs. Do not invent product decisions.
+3. **Investigate** SPEC gaps, concrete code owners (paths/types), existing tests to extend.
+4. **Design** into the issue: requirements (must vs nice-to-have), assumptions, non-goals, design proposal (reuse first; proposed screen IDs or “TBD via `document-app-ui`”), SPEC impact, manual impact, dependency-aware subtasks, risks.
+5. **ACs** Given/When/Then tied to requirements and cited SPEC.
+6. **File** via `create-github-issue` create/fallback. Title imperative, ≤ ~80 chars.
 
-From the user message(s), extract explicitly:
-
-| Field | Notes |
-|--------|--------|
-| **Problem / outcome** | What success looks like for the user or player |
-| **Constraints** | Performance, platforms, compatibility, deadlines, “must not” items |
-| **Inputs** | Who triggers it, data sources, rulesets, save format, etc. |
-| **Open questions** | Mark unknowns rather than guessing |
-
-### 2. Clarify before deep research (if needed)
-
-Ask **only** questions that unblock correct planning. For each question:
-
-- **Why it matters** (one line)
-- **Options or tradeoffs** when useful (e.g. “A: … implies …; B: … implies …”)
-
-Skip speculation; do not invent product decisions. If requirements contradict each other, quote the contradiction and ask which path to document as primary.
-
-### 3. Investigate (read-only)
-
-- **Specs:** Map the feature to GDD/TDD (and `SPEC/ui/`, `SPEC/ai/` if applicable). Note gaps: missing spec, ambiguous behavior, or conflict with existing rules.
-- **Code:** Find current owners of related behavior (services, components, packages). List **concrete paths** and key types/functions—enough for an implementer to start.
-- **Tests:** Mention existing coverage that should extend vs new test areas (no new tests in this phase).
-
-Use search/read tools; avoid mutating the working tree.
-
-### 4. Analyze and design (issue content, not repo changes)
-
-Produce sections for the issue:
-
-- **Requirements:** Numbered, testable where possible; separate **must-have** vs **nice-to-have** if the user hinted prioritization.
-- **Assumptions:** Explicit guesses the user confirmed or that remain to validate during implementation; label unconfirmed assumptions.
-- **Non-goals:** What this feature intentionally does not do (prevents scope creep).
-- **Design proposal:** How to implement **within existing patterns**—reuse points, new types/modules only if justified, data flow, UI entry points, events, save/load or ruleset touchpoints if relevant. For UI surfaces, name proposed **screen IDs** (category from registry) or “TBD — assign via `document-app-ui`” and whether a new `SPEC/ui/components/` spec is needed.
-- **SPEC impact:** `none` / `clarification only` / `GDD` / `TDD` / `UI` / `AI` (list paths)—per project SPEC-first policy; no edits in this task. UI structure changes imply `SPEC/ui/<screen>.md` + registry row + `UiScreenIds` (document in issue, implement via `document-app-ui`).
-- **Manual impact:** `none` (justify) / `docs/manual/<chapter>.md` (list)—when player UX or gameplay changes. Include subtask + AC per `.cursor/rules/colonizethis-game-manual.mdc`.
-- **Subtasks:** For complex work, a **dependency-aware** breakdown:
-  - Order orDAG style: e.g. `1 → 2`, `1 → 3`, `2+3 → 4`
-  - Each subtask: short title, one-line objective, **depends on:** ids
-- **Risks / edge cases:** Technical and design risks.
-- **Open follow-ups:** Only items still unclear **after** user clarification, if any.
-
-### 5. Acceptance criteria
-
-Write **Given / When / Then** (or checklists) that an implementer can verify without guessing. Tie criteria to requirements and to cited SPEC where applicable. Reference **CONTRIBUTING** / project testing expectations only at a high level (no new tests written here).
-
-### 6. Build title and body
-
-**Title:** Imperative, scoped (e.g. “Add …”, “Support …”); ≤ ~80 characters.
-
-**Body** template:
+## Body template
 
 ```markdown
 ## Summary
-[One or two sentences: outcome and scope]
+[Outcome and scope]
 
 ## Requirements
 1. ...
-2. ...
 
 ## Assumptions
 - ...
@@ -105,17 +41,15 @@ Write **Given / When / Then** (or checklists) that an implementer can verify wit
 - ...
 
 ## Spec and code context
-- SPEC: [paths/sections and brief notes]
-- Code: [paths, main types/hooks]
-- Tests: [what exists / likely extensions]
+- SPEC: ...
+- Code: ...
+- Tests: ...
 
 ## Design proposal
-[Reuse, new abstractions, flow, integration points]
+[...]
 
 ## Subtasks and dependencies
 - [ ] **S1** — ... *(depends on: —)*
-- [ ] **S2** — ... *(depends on: S1)*
-...
 
 ## SPEC impact (planning only — no edits in this issue’s workflow)
 - ...
@@ -132,34 +66,4 @@ Write **Given / When / Then** (or checklists) that an implementer can verify wit
 - [ ] Manual: Given player-visible behavior changes, when implementation merges, then `docs/manual/` chapter(s) [list] are updated (or non-update is justified in the PR).
 ```
 
-Adjust sections if the feature is small (minimal subtasks; still keep acceptance criteria).
-
-### 7. Create the issue (primary path)
-
-From the **repository root**:
-
-1. Write the body to a **temporary file** (e.g. under `/tmp`) to preserve markdown.
-2. Run: `gh issue create --title "<title>" --body-file "<path>"`
-3. On **success:** return the **issue URL** (and number) in chat.
-4. On **failure:** explain briefly, suggest `gh auth login` / permissions if relevant, and paste the **full title and body** for manual creation.
-
-Add labels only if the user requested or labels are obvious; otherwise suggest labels in chat.
-
-### 8. Fallback
-
-Same as sibling skill: always preserve the full draft if `gh` cannot create the issue.
-
-## Quality bar
-
-- **Facts vs inference:** Label hypotheses; do not present guesses as spec truth.
-- **No duplication:** Call out existing APIs/components to **extend** before proposing new layers.
-- **Focused clarification:** Few high-leverage questions; implications spelled out.
-- **Issue is implementable:** Another developer could start from the issue without repeating full discovery.
-
-## Related
-
-- **Bug / gap reports → structured issue (read-only):** [.cursor/skills/create-github-issue/SKILL.md](../create-github-issue/SKILL.md)
-- **Player-app UI documentation (implementation):** [.cursor/skills/document-app-ui/SKILL.md](../document-app-ui/SKILL.md) (OpenCode: `.opencode/skills/document-app-ui/SKILL.md`)
-- **Player manual (implementation):** [.cursor/skills/update-game-manual/SKILL.md](../update-game-manual/SKILL.md); policy: [`.cursor/rules/colonizethis-game-manual.mdc`](../../.cursor/rules/colonizethis-game-manual.mdc)
-- **Verify issues:** [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md)
-- **After the issue exists:** implementation follows **AGENTS.md**, **CONTRIBUTING.md**, and `.cursor/rules/` (SPEC-first, testing, UI wiring).
+Small features may drop subtasks; keep ACs. Facts vs inference: label hypotheses. The issue must be implementable without repeating discovery.

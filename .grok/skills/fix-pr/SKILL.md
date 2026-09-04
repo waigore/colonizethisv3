@@ -5,6 +5,7 @@ description: Diagnoses and unblocks a pull request by checking PR status, failin
 
 **Thin Grok shim** (repo `.grok/skills/`).
 
-Source of truth: `.cursor/skills/fix-pr/SKILL.md` (plus its sibling `reference.md`).
+Source of truth: `.cursor/skills/fix-pr/SKILL.md`
 
-Read both the SKILL.md and reference.md from the .cursor location. Follow the non-negotiables, workflow (context, conflicts, reproduce, minimal fix, verify), and output format exactly. This is a core dependency for consolidate-prs, manage-pr-agent, and backlog agents.
+Read the full file and follow it exactly.
+Also read: `.cursor/skills/fix-pr/reference.md`.

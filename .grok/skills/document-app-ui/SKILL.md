@@ -7,4 +7,4 @@ description: Documents player-app UI screens and UI changes with stable 8-char s
 
 Source of truth: `.cursor/skills/document-app-ui/SKILL.md`
 
-Read the full file and follow its authority (colonizethis-ui-documentation.mdc), ID assignment, spec content checklist, implementation alignment, Widgetbook, and output format exactly. Related skills (implement-github-issue, verify-github-issue) are referenced from within the authoritative copy.
+Read the full file and follow it exactly.

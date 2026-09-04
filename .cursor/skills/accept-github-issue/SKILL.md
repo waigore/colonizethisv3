@@ -11,70 +11,56 @@ description: |-
 
 # Accept a GitHub issue (ColonizeThis)
 
-## When this applies
-
-Issue **number** or **URL** is given. If only a GitHub username is given, ask for the issue number/URL. To pick from the `backlog:acceptance` queue instead, use **`backlog-accept-agent`**.
+Issue **number** or **URL**. If only a username is given, ask for the issue. Queue + relabel: [backlog-accept-agent](../backlog-accept-agent/SKILL.md). Conventions: [shared.md](../shared.md). Cookbook: [reference.md](reference.md).
 
 ## Policy
 
-Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONTRIBUTING.md)**. SPEC-first. Verify only on **`origin/dev`**.
+Accept only on **latest `origin/dev`**. **`gh issue comment` only** — never relabel/close (that is `backlog-accept-agent`).
 
 **Hard-fail** (never **ACCEPT**):
 
-- Any AC without **executed evidence** in the comment (test output, in-app screenshot, CLI assertion, or diff-audit finding). Reading code is not acceptance evidence.
-- Work not merged on **`origin/dev`**.
-- User-visible AC without **in-app screenshot proof** (driven app or passing e2e scenario capturing the state); UI-visual AC whose screenshot shows it unmet.
-- Refactor issue without a passing **Verification** comment (outcome **Complete**) on the issue, or whose merged state on `dev` has drifted from what was verified.
-- Art issue whose assets fail the vision checklist (placeholder look, seam breaks, off-palette vs peers, wrong geometry vs contract).
-- Any relevant suite red on `dev`; next-turn ACs exceeding the **15 s budget**.
-- **Gameplay/UI** (standing; **not** AC-gated): a **touched** game-app panel, dialog, or overlay (introduced or modified by the issue) that opens over **1 000 ms** for required content (calcs, minimaps, Yarn) or that leaves unused dialogs/widgets/`FlameGame`s mounted after close (`colonizethis-ui-surface-budget.mdc`). Untouched grandfathered overflows are exempt. Refactor-only issues stay on the verification comment.
-
-**Never** change labels, milestones, or issue state — **`gh issue comment` only** (label transitions belong to `backlog-accept-agent`).
+- Any AC without executed evidence in the comment (reading code is not evidence).
+- Work not merged on `origin/dev`.
+- User-visible AC without in-app screenshot proof; UI-visual AC whose screenshot shows it unmet.
+- Refactor issue without a passing **Verification** comment (Complete), or `dev` drifted from what was verified.
+- Art that fails the vision checklist in reference.md §C.
+- Relevant suite red on `dev`; next-turn ACs over the 15 s budget (`colonizethis-turn-resolution-budget.mdc`).
+- Touched game-app surface over 1 s or left mounted (`colonizethis-ui-surface-budget.mdc`). Grandfathered untouched overflows exempt. Refactor-only issues stay on the verification comment.
 
 ## Workflow
 
-1. `gh issue view <n> --json title,body,labels,state,url` — issue must be open.
-2. **Classify** (apply a second procedure when ACs demand it, e.g. UI feature shipping generated art):
+1. `gh issue view <n> --json title,body,labels,state,url` — open.
+2. Classify (apply a second procedure when ACs demand it):
 
    | Category | Signals | Method |
    |----------|---------|--------|
-    | **Refactor** | `refactor` label; "byte-identical" / "no UX change" / "behavior-preserving" ACs | Verification-based acceptance (no re-testing) — reference.md §B |
-   | **Art generation** | ACs reference generated PNGs/atlases under `app/assets/**`, PixelLab pipelines, style/seam criteria | Vision inspection + contract tests — §C |
-   | **Gameplay / UI** | Default: player-visible behavior, screens, game rules, setup pipeline, AI | In-app AC execution — §A |
+   | **Refactor** | `refactor` label; “byte-identical” / “no UX change” | Verification-based — reference.md §B |
+   | **Art generation** | Generated PNGs/atlases, PixelLab, style/seam ACs | Vision + contract tests — §C |
+   | **Gameplay / UI** | Default | In-app AC execution — §A |
 
-3. `git fetch origin && git checkout dev && git pull` — unmerged/local-only work → **REJECT**.
-4. **Common gates** (gameplay/UI and art issues; **refactor issues skip this** — the gates recorded in the passing verification comment are the evidence): `melos run test_app`; target package tests for `packages/<name>/` issues; `dart run tool/ct_repo_lint.dart` when the issue changes lint gates. A red suite not pre-existing on clean `dev` blocks acceptance.
-5. **Execute the category procedure** per **[reference.md](reference.md)**: derive one executable case per AC (Given → setup, When → driver actions, Then → widget-tree/screenshot assertion); record per-AC `PASS <evidence>` / `FAIL <observed vs expected>`. Every AC maps to at least one executed procedure.
-6. Post **one** consolidated comment (`gh issue comment <n> --body-file …`):
+3. `git fetch origin && git checkout dev && git pull` — unmerged → **REJECT**.
+4. Common gates (skip for refactor — the verification comment is the evidence): `melos run test_app`; package tests; `dart run tool/ct_repo_lint.dart` if lint gates changed. A new red suite on clean `dev` blocks acceptance.
+5. Execute the category procedure. Every AC → at least one `PASS <evidence>` / `FAIL <observed vs expected>`.
+6. Post one comment:
 
-   ```markdown
-   **Acceptance**
+```markdown
+**Acceptance**
 
-   Category: [Gameplay/UI | Refactor | Art generation] (mixed: …)
-   `dev` @ `<sha>` — [app driven on macos|linux | verification review (refactor) | vision inspection]
+Category: [Gameplay/UI | Refactor | Art generation]
+`dev` @ `<sha>` — [app driven on macos|linux | verification review (refactor) | vision inspection]
 
-   | AC | Result | Evidence |
-   |----|--------|----------|
-   | <AC, shortened> | ✅ PASS / ❌ FAIL | <test cmd / screenshot / diff finding / vision note> |
+| AC | Result | Evidence |
+|----|--------|----------|
+| <AC> | ✅ PASS / ❌ FAIL | <cmd / screenshot / vision note> |
 
-   Visual proof (when applicable):
+Visual proof (when applicable):
 
-   ![<ac>](https://gist.githubusercontent.com/OWNER/GIST_ID/raw/<file>.png)
+![<ac>](https://gist.githubusercontent.com/OWNER/GIST_ID/raw/<file>.png)
 
-   Gates: `melos run test_app` ✅ · `ct_repo_lint` ✅ · <package tests> ✅
+Gates: `melos run test_app` ✅ · `ct_repo_lint` ✅ · <package tests> ✅
 
-   Outcome: **ACCEPT** — all ACs pass on merged dev.
-   (or: **REJECT** — gaps: 1) … 2) …; required follow-ups: …)
-   ```
+Outcome: **ACCEPT** — all ACs pass on merged dev.
+(or: **REJECT** — gaps: 1) … ; follow-ups: …)
+```
 
-## Tools
-
-`gh` (issue view/comment, gist create, pr diff), Flutter MCP/DTD tools (`dart_list_devices`, `dart_launch_app`, `dart_connect_dart_tooling_daemon`, `dart_get_widget_tree`, `dart_flutter_driver`, `dart_get_app_logs`, `dart_stop_app`), `cd app && flutter test`, `melos run test_app`, `dart run init_game` / `dart run run_observer_game`, built-in vision (Read on PNGs), `rg`, `curl -sfI`. Cookbook: [reference.md](reference.md).
-
-## Guardrails
-
-- Evidence or it didn't happen: every PASS references an executed artifact.
-- Driving UI: stable keys, visibility-first interactions per `colonizethis-e2e-ui-stability.mdc`; no fixed-coordinate taps without a deterministic target.
-- If the Flutter MCP/DTD toolchain is unavailable, fall back to `flutter test integration_test -d macos|linux` + widget/golden suites and say so in the comment; an AC that cannot be executed by any available tool is a REJECT gap ("needs manual acceptance"), never a silent PASS.
-- Clean up run artifacts (`tmp/accept-issue-<n>/`, logs) after posting per `colonizethis-agent-run-cleanup.mdc`.
-- If `gh` is unavailable or fails, return the prepared comment for manual posting.
+Driving UI: `colonizethis-e2e-ui-stability.mdc`. If Flutter MCP/DTD is unavailable, fall back to `flutter test integration_test -d macos|linux` + widget/golden suites and say so; an unexecutable AC is a REJECT gap, never a silent PASS. Clean up `tmp/accept-issue-<n>/` after posting.

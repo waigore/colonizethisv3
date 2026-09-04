@@ -7,4 +7,4 @@ description: Regenerates the self-contained player handbook export at docs/manua
 
 Source of truth: `.cursor/skills/export-player-manual/SKILL.md`
 
-Read the full file and follow its authority (`SPEC/program/player-manual-export.md`, `pytool/export_player_manual.py`) exactly.
+Read the full file and follow it exactly.

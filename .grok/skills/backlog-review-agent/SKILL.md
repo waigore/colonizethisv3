@@ -7,4 +7,4 @@ description: Picks an open GitHub issue labeled backlog:review, performs a stric
 
 Source of truth: `.cursor/skills/backlog-review-agent/SKILL.md`
 
-Read the full file and strictly follow its analysis method and required dependency on review-github-issue (plus cross-references).
+Read the full file and follow it exactly.

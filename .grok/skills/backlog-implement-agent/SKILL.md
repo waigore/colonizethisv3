@@ -7,4 +7,4 @@ description: Optimizes code throughput across open issues labeled backlog:implem
 
 Source of truth: `.cursor/skills/backlog-implement-agent/SKILL.md`
 
-Read that file (and any reference files it points to) in full with your tools, then follow its instructions, required dependencies (especially implement-github-issue and fix-pr), workflow, and guardrails exactly. Obey all its internal cross-references to other `.cursor/skills/` entries.
+Read the full file and follow it exactly.

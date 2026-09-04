@@ -1,1 +1,8 @@
-../../../.cursor/skills/report-codebase-size/SKILL.md
+---
+name: report-codebase-size
+description: Reports ColonizeThis codebase size using pytool/project_stats.py with reproducible totals and category breakdowns. Use when the user asks for repository size, LOC counts, file counts, language/category distribution, or package-level code/test sizing.
+---
+
+**Thin OpenCode shim.** Source of truth: `.cursor/skills/report-codebase-size/SKILL.md`
+
+Read that file and follow it exactly.

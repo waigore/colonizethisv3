@@ -7,4 +7,4 @@ description: Interprets ColonizeThis full-AI turn-trace JSON (from `run_observer
 
 Source of truth: `.cursor/skills/interpret-ai-traces/SKILL.md`
 
-Read the full file (including all required SPEC sections and the step-by-step behavior + perf workflows). Follow the anti-patterns, quick reference, and final conclusion format exactly.
+Read the full file and follow it exactly.
