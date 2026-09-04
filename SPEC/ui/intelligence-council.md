@@ -81,3 +81,5 @@ Folder **Intelligence Council**. Use cases: **World briefing**, **Spy reports**,
 - Given a capture world line with a province id, when The Player taps that row, then the UI layer emits `PopNavigationEvent` then `OpenProvinceDetailPanelEvent` for that province.
 - Given a spy-gated `OVL70001` row from the digest, when The Player taps it, then the UI layer opens `GAME30003`. Public world gazette lines are not appended to the feed.
 - Given `DLG60001` / end-turn readiness, when this ships, then no idle/unassigned Spy list is added.
+- **Join Empire Intelligence Tribe colony (Refs #4729):** Given a spy/world digest line with `DiplomaticEventType.joinEmpireResolved` whose `toFactionId` is a Tribe still on the map (or listed in `Game.colonyStates`), when `GAME30003` formats that line, then the UI layer does not say the Tribe was absorbed and uses colony / land-stayed-theirs copy.
+- **Join Empire Intelligence Minor/GP absorb (Refs #4729):** Given the same event type for a Minor or Great Power absorption target, when `GAME30003` formats that line, then the UI layer describes absorption (land, armies, and fleets transferred).

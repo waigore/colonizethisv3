@@ -46,7 +46,12 @@ String formatDiplomaticEvent(
     case DiplomaticEventType.overtureRejected:
       return '${to ?? 'Unknown'} rejected ${stage ?? 'overture'} from ${from ?? 'Unknown'}.';
     case DiplomaticEventType.joinEmpireResolved:
-      return '${from ?? 'Unknown'} absorbed ${to ?? 'Unknown'} (Join Empire).';
+      return formatJoinEmpireResolvedSentence(
+        game: game,
+        fromLabel: from ?? 'Unknown',
+        toLabel: to ?? 'Unknown',
+        toFactionId: e.toFactionId,
+      );
     case DiplomaticEventType.grantAidApplied:
       final amt = e.amount ?? 0;
       return '${from ?? 'Unknown'} granted £$amt aid to ${to ?? 'Unknown'}.';
@@ -87,4 +92,29 @@ String overtureLabel(OvertureStage s) {
     OvertureStage.nap => 'Non-Aggression Pact',
     OvertureStage.joinEmpire => 'Join Empire',
   };
+}
+
+/// Whether a Join Empire target resolved as a Tribe colony (land stays theirs).
+///
+/// Tribes remain on the map and appear in [Game.colonyStates]; absorbed
+/// Minors/GPs leave the map. Used by history and Intelligence copy (Refs #4729).
+bool isJoinEmpireColonyTarget(Game game, String? toFactionId) {
+  if (toFactionId == null || toFactionId.isEmpty) return false;
+  if (game.tribes.any((t) => t.id == toFactionId)) return true;
+  return game.colonyStates.any((c) => c.tribeId == toFactionId);
+}
+
+/// Player-facing sentence for [DiplomaticEventType.joinEmpireResolved].
+String formatJoinEmpireResolvedSentence({
+  required Game game,
+  required String fromLabel,
+  required String toLabel,
+  String? toFactionId,
+}) {
+  if (isJoinEmpireColonyTarget(game, toFactionId)) {
+    return '$toLabel became a colony of $fromLabel (Join Empire); '
+        'their land stayed theirs.';
+  }
+  return '$fromLabel absorbed $toLabel (Join Empire); '
+      'their land, armies, and fleets transferred.';
 }

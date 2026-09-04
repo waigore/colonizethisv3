@@ -75,3 +75,17 @@ Game diplomacyConfirmMinorOvertureGame() => diplomacyGame(
     MinorNation(id: 'minor1', displayName: 'Bavaria'),
   ],
 );
+
+Game diplomacyConfirmTribeOvertureGame() => diplomacyGame(
+  players: const [
+    Player(
+      id: diplomacyConfirmPreviewHumanId,
+      displayName: 'England',
+      isHuman: true,
+      treasury: 50_000,
+    ),
+  ],
+  tribes: const [
+    Tribe(id: 'tribe1', displayName: 'Aztec'),
+  ],
+);

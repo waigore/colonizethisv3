@@ -121,8 +121,12 @@ String _diplomaticFact(Game game, IntelligenceSpyLine line) {
     DiplomaticEventType.overtureAccepted =>
       '$from established $stage with $to.',
     DiplomaticEventType.overtureRejected => '$to rejected $stage from $from.',
-    DiplomaticEventType.joinEmpireResolved =>
-      '$from absorbed $to (Join Empire).',
+    DiplomaticEventType.joinEmpireResolved => formatJoinEmpireResolvedSentence(
+      game: game,
+      fromLabel: from,
+      toLabel: to,
+      toFactionId: line.toFactionId,
+    ),
     DiplomaticEventType.grantAidApplied =>
       '$from granted £${line.amount ?? 0} aid to $to.',
     DiplomaticEventType.subsidySet =>

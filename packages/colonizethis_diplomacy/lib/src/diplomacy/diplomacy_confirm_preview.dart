@@ -194,8 +194,10 @@ List<String> _joinEmpire({
   if (isGreatPower(game, targetFactionId)) {
     return [
       'Cost: No treasury charge.',
-      'Effect: Offers Join Empire to the nearly defeated Great Power $targetDisplayName.',
-      'Effect: If accepted, $targetDisplayName is absorbed and their provinces transfer to your realm.',
+      'Effect: Offers Join Empire to the nearly defeated Great Power '
+          '$targetDisplayName.',
+      'Effect: If accepted, $targetDisplayName is absorbed: their remaining '
+          'land, armies, and fleets become yours and that court leaves the map.',
     ];
   }
   final cost = joinEmpireCostForMinorOrTribe(game, targetFactionId);
@@ -204,12 +206,16 @@ List<String> _joinEmpire({
     return [
       'Cost: £$cost if $targetDisplayName accepts.',
       'Effect: Offers Join Empire to $targetDisplayName.',
-      'Effect: If accepted, they become your colony.',
+      'Effect: If accepted, they stay on the map under their own ownership '
+          'as your colony.',
+      'Effect: Their land does not become yours and does not count toward '
+          'the 31 Old World provinces.',
     ];
   }
   return [
     'Cost: £$cost if $targetDisplayName accepts.',
     'Effect: Offers Join Empire to $targetDisplayName.',
-    'Effect: If accepted, their lands join your realm.',
+    'Effect: If accepted, that court is absorbed: their land, armies, and '
+        'fleets become yours and they leave the map.',
   ];
 }

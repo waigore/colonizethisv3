@@ -91,6 +91,18 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
         builder: (context) => _breakAllianceConfirmRestOfTurnLockStory(),
       ),
       WidgetbookUseCase(
+        name: 'Join Empire confirm — Minor absorb',
+        builder: (context) => joinEmpireConfirmMinorAbsorbStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Join Empire confirm — Tribe colony',
+        builder: (context) => joinEmpireConfirmTribeColonyStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Join Empire confirm — GP absorb',
+        builder: (context) => joinEmpireConfirmGpAbsorbStory(),
+      ),
+      WidgetbookUseCase(
         name: 'Boycott confirm — two named colonies',
         builder: (context) => boycottConfirmTwoColoniesStory(),
       ),
