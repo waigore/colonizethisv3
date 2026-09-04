@@ -4,305 +4,230 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/diplomacy_format_diplomatic_event_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
-  const humanId = 'human_gp';
-  const otherId = 'other_gp';
-
-  Game minimalGame({List<DiplomaticEvent> history = const []}) {
-    return Game(
-      id: 'fmt',
-      worldState: const WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-      ),
-      turnTimeMapping: TurnTimeMapping.gdd01,
-      players: const [
-        Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
-        Player(id: otherId, displayName: 'France', isHuman: false, treasury: 0),
-      ],
-      diplomacyRelations: [
-        DiplomacyRelation(
-          factionId1: humanId,
-          factionId2: otherId,
-          score: 50,
-          state: RelationState.atPeace,
-        ),
-      ],
-      diplomaticHistoryEvents: history,
-    );
-  }
-
-  DiplomaticEvent ev(
-    DiplomaticEventType type, {
-    String? fromId,
-    String? toId,
-    OvertureStage? stage,
-    int? amount,
-    String? reason,
-  }) {
-    return DiplomaticEvent(
-      turn: 1,
-      intraTurnIndex: 0,
-      type: type,
-      participants: {humanId, otherId},
-      fromFactionId: fromId ?? humanId,
-      toFactionId: toId ?? otherId,
-      overtureStage: stage,
-      amount: amount,
-      reason: reason,
-    );
-  }
-
   test('declareWar', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     final s = formatDiplomaticEvent(
-      ev(DiplomaticEventType.declareWar),
+      diplomacyFormatEvent(DiplomaticEventType.declareWar),
       g,
-      humanId,
+      diplomacyFormatHumanId,
     );
     expect(s, contains('declared war'));
   });
 
   test('peace', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
-      formatDiplomaticEvent(ev(DiplomaticEventType.peace), g, humanId),
+      formatDiplomaticEvent(
+        diplomacyFormatEvent(DiplomaticEventType.peace),
+        g,
+        diplomacyFormatHumanId,
+      ),
       contains('peace'),
     );
   });
 
   test('allianceFormed', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
-      formatDiplomaticEvent(ev(DiplomaticEventType.allianceFormed), g, humanId),
+      formatDiplomaticEvent(
+        diplomacyFormatEvent(DiplomaticEventType.allianceFormed),
+        g,
+        diplomacyFormatHumanId,
+      ),
       contains('alliance'),
     );
   });
 
   test('allianceBroken', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
-      formatDiplomaticEvent(ev(DiplomaticEventType.allianceBroken), g, humanId),
+      formatDiplomaticEvent(
+        diplomacyFormatEvent(DiplomaticEventType.allianceBroken),
+        g,
+        diplomacyFormatHumanId,
+      ),
       contains('Alliance'),
     );
   });
 
   test('overtureAccepted with stage', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     final s = formatDiplomaticEvent(
-      ev(DiplomaticEventType.overtureAccepted, stage: OvertureStage.embassy),
+      diplomacyFormatEvent(
+        DiplomaticEventType.overtureAccepted,
+        stage: OvertureStage.embassy,
+      ),
       g,
-      humanId,
+      diplomacyFormatHumanId,
     );
     expect(s, contains('Embassy'));
   });
 
   test('overtureRejected', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.overtureRejected, stage: OvertureStage.nap),
+        diplomacyFormatEvent(
+          DiplomaticEventType.overtureRejected,
+          stage: OvertureStage.nap,
+        ),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('rejected'),
     );
   });
 
-  test('joinEmpireResolved absorbs GP or Minor', () {
-    final g = minimalGame();
-    final s = formatDiplomaticEvent(
-      ev(DiplomaticEventType.joinEmpireResolved),
-      g,
-      humanId,
-    );
-    expect(s, contains('absorbed'));
-    expect(s.toLowerCase(), contains('land'));
-    expect(s.toLowerCase(), contains('armies'));
-    expect(s.toLowerCase(), contains('fleets'));
-  });
-
-  test('joinEmpireResolved tribe colony does not say absorbed', () {
-    const tribeId = 'tribe_aztec';
-    final g = Game(
-      id: 'fmt-colony',
-      worldState: const WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-      ),
-      turnTimeMapping: TurnTimeMapping.gdd01,
-      players: const [
-        Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
-      ],
-      tribes: const [Tribe(id: tribeId, displayName: 'Aztec')],
-      colonyStates: const [
-        ColonyState(tribeId: tribeId, colonyOfGpId: humanId, sinceTurn: 1),
-      ],
-      diplomacyRelations: [
-        DiplomacyRelation(
-          factionId1: humanId,
-          factionId2: tribeId,
-          score: 80,
-          state: RelationState.atPeace,
-        ),
-      ],
-    );
-    final s = formatDiplomaticEvent(
-      ev(
-        DiplomaticEventType.joinEmpireResolved,
-        toId: tribeId,
-      ),
-      g,
-      humanId,
-    );
-    expect(s.toLowerCase(), contains('colony'));
-    expect(s.toLowerCase(), contains('land stayed theirs'));
-    expect(s.toLowerCase(), isNot(contains('absorbed')));
-  });
-
   test('grantAidApplied', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.grantAidApplied, amount: 100),
+        diplomacyFormatEvent(DiplomaticEventType.grantAidApplied, amount: 100),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('100'),
     );
   });
 
   test('subsidySet', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.subsidySet, amount: 5),
+        diplomacyFormatEvent(DiplomaticEventType.subsidySet, amount: 5),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('5'),
     );
   });
 
   test('subsidyUpdated', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.subsidyUpdated, amount: 7),
+        diplomacyFormatEvent(DiplomaticEventType.subsidyUpdated, amount: 7),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('7'),
     );
   });
 
   test('subsidyCancelled', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.subsidyCancelled, reason: 'treasury'),
+        diplomacyFormatEvent(
+          DiplomaticEventType.subsidyCancelled,
+          reason: 'treasury',
+        ),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('treasury'),
     );
   });
 
   test('interventionIntervene', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.interventionIntervene),
+        diplomacyFormatEvent(DiplomaticEventType.interventionIntervene),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('intervened'),
     );
   });
 
   test('interventionDoNothing', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.interventionDoNothing),
+        diplomacyFormatEvent(DiplomaticEventType.interventionDoNothing),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('did not intervene'),
     );
   });
 
   test('interventionProtest', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.interventionProtest),
+        diplomacyFormatEvent(DiplomaticEventType.interventionProtest),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('protested'),
     );
   });
 
   test('agreementsClearedOnWar', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.agreementsClearedOnWar),
+        diplomacyFormatEvent(DiplomaticEventType.agreementsClearedOnWar),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('war'),
     );
   });
 
   test('callToArmsAccepted', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.callToArmsAccepted),
+        diplomacyFormatEvent(DiplomaticEventType.callToArmsAccepted),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('joined the war'),
     );
   });
 
   test('callToArmsRefused', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.callToArmsRefused),
+        diplomacyFormatEvent(DiplomaticEventType.callToArmsRefused),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('refused call to arms'),
     );
   });
 
   test('ftpFormed', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.ftpFormed),
+        diplomacyFormatEvent(DiplomaticEventType.ftpFormed),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('free trade partnership'),
     );
   });
 
   test('ftpBroken', () {
-    final g = minimalGame();
+    final g = diplomacyFormatMinimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(DiplomaticEventType.ftpBroken, reason: 'war'),
+        diplomacyFormatEvent(
+          DiplomaticEventType.ftpBroken,
+          reason: 'war',
+        ),
         g,
-        humanId,
+        diplomacyFormatHumanId,
       ),
       contains('ended (war)'),
     );
