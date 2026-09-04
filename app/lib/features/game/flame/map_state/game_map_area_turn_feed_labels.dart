@@ -1,6 +1,6 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
-import 'package:colonizethis_data/colonizethis_data.dart'
-    show techById, techDisplayName;
+import 'package:colonizethis_data/colonizethis_data.dart' show techById;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +9,7 @@ import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../widgets/diplomacy/diplomacy_order_helpers.dart';
+import '../../widgets/technology/tech_effect_summary.dart';
 import '../../widgets/units/civilian/civilian_units_panel_support_resolution.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
@@ -48,12 +49,8 @@ mixin GameMapAreaTurnFeedLabels
 
   bool isCatalogTech(String techId) => techById(techId) != null;
 
-  String researchCompleteLine(String techId) {
-    if (!isCatalogTech(techId)) {
-      return 'Research complete — technology unlocked!';
-    }
-    return 'Research complete: ${techDisplayName(techId)} unlocked';
-  }
+  String researchCompleteLine(String techId) =>
+      formatResearchCompleteFeedLine(appL10n(context), techId);
 
   void navigateToTechnologyScreen() {
     final orders = ref.read(currentOrdersProvider);

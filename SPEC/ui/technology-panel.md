@@ -95,7 +95,7 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 ## Components
 
 - Technology screen widgets, choose-tech dialog, [tech-tree-widget.md](tech-tree-widget.md).
-- `buildTechEffectSummaryLines` (`app/lib/features/game/widgets/technology/tech_effect_summary.dart`) — shared pure helper for Tree and Choose-tech effect copy (Refs #4222).
+- `buildTechEffectSummaryLines` (`app/lib/features/game/widgets/technology/tech_effect_summary.dart`) — shared pure helper for Tree, Choose-tech, and OVL70001 research-complete feed gist (Refs #4222, #4724).
 - `showTechDefinitionDetailDialog` / `TechDefinitionDetailDialog` (`tech_definition_detail_dialog.dart`) — Tree-parity detail surface reused by Choose-tech Details (Refs #4222).
 - `ChooseTechOptionRow` / `ChooseTechOptionLabels` (`technology_panel_choose_tech_dialog_rows.dart`) — Choose-tech option row with effect lines and Details control (Refs #4222).
 - `TechSectionHeading` (`app/lib/features/game/widgets/technology/technology_panel.dart`) — mockup-faithful accent display-font heading for the two canonical Slots-tab sections (Refs #3510); see § Slots tab — canonical heading style.

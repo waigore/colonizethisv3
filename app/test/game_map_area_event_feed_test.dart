@@ -1,7 +1,9 @@
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_effect_summary.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show kTechIdCropRotation, techDisplayName;
+    show kTechIdCopperAndTinMining, kTechIdCropRotation, techById;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -96,14 +98,42 @@ void main() {
     ], turnNumber: 2);
 
     expect(
-      find.text(
-        'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked',
-      ),
+      find.text(expectedCropRotationResearchCompleteLine()),
       findsOneWidget,
     );
     expect(find.textContaining(kTechIdCropRotation), findsNothing);
     expect(find.byIcon(Icons.chevron_right), findsOneWidget);
   });
+
+  testWidgets(
+    'Player turn event feed research line caps at two effect clauses',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness();
+      final l10n = AppLocalizationsEn();
+      final effects = buildTechEffectSummaryLines(
+        l10n,
+        techById(kTechIdCopperAndTinMining)!,
+      );
+      expect(effects.length, greaterThan(2));
+      final expected = formatResearchCompleteFeedLine(
+        l10n,
+        kTechIdCopperAndTinMining,
+      );
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppResearchCompleteEvent(
+          playerId: harness.humanId,
+          techId: kTechIdCopperAndTinMining,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.text(expected), findsOneWidget);
+      expect(find.textContaining(effects[2]), findsNothing);
+      expect(find.textContaining(kTechIdCopperAndTinMining), findsNothing);
+    },
+  );
 
   testWidgets(
     'Player turn event feed research line emits NavigateToRouteEvent on tap',
@@ -121,7 +151,7 @@ void main() {
       ], turnNumber: 2);
 
       final researchLine = find.text(
-        'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked',
+        expectedCropRotationResearchCompleteLine(),
       );
       expect(researchLine, findsOneWidget);
       await tester.tap(researchLine);
@@ -149,7 +179,7 @@ void main() {
         ),
       ], turnNumber: 2);
 
-      const fallbackLine = 'Research complete — technology unlocked!';
+      const fallbackLine = kResearchCompleteUnknownFallback;
       expect(find.text(fallbackLine), findsOneWidget);
       expect(find.textContaining('agri_1'), findsNothing);
       expect(find.byIcon(Icons.chevron_right), findsNothing);
@@ -270,8 +300,7 @@ void main() {
         openFeed: false,
       );
 
-      final researchLine =
-          'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked';
+      final researchLine = expectedCropRotationResearchCompleteLine();
       expect(find.textContaining(researchLine), findsNothing);
       expect(find.text('1'), findsOneWidget);
 

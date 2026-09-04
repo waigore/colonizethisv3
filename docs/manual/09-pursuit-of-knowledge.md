@@ -27,7 +27,7 @@ Technology raises what your land can produce, opens better roads and railroads, 
 
 Efficiency is exactly **2.0** RP per gold at Low, Medium, and High, and **2.5** at Maximum. Once **Industrial Funding of Research** is unlocked, **every** military or naval technology gains **+20%** RP (rounded down) on top of the funding preset.
 
-- **RP costs** by tier are exactly **1800 / 2400 / 3000 / 3600** (about **6 / 8 / 10 / 12** turns at Medium’s 300 RP per turn). Progress is per technology. When research finishes, you see the unlock after you confirm **Next turn** — spend, RP, and unlocks apply in the Research step of that turn, after production, consumption, diplomacy, and spy work. There is no extra “apply effects” tap once that turn finishes.
+- **RP costs** by tier are exactly **1800 / 2400 / 3000 / 3600** (about **6 / 8 / 10 / 12** turns at Medium’s 300 RP per turn). Progress is per technology. When research finishes, you see the unlock after you confirm **Next turn** — spend, RP, and unlocks apply in the Research step of that turn, after production, consumption, diplomacy, and spy work. There is no extra “apply effects” tap once that turn finishes. On `OVL70001` **Player turn event feed**, the research-complete line names the technology and shows up to two short effect lines (the same wording as **Choose tech**), so you can see what just became possible without hunting the Tree.
 - **Choose tech** on an empty or reassigned seat lists only technologies you can research now (all listed prerequisites finished), that you have not unlocked yet, and that are not already in another seat. Each row shows the name, era/category/RP cost, and **1–2** plain-language effect lines. Tap **Details** for prerequisites and the full effect list; tap the row body to assign. A new assignment starts at **Medium**. Five funding toggles print **None, Low, Medium, High, Maximum**. If nothing qualifies, the list shows **No techs available to research**. A technology cannot start the same turn its prerequisite finishes.
 - **Cancel** clears the seat and **forfeits all progress** on that technology. The game asks for confirm only when that technology already has progress.
 - Seat assignments stay across turns until unlock or cancel. The Tree has no goal-highlight control for the player to use.
@@ -116,6 +116,7 @@ Rival courts also fill research seats and spend gold on funding. They keep work 
 - `SPEC/program/turn-resolution-phases.md`
 - `SPEC/ui/technology-panel.md`
 - `SPEC/ui/tech-tree-widget.md`
+- `SPEC/ui/player-turn-event-feed.md`
 - `SPEC/ui/next-turn-confirmation.md`
 - `SPEC/ui/ux-design-decisions.md`
 - `SPEC/ui/screen-registry.md`
