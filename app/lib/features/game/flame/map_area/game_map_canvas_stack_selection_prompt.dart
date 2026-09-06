@@ -11,6 +11,7 @@ import '../../screens/game/game_screen_shared.dart'
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
 import '../../widgets/units/civilian/build_fort_payoff_gist_line.dart';
 import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
+import '../../widgets/units/civilian/explore_payoff_gist_line.dart';
 import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 import '../../widgets/units/civilian/transport_step_yield_gist_line.dart';
 
@@ -28,6 +29,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     this.payoffGist,
     this.transportGist,
     this.buildFortGist,
+    this.exploreGist,
     super.key,
   });
 
@@ -40,6 +42,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final String? payoffGist;
   final String? transportGist;
   final String? buildFortGist;
+  final String? exploreGist;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +60,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
           payoffGist: payoffGist,
           transportGist: transportGist,
           buildFortGist: buildFortGist,
+          exploreGist: exploreGist,
         ),
       ),
     );
@@ -73,6 +77,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
     this.payoffGist,
     this.transportGist,
     this.buildFortGist,
+    this.exploreGist,
   });
 
   final AppLocalizations l10n;
@@ -83,6 +88,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
   final String? payoffGist;
   final String? transportGist;
   final String? buildFortGist;
+  final String? exploreGist;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +97,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
     final landGist = payoffGist;
     final roadGist = transportGist;
     final fortGist = buildFortGist;
+    final explorePayoff = exploreGist;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: EditorialMonoclePalette.bgDeep.withValues(
@@ -126,6 +133,10 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
               TransportStepYieldGistLine(text: roadGist),
             if (fortGist != null && fortGist.isNotEmpty && !usesRelocateCopy)
               BuildFortPayoffGistLine(text: fortGist),
+            if (explorePayoff != null &&
+                explorePayoff.isNotEmpty &&
+                !usesRelocateCopy)
+              ExplorePayoffGistLine(text: explorePayoff),
           ],
         ),
       ),

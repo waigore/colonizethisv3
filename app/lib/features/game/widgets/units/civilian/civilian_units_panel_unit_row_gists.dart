@@ -13,6 +13,8 @@ import 'build_fort_payoff_copy.dart';
 import 'build_fort_payoff_gist_line.dart';
 import 'build_improvement_next_yield_copy.dart';
 import 'build_improvement_next_yield_gist_line.dart';
+import 'explore_payoff_copy.dart';
+import 'explore_payoff_gist_line.dart';
 import 'purchase_land_payoff_copy.dart';
 import 'purchase_land_payoff_gist_line.dart';
 import 'spy_research_insight_copy.dart';
@@ -93,6 +95,20 @@ List<Widget> civilianUnitsPanelPendingWorkGistChildren({
           return BuildFortPayoffGistLine(text: gist);
         },
       ),
+    if (pendingWork.target == kWorkTargetExplore)
+      Builder(
+        builder: (context) {
+          final gist = explorePayoffGistForTile(
+            l10n: l10n,
+            game: game,
+            tileKey: pendingWork.targetTileKey,
+            enabled: true,
+            canMutateViaUi: !readOnly,
+          );
+          if (gist == null) return const SizedBox.shrink();
+          return ExplorePayoffGistLine(text: gist);
+        },
+      ),
   ];
 }
 
@@ -110,6 +126,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
   String? buildPortShortcutTargetTileKey,
   String? buildRailShortcutTargetTileKey,
   String? buildFortShortcutTargetTileKey,
+  String? exploreShortcutTargetTileKey,
   String? relocateShortcutTargetTileKey,
 }) {
   if (readOnly) return assigned;
@@ -176,6 +193,17 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
           canMutateViaUi: !readOnly,
         )
       : null;
+  final exploreGist =
+      (exploreShortcutTargetTileKey != null &&
+          exploreShortcutTargetTileKey.isNotEmpty)
+      ? explorePayoffGistForTile(
+          l10n: l10n,
+          game: game,
+          tileKey: exploreShortcutTargetTileKey,
+          enabled: true,
+          canMutateViaUi: !readOnly,
+        )
+      : null;
   final spyRelocateGist =
       (relocateShortcutTargetTileKey != null &&
           relocateShortcutTargetTileKey.isNotEmpty)
@@ -191,6 +219,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
       payoff == null &&
       transportGist == null &&
       buildFortGist == null &&
+      exploreGist == null &&
       spyRelocateGist == null) {
     return assigned;
   }
@@ -203,6 +232,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
       if (payoff != null) PurchaseLandPayoffGistLine(text: payoff.gist),
       if (transportGist != null) TransportStepYieldGistLine(text: transportGist),
       if (buildFortGist != null) BuildFortPayoffGistLine(text: buildFortGist),
+      if (exploreGist != null) ExplorePayoffGistLine(text: exploreGist),
       if (spyRelocateGist != null)
         SpyResearchInsightGistLine(text: spyRelocateGist),
     ],

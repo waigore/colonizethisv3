@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/core/services/game_service/try_get_game_map_data.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_copy.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -120,6 +121,18 @@ class GameMapCanvasStackSelectionPromptLayer extends ConsumerWidget {
             canMutateViaUi: canMutateViaUi,
           )
         : null;
+    final exploreGist =
+        workTarget == kWorkTargetExplore &&
+            previewTileKey != null &&
+            !selectionPromptUsesRelocateCopy
+        ? explorePayoffGistForTile(
+            l10n: appL10n(context),
+            game: game,
+            tileKey: previewTileKey,
+            enabled: true,
+            canMutateViaUi: canMutateViaUi,
+          )
+        : null;
     return GameMapCanvasStackSelectionPrompt(
       isNarrow: isNarrow,
       overlayOpen: overlayOpen,
@@ -130,6 +143,7 @@ class GameMapCanvasStackSelectionPromptLayer extends ConsumerWidget {
       payoffGist: payoffGist,
       transportGist: transportGist,
       buildFortGist: buildFortGist,
+      exploreGist: exploreGist,
     );
   }
 }

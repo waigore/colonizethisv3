@@ -128,6 +128,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   String? buildPortShortcutTargetTileKey,
   String? buildRailShortcutTargetTileKey,
   String? buildFortShortcutTargetTileKey,
+  String? exploreShortcutTargetTileKey,
   String? relocateShortcutTargetTileKey,
   bool readOnly = false,
 }) {
@@ -240,6 +241,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
     buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
     buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
     buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+    exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
     relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
   );
 }

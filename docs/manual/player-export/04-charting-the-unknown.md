@@ -46,7 +46,7 @@ You explore and prospect **your** land, **unclaimed** land, and (with a Consulat
 
 **Explore**
 
-1. Pick a land tile in a province that is **partly seen**: at least one land tile Fogged or Fully visible **and** at least one land tile still Unknown. The work is **free**.
+1. Pick a land tile in a province that is **partly seen**: at least one land tile Fogged or Fully visible **and** at least one land tile still Unknown. The work is **free**. Before you **Assign**, enabled **Explore** shows a short line that the whole province becomes Fully visible when the work finishes, and how many turns that takes (one to three).
 2. Larger provinces take longer, up to **three** turns. Time is compared to the biggest province on the same map, so a small province finishes sooner than a large one.
 3. When that work **finishes**, after you confirm **Next turn**, every tile in that province becomes **Fully visible** for you.
 

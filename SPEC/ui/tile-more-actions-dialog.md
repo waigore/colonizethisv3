@@ -28,7 +28,7 @@ CtDialogShell
   remainder rows (catalog overflow from tile-radial-catalog.md)
 ```
 
-No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish Consulate, or Offer Peace. Remainder may include Build road / railroad / port / fort, Purchase land, or Upgrade town when those are conceivable and did not fit on `MAP30001`. If remainder is empty, only Province details remains. Enabled **Build improvement** remainder rows show the next-yield gist (Refs #4627). Enabled **Build road** / **Build port** / **Build railroad** remainder rows show the transport-step payoff gist (Refs #4663). Enabled **Build fort** remainder rows show the build-fort payoff gist (Refs #4668).
+No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish Consulate, or Offer Peace. Remainder may include Build road / railroad / port / fort, Purchase land, or Upgrade town when those are conceivable and did not fit on `MAP30001`. If remainder is empty, only Province details remains. Enabled **Build improvement** remainder rows show the next-yield gist (Refs #4627). Enabled **Build road** / **Build port** / **Build railroad** remainder rows show the transport-step payoff gist (Refs #4663). Enabled **Build fort** remainder rows show the build-fort payoff gist (Refs #4668). Enabled **Explore** remainder rows show the Explore province-reveal + duration gist (Refs #4733).
 
 ## Behavior
 
@@ -58,3 +58,4 @@ Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; re
 - Given an enabled remainder Explore row, when activated, then the UI emits the same Explore shortcut event as `MAP20001`. (`app/test/tile_radial_emit_test.dart`)
 - Given an enabled Purchase land remainder row, when the dialog renders, then the qualitative payoff gist is default-visible (not tooltip-only). (`app/test/purchase_land_payoff_copy_test.dart`)
 - Given an enabled Build fort remainder row, when the dialog renders, then the build-fort payoff gist is default-visible (not tooltip-only). (`app/test/build_fort_payoff_copy_test.dart`)
+- Given an enabled Explore remainder row, when the dialog renders, then the Explore province-reveal + duration gist is default-visible (not tooltip-only). (`app/test/explore_payoff_copy_test.dart`)

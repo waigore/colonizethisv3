@@ -682,6 +682,12 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Explore with explorer';
 
   @override
+  String provinceOverlay_tileExplorePayoffGist(int turns) {
+    final duration = turns == 1 ? '1 turn' : '$turns turns';
+    return 'After this work: this whole province becomes fully visible · Takes $duration';
+  }
+
+  @override
   String get provinceOverlay_tileConsulateRequiredForExploreTooltip =>
       'Establish a consulate before exploring or prospecting';
 
