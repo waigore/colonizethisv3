@@ -25,7 +25,7 @@ import 'golden_capture_harness.dart';
 import 'province_shortcut_host_emit_map_fixtures.dart';
 import 'province_shortcut_host_golden_game_service.dart';
 
-export 'province_shortcut_host_emit_map_fixtures.dart';
+export 'province_shortcut_host_emit_fixtures.dart';
 
 PerPlayerWorkTargetSelectionCache provinceShortcutGoldenSelectionCache({
   required Game game,
