@@ -26,18 +26,19 @@ void main() {
     (WidgetTester tester) async {
       final game = goldenBuildFortGame();
       final topology = buildFortGoldenCombinedTopology();
+      const boundaryKey = ValueKey<String>('province_bf_shortcut_wide_golden');
       await pumpProvinceShortcutGoldenWideHost(
         tester,
         gamesBox: gamesBox,
         game: game,
         region: goldenBuildFortRegion(),
         topology: topology,
-        boundaryKey: const ValueKey('province_bf_shortcut_wide_golden'),
+        boundaryKey: boundaryKey,
         tileKey: kBuildFortGoldenTileKey,
         gameId: kBuildFortGoldenGameId,
       );
       await expectLater(
-        find.byKey(const ValueKey('province_bf_shortcut_wide_golden')),
+        find.byKey(boundaryKey),
         matchesGoldenFile('goldens/province_build_fort_wide_panel.png'),
       );
     },
@@ -48,13 +49,14 @@ void main() {
     (WidgetTester tester) async {
       final game = goldenBuildFortGame();
       final topology = buildFortGoldenCombinedTopology();
+      const boundaryKey = ValueKey<String>('province_bf_shortcut_narrow_golden');
       await pumpProvinceShortcutGoldenNarrowHost(
         tester,
         gamesBox: gamesBox,
         game: game,
         region: goldenBuildFortRegion(),
         topology: topology,
-        boundaryKey: const ValueKey('province_bf_shortcut_narrow_golden'),
+        boundaryKey: boundaryKey,
         tileKey: kBuildFortGoldenTileKey,
         gameId: kBuildFortGoldenGameId,
         afterTileTap: revealProvinceShortcutGoldenNarrowMilitaryTab,
