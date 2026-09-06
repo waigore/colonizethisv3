@@ -15,11 +15,8 @@ import 'train_civilians_dialog_test_support.dart';
 void main() {
   suppressLogsForTests();
 
-  late TrainCiviliansDialogTestHarness harness;
-
-  setUpAll(() {
-    harness = TrainCiviliansDialogTestHarness();
-  });
+  // Eager: chrome case table is built at registration and closes over harness.
+  final harness = TrainCiviliansDialogTestHarness();
 
   group('TrainCiviliansDialog', () {
     for (final case_ in trainCiviliansDialogChromeCases(harness)) {

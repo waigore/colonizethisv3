@@ -87,6 +87,14 @@ class _CtTabStripState extends State<CtTabStrip> {
   late int _selectedIndex = widget.initialTabIndex;
 
   @override
+  void didUpdateWidget(CtTabStrip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_selectedIndex >= widget.tabLabels.length) {
+      _selectedIndex = widget.tabLabels.length - 1;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle baseStyle =
