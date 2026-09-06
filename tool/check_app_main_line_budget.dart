@@ -146,7 +146,8 @@ const _packageName = 'colonizethis_app';
 // raised for turn-shell surface-open tracing, deferred decree copy, feed cache (Refs #4715; measured 95_819).
 // raised for research-complete Events feed tech effect gist (Refs #4724; measured 96_018).
 // raised for GAME80001 feedstock deep-link from Production/Counsel (Refs #4725; measured 96_324).
-const _maxMainLines = 96500;
+// raised for Explore province-reveal and duration gist before assign (Refs #4733; measured 96_545).
+const _maxMainLines = 96600;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
