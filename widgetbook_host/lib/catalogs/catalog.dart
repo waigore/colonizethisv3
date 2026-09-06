@@ -93,6 +93,8 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_detach_a
     show ProvinceDetachAndSailOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
     show ProvinceTransferToHomeFleetOverlayControls;
+import 'package:colonizethis_app/features/game/flame/map_state/province_overlay_sail_move_overlay_controls.dart'
+    show ProvinceOverlaySailMoveOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_combine_overlay_controls.dart'
     show ProvinceNavalCombineOverlayControls;
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_fleet_picker_dialog.dart';
@@ -223,6 +225,7 @@ part 'catalog_panel_map_combine_armies_stories.dart';
 part 'catalog_panel_map_combine_fleets_stories.dart';
 part 'catalog_panel_map_naval_mission_stories.dart';
 part 'catalog_panel_map_detach_sail_stories.dart';
+part 'catalog_panel_map_sail_move_stories.dart';
 part 'catalog_panel_map_transfer_home_stories.dart';
 part 'catalog_panel_map_station_spy_stories.dart';
 part 'catalog_panel_map_counter_espionage_stories.dart';

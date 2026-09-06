@@ -186,6 +186,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final detachAndSail = missions.detachAndSail;
   final transferToHomeFleet = missions.transferToHomeFleet;
   final navalCombine = missions.navalCombine;
+  final sailMove = missions.sailMove;
   final stationSpy = missions.stationSpy;
   final counterEspionage = missions.counterEspionage;
 
@@ -220,6 +221,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     detachAndSail: detachAndSail,
     transferToHomeFleet: transferToHomeFleet,
     navalCombine: navalCombine,
+    sailMove: sailMove,
     stationSpy: stationSpy,
     counterEspionage: counterEspionage,
     establishConsulateState: establishConsulateState,

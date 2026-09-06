@@ -92,7 +92,11 @@ Entering a sea zone reveals its water and the coastal edge of adjacent provinces
 
 A move order replaces that fleet’s earlier move order and clears its pending mission for the turn. A fleet can move or perform one mission, never both.
 
-You can also open the same **Move fleet** dialog from the map: tap an **in-port** sea-going fleet marker, or tap **Sail / Move** on **Naval mission menu dialog** when the fleet is already at sea.
+You can also open the same **Move fleet** dialog from the map in these ways:
+
+1. Tap an **in-port** sea-going fleet marker (at your capital, **In-port fleet marker actions** may ask Sail / Move or Transfer first).
+2. Tap **Sail / Move** on **Naval mission menu dialog** when the fleet is already at sea.
+3. On **Province sea-zone overlay** **Naval**, tap **Sail / Move** when your sea-going fleet (not the Home Fleet) occupies the viewed sea or an owned port. One fleet opens **Move fleet dialog** at once. Several fleets open **Naval mission fleet picker dialog** first. This path does not open the mission menu or the capital chooser.
 
 ### Assign a naval mission
 
@@ -125,12 +129,13 @@ When you assign **Blockade**, the text you see first names the warehouse cut, no
 
 Map-marker and panel **Mission** still open **Naval mission menu dialog** as usual.
 
-**Sea-zone shortcut:** On a revealed sea you already occupy with at least one sea-going fleet of yours (not the Home Fleet), **Province sea-zone overlay** **Naval** offers **Patrol** and **Defend**.
+**Sea-zone shortcut:** On a revealed sea you already occupy with at least one sea-going fleet of yours (not the Home Fleet), **Province sea-zone overlay** **Naval** offers **Patrol**, **Defend**, and **Sail / Move**.
 
 1. Tap **Patrol** or **Defend**.
 2. One eligible fleet in this sea assigns that mission at once — you do not see **Naval mission menu dialog** or **Naval mission target dialog**.
 3. Several eligible fleets open **Naval mission fleet picker dialog** first so you pick which fleet stays.
 4. If a fleet of yours is in this sea but cannot take a new mission this turn (it already has a mission, or a move or mission is already staged), the buttons stay visible and cannot be tapped. Empty seas do not show these buttons.
+5. Tap **Sail / Move** to open **Move fleet dialog** for an occupying sea-going fleet (or **Naval mission fleet picker dialog** first when several share the sea). That control stays hidden when you are only watching, when the naval list shows `???`, or when only the Home Fleet is present.
 
 Patrol tries to intercept hostile fleets moving through this sea. Defend stays without seeking combat. Neither control prints intercept chance numbers.
 
