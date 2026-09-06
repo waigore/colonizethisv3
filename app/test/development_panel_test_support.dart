@@ -15,6 +15,7 @@ import 'package:hive/hive.dart';
 
 import 'app_test_hive_harness.dart';
 import 'development_panel_map_game_service.dart';
+export 'development_panel_map_game_service.dart';
 import 'panel_fixtures/core.dart';
 
 Game buildDevelopmentPanelGoldenGame() {

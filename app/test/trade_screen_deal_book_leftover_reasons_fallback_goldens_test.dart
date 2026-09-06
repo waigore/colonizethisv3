@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'trade_screen_deal_book_leftover_reasons_goldens_support.dart';
+import 'trade_screen_deal_book_leftover_reasons_widget_support.dart'
+    show dealBookActivityWithNotes;
 import 'trade_screen_deal_book_tab_e6_support.dart';
 import 'trade_screen_test_support.dart';
 

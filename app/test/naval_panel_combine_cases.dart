@@ -7,6 +7,8 @@ import 'naval_panel_combine_outcome_helpers.dart';
 import 'naval_panel_combine_support.dart';
 import 'naval_units_panel_test_scenarios.dart';
 
+export 'naval_panel_combine_disabled_cases.dart';
+
 List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
   navalPanelMergePortOutcome(
     name: 'AC: Combining fleets creates correct ship counts',
@@ -128,4 +130,3 @@ List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
   ),
 ];
 
-export 'naval_panel_combine_disabled_cases.dart';

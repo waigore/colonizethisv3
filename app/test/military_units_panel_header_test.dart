@@ -11,6 +11,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 
 import 'military_units_panel_test_support.dart';
+import 'panel_fixtures/military.dart' show buildMilitaryPanelTestGame;
 
 void main() {
   suppressLogsForTests();

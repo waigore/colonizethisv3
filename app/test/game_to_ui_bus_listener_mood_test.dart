@@ -1,5 +1,6 @@
 // Portrait mood forwarding for GameToUIBusListener (Refs #4734 Slice J).
 
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';

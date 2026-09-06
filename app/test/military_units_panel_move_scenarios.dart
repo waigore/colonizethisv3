@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'panel_fixtures/core.dart';
 import 'units_panel_test_shared.dart';
 
+export 'military_units_panel_move_invasion_scenarios.dart';
+
 /// Two field armies at one province (Combine).
 Game buildMilitaryTwoFieldArmiesAtProvinceGame({
   required String id,
@@ -201,4 +203,3 @@ Game buildMilitaryCrossRegionOwnedMoveGame({
   );
 }
 
-export 'military_units_panel_move_invasion_scenarios.dart';

@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'naval_panel_combine_outcome_helpers.dart';
 import 'naval_panel_combine_support.dart';
+import 'naval_units_panel_sea_mission_scenarios.dart'
+    show kNavalPanelCapProvince, kNavalPanelMergePort;
 import 'units_panel_test_shared.dart' show unitsPanelOwProvince;
 
 List<NavalPanelCombineDisabledCase> navalPanelCombineDisabledCases() {

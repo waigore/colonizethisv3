@@ -3,6 +3,8 @@
 // - SPEC/ui/game-screen.md
 
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
+    show newGameLeaderSelectionDialogId;
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';

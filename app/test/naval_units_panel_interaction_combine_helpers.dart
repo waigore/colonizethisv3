@@ -10,6 +10,7 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'naval_panel_combine_outcome_helpers.dart';
 import 'naval_panel_combine_tables.dart';
 import 'naval_units_panel_host_helpers.dart';
 import 'naval_units_panel_interaction_tile_helpers.dart';

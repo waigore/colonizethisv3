@@ -190,7 +190,7 @@ void main() {
           tester,
           bus: AppEventBus.create(),
           game: buildMoveArmySpecsIsolatedGame(),
-          topology: isolatedMoveArmySpecsTopology,
+          topology: kIsolatedMoveArmySpecsTopology,
           humanPlayerId: kMoveArmySpecsIsolatedPlayerId,
         );
 

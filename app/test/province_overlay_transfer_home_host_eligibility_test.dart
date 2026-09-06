@@ -1,6 +1,8 @@
 // Eligibility unit pins for MAP20001 Transfer host (Refs #4625, #4734).
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_transfer_home.dart';
+import 'package:colonizethis_app/features/game/widgets/units/naval/home_fleet_transfer_eligibility.dart'
+    show overlayTransferToHomeSourceFleets;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

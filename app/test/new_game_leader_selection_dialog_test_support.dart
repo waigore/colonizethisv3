@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
 import 'new_game_leader_selection_dialog_test_helpers.dart';
+export 'new_game_leader_selection_dialog_test_helpers.dart';
 
 typedef NewGameLeaderSelectionConfirmed =
     void Function(

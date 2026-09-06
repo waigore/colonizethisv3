@@ -1,5 +1,6 @@
 // Combine selection pins for NavalUnitsPanel (Refs #4013, #4352).
 
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,5 +1,6 @@
 // Screen-level harness for counsel military train-Agree confirm tests (Refs #4734 Slice E, #4307).
 
+import 'package:colonizethis_app/app.dart' show appNavigatorKey;
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';

@@ -1,16 +1,19 @@
 // Treasury indicator ACs for in-game narrow shell. SPEC/ui/in-game-shell-narrow.md.
 // Split from game_screen_narrow_shell_chrome_test.dart (Refs #4734 Slice H).
 
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
+    show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
 import 'package:colonizethis_app/features/game/widgets/shell/treasury_details_indicator_support.dart';
 import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'app_test_hive_harness.dart';
 import 'game_screen_narrow_shell_chrome_support.dart';
 import 'game_screen_test_support.dart';
 import 'map_view_test_fixtures.dart';
-import 'app_test_hive_harness.dart';
+import 'panel_fixtures/game_map.dart' show buildPlayersBarTestGame;
 
 void main() {
   suppressLogsForTests();

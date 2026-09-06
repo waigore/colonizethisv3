@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'panel_fixtures/core.dart';
 import 'units_panel_test_shared.dart';
 
+export 'military_units_panel_display_label_scenarios.dart';
+
 /// Minimal province + tile-key lookup (Refs #4013).
 Game buildMilitaryProvinceTileLookupGame({
   String id = 'min',
@@ -157,4 +159,3 @@ Game buildMilitaryHomeArmyAtCapitalGame({
   );
 }
 
-export 'military_units_panel_display_label_scenarios.dart';
