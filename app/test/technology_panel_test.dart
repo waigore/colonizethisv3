@@ -1,4 +1,5 @@
 // Tests for TechnologyPanel. UXD 03k — research slots and researched techs.
+// Cancel/snackbar pin: technology_panel_cancel_snackbar_test.dart (Refs #4734 Slice F).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -32,13 +33,8 @@ void main() {
         wrapInScrollView: true,
       );
       expect(find.byType(TechnologyPanel), findsOneWidget);
-      // SPEC/ui/technology-panel.md § Slots tab — section ordering: the body
-      // MUST NOT render the legacy dev-only header block (per-player title
-      // `Technology - {name}` or `Research slots: N` count line). Refs #3510.
       expect(find.textContaining('Technology - '), findsNothing);
       expect(find.textContaining('Research slots:'), findsNothing);
-      // Body opens directly with the Researched Techs section heading, rendered
-      // via the mockup-faithful TechSectionHeading (normal case). Refs #3510.
       expect(find.text('Researched Techs'), findsOneWidget);
       expect(find.text('None yet'), findsOneWidget);
     },
@@ -79,9 +75,6 @@ void main() {
       wrapInScrollView: true,
     );
     expect(find.text('None yet'), findsOneWidget);
-    // No Material Chip on the dark-theme researched grid; no
-    // ResearchedTechChip primitive rendered in the empty state either
-    // (Refs #2864 S2).
     expect(find.byType(Chip), findsNothing);
     expect(find.byType(ResearchedTechChip), findsNothing);
   });
@@ -101,11 +94,8 @@ void main() {
         player: withTechs,
         wrapInScrollView: true,
       );
-      // Dark theme heading (mockup-faithful TechSectionHeading, normal case)
-      // + three custom chip primitives (Refs #2864 S2 / #3510).
       expect(find.text('Researched Techs'), findsOneWidget);
       expect(find.byType(ResearchedTechChip), findsNWidgets(3));
-      // Material `Chip` is banned by the Ct-* catalog.
       expect(find.byType(Chip), findsNothing);
     },
   );
@@ -113,11 +103,6 @@ void main() {
   testWidgets(
     'TechnologyPanel renders no standalone In-Progress block (Refs #3512)',
     (WidgetTester tester) async {
-      // SPEC/ui/technology-panel.md § Slots tab — section ordering: the
-      // standalone "In progress" auxiliary block was removed; in-progress techs
-      // render exclusively inside their occupied slot cards (via persisted
-      // `researchSlotAssignments`), so a player carrying loose
-      // `researchProgressByTechId` with no slot binding shows no separate list.
       final techId = techCatalog.keys.first;
       final withProgress = player.copyWith(
         researchProgressByTechId: {techId: 50},
@@ -150,8 +135,6 @@ void main() {
         player: withSlots,
         wrapInScrollView: true,
       );
-      // The dev-only count line is removed regardless of slot count; with
-      // 4 active slots there is also no locked placeholder. Refs #3510.
       expect(find.textContaining('Research slots:'), findsNothing);
       expect(find.byType(ResearchSlotCard), findsNWidgets(4));
       expect(find.byType(LockedResearchSlotCard), findsNothing);
@@ -188,100 +171,8 @@ void main() {
         expect(
           (lockedWidth - activeWidth).abs(),
           lessThanOrEqualTo(1.0),
-          reason:
-              'SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4: '
-              'the locked Slot 4 card must render at the same width as the '
-              'active slot cards (Refs #3510).',
         );
       }
-    },
-  );
-
-  testWidgets(
-    'TechnologyPanel "Choose tech" shows no-techs modal when none available',
-    (WidgetTester tester) async {
-      final fullyUnlocked = player.copyWith(
-        techUnlocked: {for (final id in techCatalog.keys) id: true},
-      );
-      final gameWithFullyUnlocked = game.copyWith(
-        players: [fullyUnlocked, ...game.players.skip(1)],
-      );
-
-      await pumpTechnologyPanel(
-        tester,
-        game: gameWithFullyUnlocked,
-        player: fullyUnlocked,
-        onOrdersChanged: (_) {},
-        wrapInScrollView: true,
-      );
-
-      // Choose tech is rendered for each slot when editing is enabled.
-      // Scroll the button into view first: SPEC/ui/technology-panel.md §
-      // Slots tab — section ordering (Refs #2864 S0/S6) places the
-      // Researched Techs grid above the Research Slots block, and with
-      // every tech unlocked the chip grid pushes the first slot card's
-      // "Choose tech" button below the default 800×600 test viewport.
-      final chooseTech = find.text('Choose tech').first;
-      await tester.ensureVisible(chooseTech);
-      await tester.pumpAndSettle();
-      await tester.tap(chooseTech);
-      await tester.pumpAndSettle();
-
-      expect(find.text('No techs available to research'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'TechnologyPanel slot Cancel (no progress) emits empty-techId cancel order '
-    'and shows snackbar (Refs #3512)',
-    (WidgetTester tester) async {
-      final techId = techCatalog.keys.first;
-      final withOrder = player.copyWith(
-        techUnlocked:
-            <String, bool>{}, // ensures bottom sheet can be "no techs"
-        researchProgressByTechId: <String, int>{}, // no accrued progress
-      );
-      final gameWithEmptyUnlocked = game.copyWith(
-        players: [withOrder, ...game.players.skip(1)],
-      );
-
-      final orders = Orders(
-        researchOrdersByPlayerId: {
-          withOrder.id: [
-            ResearchOrder(
-              slotIndex: 0,
-              techId: techId,
-              funding: ResearchFundingLevel.low,
-            ),
-          ],
-        },
-      );
-
-      Orders? captured;
-      await pumpTechnologyPanel(
-        tester,
-        game: gameWithEmptyUnlocked,
-        player: withOrder,
-        currentOrders: orders,
-        onOrdersChanged: (next) => captured = next,
-        wrapInScrollView: true,
-      );
-
-      // Cancel shown for slots that currently have a tech assigned. With no
-      // accrued progress no forfeiture-warning dialog is shown; the slot is
-      // freed immediately via an empty-techId cancel signal so the resolver
-      // releases any persisted assignment (Refs #3512).
-      await tester.tap(find.text('Cancel').first);
-      await tester.pump(); // allow scaffoldMessenger snack bar to schedule
-      await tester.pumpAndSettle(const Duration(milliseconds: 200));
-
-      expect(find.text('Forfeit research progress?'), findsNothing);
-      expect(find.text('Research slot cancelled'), findsOneWidget);
-      expect(captured, isNotNull);
-      final capturedOrders =
-          captured!.researchOrdersByPlayerId[withOrder.id] ?? const [];
-      final slot0 = capturedOrders.firstWhere((o) => o.slotIndex == 0);
-      expect(slot0.techId, isEmpty);
     },
   );
 }

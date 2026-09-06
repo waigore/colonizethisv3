@@ -50,3 +50,91 @@ Game diplomacyStandingColonyTribeGame() {
     ],
   );
 }
+
+/// Foreign colony boycotting the human GP (Refs #3753 R12).
+Game diplomacyStandingBoycottedByGame() {
+  const nw = 'newWorld';
+  return Game(
+    id: 'standing-boycotted-by',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 8),
+      oldWorld: const RegionData(),
+      newWorld: RegionData(
+        provinces: [
+          Province(
+            id: '$nw|t2prov',
+            regionId: nw,
+            displayName: 'Foreign Colony Land',
+            ownerId: 't2',
+          ),
+        ],
+      ),
+    ),
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+      Player(id: 'gp2', displayName: 'Castile', isHuman: false),
+    ],
+    tribes: const [Tribe(id: 't2', displayName: 'Aztec')],
+    diplomacyRelations: const [
+      DiplomacyRelation(factionId1: 'gp1', factionId2: 't2', score: 45),
+    ],
+    overtureStates: const [
+      OvertureState(
+        gpId: 'gp1',
+        targetId: 't2',
+        stage: OvertureStage.tradeConsulate,
+      ),
+    ],
+    colonyStates: const [
+      ColonyState(tribeId: 't2', colonyOfGpId: 'gp2', sinceTurn: 7),
+    ],
+    boycottStates: const [
+      BoycottState(gpId: 'gp2', targetGpId: 'gp1', sinceTurn: 8),
+    ],
+  );
+}
+
+Game diplomacyStandingMinorJoinEmpireGame() {
+  return Game(
+    id: 'standing-minor-je',
+    worldState: const WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+    ],
+    minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
+  );
+}
+
+Game diplomacyStandingOverseasGame() {
+  return Game(
+    id: 'standing-overseas',
+    worldState: const WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+    ],
+    minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
+  );
+}
+
+Game diplomacyStandingEmptyGame() {
+  return Game(
+    id: 'standing-empty',
+    worldState: const WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: const [
+      Player(id: 'gp1', displayName: 'Albion', isHuman: true),
+    ],
+    minorNations: const [MinorNation(id: 'm1', displayName: 'Bavaria')],
+  );
+}

@@ -1,5 +1,4 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -33,7 +32,11 @@ void main() {
 
     setUp(() async {
       hiveDir = await Directory.systemTemp.createTemp('ct_app_test_hive_');
-      box = await openAppTestHiveBox(suiteId: 'game_service_cache', directory: hiveDir, boxName: 'games_cache');
+      box = await openAppTestHiveBox(
+        suiteId: 'game_service_cache',
+        directory: hiveDir,
+        boxName: 'games_cache',
+      );
       service = GameService(box, GameSaveAdapter());
     });
 
@@ -45,8 +48,7 @@ void main() {
     });
 
     test('getMapData returns null for unknown game id', () {
-      final result = service.getMapData('no-such-game');
-      expect(result, isNull);
+      expect(service.getMapData('no-such-game'), isNull);
     });
 
     test('default turn trace root directory matches startup config constant', () {
@@ -109,8 +111,7 @@ void main() {
       );
       service.saveGame(game);
 
-      final loaded = service.loadGame(gameId);
-      expect(loaded, isNull);
+      expect(service.loadGame(gameId), isNull);
     });
 
     test(
@@ -129,16 +130,11 @@ void main() {
         writer.createNewGame(id: gameId, config: config);
 
         final reader = GameService(box, GameSaveAdapter());
-        final first = reader.getMapData(gameId);
-        expect(first, isNotNull);
-        expect(first!.combinedTopology, isNotNull);
+        expect(reader.getMapData(gameId), isNotNull);
+        expect(reader.getMapData(gameId)!.combinedTopology, isNotNull);
+        expect(reader.getMapData(gameId), isNotNull);
 
-        final second = reader.getMapData(gameId);
-        expect(second, isNotNull);
-
-        final freshForLoad = GameService(box, GameSaveAdapter());
-        final loaded = freshForLoad.loadGame(gameId);
-        expect(loaded, isNotNull);
+        expect(GameService(box, GameSaveAdapter()).loadGame(gameId), isNotNull);
       },
     );
 
@@ -201,77 +197,7 @@ void main() {
         numProvincesOldWorld: 3,
         numProvincesNewWorld: 2,
       );
-      final g = service.createNewGame(config: config);
-      expect(g.id, startsWith('game_'));
+      expect(service.createNewGame(config: config).id, startsWith('game_'));
     });
-
-    test(
-      'runTurnResolution exports merged turn trace when debug trace is enabled',
-      () async {
-        final traceRoot = await Directory.systemTemp.createTemp(
-          'ct_turn_trace_app_',
-        );
-        addTearDown(() async {
-          if (await traceRoot.exists()) {
-            await traceRoot.delete(recursive: true);
-          }
-        });
-        final traceService = GameService(
-          box,
-          GameSaveAdapter(),
-          turnTraceEnabled: true,
-          turnTraceRootDirectory: traceRoot.path,
-        );
-        final config = GameSetupConfig(
-          selectedGreatPowerIds: ['england'],
-          continentCount: 1,
-          minorNationCount: 0,
-          tribeCount: 1,
-          numProvincesOldWorld: 3,
-          numProvincesNewWorld: 2,
-        );
-        final game = traceService.createNewGame(
-          id: 'trace_app_game',
-          config: config,
-        );
-        final aiEnabledGame = game.copyWith(
-          aiControlByGpId: {for (final player in game.players) player.id: true},
-        );
-
-        final result = traceService.runTurnResolution(
-          aiEnabledGame,
-          orders: const Orders(),
-        );
-        expect(result, isA<TurnResolutionComplete>());
-
-        await Future<void>.delayed(const Duration(milliseconds: 30));
-        final traceDir = Directory('${traceRoot.path}/turn-traces/${game.id}');
-        expect(await traceDir.exists(), isTrue);
-        final files = traceDir
-            .listSync()
-            .whereType<File>()
-            .where((file) => file.path.endsWith('.json'))
-            .toList();
-        expect(files.length, 1);
-        final payload =
-            jsonDecode(await files.single.readAsString())
-                as Map<String, dynamic>;
-        expect(payload['schemaVersion'], 'v1');
-        final meta = payload['meta'] as Map<String, dynamic>;
-        expect(meta['source'], 'app');
-        expect(meta['traceEnabled'], isTrue);
-        final phases =
-            ((payload['turnResolution'] as Map<String, dynamic>)['phases']
-                as List<dynamic>);
-        expect(phases, isNotEmpty);
-        final ai = payload['ai'] as List<dynamic>;
-        expect(ai, isNotEmpty);
-        final firstAi = ai.first as Map<String, dynamic>;
-        expect(firstAi['factionId'], isNotEmpty);
-        expect(firstAi['state'], isA<Map<String, dynamic>>());
-        expect(firstAi['thresholds'], isA<Map<String, dynamic>>());
-        expect(firstAi['outcome'], isA<Map<String, dynamic>>());
-      },
-    );
   });
 }

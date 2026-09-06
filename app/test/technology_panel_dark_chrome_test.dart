@@ -1,8 +1,6 @@
-// Dark editorial-monocle visual ACs for TechnologyPanel.
-// (Refs #4021).
-// Refs #2864 — S0 locked-slot rule + S2 researched-chip grid + S3 slot
-// cards with locked slot 4 dim. SPEC/ui/technology-panel.md § Slot
-// behaviour + § Layout / wireframe.
+// Dark editorial-monocle visual ACs for TechnologyPanel (Refs #2864 / #4021).
+// Heading/ordering pins: technology_panel_dark_chrome_headings_test.dart.
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -67,18 +65,6 @@ void main() {
     );
     return (localGame, panelPlayer);
   }
-
-  Orders mediumOrder(Player p, String techId) => Orders(
-    researchOrdersByPlayerId: {
-      p.id: [
-        ResearchOrder(
-          slotIndex: 0,
-          techId: techId,
-          funding: ResearchFundingLevel.medium,
-        ),
-      ],
-    },
-  );
 
   group('Slots tab always renders four slot cards (Refs #2864 AC always-4)', () {
     for (final c
@@ -226,36 +212,5 @@ void main() {
         expect(find.byType(CtBrassDivider), findsOneWidget);
       },
     );
-  });
-
-  group('Slots-tab section ordering (Refs #2864 S0/S6 ordering AC)', () {
-    for (final c in <({String name, Map<String, bool> unlocked})>[
-      (
-        name:
-            'Researched Techs heading renders strictly above Research Slots heading',
-        unlocked: {for (final id in techCatalog.keys.take(2)) id: true},
-      ),
-      (
-        name:
-            'ordering holds with zero researched techs (empty-state precedes slots)',
-        unlocked: <String, bool>{},
-      ),
-    ]) {
-      testWidgets(c.name, (WidgetTester tester) async {
-        await pumpPlayer(tester, techUnlocked: c.unlocked);
-        final researchedHeadingY = tester
-            .getTopLeft(find.text('Researched Techs'))
-            .dy;
-        final slotsHeadingY = tester.getTopLeft(find.text('Research Slots')).dy;
-        expect(
-          researchedHeadingY,
-          lessThan(slotsHeadingY),
-          reason:
-              'SPEC/ui/technology-panel.md § Slots tab — section ordering '
-              '(Refs #2864 S0/S6) requires the Researched Techs heading to '
-              'render strictly above the Research Slots heading.',
-        );
-      });
-    }
   });
 }

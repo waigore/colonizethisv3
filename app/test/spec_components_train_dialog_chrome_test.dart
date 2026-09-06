@@ -1,27 +1,6 @@
 /// Pins the [`SPEC/ui/components/train-dialog-chrome.md`](
 /// ../../../SPEC/ui/components/train-dialog-chrome.md) component spec
-/// authored as part of issue #2914 S9 (Refactor app/lib UI to
-/// consolidate editorial-monocle design system — Phase 1 step S9:
-/// populate `SPEC/ui/components/` with composite-component specs for
-/// shared abstractions).
-///
-/// `TrainDialogChrome` is the canonical header / divider / resource-bar
-/// / resource-chip / row-surface chrome composed inside `CtDialogShell`
-/// by both the Train Civilians dialog (stable screen id `UNIT40001`)
-/// and the Train Military dialog (stable screen id `UNIT50001`). Per
-/// `colonizethis-ui-documentation.mdc` § *Component specs*, a composite
-/// reused by multiple screen specs must live under
-/// `SPEC/ui/components/<kebab-name>.md` rather than being duplicated in
-/// each consumer spec.
-///
-/// These tests are deliberately static-text checks (file reads + regex
-/// searches): the canonical Given–When–Then runtime contract for the
-/// individual chrome widgets is exercised by
-/// `app/test/train_dialog_chrome_test.dart`,
-/// `app/test/train_dialogs_320dp_min_viewport_test.dart`, and the two
-/// consumer-dialog widget tests. The goal here is to ensure the SPEC
-/// stays present and aligned with the documentation rule even if future
-/// refactors move the widget file around.
+/// authored as part of issue #2914 S9.
 ///
 /// Refs #2914.
 library;
@@ -31,10 +10,9 @@ import 'dart:io' show File;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-const String _kSpecPath = '../SPEC/ui/components/train-dialog-chrome.md';
-const String _kComponentsReadmePath = '../SPEC/ui/components/README.md';
+import 'spec_components_train_dialog_chrome_cases.dart';
 
-String _readSpec() => File(_kSpecPath).readAsStringSync();
+String _readSpec() => File(kTrainDialogChromeSpecPath).readAsStringSync();
 
 void main() {
   suppressLogsForTests();
@@ -44,7 +22,7 @@ void main() {
       test(
         'spec file exists and is non-empty',
         () {
-          final file = File(_kSpecPath);
+          final file = File(kTrainDialogChromeSpecPath);
           expect(
             file.existsSync(),
             isTrue,
@@ -69,16 +47,7 @@ void main() {
         'Consumers / Acceptance criteria / Tests / Related)',
         () {
           final body = _readSpec();
-          for (final heading in <String>[
-            '## Purpose',
-            '## Widget contract',
-            '## Layout / wireframe',
-            '## Behavior',
-            '## Consumers',
-            '## Acceptance criteria (Given–When–Then)',
-            '## Tests',
-            '## Related',
-          ]) {
+          for (final heading in kTrainDialogChromeRequiredHeadings) {
             expect(
               body,
               contains(heading),
@@ -95,36 +64,10 @@ void main() {
         'screen ID and spec link',
         () {
           final body = _readSpec();
-          expect(
-            body,
-            contains('UNIT40001'),
-            reason:
-                'spec must enumerate consumer screen ID UNIT40001 (Train '
-                'Civilians dialog) so future refactors can reverse-trace '
-                'the screen that depends on this composite.',
-          );
-          expect(
-            body,
-            contains('UNIT50001'),
-            reason:
-                'spec must enumerate consumer screen ID UNIT50001 (Train '
-                'Military dialog) so future refactors can reverse-trace '
-                'the screen that depends on this composite.',
-          );
-          expect(
-            body,
-            contains('train-civilians-dialog.md'),
-            reason:
-                'spec must link to the train-civilians-dialog.md consumer '
-                'spec so reviewers can navigate to the host dialog.',
-          );
-          expect(
-            body,
-            contains('train-military-dialog.md'),
-            reason:
-                'spec must link to the train-military-dialog.md consumer '
-                'spec so reviewers can navigate to the host dialog.',
-          );
+          expect(body, contains('UNIT40001'));
+          expect(body, contains('UNIT50001'));
+          expect(body, contains('train-civilians-dialog.md'));
+          expect(body, contains('train-military-dialog.md'));
         },
       );
 
@@ -133,23 +76,13 @@ void main() {
         'regression guards',
         () {
           final body = _readSpec();
-          for (final symbol in <String>[
-            'TrainDialogHeader',
-            'TrainDialogSectionDivider',
-            'TrainDialogResourceBar',
-            'TrainDialogResourceChip',
-            'TrainDialogUnitRowSurface',
-            'kTrainDialogLockedOpacity = 0.5',
-            'kTrainDialogTitleLetterSpacing = 0.05',
-          ]) {
+          for (final symbol in kTrainDialogChromeRequiredSymbols) {
             expect(
               body,
               contains(symbol),
               reason:
                   'spec must restate the canonical chrome symbol or '
-                  'constant "$symbol" so reviewers do not have to '
-                  'cross-reference the implementation to confirm the '
-                  'dark editorial-monocle contract.',
+                  'constant "$symbol".',
             );
           }
         },
@@ -161,20 +94,12 @@ void main() {
         'EditorialMonoclePalette)',
         () {
           final body = _readSpec();
-          for (final atom in <String>[
-            'CtDialogShell',
-            'CtNinePatchButton',
-            'CtBrassDivider',
-            'CtGradients',
-            'EditorialMonoclePalette',
-          ]) {
+          for (final atom in kTrainDialogChromeCatalogAtoms) {
             expect(
               body,
               contains(atom),
               reason:
-                  'spec must reference the Ct-* catalog atom "$atom" so '
-                  'the composite chrome stays traceable to its '
-                  'design-system sources.',
+                  'spec must reference the Ct-* catalog atom "$atom".',
             );
           }
         },
@@ -184,20 +109,8 @@ void main() {
         'spec links to the catalog and tracking issue #2914',
         () {
           final body = _readSpec();
-          expect(
-            body,
-            contains('pixel-art-ui-catalog.md'),
-            reason:
-                'spec must link back to the catalog so reviewers can '
-                'cross-reference the catalog atoms it composes.',
-          );
-          expect(
-            body,
-            contains('#2914'),
-            reason:
-                'spec must reference tracking issue #2914 so progress on '
-                'the umbrella S9 step is discoverable from the file.',
-          );
+          expect(body, contains('pixel-art-ui-catalog.md'));
+          expect(body, contains('#2914'));
         },
       );
 
@@ -213,9 +126,8 @@ void main() {
             words.length <= 1000,
             isTrue,
             reason:
-                'SPEC documents must stay under the 1000-word ceiling per '
-                'colonizethis-spec-required.mdc § Layout. Current word '
-                'count is ${words.length}.',
+                'SPEC documents must stay under the 1000-word ceiling. '
+                'Current word count is ${words.length}.',
           );
         },
       );
@@ -225,50 +137,14 @@ void main() {
         '(negative regression guard — README must continue to enumerate '
         'every composite spec under it)',
         () {
-          final readme = File(_kComponentsReadmePath);
-          expect(
-            readme.existsSync(),
-            isTrue,
-            reason:
-                'SPEC/ui/components/README.md must remain in place so '
-                'authoring rules for new composite specs stay discoverable.',
-          );
+          final readme = File(kTrainDialogChromeComponentsReadmePath);
+          expect(readme.existsSync(), isTrue);
           final body = readme.readAsStringSync();
-          expect(
-            body,
-            contains('SPEC/ui/components/'),
-            reason:
-                'README must continue to introduce the components/ '
-                'directory.',
-          );
-          expect(
-            body,
-            contains('TrainDialogChrome'),
-            reason:
-                'README index must enumerate TrainDialogChrome so the '
-                'composite is discoverable from the directory landing '
-                'page (issue #2914 S9).',
-          );
-          expect(
-            body,
-            contains('train-dialog-chrome.md'),
-            reason:
-                'README index row must link to the spec file path.',
-          );
-          expect(
-            body,
-            contains('UNIT40001'),
-            reason:
-                'README index row for TrainDialogChrome must reference '
-                'the Train Civilians dialog stable screen id UNIT40001.',
-          );
-          expect(
-            body,
-            contains('UNIT50001'),
-            reason:
-                'README index row for TrainDialogChrome must reference '
-                'the Train Military dialog stable screen id UNIT50001.',
-          );
+          expect(body, contains('SPEC/ui/components/'));
+          expect(body, contains('TrainDialogChrome'));
+          expect(body, contains('train-dialog-chrome.md'));
+          expect(body, contains('UNIT40001'));
+          expect(body, contains('UNIT50001'));
         },
       );
     },

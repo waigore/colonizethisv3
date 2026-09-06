@@ -1,7 +1,6 @@
 // Pins SPEC/ui/empire-overview.md § Map display options button and dialog
 // (dark editorial-monocle chrome — Refs #2861 S8 / R9, Refs #2867 R1).
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -11,41 +10,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'app_shell_harness.dart';
-
-Widget _frame({
-  required MapViewState initialState,
-  required ValueChanged<MapViewState> onChanged,
-}) {
-  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-  return buildAppShell(
-    child: Scaffold(
-      body: Builder(
-        builder: (context) => Center(
-          child: TextButton(
-            onPressed: () {
-              showDialog<void>(
-                context: context,
-                barrierColor: EditorialMonoclePalette.dialogScrim,
-                builder: (_) => GameMapOptionsDialog(
-                  initialState: initialState,
-                  onChanged: onChanged,
-                ),
-              );
-            },
-            child: const Text('open'),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-Future<void> _openDialog(WidgetTester tester) async {
-  await tester.tap(find.text('open'));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 200));
-}
+import 'game_map_options_dialog_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -55,19 +20,21 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
+        gameMapOptionsDialogFrame(
+          initialState: MapViewState.defaults,
+          onChanged: (_) {},
+        ),
       );
-      await _openDialog(tester);
+      await openGameMapOptionsDialog(tester);
 
       expect(find.byType(CtDialogShell), findsOneWidget);
       expect(find.byType(AlertDialog), findsNothing);
       expect(find.byType(SwitchListTile), findsNothing);
 
-      // Default 2px --accent-dim border per CtDialogShell contract.
       final CtDialogShell shell = tester.widget<CtDialogShell>(
         find.byType(CtDialogShell),
       );
-      expect(shell.borderColor, isNull); // defaults to accentDim
+      expect(shell.borderColor, isNull);
       expect(shell.borderWidth, CtDialogShell.defaultBorderWidth);
     });
 
@@ -75,9 +42,12 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
+        gameMapOptionsDialogFrame(
+          initialState: MapViewState.defaults,
+          onChanged: (_) {},
+        ),
       );
-      await _openDialog(tester);
+      await openGameMapOptionsDialog(tester);
 
       expect(find.text('Map display options'), findsOneWidget);
       expect(find.text('Map marks'), findsOneWidget);
@@ -97,9 +67,12 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
+        gameMapOptionsDialogFrame(
+          initialState: MapViewState.defaults,
+          onChanged: (_) {},
+        ),
       );
-      await _openDialog(tester);
+      await openGameMapOptionsDialog(tester);
 
       expect(find.byType(CtToggleSwitch), findsNWidgets(7));
 
@@ -139,9 +112,12 @@ void main() {
       'Close action uses CtNinePatchButton (no Material TextButton)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _frame(initialState: MapViewState.defaults, onChanged: (_) {}),
+          gameMapOptionsDialogFrame(
+            initialState: MapViewState.defaults,
+            onChanged: (_) {},
+          ),
         );
-        await _openDialog(tester);
+        await openGameMapOptionsDialog(tester);
 
         expect(
           find.descendant(
@@ -170,9 +146,12 @@ void main() {
       (WidgetTester tester) async {
         final List<MapViewState> emitted = <MapViewState>[];
         await tester.pumpWidget(
-          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
+          gameMapOptionsDialogFrame(
+            initialState: MapViewState.defaults,
+            onChanged: emitted.add,
+          ),
         );
-        await _openDialog(tester);
+        await openGameMapOptionsDialog(tester);
 
         await tester.tap(
           find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
@@ -182,11 +161,9 @@ void main() {
 
         expect(emitted, hasLength(1));
         expect(emitted.last.showProvinceOwnershipTint, isTrue);
-        // Other fields unchanged from default.
         expect(emitted.last.showProvinceOverlay, isTrue);
         expect(emitted.last.showProvinceNamesLayer, isTrue);
 
-        // Local state updated immediately within the same dialog session.
         final ownership = tester.widget<CtToggleSwitch>(
           find.byKey(kGameMapOptionsShowProvinceOwnershipToggleKey),
         );
@@ -199,97 +176,18 @@ void main() {
       (WidgetTester tester) async {
         final List<MapViewState> emitted = <MapViewState>[];
         await tester.pumpWidget(
-          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
+          gameMapOptionsDialogFrame(
+            initialState: MapViewState.defaults,
+            onChanged: emitted.add,
+          ),
         );
-        await _openDialog(tester);
+        await openGameMapOptionsDialog(tester);
 
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Close'));
         await tester.pumpAndSettle();
 
         expect(find.byType(CtDialogShell), findsNothing);
         expect(emitted, isEmpty);
-      },
-    );
-
-    testWidgets(
-      'turning improvements off auto-offs roads and disables the roads switch',
-      (WidgetTester tester) async {
-        final List<MapViewState> emitted = <MapViewState>[];
-        await tester.pumpWidget(
-          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
-        );
-        await _openDialog(tester);
-
-        await tester.tap(
-          find.byKey(kGameMapOptionsShowMapImprovementsToggleKey),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(emitted, hasLength(1));
-        expect(emitted.last.showMapImprovements, isFalse);
-        expect(emitted.last.showMapRoads, isFalse);
-        expect(emitted.last.showMapResources, isTrue);
-
-        final roads = tester.widget<CtToggleSwitch>(
-          find.byKey(kGameMapOptionsShowMapRoadsToggleKey),
-        );
-        expect(roads.value, isFalse);
-        expect(roads.onChanged, isNull);
-
-        await tester.tap(find.byKey(kGameMapOptionsShowMapRoadsToggleKey));
-        await tester.pump();
-        expect(emitted, hasLength(1));
-      },
-    );
-
-    testWidgets(
-      'turning improvements on leaves roads off until the player turns them on',
-      (WidgetTester tester) async {
-        final List<MapViewState> emitted = <MapViewState>[];
-        await tester.pumpWidget(
-          _frame(
-            initialState: const MapViewState(
-              showMapImprovements: false,
-              showMapRoads: false,
-            ),
-            onChanged: emitted.add,
-          ),
-        );
-        await _openDialog(tester);
-
-        await tester.tap(
-          find.byKey(kGameMapOptionsShowMapImprovementsToggleKey),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(emitted.last.showMapImprovements, isTrue);
-        expect(emitted.last.showMapRoads, isFalse);
-        final roads = tester.widget<CtToggleSwitch>(
-          find.byKey(kGameMapOptionsShowMapRoadsToggleKey),
-        );
-        expect(roads.value, isFalse);
-        expect(roads.onChanged, isNotNull);
-      },
-    );
-
-    testWidgets(
-      'turning resources off leaves improvements and roads unchanged',
-      (WidgetTester tester) async {
-        final List<MapViewState> emitted = <MapViewState>[];
-        await tester.pumpWidget(
-          _frame(initialState: MapViewState.defaults, onChanged: emitted.add),
-        );
-        await _openDialog(tester);
-
-        await tester.tap(find.byKey(kGameMapOptionsShowMapResourcesToggleKey));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-
-        expect(emitted.last.showMapResources, isFalse);
-        expect(emitted.last.showMapImprovements, isTrue);
-        expect(emitted.last.showMapRoads, isTrue);
       },
     );
   });

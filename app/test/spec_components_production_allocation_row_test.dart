@@ -1,30 +1,5 @@
-/// Pins the [`SPEC/ui/components/production-allocation-row.md`](
-/// ../../../SPEC/ui/components/production-allocation-row.md) component
-/// spec authored as part of issue #2914 S9 (Refactor app/lib UI to
-/// consolidate editorial-monocle design system — Phase 1 step S9:
-/// populate `SPEC/ui/components/` with composite-component specs for
-/// shared abstractions).
-///
-/// `ProductionAllocationRow` is the canonical per-recipe row composite
-/// consumed by the Production panel (stable screen id `GAME20001`).
-/// Per `colonizethis-ui-documentation.mdc` § *Component specs*, a
-/// composite that is reused or extracted from a screen spec must have
-/// its own `kebab-name.md` under `SPEC/ui/components/` rather than
-/// duplicating the layout in the host screen spec. Issue #2914 § 6
-/// explicitly enumerates "production allocation rows" as one of the
-/// missing composite specs.
-///
-/// These tests are deliberately static-text checks (file reads + regex
-/// searches): the canonical Given–When–Then runtime contract for the
-/// widget itself is exercised by the existing
-/// `app/test/production_allocation_row_buttons_test.dart`,
-/// `app/test/production_allocation_row_chrome_test.dart`, and
-/// `app/test/production_allocation_provider_test.dart` widget tests;
-/// the goal here is to ensure the SPEC stays present and aligned with
-/// the documentation rule even if future refactors move the widget
-/// around.
-///
-/// Refs #2914.
+/// Pins SPEC/ui/components/production-allocation-row.md (#2914 S9).
+/// README index: spec_components_production_allocation_row_readme_test.dart.
 library;
 
 import 'dart:io' show File;
@@ -33,7 +8,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 const String _kSpecPath = '../SPEC/ui/components/production-allocation-row.md';
-const String _kComponentsReadmePath = '../SPEC/ui/components/README.md';
 
 String _readSpec() => File(_kSpecPath).readAsStringSync();
 
@@ -197,52 +171,6 @@ void main() {
                 'SPEC documents must stay under the 1000-word ceiling per '
                 'colonizethis-spec-required.mdc § Layout. Current word '
                 'count is ${words.length}.',
-          );
-        },
-      );
-
-      test(
-        'components README index lists the ProductionAllocationRow row '
-        '(negative regression guard — README must continue to enumerate '
-        'every composite spec under it)',
-        () {
-          final readme = File(_kComponentsReadmePath);
-          expect(
-            readme.existsSync(),
-            isTrue,
-            reason:
-                'SPEC/ui/components/README.md must remain in place so '
-                'authoring rules for new composite specs stay discoverable.',
-          );
-          final body = readme.readAsStringSync();
-          expect(
-            body,
-            contains('SPEC/ui/components/'),
-            reason:
-                'README must continue to introduce the components/ '
-                'directory.',
-          );
-          expect(
-            body,
-            contains('ProductionAllocationRow'),
-            reason:
-                'README index must enumerate ProductionAllocationRow so '
-                'the composite is discoverable from the directory landing '
-                'page (issue #2914 S9).',
-          );
-          expect(
-            body,
-            contains('production-allocation-row.md'),
-            reason:
-                'README index row must link to the spec file path.',
-          );
-          expect(
-            body,
-            contains('GAME20001'),
-            reason:
-                'README index row for ProductionAllocationRow must '
-                'reference the Production panel stable screen id '
-                'GAME20001.',
           );
         },
       );

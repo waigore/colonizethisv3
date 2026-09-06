@@ -15,7 +15,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'panel_session_revision.dart'
-    show panelOrdersRevision, panelWorldRevision;
+    show panelOrdersRevision, panelStaticSessionRevision, panelTopologyRevision;
 import 'production_panel_projection_provider.dart'
     show productionDesiredOutputRevision;
 
@@ -69,13 +69,14 @@ CounselPanelSessionRevision counselPanelSessionRevision({
   required Map<String, int> desiredOutputByRecipe,
   required MapTopology topology,
 }) {
+  final staticRevision = panelStaticSessionRevision(game);
   return (
-    gameId: game.id,
-    turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: panelWorldRevision(game),
+    gameId: staticRevision.gameId,
+    turnNumber: staticRevision.turnNumber,
+    worldRevision: staticRevision.worldRevision,
     ordersRevision: panelOrdersRevision(orders),
     desiredOutputRevision: productionDesiredOutputRevision(desiredOutputByRecipe),
-    topologyRevision: Object.hashAll(topology.nodes.map((node) => node.id)),
+    topologyRevision: panelTopologyRevision(topology),
   );
 }
 

@@ -2,6 +2,7 @@ import 'package:colonizethis_app/features/game/screens/development/development_p
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'development_panel_map_game_service.dart';
 import 'development_panel_test_support.dart';
 import 'panel_fixtures/core.dart';
 

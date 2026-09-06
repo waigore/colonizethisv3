@@ -8,6 +8,8 @@ import 'package:jenny/src/structure/line_content.dart';
 
 import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
 
+import 'ct_dialogue_view_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -19,14 +21,12 @@ void main() {
       var stateCalls = 0;
       view.onStateChanged = (_, _) => stateCalls++;
 
-      final line = DialogueLine(content: LineContent('Hello world'));
+      final line = ctDialogueViewLine('Hello world');
 
       final resultFuture = view.onLineStart(line);
       expect(view.currentLine, isNotNull);
       expect(view.currentLine!.text, 'Hello world');
       expect(stateCalls, 1);
-
-      // contextLine mirrors the active line while it is presented (#3628).
       expect(view.contextLine, isNotNull);
       expect(view.contextLine!.text, 'Hello world');
 
@@ -36,11 +36,8 @@ void main() {
 
       expect(view.currentLine, isNull);
       expect(view.currentChoice, isNull);
-      // contextLine is retained through the transient null state so consumers
-      // keep the message visible while the next Jenny event is dispatched.
       expect(view.contextLine, isNotNull);
       expect(view.contextLine!.text, 'Hello world');
-      // second state callback after advancing.
       expect(stateCalls, 2);
     },
   );
@@ -49,8 +46,7 @@ void main() {
       '(#3628 combined line+choice)', () async {
     final view = CtDialogueView(logger: packageLogger('dialogue'));
 
-    // Present a line, advance it, then present the following choice.
-    final line = DialogueLine(content: LineContent('Narrative before choice'));
+    final line = ctDialogueViewLine('Narrative before choice');
     final lineFuture = view.onLineStart(line);
     view.advanceLine();
     await lineFuture;
@@ -60,8 +56,6 @@ void main() {
     ]);
     final indexFuture = view.onChoiceStart(choice);
 
-    // While the choice is active the immediately-preceding line is retained so
-    // the overlay can render the narrative above the option button(s).
     expect(view.currentLine, isNull);
     expect(view.currentChoice, isNotNull);
     expect(view.contextLine, isNotNull);
@@ -71,8 +65,6 @@ void main() {
     final index = await indexFuture;
     expect(index, 0);
 
-    // Once the choice resolves the retained line is cleared so a later choice
-    // without a preceding line does not show stale narrative.
     expect(view.currentChoice, isNull);
     expect(view.contextLine, isNull);
   });
@@ -83,17 +75,16 @@ void main() {
     () async {
       final view = CtDialogueView(logger: packageLogger('dialogue'));
 
-      final first = view.onLineStart(DialogueLine(content: LineContent('L1')));
+      final first = view.onLineStart(ctDialogueViewLine('L1'));
       view.advanceLine();
       await first;
       expect(view.contextLine!.text, 'L1');
 
-      final second = view.onLineStart(DialogueLine(content: LineContent('L2')));
+      final second = view.onLineStart(ctDialogueViewLine('L2'));
       expect(view.contextLine!.text, 'L2');
       view.advanceLine();
       await second;
 
-      // L2 (not L1) accompanies the choice that follows the second line.
       final choice = DialogueChoice([
         DialogueOption(content: LineContent('Continue')),
       ]);
@@ -126,31 +117,17 @@ void main() {
   );
 
   group('single line + single option collapse (#3628)', () {
-    DialogueLine firstLine(Node node) {
-      final entry = node.toList(growable: false).first;
-      return (entry as DialogueLine)..evaluate();
-    }
-
     test(
       'onNodeStart marks a line before a single-option choice; '
       'onLineStart exposes the option label',
       () {
-        final project = YarnProject()
-          ..parse('''
-title: n
----
-The age of imperialism draweth nigh.
--> I shall.
-===
-''');
+        final project = ctDialogueViewSingleOptionProject();
         final view = CtDialogueView(logger: packageLogger('dialogue'));
         final node = project.nodes['n']!;
 
         view.onNodeStart(node);
-        view.onLineStart(firstLine(node));
+        view.onLineStart(ctDialogueViewFirstLine(node));
 
-        // The collapsed step exposes the Yarn option label (not a generic
-        // Continue) so consumers render one combined button.
         expect(view.currentLine, isNotNull);
         expect(view.pendingSingleOptionLabel, 'I shall.');
       },
@@ -158,14 +135,7 @@ The age of imperialism draweth nigh.
 
     test('confirmCombinedLineOption advances the line and auto-selects the '
         'sole option without a second step', () async {
-      final project = YarnProject()
-        ..parse('''
-title: n
----
-The age of imperialism draweth nigh.
--> I shall.
-===
-''');
+      final project = ctDialogueViewSingleOptionProject();
       final view = CtDialogueView(logger: packageLogger('dialogue'));
       final runner = DialogueRunner(
         yarnProject: project,
@@ -173,25 +143,19 @@ The age of imperialism draweth nigh.
       );
 
       String? labelWhenLineShown;
-      var confirmCount = 0;
       var choiceStepsRendered = 0;
       view.onStateChanged = (line, choice) {
         if (choice != null) choiceStepsRendered++;
         if (line != null &&
             view.pendingSingleOptionLabel != null &&
-            confirmCount == 0) {
-          confirmCount++;
+            labelWhenLineShown == null) {
           labelWhenLineShown = view.pendingSingleOptionLabel;
-          // Defer the confirm so it mirrors a real button tap after the frame.
           scheduleMicrotask(view.confirmCombinedLineOption);
         }
       };
 
       await runner.startDialogue('n');
 
-      // One confirmation tap shown, the narrative option label preserved, and
-      // no separate choice step was ever rendered (the single option was
-      // auto-selected). State is fully cleared at finish.
       expect(labelWhenLineShown, 'I shall.');
       expect(choiceStepsRendered, 0);
       expect(view.currentLine, isNull);
@@ -202,15 +166,7 @@ The age of imperialism draweth nigh.
 
     test('multi-line node collapses only the final line before the option',
         () {
-      final project = YarnProject()
-        ..parse('''
-title: n
----
-Heavy tidings cross thy desk.
-Each matter shall be judged in turn.
--> Continue
-===
-''');
+      final project = ctDialogueViewMultiLineProject();
       final view = CtDialogueView(logger: packageLogger('dialogue'));
       final node = project.nodes['n']!;
       final entries = node.toList(growable: false);
@@ -218,32 +174,20 @@ Each matter shall be judged in turn.
       final line2 = (entries[1] as DialogueLine)..evaluate();
 
       view.onNodeStart(node);
-
-      // The first line keeps its own advance tap (not collapsed).
       view.onLineStart(line1);
       expect(view.pendingSingleOptionLabel, isNull);
       view.advanceLine();
-
-      // Only the final line (immediately preceding the single option) collapses.
       view.onLineStart(line2);
       expect(view.pendingSingleOptionLabel, 'Continue');
     });
 
     test('a choice with two or more options never collapses', () {
-      final project = YarnProject()
-        ..parse('''
-title: n
----
-Choose thy path.
--> Onward
--> Retreat
-===
-''');
+      final project = ctDialogueViewMultiChoiceProject();
       final view = CtDialogueView(logger: packageLogger('dialogue'));
       final node = project.nodes['n']!;
 
       view.onNodeStart(node);
-      view.onLineStart(firstLine(node));
+      view.onLineStart(ctDialogueViewFirstLine(node));
 
       expect(view.pendingSingleOptionLabel, isNull);
     });
@@ -259,15 +203,12 @@ Choose thy path.
         if (line == null && choice == null) nullCalls++;
       };
 
-      // Drive a state first.
-      final line = DialogueLine(content: LineContent('Transient'));
+      final line = ctDialogueViewLine('Transient');
       final future = view.onLineStart(line);
       view.advanceLine();
       await future;
 
       expect(nullCalls, greaterThanOrEqualTo(1));
-
-      // contextLine is retained after the line advance, then cleared on finish.
       expect(view.contextLine, isNotNull);
 
       view.onDialogueFinish();

@@ -8,7 +8,7 @@ import '../features/game/widgets/diplomacy/diplomacy_panel_rows_builder.dart';
 import '../features/game/widgets/diplomacy/diplomacy_panel_rows.dart';
 import '../features/game/widgets/shell/shell_player_context.dart';
 import 'panel_session_revision.dart'
-    show panelOrdersRevision, panelWorldRevision;
+    show panelOrdersRevision, panelStaticSessionRevision, panelTopologyRevision;
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
@@ -50,13 +50,14 @@ DiplomacyPanelSessionRevision diplomacyPanelSessionRevision({
   required Orders orders,
   required MapTopology topology,
 }) {
+  final staticRevision = panelStaticSessionRevision(game);
   return (
-    gameId: game.id,
-    turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: panelWorldRevision(game),
+    gameId: staticRevision.gameId,
+    turnNumber: staticRevision.turnNumber,
+    worldRevision: staticRevision.worldRevision,
     humanPlayerId: humanPlayerId,
     ordersRevision: panelOrdersRevision(orders),
-    topologyRevision: Object.hashAll(topology.nodes.map((n) => n.id)),
+    topologyRevision: panelTopologyRevision(topology),
   );
 }
 

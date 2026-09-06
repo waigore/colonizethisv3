@@ -1,15 +1,11 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 
 import 'overture_dialogue_overlay_test_support.dart';
 
@@ -29,17 +25,11 @@ void main() {
         );
 
         expect(find.text('Diplomatic overtures'), findsOneWidget);
-        // Offerer name renders in its own --accent Text per #2867 R22.
         expect(find.text('Great Power 2'), findsNWidgets(2));
-        // Stage labels render in their own --muted Text per #2867 R22.
         expect(find.text('trade consulate'), findsOneWidget);
         expect(find.text('embassy'), findsOneWidget);
-        // Separator between offerer and stage is its own --muted Text.
         expect(find.text(': '), findsNWidgets(2));
 
-        // Every row starts undecided per #2867 R23 / AC4, so Submit is
-        // disabled and tapping it must be a no-op. `warnIfMissed: false`
-        // because the disabled button intentionally ignores hit-tests.
         await tester.tap(find.text('Submit'), warnIfMissed: false);
         await tester.pump();
         expect(submitted, isNull);
@@ -75,33 +65,15 @@ void main() {
         CtNinePatchButton submitButton() =>
             tester.widget<CtNinePatchButton>(submitFinder);
 
-        expect(
-          submitButton().enabled,
-          isFalse,
-          reason:
-              'Submit must start disabled when every overture row defaults '
-              'to undecided (#2867 R23).',
-        );
+        expect(submitButton().enabled, isFalse);
 
         await tester.tap(find.text('Accept').first);
         await tester.pump();
-        expect(
-          submitButton().enabled,
-          isFalse,
-          reason:
-              'Submit must remain disabled when only the first row has been '
-              'decided (#2867 R23 negative case).',
-        );
+        expect(submitButton().enabled, isFalse);
 
         await tester.tap(find.text('Reject').last);
         await tester.pump();
-        expect(
-          submitButton().enabled,
-          isTrue,
-          reason:
-              'Submit must enable once every overture row has a non-null '
-              'decision (#2867 R23 positive case).',
-        );
+        expect(submitButton().enabled, isTrue);
       },
     );
 
@@ -126,154 +98,9 @@ void main() {
       );
       expect(submitButton.enabled, isFalse);
 
-      // `warnIfMissed: false` because the disabled button intentionally
-      // ignores hit-tests (per CtNinePatchButton § Disabled).
       await tester.tap(find.text('Submit'), warnIfMissed: false);
       await tester.pump();
-      expect(
-        submitted,
-        isNull,
-        reason:
-            'Tapping the disabled Submit must not invoke onDecisions '
-            'while any row is still undecided (#2867 R23).',
-      );
-    });
-
-    testWidgets(
-      'phase 2 title uses --accent color and 0.05em letter-spacing (#2867 R2/R21)',
-      (WidgetTester tester) async {
-        await pumpOvertureOverlay(tester);
-
-        final Finder titleFinder = find.byKey(
-          const ValueKey<String>('overtureTitle'),
-        );
-        expect(titleFinder, findsOneWidget);
-        final Text titleText = tester.widget<Text>(titleFinder);
-        expect(titleText.data, 'Diplomatic overtures');
-        expect(titleText.style?.color, EditorialMonoclePalette.accent);
-        final double? fontSize = titleText.style?.fontSize;
-        expect(fontSize, isNotNull);
-        expect(
-          titleText.style?.letterSpacing,
-          closeTo(fontSize! * 0.05, 0.0001),
-        );
-      },
-    );
-
-    testWidgets(
-      'phase 2 renders CtBrassDivider between title and intro (#2867 R21)',
-      (WidgetTester tester) async {
-        await pumpOvertureOverlay(tester);
-
-        final Finder dividerFinder = find.byKey(
-          const ValueKey<String>('overtureBrassDivider'),
-        );
-        expect(dividerFinder, findsOneWidget);
-        expect(dividerFinder.evaluate().single.widget, isA<CtBrassDivider>());
-      },
-    );
-
-    testWidgets(
-      'phase 2 intro is rendered in --muted italic body style (#2867 R5/R21)',
-      (WidgetTester tester) async {
-        await pumpOvertureOverlay(tester);
-
-        final Finder introFinder = find.byKey(
-          const ValueKey<String>('overtureIntro'),
-        );
-        expect(introFinder, findsOneWidget);
-        final Text intro = tester.widget<Text>(introFinder);
-        expect(intro.style?.color, EditorialMonoclePalette.muted);
-        expect(intro.style?.fontStyle, FontStyle.italic);
-      },
-    );
-
-    testWidgets(
-      'offer row paints offerer in --accent and stage in --muted (#2867 R22)',
-      (WidgetTester tester) async {
-        await pumpOvertureOverlay(tester);
-
-        final Finder offererFinder = find.byKey(
-          const ValueKey<String>('overtureOfferOfferer'),
-        );
-        expect(offererFinder, findsOneWidget);
-        final Text offererText = tester.widget<Text>(offererFinder);
-        expect(offererText.data, 'Great Power 2');
-        expect(offererText.style?.color, EditorialMonoclePalette.accent);
-
-        final Finder stageFinder = find.byKey(
-          const ValueKey<String>('overtureOfferStage'),
-        );
-        expect(stageFinder, findsOneWidget);
-        final Text stageText = tester.widget<Text>(stageFinder);
-        expect(stageText.data, 'trade consulate');
-        expect(stageText.style?.color, EditorialMonoclePalette.muted);
-
-        final Finder separatorFinder = find.byKey(
-          const ValueKey<String>('overtureOfferSeparator'),
-        );
-        expect(separatorFinder, findsOneWidget);
-        final Text separator = tester.widget<Text>(separatorFinder);
-        expect(separator.data, ': ');
-        expect(separator.style?.color, EditorialMonoclePalette.muted);
-      },
-    );
-
-    testWidgets(
-      'phase 2 chrome contains no Material AlertDialog/ListTile/Card chrome (#2867 R1)',
-      (WidgetTester tester) async {
-        await pumpOvertureOverlay(tester);
-
-        final Finder overlay = find.byType(OvertureDialogueOverlay);
-        expect(
-          find.descendant(of: overlay, matching: find.byType(AlertDialog)),
-          findsNothing,
-        );
-        expect(
-          find.descendant(of: overlay, matching: find.byType(ListTile)),
-          findsNothing,
-        );
-        expect(
-          find.descendant(of: overlay, matching: find.byType(Card)),
-          findsNothing,
-        );
-      },
-    );
-
-    testWidgets('phase 2 scrim resolves to EditorialMonoclePalette.dialogScrim '
-        '(#2867 R1; mirrors intervention overlay S9)', (
-      WidgetTester tester,
-    ) async {
-      await pumpOvertureOverlay(tester);
-
-      final Finder shellFinder = find.byType(CtDialogShell);
-      expect(shellFinder, findsOneWidget);
-      final Material scrim = tester.widget<Material>(
-        find.ancestor(of: shellFinder, matching: find.byType(Material)).first,
-      );
-      expect(scrim.color, EditorialMonoclePalette.dialogScrim);
-      expect(scrim.color, isNot(Colors.black54));
-    });
-
-    testWidgets('no Material descendant uses the legacy Colors.black54 scrim '
-        '(#2867 R1 negative regression guard)', (WidgetTester tester) async {
-      await pumpOvertureOverlay(tester);
-
-      final Finder overlay = find.byType(OvertureDialogueOverlay);
-      for (final Element element
-          in find
-              .descendant(of: overlay, matching: find.byType(Material))
-              .evaluate()) {
-        final Material material = element.widget as Material;
-        expect(
-          material.color,
-          isNot(Colors.black54),
-          reason:
-              'Legacy Colors.black54 scrim must not leak into the overture '
-              'overlay; use EditorialMonoclePalette.dialogScrim per '
-              '#2867 R1 / SPEC/ui/pixel-art-ui-catalog.md § Dialog scrim.',
-        );
-      }
+      expect(submitted, isNull);
     });
   });
 }

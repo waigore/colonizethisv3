@@ -1,81 +1,17 @@
 // Widget goldens for DIPL20001 Grant / Set Subsidy Cost–Effect preview
 // (Refs #4415). Pins GrantOrSubsidyDialog under AppThemes.editorialMonocle.
+// Standing-word pins: diplomacy_grant_subsidy_dialog_standing_goldens_test.dart.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'diplomacy_grant_subsidy_dialog_goldens_fixtures.dart';
 import 'editorial_monocle_dark_token_assertions.dart';
-import 'golden_capture_harness.dart';
 import 'widget_test_assets.dart';
-
-const _humanId = 'gp1';
-const _targetId = 'gp2';
-const Size _dialogHost = Size(420, 560);
-
-Game _buildGame({required int humanTreasury, num? pairScore}) {
-  return Game(
-    id: 'g_dipl20001_golden',
-    worldState: const WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    players: [
-      Player(
-        id: _humanId,
-        displayName: 'Castile',
-        isHuman: true,
-        treasury: humanTreasury,
-      ),
-      const Player(
-        id: _targetId,
-        displayName: 'England',
-        isHuman: false,
-        treasury: 0,
-      ),
-    ],
-    diplomacyRelations: pairScore == null
-        ? const []
-        : [
-            DiplomacyRelation(
-              factionId1: _humanId,
-              factionId2: _targetId,
-              score: pairScore,
-            ),
-          ],
-  );
-}
-
-Future<void> _pumpDialogGolden(
-  WidgetTester tester, {
-  required Key boundaryKey,
-  required Game game,
-  required bool isSubsidy,
-  Size physicalSize = _dialogHost,
-}) async {
-  await pumpGoldenHost(
-    tester,
-    boundaryKey: boundaryKey,
-    physicalSize: physicalSize,
-    settle: false,
-    includeLocalizations: true,
-    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-    child: GrantOrSubsidyDialog(
-      game: game,
-      humanPlayerId: _humanId,
-      targetFactionId: _targetId,
-      isSubsidy: isSubsidy,
-      bus: AppEventBus.create(),
-    ),
-  );
-}
 
 void main() {
   suppressLogsForTests();
@@ -88,10 +24,12 @@ void main() {
     WidgetTester tester,
   ) async {
     const boundaryKey = ValueKey<String>('dipl20001_grant_preview_golden');
-    await _pumpDialogGolden(
+    await pumpDiploGrantSubsidyGoldenDialog(
       tester,
       boundaryKey: boundaryKey,
-      game: _buildGame(humanTreasury: 5 * grantAidAmountStep),
+      game: buildDiploGrantSubsidyGoldenGame(
+        humanTreasury: 5 * grantAidAmountStep,
+      ),
       isSubsidy: false,
     );
 
@@ -131,10 +69,10 @@ void main() {
     WidgetTester tester,
   ) async {
     const boundaryKey = ValueKey<String>('dipl20001_subsidy_preview_golden');
-    await _pumpDialogGolden(
+    await pumpDiploGrantSubsidyGoldenDialog(
       tester,
       boundaryKey: boundaryKey,
-      game: _buildGame(humanTreasury: 0),
+      game: buildDiploGrantSubsidyGoldenGame(humanTreasury: 0),
       isSubsidy: true,
     );
 
@@ -161,10 +99,12 @@ void main() {
       const boundaryKey = ValueKey<String>(
         'dipl20001_grant_below_minimum_golden',
       );
-      await _pumpDialogGolden(
+      await pumpDiploGrantSubsidyGoldenDialog(
         tester,
         boundaryKey: boundaryKey,
-        game: _buildGame(humanTreasury: grantAidAmountStep - 1),
+        game: buildDiploGrantSubsidyGoldenGame(
+          humanTreasury: grantAidAmountStep - 1,
+        ),
         isSubsidy: false,
       );
 
@@ -193,10 +133,12 @@ void main() {
       const boundaryKey = ValueKey<String>(
         'dipl20001_grant_preview_320dp_golden',
       );
-      await _pumpDialogGolden(
+      await pumpDiploGrantSubsidyGoldenDialog(
         tester,
         boundaryKey: boundaryKey,
-        game: _buildGame(humanTreasury: 5 * grantAidAmountStep),
+        game: buildDiploGrantSubsidyGoldenGame(
+          humanTreasury: 5 * grantAidAmountStep,
+        ),
         isSubsidy: false,
         physicalSize: const Size(kMinViewportWidth, 640),
       );
@@ -213,60 +155,6 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/dipl20001_grant_preview_320dp.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: DIPL20001 grant standing word becomes Neutral (Refs #4632)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>(
-        'dipl20001_grant_standing_becomes_golden',
-      );
-      await _pumpDialogGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        game: _buildGame(humanTreasury: 5 * grantAidAmountStep, pairScore: 45),
-        isSubsidy: false,
-      );
-
-      expect(tester.takeException(), isNull);
-      expectEditorialMonocleDarkChrome(tester);
-      expect(
-        find.text('Effect: Standing word becomes Neutral.'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('+5'), findsNothing);
-
-      // Capture the preview Column so the trailing standing word is in-frame
-      // (full-dialog 420×560 clips that last Effect line; Refs #4632).
-      await expectLater(
-        find.byKey(const Key('grantOrSubsidyDialogPreview')),
-        matchesGoldenFile('goldens/dipl20001_grant_standing_becomes.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: DIPL20001 grant standing word stays Devoted (Refs #4632)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>(
-        'dipl20001_grant_standing_stays_golden',
-      );
-      await _pumpDialogGolden(
-        tester,
-        boundaryKey: boundaryKey,
-        game: _buildGame(humanTreasury: 5 * grantAidAmountStep, pairScore: 95),
-        isSubsidy: false,
-      );
-
-      expect(tester.takeException(), isNull);
-      expectEditorialMonocleDarkChrome(tester);
-      expect(find.text('Effect: Standing word stays Devoted.'), findsOneWidget);
-
-      await expectLater(
-        find.byKey(const Key('grantOrSubsidyDialogPreview')),
-        matchesGoldenFile('goldens/dipl20001_grant_standing_stays.png'),
       );
     },
   );

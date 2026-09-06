@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/widgets/panels/tree_builders/military_tree_builder.dart';
 import '../features/game/widgets/panels/tree_builders/naval_tree_builder.dart';
-import 'panel_session_revision.dart' show panelOrdersRevision, panelWorldRevision;
+import 'panel_session_revision.dart'
+    show
+        PanelStaticSessionRevision,
+        panelOrdersRevision,
+        panelStaticSessionRevision;
 
-typedef UnitsPanelStaticSessionRevision = ({
-  String gameId,
-  int turnNumber,
-  int worldRevision,
-});
+typedef UnitsPanelStaticSessionRevision = PanelStaticSessionRevision;
 
 typedef UnitsPanelMilitarySessionRevision = ({
   UnitsPanelStaticSessionRevision staticRevision,
@@ -82,13 +82,8 @@ final unitsPanelSessionCacheProvider = Provider<UnitsPanelSessionCache>(
 
 UnitsPanelStaticSessionRevision unitsPanelStaticSessionRevision({
   required Game game,
-}) {
-  return (
-    gameId: game.id,
-    turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: panelWorldRevision(game),
-  );
-}
+}) =>
+    panelStaticSessionRevision(game);
 
 int unitsPanelMilitaryContentRevision(Game game, String humanPlayerId) {
   final armyHashes = <int>[];

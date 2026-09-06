@@ -1,7 +1,6 @@
 // Shared map-backed fixtures for Development panel layout/golden tests (Refs #4175).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
@@ -15,106 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_test_hive_harness.dart';
+import 'development_panel_map_game_service.dart';
 import 'panel_fixtures/core.dart';
-
-const String kDevelopmentPanelMapTestGameId = 'development-panel-golden-test';
-
-final MapTopology developmentPanelMapCombinedTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'oldWorld|p1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|p2',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: const [
-    TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
-  ],
-);
-
-class DevelopmentPanelMapGameService extends GameService {
-  DevelopmentPanelMapGameService(super.box, super.adapter);
-
-  static final Map<String, MapTopology> _topologyByRegion = {
-    'oldWorld': MapTopology(
-      nodes: const [
-        TopologyNode(
-          id: 'p1',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-        TopologyNode(
-          id: 'p2',
-          regionId: 'oldWorld',
-          type: TopologyNodeType.province,
-        ),
-      ],
-      edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
-    ),
-    'newWorld': const MapTopology(nodes: [], edges: []),
-  };
-
-  static final Map<String, TileMapResult> _tileMapByRegion = {
-    'oldWorld': TileMapResult(
-      width: 2,
-      height: 2,
-      grid: const [
-        ['p1', 'p1'],
-        ['p2', 'p2'],
-      ],
-      terrainGrid: const [
-        [TerrainType.plains, TerrainType.plains],
-        [TerrainType.plains, TerrainType.plains],
-      ],
-      resourceGrid: [
-        [Resource.grain, Resource.grain],
-        [null, null],
-      ],
-    ),
-    'newWorld': TileMapResult(
-      width: 1,
-      height: 1,
-      grid: const [
-        ['nw1'],
-      ],
-      terrainGrid: const [
-        [TerrainType.plains],
-      ],
-    ),
-  };
-
-  static ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })
-  goldenMapData() {
-    return (
-      combinedTopology: developmentPanelMapCombinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-      warpLinks: null,
-    );
-  }
-
-  @override
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
-    if (gameId != kDevelopmentPanelMapTestGameId) return null;
-    return goldenMapData();
-  }
-}
 
 Game buildDevelopmentPanelGoldenGame() {
   const human = kPanelTestHumanPlayerId;
@@ -207,17 +108,12 @@ Game buildDevelopmentPanelGoldenGame() {
   );
 }
 
-/// Opens an isolated Hive games box for one Development panel test suite.
-///
-/// [suiteId] must be unique per `*_test.dart` file so parallel `flutter test`
-/// shards do not contend on `games.lock` (Refs #4175 Slice E).
 Future<Box<dynamic>> openDevelopmentPanelTestHiveBox({
   required String suiteId,
 }) async {
   return openAppTestHiveBox(suiteId: 'development_panel_$suiteId');
 }
 
-/// Pumps post-frame gates for read-model and map deferral (Slice E).
 Future<void> pumpDevelopmentPanelReady(WidgetTester tester) async {
   await tester.pump();
   await tester.pump();
