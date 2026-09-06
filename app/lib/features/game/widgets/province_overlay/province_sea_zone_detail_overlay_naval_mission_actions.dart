@@ -6,6 +6,8 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_naval_co
     show ProvinceNavalCombineOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
+import 'package:colonizethis_app/features/game/flame/map_state/province_overlay_sail_move_overlay_controls.dart'
+    show ProvinceOverlaySailMoveOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
     show ProvinceTransferToHomeFleetOverlayControls;
 import 'package:flutter/material.dart';
@@ -16,17 +18,20 @@ List<Widget> navalMissionActionWidgets(
   ProvinceDetachAndSailOverlayControls detachAndSail,
   ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
   ProvinceNavalCombineOverlayControls navalCombine,
+  ProvinceOverlaySailMoveOverlayControls sailMove,
 ) {
   final showDetach = detachAndSail.showDetachAndSail;
   final showTransfer = transferToHomeFleet.showTransferToHomeFleet;
   final showCombine = navalCombine.showCombineFleets;
+  final showSail = sailMove.showSailMove;
   if (!navalMission.showBlockade &&
       !navalMission.showBeachhead &&
       !navalMission.showPatrol &&
       !navalMission.showDefend &&
       !showDetach &&
       !showTransfer &&
-      !showCombine) {
+      !showCombine &&
+      !showSail) {
     return const [];
   }
   return [
@@ -61,6 +66,15 @@ List<Widget> navalMissionActionWidgets(
               enabled: detachAndSail.detachAndSailEnabled,
               onPressed: detachAndSail.detachAndSailEnabled
                   ? detachAndSail.onDetachAndSailTap
+                  : null,
+            ),
+          if (showSail)
+            CtActionTextButton(
+              label: l10n.naval_mission_sail,
+              tooltip: sailMove.sailMoveTooltip,
+              enabled: sailMove.sailMoveEnabled,
+              onPressed: sailMove.sailMoveEnabled
+                  ? sailMove.onSailMoveTap
                   : null,
             ),
           if (navalMission.showBlockade)

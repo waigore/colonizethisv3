@@ -1,7 +1,7 @@
 # Move Fleet Dialog
 
 **Screen ID:** `DLG30001` — stable; do not reassign.
-**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md), from a map fleet-marker in-port tap, from `DLG31001` **Sail / Move** (Refs #4343), or from Home Fleet detach-then-sail after a confirmed split (Refs #4448). Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart`.
+**SPEC/ui** — Modal that lets the human player move a sea-going fleet to an adjacent sea zone or owned port from the [naval-units-panel.md](naval-units-panel.md), from a map fleet-marker in-port tap, from `DLG31001` **Sail / Move** (Refs #4343), from Home Fleet detach-then-sail after a confirmed split (Refs #4448), or from `MAP20001` Naval **Sail / Move** occupancy (optional `DLG31003`; never `DLG31001`/`DLG31004`; Refs #4735). Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart`.
 **Widgetbook:** `Move Fleet Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [ships-and-naval.md](../game/ships-and-naval.md). Movement: [naval-movement-resolution.md](../program/naval-movement-resolution.md). Map locate: [map-widget.md](map-widget.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 **Mockup:** [mockups/DLG30001-move-fleet-dialog.html](mockups/DLG30001-move-fleet-dialog.html)
@@ -11,7 +11,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `MoveFleetDialog` | `StatefulWidget` | `game` (`Game`), `topology` (`MapTopology`), `humanPlayerId` (`String`), `fleet` (`Fleet`), `bus` (`AppEventBus`), `playerView` (`PlayerView?`) | Local `showDialog` modal opened from `NavalUnitsPanel` Move, map marker in-port branch, `DLG31001` Sail/Move, or Home Fleet detach-then-sail for the **new** fleet. Emits a naval move request on confirm and per-row `LocateMapTileEvent`s on locate. Optional `playerView` drives fog-respecting sea-zone hostile gist (Refs #4573); callers via `showMoveFleetDialogForFleet` supply caller view or `buildPlayerView`. |
+| `MoveFleetDialog` | `StatefulWidget` | `game` (`Game`), `topology` (`MapTopology`), `humanPlayerId` (`String`), `fleet` (`Fleet`), `bus` (`AppEventBus`), `playerView` (`PlayerView?`) | Local `showDialog` modal opened from `NavalUnitsPanel` Move, map marker in-port branch, `DLG31001` Sail/Move, Home Fleet detach-then-sail for the **new** fleet, or `MAP20001` Naval **Sail / Move** (Refs #4735). Emits a naval move request on confirm and per-row `LocateMapTileEvent`s on locate. Optional `playerView` drives fog-respecting sea-zone hostile gist (Refs #4573); callers via `showMoveFleetDialogForFleet` supply caller view or `buildPlayerView`. |
 
 Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart`. Wrapped in a `CtDialogShell` (dark editorial-monocle chrome per #2867 R1 — 2 px `--accent-dim` border + `surface-lite → surface → bg-deep` panel gradient). The legacy Material `AlertDialog` / `RadioListTile` / `TextButton` chrome is forbidden (regression guard) per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban. `_buildNavalMovePicks` plus the `_PickSeaZone` / `_PickPort` variants build the sealed `_MovePick` list and order conversion.
 
@@ -62,6 +62,7 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dar
 - Opened from map fleet-marker flow when the selected fleet is sea-going **in port** (`showNavalFleetMarkerFlow`; Refs #4343). At the capital, `DLG31004` may precede this dialog when Transfer is also legal (Refs #4625); Sail / Move still opens `DLG30001`. Other in-port markers skip the chooser.
 - Opened from Home Fleet detach-then-sail after a confirmed split, targeting the **new** sea-going fleet id from `NavalFleetsUpdatedEvent.game` (never the Home Fleet id; Refs #4448).
 - Opened from `DLG31001` **Sail / Move** when the selected fleet is sea-going **at sea**.
+- Opened from `MAP20001` Naval **Sail / Move** when ≥1 human sea-going non-Home fleet occupies the viewed revealed sea or owned port (optional `DLG31003` of those fleets first; never `DLG31001` or `DLG31004`; Refs #4735).
 - `_buildNavalMovePicks` derives candidates from `navalMoveTopologyPicksForFleet(topology, fleet)`. With zero topology picks the dialog opens in the empty state.
 - The dialog does not mutate game state; it emits `NavalMoveFleetRequestedEvent` and the shell/turn-resolution pipeline applies the order. Confirming a move still clears any pending mission for that fleet (existing XOR).
 
@@ -95,6 +96,7 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dar
 | Source | Condition | Result |
 |--------|-----------|--------|
 | `NavalUnitsPanel` Move action | Fleet row; `navalMoveTopologyPicksForFleet` non-empty | `showDialog` mounts `MoveFleetDialog`. |
+| `MAP20001` Naval **Sail / Move** | Occupying sea-going non-Home fleet; optional `DLG31003` | `showMoveFleetDialogForFleet` mounts `MoveFleetDialog` (Refs #4735). |
 | — | Zero move picks | Dialog may open with empty state (`moveFleet_noAdjacentSeaZones`). |
 
 ### User actions → outcomes

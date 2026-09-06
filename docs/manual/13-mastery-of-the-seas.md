@@ -92,7 +92,11 @@ Entering a sea zone reveals its water and the coastal edge of adjacent provinces
 
 A move order replaces that fleet’s earlier move order and clears its pending mission for the turn. A fleet can move or perform one mission, never both.
 
-You can also open the same **Move fleet** dialog from the map: tap an **in-port** sea-going fleet marker, or tap **Sail / Move** on `DLG31001` **Naval mission menu dialog** when the fleet is already at sea.
+You can also open the same **Move fleet** dialog from the map in these ways:
+
+1. Tap an **in-port** sea-going fleet marker (at your capital, `DLG31004` may ask Sail / Move or Transfer first).
+2. Tap **Sail / Move** on `DLG31001` **Naval mission menu dialog** when the fleet is already at sea.
+3. On `MAP20001` **Province sea-zone overlay** **Naval**, tap **Sail / Move** when your sea-going fleet (not the Home Fleet) occupies the viewed sea or an owned port. One fleet opens `DLG30001` at once. Several fleets open `DLG31003` first. This path does not open the mission menu or the capital chooser.
 
 ### Assign a naval mission
 
@@ -125,12 +129,13 @@ When you assign **Blockade**, the text you see first names the warehouse cut, no
 
 Map-marker and panel **Mission** still open `DLG31001` as usual.
 
-**Sea-zone shortcut:** On a revealed sea you already occupy with at least one sea-going fleet of yours (not the Home Fleet), `MAP20001` **Province sea-zone overlay** **Naval** offers **Patrol** and **Defend**.
+**Sea-zone shortcut:** On a revealed sea you already occupy with at least one sea-going fleet of yours (not the Home Fleet), `MAP20001` **Province sea-zone overlay** **Naval** offers **Patrol**, **Defend**, and **Sail / Move**.
 
 1. Tap **Patrol** or **Defend**.
 2. One eligible fleet in this sea assigns that mission at once — you do not see `DLG31001` or `DLG31002`.
 3. Several eligible fleets open `DLG31003` first so you pick which fleet stays.
 4. If a fleet of yours is in this sea but cannot take a new mission this turn (it already has a mission, or a move or mission is already staged), the buttons stay visible and cannot be tapped. Empty seas do not show these buttons.
+5. Tap **Sail / Move** to open `DLG30001` for an occupying sea-going fleet (or `DLG31003` first when several share the sea). That control stays hidden when you are only watching, when the naval list shows `???`, or when only the Home Fleet is present.
 
 Patrol tries to intercept hostile fleets moving through this sea. Defend stays without seeking combat. Neither control prints intercept chance numbers.
 
@@ -192,7 +197,7 @@ Victoria and Henry lean toward ships and naval learning; Isabella leans toward e
 - [ ] Explains the complete merchant and warship roster, each ship’s required technology, and the Carrack exception. Train Naval roles match the dialog (**Merchant** or **Warship**).
 - [ ] Documents opening `UNIT30001` **Naval units panel** from **Naval Units** on the left of the map, then `UNIT60001` **Train naval dialog** for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints. Results appear after **Next turn**.
 - [ ] Documents `DLG30001` **Move fleet dialog** one adjacent hop (port to sea, or sea to sea or owned port), capital docking after **Next turn**, sea-zone revelation, **links to** passages between the two maps, and fog-respecting sea-row hostile gist (**Hostile patrol** / **Hostile blockade** / **Hostile fleets: N** / **Fleets unknown**).
-- [ ] Documents tapping a fleet marker: Home Fleet with ships → detach-then-sail (`DLG30001` for the new fleet), empty Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with **Sail / Move**, plus `UNIT30001` **Mission**, `MAP20001` **Naval** **Detach and sail** on the owned capital, `MAP20001` **Naval** **Blockade** / **Beachhead** on a foreign coast at war (skips the mission menu when the mission is already known; `DLG31003` when several fleets qualify), and `MAP20001` **Naval** **Patrol** / **Defend** on a revealed sea you occupy (skips the mission menu; `DLG31003` when several fleets qualify). A fleet may move or take one mission, never both. Beachhead/Blockade target lines stay honest when you cannot see the coast. `DLG31003` rows show ship mix when several fleets share a marker.
+- [ ] Documents tapping a fleet marker: Home Fleet with ships → detach-then-sail (`DLG30001` for the new fleet), empty Home Fleet → `UNIT30001`, in-port → `DLG30001`, at-sea → `DLG31001` with **Sail / Move**, plus `UNIT30001` **Mission**, `MAP20001` **Naval** **Detach and sail** on the owned capital, `MAP20001` **Naval** **Blockade** / **Beachhead** on a foreign coast at war (skips the mission menu when the mission is already known; `DLG31003` when several fleets qualify), `MAP20001` **Naval** **Patrol** / **Defend** on a revealed sea you occupy (skips the mission menu; `DLG31003` when several fleets qualify), and `MAP20001` **Naval** **Sail / Move** on a revealed sea or owned port you occupy with a sea-going fleet (skips the mission menu and capital chooser; `DLG31003` when several fleets qualify). A fleet may move or take one mission, never both. Beachhead/Blockade target lines stay honest when you cannot see the coast. `DLG31003` rows show ship mix when several fleets share a marker.
 - [ ] Documents panel **Split** (**Split Fleet** / **Confirm Split**, then a separate **Move**) versus map **Detach a squadron** / **Detach and choose destination** (then `DLG30001`).
 - [ ] Documents **Combine**: two or more fleets in the same port or the same sea merge at once from `UNIT30001` (checkbox selection; Home+one eligible source may open `DLG40001`) or from `MAP20001` Naval **Combine** (merges every human fleet in the viewed port/sea after confirm; never opens `DLG40001`); ships join the Home Fleet when it is among them; empty non-Home fleets are removed.
 - [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing; Blockade cuts the target port’s link to its capital (and sea-only overseas links when the target is a capital port); Join Home Fleet via dock/transfer only (not the mission menu).

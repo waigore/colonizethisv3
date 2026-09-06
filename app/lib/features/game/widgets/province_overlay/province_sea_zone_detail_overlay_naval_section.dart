@@ -13,6 +13,8 @@ import '../../flame/map_state/province_naval_mission_action_state.dart'
     show ProvinceNavalMissionOverlayControls;
 import '../../flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
     show ProvinceTransferToHomeFleetOverlayControls;
+import '../../flame/map_state/province_overlay_sail_move_overlay_controls.dart'
+    show ProvinceOverlaySailMoveOverlayControls;
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'province_panel_labels.dart';
 import 'province_sea_zone_detail_overlay_naval_mission_actions.dart';
@@ -40,6 +42,8 @@ Widget buildNavalSection({
       ProvinceTransferToHomeFleetOverlayControls.hidden,
   ProvinceNavalCombineOverlayControls navalCombine =
       ProvinceNavalCombineOverlayControls.hidden,
+  ProvinceOverlaySailMoveOverlayControls sailMove =
+      ProvinceOverlaySailMoveOverlayControls.hidden,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
   final pending = pendingNavalLines(
@@ -56,6 +60,7 @@ Widget buildNavalSection({
     detachAndSail,
     transferToHomeFleet,
     navalCombine,
+    sailMove,
   );
   final hasRoster = fleets.isNotEmpty || pending.isNotEmpty;
   final blockadeLine = switch (blockadeStatus) {

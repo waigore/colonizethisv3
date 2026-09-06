@@ -147,7 +147,8 @@ const _packageName = 'colonizethis_app';
 // raised for research-complete Events feed tech effect gist (Refs #4724; measured 96_018).
 // raised for GAME80001 feedstock deep-link from Production/Counsel (Refs #4725; measured 96_324).
 // raised for Explore province-reveal and duration gist before assign (Refs #4733; measured 96_545).
-const _maxMainLines = 96600;
+// raised for MAP20001 Naval Sail/Move occupying fleets (Refs #4735; measured 96_872).
+const _maxMainLines = 96950;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
