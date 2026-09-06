@@ -10,6 +10,7 @@ import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 import 'new_game_leader_selection_dialog_test_support.dart';
+import 'new_game_leader_selection_dialog_test_helpers.dart';
 
 void main() {
   suppressLogsForTests();
