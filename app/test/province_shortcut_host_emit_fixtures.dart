@@ -1,151 +1,83 @@
-// Shared MapTopology / TileMapResult fixtures for province shortcut host-emit
-// and host-golden suites (Refs #4450 Slice C). Leaf suites keep order-specific
-// Game builders and assertions.
+// RegionMapViewData fixtures for province shortcut host-emit and golden suites.
+// Refs #4450 Slice C; map/topology fixtures in province_shortcut_host_emit_map_fixtures.dart.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 
-const String kProvinceShortcutHostOldWorldProvinceId = 'oldWorld|p1';
-const String kProvinceShortcutHostOldWorldSeaId = 'oldWorld|s1';
-const String kProvinceShortcutHostOldWorldLocalProvinceId = 'p1';
-const String kProvinceShortcutHostOldWorldLocalSeaId = 's1';
+import 'province_shortcut_host_emit_map_fixtures.dart';
 
-MapTopology provinceShortcutHostCombinedTopology({
-  bool includeNewWorld = false,
-  bool includeSea = true,
-}) {
-  final nodes = <TopologyNode>[
-    const TopologyNode(
-      id: kProvinceShortcutHostOldWorldProvinceId,
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
+export 'province_shortcut_host_emit_map_fixtures.dart';
+
+RegionMapViewData provinceShortcutHostRegionView({
+  String ownerFactionId = kProvinceShortcutHostHumanPlayerId,
+  String provinceDisplayName = 'Test Province',
+  String greatPowerId = kProvinceShortcutHostHumanPlayerId,
+}) => RegionMapViewData(
+  regionId: 'oldWorld',
+  width: 1,
+  height: 1,
+  cellSize: 16,
+  cells: [
+    CellViewData(
+      x: 0,
+      y: 0,
+      regionCellId: kProvinceShortcutHostOldWorldLocalProvinceId,
+      isSea: false,
+      terrainType: TerrainType.plains,
+      resourceId: 'grain',
+      ownerFactionId: ownerFactionId,
+      provinceDisplayName: provinceDisplayName,
+      visibility: TileVisibility.visible,
     ),
-    if (includeSea)
-      const TopologyNode(
-        id: kProvinceShortcutHostOldWorldSeaId,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    if (includeNewWorld) ...[
-      const TopologyNode(
-        id: 'newWorld|p1',
-        regionId: 'newWorld',
-        type: TopologyNodeType.province,
-      ),
-      const TopologyNode(
-        id: 'newWorld|s1',
-        regionId: 'newWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-  ];
-  final edges = <TopologyEdge>[
-    if (includeSea)
-      const TopologyEdge(
-        id1: kProvinceShortcutHostOldWorldProvinceId,
-        id2: kProvinceShortcutHostOldWorldSeaId,
-      ),
-    if (includeNewWorld)
-      const TopologyEdge(id1: 'newWorld|p1', id2: 'newWorld|s1'),
-  ];
-  return MapTopology(nodes: nodes, edges: edges);
-}
+  ],
+  capitalMarkers: const [],
+  portMarkers: const [],
+  factionColors: const {},
+  greatPowerFactionIds: {greatPowerId},
+  terrainColors: const {},
+  provincePoliticalOwnerByPrefixedProvinceId: {
+    kProvinceShortcutHostOldWorldProvinceId: ownerFactionId,
+  },
+);
 
-Map<String, MapTopology> provinceShortcutHostTopologyByRegion({
-  bool includeNewWorld = false,
-  bool includeSea = true,
-}) {
-  MapTopology local({required String regionId}) => MapTopology(
-    nodes: [
-      TopologyNode(
-        id: kProvinceShortcutHostOldWorldLocalProvinceId,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      if (includeSea)
-        TopologyNode(
-          id: kProvinceShortcutHostOldWorldLocalSeaId,
-          regionId: regionId,
-          type: TopologyNodeType.seaZone,
-        ),
-    ],
-    edges: [
-      if (includeSea)
-        const TopologyEdge(
-          id1: kProvinceShortcutHostOldWorldLocalProvinceId,
-          id2: kProvinceShortcutHostOldWorldLocalSeaId,
-        ),
-    ],
-  );
-  return {
-    'oldWorld': local(regionId: 'oldWorld'),
-    if (includeNewWorld) 'newWorld': local(regionId: 'newWorld'),
-  };
-}
-
-Map<String, TileMapResult> provinceShortcutHostTileMapByRegion({
-  int width = 1,
-  int height = 1,
-  List<List<String>>? grid,
-  List<List<TerrainType>>? terrainGrid,
-  List<List<Resource?>>? resourceGrid,
-  bool includeNewWorld = false,
-}) {
-  final resolvedGrid =
-      grid ??
-      List<List<String>>.generate(
-        height,
-        (_) => List<String>.filled(
-          width,
-          kProvinceShortcutHostOldWorldLocalProvinceId,
-        ),
-      );
-  final resolvedTerrain =
-      terrainGrid ??
-      List<List<TerrainType>>.generate(
-        height,
-        (_) => List<TerrainType>.filled(width, TerrainType.plains),
-      );
-  final resolvedResources =
-      resourceGrid ??
-      List<List<Resource?>>.generate(
-        height,
-        (_) => List<Resource?>.filled(width, Resource.grain),
-      );
-  final oldWorld = TileMapResult(
-    width: width,
-    height: height,
-    grid: resolvedGrid,
-    terrainGrid: resolvedTerrain,
-    resourceGrid: resolvedResources,
-  );
-  return {
-    'oldWorld': oldWorld,
-    if (includeNewWorld)
-      'newWorld': TileMapResult(
-        width: width,
-        height: height,
-        grid: resolvedGrid,
-      ),
-  };
-}
-
-/// 2×2 golden tile map used by Build port / road / fort / railroad hosts.
-Map<String, TileMapResult> provinceShortcutHostGoldenCoastalTileMapByRegion({
-  bool includeNewWorld = false,
-}) => provinceShortcutHostTileMapByRegion(
+RegionMapViewData provinceShortcutHostTwoTileRegionView({
+  String ownerFactionId = kProvinceShortcutHostHumanPlayerId,
+  String provinceDisplayName = 'Home',
+}) => RegionMapViewData(
+  regionId: 'oldWorld',
   width: 2,
-  height: 2,
-  grid: const [
-    ['p1', 's1'],
-    ['s1', 's1'],
+  height: 1,
+  cellSize: 16,
+  cells: [
+    CellViewData(
+      x: 0,
+      y: 0,
+      regionCellId: kProvinceShortcutHostOldWorldLocalProvinceId,
+      isSea: false,
+      terrainType: TerrainType.plains,
+      resourceId: 'grain',
+      ownerFactionId: ownerFactionId,
+      provinceDisplayName: provinceDisplayName,
+      visibility: TileVisibility.visible,
+    ),
+    CellViewData(
+      x: 1,
+      y: 0,
+      regionCellId: kProvinceShortcutHostOldWorldLocalProvinceId,
+      isSea: false,
+      terrainType: TerrainType.plains,
+      resourceId: 'grain',
+      ownerFactionId: ownerFactionId,
+      provinceDisplayName: provinceDisplayName,
+      visibility: TileVisibility.visible,
+    ),
   ],
-  terrainGrid: const [
-    [TerrainType.plains, TerrainType.plains],
-    [TerrainType.plains, TerrainType.plains],
-  ],
-  resourceGrid: const [
-    [Resource.grain, Resource.meat],
-    [Resource.meat, Resource.meat],
-  ],
-  includeNewWorld: includeNewWorld,
+  capitalMarkers: const [],
+  portMarkers: const [],
+  factionColors: const {},
+  greatPowerFactionIds: {kProvinceShortcutHostHumanPlayerId},
+  terrainColors: const {},
+  provincePoliticalOwnerByPrefixedProvinceId: {
+    kProvinceShortcutHostOldWorldProvinceId: ownerFactionId,
+  },
 );

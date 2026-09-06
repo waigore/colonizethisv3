@@ -1,169 +1,79 @@
 // Map extraction disc maps for disconnected improved tiles (Refs #4151).
 
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show
-        MapTopology,
-        Resource,
-        TileMapResult,
-        TopologyNode,
-        TopologyNodeType,
-        kTechIdMoldboardPlow;
+    show kTechIdMoldboardPlow;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show ConnectivityResult, resolveConnectivity;
+    show ConnectivityResult;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/providers/map_view_provider_extraction.dart';
 
-const _provinceId = 'oldWorld|p1';
-const _ownerId = 'gp1';
-const _disconnectedTile = 'oldWorld|p1|0|0';
-const _connectedTile = 'oldWorld|p1|1|0';
-
-Game _gameWithImprovedTile({
-  required String improvedTileKey,
-  required int improvementLevel,
-}) {
-  return Game(
-    id: 'g_map_discs',
-    capitalTileGrainBonusPerTurn: 0,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _provinceId,
-            regionId: 'oldWorld',
-            ownerId: _ownerId,
-            townDevelopmentLevel: 4,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileState: TileMapState()
-          .setImprovement(improvedTileKey, improvementLevel)
-          .setRoadLevel(improvedTileKey, 4),
-      resourceByTileKey: {improvedTileKey: 'grain'},
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          _provinceId: [_disconnectedTile, _connectedTile],
-        },
-      },
-    ),
-    players: [
-      Player(
-        id: _ownerId,
-        displayName: 'GP',
-        isHuman: true,
-        capitalProvinceId: _provinceId,
-        capitalTile: const CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: _provinceId,
-          x: 1,
-          y: 1,
-        ),
-        techUnlocked: const {kTechIdMoldboardPlow: true},
-      ),
-    ],
-  );
-}
-
-Map<String, TileMapResult> _tileMapByRegion() {
-  return {
-    'oldWorld': TileMapResult(
-      width: 3,
-      height: 3,
-      grid: const [
-        ['p1', 'p1', 'p1'],
-        ['p1', 'p1', 'p1'],
-        ['p1', 'p1', 'p1'],
-      ],
-      resourceGrid: const [
-        [Resource.grain, Resource.grain, Resource.grain],
-        [Resource.grain, Resource.grain, Resource.grain],
-        [Resource.grain, Resource.grain, Resource.grain],
-      ],
-    ),
-  };
-}
-
-MapTopology _topology() {
-  return const MapTopology(
-    nodes: [
-      TopologyNode(
-        id: 'p1',
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: [],
-  );
-}
-
-MapResourceExtractionMaps _buildMaps(Game game) {
-  final player = game.players.first;
-  final tileMapByRegion = _tileMapByRegion();
-  final connectivity = resolveConnectivity(
-    game: game,
-    tileMapByRegion: tileMapByRegion,
-    topology: _topology(),
-  )[_ownerId]!;
-  return mapViewBuildResourceExtractionMaps(
-    game: game,
-    mapPlayer: player,
-    tileMapByRegion: tileMapByRegion,
-    connectivityForHuman: connectivity,
-  );
-}
+import 'map_view_provider_extraction_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('mapViewBuildResourceExtractionMaps (Refs #4151)', () {
     test('disconnected improved tile gets E=0 and B=production', () {
-      final game = _gameWithImprovedTile(
-        improvedTileKey: _disconnectedTile,
+      final game = mapViewExtractionGameWithImprovedTile(
+        improvedTileKey: mapViewExtractionDisconnectedTile,
         improvementLevel: 2,
       );
-      final maps = _buildMaps(game);
+      final maps = mapViewExtractionBuildMaps(game);
 
-      expect(maps.unitsByTile[_disconnectedTile], 2);
-      expect(maps.effectiveUnitsByTile[_disconnectedTile], 0);
-      expect(maps.blockedUnitsByTile[_disconnectedTile], 2);
-      expect(maps.capitalLinkDisconnectedTileKeys, contains(_disconnectedTile));
+      expect(maps.unitsByTile[mapViewExtractionDisconnectedTile], 2);
+      expect(maps.effectiveUnitsByTile[mapViewExtractionDisconnectedTile], 0);
+      expect(maps.blockedUnitsByTile[mapViewExtractionDisconnectedTile], 2);
+      expect(
+        maps.capitalLinkDisconnectedTileKeys,
+        contains(mapViewExtractionDisconnectedTile),
+      );
     });
 
     test(
       'disconnected tile switches to E=F when connectivity includes tile',
       () {
-        final game = _gameWithImprovedTile(
-          improvedTileKey: _disconnectedTile,
+        final game = mapViewExtractionGameWithImprovedTile(
+          improvedTileKey: mapViewExtractionDisconnectedTile,
           improvementLevel: 2,
         );
         final player = game.players.first;
-        final tileMapByRegion = _tileMapByRegion();
+        final tileMapByRegion = mapViewExtractionTileMapByRegion();
         final disconnected = mapViewBuildResourceExtractionMaps(
           game: game,
           mapPlayer: player,
           tileMapByRegion: tileMapByRegion,
           connectivityForHuman: const ConnectivityResult(connected: {}),
         );
-        expect(disconnected.effectiveUnitsByTile[_disconnectedTile], 0);
-        expect(disconnected.blockedUnitsByTile[_disconnectedTile], 2);
+        expect(
+          disconnected.effectiveUnitsByTile[mapViewExtractionDisconnectedTile],
+          0,
+        );
+        expect(
+          disconnected.blockedUnitsByTile[mapViewExtractionDisconnectedTile],
+          2,
+        );
 
         final connected = mapViewBuildResourceExtractionMaps(
           game: game,
           mapPlayer: player,
           tileMapByRegion: tileMapByRegion,
           connectivityForHuman: ConnectivityResult(
-            connected: {_disconnectedTile},
-            pathTransportCap: {_disconnectedTile: 4},
-            connectedByRoadRule: {_disconnectedTile},
+            connected: {mapViewExtractionDisconnectedTile},
+            pathTransportCap: {mapViewExtractionDisconnectedTile: 4},
+            connectedByRoadRule: {mapViewExtractionDisconnectedTile},
           ),
         );
-        expect(connected.effectiveUnitsByTile[_disconnectedTile], 2);
-        expect(connected.blockedUnitsByTile[_disconnectedTile], 0);
+        expect(
+          connected.effectiveUnitsByTile[mapViewExtractionDisconnectedTile],
+          2,
+        );
+        expect(
+          connected.blockedUnitsByTile[mapViewExtractionDisconnectedTile],
+          0,
+        );
       },
     );
 
@@ -177,9 +87,9 @@ void main() {
           oldWorld: RegionData(
             provinces: [
               Province(
-                id: _provinceId,
+                id: mapViewExtractionProvinceId,
                 regionId: 'oldWorld',
-                ownerId: _ownerId,
+                ownerId: mapViewExtractionOwnerId,
                 townDevelopmentLevel: 4,
               ),
             ],
@@ -191,19 +101,19 @@ void main() {
           resourceByTileKey: const {tileKey: 'grain'},
           tileKeysByRegionAndProvince: const {
             'oldWorld': {
-              _provinceId: [tileKey],
+              mapViewExtractionProvinceId: [tileKey],
             },
           },
         ),
         players: [
           Player(
-            id: _ownerId,
+            id: mapViewExtractionOwnerId,
             displayName: 'GP',
             isHuman: true,
-            capitalProvinceId: _provinceId,
+            capitalProvinceId: mapViewExtractionProvinceId,
             capitalTile: const CapitalTile(
               regionId: 'oldWorld',
-              provinceId: _provinceId,
+              provinceId: mapViewExtractionProvinceId,
               x: 1,
               y: 0,
             ),
@@ -211,7 +121,7 @@ void main() {
           ),
         ],
       );
-      final maps = _buildMaps(game);
+      final maps = mapViewExtractionBuildMaps(game);
 
       expect(maps.effectiveUnitsByTile[tileKey], 2);
       expect(maps.blockedUnitsByTile[tileKey], 0);
@@ -219,48 +129,63 @@ void main() {
     });
 
     test('unimproved disconnected tile omits discs', () {
-      final game = _gameWithImprovedTile(
-        improvedTileKey: _disconnectedTile,
+      final game = mapViewExtractionGameWithImprovedTile(
+        improvedTileKey: mapViewExtractionDisconnectedTile,
         improvementLevel: 0,
       );
-      final maps = _buildMaps(game);
+      final maps = mapViewExtractionBuildMaps(game);
 
-      expect(maps.unitsByTile.containsKey(_disconnectedTile), isFalse);
-      expect(maps.effectiveUnitsByTile.containsKey(_disconnectedTile), isFalse);
-      expect(maps.blockedUnitsByTile.containsKey(_disconnectedTile), isFalse);
-      expect(maps.capitalLinkDisconnectedTileKeys, contains(_disconnectedTile));
+      expect(
+        maps.unitsByTile.containsKey(mapViewExtractionDisconnectedTile),
+        isFalse,
+      );
+      expect(
+        maps.effectiveUnitsByTile.containsKey(mapViewExtractionDisconnectedTile),
+        isFalse,
+      );
+      expect(
+        maps.blockedUnitsByTile.containsKey(mapViewExtractionDisconnectedTile),
+        isFalse,
+      );
+      expect(
+        maps.capitalLinkDisconnectedTileKeys,
+        contains(mapViewExtractionDisconnectedTile),
+      );
     });
   });
 
   group('mapViewExtractionMapsForShell (Refs #4370)', () {
     test('omits hatch keys in global observe and keeps discs', () {
       const built = MapResourceExtractionMaps(
-        unitsByTile: {_disconnectedTile: 2},
-        effectiveUnitsByTile: {_disconnectedTile: 0},
-        blockedUnitsByTile: {_disconnectedTile: 2},
-        capitalLinkDisconnectedTileKeys: {_disconnectedTile},
+        unitsByTile: {mapViewExtractionDisconnectedTile: 2},
+        effectiveUnitsByTile: {mapViewExtractionDisconnectedTile: 0},
+        blockedUnitsByTile: {mapViewExtractionDisconnectedTile: 2},
+        capitalLinkDisconnectedTileKeys: {mapViewExtractionDisconnectedTile},
       );
       final observe = mapViewExtractionMapsForShell(
         built: built,
         panelPlayerId: null,
       );
       expect(observe.capitalLinkDisconnectedTileKeys, isEmpty);
-      expect(observe.unitsByTile[_disconnectedTile], 2);
-      expect(observe.blockedUnitsByTile[_disconnectedTile], 2);
+      expect(observe.unitsByTile[mapViewExtractionDisconnectedTile], 2);
+      expect(observe.blockedUnitsByTile[mapViewExtractionDisconnectedTile], 2);
     });
 
     test('keeps hatch keys when a viewing GP is present', () {
       const built = MapResourceExtractionMaps(
-        unitsByTile: {_disconnectedTile: 2},
-        effectiveUnitsByTile: {_disconnectedTile: 0},
-        blockedUnitsByTile: {_disconnectedTile: 2},
-        capitalLinkDisconnectedTileKeys: {_disconnectedTile},
+        unitsByTile: {mapViewExtractionDisconnectedTile: 2},
+        effectiveUnitsByTile: {mapViewExtractionDisconnectedTile: 0},
+        blockedUnitsByTile: {mapViewExtractionDisconnectedTile: 2},
+        capitalLinkDisconnectedTileKeys: {mapViewExtractionDisconnectedTile},
       );
       final play = mapViewExtractionMapsForShell(
         built: built,
-        panelPlayerId: _ownerId,
+        panelPlayerId: mapViewExtractionOwnerId,
       );
-      expect(play.capitalLinkDisconnectedTileKeys, contains(_disconnectedTile));
+      expect(
+        play.capitalLinkDisconnectedTileKeys,
+        contains(mapViewExtractionDisconnectedTile),
+      );
       expect(identical(play, built), isTrue);
     });
   });

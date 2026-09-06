@@ -14,6 +14,18 @@ import 'app_shell_harness.dart';
 /// with side-by-side subpanels → ~120–130 dp slots).
 const double kCtResourceCellGridCellWidth = 120;
 
+CtResourceCell ctResourceCellSample({
+  required String name,
+  required int quantity,
+  int? delta,
+}) =>
+    CtResourceCell(
+      iconBuilder: ctResourceCellTinyIcon,
+      name: name,
+      quantity: quantity,
+      delta: delta,
+    );
+
 Widget ctResourceCellTinyIcon(BuildContext context) => const SizedBox(
       key: Key('test-icon'),
       width: 20,

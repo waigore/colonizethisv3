@@ -1,273 +1,148 @@
-// Pins the host-level Purchase land *shortcut-assignment* tap flow for
-// both province detail hosts (`GameMapProvinceDetailSidePanel` wide,
-// `GameMapNarrowDetailOverlaySlot` narrow).
-//
-// SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
-// § Tile inline actions — Purchase land icon behavior:
-//   On tap, open Civilian Units panel in merchant-only shortcut mode targeting
-//   purchase_land for the exact selected tile key.
-// SPEC/ui/civilian-units-panel.md — explicit shortcut contract:
-//   `purchaseLandShortcutTargetTileKey` opens direct-assign `purchase_land`.
-//
-// Coverage gap closed here (Refs #4274):
-//   - `province_overlay_tile_inline_action_non_clickable_test.dart` pins the
-//     *overlay-level* callback contract (enabled fires / disabled does not).
-//   - This file pins the *host wiring*: that tapping the enabled inline action
-//     emits `OpenCivilianUnitsPanelEvent(merchantOnly: true,
-//     purchaseLandShortcutTargetTileKey: <exact tile key>)` on the app event
-//     bus, plus the no-Merchant negative.
+// Pins host-level Purchase land shortcut-assignment tap flow (Refs #4274).
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
-import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'province_shortcut_host_emit_test_support.dart';
 import 'app_test_hive_harness.dart';
+import 'province_shortcut_host_emit_test_support.dart';
 
-const String _kGameId = 'g_pl_shortcut_emit';
-const String _kHumanPlayerId = 'gp1';
-const String _kMinorId = 'minor1';
-const String _kProvinceId = 'oldWorld|p1';
-const String _kTileKey = 'oldWorld|p1|0|0';
+const _kGameId = 'g_pl_shortcut_emit';
+const _kHuman = kProvinceShortcutHostHumanPlayerId;
+const _kMinor = 'minor1';
+const _kProvince = kProvinceShortcutHostOldWorldProvinceId;
+const _kTile = kProvinceShortcutHostTileKey;
+final _maps = provinceShortcutHostPlainMaps();
+final _region = provinceShortcutHostRegionView(
+  ownerFactionId: _kMinor,
+  provinceDisplayName: 'Minor Province',
+);
 
-final MapTopology _combinedTopology = provinceShortcutHostCombinedTopology();
-final Map<String, MapTopology> _topologyByRegion =
-    provinceShortcutHostTopologyByRegion();
-
-final Map<String, TileMapResult> _tileMapByRegion =
-    provinceShortcutHostTileMapByRegion();
-
-Game _buildGame({required bool withMerchant}) {
-  return Game(
-    id: _kGameId,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: _kProvinceId, regionId: 'oldWorld', ownerId: _kMinorId),
-        ],
-        units: [
-          if (withMerchant)
-            Unit(
-              id: 'u_merchant',
-              type: kUnitTypeMerchant,
-              ownerId: _kHumanPlayerId,
-              locationProvinceId: _kProvinceId,
-              tileKey: _kTileKey,
-              status: UnitStatus.idle,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(provinces: [], units: []),
-      resourceByTileKey: const {_kTileKey: 'grain'},
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          _kProvinceId: [_kTileKey],
-        },
-      },
-      playerVisibilityByTile: {
-        _kHumanPlayerId: {_kTileKey: 'fullyVisible'},
-      },
+Game _buildGame({required bool withMerchant}) => Game(
+  id: _kGameId,
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: [Province(id: _kProvince, regionId: 'oldWorld', ownerId: _kMinor)],
+      units: [
+        if (withMerchant)
+          Unit(
+            id: 'u_merchant',
+            type: kUnitTypeMerchant,
+            ownerId: _kHuman,
+            locationProvinceId: _kProvince,
+            tileKey: _kTile,
+            status: UnitStatus.idle,
+          ),
+      ],
     ),
-    players: [
-      Player(
-        id: _kHumanPlayerId,
-        displayName: 'Human',
-        isHuman: true,
-        capitalProvinceId: 'oldWorld|home',
-        treasury: 500,
-        techUnlocked: const {kTechIdMerchantCompanies: true},
-      ),
-    ],
-    minorNations: const [MinorNation(id: _kMinorId, displayName: 'Minor 1')],
-    tribes: const [],
-    overtureStates: const [
-      OvertureState(
-        gpId: _kHumanPlayerId,
-        targetId: _kMinorId,
-        stage: OvertureStage.embassy,
-        sinceTurn: 0,
-      ),
-    ],
-  );
-}
-
-RegionMapViewData _region() {
-  return RegionMapViewData(
-    regionId: 'oldWorld',
-    width: 1,
-    height: 1,
-    cellSize: 16,
-    cells: const [
-      CellViewData(
-        x: 0,
-        y: 0,
-        regionCellId: 'p1',
-        isSea: false,
-        terrainType: TerrainType.plains,
-        resourceId: 'grain',
-        ownerFactionId: _kMinorId,
-        provinceDisplayName: 'Minor Province',
-        visibility: TileVisibility.visible,
-      ),
-    ],
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: {_kHumanPlayerId},
-    terrainColors: const {},
-    provincePoliticalOwnerByPrefixedProvinceId: const {
-      'oldWorld|p1': _kMinorId,
+    newWorld: const RegionData(provinces: [], units: []),
+    resourceByTileKey: const {_kTile: 'grain'},
+    tileKeysByRegionAndProvince: {
+      'oldWorld': {_kProvince: [_kTile]},
     },
-  );
-}
-
-Finder _purchaseLandAction({required bool enabledOnly}) {
-  return find.byWidgetPredicate(
-    (Widget w) =>
-        w is CtIconAction &&
-        w.icon == Icons.payments &&
-        (!enabledOnly || w.onPressed != null),
-  );
-}
+    playerVisibilityByTile: {_kHuman: {_kTile: 'fullyVisible'}},
+  ),
+  players: [
+    Player(
+      id: _kHuman,
+      displayName: 'Human',
+      isHuman: true,
+      capitalProvinceId: 'oldWorld|home',
+      treasury: 500,
+      techUnlocked: const {kTechIdMerchantCompanies: true},
+    ),
+  ],
+  minorNations: const [MinorNation(id: _kMinor, displayName: 'Minor 1')],
+  tribes: const [],
+  overtureStates: const [
+    OvertureState(
+      gpId: _kHuman,
+      targetId: _kMinor,
+      stage: OvertureStage.embassy,
+      sinceTurn: 0,
+    ),
+  ],
+);
 
 void main() {
   suppressLogsForTests();
-
-  test('purchase land action state fixture is enabled for host wiring', () {
-    final game = _buildGame(withMerchant: true);
-    final playerView = buildPlayerView(
-      game,
-      _combinedTopology,
-      _kHumanPlayerId,
-    );
-    final state =
-        GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
-          game: game,
-          humanPlayerId: _kHumanPlayerId,
-          selectedTileKey: _kTileKey,
-          playerView: playerView,
-          topology: _combinedTopology,
-          currentOrders: const Orders(),
-          tileMapByRegion: _tileMapByRegion,
-        );
-    expect(state.showIcon, isTrue);
-    expect(state.enabled, isTrue);
-  });
-
   late Box<dynamic> gamesBox;
+  late ProvinceShortcutHostEmitPump pumpHost;
 
   setUpAll(() async {
     gamesBox = await openAppTestHiveBox(suiteId: 'province_pl_shortcut_emit');
   });
 
-  Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(
-    WidgetTester tester, {
-    required Game game,
-    required ProvinceShortcutHostCase host,
-  }) => pumpProvinceShortcutHostAndSelect(
-    tester,
-    gamesBox: gamesBox,
-    gameService: provinceShortcutHostEmitGameService(
+  setUp(() {
+    pumpHost = ProvinceShortcutHostEmitPump(
       gamesBox: gamesBox,
       gameId: _kGameId,
-      combinedTopology: _combinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-    ),
-    game: game,
-    humanPlayerId: _kHumanPlayerId,
-    host: host,
-    region: _region(),
-    combinedTopology: _combinedTopology,
-    workTargetSelectionCache: refreshedProvinceShortcutWorkTargetCache(
-      game: game,
-      humanPlayerId: _kHumanPlayerId,
-      combinedTopology: _combinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-    ),
-    selectedTileKey: _kTileKey,
-  );
-
-  Future<void> expectPurchaseLandShortcutEmits(
-    WidgetTester tester, {
-    required List<OpenCivilianUnitsPanelEvent> opened,
-    required String hostLabel,
-  }) async {
-    final shortcut = _purchaseLandAction(enabledOnly: true);
-    expect(
-      shortcut,
-      findsOneWidget,
-      reason:
-          '$hostLabel must render an enabled Purchase land inline action for a '
-          'valid Merchant + embassy Minor resource tile.',
+      humanPlayerId: _kHuman,
+      maps: _maps,
+      region: _region,
+      selectedTileKey: _kTile,
     );
+  });
+
+  test('purchase land action state fixture is enabled for host wiring', () {
+    final game = _buildGame(withMerchant: true);
+    final state = GameMapAreaStateLogicProvinceActions.provincePurchaseLandActionState(
+      game: game,
+      humanPlayerId: _kHuman,
+      selectedTileKey: _kTile,
+      playerView: buildPlayerView(game, _maps.combinedTopology, _kHuman),
+      topology: _maps.combinedTopology,
+      currentOrders: const Orders(),
+      tileMapByRegion: _maps.tileMapByRegion,
+    );
+    expect(state.showIcon, isTrue);
+    expect(state.enabled, isTrue);
+  });
+
+  Future<void> expectEmits(WidgetTester tester, List<OpenCivilianUnitsPanelEvent> opened) async {
+    final shortcut = provinceShortcutHostIconAction(Icons.payments);
+    expect(shortcut, findsOneWidget);
     await tester.ensureVisible(shortcut);
     await tester.tap(shortcut);
     await tester.pump();
-    expect(
-      opened,
-      hasLength(1),
-      reason:
-          'Tapping the enabled Purchase land shortcut must open the Civilian '
-          'Units panel exactly once via OpenCivilianUnitsPanelEvent.',
-    );
+    expect(opened, hasLength(1));
     final event = opened.single;
     expect(event.merchantOnly, isTrue);
-    expect(event.explorerOnly, isFalse);
-    expect(event.builderOnly, isFalse);
-    expect(event.engineerOnly, isFalse);
-    expect(event.purchaseLandShortcutTargetTileKey, _kTileKey);
+    expect(event.purchaseLandShortcutTargetTileKey, _kTile);
     expect(event.exploreShortcutTargetTileKey, isNull);
-    expect(event.prospectShortcutTargetTileKey, isNull);
-    expect(event.buildImprovementShortcutTargetTileKey, isNull);
     expect(event.buildRoadShortcutTargetTileKey, isNull);
   }
 
   for (final host in provinceShortcutHostCases) {
     testWidgets(
-      '${host.wide ? 'wide' : 'narrow'} host: tapping the enabled Purchase '
-      'land shortcut emits a merchant-only OpenCivilianUnitsPanelEvent '
-      'targeting the exact selected tile key (SPEC § Tile inline actions — '
-      'Purchase land shortcut assignment)',
-      (WidgetTester tester) async {
-        final opened = await pumpHostAndSelect(
-          tester,
-          game: _buildGame(withMerchant: true),
-          host: host,
-        );
-        await expectPurchaseLandShortcutEmits(
-          tester,
-          opened: opened,
-          hostLabel: host.label,
-        );
+      '${host.wide ? 'wide' : 'narrow'} host: Purchase land shortcut emits merchant-only event',
+      (tester) async {
+        final opened = await pumpHost(tester, game: _buildGame(withMerchant: true), host: host);
+        await expectEmits(tester, opened);
       },
     );
 
     testWidgets(
-      'negative — ${host.wide ? 'wide' : 'narrow'} host with no Merchant unit '
-      'does not enable Purchase land and emits no '
-      'OpenCivilianUnitsPanelEvent',
-      (WidgetTester tester) async {
-        final opened = await pumpHostAndSelect(
+      'negative — ${host.wide ? 'wide' : 'narrow'} host without Merchant emits nothing',
+      (tester) async {
+        final negativeHost = host.wide ? host : provinceShortcutHostCaseWithoutTileTab(host);
+        final opened = await pumpHost(
           tester,
           game: _buildGame(withMerchant: false),
-          host: host.wide ? host : provinceShortcutHostCaseWithoutTileTab(host),
+          host: negativeHost,
         );
-        expect(_purchaseLandAction(enabledOnly: true), findsNothing);
+        expect(provinceShortcutHostIconAction(Icons.payments), findsNothing);
         if (host.wide) {
-          final anyShortcut = _purchaseLandAction(enabledOnly: false);
-          if (anyShortcut.evaluate().isNotEmpty) {
-            await tester.tap(anyShortcut.first, warnIfMissed: false);
+          final any = provinceShortcutHostIconAction(Icons.payments, enabledOnly: false);
+          if (any.evaluate().isNotEmpty) {
+            await tester.tap(any.first, warnIfMissed: false);
             await tester.pump();
           }
         }

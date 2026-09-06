@@ -13,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
+import 'new_game_leader_selection_dialog_test_helpers.dart';
+export 'new_game_leader_selection_dialog_test_helpers.dart';
 
 typedef NewGameLeaderSelectionConfirmed =
     void Function(
@@ -107,18 +109,6 @@ Future<void> ensureTapNewGameLeaderSelectionCancel(WidgetTester tester) async {
 }
 
 const Size kNewGameLeaderLargeViewport = Size(900, 2000);
-const Size kNewGameLeaderDuplicateSurface = Size(900, 1600);
-const List<String> kNewGameLeaderDuplicateEnglandIds = <String>[
-  'england',
-  'france',
-  'spain',
-  'portugal',
-  'netherlands',
-  'england',
-];
-
-GameSetupConfig get newGameLeaderDuplicateEnglandConfig =>
-    GameSetupConfig(selectedGreatPowerIds: kNewGameLeaderDuplicateEnglandIds);
 
 Future<void> enterNewGameLeaderSeed(WidgetTester tester, String value) async {
   final field = find.byType(TextField);
@@ -221,4 +211,16 @@ Future<AdvancedStartType?> confirmNewGameLeaderAdvancedStart(
   }
   await ensureTapNewGameLeaderSelectionStart(tester);
   return gotAdvancedStart;
+}
+
+Future<void> pumpNewGameLeaderBlessedProfilesDialog(
+  WidgetTester tester, {
+  required void Function(Map<String, String?>?) onConfirmed,
+}) {
+  return pumpNewGameLeaderSelectionDialog(
+    tester,
+    surfaceSize: kNewGameLeaderLargeViewport,
+    blessedProfileNames: const ['aggressive_v2'],
+    onConfirmed: (_, _, _, _, _, profiles, _) => onConfirmed(profiles),
+  );
 }

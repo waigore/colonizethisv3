@@ -6,69 +6,19 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'app_shell_harness.dart';
+import 'ct_confirm_dialog_test_support.dart';
 
 /// Widget tests for the generic dark editorial-monocle confirm dialog
 /// (`CtConfirmDialog` + `showCtConfirmDialog`). Pins #2914 S8 — the
 /// replacement of Material `AlertDialog` + `TextButton` actions in the
 /// `ConfirmDialogEvent` rendering path inside `AppEventHandler`.
-///
-/// Visual contract anchors (per `SPEC/ui/pixel-art-ui-catalog.md`
-/// § Material design ban — Ct-* counterparts):
-///   * Frame: `CtDialogShell` (no Material `AlertDialog` / `Dialog`).
-///   * Actions: `CtNinePatchButton` (no Material `TextButton`).
-///   * Title in `--accent`, body in `--fg`.
-///   * Barrier color is the canonical `EditorialMonoclePalette.dialogScrim`.
 void main() {
   suppressLogsForTests();
-
-  Widget dialogOpenHost({
-    required Future<void> Function(BuildContext context) onOpen,
-  }) =>
-      buildAppShell(
-        child: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () => onOpen(context),
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-  Future<bool?> showFromHost(
-    WidgetTester tester, {
-    String title = 'Confirm',
-    String message = 'Proceed?',
-    String confirmLabel = CtConfirmDialog.defaultConfirmLabel,
-    String cancelLabel = CtConfirmDialog.defaultCancelLabel,
-  }) async {
-    bool? result;
-    await tester.pumpWidget(
-      dialogOpenHost(
-        onOpen: (BuildContext context) async {
-          result = await showCtConfirmDialog(
-            context,
-            title: title,
-            message: message,
-            confirmLabel: confirmLabel,
-            cancelLabel: cancelLabel,
-          );
-        },
-      ),
-    );
-    await tester.tap(find.byKey(const Key('open-dialog')));
-    await tester.pumpAndSettle();
-    return result;
-  }
 
   testWidgets('renders title, message, confirm and cancel labels', (
     WidgetTester tester,
   ) async {
-    await showFromHost(
+    await showCtConfirmDialogFromHost(
       tester,
       title: 'Confirm action',
       message: 'Are you sure?',
@@ -82,14 +32,13 @@ void main() {
   testWidgets('honors custom confirm/cancel labels', (
     WidgetTester tester,
   ) async {
-    await showFromHost(
+    await showCtConfirmDialogFromHost(
       tester,
       confirmLabel: 'Proceed',
       cancelLabel: 'Abort',
     );
     expect(find.text('Proceed'), findsOneWidget);
     expect(find.text('Abort'), findsOneWidget);
-    // Default labels are not used when overrides are supplied.
     expect(find.text(CtConfirmDialog.defaultConfirmLabel), findsNothing);
     expect(find.text(CtConfirmDialog.defaultCancelLabel), findsNothing);
   });
@@ -97,7 +46,7 @@ void main() {
   testWidgets('uses CtNinePatchButton actions (no Material action buttons)', (
     WidgetTester tester,
   ) async {
-    await showFromHost(tester);
+    await showCtConfirmDialogFromHost(tester);
     expect(
       find.descendant(
         of: find.byType(CtConfirmDialog),
@@ -105,7 +54,6 @@ void main() {
       ),
       findsNWidgets(2),
     );
-    // The host's opener uses ElevatedButton; the dialog body must not.
     expect(
       find.descendant(
         of: find.byType(CtConfirmDialog),
@@ -127,7 +75,6 @@ void main() {
       ),
       findsNothing,
     );
-    // No raw Material AlertDialog under the body either.
     expect(
       find.descendant(
         of: find.byType(CtConfirmDialog),
@@ -140,7 +87,7 @@ void main() {
   testWidgets('frames the body in a CtDialogShell', (
     WidgetTester tester,
   ) async {
-    await showFromHost(tester);
+    await showCtConfirmDialogFromHost(tester);
     expect(
       find.descendant(
         of: find.byType(CtConfirmDialog),
@@ -153,7 +100,7 @@ void main() {
   testWidgets('title renders in --accent and message in --fg', (
     WidgetTester tester,
   ) async {
-    await showFromHost(
+    await showCtConfirmDialogFromHost(
       tester,
       title: 'Title text',
       message: 'Body text',
@@ -168,7 +115,7 @@ void main() {
   testWidgets('barrierColor matches the canonical dialog-scrim token', (
     WidgetTester tester,
   ) async {
-    await showFromHost(tester);
+    await showCtConfirmDialogFromHost(tester);
     final Iterable<ModalBarrier> dimBarriers = tester
         .widgetList<ModalBarrier>(find.byType(ModalBarrier))
         .where((ModalBarrier b) => b.color != null);
@@ -177,9 +124,6 @@ void main() {
         (ModalBarrier b) => b.color == EditorialMonoclePalette.dialogScrim,
       ),
       isNotEmpty,
-      reason:
-          'showDialog barrierColor must resolve to the canonical '
-          '--dialog-scrim token; literal Colors.black54 is a regression.',
     );
   });
 
@@ -188,7 +132,7 @@ void main() {
   ) async {
     bool? result;
     await tester.pumpWidget(
-      dialogOpenHost(
+      ctConfirmDialogOpenHost(
         onOpen: (BuildContext context) async {
           result = await showCtConfirmDialog(
             context,
@@ -210,7 +154,7 @@ void main() {
   ) async {
     bool? result;
     await tester.pumpWidget(
-      dialogOpenHost(
+      ctConfirmDialogOpenHost(
         onOpen: (BuildContext context) async {
           result = await showCtConfirmDialog(
             context,
@@ -232,7 +176,7 @@ void main() {
   ) async {
     bool? result;
     await tester.pumpWidget(
-      dialogOpenHost(
+      ctConfirmDialogOpenHost(
         onOpen: (BuildContext context) async {
           result = await showCtConfirmDialog(
             context,
@@ -246,12 +190,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tapAt(const Offset(5, 5));
     await tester.pumpAndSettle();
-    expect(
-      result,
-      isFalse,
-      reason:
-          'Barrier-dismissed confirm dialog must resolve to false to mirror '
-          'the ConfirmDialogEvent bool contract (cancel intent).',
-    );
+    expect(result, isFalse);
   });
 }

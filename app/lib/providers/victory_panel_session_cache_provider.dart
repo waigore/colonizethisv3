@@ -9,15 +9,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/game_service/try_get_game_map_data.dart';
 import '../features/game/screens/victory/victory_political_minimap.dart';
 import '../features/game/screens/victory/victory_standings.dart';
-import 'panel_session_revision.dart' show panelWorldRevision;
+import 'panel_session_revision.dart'
+    show PanelStaticSessionRevision, panelStaticSessionRevision;
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
-typedef VictoryPanelSessionRevision = ({
-  String gameId,
-  int turnNumber,
-  int worldRevision,
-});
+typedef VictoryPanelSessionRevision = PanelStaticSessionRevision;
 
 /// Open-path projections reused across `GAME70001` reopen (Refs #4688 Slice 5).
 class VictoryPanelOpenPathSnapshot {
@@ -55,13 +52,8 @@ final victoryPanelSessionCacheProvider = Provider<VictoryPanelSessionCache>(
   (ref) => VictoryPanelSessionCache(),
 );
 
-VictoryPanelSessionRevision victoryPanelSessionRevision({required Game game}) {
-  return (
-    gameId: game.id,
-    turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: panelWorldRevision(game),
-  );
-}
+VictoryPanelSessionRevision victoryPanelSessionRevision({required Game game}) =>
+    panelStaticSessionRevision(game);
 
 VictoryPanelOpenPathSnapshot resolveVictoryPanelOpenPath({
   required VictoryPanelSessionCache cache,

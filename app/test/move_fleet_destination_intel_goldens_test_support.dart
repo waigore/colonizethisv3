@@ -1,9 +1,14 @@
 // Fixtures for DLG30001 destination hostile-fleet intel goldens (Refs #4573).
 
+import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
+import 'golden_capture_harness.dart';
 import 'move_fleet_destination_intel_test_support.dart';
 
 const Size kMoveFleetDestinationIntelGoldenViewport = Size(360, 620);
@@ -123,3 +128,30 @@ Game buildMoveFleetDestinationIntelGoldenGame({
 Map<String, String> moveFleetDestIntelFullVisibilityTiles() => const {
       moveFleetDestIntelSeaTile: 'fullyVisible',
     };
+
+Future<void> pumpMoveFleetDestinationIntelGolden(
+  WidgetTester tester, {
+  required Key boundaryKey,
+  required Game game,
+  required MapTopology topology,
+  PlayerView? playerView,
+}) async {
+  final fleet = game.worldState.fleets.firstWhere((f) => f.id == 'f_self');
+  await pumpGoldenHost(
+    tester,
+    boundaryKey: boundaryKey,
+    physicalSize: kMoveFleetDestinationIntelGoldenViewport,
+    settle: false,
+    includeLocalizations: true,
+    scaffoldBackgroundColor:
+        AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    child: MoveFleetDialog(
+      game: game,
+      topology: topology,
+      humanPlayerId: moveFleetDestIntelHumanId,
+      fleet: fleet,
+      bus: AppEventBus.create(),
+      playerView: playerView,
+    ),
+  );
+}

@@ -1,6 +1,7 @@
 // Industry counsel stars on Production Allocation rows. SPEC/ui/production-panel.md.
+// Semantics/read-only: production_industry_counsel_stars_semantics_test.dart.
 
-import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -8,33 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production/production_industry_counsel_star.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
+import 'production_industry_counsel_stars_support.dart';
 import 'production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
-
-IndustryCounselRecommendation _produceRecommendation(
-  String recipeId, {
-  int suggestedDesiredOutput = 2,
-}) {
-  return IndustryCounselRecommendation(
-    recommendationId: 'produce:$recipeId',
-    kind: IndustryCounselRecommendationKind.produceRecipe,
-    rankScore: 20,
-    briefReasonKey: IndustryCounselReasonKey.outputShortage,
-    detailReasonKeys: const [IndustryCounselReasonKey.outputShortage],
-    recipeId: recipeId,
-    suggestedDesiredOutput: suggestedDesiredOutput,
-  );
-}
-
-const _lumberCounselStarKey =
-    ValueKey<String>('production_industry_counsel_star_lumber_from_timber');
-
-const _threeStarRecipeIds = [
-  'lumber_from_timber',
-  'paper_from_timber',
-  'cigars_from_tobacco',
-];
 
 void main() {
   suppressLogsForTests();
@@ -73,7 +50,7 @@ void main() {
           player: fullPlayer,
           starredProduceRecommendationsByRecipeId: {
             for (final recipeId in starredRecipeIds)
-              recipeId: _produceRecommendation(recipeId),
+              recipeId: productionIndustryCounselProduceRecommendation(recipeId),
           },
           onOpenCounsel: ({String? highlightRecommendationId}) {},
         ),
@@ -99,8 +76,8 @@ void main() {
         buildProductionPanel(
           player: fullPlayer,
           starredProduceRecommendationsByRecipeId: {
-            for (final recipeId in _threeStarRecipeIds)
-              recipeId: _produceRecommendation(recipeId),
+            for (final recipeId in productionIndustryCounselThreeStarRecipeIds)
+              recipeId: productionIndustryCounselProduceRecommendation(recipeId),
           },
           onOpenCounsel: ({String? highlightRecommendationId}) {},
         ),
@@ -118,7 +95,10 @@ void main() {
         buildProductionPanel(
           player: fullPlayer,
           starredProduceRecommendationsByRecipeId: {
-            'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
+            'lumber_from_timber':
+                productionIndustryCounselProduceRecommendation(
+                  'lumber_from_timber',
+                ),
           },
           onOpenCounsel: ({String? highlightRecommendationId}) {
             openedHighlightId = highlightRecommendationId;
@@ -127,7 +107,7 @@ void main() {
       );
       await pumpSettleCapped(tester);
 
-      final star = find.byKey(_lumberCounselStarKey);
+      final star = find.byKey(productionIndustryCounselLumberStarKey);
       await tester.ensureVisible(star);
       await tester.tap(star);
       await pumpSettleCapped(tester);
@@ -165,7 +145,10 @@ void main() {
         buildProductionPanel(
           player: lockedPlayer,
           starredProduceRecommendationsByRecipeId: {
-            'fabric_from_cotton': _produceRecommendation('fabric_from_cotton'),
+            'fabric_from_cotton':
+                productionIndustryCounselProduceRecommendation(
+                  'fabric_from_cotton',
+                ),
           },
           onOpenCounsel: ({String? highlightRecommendationId}) {},
         ),
@@ -174,106 +157,6 @@ void main() {
 
       expect(find.byType(ProductionIndustryCounselStar), findsNothing);
       expect(find.textContaining('(locked)'), findsOneWidget);
-    });
-
-    testWidgets('star exposes semantic label with brief reason', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          starredProduceRecommendationsByRecipeId: {
-            'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
-          },
-          onOpenCounsel: ({String? highlightRecommendationId}) {},
-        ),
-      );
-      await pumpSettleCapped(tester);
-
-      final semantics = tester.getSemantics(
-        find.byKey(_lumberCounselStarKey),
-      );
-      expect(
-        semantics.label,
-        contains('Your stocks of this output are low'),
-      );
-    });
-
-    testWidgets('star tooltip shows localized brief reason', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          starredProduceRecommendationsByRecipeId: {
-            'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
-          },
-          onOpenCounsel: ({String? highlightRecommendationId}) {},
-        ),
-      );
-      await pumpSettleCapped(tester);
-
-      final tooltip = tester.widget<Tooltip>(
-        find.descendant(
-          of: find.byType(ProductionIndustryCounselStar),
-          matching: find.byType(Tooltip),
-        ),
-      );
-      expect(tooltip.message, startsWith('Your stocks of this output are low'));
-    });
-
-    testWidgets('star remains when player allocation already matches AI plan', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          desiredOutputByRecipe: const {'lumber_from_timber': 2},
-          starredProduceRecommendationsByRecipeId: {
-            'lumber_from_timber': _produceRecommendation(
-              'lumber_from_timber',
-              suggestedDesiredOutput: 2,
-            ),
-          },
-          onOpenCounsel: ({String? highlightRecommendationId}) {},
-        ),
-      );
-      await pumpSettleCapped(tester);
-
-      expect(find.byType(ProductionIndustryCounselStar), findsOneWidget);
-    });
-
-    testWidgets('read-only allocation keeps stars and counsel navigation', (
-      WidgetTester tester,
-    ) async {
-      String? openedHighlightId;
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          canEditLabour: false,
-          starredProduceRecommendationsByRecipeId: {
-            'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
-          },
-          onOpenCounsel: ({String? highlightRecommendationId}) {
-            openedHighlightId = highlightRecommendationId;
-          },
-        ),
-      );
-      await pumpSettleCapped(tester);
-
-      expect(find.byType(ProductionIndustryCounselStar), findsOneWidget);
-
-      final star = find.byKey(_lumberCounselStarKey);
-      await tester.ensureVisible(star);
-      await tester.tap(star);
-      await pumpSettleCapped(tester);
-      expect(openedHighlightId, 'produce:lumber_from_timber');
-
-      final counselButton = find.widgetWithText(CtActionTextButton, 'Counsel');
-      await tester.ensureVisible(counselButton);
-      await tester.tap(counselButton);
-      await pumpSettleCapped(tester);
-      expect(openedHighlightId, isNull);
     });
   });
 }

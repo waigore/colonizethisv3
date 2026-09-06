@@ -139,4 +139,52 @@ void main() {
       },
     );
   });
+
+  group('CtToggleSwitch hover states (R8)', () {
+    testWidgets('hover-off: knob fill brightens from --muted to --accent-dim', (
+      tester,
+    ) async {
+      await pumpCtToggle(
+        tester,
+        CtToggleSwitch(value: false, onChanged: (_) {}),
+      );
+      await hoverCtToggleSwitch(tester);
+      final BoxDecoration deco = ctToggleKnobDecoration(tester);
+      expect(deco.color, EditorialMonoclePalette.accentDim);
+      expect(deco.boxShadow, anyOf(isNull, isEmpty));
+    });
+
+    testWidgets(
+      'hover-on: knob brightens from --accent to --accent-bright + halo '
+      'reaches 100%',
+      (tester) async {
+        await pumpCtToggle(
+          tester,
+          CtToggleSwitch(value: true, onChanged: (_) {}),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+        await hoverCtToggleSwitch(tester);
+        final BoxDecoration deco = ctToggleKnobDecoration(tester);
+        expect(deco.color, EditorialMonoclePalette.accentBright);
+        final List<BoxShadow> glow = deco.boxShadow!;
+        expect(glow, hasLength(1));
+        expect(
+          glow.first.color.a,
+          closeTo(CtToggleSwitch.glowHoverAlpha, 1e-6),
+        );
+      },
+    );
+
+    testWidgets('hover ignored while disabled (no knob colour change)', (
+      tester,
+    ) async {
+      await pumpCtToggle(
+        tester,
+        const CtToggleSwitch(value: false, onChanged: null),
+      );
+      await hoverCtToggleSwitch(tester);
+      final BoxDecoration deco = ctToggleKnobDecoration(tester);
+      expect(deco.color, EditorialMonoclePalette.muted);
+    });
+  });
 }

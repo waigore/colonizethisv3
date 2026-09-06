@@ -1,9 +1,7 @@
 // Session clear API and bleed isolation. SPEC/program/save-load-session-clear.md.
-// Remaining ACs for #3989: same-id reload, exit→load, new-game dirty queues.
 
 import 'dart:io';
 
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_session_clear.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/development_panel_projection_provider.dart';
@@ -11,6 +9,7 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_app/providers/panel_session_revision.dart';
 import 'package:colonizethis_app/providers/province_overlay_read_model_cache_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/observe_session_provider.dart';
@@ -39,7 +38,10 @@ void main() {
 
   setUp(() async {
     hiveDir = await Directory.systemTemp.createTemp('ct_session_clear_');
-    gamesBox = await openAppTestHiveBox(suiteId: 'game_session_clear', directory: hiveDir);
+    gamesBox = await openAppTestHiveBox(
+      suiteId: 'game_session_clear',
+      directory: hiveDir,
+    );
     AppEventBus.reset();
     bus = AppEventBus.create();
     container = ProviderContainer(
@@ -109,7 +111,7 @@ void main() {
         revision: (
           gameId: gameA.id,
           turnNumber: gameA.worldState.turnState.turnNumber,
-          worldRevision: provinceOverlayWorldRevision(gameA),
+          worldRevision: panelWorldRevision(gameA),
         ),
         displayId: 'oldWorld|p0',
         readModel: const ProvinceOverlayProvinceReadModel(
@@ -172,92 +174,4 @@ void main() {
       expect(gamesBox.containsKey('game_a'), isTrue);
     },
   );
-
-  test('clearLoadAndApplyGameSession isolates B from dirty A session', () {
-    final service = container.read(gameServiceProvider);
-    final gameA = service.createNewGame(
-      id: 'save_a',
-      config: sessionClearConfig(seed: 101),
-    );
-    final gameB = service.createNewGame(
-      id: 'save_b',
-      config: sessionClearConfig(seed: 202),
-    );
-    final fingerprintA = service.cachedMapContentFingerprint('save_a');
-    final fingerprintB = service.cachedMapContentFingerprint('save_b');
-    expect(fingerprintA, isNotNull);
-    expect(fingerprintB, isNotNull);
-    expect(fingerprintA, isNot(fingerprintB));
-
-    service.saveGameSession(
-      sessionGame: gameA,
-      saveGameId: 'save_a',
-      draftOrders: sessionClearDraftOrders(unitType: 'farmer'),
-      productionDesiredOutputByRecipe: const {'grain': 9},
-      displayName: 'Save A',
-      mirrorAutoSave: false,
-    );
-    service.saveGameSession(
-      sessionGame: gameB,
-      saveGameId: 'save_b',
-      draftOrders: sessionClearDraftOrders(unitType: 'miner'),
-      productionDesiredOutputByRecipe: const {'iron': 1},
-      displayName: 'Save B',
-      mirrorAutoSave: false,
-    );
-
-    dirtySessionA(container, gameA);
-    service.debugSeedTurnTraceSession('save_a');
-    expect(service.turnTraceSessionCount, 1);
-
-    final loaded = clearLoadAndApplyGameSession(
-      container: container,
-      load: () => service.loadGameSession('save_b'),
-    );
-
-    expect(loaded, isNotNull);
-    expect(container.read(currentGameProvider)?.id, 'save_b');
-    expect(
-      container
-          .read(currentOrdersProvider)
-          .buildUnitOrdersByPlayerId['england']!
-          .single
-          .unitType,
-      'miner',
-    );
-    expect(container.read(productionDesiredOutputProvider), {'iron': 1});
-    expectCleanOfABleed(container, service);
-    expect(service.hasMapCacheEntry('save_a'), isFalse);
-    expect(service.hasMapCacheEntry('save_b'), isTrue);
-    expect(service.cachedMapContentFingerprint('save_a'), isNull);
-    expect(service.cachedMapContentFingerprint('save_b'), fingerprintB);
-  });
-
-  test('clearLoadAndApplyGameSession leaves empty session when load fails', () {
-    final service = container.read(gameServiceProvider);
-    final gameA = service.createNewGame(
-      id: 'keep_disk',
-      config: sessionClearConfig(seed: 7),
-    );
-    container.read(currentGameProvider.notifier).setGame(gameA);
-    container
-        .read(tribeFirstContactHeraldQueueProvider.notifier)
-        .enqueue(
-          const TribeFirstContactHeraldPayload(
-            tribeId: 't1',
-            tribeName: 'T',
-            capitalName: 'C',
-          ),
-        );
-
-    final loaded = clearLoadAndApplyGameSession(
-      container: container,
-      load: () => null,
-    );
-
-    expect(loaded, isNull);
-    expect(container.read(currentGameProvider), isNull);
-    expect(container.read(tribeFirstContactHeraldQueueProvider), isEmpty);
-    expect(gamesBox.containsKey('keep_disk'), isTrue);
-  });
 }

@@ -1,7 +1,12 @@
 // Shared GameTopBar host for chrome/layout widget tests (Refs #4352 Slice D).
 // SPEC: SPEC/ui/game-screen.md; SPEC/ui/in-game-shell-narrow.md.
 
+import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
+    show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/widgets/ct_gradients.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -44,6 +49,54 @@ Widget buildGameTopBarHost({
           ],
         ),
       ),
+    ),
+  );
+}
+
+BoxDecoration gameTopBarSurfaceDecoration(WidgetTester tester) {
+  final decoratedBox = tester.widget<DecoratedBox>(
+    find
+        .descendant(
+          of: find.byKey(GameTopBar.surfaceKey),
+          matching: find.byType(DecoratedBox),
+        )
+        .first,
+  );
+  return decoratedBox.decoration as BoxDecoration;
+}
+
+void expectGameTopBarGradientAndBorder(WidgetTester tester) {
+  final decoration = gameTopBarSurfaceDecoration(tester);
+  expect(decoration.gradient, isA<LinearGradient>());
+  expect(
+    (decoration.gradient! as LinearGradient).colors,
+    CtGradients.topBarGradient.colors,
+  );
+  final border = decoration.border as Border;
+  expect(border.bottom.width, GameTopBar.borderWidth);
+  expect(border.bottom.color, EditorialMonoclePalette.accentDim);
+  expect(border.top, BorderSide.none);
+  expect(border.left, BorderSide.none);
+  expect(border.right, BorderSide.none);
+}
+
+Finder gameTopBarNextTurnDisabledOpacityFinder() {
+  return find.descendant(
+    of: find.byKey(kGameMapNextTurnButtonKey),
+    matching: find.byWidgetPredicate(
+      (Widget w) => w is Opacity && w.opacity == kNextTurnDisabledOpacity,
+    ),
+  );
+}
+
+Finder gameTopBarNextTurnDimmingOpacityFinder() {
+  return find.descendant(
+    of: find.byKey(kGameMapNextTurnButtonKey),
+    matching: find.byWidgetPredicate(
+      (Widget w) =>
+          w is Opacity &&
+          (w.opacity == kNextTurnDisabledOpacity ||
+              w.opacity == CtNinePatchButton.disabledOpacity),
     ),
   );
 }

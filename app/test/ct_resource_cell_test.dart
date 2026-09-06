@@ -1,6 +1,5 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,12 +13,7 @@ void main() {
     testWidgets('positive delta renders +N in --success', (tester) async {
       await pumpCtResourceCell(
         tester,
-        CtResourceCell(
-          iconBuilder: ctResourceCellTinyIcon,
-          name: 'Grain',
-          quantity: 1240,
-          delta: 12,
-        ),
+        ctResourceCellSample(name: 'Grain', quantity: 1240, delta: 12),
       );
       expect(find.text('+12'), findsOneWidget);
       final Text delta = tester.widget<Text>(find.text('+12'));
@@ -29,27 +23,19 @@ void main() {
     testWidgets('negative delta renders -N in --danger', (tester) async {
       await pumpCtResourceCell(
         tester,
-        CtResourceCell(
-          iconBuilder: ctResourceCellTinyIcon,
-          name: 'Timber',
-          quantity: 920,
-          delta: -40,
-        ),
+        ctResourceCellSample(name: 'Timber', quantity: 920, delta: -40),
       );
       expect(find.text('-40'), findsOneWidget);
       final Text delta = tester.widget<Text>(find.text('-40'));
       expect(delta.style?.color, EditorialMonoclePalette.danger);
     });
 
-    testWidgets('zero delta renders 0 in --muted with no + prefix', (tester) async {
+    testWidgets('zero delta renders 0 in --muted with no + prefix', (
+      tester,
+    ) async {
       await pumpCtResourceCell(
         tester,
-        CtResourceCell(
-          iconBuilder: ctResourceCellTinyIcon,
-          name: 'Meat',
-          quantity: 870,
-          delta: 0,
-        ),
+        ctResourceCellSample(name: 'Meat', quantity: 870, delta: 0),
       );
       expect(find.text('0'), findsOneWidget);
       expect(find.text('+0'), findsNothing);
@@ -60,13 +46,7 @@ void main() {
     testWidgets('null delta is not laid out (negative path)', (tester) async {
       await pumpCtResourceCell(
         tester,
-        CtResourceCell(
-          iconBuilder: ctResourceCellTinyIcon,
-          name: 'Coal',
-          quantity: 170,
-          // ignore: avoid_redundant_argument_values
-          delta: null,
-        ),
+        ctResourceCellSample(name: 'Coal', quantity: 170),
       );
       final Iterable<Text> texts = tester
           .widgetList<Text>(find.descendant(
@@ -112,11 +92,7 @@ void main() {
     ) async {
       await pumpCtResourceCell(
         tester,
-        CtResourceCell(
-          iconBuilder: ctResourceCellTinyIcon,
-          name: 'Grain',
-          quantity: 1240,
-        ),
+        ctResourceCellSample(name: 'Grain', quantity: 1240),
       );
       expect(find.byKey(const Key('test-icon')), findsOneWidget);
       expect(find.text('Grain'), findsOneWidget);
@@ -135,12 +111,7 @@ void main() {
       (tester) async {
         await pumpCtResourceCell(
           tester,
-          CtResourceCell(
-            iconBuilder: ctResourceCellTinyIcon,
-            name: 'Iron',
-            quantity: 430,
-            delta: -20,
-          ),
+          ctResourceCellSample(name: 'Iron', quantity: 430, delta: -20),
         );
         final Text qty = tester.widget<Text>(find.text('430'));
         expect(qty.style?.color, EditorialMonoclePalette.accentDim);
@@ -150,11 +121,7 @@ void main() {
     testWidgets('name styles default to --fg body text', (tester) async {
       await pumpCtResourceCell(
         tester,
-        CtResourceCell(
-          iconBuilder: ctResourceCellTinyIcon,
-          name: 'Wool',
-          quantity: 380,
-        ),
+        ctResourceCellSample(name: 'Wool', quantity: 380),
       );
       final Text name = tester.widget<Text>(find.text('Wool'));
       expect(name.style?.color, EditorialMonoclePalette.fg);
@@ -163,11 +130,7 @@ void main() {
     testWidgets('name truncates with ellipsis under tight width', (tester) async {
       await pumpCtResourceCellFixedWidth(
         tester,
-        CtResourceCell(
-          iconBuilder: ctResourceCellTinyIcon,
-          name: 'Refined Sugar — Long Label',
-          quantity: 50,
-        ),
+        ctResourceCellSample(name: 'Refined Sugar — Long Label', quantity: 50),
         width: 80,
       );
       final Text name = tester.widget<Text>(
@@ -188,12 +151,7 @@ void main() {
       (tester) async {
         await pumpCtResourceCellFixedWidth(
           tester,
-          CtResourceCell(
-            iconBuilder: ctResourceCellTinyIcon,
-            name: 'Grain',
-            quantity: 1240,
-            delta: 45,
-          ),
+          ctResourceCellSample(name: 'Grain', quantity: 1240, delta: 45),
           width: 240,
         );
 
@@ -221,12 +179,7 @@ void main() {
         ]) {
           await pumpCtResourceCellFixedWidth(
             tester,
-            CtResourceCell(
-              iconBuilder: ctResourceCellTinyIcon,
-              name: name,
-              quantity: 430,
-              delta: -20,
-            ),
+            ctResourceCellSample(name: name, quantity: 430, delta: -20),
             width: 320,
           );
 
@@ -248,7 +201,7 @@ void main() {
 
         await pumpCtResourceCellFixedWidth(
           tester,
-          CtResourceCell(iconBuilder: ctResourceCellTinyIcon, name: name, quantity: 430),
+          ctResourceCellSample(name: name, quantity: 430),
           width: width,
         );
         final noDeltaExceeded =
@@ -256,12 +209,7 @@ void main() {
 
         await pumpCtResourceCellFixedWidth(
           tester,
-          CtResourceCell(
-            iconBuilder: ctResourceCellTinyIcon,
-            name: name,
-            quantity: 430,
-            delta: -20,
-          ),
+          ctResourceCellSample(name: name, quantity: 430, delta: -20),
           width: width,
         );
         final withDeltaExceeded =

@@ -2,6 +2,7 @@
 // (Refs #4013). Pins SPEC/ui/main-menu.md under colonial / editorial themes.
 
 import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
@@ -93,6 +94,53 @@ Future<void> pumpScreenSpecMainMenu(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+/// Pumps the plain-variant main menu used by the AC 8 negative gradient pin.
+Future<void> pumpScreenSpecPlainMainMenu(WidgetTester tester) async {
+  await tester.pumpWidget(
+    buildAppShell(
+      child: CtMainMenu(
+        variant: MainMenuVariant.plain,
+        state: MainMenuState.default_,
+        version: formatDebugAwareVersion('v1.0.0'),
+        onQuickStart: () {},
+        onNewGame: () {},
+        onLoadGame: () {},
+        onSettings: () {},
+        onQuit: () {},
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// AC 8: wood-panel button held/released gradient cycle for [label].
+Future<void> expectScreenSpecWoodPanelGradientPressCycle(
+  WidgetTester tester,
+  String label,
+) async {
+  final Finder button = woodPanelButtonFinderFor(label);
+  final Offset center = tester.getCenter(button);
+  final TestGesture gesture = await tester.startGesture(center);
+  await tester.pump();
+  await tester.pumpAndSettle();
+
+  final LinearGradient pressedGradient =
+      (findGradientSurfaceFor(tester, label).decoration as BoxDecoration)
+          .gradient! as LinearGradient;
+  expect(
+    pressedGradient.colors,
+    CtGradients.woodPanelButtonGradientPressed.colors,
+  );
+
+  await gesture.up();
+  await tester.pumpAndSettle();
+
+  final LinearGradient releasedGradient =
+      (findGradientSurfaceFor(tester, label).decoration as BoxDecoration)
+          .gradient! as LinearGradient;
+  expect(releasedGradient.colors, CtGradients.woodPanelButtonGradient.colors);
 }
 
 /// Texts whose style letter-spacing matches [spacing].

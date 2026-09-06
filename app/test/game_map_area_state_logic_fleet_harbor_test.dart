@@ -1,5 +1,4 @@
-// Concern split under repo.app_test_file_size (Refs #4013, #4352):
-// in-port harbor anchoring for projectFleetMarkersForHumanDraft.
+// In-port harbor anchoring for projectFleetMarkersForHumanDraft (Refs #4013).
 
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -8,14 +7,13 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'game_map_area_state_logic_fleet_harbor_fixtures.dart';
 import 'game_map_area_state_logic_test_support.dart';
 
 void main() {
   suppressLogsForTests();
   group('GameMapAreaStateLogic', () {
     group('projectFleetMarkersForHumanDraft in-port harbor anchoring', () {
-      const humanId = 'gp1';
-
       RegionMapViewData projectFleetDraft({
         required RegionMapViewData region,
         required ct_models.Game game,
@@ -23,106 +21,26 @@ void main() {
         required Map<String, TileMapResult> tm,
         required Map<String, MapTopology> tr,
       }) {
-        return GameMapAreaStateLogicDraftProjection.projectFleetMarkersForHumanDraft(
+        return GameMapAreaStateLogicDraftProjection
+            .projectFleetMarkersForHumanDraft(
           region: region,
           game: game,
           orders: orders,
-          humanPlayerId: humanId,
+          humanPlayerId: fleetHarborTestHumanId,
           tileMapByRegion: tm,
           topologyByRegion: tr,
           combinedTopology: const MapTopology(nodes: [], edges: []),
         );
       }
 
-      final capitalPortOwMap = TileMapResult(
-        width: 2,
-        height: 2,
-        grid: [
-          ['p1', 's1'],
-          ['p1', 'p1'],
-        ],
-      );
-      final stubNwMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['p1'],
-        ],
-      );
-      const capitalPortOwTopology = MapTopology(
-        nodes: [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 's1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: [TopologyEdge(id1: 'p1', id2: 's1')],
-      );
-      const stubNwTopology = MapTopology(
-        nodes: [
-          TopologyNode(
-            id: 'p1',
-            regionId: 'newWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: [],
-      );
-
-      Map<String, TileMapResult> capitalPortTiles() => {
-        'oldWorld': capitalPortOwMap,
-        'newWorld': stubNwMap,
-      };
-      Map<String, MapTopology> capitalPortTopologies() => {
-        'oldWorld': capitalPortOwTopology,
-        'newWorld': stubNwTopology,
-      };
-
-      ct_models.Game capitalPortGame({required List<ct_models.Fleet> fleets}) {
-        return ct_models.Game(
-          id: 'g',
-          worldState: ct_models.WorldState(
-            turnState: const ct_models.TurnState(
-              phase: ct_models.TurnPhase.orders,
-              turnNumber: 0,
-            ),
-            oldWorld: ct_models.RegionData(
-              provinces: [
-                ct_models.Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  townTileKey: 'oldWorld|p1|1|1',
-                ),
-              ],
-              units: const [],
-            ),
-            newWorld: const ct_models.RegionData(provinces: [], units: []),
-            portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
-            fleets: fleets,
-          ),
-          players: const [
-            ct_models.Player(id: humanId, displayName: 'Human', isHuman: true),
-          ],
-          minorNations: const [],
-          tribes: const [],
-        );
-      }
-
       test(
         'in-port fleet marker matches port icon after projection (capital port)',
         () {
-          final game = capitalPortGame(
+          final game = capitalPortHarborGame(
             fleets: [
               ct_models.Fleet(
                 id: 'f1',
-                ownerId: humanId,
+                ownerId: fleetHarborTestHumanId,
                 regionId: 'oldWorld',
                 inPortAtProvinceId: 'oldWorld|p1',
                 ships: [
@@ -154,11 +72,11 @@ void main() {
       );
 
       test('dock draft destination uses same harbor sea cell as port icon', () {
-        final game = capitalPortGame(
+        final game = capitalPortHarborGame(
           fleets: [
             ct_models.Fleet(
               id: 'f_sea',
-              ownerId: humanId,
+              ownerId: fleetHarborTestHumanId,
               regionId: 'oldWorld',
               seaZoneId: 's1',
               ships: [ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate')],
@@ -177,7 +95,7 @@ void main() {
         final town = region.townMarkers.singleWhere((t) => t.isPort);
         final orders = ct_models.Orders(
           navalMoveOrdersByPlayerId: {
-            humanId: [
+            fleetHarborTestHumanId: [
               ct_models.NavalMoveOrder(
                 fleetId: 'f_sea',
                 destinationPortProvinceId: 'oldWorld|p1',
@@ -233,7 +151,7 @@ void main() {
                 const ct_models.Province(
                   id: 'oldWorld|p2',
                   regionId: 'oldWorld',
-                  ownerId: humanId,
+                  ownerId: fleetHarborTestHumanId,
                   townTileKey: 'oldWorld|p2|0|0',
                 ),
               ],
@@ -244,7 +162,7 @@ void main() {
             fleets: [
               ct_models.Fleet(
                 id: 'f_p2',
-                ownerId: humanId,
+                ownerId: fleetHarborTestHumanId,
                 regionId: 'oldWorld',
                 inPortAtProvinceId: 'oldWorld|p2',
                 ships: [
@@ -254,7 +172,11 @@ void main() {
             ],
           ),
           players: const [
-            ct_models.Player(id: humanId, displayName: 'Human', isHuman: true),
+            ct_models.Player(
+              id: fleetHarborTestHumanId,
+              displayName: 'Human',
+              isHuman: true,
+            ),
           ],
           minorNations: const [],
           tribes: const [],
