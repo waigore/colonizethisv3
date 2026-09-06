@@ -23,6 +23,8 @@ import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 import 'province_sea_zone_detail_overlay_tile_section_revealed_improvement.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_payoff_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_payoff_gist_line.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show
         explorerConsulateGateBlocksMinorTribeProvince,
@@ -95,7 +97,13 @@ Widget buildRevealedTileSection({
       ? consulateTooltip
       : l10n.provinceOverlay_tileProspectWithExplorerTooltip;
 
-  final prospectedRow = Row(
+  final explorePayoffGist = explorePayoffGistForTile(
+    l10n: l10n,
+    game: game,
+    tileKey: selectedTileKey,
+    enabled: explore.enabled,
+  );
+  final prospectedIconRow = Row(
     children: [
       Expanded(
         child: Text(
@@ -129,6 +137,16 @@ Widget buildRevealedTileSection({
         ),
     ],
   );
+  final prospectedRow = explorePayoffGist == null
+      ? prospectedIconRow
+      : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            prospectedIconRow,
+            ExplorePayoffGistLine(text: explorePayoffGist),
+          ],
+        );
   final improvementRow = buildRevealedTileImprovementRow(
     l10n: l10n,
     game: game,

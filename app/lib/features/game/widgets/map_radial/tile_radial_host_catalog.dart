@@ -6,6 +6,7 @@ library;
 
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_copy.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -133,6 +134,12 @@ List<TileRadialSpokeView> tileRadialHostSpokeViews({
           hasMatchingUnits: hasMatchingUnits(spoke.action),
         ),
         caption: switch (spoke.action) {
+          TileRadialCatalogAction.explore => explorePayoffGistForTile(
+            l10n: l10n,
+            game: game,
+            tileKey: tileKey,
+            enabled: spoke.enabled,
+          ),
           TileRadialCatalogAction.buildImprovement =>
             buildImprovementNextYieldGistForTile(
               l10n: l10n,

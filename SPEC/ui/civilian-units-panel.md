@@ -305,6 +305,8 @@ For each civilian unit, the panel shows:
 
 - **Given** an enabled Engineer shortcut or pending `build_fort` row, **when** the panel renders outside observe/`readOnly`, **then** the UI layer shows the same build-fort payoff gist as `MAP20001` (`app/test/build_fort_payoff_copy_test.dart`).
 
+- **Given** an enabled Explorer shortcut or pending `explore` row, **when** the panel renders outside observe/`readOnly`, **then** the UI layer shows the same Explore province-reveal + duration gist as `MAP20001` (`app/test/explore_payoff_copy_test.dart`).
+
 - **Given** a unit row has a **pending** civilian work order (full-list or tile-scoped), **when** the panel renders, **then** the first **Assigned to** line shows localized inline turns using assign-time `totalTurns` for that order, and the row does not show a literal ` (pending)` suffix.
 
 - **Given** a pending civilian work order is newly assigned this turn, **when** the panel renders before turn resolution, **then** the displayed pending turn counter equals assign-time `totalTurns` for that target.
