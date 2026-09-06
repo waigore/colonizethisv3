@@ -8,6 +8,7 @@ import 'package:colonizethis_world/colonizethis_world.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/screens/development/development_panel_map_snapshot.dart';
+import 'panel_session_revision.dart' show PanelStaticSessionRevision;
 
 /// Shared Development panel inputs memoized across [DevelopmentScreenBody] rebuilds
 /// when game, orders, map data, or shell player context change. Refs #4175 Slice E.
@@ -45,11 +46,7 @@ typedef DevelopmentPanelStaticContext = ({
 });
 
 /// Static inputs for Development panel session reuse (game/map/fog only).
-typedef DevelopmentPanelStaticSessionRevision = ({
-  String gameId,
-  int turnNumber,
-  int worldRevision,
-});
+typedef DevelopmentPanelStaticSessionRevision = PanelStaticSessionRevision;
 
 /// Full session revision including draft orders (Refs #4687 Slice C).
 typedef DevelopmentPanelFullSessionRevision = ({

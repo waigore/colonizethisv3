@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+export 'ct_region_map_test_support_assets.dart';
+
 /// Assert each asset path loads and is non-empty.
 Future<void> expectCtRegionMapAssetsNonEmpty(Iterable<String> paths) async {
   for (final path in paths) {
@@ -11,45 +13,6 @@ Future<void> expectCtRegionMapAssetsNonEmpty(Iterable<String> paths) async {
     expect(data.lengthInBytes, greaterThan(0), reason: '$path is empty');
   }
 }
-
-const ctRegionMapTransportOverlayAssetPaths = [
-  'assets/images/terrain/tilesets/tileset_transport_road_64.png',
-  'assets/images/terrain/tilesets/tileset_transport_road_64.json',
-  'assets/images/terrain/tilesets/tileset_transport_rail_64.png',
-  'assets/images/terrain/tilesets/tileset_transport_rail_64.json',
-];
-
-const ctRegionMapWangPngAssetPaths = [
-  'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
-  'assets/images/terrain/tilesets/tileset_sea_desert.png',
-  'assets/images/terrain/tilesets/tileset_plains_desert.png',
-];
-
-const ctRegionMapWangJsonAssetPaths = [
-  'assets/data/map_terrain_tilesets.json',
-  'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.json',
-  'assets/images/terrain/tilesets/tileset_sea_desert.json',
-  'assets/images/terrain/tilesets/tileset_plains_desert.json',
-];
-
-const ctRegionMapL2OverlayAssetPaths = [
-  'assets/images/terrain/tile_plains_grain.png',
-  'assets/images/terrain/tile_plains_meat.png',
-  'assets/images/terrain/tile_plains_horses.png',
-  'assets/images/terrain/tile_plains_sugar_cane.png',
-  'assets/images/terrain/tile_plains_tobacco.png',
-  'assets/images/terrain/tile_plains_cotton.png',
-  'assets/images/terrain/tile_plains_spices.png',
-  'assets/images/terrain/tile_hardwood_forest.png',
-  'assets/images/terrain/tile_hardwood_forest_timber.png',
-  'assets/images/terrain/tile_scrub_forest.png',
-  'assets/images/terrain/tile_scrub_forest_timber.png',
-  'assets/images/terrain/tile_hills.png',
-  'assets/images/terrain/tile_hills_mine.png',
-  'assets/images/terrain/tile_hills_wool.png',
-  'assets/images/terrain/tile_mountain.png',
-  'assets/images/terrain/tile_swamp.png',
-];
 
 /// Copy [base] with one province presence entry updated.
 RegionMapViewData ctRegionMapWithPresence({

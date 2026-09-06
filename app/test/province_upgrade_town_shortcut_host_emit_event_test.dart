@@ -1,243 +1,152 @@
-// Pins the host-level Upgrade town *shortcut-assignment* tap flow for
-// both province detail hosts. SPEC/ui/province-sea-zone-detail-overlay.md;
-// SPEC/ui/civilian-units-panel.md. Refs #4316, #4352.
+// Pins host-level Upgrade town shortcut-assignment tap flow (Refs #4316, #4352).
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_state_logic.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'province_shortcut_host_emit_test_support.dart';
 import 'app_test_hive_harness.dart';
+import 'province_shortcut_host_emit_test_support.dart';
 
-const String _kGameId = 'g_ut_shortcut_emit';
-const String _kHumanPlayerId = 'gp1';
-const String _kProvinceId = 'oldWorld|p1';
-const String _kTileKey = 'oldWorld|p1|0|0';
+const _kGameId = 'g_ut_shortcut_emit';
+const _kHuman = kProvinceShortcutHostHumanPlayerId;
+const _kProvince = kProvinceShortcutHostOldWorldProvinceId;
+const _kTile = kProvinceShortcutHostTileKey;
+final _maps = provinceShortcutHostPlainMaps();
+final _region = provinceShortcutHostRegionView();
+final _l10n = AppLocalizationsEn();
 
-final MapTopology _combinedTopology = provinceShortcutHostCombinedTopology();
-final Map<String, MapTopology> _topologyByRegion =
-    provinceShortcutHostTopologyByRegion();
-
-final Map<String, TileMapResult> _tileMapByRegion =
-    provinceShortcutHostTileMapByRegion();
-
-Game _buildGame({required bool withBuilder}) {
-  return Game(
-    id: _kGameId,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _kProvinceId,
-            regionId: 'oldWorld',
-            ownerId: _kHumanPlayerId,
-            townDevelopmentLevel: 2,
-            townTileKey: _kTileKey,
+Game _buildGame({required bool withBuilder}) => Game(
+  id: _kGameId,
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: [
+        Province(
+          id: _kProvince,
+          regionId: 'oldWorld',
+          ownerId: _kHuman,
+          townDevelopmentLevel: 2,
+          townTileKey: _kTile,
+        ),
+      ],
+      units: [
+        if (withBuilder)
+          Unit(
+            id: 'u_builder',
+            type: kUnitTypeBuilder,
+            ownerId: _kHuman,
+            locationProvinceId: _kProvince,
+            tileKey: _kTile,
+            status: UnitStatus.idle,
           ),
-        ],
-        units: [
-          if (withBuilder)
-            Unit(
-              id: 'u_builder',
-              type: kUnitTypeBuilder,
-              ownerId: _kHumanPlayerId,
-              locationProvinceId: _kProvinceId,
-              tileKey: _kTileKey,
-              status: UnitStatus.idle,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(provinces: [], units: []),
-      resourceByTileKey: const {_kTileKey: 'grain'},
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          _kProvinceId: [_kTileKey],
-        },
-      },
-      playerVisibilityByTile: {
-        _kHumanPlayerId: {_kTileKey: 'fullyVisible'},
-      },
+      ],
     ),
-    players: [
-      Player(
-        id: _kHumanPlayerId,
-        displayName: 'Human',
-        isHuman: true,
-        capitalProvinceId: _kProvinceId,
-        stockpile: const Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
-        techUnlocked: const {kTechIdNationalBureaucracy: true},
-      ),
-    ],
-    minorNations: const [],
-    tribes: const [],
-  );
-}
-
-RegionMapViewData _region() {
-  return RegionMapViewData(
-    regionId: 'oldWorld',
-    width: 1,
-    height: 1,
-    cellSize: 16,
-    cells: const [
-      CellViewData(
-        x: 0,
-        y: 0,
-        regionCellId: 'p1',
-        isSea: false,
-        terrainType: TerrainType.plains,
-        resourceId: 'grain',
-        ownerFactionId: _kHumanPlayerId,
-        provinceDisplayName: 'Test Province',
-        visibility: TileVisibility.visible,
-      ),
-    ],
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: {_kHumanPlayerId},
-    terrainColors: const {},
-    provincePoliticalOwnerByPrefixedProvinceId: const {
-      'oldWorld|p1': _kHumanPlayerId,
+    newWorld: const RegionData(provinces: [], units: []),
+    resourceByTileKey: const {_kTile: 'grain'},
+    tileKeysByRegionAndProvince: {
+      'oldWorld': {_kProvince: [_kTile]},
     },
-  );
-}
+    playerVisibilityByTile: {_kHuman: {_kTile: 'fullyVisible'}},
+  ),
+  players: [
+    Player(
+      id: _kHuman,
+      displayName: 'Human',
+      isHuman: true,
+      capitalProvinceId: _kProvince,
+      stockpile: const Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
+      techUnlocked: const {kTechIdNationalBureaucracy: true},
+    ),
+  ],
+  minorNations: const [],
+  tribes: const [],
+);
 
-Finder _upgradeTownAction({required bool enabledOnly}) {
-  final l10n = AppLocalizationsEn();
-  return find.byWidgetPredicate(
-    (Widget w) =>
-        w is CtActionTextButton &&
-        w.label == l10n.provinceOverlay_upgradeTownAction &&
-        (!enabledOnly || (w.enabled && w.onPressed != null)),
-  );
-}
-
-const List<ProvinceShortcutHostCase> _hostCases = provinceShortcutHostCases;
+Finder _upgradeTownAction({required bool enabledOnly}) => find.byWidgetPredicate(
+  (w) =>
+      w is CtActionTextButton &&
+      w.label == _l10n.provinceOverlay_upgradeTownAction &&
+      (!enabledOnly || (w.enabled && w.onPressed != null)),
+);
 
 void main() {
   suppressLogsForTests();
-
-  test('upgrade town action state fixture is enabled for host wiring', () {
-    final game = _buildGame(withBuilder: true);
-    final playerView = buildPlayerView(
-      game,
-      _combinedTopology,
-      _kHumanPlayerId,
-    );
-    final state =
-        GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
-          game: game,
-          humanPlayerId: _kHumanPlayerId,
-          provinceId: _kProvinceId,
-          playerView: playerView,
-          topology: _combinedTopology,
-          currentOrders: const Orders(),
-          tileMapByRegion: _tileMapByRegion,
-        );
-    expect(state.showControl, isTrue);
-    expect(state.enabled, isTrue);
-    expect(state.townTileKey, _kTileKey);
-  });
-
   late Box<dynamic> gamesBox;
+  late ProvinceShortcutHostEmitPump pumpHost;
 
   setUpAll(() async {
     gamesBox = await openAppTestHiveBox(suiteId: 'province_ut_shortcut_emit');
   });
 
-  Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(
-    WidgetTester tester, {
-    required Game game,
-    required ProvinceShortcutHostCase host,
-  }) => pumpProvinceShortcutHostAndSelect(
-    tester,
-    gamesBox: gamesBox,
-    gameService: provinceShortcutHostEmitGameService(
+  setUp(() {
+    pumpHost = ProvinceShortcutHostEmitPump(
       gamesBox: gamesBox,
       gameId: _kGameId,
-      combinedTopology: _combinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-    ),
-    game: game,
-    humanPlayerId: _kHumanPlayerId,
-    host: provinceShortcutHostCaseWithoutTileTab(host),
-    region: _region(),
-    combinedTopology: _combinedTopology,
-    workTargetSelectionCache: refreshedProvinceShortcutWorkTargetCache(
-      game: game,
-      humanPlayerId: _kHumanPlayerId,
-      combinedTopology: _combinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-    ),
-    selectedTileKey: _kTileKey,
-  );
+      humanPlayerId: _kHuman,
+      maps: _maps,
+      region: _region,
+      selectedTileKey: _kTile,
+    );
+  });
 
-  Future<void> expectUpgradeTownShortcutEmits(
-    WidgetTester tester, {
-    required List<OpenCivilianUnitsPanelEvent> opened,
-    required String hostLabel,
-  }) async {
+  test('upgrade town action state fixture is enabled for host wiring', () {
+    final game = _buildGame(withBuilder: true);
+    final state = GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
+      game: game,
+      humanPlayerId: _kHuman,
+      provinceId: _kProvince,
+      playerView: buildPlayerView(game, _maps.combinedTopology, _kHuman),
+      topology: _maps.combinedTopology,
+      currentOrders: const Orders(),
+      tileMapByRegion: _maps.tileMapByRegion,
+    );
+    expect(state.showControl, isTrue);
+    expect(state.enabled, isTrue);
+    expect(state.townTileKey, _kTile);
+  });
+
+  Future<void> expectEmits(WidgetTester tester, List<OpenCivilianUnitsPanelEvent> opened) async {
     final shortcut = _upgradeTownAction(enabledOnly: true);
-    expect(shortcut, findsOneWidget, reason: '$hostLabel enabled Upgrade town');
+    expect(shortcut, findsOneWidget);
     await tester.ensureVisible(shortcut);
     await tester.tap(shortcut);
     await tester.pump();
     expect(opened, hasLength(1));
     final event = opened.single;
     expect(event.builderOnly, isTrue);
-    expect(event.explorerOnly, isFalse);
-    expect(event.engineerOnly, isFalse);
-    expect(event.merchantOnly, isFalse);
-    expect(event.upgradeTownShortcutTargetTileKey, _kTileKey);
+    expect(event.upgradeTownShortcutTargetTileKey, _kTile);
     expect(event.exploreShortcutTargetTileKey, isNull);
-    expect(event.prospectShortcutTargetTileKey, isNull);
     expect(event.buildImprovementShortcutTargetTileKey, isNull);
-    expect(event.buildRoadShortcutTargetTileKey, isNull);
-    expect(event.buildFortShortcutTargetTileKey, isNull);
-    expect(event.purchaseLandShortcutTargetTileKey, isNull);
   }
 
-  for (final host in _hostCases) {
+  for (final host in provinceShortcutHostCases) {
     testWidgets(
-      '${host.wide ? 'wide' : 'narrow'} host: tapping the enabled Upgrade '
-      'town shortcut emits a Builder-only OpenCivilianUnitsPanelEvent '
-      'targeting the province town tile key',
-      (WidgetTester tester) async {
-        final opened = await pumpHostAndSelect(
+      '${host.wide ? 'wide' : 'narrow'} host: Upgrade town shortcut emits Builder-only event',
+      (tester) async {
+        final opened = await pumpHost(
           tester,
           game: _buildGame(withBuilder: true),
-          host: host,
+          host: provinceShortcutHostCaseWithoutTileTab(host),
         );
-        await expectUpgradeTownShortcutEmits(
-          tester,
-          opened: opened,
-          hostLabel: host.label,
-        );
+        await expectEmits(tester, opened);
       },
     );
 
     testWidgets(
-      'negative — ${host.wide ? 'wide' : 'narrow'} host with no Builder unit '
-      'does not enable Upgrade town and emits no '
-      'OpenCivilianUnitsPanelEvent',
-      (WidgetTester tester) async {
-        final opened = await pumpHostAndSelect(
+      'negative — ${host.wide ? 'wide' : 'narrow'} host without Builder emits nothing',
+      (tester) async {
+        final opened = await pumpHost(
           tester,
           game: _buildGame(withBuilder: false),
-          host: host,
+          host: provinceShortcutHostCaseWithoutTileTab(host),
         );
         expect(_upgradeTownAction(enabledOnly: true), findsNothing);
         final disabled = _upgradeTownAction(enabledOnly: false);

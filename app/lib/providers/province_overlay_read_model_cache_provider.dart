@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/game_service/game_service.dart' show GameMapData;
 import '../features/game/flame/overlays/province_detail_overlay_host_support_bonus.dart';
 import '../features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart';
+import 'panel_session_revision.dart'
+    show PanelStaticSessionRevision, panelStaticSessionRevision;
 
 /// Province-wide read-model slice reused across MAP20001 close/reopen (Refs #4690 Slice B).
 class ProvinceOverlayProvinceReadModel {
@@ -22,11 +24,7 @@ class ProvinceOverlayProvinceReadModel {
   final Map<String, ProvinceImprovableCommodityCount> availableByCommodity;
 }
 
-typedef ProvinceOverlayStaticSessionRevision = ({
-  String gameId,
-  int turnNumber,
-  int worldRevision,
-});
+typedef ProvinceOverlayStaticSessionRevision = PanelStaticSessionRevision;
 
 class ProvinceOverlaySessionCacheState {
   const ProvinceOverlaySessionCacheState({
@@ -88,24 +86,10 @@ final provinceOverlayReadModelCacheProvider = Provider<ProvinceOverlaySessionCac
   (ref) => ProvinceOverlaySessionCache(),
 );
 
-int provinceOverlayWorldRevision(Game game) {
-  return Object.hash(
-    game.worldState.turnState.turnNumber,
-    game.worldState.purchasedTilesByTileKey.length,
-    game.worldState.tileKeysByRegionAndProvince.length,
-    game.players.length,
-  );
-}
-
 ProvinceOverlayStaticSessionRevision provinceOverlayStaticSessionRevision({
   required Game game,
-}) {
-  return (
-    gameId: game.id,
-    turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: provinceOverlayWorldRevision(game),
-  );
-}
+}) =>
+    panelStaticSessionRevision(game);
 
 ProvinceOverlayProvinceReadModel buildProvinceOverlayProvinceReadModel({
   required Game game,

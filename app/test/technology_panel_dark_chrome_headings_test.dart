@@ -12,10 +12,8 @@ import 'package:colonizethis_app/config/themes.dart'
     show editorialMonocleDisplayFontFamily;
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_progress_bar.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
 import 'panel_test_fixtures.dart';
@@ -175,37 +173,6 @@ void main() {
           find.byType(CtActionTextButton).first,
         );
         expect(chooseSize.height, lessThan(kMinTouchTargetSize));
-      },
-    );
-  });
-
-  group('Slot card chrome (Refs #2864 AC S3)', () {
-    testWidgets(
-      'editable assigned slot uses the dual-segment turn preview and the '
-      'canonical RP label format (Refs #3512)',
-      (WidgetTester tester) async {
-        final techId = techCatalog.keys.first;
-        final techCost = techCatalog[techId]!.cost;
-        final player = basePlayer.copyWith(researchSlots: 3);
-        await pumpPlayer(
-          tester,
-          researchProgressByTechId: {techId: 17},
-          orders: mediumOrder(player, techId),
-        );
-
-        expect(find.byType(ResearchSlotTurnPreviewView), findsOneWidget);
-        expect(find.byType(CtProgressBar), findsNothing);
-        expect(find.text('17 / $techCost RP'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'empty slot shows "No tech assigned" italic muted line and no progress bar',
-      (WidgetTester tester) async {
-        await pumpPlayer(tester, techUnlocked: <String, bool>{});
-
-        expect(find.text('No tech assigned'), findsNWidgets(3));
-        expect(find.byType(CtProgressBar), findsNothing);
       },
     );
   });

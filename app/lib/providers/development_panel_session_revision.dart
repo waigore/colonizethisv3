@@ -7,13 +7,8 @@ int developmentPanelWorldRevision(Game game) => panelWorldRevision(game);
 
 DevelopmentPanelStaticSessionRevision developmentPanelStaticSessionRevision({
   required Game game,
-}) {
-  return (
-    gameId: game.id,
-    turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: developmentPanelWorldRevision(game),
-  );
-}
+}) =>
+    panelStaticSessionRevision(game);
 
 int developmentPanelOrdersRevision(Orders orders) =>
     panelOrdersRevision(orders);

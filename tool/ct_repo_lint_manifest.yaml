@@ -500,6 +500,13 @@ rules:
     runner: dart
     script: tool/check_app_chrome_popover_sot.dart
 
+  - rule_id: repo.app_panel_static_session_revision
+    group: architecture
+    title: panel static session revision triple owned by panel_session_revision (Refs #4734)
+    spec: SPEC/program/app-panel-static-session-revision.md
+    runner: dart
+    script: tool/check_app_panel_static_session_revision_sot.dart
+
   - rule_id: repo.app_province_inline_action_state
     group: architecture
     title: app/lib/features/game civilian inline-action state uses hasMatchingUnits (Refs #4559)
@@ -2619,7 +2626,7 @@ rules:
 
   - rule_id: repo.app_test_file_size
     group: testing
-    title: "app/test files must stay at or below 300 physical lines (shrink-only allowlist; Refs #4305, #4352, #4606, #4642, #4680, #4720)"
+    title: "app/test files must stay at or below 250 physical lines (shrink-only allowlist; Refs #4305, #4352, #4606, #4642, #4680, #4720, #4734)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_file_size.dart

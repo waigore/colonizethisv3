@@ -13,6 +13,8 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_fixtures/production.dart' show productionPanelTestGameFor;
+export 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart'
+    show productionPanelTestFullWorkerPool;
 export 'panel_fixtures/production.dart'
     show
         productionPanelTestFullPlayer,

@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'golden_capture_harness.dart';
-import 'province_build_fort_shortcut_host_goldens_test.dart'
+import 'province_build_fort_shortcut_host_golden_fixtures.dart'
     show goldenBuildFortGame, goldenBuildFortRegion;
 import 'province_shortcut_host_emit_fixtures.dart'
     show provinceShortcutHostCombinedTopology;

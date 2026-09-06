@@ -1,258 +1,99 @@
-// Golden + widget checks per #1990 testing strategy branch (A): wide side panel uses a
-// pixel golden; narrow host asserts the Build improvement shortcut (avoids fragile
-// cross-engine / cross-arch golden drift on CI). Hosts use AppThemes.editorialMonocle
-// per MAP20001 dark-theme contract (Refs #2865).
-// Pipeline contract: SPEC/program/order-suggestions.md § Province Tile `Build improvement`
-// shortcut enablement.
+// Golden + widget checks for MAP20001 Build improvement shortcut (Refs #2865, #1990).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, buildPlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'golden_capture_harness.dart';
-import 'province_shortcut_host_emit_fixtures.dart';
-import 'province_shortcut_host_golden_game_service.dart';
 import 'app_test_hive_harness.dart';
+import 'province_shortcut_host_golden_test_support.dart';
 
-final MapTopology _goldenCombinedTopology =
-    provinceShortcutHostCombinedTopology(includeNewWorld: true);
+const _kGameId = 'g_bi_golden';
+const _kHuman = kProvinceShortcutHostHumanPlayerId;
+const _kProvince = kProvinceShortcutHostOldWorldProvinceId;
+const _kTile = kProvinceShortcutHostTileKey;
+final _topology = provinceShortcutHostCombinedTopology(includeNewWorld: true);
 
-Game goldenBuildImprovementGame() {
-  const humanPlayerId = 'gp1';
-  const provinceId = 'oldWorld|p1';
-  const tileKey = 'oldWorld|p1|0|0';
-  return Game(
-    id: 'g_bi_golden',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: 'oldWorld',
-            ownerId: humanPlayerId,
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'u_builder',
-            type: kUnitTypeBuilder,
-            ownerId: humanPlayerId,
-            locationProvinceId: provinceId,
-            tileKey: tileKey,
-            status: UnitStatus.idle,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(provinces: [], units: []),
-      resourceByTileKey: const {tileKey: 'grain'},
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          provinceId: [tileKey],
-        },
-      },
-      tileState: TileMapState(improvementByTile: {tileKey: 0}),
-      playerVisibilityByTile: {
-        humanPlayerId: {tileKey: 'fullyVisible'},
-      },
+Game goldenBuildImprovementGame() => Game(
+  id: _kGameId,
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: [Province(id: _kProvince, regionId: 'oldWorld', ownerId: _kHuman)],
+      units: [
+        Unit(
+          id: 'u_builder',
+          type: kUnitTypeBuilder,
+          ownerId: _kHuman,
+          locationProvinceId: _kProvince,
+          tileKey: _kTile,
+          status: UnitStatus.idle,
+        ),
+      ],
     ),
-    players: [
-      Player(
-        id: humanPlayerId,
-        displayName: 'Human',
-        isHuman: true,
-        capitalProvinceId: provinceId,
-        stockpile: const Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
-        techUnlocked: const {kTechIdCircularSaw: true},
-      ),
-    ],
-    minorNations: const [],
-    tribes: const [],
-  );
-}
-
-RegionMapViewData goldenBuildImprovementRegion() {
-  return RegionMapViewData(
-    regionId: 'oldWorld',
-    width: 1,
-    height: 1,
-    cellSize: 16,
-    cells: const [
-      CellViewData(
-        x: 0,
-        y: 0,
-        regionCellId: 'p1',
-        isSea: false,
-        terrainType: TerrainType.plains,
-        resourceId: 'grain',
-        ownerFactionId: 'gp1',
-        provinceDisplayName: 'Golden Province',
-        visibility: TileVisibility.visible,
-      ),
-    ],
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: {'gp1'},
-    terrainColors: const {},
-    provincePoliticalOwnerByPrefixedProvinceId: const {'oldWorld|p1': 'gp1'},
-  );
-}
-
-PerPlayerWorkTargetSelectionCache _buildSelectionCache({
-  required Game game,
-  required String playerId,
-  required PlayerView playerView,
-}) {
-  final cache = PerPlayerWorkTargetSelectionCache();
-  cache.refresh(
-    WorkTargetSelectionSnapshot(
-      game: game,
-      playerId: playerId,
-      playerView: playerView,
-      topology: _goldenCombinedTopology,
-      currentOrders: const Orders(),
-      tileMapByRegion: ProvinceShortcutHostGoldenGameService.tileMapByRegionFor(
-        includeNewWorld: true,
-      ),
+    newWorld: const RegionData(provinces: [], units: []),
+    resourceByTileKey: const {_kTile: 'grain'},
+    tileKeysByRegionAndProvince: {
+      'oldWorld': {_kProvince: [_kTile]},
+    },
+    tileState: TileMapState(improvementByTile: {_kTile: 0}),
+    playerVisibilityByTile: {_kHuman: {_kTile: 'fullyVisible'}},
+  ),
+  players: [
+    Player(
+      id: _kHuman,
+      displayName: 'Human',
+      isHuman: true,
+      capitalProvinceId: _kProvince,
+      stockpile: const Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
+      techUnlocked: const {kTechIdCircularSaw: true},
     ),
-  );
-  return cache;
-}
+  ],
+  minorNations: const [],
+  tribes: const [],
+);
 
 void main() {
   suppressLogsForTests();
-
   late Box<dynamic> gamesBox;
-
   setUpAll(() async {
     gamesBox = await openAppTestHiveBox(suiteId: 'province_bi_golden');
   });
 
-  Future<void> pumpWideHost(WidgetTester tester) async {
-    final game = goldenBuildImprovementGame();
-    final region = goldenBuildImprovementRegion();
-    final playerId = game.players.first.id;
-    final playerView = buildPlayerView(game, _goldenCombinedTopology, playerId);
-    const tileKey = 'oldWorld|p1|0|0';
-    const boundaryKey = ValueKey('province_bi_shortcut_wide_golden');
+  Future<void> pumpWide(WidgetTester tester) => pumpProvinceShortcutGoldenWideHost(
+    tester,
+    gamesBox: gamesBox,
+    game: goldenBuildImprovementGame(),
+    region: provinceShortcutHostRegionView(provinceDisplayName: 'Golden Province'),
+    topology: _topology,
+    boundaryKey: const ValueKey('province_bi_shortcut_wide_golden'),
+    tileKey: _kTile,
+    gameId: _kGameId,
+    workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
+    includeNewWorld: true,
+  );
 
-    await configureGoldenSurface(tester, size: const Size(360, 720));
-    await tester.pumpWidget(
-      wrapGoldenBoundary(
-        boundaryKey: boundaryKey,
-        wrapInProviderScope: true,
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => ProvinceShortcutHostGoldenGameService(
-              gamesBox,
-              GameSaveAdapter(),
-              gameId: 'g_bi_golden',
-              includeNewWorld: true,
-            ),
-          ),
-          appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-        ],
-        child: SizedBox(
-          width: 320,
-          child: GameMapProvinceDetailSidePanel(
-            game: game,
-            region: region,
-            humanPlayerId: playerId,
-            playerView: playerView,
-            workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
-          ),
-        ),
-      ),
-    );
-    final ctx = tester.element(find.byType(GameMapProvinceDetailSidePanel));
-    final container = ProviderScope.containerOf(ctx);
-    container
-        .read(mapProvincePanelProvider.notifier)
-        .reportMapTileTapped(tileKey);
-    await pumpForGolden(tester);
-  }
-
-  Future<void> pumpNarrowHost(WidgetTester tester) async {
-    final game = goldenBuildImprovementGame();
-    final region = goldenBuildImprovementRegion();
-    final playerId = game.players.first.id;
-    final playerView = buildPlayerView(game, _goldenCombinedTopology, playerId);
-    final workTargetSelectionCache = _buildSelectionCache(
-      game: game,
-      playerId: playerId,
-      playerView: playerView,
-    );
-    const tileKey = 'oldWorld|p1|0|0';
-    const boundaryKey = ValueKey('province_bi_shortcut_narrow_golden');
-
-    await configureGoldenSurface(tester, size: const Size(400, 600));
-    await tester.pumpWidget(
-      wrapGoldenBoundary(
-        boundaryKey: boundaryKey,
-        center: false,
-        alignment: Alignment.bottomCenter,
-        wrapInProviderScope: true,
-        overrides: [
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => ProvinceShortcutHostGoldenGameService(
-              gamesBox,
-              GameSaveAdapter(),
-              gameId: 'g_bi_golden',
-              includeNewWorld: true,
-            ),
-          ),
-          appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-        ],
-        child: GameMapNarrowDetailOverlaySlot(
-          game: game,
-          region: region,
-          humanPlayerId: playerId,
-          playerView: playerView,
-          workTargetSelectionCache: workTargetSelectionCache,
-        ),
-      ),
-    );
-    final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-    final container = ProviderScope.containerOf(ctx);
-    container
-        .read(mapProvincePanelProvider.notifier)
-        .reportMapTileTapped(tileKey);
-    await pumpForGolden(tester);
-  }
+  Future<void> pumpNarrow(WidgetTester tester) => pumpProvinceShortcutGoldenNarrowHost(
+    tester,
+    gamesBox: gamesBox,
+    game: goldenBuildImprovementGame(),
+    region: provinceShortcutHostRegionView(provinceDisplayName: 'Golden Province'),
+    topology: _topology,
+    boundaryKey: const ValueKey('province_bi_shortcut_narrow_golden'),
+    tileKey: _kTile,
+    gameId: _kGameId,
+    includeNewWorld: true,
+  );
 
   testWidgets(
     'golden: wide province side panel shows enabled Build improvement shortcut (Refs #1990)',
-    (WidgetTester tester) async {
-      await pumpWideHost(tester);
+    (tester) async {
+      await pumpWide(tester);
       await expectLater(
         find.byKey(const ValueKey('province_bi_shortcut_wide_golden')),
         matchesGoldenFile('goldens/province_build_improvement_wide_panel.png'),
@@ -262,15 +103,14 @@ void main() {
 
   testWidgets(
     'narrow detail overlay shows enabled Build improvement shortcut (Refs #1990)',
-    (WidgetTester tester) async {
-      await pumpNarrowHost(tester);
-      final buildImprovementShortcut = find.byWidgetPredicate(
-        (Widget w) =>
-            w is CtIconAction &&
-            w.onPressed != null &&
-            w.icon == Icons.handyman,
+    (tester) async {
+      await pumpNarrow(tester);
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is CtIconAction && w.onPressed != null && w.icon == Icons.handyman,
+        ),
+        findsOneWidget,
       );
-      expect(buildImprovementShortcut, findsOneWidget);
     },
   );
 }

@@ -1,6 +1,8 @@
 // Shared pump/decoration helpers for CtToggleSwitch widget tests (Refs #4352).
 // SPEC: SPEC/ui/pixel-art-ui-catalog.md.
 
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,4 +27,15 @@ BoxDecoration ctToggleKnobDecoration(WidgetTester tester) {
     find.byKey(const ValueKey<String>('ctToggleSwitchKnob')),
   );
   return container.decoration! as BoxDecoration;
+}
+
+Future<void> hoverCtToggleSwitch(WidgetTester tester) async {
+  final TestGesture gesture = await tester.createGesture(
+    kind: PointerDeviceKind.mouse,
+  );
+  addTearDown(gesture.removePointer);
+  await gesture.addPointer(location: Offset.zero);
+  await gesture.moveTo(tester.getCenter(find.byType(CtToggleSwitch)));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 200));
 }

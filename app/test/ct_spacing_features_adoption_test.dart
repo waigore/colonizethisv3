@@ -4,6 +4,7 @@ import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'ct_spacing_features_adoption_checks.dart';
 import 'ct_spacing_features_adoption_files.dart';
 
 /// Pinning tests for `CtSpacing` adoption in `app/lib/features/**.dart`
@@ -180,62 +181,7 @@ void main() {
 
         test('no raw EdgeInsets.symmetric named arg for N in the migrated '
             'token set ({8, 12, 16, 20, 24})', () {
-          // Pattern matches a `horizontal:` or `vertical:` named arg with
-          // a raw literal value from the migrated token set inside any
-          // `EdgeInsets.symmetric(...)` call, allowing the arg to sit on
-          // its own line (split-arg form). Out-of-scale literals like
-          // `4` and `6` are intentionally NOT matched: SPEC §Spacing
-          // tokens explicitly leaves them as per-component overrides
-          // (the example `EdgeInsets.symmetric(horizontal: s, vertical: 4)`
-          // keeps the `4` as a literal). Mixed callsites where ONE arg
-          // is in the token set and the other is out-of-scale must
-          // still migrate the token-set arg through `CtSpacing.<token>`.
-          //
-          // The check ignores comments by trimming source lines whose
-          // first non-whitespace char is `//`.
-          final symmetricArg = RegExp(
-            r'\b(horizontal|vertical):\s*(8|12|16|20|24)(?:\.0)?\s*[,)]',
-          );
-          final lines = source.split('\n');
-          final List<String> bad = <String>[];
-          bool insideSymmetric = false;
-          for (var i = 0; i < lines.length; i++) {
-            final raw = lines[i];
-            final trimmed = raw.trimLeft();
-            if (trimmed.startsWith('//')) continue;
-            // Track whether the current line lies inside an
-            // `EdgeInsets.symmetric(` argument list. A line either
-            // opens one (`EdgeInsets.symmetric(`) or closes one (`)`).
-            // The same-line literal form is caught by the single-line
-            // match below.
-            final opensSymmetric = raw.contains('EdgeInsets.symmetric(');
-            if (opensSymmetric) {
-              // Same-line `EdgeInsets.symmetric(... N ...)` form.
-              final sym = RegExp(
-                r'EdgeInsets\.symmetric\([^)]*\b(horizontal|vertical):\s*(?:8|12|16|20|24)(?:\.0)?\s*[,)]',
-              );
-              if (sym.hasMatch(raw)) {
-                bad.add('  L${i + 1}: ${raw.trim()}');
-              }
-              // Open the multi-line tracker only when the call does NOT
-              // also close on the same line (no trailing `)` after the
-              // last `(`).
-              final openIdx = raw.lastIndexOf('EdgeInsets.symmetric(');
-              final tail = raw.substring(openIdx);
-              if (!tail.contains(')')) {
-                insideSymmetric = true;
-              }
-              continue;
-            }
-            if (insideSymmetric) {
-              if (symmetricArg.hasMatch(raw)) {
-                bad.add('  L${i + 1}: ${raw.trim()}');
-              }
-              if (raw.contains(')')) {
-                insideSymmetric = false;
-              }
-            }
-          }
+          final bad = ctSpacingSymmetricBadLines(source);
           expect(
             bad,
             isEmpty,

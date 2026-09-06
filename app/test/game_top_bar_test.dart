@@ -1,9 +1,7 @@
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,27 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'game_top_bar_test_support.dart';
 
 /// Widget tests for the in-game shell top bar (issue #2861 S1).
-///
-/// Pins the dark editorial-monocle chrome contract:
-///   1. The bar paints [CtGradients.topBarGradient] with a 1 px
-///      `--accent-dim` bottom border (#2861 R1).
-///   2. The bar is a fixed 36 px high (#2861 R1).
-///   3. The hamburger affordance is a 28 x 28 dp tap target that fires
-///      `onToggleSideMenu` on tap (#2861 R1, SPEC/ui/in-game-shell-narrow.md).
-///   4. The trailing [CtNinePatchButton] surfaces the supplied
-///      `nextTurnText` and is wired to `onNextTurn` when enabled.
-///   5. When `nextTurnEnabled: false`, the button passes
-///      `enabled: false` and `onPressed: null` to [CtNinePatchButton] AND
-///      an explicit `disabledOpacityOverride` equal to
-///      [kNextTurnDisabledOpacity] (`0.35`) so the disabled wrapper
-///      `Opacity` widget resolves to `0.35` — matching
-///      `.next-turn.disabled { opacity: 0.35 }` in the GAME10001
-///      mockup, issue #2861 R1 / AC#9 and the normative
-///      `SPEC/ui/game-screen.md` AC. The default catalog
-///      `CtNinePatchButton.disabledOpacity` (`0.4`) is left untouched
-///      for every other call site (regression guard in
-///      `widgets/ct_nine_patch_button_dark_test.dart`).
-///   6. The optional observe-mode banner is shown only when supplied.
 void main() {
   suppressLogsForTests();
 
@@ -47,27 +24,7 @@ void main() {
         ),
       );
       await tester.pump();
-
-      final decoratedBox = tester.widget<DecoratedBox>(
-        find
-            .descendant(
-              of: find.byKey(GameTopBar.surfaceKey),
-              matching: find.byType(DecoratedBox),
-            )
-            .first,
-      );
-      final decoration = decoratedBox.decoration as BoxDecoration;
-      expect(decoration.gradient, isA<LinearGradient>());
-      final actualColors = (decoration.gradient! as LinearGradient).colors;
-      final expectedColors = CtGradients.topBarGradient.colors;
-      expect(actualColors, expectedColors);
-
-      final border = decoration.border as Border;
-      expect(border.bottom.width, GameTopBar.borderWidth);
-      expect(border.bottom.color, EditorialMonoclePalette.accentDim);
-      expect(border.top, BorderSide.none);
-      expect(border.left, BorderSide.none);
-      expect(border.right, BorderSide.none);
+      expectGameTopBarGradientAndBorder(tester);
     },
   );
 
@@ -139,7 +96,6 @@ void main() {
       await tester.tap(button);
       await tester.pump();
       expect(nextTurnCalls, 1);
-
       expect(find.text('Next turn (42 / 1650)'), findsOneWidget);
     },
   );
@@ -164,35 +120,15 @@ void main() {
         find.byKey(kGameMapNextTurnButtonKey),
       );
       expect(widget.onPressed, isNull);
-      expect(
-        widget.enabled,
-        isFalse,
-        reason:
-            'Disabled Next-turn button must pass enabled: false to '
-            'CtNinePatchButton so the disabled Opacity wrapper activates '
-            '(issue #2861 R1 / AC#9).',
-      );
-      expect(
-        widget.disabledOpacityOverride,
-        kNextTurnDisabledOpacity,
-        reason:
-            'Next-turn button must pass kNextTurnDisabledOpacity (0.35) as '
-            'the disabled opacity override per SPEC/ui/game-screen.md '
-            'Acceptance Criteria + mockup .next-turn.disabled.',
-      );
+      expect(widget.enabled, isFalse);
+      expect(widget.disabledOpacityOverride, kNextTurnDisabledOpacity);
 
       await tester.tap(
         find.byKey(kGameMapNextTurnButtonKey),
         warnIfMissed: false,
       );
       await tester.pump();
-      expect(
-        nextTurnCalls,
-        0,
-        reason:
-            'Disabled Next-turn button must not invoke the host callback even '
-            'when the tap finder is hit (#2861 R1 disabled-during-resolution).',
-      );
+      expect(nextTurnCalls, 0);
     },
   );
 
@@ -210,24 +146,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final Finder opacityFinder = find.descendant(
-        of: find.byKey(kGameMapNextTurnButtonKey),
-        matching: find.byWidgetPredicate(
-          (Widget w) => w is Opacity && w.opacity == kNextTurnDisabledOpacity,
-        ),
-      );
-      expect(
-        opacityFinder,
-        findsOneWidget,
-        reason:
-            'Disabled Next-turn button must wrap the chrome surface in an '
-            'Opacity widget whose opacity equals kNextTurnDisabledOpacity '
-            '(0.35) per SPEC/ui/game-screen.md AC and '
-            '.next-turn.disabled { opacity: 0.35 } in '
-            'SPEC/ui/mockups/GAME10001-game-screen.html. The catalog '
-            'default CtNinePatchButton.disabledOpacity (0.4) is suppressed '
-            'for this call site only.',
-      );
+      expect(gameTopBarNextTurnDisabledOpacityFinder(), findsOneWidget);
       expect(kNextTurnDisabledOpacity, 0.35);
       expect(CtNinePatchButton.disabledOpacity, 0.4);
 
@@ -238,14 +157,7 @@ void main() {
               w is Opacity && w.opacity == CtNinePatchButton.disabledOpacity,
         ),
       );
-      expect(
-        defaultOpacityFinder,
-        findsNothing,
-        reason:
-            'Negative: the catalog-default 0.4 Opacity must not be applied '
-            'when the explicit 0.35 override is in scope (regression guard '
-            'against accidentally dropping the override).',
-      );
+      expect(defaultOpacityFinder, findsNothing);
     },
   );
 
@@ -261,25 +173,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-
-      final Finder opacityFinder = find.descendant(
-        of: find.byKey(kGameMapNextTurnButtonKey),
-        matching: find.byWidgetPredicate(
-          (Widget w) =>
-              w is Opacity &&
-              (w.opacity == kNextTurnDisabledOpacity ||
-                  w.opacity == CtNinePatchButton.disabledOpacity),
-        ),
-      );
-      expect(
-        opacityFinder,
-        findsNothing,
-        reason:
-            'Negative: enabled Next-turn button must not paint any dimming '
-            'Opacity wrapper — neither the 0.35 next-turn override nor the '
-            '0.4 catalog default may activate when nextTurnEnabled: true '
-            '(regression guard for the enabled visual state).',
-      );
+      expect(gameTopBarNextTurnDimmingOpacityFinder(), findsNothing);
     },
   );
 }

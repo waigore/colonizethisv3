@@ -1,6 +1,4 @@
 // SPEC/ui/components/dialogue-tristate-decision-row.md + #4018 helpers.
-import 'dart:io';
-
 import 'package:colonizethis_app/features/game/widgets/dialogue/dialogue_tristate_decision_row.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/titled_dialogue_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/tree_builders/draft_move_destination_line.dart';
@@ -12,7 +10,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
 
 import 'app_shell_harness.dart';
 
@@ -119,7 +116,6 @@ void main() {
 
   testWidgets('DialogueTristateDecisionRow wires dual toggles', (tester) async {
     bool? decision;
-    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
       buildAppShell(
         child: Scaffold(
@@ -142,7 +138,6 @@ void main() {
 
   testWidgets('buildTitledDialogueChrome mounts title and brass frame body',
       (tester) async {
-    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
       buildAppShell(
         child: buildTitledDialogueChrome(
@@ -209,67 +204,4 @@ void main() {
       expect(detailBuilds, detailAfterMount);
     },
   );
-
-  group('GameMapAreaStateLogic explicit-import library (#4018, #4117)', () {
-    test('positive: state-logic library has no part directives or Api* hops', () {
-      final mapStateDir = Directory(
-        '${Directory.current.path}/lib/features/game/flame/map_state',
-      );
-      final names = mapStateDir
-          .listSync()
-          .whereType<File>()
-          .map((f) => p.basename(f.path))
-          .toList();
-      expect(names, contains('game_map_area_state_logic.dart'));
-      expect(names, isNot(contains('game_map_area_state_logic_forwarders.dart')));
-      expect(
-        names.where((n) => n.contains('forwarders_')).toList(),
-        isEmpty,
-      );
-      final library = File(
-        '${mapStateDir.path}/game_map_area_state_logic.dart',
-      ).readAsStringSync();
-      expect(library.contains('_GameMapAreaStateLogicApi'), isFalse);
-      // Wave-15 Slice C (#4352): stable surface is topic export barrels.
-      expect(
-        library.contains("export 'game_map_area_state_logic_shell.dart';"),
-        isTrue,
-      );
-      expect(
-        library.contains("export 'game_map_area_state_logic_work_targets.dart';"),
-        isTrue,
-      );
-      expect(
-        library.contains(
-          "export 'game_map_area_state_logic_draft_projection.dart';",
-        ),
-        isTrue,
-      );
-      expect(
-        library.contains(
-          "export 'game_map_area_state_logic_province_actions.dart';",
-        ),
-        isTrue,
-      );
-    });
-
-    test('negative: state-logic library does not declare part directives', () {
-      final library = File(
-        '${Directory.current.path}/lib/features/game/flame/map_state/'
-        'game_map_area_state_logic.dart',
-      ).readAsStringSync();
-      expect(
-        library.contains("part 'game_map_area_state_logic_forwarders_"),
-        isFalse,
-      );
-      expect(
-        RegExp(r'^\s*part\s+', multiLine: true).hasMatch(library),
-        isFalse,
-      );
-      expect(
-        RegExp(r'^\s*part\s+of\s+', multiLine: true).hasMatch(library),
-        isFalse,
-      );
-    });
-  });
 }

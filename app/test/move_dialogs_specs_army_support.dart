@@ -10,15 +10,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'move_dialogs_specs_army_isolated_cases.dart';
 import 'move_dialogs_specs_test_support.dart';
+
+export 'move_dialogs_specs_army_isolated_cases.dart';
 
 const kMoveArmySpecsPlayerId = 'gp_specs_army';
 const kMoveArmySpecsRivalId = 'gp_specs_rival';
 const kMoveArmySpecsFrom = 'oldWorld|p_from';
 const kMoveArmySpecsOwnedDest = 'oldWorld|p_owned';
 const kMoveArmySpecsInvasionDest = 'oldWorld|p_invade';
-const kMoveArmySpecsIsolatedPlayerId = 'gp_isolated';
-const kMoveArmySpecsIsolatedFrom = 'oldWorld|p_isolated';
 
 MapTopology buildMoveArmySpecsTopology() {
   return const MapTopology(
@@ -123,68 +124,6 @@ Game buildMoveArmySpecsGame() {
     ],
   );
 }
-
-Game buildMoveArmySpecsIsolatedGame() {
-  return Game(
-    id: 'g_isolated_army',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(
-            id: kMoveArmySpecsIsolatedFrom,
-            regionId: 'oldWorld',
-            ownerId: kMoveArmySpecsIsolatedPlayerId,
-            displayName: 'Lonely',
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'u_isolated',
-            type: 'musketeers',
-            ownerId: kMoveArmySpecsIsolatedPlayerId,
-            locationProvinceId: kMoveArmySpecsIsolatedFrom,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: const [
-        Army(
-          id: 'aisolated',
-          ownerId: kMoveArmySpecsIsolatedPlayerId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kMoveArmySpecsIsolatedFrom,
-          regimentUnitIds: ['u_isolated'],
-          isHomeArmy: false,
-        ),
-      ],
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          kMoveArmySpecsIsolatedFrom: ['oldWorld|p_isolated|0|0'],
-        },
-      },
-    ),
-    players: const [
-      Player(
-        id: kMoveArmySpecsIsolatedPlayerId,
-        displayName: 'Isolated',
-        isHuman: true,
-        capitalProvinceId: kMoveArmySpecsIsolatedFrom,
-      ),
-    ],
-  );
-}
-
-const isolatedMoveArmySpecsTopology = MapTopology(
-  nodes: [
-    TopologyNode(
-      id: kMoveArmySpecsIsolatedFrom,
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: [],
-);
 
 Future<void> pumpMoveArmySpecsDialog(
   WidgetTester tester, {

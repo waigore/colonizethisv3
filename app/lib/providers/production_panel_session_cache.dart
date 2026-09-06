@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'panel_session_revision.dart'
-    show panelOrdersRevision, panelWorldRevision;
+    show panelOrdersRevision, panelStaticSessionRevision;
 
 /// Synchronous open-path read model for `GAME20001` (Refs #4688 Slice 2).
 class ProductionPanelOpenPathSnapshot {
@@ -94,10 +94,11 @@ ProductionPanelSessionRevision productionPanelSessionRevision({
   required Orders orders,
   required Map<String, int> desiredOutputByRecipe,
 }) {
+  final staticRevision = panelStaticSessionRevision(game);
   return (
-    gameId: game.id,
-    turnNumber: game.worldState.turnState.turnNumber,
-    worldRevision: panelWorldRevision(game),
+    gameId: staticRevision.gameId,
+    turnNumber: staticRevision.turnNumber,
+    worldRevision: staticRevision.worldRevision,
     ordersRevision: panelOrdersRevision(orders),
     desiredOutputRevision: productionDesiredOutputRevision(desiredOutputByRecipe),
   );

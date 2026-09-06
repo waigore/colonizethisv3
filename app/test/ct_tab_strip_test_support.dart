@@ -50,10 +50,31 @@ Widget ctTabStripPaletteHarness({
   final List<Widget> views = labels
       .map((String l) => Text('Body $l', key: ValueKey<String>('body-$l')))
       .toList(growable: false);
+  return ctTabStripBasicHarness(
+    tabLabels: labels,
+    tabViews: views,
+    themeOverride: themeOverride,
+  );
+}
+
+Widget ctTabStripBasicHarness({
+  required List<String> tabLabels,
+  required List<Widget> tabViews,
+  EdgeInsets? contentPadding,
+  bool lazyTabBodies = false,
+  ValueChanged<int>? onTabIndexChanged,
+  ThemeData? themeOverride,
+}) {
   return ctTabStripTestHost(
     SizedBox(
       height: 200,
-      child: CtTabStrip(tabLabels: labels, tabViews: views),
+      child: CtTabStrip(
+        tabLabels: tabLabels,
+        tabViews: tabViews,
+        contentPadding: contentPadding,
+        lazyTabBodies: lazyTabBodies,
+        onTabIndexChanged: onTabIndexChanged,
+      ),
     ),
     themeOverride: themeOverride,
   );

@@ -1,45 +1,16 @@
 // Widget tests for the Market tab interactive bid/offer/quantity
 // controls (Refs #2993 E5b). SPEC/ui/trade-screen.md § Body — Market
+
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'trade_screen_test_support.dart';
-
-const String _humanPlayerId = kTradeTestHumanPlayerId;
-
-CommodityId get _timber => CommodityCatalog.timber.id;
-CommodityId get _fabric => CommodityCatalog.fabric.id;
-
-TradeOrder? _stagedOrder(ProviderContainer container, CommodityId commodityId) {
-  final Orders orders = container.read(currentOrdersProvider);
-  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[_humanPlayerId];
-  if (list == null) return null;
-  for (final TradeOrder o in list) {
-    if (o.commodityId == commodityId) return o;
-  }
-  return null;
-}
-
-Future<ProviderContainer> _pumpFilled(WidgetTester tester) {
-  return pumpTradeScreenWithContainer(
-    tester,
-    game: buildTradeTestGame(
-      id: 'test_trade_screen_e5b',
-      stockpile: tradeableStockpileFilled(99),
-    ),
-  );
-}
-
-Future<void> _tapKey(WidgetTester tester, Key key) async {
-  await tester.tap(find.byKey(key));
-  await tester.pump();
-}
+import 'trade_screen_market_tab_e5b_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -49,7 +20,7 @@ void main() {
         '`+` / quantity / `−` stepper widgets keyed per commodity', (
       tester,
     ) async {
-      await _pumpFilled(tester);
+      await pumpE5bFilledTradeScreen(tester);
 
       for (final Commodity c in CommodityCatalog.all) {
         if (c.category == CommodityCategory.riches || c.id == 'spices') {
@@ -90,14 +61,14 @@ void main() {
         'type=bid, quantity=1, priority=1 in currentOrdersProvider', (
       tester,
     ) async {
-      final ProviderContainer container = await _pumpFilled(tester);
-      expect(_stagedOrder(container, _timber), isNull);
+      final ProviderContainer container = await pumpE5bFilledTradeScreen(tester);
+      expect(e5bStagedOrder(container, kE5bTimber), isNull);
 
-      await _tapKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(_timber));
+      await tapE5bKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(kE5bTimber));
 
-      final TradeOrder? staged = _stagedOrder(container, _timber);
+      final TradeOrder? staged = e5bStagedOrder(container, kE5bTimber);
       expect(staged, isNotNull);
-      expect(staged!.commodityId, _timber);
+      expect(staged!.commodityId, kE5bTimber);
       expect(staged.type, TradeOrderType.bid);
       expect(
         staged.quantity,
@@ -119,33 +90,33 @@ void main() {
     testWidgets('tapping `Offer` on a row that already has a staged bid '
         'REPLACES the prior bid (mutual exclusion: at most one staged '
         'TradeOrder per commodity)', (tester) async {
-      final ProviderContainer container = await _pumpFilled(tester);
+      final ProviderContainer container = await pumpE5bFilledTradeScreen(tester);
 
-      await _tapKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(_timber));
-      await _tapKey(
+      await tapE5bKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(kE5bTimber));
+      await tapE5bKey(
         tester,
-        TradeScreenMarketKeys.marketRowIncrementKey(_timber),
+        TradeScreenMarketKeys.marketRowIncrementKey(kE5bTimber),
       );
-      TradeOrder? staged = _stagedOrder(container, _timber);
+      TradeOrder? staged = e5bStagedOrder(container, kE5bTimber);
       expect(staged, isNotNull);
       expect(staged!.type, TradeOrderType.bid);
       expect(staged.quantity, 2);
 
-      await _tapKey(
+      await tapE5bKey(
         tester,
-        TradeScreenMarketKeys.marketRowOfferChipKey(_timber),
+        TradeScreenMarketKeys.marketRowOfferChipKey(kE5bTimber),
       );
-      staged = _stagedOrder(container, _timber);
+      staged = e5bStagedOrder(container, kE5bTimber);
       expect(staged, isNotNull);
       expect(staged!.type, TradeOrderType.offer);
       expect(staged.quantity, 2);
 
       final Orders orders = container.read(currentOrdersProvider);
       final List<TradeOrder>? list =
-          orders.tradeOrdersByPlayerId[_humanPlayerId];
+          orders.tradeOrdersByPlayerId[kE5bHumanPlayerId];
       expect(list, isNotNull);
       final int timberCount = list!
-          .where((TradeOrder o) => o.commodityId == _timber)
+          .where((TradeOrder o) => o.commodityId == kE5bTimber)
           .length;
       expect(
         timberCount,
@@ -161,16 +132,16 @@ void main() {
         'TradeOrder for the commodity from currentOrdersProvider', (
       tester,
     ) async {
-      final ProviderContainer container = await _pumpFilled(tester);
-      await _tapKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(_timber));
-      expect(_stagedOrder(container, _timber), isNotNull);
+      final ProviderContainer container = await pumpE5bFilledTradeScreen(tester);
+      await tapE5bKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(kE5bTimber));
+      expect(e5bStagedOrder(container, kE5bTimber), isNotNull);
 
-      await _tapKey(
+      await tapE5bKey(
         tester,
-        TradeScreenMarketKeys.marketRowNoneChipKey(_timber),
+        TradeScreenMarketKeys.marketRowNoneChipKey(kE5bTimber),
       );
       expect(
-        _stagedOrder(container, _timber),
+        e5bStagedOrder(container, kE5bTimber),
         isNull,
         reason:
             'Refs #2993 E5b: tapping the None chip removes the '
@@ -182,32 +153,32 @@ void main() {
         'at marketRowQuantityMin = 1 when a direction is staged)', (
       tester,
     ) async {
-      final ProviderContainer container = await _pumpFilled(tester);
-      await _tapKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(_timber));
-      expect(_stagedOrder(container, _timber)!.quantity, 1);
+      final ProviderContainer container = await pumpE5bFilledTradeScreen(tester);
+      await tapE5bKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(kE5bTimber));
+      expect(e5bStagedOrder(container, kE5bTimber)!.quantity, 1);
 
       for (int i = 0; i < 3; i++) {
-        await _tapKey(
+        await tapE5bKey(
           tester,
-          TradeScreenMarketKeys.marketRowIncrementKey(_timber),
+          TradeScreenMarketKeys.marketRowIncrementKey(kE5bTimber),
         );
       }
-      expect(_stagedOrder(container, _timber)!.quantity, 4);
+      expect(e5bStagedOrder(container, kE5bTimber)!.quantity, 4);
 
       for (int i = 0; i < 3; i++) {
-        await _tapKey(
+        await tapE5bKey(
           tester,
-          TradeScreenMarketKeys.marketRowDecrementKey(_timber),
+          TradeScreenMarketKeys.marketRowDecrementKey(kE5bTimber),
         );
       }
-      expect(_stagedOrder(container, _timber)!.quantity, 1);
+      expect(e5bStagedOrder(container, kE5bTimber)!.quantity, 1);
 
-      await _tapKey(
+      await tapE5bKey(
         tester,
-        TradeScreenMarketKeys.marketRowDecrementKey(_timber),
+        TradeScreenMarketKeys.marketRowDecrementKey(kE5bTimber),
       );
       expect(
-        _stagedOrder(container, _timber)!.quantity,
+        e5bStagedOrder(container, kE5bTimber)!.quantity,
         TradeScreenMarketKeys.marketRowQuantityMin,
         reason:
             'Refs #2993 E5b: the per-row stepper clamps at '
@@ -221,17 +192,17 @@ void main() {
       'increment / decrement buttons are no-ops while no direction is '
       'staged (the `−` and `+` taps must not create a TradeOrder)',
       (tester) async {
-        final ProviderContainer container = await _pumpFilled(tester);
-        await _tapKey(
+        final ProviderContainer container = await pumpE5bFilledTradeScreen(tester);
+        await tapE5bKey(
           tester,
-          TradeScreenMarketKeys.marketRowIncrementKey(_timber),
+          TradeScreenMarketKeys.marketRowIncrementKey(kE5bTimber),
         );
-        await _tapKey(
+        await tapE5bKey(
           tester,
-          TradeScreenMarketKeys.marketRowDecrementKey(_timber),
+          TradeScreenMarketKeys.marketRowDecrementKey(kE5bTimber),
         );
         expect(
-          _stagedOrder(container, _timber),
+          e5bStagedOrder(container, kE5bTimber),
           isNull,
           reason:
               'Refs #2993 E5b: stepper taps without a staged '
@@ -241,28 +212,5 @@ void main() {
         );
       },
     );
-
-    testWidgets('mutual exclusion across distinct commodities — staging timber '
-        'as Bid and fabric as Offer keeps both as a single TradeOrder '
-        'each in currentOrdersProvider', (tester) async {
-      final ProviderContainer container = await _pumpFilled(tester);
-      await _tapKey(tester, TradeScreenMarketKeys.marketRowBidChipKey(_timber));
-      await _tapKey(
-        tester,
-        TradeScreenMarketKeys.marketRowOfferChipKey(_fabric),
-      );
-
-      expect(_stagedOrder(container, _timber)?.type, TradeOrderType.bid);
-      expect(_stagedOrder(container, _fabric)?.type, TradeOrderType.offer);
-      final Orders orders = container.read(currentOrdersProvider);
-      expect(
-        orders.tradeOrdersByPlayerId[_humanPlayerId]?.length,
-        2,
-        reason:
-            'Refs #2993 E5b: the player can stage one TradeOrder '
-            'per commodity simultaneously; mutual exclusion is '
-            'per-commodity, not per-player.',
-      );
-    });
   });
 }

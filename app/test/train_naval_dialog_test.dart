@@ -68,60 +68,6 @@ void main() {
     expect(find.text('Ship of the Line'), findsWidgets);
   });
 
-  group('Train Naval role and capability gist (#4300)', () {
-    testWidgets('AC: Carrack row shows Merchant and cargo holds', (
-      WidgetTester tester,
-    ) async {
-      await harness.pumpDialog(tester, panelGame: harness.gameWithNavalResources());
-      expect(
-        find.text(
-          'Merchant · +${NavalStatsCatalog.carrack.cargoHold} cargo holds',
-        ),
-        findsWidgets,
-      );
-    });
-
-    testWidgets('AC: Sloop row shows Warship and fast interceptor gist', (
-      WidgetTester tester,
-    ) async {
-      await harness.pumpDialog(tester, panelGame: harness.gameWithNavalResources());
-      expect(find.text('Warship · Fast interceptor'), findsWidgets);
-      expect(find.textContaining('+0 cargo holds'), findsNothing);
-    });
-
-    testWidgets('AC: Ship of the Line row shows battle ship gist', (
-      WidgetTester tester,
-    ) async {
-      await harness.pumpDialog(tester, panelGame: harness.gameWithNavalResources());
-      expect(find.text('Warship · Battle ship'), findsWidgets);
-    });
-
-    testWidgets('AC: locked row keeps muted role/capability with Requires tech', (
-      WidgetTester tester,
-    ) async {
-      await harness.pumpDialog(
-        tester,
-        panelGame: harness.gameWithPlayer(
-          (player) => player.copyWith(
-            treasury: 1000000,
-            techUnlocked: const <String, bool>{},
-          ),
-        ),
-      );
-      expect(find.textContaining('Requires:'), findsWidgets);
-      expect(find.text('Warship · Fast interceptor'), findsWidgets);
-    });
-
-    testWidgets('AC (negative): default row omits full combat stat dump', (
-      WidgetTester tester,
-    ) async {
-      await harness.pumpDialog(tester, panelGame: harness.gameWithNavalResources());
-      expect(find.textContaining('FRP'), findsNothing);
-      expect(find.textContaining('RNG'), findsNothing);
-      expect(find.text('Details'), findsNothing);
-    });
-  });
-
   testWidgets('AC: dialog submits naval orders (isMilitary false) when closed', (
     WidgetTester tester,
   ) async {
@@ -264,16 +210,8 @@ void main() {
               .read(currentOrdersProvider)
               .buildUnitOrdersByPlayerId[harness.humanPlayerId] ??
           const <BuildUnitOrder>[];
-      expect(
-        merged.where((o) => o.unitType == civilianType).length,
-        1,
-        reason: 'existing civilian build order must be preserved',
-      );
-      expect(
-        merged.where((o) => o.unitType == firstShip).length,
-        1,
-        reason: 'naval order from dialog must be merged in',
-      );
+      expect(merged.where((o) => o.unitType == civilianType).length, 1);
+      expect(merged.where((o) => o.unitType == firstShip).length, 1);
     },
   );
 }

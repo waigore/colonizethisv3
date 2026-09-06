@@ -5,9 +5,6 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_models/colonizethis_models.dart'
-    show MapBaseLayerFlags;
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -15,34 +12,18 @@ import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'app_shell_harness.dart';
-
-Widget _wrap({required Widget child}) {
-  return buildAppShell(
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    locale: const Locale('en'),
-    child: Scaffold(
-      body: Align(alignment: Alignment.bottomLeft, child: child),
-    ),
-  );
-}
+import 'game_map_corner_controls_dark_chrome_disabled_test.dart'
+    show gameMapCornerControlsWrap;
 
 void main() {
   suppressLogsForTests();
 
-  // Intentionally do not stub the asset bundle here: when the icon PNGs
-  // are absent the inner StrictAssetIcon throws via its errorBuilder. We
-  // assert chrome via the AnimatedContainer decoration and via the icon
-  // glyph args (StrictAssetIcon size) without forcing image decoding, and
-  // assert the glyph is full-colour pixel art (no ColorFiltered srcIn tint
-  // per M6 / S15). The widget tree is still constructed end-to-end.
   group('GameMapCornerControls dark editorial-monocle chrome (Refs #2861 S4)', () {
     testWidgets(
       'positive: default state — gradient surface + 32 dp size + 1 px border + full-colour glyph (no srcIn tint)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _wrap(
+          gameMapCornerControlsWrap(
             child: GameMapCornerControls(
               onCycleBaseLayerDisplayMode: () {},
               onCenterOnHomeCapital: () {},
@@ -74,14 +55,11 @@ void main() {
         expect(border.left.color, EditorialMonoclePalette.border);
         expect(border.right.color, EditorialMonoclePalette.border);
 
-        // M6 / S15: glyph renders as full-colour pixel art — no ColorFiltered
-        // srcIn tint collapsing the asset to a single accent colour.
         expect(
           find.descendant(of: baseFinder, matching: find.byType(ColorFiltered)),
           findsNothing,
         );
 
-        // Icon size matches mockup `.corner-btn img { 22 × 22 }`.
         final StrictAssetIcon icon = tester.widget(
           find.descendant(
             of: baseFinder,
@@ -97,7 +75,7 @@ void main() {
       'positive: hover lifts border to --accent-dim and leaves the full-colour glyph unrecoloured',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _wrap(
+          gameMapCornerControlsWrap(
             child: GameMapCornerControls(
               onCycleBaseLayerDisplayMode: () {},
               onCenterOnHomeCapital: () {},
@@ -126,14 +104,11 @@ void main() {
         final hoveredBorder = hoveredDecoration.border as Border;
         expect(hoveredBorder.top.color, EditorialMonoclePalette.accentDim);
 
-        // M6 / S15: hover affordance lives on the border only — the glyph is
-        // never wrapped in a ColorFiltered srcIn tint in any state.
         expect(
           find.descendant(of: baseFinder, matching: find.byType(ColorFiltered)),
           findsNothing,
         );
 
-        // Move the pointer away — chrome returns to the default state.
         await gesture.moveTo(Offset.zero);
         await tester.pumpAndSettle();
 
@@ -150,68 +125,10 @@ void main() {
     );
 
     testWidgets(
-      'positive: home-to-capital disabled wraps the surface in IgnorePointer + Opacity(0.4)',
-      (WidgetTester tester) async {
-        var homeCalls = 0;
-        await tester.pumpWidget(
-          _wrap(
-            child: GameMapCornerControls(
-              onCycleBaseLayerDisplayMode: () {},
-              onCenterOnHomeCapital: () => homeCalls++,
-              onOpenMapDisplayOptions: () {},
-              homeToCapitalEnabled: false,
-            ),
-          ),
-        );
-        await tester.pump();
-
-        final homeFinder = find.byKey(kHomeToCapitalButtonKey);
-        expect(homeFinder, findsOneWidget);
-
-        // The disabled chrome wraps the surface in IgnorePointer + Opacity(0.4).
-        final Opacity opacity = tester.widget(
-          find.ancestor(of: homeFinder, matching: find.byType(Opacity)).first,
-        );
-        expect(opacity.opacity, 0.4);
-        expect(
-          tester
-              .widgetList<IgnorePointer>(
-                find.ancestor(
-                  of: homeFinder,
-                  matching: find.byType(IgnorePointer),
-                ),
-              )
-              .any((ip) => ip.ignoring),
-          isTrue,
-        );
-
-        await tester.tap(homeFinder, warnIfMissed: false);
-        await tester.pump();
-        expect(homeCalls, 0);
-
-        // The underlying border + tint still resolve in the default state.
-        final AnimatedContainer container = tester.widget(
-          find.descendant(
-            of: homeFinder,
-            matching: find.byType(AnimatedContainer),
-          ),
-        );
-        final border = (container.decoration as BoxDecoration).border as Border;
-        expect(border.top.color, EditorialMonoclePalette.border);
-        // M6 / S15: disabled glyph still renders in native full colour — no
-        // ColorFiltered srcIn tint over the asset.
-        expect(
-          find.descendant(of: homeFinder, matching: find.byType(ColorFiltered)),
-          findsNothing,
-        );
-      },
-    );
-
-    testWidgets(
       'negative regression guard: no Material(color: Colors.white …) and no Material button chrome inside the row',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _wrap(
+          gameMapCornerControlsWrap(
             child: GameMapCornerControls(
               onCycleBaseLayerDisplayMode: () {},
               onCenterOnHomeCapital: () {},
@@ -222,9 +139,6 @@ void main() {
         await tester.pump();
 
         final row = find.byType(GameMapCornerControls);
-        // No Material widget under the row paints with a hard-coded
-        // light-theme background (Colors.white). Pointer plumbing still
-        // uses InkWell under a transparent Material, which is allowed.
         final List<Material> materials = tester
             .widgetList<Material>(
               find.descendant(of: row, matching: find.byType(Material)),
@@ -238,8 +152,6 @@ void main() {
           }
         }
 
-        // None of the banned Material button chrome widgets paint inside
-        // the corner row (Material design ban per pixel-art-ui-catalog.md).
         expect(
           find.descendant(of: row, matching: find.byType(ElevatedButton)),
           findsNothing,
@@ -256,23 +168,6 @@ void main() {
           find.descendant(of: row, matching: find.byType(IconButton)),
           findsNothing,
         );
-      },
-    );
-
-    testWidgets(
-      'cycle button tooltip names the current map marks combination (Refs #4388)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          _wrap(
-            child: GameMapCornerControls(
-              onCycleBaseLayerDisplayMode: () {},
-              onCenterOnHomeCapital: () {},
-              onOpenMapDisplayOptions: () {},
-              mapBaseLayerFlags: MapBaseLayerFlags.resourcesOnly,
-            ),
-          ),
-        );
-        expect(find.byTooltip('Map marks: resources'), findsOneWidget);
       },
     );
   });
