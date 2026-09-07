@@ -474,7 +474,9 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
-  String production_recipeAffordanceCannotRunShortOfCommodity(String commodity) {
+  String production_recipeAffordanceCannotRunShortOfCommodity(
+    String commodity,
+  ) {
     return 'Cannot run — short of $commodity';
   }
 

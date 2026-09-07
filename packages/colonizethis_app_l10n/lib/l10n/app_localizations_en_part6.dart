@@ -746,4 +746,15 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String provinceOverlay_tileRoadCaption(String caption) {
     return 'Road / railroad: $caption';
   }
+
+  @override
+  String get provinceOverlay_establishEmbassyAction => 'Establish Embassy';
+
+  @override
+  String get provinceOverlay_cancelEstablishEmbassyAction => 'Cancel';
+
+  @override
+  String provinceOverlay_establishEmbassyDisabledSemantics(String reason) {
+    return 'Establish Embassy unavailable: $reason';
+  }
 }

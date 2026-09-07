@@ -84,6 +84,18 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     game,
     establishConsulateState.ownerId,
   );
+  final establishEmbassyState =
+      GameMapAreaStateLogicProvinceActions.provinceEstablishEmbassyActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        provinceId: displayId,
+        topology: mapData?.combinedTopology,
+        currentOrders: draftOrders,
+      );
+  final establishEmbassyTargetName = resolveProvinceDetailFactionDisplayName(
+    game,
+    establishEmbassyState.ownerId,
+  );
   final isSeaZone = isProvinceSeaZoneOverlaySeaZone(region, displayId);
   final offerPeaceState =
       GameMapAreaStateLogicProvinceActions.provinceOfferPeaceActionState(
@@ -123,6 +135,10 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     establishConsulatePending: establishConsulateState.pending,
     establishConsulateOrder: establishConsulateState.order,
     establishConsulateTargetName: establishConsulateTargetName,
+    establishEmbassyEnabled: establishEmbassyState.enabled,
+    establishEmbassyPending: establishEmbassyState.pending,
+    establishEmbassyOrder: establishEmbassyState.order,
+    establishEmbassyTargetName: establishEmbassyTargetName,
     isSeaZone: isSeaZone,
     offerPeaceEnabled: offerPeaceState.offerPeaceEnabled,
     offerPeacePending: offerPeaceState.offerPeacePending,
@@ -225,6 +241,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     stationSpy: stationSpy,
     counterEspionage: counterEspionage,
     establishConsulateState: establishConsulateState,
+    establishEmbassyState: establishEmbassyState,
     offerPeaceState: offerPeaceState,
   );
 }

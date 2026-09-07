@@ -231,6 +231,7 @@ part 'catalog_panel_map_transfer_home_stories.dart';
 part 'catalog_panel_map_station_spy_stories.dart';
 part 'catalog_panel_map_counter_espionage_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
+part 'catalog_panel_map_establish_embassy_stories.dart';
 part 'catalog_panel_map_owner_standing_stories.dart';
 part 'catalog_panel_map_political_sight_stories.dart';
 part 'catalog_panel_map_stories.dart';

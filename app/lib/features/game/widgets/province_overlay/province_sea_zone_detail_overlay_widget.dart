@@ -1,6 +1,5 @@
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/constants.dart';
@@ -21,9 +20,8 @@ import '../../flame/map_state/province_naval_mission_action_state.dart'
 import '../../flame/map_state/province_overlay_sail_move_overlay_controls.dart'
     show ProvinceOverlaySailMoveOverlayControls;
 import 'province_sea_zone_detail_overlay_chrome.dart';
-import 'province_sea_zone_detail_overlay_province_content.dart';
-import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_widget_content.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show ProvinceImprovableCommodityCount;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
@@ -64,7 +62,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onCombineArmiesTap,
     this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
     this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
-    this.transferToHomeFleet = ProvinceTransferToHomeFleetOverlayControls.hidden,
+    this.transferToHomeFleet =
+        ProvinceTransferToHomeFleetOverlayControls.hidden,
     this.navalCombine = ProvinceNavalCombineOverlayControls.hidden,
     this.sailMove = ProvinceOverlaySailMoveOverlayControls.hidden,
     this.blockadeStatus = ProvinceBlockadeStatus.none,
@@ -75,6 +74,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.establishConsulatePending = false,
     this.establishConsulateRejectionReason,
     this.onEstablishConsulateTap,
+    this.showEstablishEmbassyControl = false,
+    this.establishEmbassyEnabled = false,
+    this.establishEmbassyPending = false,
+    this.establishEmbassyRejectionReason,
+    this.onEstablishEmbassyTap,
     this.showOwnerStanding = false,
     this.ownerStandingAtWar = false,
     this.showOwnerAllianceBadge = false,
@@ -133,6 +137,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool establishConsulatePending;
   final String? establishConsulateRejectionReason;
   final VoidCallback? onEstablishConsulateTap;
+  final bool showEstablishEmbassyControl;
+  final bool establishEmbassyEnabled;
+  final bool establishEmbassyPending;
+  final String? establishEmbassyRejectionReason;
+  final VoidCallback? onEstablishEmbassyTap;
   final bool showOwnerStanding;
   final bool ownerStandingAtWar;
   final bool showOwnerAllianceBadge;
@@ -154,87 +163,6 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) =>
           buildResponsivePanel(context, constraints, isNarrow, content),
-    );
-  }
-
-  OverlayContent resolveOverlayContent(
-    BuildContext context, {
-    required bool isNarrow,
-  }) {
-    final l10n = appL10n(context);
-    if (isProvinceSeaZoneOverlaySeaZone(region, displayId)) {
-      return seaZoneContent(
-        l10n: l10n,
-        game: game,
-        region: region,
-        seaZoneId: displayId,
-        humanPlayerId: humanPlayerId,
-        draftOrders: draftOrders,
-        selectedTileKey: selectedTileKey,
-        navalMission: navalMission,
-        transferToHomeFleet: transferToHomeFleet,
-        navalCombine: navalCombine,
-        sailMove: sailMove,
-      );
-    }
-    return provinceContent(
-      context: context,
-      l10n: l10n,
-      game: game,
-      region: region,
-      provinceId: displayId,
-      humanPlayerId: humanPlayerId,
-      playerView: playerView,
-      draftOrders: draftOrders,
-      selectedTileKey: selectedTileKey,
-      onHighlightTile: onHighlightTile,
-      civilianInlineActions: civilianInlineActions,
-      inlineActionCallbacks: inlineActionCallbacks,
-      showUpgradeTownControl: showUpgradeTownControl,
-      upgradeTownEnabled: upgradeTownEnabled,
-      upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,
-      upgradeTownTargetTileKey: upgradeTownTargetTileKey,
-      onUpgradeTownTap: onUpgradeTownTap,
-      showMoveArmyControl: showMoveArmyControl,
-      moveArmyEnabled: moveArmyEnabled,
-      moveArmyTooltip: moveArmyTooltip,
-      onMoveArmyTap: onMoveArmyTap,
-      showInvadeArmyControl: showInvadeArmyControl,
-      invadeArmyEnabled: invadeArmyEnabled,
-      invadeArmyTooltip: invadeArmyTooltip,
-      onInvadeArmyTap: onInvadeArmyTap,
-      showCombineArmiesControl: showCombineArmiesControl,
-      combineArmiesEnabled: combineArmiesEnabled,
-      combineArmiesTooltip: combineArmiesTooltip,
-      onCombineArmiesTap: onCombineArmiesTap,
-      navalMission: navalMission,
-      detachAndSail: detachAndSail,
-      transferToHomeFleet: transferToHomeFleet,
-      navalCombine: navalCombine,
-      sailMove: sailMove,
-      blockadeStatus: blockadeStatus,
-      stationSpy: stationSpy,
-      counterEspionage: counterEspionage,
-      showEstablishConsulateControl: showEstablishConsulateControl,
-      establishConsulateEnabled: establishConsulateEnabled,
-      establishConsulatePending: establishConsulatePending,
-      establishConsulateRejectionReason: establishConsulateRejectionReason,
-      onEstablishConsulateTap: onEstablishConsulateTap,
-      showOwnerStanding: showOwnerStanding,
-      ownerStandingAtWar: ownerStandingAtWar,
-      showOwnerAllianceBadge: showOwnerAllianceBadge,
-      showOfferPeaceControl: showOfferPeaceControl,
-      offerPeaceEnabled: offerPeaceEnabled,
-      offerPeacePending: offerPeacePending,
-      offerPeaceRejectionReason: offerPeaceRejectionReason,
-      onOfferPeaceTap: onOfferPeaceTap,
-      isNarrow: isNarrow,
-      omniscientDetail: omniscientDetail,
-      townProductionBonusByCommodity: townProductionBonusByCommodity,
-      extractionSnapshot: extractionSnapshot,
-      availableByCommodity: availableByCommodity,
-      tileConnectivity: tileConnectivity,
-      onHighlightTiles: onHighlightTiles,
     );
   }
 }

@@ -4047,6 +4047,23 @@
       }
     }
   },
+  "provinceOverlay_establishEmbassyAction": "Establish Embassy",
+  "@provinceOverlay_establishEmbassyAction": {
+    "description": "Political shortcut label for staging an Embassy overture after Consulate (Refs #4739)."
+  },
+  "provinceOverlay_cancelEstablishEmbassyAction": "Cancel",
+  "@provinceOverlay_cancelEstablishEmbassyAction": {
+    "description": "Political shortcut label when an Embassy overture is already pending (Refs #4739)."
+  },
+  "provinceOverlay_establishEmbassyDisabledSemantics": "Establish Embassy unavailable: {reason}",
+  "@provinceOverlay_establishEmbassyDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Establish Embassy shortcut (Refs #4739).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_ownerStandingAtWar": "At war",
   "@provinceOverlay_ownerStandingAtWar": {
     "description": "MAP20001 Political standing line when human is at war with the province owner (Refs #4479)."
@@ -7639,6 +7656,10 @@
       "good": { "type": "String" },
       "court": { "type": "String" }
     }
+  },
+  "provinceOverlay_tilePurchaseLandDisabledEmbassyNarrowTooltip": "Embassy required with this Minor or Tribe. Use Establish Embassy on Political.",
+  "@provinceOverlay_tilePurchaseLandDisabledEmbassyNarrowTooltip": {
+    "description": "Narrow MAP20001/MAP30001 tooltip directing players from embassy-gated Purchase land to Political Establish Embassy (Refs #4739)."
   },
   "tileRadial_upgradeTown": "Upgrade town",
   "@tileRadial_upgradeTown": {

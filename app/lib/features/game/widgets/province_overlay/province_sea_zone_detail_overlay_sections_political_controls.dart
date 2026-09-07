@@ -110,3 +110,43 @@ List<Widget> buildEstablishConsulateControl({
     ),
   ];
 }
+
+List<Widget> buildEstablishEmbassyControl({
+  required AppLocalizations l10n,
+  required bool enabled,
+  required bool pending,
+  required String? rejectionReason,
+  required VoidCallback? onTap,
+  required bool isNarrow,
+  required TextStyle bodyStyle,
+}) {
+  final label = pending
+      ? l10n.provinceOverlay_cancelEstablishEmbassyAction
+      : l10n.provinceOverlay_establishEmbassyAction;
+  final tooltip = enabled || rejectionReason == null ? label : rejectionReason;
+  return [
+    Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          CtActionTextButton(
+            label: label,
+            tooltip: tooltip,
+            semanticLabel: !enabled && rejectionReason != null
+                ? l10n.provinceOverlay_establishEmbassyDisabledSemantics(
+                    rejectionReason,
+                  )
+                : label,
+            enabled: enabled,
+            onPressed: enabled ? onTap : null,
+          ),
+          if (isNarrow && !enabled && rejectionReason != null)
+            Text(rejectionReason, style: bodyStyle),
+        ],
+      ),
+    ),
+  ];
+}

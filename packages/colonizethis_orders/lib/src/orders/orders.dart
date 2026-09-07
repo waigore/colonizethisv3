@@ -9,6 +9,7 @@ export 'civilian_work_affordance.dart';
 // the order-engine submission gate (single source of truth).
 export 'diplomatic_access_helpers.dart'
     show
+        embassyShortcutAppliesToMinorTribeProvince,
         explorerConsulateGateBlocksMinorTribeProvince,
         kReasonConsulateRequiredForExplore;
 export 'development_panel_assign.dart';

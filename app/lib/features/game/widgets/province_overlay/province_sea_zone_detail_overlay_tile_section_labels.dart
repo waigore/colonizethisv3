@@ -13,6 +13,8 @@ import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../config/constants.dart' show kNarrowBreakpoint;
+
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_tokens.dart';
@@ -55,6 +57,7 @@ Widget buildTileResourceLabelRow({
     provinceId: provinceId,
     enabled: purchaseLandAction.enabled,
     hasMatchingUnits: purchaseLandAction.hasMatchingUnits,
+    isNarrow: MediaQuery.sizeOf(context).width < kNarrowBreakpoint,
   );
   final payoff = purchaseLandPayoffCopyForTile(
     l10n: l10n,

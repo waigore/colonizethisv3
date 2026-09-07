@@ -825,6 +825,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Embassy required with this Minor or Tribe';
 
   @override
+  String get provinceOverlay_tilePurchaseLandDisabledEmbassyNarrowTooltip =>
+      'Embassy required with this Minor or Tribe. '
+      'Use Establish Embassy on Political.';
+
+  @override
   String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount) {
     return 'Short: treasury ×$amount';
   }

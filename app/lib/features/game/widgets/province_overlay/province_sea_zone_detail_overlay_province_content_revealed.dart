@@ -17,22 +17,14 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mi
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'province_overlay_unit_partition.dart';
-import 'province_sea_zone_detail_overlay_province_content_intel.dart';
+import 'province_sea_zone_detail_overlay_province_content_revealed_context.dart';
 import 'province_sea_zone_detail_overlay_province_content_revealed_political.dart';
 import 'province_sea_zone_detail_overlay_province_content_revealed_tabs.dart';
-import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show ProvinceImprovableCommodityCount;
-import 'package:colonizethis_world/colonizethis_world.dart'
-    show
-        PlayerView,
-        fleetsInPortAtProvince,
-        kRegionNewWorld,
-        provincePanelShowsFullTileDerivedIntel;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 OverlayContent provinceContentRevealed({
   required BuildContext context,
@@ -77,6 +69,11 @@ OverlayContent provinceContentRevealed({
   required bool establishConsulatePending,
   required String? establishConsulateRejectionReason,
   VoidCallback? onEstablishConsulateTap,
+  bool showEstablishEmbassyControl = false,
+  bool establishEmbassyEnabled = false,
+  bool establishEmbassyPending = false,
+  String? establishEmbassyRejectionReason,
+  VoidCallback? onEstablishEmbassyTap,
   required bool showOwnerStanding,
   required bool ownerStandingAtWar,
   required bool showOwnerAllianceBadge,
@@ -93,42 +90,13 @@ OverlayContent provinceContentRevealed({
   void Function(Iterable<String>?)? onHighlightTiles,
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
-  final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
-  final province = findProvinceForSeaZoneOverlay(game, provinceId);
-  final regionData = provinceId.startsWith(kRegionNewWorld)
-      ? game.worldState.newWorld
-      : game.worldState.oldWorld;
-  final partitioned = partitionProvinceOverlayUnits(
-    regionUnits: regionData.units,
-    provinceId: provinceId,
-    humanPlayerId: humanPlayerId,
-    playerView: playerView,
-  );
-  final military = partitioned.military;
-  final civilian = partitioned.civilian;
-  final visibleCivilianCount = partitioned.visibleCivilianCount;
-  final fleetsInPort = fleetsInPortAtProvince(game.worldState, provinceId);
-  final tileKeys =
-      game.worldState.tileKeysByRegionAndProvince[region
-          .regionId]?[provinceId] ??
-      [];
-  final showsFullIntel =
-      omniscientDetail ||
-      provincePanelShowsFullTileDerivedIntel(
-        game: game,
-        view: playerView,
-        humanPlayerId: humanPlayerId,
-        provinceId: provinceId,
-        provinceTileKeys: tileKeys,
-      );
-  final tileIntel = aggregateProvinceTileIntel(
+  final revealed = resolveRevealedProvinceOverlayContext(
     l10n: l10n,
     game: game,
     region: region,
     provinceId: provinceId,
     humanPlayerId: humanPlayerId,
     playerView: playerView,
-    tileKeys: tileKeys,
     omniscientDetail: omniscientDetail,
   );
   final tileSection = buildTileSection(
@@ -139,7 +107,7 @@ OverlayContent provinceContentRevealed({
     provinceId: provinceId,
     humanPlayerId: humanPlayerId,
     playerView: playerView,
-    civilianCount: visibleCivilianCount,
+    civilianCount: revealed.visibleCivilianCount,
     selectedTileKey: selectedTileKey,
     civilianInlineActions: civilianInlineActions,
     inlineActionCallbacks: inlineActionCallbacks,
@@ -152,10 +120,10 @@ OverlayContent provinceContentRevealed({
     game: game,
     region: region,
     provinceId: provinceId,
-    regionId: regionId,
+    regionId: revealed.regionId,
     humanPlayerId: humanPlayerId,
     draftOrders: draftOrders,
-    province: province,
+    province: revealed.province,
     selectedTileKey: selectedTileKey,
     showUpgradeTownControl: showUpgradeTownControl,
     upgradeTownEnabled: upgradeTownEnabled,
@@ -167,6 +135,11 @@ OverlayContent provinceContentRevealed({
     establishConsulatePending: establishConsulatePending,
     establishConsulateRejectionReason: establishConsulateRejectionReason,
     onEstablishConsulateTap: onEstablishConsulateTap,
+    showEstablishEmbassyControl: showEstablishEmbassyControl,
+    establishEmbassyEnabled: establishEmbassyEnabled,
+    establishEmbassyPending: establishEmbassyPending,
+    establishEmbassyRejectionReason: establishEmbassyRejectionReason,
+    onEstablishEmbassyTap: onEstablishEmbassyTap,
     showOwnerStanding: showOwnerStanding,
     ownerStandingAtWar: ownerStandingAtWar,
     showOwnerAllianceBadge: showOwnerAllianceBadge,
@@ -180,15 +153,15 @@ OverlayContent provinceContentRevealed({
   return assembleRevealedProvinceUnitTabContent(
     l10n: l10n,
     game: game,
-    showsFullIntel: showsFullIntel,
+    showsFullIntel: revealed.showsFullIntel,
     humanPlayerId: humanPlayerId,
     provinceId: provinceId,
     draftOrders: draftOrders,
     playerView: playerView,
-    military: military,
-    civilian: civilian,
-    fleetsInPort: fleetsInPort,
-    fortLevel: province?.fortLevel ?? 0,
+    military: revealed.military,
+    civilian: revealed.civilian,
+    fleetsInPort: revealed.fleetsInPort,
+    fortLevel: revealed.province?.fortLevel ?? 0,
     buildFortAction: civilianInlineActions.buildFort,
     onBuildFortTap: inlineActionCallbacks.onBuildFortTap,
     showMoveArmyControl: showMoveArmyControl,
@@ -211,15 +184,15 @@ OverlayContent provinceContentRevealed({
     blockadeStatus: blockadeStatus,
     stationSpy: stationSpy,
     counterEspionage: counterEspionage,
-    provinceDisplayName: province?.displayName,
+    provinceDisplayName: revealed.province?.displayName,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
     extractionSnapshot: extractionSnapshot,
     availableByCommodity: availableByCommodity,
     townProductionBonusByCommodity: townProductionBonusByCommodity,
-    byResImproved: tileIntel.byResImproved,
-    byResImprovable: tileIntel.byResImprovable,
-    resourceKeysSorted: tileIntel.resourceKeysSorted,
+    byResImproved: revealed.tileIntel.byResImproved,
+    byResImprovable: revealed.tileIntel.byResImprovable,
+    resourceKeysSorted: revealed.tileIntel.resourceKeysSorted,
     selectedTileKey: selectedTileKey,
     political: () => political,
     tileSection: () => tileSection,

@@ -2620,6 +2620,9 @@ abstract class AppLocalizations {
   /// Disabled purchase-land shortcut when embassy is missing or at war.
   String get provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip;
 
+  /// Narrow disabled purchase-land tooltip pointing to Political Embassy.
+  String get provinceOverlay_tilePurchaseLandDisabledEmbassyNarrowTooltip;
+
   /// Disabled purchase-land shortcut when treasury shortfall is primary.
   String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount);
 
@@ -2817,6 +2820,15 @@ abstract class AppLocalizations {
 
   /// Accessible disabled label including the canonical validator reason.
   String provinceOverlay_establishConsulateDisabledSemantics(String reason);
+
+  /// Political shortcut that stages an Embassy overture. Refs #4739.
+  String get provinceOverlay_establishEmbassyAction;
+
+  /// Political shortcut label while that Embassy overture is pending.
+  String get provinceOverlay_cancelEstablishEmbassyAction;
+
+  /// Accessible disabled label including the canonical validator reason.
+  String provinceOverlay_establishEmbassyDisabledSemantics(String reason);
 
   /// Political standing when at war with the province owner. Refs #4479.
   String get provinceOverlay_ownerStandingAtWar;

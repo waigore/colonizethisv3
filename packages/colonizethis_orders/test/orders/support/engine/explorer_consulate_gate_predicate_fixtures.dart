@@ -5,7 +5,10 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 
 const ecgPlayerId = 'gp1';
 
-Game ecgGameWith({List<OvertureState> overtures = const []}) {
+Game ecgGameWith({
+  List<OvertureState> overtures = const [],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+}) {
   return TestFixtures.minimalGame(
     id: 'g1',
     players: const [
@@ -14,5 +17,6 @@ Game ecgGameWith({List<OvertureState> overtures = const []}) {
     ],
     tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe One')],
     overtureStates: overtures,
+    diplomacyRelations: diplomacyRelations,
   );
 }

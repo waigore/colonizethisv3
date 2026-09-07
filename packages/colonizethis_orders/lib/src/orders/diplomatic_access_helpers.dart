@@ -42,11 +42,7 @@ bool civilianEmbassyWorkAllowedInMinorTribeProvince({
 ///
 /// Shared by civilian embassy-work eligibility, town-tile candidacy for
 /// Minor/Tribe upgrade_town, and validator rejection helpers (Refs #3971).
-bool hasPeaceTimeEmbassy(
-  Game game,
-  String playerId,
-  String otherFactionId,
-) {
+bool hasPeaceTimeEmbassy(Game game, String playerId, String otherFactionId) {
   final rel = getRelation(game, playerId, otherFactionId);
   if (rel?.atWar == true) return false;
   final overture = getOverture(game, playerId, otherFactionId);
@@ -104,6 +100,34 @@ bool explorerConsulateGateBlocksMinorTribeProvince({
   }
   final overture = getOverture(game, playerId, provinceOwnerId);
   return overture == null || !overture.hasConsulate;
+}
+
+/// True when MAP20001 Political should offer **Establish Embassy** toward
+/// [provinceOwnerId]: the owner is a Minor/Tribe, [playerId] holds Consulate
+/// but not Embassy (or higher), and the pair is not at war (Refs #4739).
+bool embassyShortcutAppliesToMinorTribeProvince({
+  required Game game,
+  required String playerId,
+  required String? provinceOwnerId,
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  if (provinceOwnerId == null ||
+      provinceOwnerId.isEmpty ||
+      provinceOwnerId == playerId) {
+    return false;
+  }
+  if (!isMinorOrTribe(
+    game,
+    provinceOwnerId,
+    factionMembership: factionMembership,
+  )) {
+    return false;
+  }
+  final rel = getRelation(game, playerId, provinceOwnerId);
+  if (rel?.atWar == true) return false;
+  final overture = getOverture(game, playerId, provinceOwnerId);
+  if (overture == null || !overture.hasConsulate) return false;
+  return !overture.hasEmbassy;
 }
 
 /// Refs #3753 R4/S4a: an Explorer `explore`/`prospect` work order inside a
