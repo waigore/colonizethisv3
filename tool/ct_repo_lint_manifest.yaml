@@ -936,6 +936,13 @@ rules:
     runner: dart
     script: tool/check_turn_test_support_loc.dart
 
+  - rule_id: repo.turn_test_support_file_size
+    group: testing
+    title: colonizethis_turn test/support files must stay at or below 250 physical lines (Refs #4740)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_support_file_size.dart
+
   - rule_id: repo.turn_test_support_region_literals
     group: testing
     title: colonizethis_turn test/support must not hard-code bare oldWorld/newWorld literals (Refs #4168)
@@ -952,7 +959,7 @@ rules:
 
   - rule_id: repo.turn_test_file_size
     group: testing
-    title: colonizethis_turn non-support test files must stay at or below the wave-8 300 physical-line ceiling (Refs #4113, #4583)
+    title: colonizethis_turn non-support test files must stay at or below the wave-9 250 physical-line ceiling (Refs #4113, #4583, #4740)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_test_file_size.dart

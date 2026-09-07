@@ -1,8 +1,9 @@
-// Physical line limit for colonizethis_turn non-support tests (repo rule:
-// `repo.turn_test_file_size`).
+// Physical line ratchet for colonizethis_turn test/support
+// (repo rule: `repo.turn_test_support_file_size`).
 //
-// Wave 4 (#4113): peer-aligned 400 physical-line ceiling for root test suites;
-// `test/support/` is governed separately by `repo.turn_test_support_loc`.
+// Wave 9 (#4740) splits remaining kitchen-sink support hosts so every support
+// file stays at or below 250 physical lines. Distinct from the tree-total
+// `repo.turn_test_support_loc` gate and from non-support `repo.turn_test_file_size`.
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,46 +11,41 @@ import 'package:path/path.dart' as p;
 
 import 'check_turn_test_support_loc.dart';
 
-/// Ratchet ceiling for wave-9 densify of non-support test files (≤250).
-/// Wave 4 landed 400 (Refs #4113); wave 8 tightens to 300 (Refs #4583);
-/// wave 9 tightens to 250 (Refs #4740).
-const int turnTestFileSizeCeiling = 250;
+/// Wave-9 support per-file ceiling (Refs #4740).
+const int turnTestSupportFileSizeCeiling = 250;
 
-const String _turnTestsRelativePath = 'packages/colonizethis_turn/test';
+final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
-int runCheckTurnTestFileSize(
+int runCheckTurnTestSupportFileSize(
   String repoRoot, {
   Iterable<String>? targetFiles,
   void Function(String line)? info,
   void Function(String line)? err,
-  int ceiling = turnTestFileSizeCeiling,
+  int ceiling = turnTestSupportFileSizeCeiling,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final turnTestsDir = Directory(p.join(repoRoot, _turnTestsRelativePath));
-  if (!turnTestsDir.existsSync()) {
+  final supportDir = Directory(p.join(repoRoot, turnTestSupportRelativeDir));
+  if (!supportDir.existsSync()) {
     logE(
-      'check_turn_test_file_size: packages/colonizethis_turn/test not found.',
+      'check_turn_test_support_file_size: '
+      '$turnTestSupportRelativeDir not found.',
     );
     return 1;
   }
 
-  final supportPrefix = '${turnTestSupportRelativeDir.replaceAll(r'\', '/')}/';
-
   final violations = <String>[];
   for (final filePath in _collectFilesToCheck(
     repoRoot,
-    turnTestsDir,
+    supportDir,
     targetFiles,
   )) {
+    final file = File(filePath);
     final relativePath = p
-        .relative(filePath, from: repoRoot)
+        .relative(file.path, from: repoRoot)
         .replaceAll('\\', '/');
-    if (relativePath.startsWith(supportPrefix)) {
-      continue;
-    }
     final physicalLines = const LineSplitter()
-        .convert(File(filePath).readAsStringSync())
+        .convert(file.readAsStringSync())
         .length;
     if (physicalLines <= ceiling) {
       continue;
@@ -59,16 +55,17 @@ int runCheckTurnTestFileSize(
 
   if (violations.isEmpty) {
     logI(
-      'check_turn_test_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4113, #4583, #4740).',
+      'check_turn_test_support_file_size: no violations found '
+      '(ceiling $ceiling; Refs #4740).',
     );
     return 0;
   }
 
   violations.sort();
   logE(
-    'check_turn_test_file_size: found ${violations.length} violation(s) '
-    'under $_turnTestsRelativePath (wave-9 ceiling $ceiling; Refs #4113, #4583, #4740):',
+    'check_turn_test_support_file_size: found ${violations.length} '
+    'violation(s) under $turnTestSupportRelativeDir '
+    '(ceiling $ceiling; Refs #4740):',
   );
   for (final violation in violations) {
     logE(' - $violation');
@@ -78,23 +75,25 @@ int runCheckTurnTestFileSize(
 
 List<String> _collectFilesToCheck(
   String repoRoot,
-  Directory turnTestsDir,
+  Directory supportDir,
   Iterable<String>? targetFiles,
 ) {
   if (targetFiles == null) {
-    return turnTestsDir
+    return supportDir
         .listSync(recursive: true, followLinks: false)
         .whereType<File>()
         .map((file) => file.path)
         .where((path) => path.endsWith('.dart'))
+        .where((path) => !_generatedSuffix.hasMatch(path))
         .toList(growable: false);
   }
 
   final results = <String>[];
   for (final relativePath in targetFiles) {
     final normalized = relativePath.replaceAll('\\', '/');
-    if (!normalized.startsWith('$_turnTestsRelativePath/') ||
-        !normalized.endsWith('.dart')) {
+    if (!normalized.startsWith('$turnTestSupportRelativeDir/') ||
+        !normalized.endsWith('.dart') ||
+        _generatedSuffix.hasMatch(normalized)) {
       continue;
     }
     final file = File(p.join(repoRoot, normalized));
@@ -108,7 +107,7 @@ List<String> _collectFilesToCheck(
 
 void main(List<String> args) {
   exit(
-    runCheckTurnTestFileSize(
+    runCheckTurnTestSupportFileSize(
       Directory.current.path,
       targetFiles: args.isEmpty ? null : args,
     ),

@@ -17,7 +17,8 @@ const String turnTestSupportRelativeDir =
 /// Post-#4039 densify support-tree ceiling (physical LOC) with headroom.
 /// Wave 4 (#4113) **5800**; wave 5 slice A (#4168) **5675**; wave 6 (#4252)
 /// **5700** (shrink-only net; world-market row factories add support LOC).
-const int turnTestSupportLocCeiling = 5700;
+/// Wave 9 (#4740) **5600** after kitchen-sink splits (measured 5508).
+const int turnTestSupportLocCeiling = 5600;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countTurnTestSupportPhysicalLoc(Directory dir) {

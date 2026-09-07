@@ -3,7 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-import 'world_market_test_support.dart';
+import 'world_market_phase_games.dart';
+import 'world_market_phase_runners.dart';
 
 const boycottColonyTradeTribeId = 'tribeT';
 
@@ -92,7 +93,9 @@ Game boycottColonyTradeGame({required bool boycottActive}) {
         stockpile: Stockpile.empty,
       ),
     ],
-    tribes: const [Tribe(id: boycottColonyTradeTribeId, displayName: 'Tribe T')],
+    tribes: const [
+      Tribe(id: boycottColonyTradeTribeId, displayName: 'Tribe T'),
+    ],
   ).copyWith(
     colonyStates: const [
       ColonyState(
@@ -186,13 +189,13 @@ Game sellPriorityGpSellerUnaffectedGame() {
 
 /// Tribe timber offer for boycott colony-trade scenarios.
 List<TradeOrder> tribeTimberOffer(int quantity) => [
-      TradeOrder(
-        commodityId: 'timber',
-        type: TradeOrderType.offer,
-        quantity: quantity,
-        priority: 1,
-      ),
-    ];
+  TradeOrder(
+    commodityId: 'timber',
+    type: TradeOrderType.offer,
+    quantity: quantity,
+    priority: 1,
+  ),
+];
 
 /// Runs world-market phase with trade orders keyed by faction id.
 Game runWorldMarketTradePhase({
@@ -200,10 +203,9 @@ Game runWorldMarketTradePhase({
   required Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
   MapTopology topology = kEmptyTopology,
   int turnNumber = 3,
-}) =>
-    runWorldMarketPhase(
-      game: game,
-      orders: Orders(tradeOrdersByPlayerId: tradeOrdersByPlayerId),
-      topology: topology,
-      turnNumber: turnNumber,
-    );
+}) => runWorldMarketPhase(
+  game: game,
+  orders: Orders(tradeOrdersByPlayerId: tradeOrdersByPlayerId),
+  topology: topology,
+  turnNumber: turnNumber,
+);
