@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_projections_cases.dart';
+import 'order_projections_economy_cases.dart';
 
 void main() {
   group('projectOrderEffects', () {

@@ -14,14 +14,14 @@ void _writeFile(Directory root, String relative, String source) {
 void main() {
   group('runCheckTurnTestFileSize', () {
     test(
-      'passes on current repo tree under wave-8 300 physical-line ceiling',
+      'passes on current repo tree under wave-9 250 physical-line ceiling',
       () {
         expect(runCheckTurnTestFileSize('.'), 0);
       },
     );
 
-    test('ceiling is 300 after #4583 Slice C ratchet', () {
-      expect(turnTestFileSizeCeiling, 300);
+    test('ceiling is 250 after #4740 Slice D ratchet', () {
+      expect(turnTestFileSizeCeiling, 250);
     });
 
     test('ignores test/support paths governed by support LOC gate', () {

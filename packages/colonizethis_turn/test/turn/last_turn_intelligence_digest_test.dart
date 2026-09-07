@@ -1,10 +1,9 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_turn/colonizethis_turn.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../support/turn_news_digest_test_support.dart';
+import 'last_turn_intelligence_digest_alliance_combat_cases.dart';
 import 'last_turn_intelligence_digest_test_cases.dart';
 
 void main() {
@@ -85,6 +84,7 @@ void main() {
     );
 
     registerLastTurnIntelSpyCases();
+    registerLastTurnIntelAllianceCombatCases();
 
     test('Given new digest When persist Then previous digest replaced', () {
       final start = turnNewsMinimalGame(turn: 2).copyWith(
