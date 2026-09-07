@@ -12,11 +12,6 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
-  String provinceOverlay_establishEmbassyDisabledSemantics(String reason) {
-    return 'Establish Embassy unavailable: $reason';
-  }
-
-  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }

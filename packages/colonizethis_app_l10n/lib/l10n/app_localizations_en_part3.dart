@@ -996,10 +996,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_cancelEstablishConsulateAction => 'Cancel';
-
-  @override
-  String get provinceOverlay_establishEmbassyAction => 'Establish Embassy';
-
-  @override
-  String get provinceOverlay_cancelEstablishEmbassyAction => 'Cancel';
 }
