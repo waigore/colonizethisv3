@@ -6,6 +6,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 
 import '../map_state/game_map_area_province_action_states_establish_consulate.dart';
+import '../map_state/game_map_area_province_action_states_establish_embassy.dart';
 import '../map_state/game_map_area_province_action_states_offer_peace.dart';
 import '../map_state/province_action_state_calculator.dart';
 import '../map_state/province_detach_and_sail_overlay_controls.dart';
@@ -56,6 +57,7 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
   required ProvinceOverlayStationSpyProps stationSpy,
   required ProvinceOverlayCounterEspionageProps counterEspionage,
   required ProvinceEstablishConsulateActionState establishConsulateState,
+  required ProvinceEstablishEmbassyActionState establishEmbassyState,
   required ProvinceOwnerStandingOfferPeaceState offerPeaceState,
 }) {
   return ProvinceSeaZoneDetailOverlay(
@@ -118,6 +120,12 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
     establishConsulatePending: establishConsulateState.pending,
     establishConsulateRejectionReason: establishConsulateState.rejectionReason,
     onEstablishConsulateTap: shortcuts.onEstablishConsulateTap,
+    showEstablishEmbassyControl:
+        canMutateViaUi && establishEmbassyState.showControl,
+    establishEmbassyEnabled: canMutateViaUi && establishEmbassyState.enabled,
+    establishEmbassyPending: establishEmbassyState.pending,
+    establishEmbassyRejectionReason: establishEmbassyState.rejectionReason,
+    onEstablishEmbassyTap: shortcuts.onEstablishEmbassyTap,
     showOwnerStanding: offerPeaceState.showStanding,
     ownerStandingAtWar: offerPeaceState.atWar,
     showOwnerAllianceBadge: offerPeaceState.showAllianceBadge,

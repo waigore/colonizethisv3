@@ -92,6 +92,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
       ...provinceOverlayStationSpyUseCases,
       ...provinceOverlayCounterEspionageUseCases,
       ...provinceOverlayEstablishConsulateUseCases,
+      ...provinceOverlayEstablishEmbassyUseCases,
       ...provinceOverlayOwnerStandingUseCases,
       ...provinceOverlayPoliticalSightUseCases,
       WidgetbookUseCase(

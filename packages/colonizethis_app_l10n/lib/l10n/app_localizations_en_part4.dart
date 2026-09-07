@@ -12,6 +12,11 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_establishEmbassyDisabledSemantics(String reason) {
+    return 'Establish Embassy unavailable: $reason';
+  }
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }
@@ -474,7 +479,9 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
-  String production_recipeAffordanceCannotRunShortOfCommodity(String commodity) {
+  String production_recipeAffordanceCannotRunShortOfCommodity(
+    String commodity,
+  ) {
     return 'Cannot run — short of $commodity';
   }
 

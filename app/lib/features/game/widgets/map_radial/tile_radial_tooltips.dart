@@ -74,6 +74,7 @@ String tileRadialActionTooltip({
         provinceId: provinceId,
         enabled: enabled,
         hasMatchingUnits: hasMatchingUnits,
+        isNarrow: MediaQuery.sizeOf(context).width < kNarrowBreakpoint,
       );
     case TileRadialCatalogAction.upgradeTown:
       return provinceOverlayPoliticalUpgradeTownTooltip(

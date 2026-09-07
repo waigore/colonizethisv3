@@ -148,7 +148,8 @@ const _packageName = 'colonizethis_app';
 // raised for GAME80001 feedstock deep-link from Production/Counsel (Refs #4725; measured 96_324).
 // raised for Explore province-reveal and duration gist before assign (Refs #4733; measured 96_545).
 // raised for MAP20001 Naval Sail/Move occupying fleets (Refs #4735; measured 96_872).
-const _maxMainLines = 96950;
+// raised for MAP20001 Political Establish Embassy shortcut (Refs #4739; measured 97_204).
+const _maxMainLines = 97450;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

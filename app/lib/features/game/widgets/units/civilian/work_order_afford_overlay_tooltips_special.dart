@@ -20,6 +20,7 @@ String provinceOverlayPurchaseLandTooltip({
   required String provinceId,
   required bool enabled,
   required bool hasMatchingUnits,
+  bool isNarrow = false,
 }) {
   if (!hasMatchingUnits) {
     return l10n.provinceOverlay_tilePurchaseLandDisabledNoMerchantTooltip;
@@ -31,7 +32,9 @@ String provinceOverlayPurchaseLandTooltip({
     final overture = getOverture(game, humanPlayerId, ownerId);
     if (!enabled &&
         (rel?.atWar == true || overture == null || !overture.hasEmbassy)) {
-      return l10n.provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip;
+      return isNarrow
+          ? l10n.provinceOverlay_tilePurchaseLandDisabledEmbassyNarrowTooltip
+          : l10n.provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip;
     }
   }
   final preview = previewWorkOrderAffordAtTile(

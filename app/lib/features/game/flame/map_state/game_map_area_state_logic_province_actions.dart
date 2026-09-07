@@ -7,6 +7,7 @@ import 'game_map_area_province_action_states.dart';
 import 'game_map_area_province_action_states_assignable.dart'
     show ProvinceInlineActionState;
 import 'game_map_area_province_action_states_establish_consulate.dart';
+import 'game_map_area_province_action_states_establish_embassy.dart';
 import 'game_map_area_province_action_states_offer_peace.dart';
 import 'game_map_area_province_action_states_upgrade_town.dart';
 import 'game_map_area_state_logic_province_actions_build.dart';
@@ -127,6 +128,21 @@ abstract final class GameMapAreaStateLogicProvinceActions {
     required MapTopology? topology,
     required ct_models.Orders currentOrders,
   }) => GameMapAreaProvinceActionStatesEstablishConsulate.compute(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    topology: topology,
+    currentOrders: currentOrders,
+  );
+
+  static ProvinceEstablishEmbassyActionState
+  provinceEstablishEmbassyActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String provinceId,
+    required MapTopology? topology,
+    required ct_models.Orders currentOrders,
+  }) => GameMapAreaProvinceActionStatesEstablishEmbassy.compute(
     game: game,
     humanPlayerId: humanPlayerId,
     provinceId: provinceId,

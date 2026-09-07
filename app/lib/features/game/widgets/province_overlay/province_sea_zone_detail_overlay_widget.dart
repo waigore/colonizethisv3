@@ -64,7 +64,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onCombineArmiesTap,
     this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
     this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
-    this.transferToHomeFleet = ProvinceTransferToHomeFleetOverlayControls.hidden,
+    this.transferToHomeFleet =
+        ProvinceTransferToHomeFleetOverlayControls.hidden,
     this.navalCombine = ProvinceNavalCombineOverlayControls.hidden,
     this.sailMove = ProvinceOverlaySailMoveOverlayControls.hidden,
     this.blockadeStatus = ProvinceBlockadeStatus.none,
@@ -75,6 +76,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.establishConsulatePending = false,
     this.establishConsulateRejectionReason,
     this.onEstablishConsulateTap,
+    this.showEstablishEmbassyControl = false,
+    this.establishEmbassyEnabled = false,
+    this.establishEmbassyPending = false,
+    this.establishEmbassyRejectionReason,
+    this.onEstablishEmbassyTap,
     this.showOwnerStanding = false,
     this.ownerStandingAtWar = false,
     this.showOwnerAllianceBadge = false,
@@ -133,6 +139,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool establishConsulatePending;
   final String? establishConsulateRejectionReason;
   final VoidCallback? onEstablishConsulateTap;
+  final bool showEstablishEmbassyControl;
+  final bool establishEmbassyEnabled;
+  final bool establishEmbassyPending;
+  final String? establishEmbassyRejectionReason;
+  final VoidCallback? onEstablishEmbassyTap;
   final bool showOwnerStanding;
   final bool ownerStandingAtWar;
   final bool showOwnerAllianceBadge;
@@ -220,6 +231,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       establishConsulatePending: establishConsulatePending,
       establishConsulateRejectionReason: establishConsulateRejectionReason,
       onEstablishConsulateTap: onEstablishConsulateTap,
+      showEstablishEmbassyControl: showEstablishEmbassyControl,
+      establishEmbassyEnabled: establishEmbassyEnabled,
+      establishEmbassyPending: establishEmbassyPending,
+      establishEmbassyRejectionReason: establishEmbassyRejectionReason,
+      onEstablishEmbassyTap: onEstablishEmbassyTap,
       showOwnerStanding: showOwnerStanding,
       ownerStandingAtWar: ownerStandingAtWar,
       showOwnerAllianceBadge: showOwnerAllianceBadge,

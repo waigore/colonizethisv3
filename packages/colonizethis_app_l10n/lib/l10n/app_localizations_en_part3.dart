@@ -825,6 +825,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Embassy required with this Minor or Tribe';
 
   @override
+  String get provinceOverlay_tilePurchaseLandDisabledEmbassyNarrowTooltip =>
+      'Embassy required with this Minor or Tribe. '
+      'Use Establish Embassy on Political.';
+
+  @override
   String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount) {
     return 'Short: treasury ×$amount';
   }
@@ -991,4 +996,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_cancelEstablishConsulateAction => 'Cancel';
+
+  @override
+  String get provinceOverlay_establishEmbassyAction => 'Establish Embassy';
+
+  @override
+  String get provinceOverlay_cancelEstablishEmbassyAction => 'Cancel';
 }
