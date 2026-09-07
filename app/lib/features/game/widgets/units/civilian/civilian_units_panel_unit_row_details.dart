@@ -4,9 +4,7 @@ library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_logic/civilian_intel_api.dart'
-    show
-        isForeignProvinceForPlayer,
-        isRivalGreatPowerProvinceForPlayer;
+    show isForeignProvinceForPlayer, isRivalGreatPowerProvinceForPlayer;
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:flutter/material.dart';
 
@@ -129,6 +127,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   String? buildRailShortcutTargetTileKey,
   String? buildFortShortcutTargetTileKey,
   String? exploreShortcutTargetTileKey,
+  String? prospectShortcutTargetTileKey,
   String? relocateShortcutTargetTileKey,
   bool readOnly = false,
 }) {
@@ -242,6 +241,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
     buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
     buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
     exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+    prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
     relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
   );
 }

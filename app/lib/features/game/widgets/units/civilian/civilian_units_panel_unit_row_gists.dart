@@ -15,6 +15,7 @@ import 'build_improvement_next_yield_copy.dart';
 import 'build_improvement_next_yield_gist_line.dart';
 import 'explore_payoff_copy.dart';
 import 'explore_payoff_gist_line.dart';
+import 'prospect_payoff_copy.dart';
 import 'purchase_land_payoff_copy.dart';
 import 'purchase_land_payoff_gist_line.dart';
 import 'spy_research_insight_copy.dart';
@@ -109,6 +110,7 @@ List<Widget> civilianUnitsPanelPendingWorkGistChildren({
           return ExplorePayoffGistLine(text: gist);
         },
       ),
+    ...prospectPayoffPendingGistChildren(l10n, game, pendingWork, readOnly),
   ];
 }
 
@@ -127,6 +129,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
   String? buildRailShortcutTargetTileKey,
   String? buildFortShortcutTargetTileKey,
   String? exploreShortcutTargetTileKey,
+  String? prospectShortcutTargetTileKey,
   String? relocateShortcutTargetTileKey,
 }) {
   if (readOnly) return assigned;
@@ -204,6 +207,8 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
           canMutateViaUi: !readOnly,
         )
       : null;
+  final pTile = prospectShortcutTargetTileKey;
+  final prospectGist = prospectShortcutGist(l10n, game, pTile, readOnly);
   final spyRelocateGist =
       (relocateShortcutTargetTileKey != null &&
           relocateShortcutTargetTileKey.isNotEmpty)
@@ -220,6 +225,7 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
       transportGist == null &&
       buildFortGist == null &&
       exploreGist == null &&
+      prospectGist == null &&
       spyRelocateGist == null) {
     return assigned;
   }
@@ -230,9 +236,11 @@ Widget wrapCivilianUnitsPanelAssignedWithShortcutGists({
       assigned,
       if (gist != null) BuildImprovementYieldGistLine(text: gist),
       if (payoff != null) PurchaseLandPayoffGistLine(text: payoff.gist),
-      if (transportGist != null) TransportStepYieldGistLine(text: transportGist),
+      if (transportGist != null)
+        TransportStepYieldGistLine(text: transportGist),
       if (buildFortGist != null) BuildFortPayoffGistLine(text: buildFortGist),
       if (exploreGist != null) ExplorePayoffGistLine(text: exploreGist),
+      if (prospectGist != null) ProspectPayoffGistLine(text: prospectGist),
       if (spyRelocateGist != null)
         SpyResearchInsightGistLine(text: spyRelocateGist),
     ],

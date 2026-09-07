@@ -737,6 +737,12 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_tileProspectPayoffGist(int turns) {
+    final duration = turns == 1 ? '1 turn' : '$turns turns';
+    return 'After this work: any mineral on this tile becomes known · Takes $duration';
+  }
+
+  @override
   String provinceOverlay_tileRoadCaption(String caption) {
     return 'Road / railroad: $caption';
   }
