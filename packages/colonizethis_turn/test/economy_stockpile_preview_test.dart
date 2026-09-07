@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'support/economy_stockpile_preview_test_support.dart';
+import 'support/economy_stockpile_preview_pending_work_aggregation_scenarios.dart';
 import 'support/economy_stockpile_preview_pending_work_scenarios.dart';
 
 import 'economy_stockpile_preview_cases.dart';
@@ -14,9 +15,7 @@ void main() {
 
   group('previewStockpilePhaseDeltasByCommodityForPlayer', () {
     test('unknown player yields empty maps per phase', () {
-      final game = economyPreviewSinglePlayerGame(
-        economyPreviewSinglePlayer(),
-      );
+      final game = economyPreviewSinglePlayerGame(economyPreviewSinglePlayer());
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -30,9 +29,7 @@ void main() {
 
   group('previewStockpileNetDeltaByCommodityForPlayer', () {
     test('extraction only: delta matches injected extraction totals', () {
-      final game = economyPreviewSinglePlayerGame(
-        economyPreviewSinglePlayer(),
-      );
+      final game = economyPreviewSinglePlayerGame(economyPreviewSinglePlayer());
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -59,7 +56,10 @@ void main() {
       () {
         final game = economyPreviewSinglePlayerGame(
           economyPreviewSinglePlayer(
-            stockpile: const Stockpile().applyDelta(CommodityCatalog.gold.id, 2),
+            stockpile: const Stockpile().applyDelta(
+              CommodityCatalog.gold.id,
+              2,
+            ),
           ),
         );
         final delta = previewStockpileNetDeltaByCommodityForPlayer(
@@ -102,7 +102,10 @@ void main() {
         inputs: economyPreviewInputs(
           defaultAssignmentsByPlayerId: {
             'p1': const [
-              AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
+              AssignedRecipe(
+                recipeId: 'lumber_from_timber',
+                assignedLabour: 10,
+              ),
             ],
           },
         ),

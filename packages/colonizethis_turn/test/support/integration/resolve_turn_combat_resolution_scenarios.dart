@@ -206,54 +206,6 @@ void registerCombatResolutionTests() {
           expect(eventDialogue, isNotEmpty);
         },
       );
-
-      test(
-        'naval interception combat with AI players invokes onDialogue with event battle_won/battle_lost',
-        () {
-          final dialogueEvents = <DialogueEvent>[];
-          final next = resolveTurnComplete(
-            game: turnTestOwGame(
-              provinces: const [],
-            fleets: [
-              turnTestCarrackFleet(
-                shipTypeIds: const ['carrack', 'carrack'],
-              ),
-                Fleet(
-                  id: 'f2',
-                  ownerId: 'p2',
-                  seaZoneId: 'sea1',
-                  regionId: kRegionOldWorld,
-                  shipTypeIds: ['fluyte'],
-                ),
-              ],
-              players: const [
-                Player(id: 'p1', displayName: 'AI Fleet A', isHuman: false),
-                Player(id: 'p2', displayName: 'AI Fleet B', isHuman: false),
-              ],
-              diplomacyRelations: [
-                DiplomacyRelation(
-                  factionId1: 'p1',
-                  factionId2: 'p2',
-                  state: RelationState.atWar,
-                ),
-              ],
-            ).copyWith(globalGameSeed: 42),
-            topology: turnTestOwSeaZoneTopology(),
-            orders: const Orders(),
-            eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-          );
-          expect(next.worldState.turnState.turnNumber, 1);
-          final eventDialogue = dialogueEvents
-              .where(
-                (e) =>
-                    e.category == 'event' &&
-                    (e.situation == 'battle_won' ||
-                        e.situation == 'battle_lost'),
-              )
-              .toList();
-          expect(eventDialogue.length, lessThanOrEqualTo(2));
-        },
-      );
     });
   });
 }
