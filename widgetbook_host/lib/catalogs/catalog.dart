@@ -218,6 +218,7 @@ part 'catalog_panel_map_build_improvement_yield_stories.dart';
 part 'catalog_panel_map_transport_step_yield_stories.dart';
 part 'catalog_panel_map_build_fort_stories.dart';
 part 'catalog_panel_map_explore_payoff_stories.dart';
+part 'catalog_panel_map_prospect_payoff_stories.dart';
 part 'catalog_panel_map_purchase_land_stories.dart';
 part 'catalog_panel_map_upgrade_town_stories.dart';
 part 'catalog_panel_map_move_invade_stories.dart';

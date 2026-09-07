@@ -2449,6 +2449,9 @@ abstract class AppLocalizations {
   /// Explore payoff gist: whole-province reveal and duration (Refs #4733).
   String provinceOverlay_tileExplorePayoffGist(int turns);
 
+  /// Prospect payoff gist: tile mineral-known clause and duration (Refs #4741).
+  String provinceOverlay_tileProspectPayoffGist(int turns);
+
   /// Tooltip shown on the disabled province tile Explore/Prospect inline actions
   /// when the issuing Great Power holds no Consulate (or higher) with the owning
   /// Minor/Tribe (Refs #3753 R4b).

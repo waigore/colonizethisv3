@@ -53,7 +53,7 @@ You explore and prospect **your** land, **unclaimed** land, and (with a Consulat
 **Prospect**
 
 1. Pick a swamp, hills, mountain, or desert tile that is at least Fogged. Tiles that already show a good you can see from the land (grain, meat, wool, horses, timber, sugar cane, tobacco, cotton, furs, spices) cannot be prospected, even on those terrains. Hills with wool cannot be prospected.
-2. The work is **free** and lasts **one** turn. The mineral is known to you only when that work **finishes**, after you confirm **Next turn**. Prospect-required minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until then.
+2. The work is **free** and lasts **one** turn. Before you **Assign**, enabled **Prospect** shows a short line that any mineral on this tile becomes known when the work finishes, and that it takes one turn. The mineral is known to you only when that work **finishes**, after you confirm **Next turn**. Prospect-required minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until then. The line does not name a hidden good and does not promise that a deposit is there.
 
 **Consulate on Minor Nation or Tribe land**
 
@@ -104,7 +104,7 @@ Rival courts send Explorers into the same fog. When they need ore for workshops 
 - [ ] Documents unknown / fogged / fully visible (printed sight phrases), own-province never-decay, and other-land decay (Fully visible becomes Fogged only).
 - [ ] Documents MAP10001 hover **Place**, **Owner**, and **Sight** lines and MAP20001 Political Sight row (touch uses that row).
 - [ ] Documents bootstrap prospecting on advanced starts vs in-game Explorer prospect (cross-ref Ch. 2; Minor Nation knowledge vs bought tiles kept separate).
-- [ ] Documents Explorer work from `UNIT10001` **Assign** and `MAP20001` **Explore with explorer** / **Prospect with explorer**; partial-reveal explore, free, ≤3 turns vs largest province on the same map; prospect eligibility plus terrain-known exclusion; Consulate printed hints; no rival Great Power land.
+- [ ] Documents Explorer work from `UNIT10001` **Assign** and `MAP20001` **Explore with explorer** / **Prospect with explorer**; partial-reveal explore, free, ≤3 turns vs largest province on the same map; prospect eligibility plus terrain-known exclusion; enabled Prospect mineral-known line and one-turn duration before Assign; Consulate printed hints; no rival Great Power land.
 - [ ] Documents fleet enter → coastal-ring and water Fully visible, inland still Unknown, and distant-sea Fogged conditions (unknown unchanged).
 - [ ] Documents `OVL80001` **First Contact** / **Continue**; `DLG50001` as world news after a resolved turn; `OVL70001` hidden-by-default, tab-row toggle, replace-not-append.
 - [ ] Does not cite `MAP30001` / `MAP30002` or tile-context-radial / tile-more-actions SPECs.

@@ -173,6 +173,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
             buildRailShortcutTargetTileKey: buildRailShortcutTargetTileKey,
             buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
             exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+            prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
             relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
             readOnly: readOnly,
           ),
