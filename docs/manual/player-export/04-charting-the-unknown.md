@@ -53,7 +53,7 @@ You explore and prospect **your** land, **unclaimed** land, and (with a Consulat
 **Prospect**
 
 1. Pick a swamp, hills, mountain, or desert tile that is at least Fogged. Tiles that already show a good you can see from the land (grain, meat, wool, horses, timber, sugar cane, tobacco, cotton, furs, spices) cannot be prospected, even on those terrains. Hills with wool cannot be prospected.
-2. The work is **free** and lasts **one** turn. The mineral is known to you only when that work **finishes**, after you confirm **Next turn**. Prospect-required minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until then.
+2. The work is **free** and lasts **one** turn. Before you **Assign**, enabled **Prospect** shows a short line that any mineral on this tile becomes known when the work finishes, and that it takes one turn. The mineral is known to you only when that work **finishes**, after you confirm **Next turn**. Prospect-required minerals (iron, copper, tin, coal, silver, gold, gems, diamonds) stay hidden until then. The line does not name a hidden good and does not promise that a deposit is there.
 
 **Consulate on Minor Nation or Tribe land**
 

@@ -4004,6 +4004,15 @@
       }
     }
   },
+  "provinceOverlay_tileProspectPayoffGist": "After this work: any mineral on this tile becomes known · Takes {turns, plural, one {1 turn} other {{turns} turns}}",
+  "@provinceOverlay_tileProspectPayoffGist": {
+    "description": "Default-visible Prospect payoff: tile mineral becomes known plus work duration (Refs #4741).",
+    "placeholders": {
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_tileConsulateRequiredForExploreTooltip": "Establish a consulate before exploring or prospecting",
   "@provinceOverlay_tileConsulateRequiredForExploreTooltip": {
     "description": "Tooltip shown on the disabled province tile Explore/Prospect inline actions when the issuing Great Power holds no Consulate (or higher) with the owning Minor/Tribe (Refs #3753 R4b)."

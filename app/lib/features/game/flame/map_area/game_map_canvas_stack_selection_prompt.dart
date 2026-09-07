@@ -12,6 +12,7 @@ import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
 import '../../widgets/units/civilian/build_fort_payoff_gist_line.dart';
 import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
 import '../../widgets/units/civilian/explore_payoff_gist_line.dart';
+import '../../widgets/units/civilian/prospect_payoff_gist_line.dart';
 import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 import '../../widgets/units/civilian/transport_step_yield_gist_line.dart';
 
@@ -30,6 +31,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     this.transportGist,
     this.buildFortGist,
     this.exploreGist,
+    this.prospectGist,
     super.key,
   });
 
@@ -43,6 +45,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final String? transportGist;
   final String? buildFortGist;
   final String? exploreGist;
+  final String? prospectGist;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +64,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
           transportGist: transportGist,
           buildFortGist: buildFortGist,
           exploreGist: exploreGist,
+          prospectGist: prospectGist,
         ),
       ),
     );
@@ -78,6 +82,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
     this.transportGist,
     this.buildFortGist,
     this.exploreGist,
+    this.prospectGist,
   });
 
   final AppLocalizations l10n;
@@ -89,6 +94,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
   final String? transportGist;
   final String? buildFortGist;
   final String? exploreGist;
+  final String? prospectGist;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +104,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
     final roadGist = transportGist;
     final fortGist = buildFortGist;
     final explorePayoff = exploreGist;
+    final prospectPayoff = prospectGist;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: EditorialMonoclePalette.bgDeep.withValues(
@@ -137,6 +144,10 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
                 explorePayoff.isNotEmpty &&
                 !usesRelocateCopy)
               ExplorePayoffGistLine(text: explorePayoff),
+            if (prospectPayoff != null &&
+                prospectPayoff.isNotEmpty &&
+                !usesRelocateCopy)
+              ProspectPayoffGistLine(text: prospectPayoff),
           ],
         ),
       ),
