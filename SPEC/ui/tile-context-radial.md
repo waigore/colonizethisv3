@@ -62,7 +62,7 @@ Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog ch
 
 ## Widgetbook
 
-Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enabled Explore disabled; empty catalog More-only; sea-zone few shortcuts; five wedges with remainder; 320 dp clamp.
+Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enabled Explore disabled; empty catalog More-only; sea-zone few shortcuts; five wedges with remainder; 320 dp clamp; **Upgrade town payoff pause** (Refs #4747).
 
 ## Acceptance criteria
 

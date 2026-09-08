@@ -161,22 +161,22 @@ void main() {
     );
   });
 
-  testWidgets('golden: selection prompt + pending gist (Refs #4747)', (
+  testWidgets('golden: map work-target banner pause gist (Refs #4747)', (
     tester,
   ) async {
-    const boundaryKey = ValueKey<String>('upgrade_town_prompt_pending');
+    const boundaryKey = ValueKey<String>('upgrade_town_prompt');
     final gist = upgradeTownPayoffGistLine(l10n: l10n, fromLevel: 2, turns: 1);
     await pumpGoldenHost(
       tester,
       boundaryKey: boundaryKey,
-      physicalSize: const Size(640, 280),
+      physicalSize: const Size(640, 220),
       includeLocalizations: true,
       useScaffold: false,
       center: false,
       settle: false,
       child: SizedBox(
         width: 640,
-        height: 280,
+        height: 220,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -186,18 +186,14 @@ void main() {
               onCancel: () {},
               upgradeTownGist: gist,
             ),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: UpgradeTownPayoffGistLine(text: gist),
-            ),
           ],
         ),
       ),
     );
-    expect(find.textContaining('After this work:'), findsWidgets);
+    expect(find.textContaining('After this work:'), findsOneWidget);
     await expectLater(
       find.byKey(boundaryKey),
-      matchesGoldenFile('goldens/upgrade_town_payoff_prompt_pending.png'),
+      matchesGoldenFile('goldens/upgrade_town_payoff_prompt.png'),
     );
   });
 

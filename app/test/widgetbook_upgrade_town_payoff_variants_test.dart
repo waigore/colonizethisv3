@@ -52,5 +52,32 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(kUpgradeTownPayoffGistKey), findsOneWidget);
     });
+
+    testWidgets('radial pause caption is catalogued', (tester) async {
+      final useCase = findWidgetbookUseCase(
+        tileRadialDirectories,
+        folderName: 'Tile Context Radial',
+        useCaseName: 'Upgrade town payoff pause',
+      );
+      expect(useCase.builder, isNotNull);
+    });
+
+    testWidgets('selection-prompt pause variant is catalogued', (tester) async {
+      final useCase = findWidgetbookUseCase(
+        workOrderAffordPreviewDirectories,
+        folderName: 'Work order afford preview',
+        useCaseName: 'Selection prompt — Upgrade town payoff pause',
+      );
+      expect(useCase.builder, isNotNull);
+    });
+
+    testWidgets('UNIT10001 pending pause story is catalogued', (tester) async {
+      final useCase = findWidgetbookUseCase(
+        civilianUnitsPanelDirectories,
+        folderName: 'Civilian Units Panel',
+        useCaseName: 'Upgrade town pending pause gist',
+      );
+      expect(useCase.builder, isNotNull);
+    });
   });
 }

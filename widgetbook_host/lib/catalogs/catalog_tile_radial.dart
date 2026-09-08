@@ -302,6 +302,32 @@ List<WidgetbookNode> get tileRadialDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Upgrade town payoff pause',
+        builder: (context) => _tileRadialStoryFrame(
+          child: TileContextRadial(
+            // ignore: avoid_hardcoded_strings_in_widgets
+            placeLine: 'Place: Wessex',
+            wedges: const [
+              TileRadialSpokeView(
+                action: TileRadialCatalogAction.upgradeTown,
+                enabled: true,
+                // ignore: avoid_hardcoded_strings_in_widgets
+                label: 'Upgrade town',
+                // ignore: avoid_hardcoded_strings_in_widgets
+                tooltip: 'Upgrade town',
+                // ignore: avoid_hardcoded_strings_in_widgets
+                caption:
+                    'After this work: town workshops pause until level 4 · Takes 1 turn',
+              ),
+            ],
+            onWedge: (_) {},
+            onMore: () {},
+            onDismiss: () {},
+            anchor: const Offset(200, 200),
+          ),
+        ),
+      ),
     ],
   ),
   WidgetbookFolder(

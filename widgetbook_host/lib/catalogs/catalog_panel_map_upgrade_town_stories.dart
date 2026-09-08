@@ -97,3 +97,84 @@ Widget _provinceOverlayUpgradeTownPayoffStory({required int townLevel}) {
     game: game,
   );
 }
+
+/// UNIT10001 Upgrade town payoff stories. Refs #4747.
+List<WidgetbookUseCase> get civilianUnitsPanelUpgradeTownPayoffUseCases => [
+  WidgetbookUseCase(
+    name: 'Upgrade town pending pause gist',
+    builder: (context) => _civilianUpgradeTownPayoffStory(pending: true),
+  ),
+  WidgetbookUseCase(
+    name: 'Upgrade town shortcut pause gist',
+    builder: (context) => _civilianUpgradeTownPayoffStory(pending: false),
+  ),
+];
+
+Widget _civilianUpgradeTownPayoffStory({required bool pending}) {
+  const humanId = 'gp1';
+  const provinceId = 'oldWorld|p1';
+  const tile = 'oldWorld|p1|0|0';
+  const builderId = 'u_builder';
+  final game = Game(
+    id: pending ? 'g_wb_ut_pending' : 'g_wb_ut_shortcut',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: 'oldWorld',
+            ownerId: humanId,
+            displayName: 'Alpha',
+            townDevelopmentLevel: 2,
+            townTileKey: tile,
+          ),
+        ],
+        units: [
+          Unit(
+            id: builderId,
+            type: kUnitTypeBuilder,
+            ownerId: humanId,
+            locationProvinceId: provinceId,
+            tileKey: tile,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(provinces: [], units: []),
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          provinceId: [tile],
+        },
+      },
+    ),
+    players: const [Player(id: humanId, displayName: 'Human', isHuman: true)],
+    minorNations: const [],
+    tribes: const [],
+  );
+  return civilianUnitsPanelWithRiverpod(
+    game: game,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+      child: CivilianUnitsPanel(
+        game: game,
+        humanPlayerId: humanId,
+        bus: AppEventBus(),
+        builderOnly: true,
+        currentOrders: pending
+            ? const Orders(
+                workOrdersByPlayerId: {
+                  humanId: [
+                    WorkOrder(
+                      unitId: builderId,
+                      target: kWorkTargetUpgradeTown,
+                      targetTileKey: tile,
+                    ),
+                  ],
+                },
+              )
+            : const Orders(),
+        upgradeTownShortcutTargetTileKey: pending ? null : tile,
+      ),
+    ),
+  );
+}
