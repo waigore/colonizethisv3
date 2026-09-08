@@ -1,6 +1,8 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+const _prospectWorkTarget = 'prospect';
+
 void main() {
   group('remaining UIActionEvent payloads', () {
     test('no-argument requests instantiate as UIActionEvent', () {
@@ -165,6 +167,18 @@ void main() {
           turnNumber: 3,
         ).workTarget,
         'build_farm',
+      );
+      expect(
+        const AppWorkOrderCompletedEvent(
+          playerId: 'A',
+          unitId: 'u1',
+          workTarget: _prospectWorkTarget,
+          targetTileKey: 'r1|p1|0|0',
+          provinceId: 'r1|p1',
+          turnNumber: 3,
+          revealedResourceId: 'iron',
+        ).revealedResourceId,
+        'iron',
       );
       expect(
         const AppPlayerProvinceDiscoveredEvent(
