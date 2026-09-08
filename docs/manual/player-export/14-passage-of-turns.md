@@ -54,7 +54,7 @@ When your Spies still stood in a foreign court after that turn, a line at the bo
 
 After you close turn news — or, when **Victory overlay** is up for a military win or **Campaign complete**, after you choose **View Final State** — **Empire overview / map area** may briefly pulse a few places where last turn’s fights, captures, finished civilian work, or new sight landed.
 
-The pulses wait until **Victory overlay** is gone; closing the newspaper while it is still up does not start them. Each pulse also switches the **Old World** / **New World** tab the same way a locate button does. The camera moves to each place in turn; a short caption names what happened. Tap the map or **Skip** to end the sequence early. Skip or a map tap does **not** open **Province sea-zone overlay** or a unit panel. At most six places play this way; the full list stays in **Player turn event feed**. Research, diplomacy, and market lines stay in news and the feed only.
+The pulses wait until **Victory overlay** is gone; closing the newspaper while it is still up does not start them. Each pulse also switches the **Old World** / **New World** tab the same way a locate button does. The camera moves to each place in turn; a short caption names what happened. A finished **Prospect** caption uses the same survey words as the Events feed. Tap the map or **Skip** to end the sequence early. Skip or a map tap does **not** open **Province sea-zone overlay** or a unit panel. At most six places play this way; the full list stays in **Player turn event feed**. Research, diplomacy, and market lines stay in news and the feed only.
 
 ### The newspaper feed
 
@@ -67,7 +67,7 @@ Tap a line for the matching place or screen:
 1. When a technology finishes researching, its feed line shows the tech by name and up to two short lines that say what the unlock does (the same plain wording as **Choose tech**). Tap it to open **Technology screen** on the Slots tab and choose your next project.
 2. Diplomacy and overture lines open the other nation’s **Diplomacy detail screen**. Spy-caught and spy-defected rows also open that court’s **Diplomacy detail screen**.
 3. Spy report lines (the same **Our spy in {court} reports:** wording as Intelligence) open **Intelligence Council** or that court’s **Diplomacy detail screen**.
-4. Completed work orders open **Civilian units panel** focused on the person who finished the task.
+4. Completed work orders open **Civilian units panel** focused on the person who finished the task. When **your** Explorer finishes **Prospect**, that line names the mineral found (Iron, Coal, and the other printed goods names) or that the tile has no mineral. Other finished work still says the job finished. Rival courts’ surveys stay off this list.
 5. Land combat and province capture lines open **Province sea-zone overlay**. Naval combat lines use the same plain-language outcome and loss style as land battles and open that same screen when the map can find the sea; otherwise that line is not tappable. Discovery pans the map to the new province or sea. Medal lines use the word **general**.
 6. Rejected orders open the panel or screen that owns that order type (for example civilian work opens Civilian units, trade opens Trade).
 7. When your own market bids or offers filled or carried forward last turn, a short **Market:** line summarizes bought and sold totals (and orders carried when any). Tap it to open **Trade screen** on the **Deal Book** tab. Overseas-profit lines remain separate and use the same Trade / Deal Book tap.

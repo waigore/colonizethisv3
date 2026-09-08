@@ -1,10 +1,12 @@
 // Last-turn spatial playback anchors and captions for [GameMapArea].
 // SPEC/ui/map-widget.md § Last-turn spatial playback.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/event_feed/ct_event_feed_text.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../widgets/commodity_display_name.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed_labels.dart';
@@ -123,9 +125,16 @@ mixin GameMapAreaLastTurnPlaybackAnchors
       ct_models.AppWorkOrderCompletedEvent(
         :final provinceId,
         :final workTarget,
+        :final revealedResourceId,
       ) =>
-        '${provinceLabel(provinceId)} work completed! '
-            '${workTargetLabel(workTarget)} finished!',
+        CtEventFeedText.workOrderCompletedLine(
+          provinceLabel: provinceLabel(provinceId),
+          workTargetLabel: workTargetLabel(workTarget),
+          workTarget: workTarget,
+          prospectFoundDisplayName: revealedResourceId == null
+              ? null
+              : commodityDisplayName(appL10n(context), revealedResourceId),
+        ),
       ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
         '${provinceLabel(provinceId)} discovered!',
       ct_models.AppPlayerSeaZoneDiscoveredEvent(:final seaZoneId) =>

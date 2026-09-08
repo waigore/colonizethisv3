@@ -33,9 +33,7 @@ void main() {
           techId: 'unknown_tech',
           turnNumber: 1,
         ),
-        TurnFeedTestContext(
-          researchCompleteLine: (_) => 'Research: Unknown',
-        ),
+        TurnFeedTestContext(researchCompleteLine: (_) => 'Research: Unknown'),
       );
 
       expect(entry.text, 'Research: Unknown');
@@ -51,9 +49,7 @@ void main() {
           orderSummary: 'move u1',
           reasonCode: 'insufficient_treasury',
         ),
-        TurnFeedTestContext(
-          orderRejectedTapForKind: (_) => () {},
-        ),
+        TurnFeedTestContext(orderRejectedTapForKind: (_) => () {}),
       );
 
       expect(entry.text, 'Order rejected: insufficient treasury.');
@@ -73,10 +69,7 @@ void main() {
         ),
         TurnFeedTestContext(
           workTargetLabel: (_) => 'Fortify',
-          workOrderCompletedTap: ({
-            required unitId,
-            required targetTileKey,
-          }) {
+          workOrderCompletedTap: ({required unitId, required targetTileKey}) {
             tappedUnit = unitId;
             return () {};
           },
@@ -86,6 +79,60 @@ void main() {
       expect(entry.text, 'Capital work completed! Fortify finished!');
       entry.onTap?.call();
       expect(tappedUnit, 'u1');
+    });
+
+    test('AppWorkOrderCompletedEvent prospect found display name', () {
+      final entry = singleTurnFeedEntry(
+        const AppWorkOrderCompletedEvent(
+          playerId: 'gp1',
+          unitId: 'u1',
+          workTarget: 'prospect',
+          targetTileKey: 'ow|1|2',
+          provinceId: 'oldWorld|cap',
+          turnNumber: 1,
+          revealedResourceId: 'iron',
+        ),
+        TurnFeedTestContext(
+          workTargetLabel: (_) => 'Prospect',
+          commodityDisplayName: (id) => id == 'iron' ? 'Iron' : id,
+        ),
+      );
+
+      expect(entry.text, 'Capital work completed! Prospect found Iron');
+      expect(entry.text, isNot(contains('iron')));
+    });
+
+    test('AppWorkOrderCompletedEvent prospect found no mineral', () {
+      final entry = singleTurnFeedEntry(
+        const AppWorkOrderCompletedEvent(
+          playerId: 'gp1',
+          unitId: 'u1',
+          workTarget: 'prospect',
+          targetTileKey: 'ow|1|2',
+          provinceId: 'oldWorld|cap',
+          turnNumber: 1,
+        ),
+        TurnFeedTestContext(workTargetLabel: (_) => 'Prospect'),
+      );
+
+      expect(entry.text, 'Capital work completed! Prospect found no mineral');
+    });
+
+    test('AppWorkOrderCompletedEvent explore line unchanged', () {
+      final entry = singleTurnFeedEntry(
+        const AppWorkOrderCompletedEvent(
+          playerId: 'gp1',
+          unitId: 'u1',
+          workTarget: 'explore',
+          targetTileKey: 'ow|1|2',
+          provinceId: 'oldWorld|cap',
+          turnNumber: 1,
+        ),
+        TurnFeedTestContext(workTargetLabel: (_) => 'Explore'),
+      );
+
+      expect(entry.text, 'Capital work completed! Explore finished!');
+      expect(entry.text, isNot(contains('Prospect found')));
     });
 
     test('AppOverseasProfitCreditedEvent link when tap provided', () {

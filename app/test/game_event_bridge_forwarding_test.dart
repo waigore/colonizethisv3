@@ -195,6 +195,30 @@ void main() {
       expect(evt.targetTileKey, 'oldWorld|p1|3|4');
       expect(evt.provinceId, 'oldWorld|p1');
       expect(evt.turnNumber, 2);
+      expect(evt.revealedResourceId, isNull);
+    });
+
+    test('forwards WorkOrderCompletedEvent prospect resource', () async {
+      final received = <AppWorkOrderCompletedEvent>[];
+      appBus.on<AppWorkOrderCompletedEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        WorkOrderCompletedEvent(
+          playerId: 'gp1',
+          unitId: 'u1',
+          workTarget: kWorkTargetProspect,
+          targetTileKey: 'oldWorld|p1|3|4',
+          provinceId: 'oldWorld|p1',
+          turnNumber: 2,
+          revealedResourceId: 'iron',
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      expect(received.first.revealedResourceId, 'iron');
+      expect(received.first.workTarget, kWorkTargetProspect);
     });
   });
 }

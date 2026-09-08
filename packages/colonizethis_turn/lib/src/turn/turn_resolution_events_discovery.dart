@@ -25,12 +25,16 @@ Set<String> _seaZonesAtSeaForPlayer(Game game, String playerId) {
 }
 
 /// Emit work_order_completed for units that finished deterministic build/work targets.
+///
+/// Same-turn-assigned 1-turn Prospect never has `currentWork` on [stateBefore];
+/// [orders] plus newly prospected tiles cover that path (Refs #4746).
 void emitWorkOrderCompletedEvents(
   Game stateBefore,
   Game stateAfter,
   int turn,
-  TurnEventSink sink,
-) {
+  TurnEventSink sink, {
+  Orders orders = const Orders(),
+}) {
   final beforeById = stateBefore.worldState.allUnitsById;
   final afterById = stateAfter.worldState.allUnitsById;
   final supportedTargets = <String>{
@@ -66,6 +70,69 @@ void emitWorkOrderCompletedEvents(
       turnNumber: turn,
     );
     sink.emit(event);
+  }
+  emitSamePhaseProspectCompletedEvents(
+    stateBefore,
+    stateAfter,
+    turn,
+    sink,
+    orders,
+  );
+}
+
+/// Emit Prospect completions assigned and finished in this Build/Work phase.
+void emitSamePhaseProspectCompletedEvents(
+  Game stateBefore,
+  Game stateAfter,
+  int turn,
+  TurnEventSink sink,
+  Orders orders,
+) {
+  final afterById = stateAfter.worldState.allUnitsById;
+  for (final playerId in sortedPlayerIdsForTurnEvents(stateAfter)) {
+    final newly =
+        stateAfter.worldState
+            .prospectedTilesForPlayer(playerId)
+            .difference(
+              stateBefore.worldState.prospectedTilesForPlayer(playerId),
+            )
+            .toList()
+          ..sort();
+    if (newly.isEmpty) {
+      continue;
+    }
+    final prospectByTile = <String, String>{};
+    for (final order in orders.workOrdersByPlayerId[playerId] ?? const []) {
+      if (order.target != kWorkTargetProspect || order.targetTileKey.isEmpty) {
+        continue;
+      }
+      prospectByTile.putIfAbsent(order.targetTileKey, () => order.unitId);
+    }
+    for (final tileKey in newly) {
+      final unitId = prospectByTile[tileKey];
+      if (unitId == null) {
+        continue;
+      }
+      final unit = afterById[unitId];
+      final provinceId =
+          Unit.provinceIdFromTileKey(tileKey) ?? unit?.locationProvinceId ?? '';
+      final resourceId = stateAfter.worldState.resourceAtTile(tileKey);
+      final revealed =
+          resourceId != null && kMineralResourceIds.contains(resourceId)
+          ? resourceId
+          : null;
+      sink.emit(
+        WorkOrderCompletedEvent(
+          playerId: playerId,
+          unitId: unitId,
+          workTarget: kWorkTargetProspect,
+          targetTileKey: tileKey,
+          provinceId: provinceId,
+          turnNumber: turn,
+          revealedResourceId: revealed,
+        ),
+      );
+    }
   }
 }
 

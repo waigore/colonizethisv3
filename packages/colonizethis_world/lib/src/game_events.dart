@@ -196,6 +196,7 @@ class WorkOrderCompletedEvent extends GameEvent {
     required this.targetTileKey,
     required this.provinceId,
     required this.turnNumber,
+    this.revealedResourceId,
   });
 
   final String playerId;
@@ -206,6 +207,10 @@ class WorkOrderCompletedEvent extends GameEvent {
   /// Prefixed province id (`regionId|localId`) derived from target tile.
   final String provinceId;
   final int turnNumber;
+
+  /// Prospect-required mineral id when [workTarget] is prospect and the tile
+  /// holds one; null for no deposit and for non-Prospect work.
+  final String? revealedResourceId;
 }
 
 /// First province discovery for a specific player in this resolved turn.

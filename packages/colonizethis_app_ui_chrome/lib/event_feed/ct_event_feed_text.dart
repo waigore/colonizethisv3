@@ -85,8 +85,7 @@ class CtEventFeedText {
   static String generalMedalGainedAtProvinceLine(
     String provinceLabel,
     int newMedals,
-  ) =>
-      'Victory at $provinceLabel: a general earned a medal (now $newMedals).';
+  ) => 'Victory at $provinceLabel: a general earned a medal (now $newMedals).';
 
   static String combatResolvedLine({
     required String provinceLabel,
@@ -128,14 +127,12 @@ class CtEventFeedText {
     required String provinceLabel,
     required String winnerLabel,
     required String defeatedLabel,
-  }) =>
-      '$provinceLabel battle resolved! $winnerLabel defeated $defeatedLabel!';
+  }) => '$provinceLabel battle resolved! $winnerLabel defeated $defeatedLabel!';
 
   static String provinceCapturedLine({
     required String provinceLabel,
     required String ownerLabel,
-  }) =>
-      '$provinceLabel captured! $ownerLabel now controls it!';
+  }) => '$provinceLabel captured! $ownerLabel now controls it!';
 
   static String navalCombatResolvedLine({
     required String seaZoneLabel,
@@ -171,8 +168,7 @@ class CtEventFeedText {
     required String offererLabel,
     required String targetLabel,
     required String stageLabel,
-  }) =>
-      'Overture advanced! $offererLabel with $targetLabel: $stageLabel!';
+  }) => 'Overture advanced! $offererLabel with $targetLabel: $stageLabel!';
 
   static String spyCaughtLine({
     required String mapPlayerId,
@@ -180,10 +176,9 @@ class CtEventFeedText {
     required String spyOwnerLabel,
     required String territoryOwnerLabel,
     required String territoryOwnerId,
-  }) =>
-      mapPlayerId == territoryOwnerId
-          ? '$provinceLabel — enemy spy from $spyOwnerLabel caught and eliminated!'
-          : 'Spy caught in $provinceLabel! $territoryOwnerLabel eliminated your agent!';
+  }) => mapPlayerId == territoryOwnerId
+      ? '$provinceLabel — enemy spy from $spyOwnerLabel caught and eliminated!'
+      : 'Spy caught in $provinceLabel! $territoryOwnerLabel eliminated your agent!';
 
   static String spyDefectedLine({
     required String mapPlayerId,
@@ -191,16 +186,27 @@ class CtEventFeedText {
     required String previousOwnerLabel,
     required String newOwnerLabel,
     required String newOwnerId,
-  }) =>
-      mapPlayerId == newOwnerId
-          ? '$provinceLabel — enemy spy from $previousOwnerLabel defected to your side!'
-          : 'Spy defected in $provinceLabel! Agent joined $newOwnerLabel!';
+  }) => mapPlayerId == newOwnerId
+      ? '$provinceLabel — enemy spy from $previousOwnerLabel defected to your side!'
+      : 'Spy defected in $provinceLabel! Agent joined $newOwnerLabel!';
+
+  static const String prospectWorkTarget = 'prospect';
 
   static String workOrderCompletedLine({
     required String provinceLabel,
     required String workTargetLabel,
-  }) =>
-      '$provinceLabel work completed! $workTargetLabel finished!';
+    String? workTarget,
+    String? prospectFoundDisplayName,
+  }) {
+    if (workTarget == prospectWorkTarget) {
+      final found =
+          prospectFoundDisplayName == null || prospectFoundDisplayName.isEmpty
+          ? 'no mineral'
+          : prospectFoundDisplayName;
+      return '$provinceLabel work completed! Prospect found $found';
+    }
+    return '$provinceLabel work completed! $workTargetLabel finished!';
+  }
 
   static const String eventResolvedFallback = 'Event resolved!';
 }

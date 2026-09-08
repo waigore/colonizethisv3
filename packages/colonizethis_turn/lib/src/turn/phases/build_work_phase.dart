@@ -46,6 +46,7 @@ TurnPhaseStepOutcome buildWorkTurnPhaseHandler(
     afterBuildWork,
     turn,
     config.eventSink,
+    orders: config.orders,
   );
   return TurnPhaseStepContinue(acc.copyWith(game: afterBuildWork));
 }

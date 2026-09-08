@@ -19,10 +19,7 @@ CtEventFeedEntry? mapCtTurnFeedEconomyOrdersResearchEvent({
               onTap: context.navigateToTechnologyScreen,
             )
           : ctTurnFeedEntry(text: context.researchCompleteLine(techId)),
-    ct_models.AppOrderRejectedEvent(
-      :final reasonCode,
-      :final orderKind,
-    ) =>
+    ct_models.AppOrderRejectedEvent(:final reasonCode, :final orderKind) =>
       _orderRejectedFeedEntry(
         context: context,
         orderKind: orderKind,
@@ -33,6 +30,7 @@ CtEventFeedEntry? mapCtTurnFeedEconomyOrdersResearchEvent({
       :final targetTileKey,
       :final provinceId,
       :final unitId,
+      :final revealedResourceId,
     ) =>
       _workOrderFeedEntry(
         context: context,
@@ -41,6 +39,10 @@ CtEventFeedEntry? mapCtTurnFeedEconomyOrdersResearchEvent({
         text: CtEventFeedText.workOrderCompletedLine(
           provinceLabel: context.provinceLabel(provinceId),
           workTargetLabel: context.workTargetLabel(workTarget),
+          workTarget: workTarget,
+          prospectFoundDisplayName: revealedResourceId == null
+              ? null
+              : context.commodityDisplayName(revealedResourceId),
         ),
       ),
     ct_models.AppOverseasProfitCreditedEvent(

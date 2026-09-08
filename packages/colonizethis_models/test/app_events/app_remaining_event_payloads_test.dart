@@ -167,6 +167,18 @@ void main() {
         'build_farm',
       );
       expect(
+        const AppWorkOrderCompletedEvent(
+          playerId: 'A',
+          unitId: 'u1',
+          workTarget: 'prospect',
+          targetTileKey: 'r1|p1|0|0',
+          provinceId: 'r1|p1',
+          turnNumber: 3,
+          revealedResourceId: 'iron',
+        ).revealedResourceId,
+        'iron',
+      );
+      expect(
         const AppPlayerProvinceDiscoveredEvent(
           playerId: 'A',
           provinceId: 'r1|p1',
