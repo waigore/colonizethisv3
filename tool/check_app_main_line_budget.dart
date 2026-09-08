@@ -150,7 +150,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 Naval Sail/Move occupying fleets (Refs #4735; measured 96_872).
 // raised for MAP20001 Political Establish Embassy shortcut (Refs #4739; measured 97_204).
 // raised for Prospect mineral-known meaning and duration gist (Refs #4741; measured 97_040).
-const _maxMainLines = 97450;
+// raised for Upgrade town workshop payoff gist (Refs #4747; measured 97_782).
+const _maxMainLines = 97782;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
