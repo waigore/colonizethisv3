@@ -113,6 +113,27 @@ void main() {
     expect(committed, TileRadialCatalogAction.explore);
   });
 
+  testWidgets(
+    'enabled Upgrade town remainder row shows the payoff gist (Refs #4747)',
+    (tester) async {
+      await _pumpDialog(
+        tester,
+        remainder: const [
+          TileRadialSpokeView(
+            action: TileRadialCatalogAction.upgradeTown,
+            enabled: true,
+            label: 'Upgrade town',
+            tooltip: 'Upgrade town',
+            caption:
+                'After this work: town workshops pause until level 4 · Takes 1 turn',
+          ),
+        ],
+      );
+      expect(find.text('Upgrade town'), findsOneWidget);
+      expect(find.textContaining('pause until level 4'), findsOneWidget);
+    },
+  );
+
   testWidgets('320 dp dialog does not overflow horizontally', (tester) async {
     await _pumpDialog(
       tester,

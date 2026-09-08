@@ -6,12 +6,14 @@ import 'package:colonizethis_app/core/services/game_service/game_service.dart'
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_catalog.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_host_catalog.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'province_shortcut_host_emit_fixtures.dart';
@@ -214,6 +216,60 @@ void main() {
         _catalogActions(onOther),
         isNot(contains(TileRadialCatalogAction.upgradeTown)),
       );
+    },
+  );
+
+  testWidgets(
+    'enabled Upgrade town spoke caption is the pause gist (Refs #4747)',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: const SizedBox(),
+        ),
+      );
+      final context = tester.element(find.byType(SizedBox));
+      final l10n = appL10n(context);
+      final game = _game();
+      final region = _region();
+      final playerView = buildPlayerView(
+        game,
+        _combinedTopology,
+        _kHumanPlayerId,
+      );
+      final catalogContext = computeTileRadialHostCatalogContext(
+        game: game,
+        humanPlayerId: _kHumanPlayerId,
+        tileKey: _kTownTileKey,
+        region: region,
+        playerView: playerView,
+        workTargetSelectionCache: _cache(game),
+        draftOrders: const Orders(),
+        mapData: _mapData,
+      );
+      final layout = tileRadialHostCatalogLayout(
+        catalogContext: catalogContext,
+        tileKey: _kTownTileKey,
+      );
+      final views = tileRadialHostSpokeViews(
+        context: context,
+        l10n: l10n,
+        game: game,
+        humanPlayerId: _kHumanPlayerId,
+        tileKey: _kTownTileKey,
+        draftOrders: const Orders(),
+        catalogContext: catalogContext,
+        spokes: layout.wedges,
+      );
+      final upgradeTown = views.firstWhere(
+        (view) => view.action == TileRadialCatalogAction.upgradeTown,
+      );
+      expect(upgradeTown.enabled, isTrue);
+      expect(upgradeTown.caption, contains('pause until level 4'));
+      expect(upgradeTown.caption, contains('Takes 1 turn'));
     },
   );
 }
