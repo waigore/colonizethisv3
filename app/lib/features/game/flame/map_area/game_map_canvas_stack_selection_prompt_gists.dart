@@ -34,31 +34,24 @@ class GameMapSelectionPromptPayoffGists extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final yieldGist = nextYieldGist;
-    final landGist = payoffGist;
-    final roadGist = transportGist;
-    final fortGist = buildFortGist;
-    final explorePayoff = exploreGist;
-    final prospectPayoff = prospectGist;
-    final upgradeTownPayoff = upgradeTownGist;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (yieldGist != null && yieldGist.isNotEmpty)
-          BuildImprovementYieldGistLine(text: yieldGist),
-        if (landGist != null && landGist.isNotEmpty)
-          PurchaseLandPayoffGistLine(text: landGist),
-        if (roadGist != null && roadGist.isNotEmpty)
-          TransportStepYieldGistLine(text: roadGist),
-        if (fortGist != null && fortGist.isNotEmpty)
-          BuildFortPayoffGistLine(text: fortGist),
-        if (explorePayoff != null && explorePayoff.isNotEmpty)
-          ExplorePayoffGistLine(text: explorePayoff),
-        if (prospectPayoff != null && prospectPayoff.isNotEmpty)
-          ProspectPayoffGistLine(text: prospectPayoff),
-        if (upgradeTownPayoff != null && upgradeTownPayoff.isNotEmpty)
-          UpgradeTownPayoffGistLine(text: upgradeTownPayoff),
+        if (nextYieldGist != null && nextYieldGist!.isNotEmpty)
+          BuildImprovementYieldGistLine(text: nextYieldGist!),
+        if (payoffGist != null && payoffGist!.isNotEmpty)
+          PurchaseLandPayoffGistLine(text: payoffGist!),
+        if (transportGist != null && transportGist!.isNotEmpty)
+          TransportStepYieldGistLine(text: transportGist!),
+        if (buildFortGist != null && buildFortGist!.isNotEmpty)
+          BuildFortPayoffGistLine(text: buildFortGist!),
+        if (exploreGist != null && exploreGist!.isNotEmpty)
+          ExplorePayoffGistLine(text: exploreGist!),
+        if (prospectGist != null && prospectGist!.isNotEmpty)
+          ProspectPayoffGistLine(text: prospectGist!),
+        if (upgradeTownGist != null && upgradeTownGist!.isNotEmpty)
+          UpgradeTownPayoffGistLine(text: upgradeTownGist!),
       ],
     );
   }

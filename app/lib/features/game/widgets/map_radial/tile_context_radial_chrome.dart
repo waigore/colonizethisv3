@@ -52,9 +52,7 @@ Widget tileRadialSpokeAt({
   final angle = -math.pi / 2 + (2 * math.pi * index / spokeCount);
   final cx = size.width / 2 + kTileRadialSpokeRadius * math.cos(angle);
   final cy = size.height / 2 + kTileRadialSpokeRadius * math.sin(angle);
-  final height = hasCaption
-      ? kTileRadialWedgeMinSize * 2
-      : kTileRadialWedgeMinSize;
+  final height = kTileRadialWedgeMinSize * (hasCaption ? 2 : 1);
   return Positioned(
     left: cx - kTileRadialWedgeMinSize / 2,
     top: cy - height / 2,
@@ -102,9 +100,7 @@ class TileRadialWedgeButton extends StatelessWidget {
           key: resolvedKey,
           onTap: isEnabled ? onPressed : null,
           child: SizedBox(
-            height: view?.caption == null
-                ? kTileRadialWedgeMinSize
-                : kTileRadialWedgeMinSize * 2,
+            height: kTileRadialWedgeMinSize * (view?.caption == null ? 1 : 2),
             child: ClipRect(
               child: Center(
                 child: Column(
@@ -174,8 +170,7 @@ class TileRadialMenu extends StatelessWidget {
               index: i,
               spokeCount: spokeCount,
               size: size,
-              hasCaption:
-                  wedges[i].caption != null && wedges[i].caption!.isNotEmpty,
+              hasCaption: wedges[i].caption?.isNotEmpty == true,
               child: TileRadialWedgeButton(
                 view: wedges[i],
                 onPressed: wedges[i].enabled
