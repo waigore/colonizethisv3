@@ -1,7 +1,10 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_ui_chrome/event_feed/ct_event_feed_text.dart';
 
 import 'turn_feed_test_context.dart';
+
+const _exploreWorkTarget = 'explore';
 
 void main() {
   group('buildCtTurnFeedEntries economy orders research', () {
@@ -86,7 +89,7 @@ void main() {
         const AppWorkOrderCompletedEvent(
           playerId: 'gp1',
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: CtEventFeedText.prospectWorkTarget,
           targetTileKey: 'ow|1|2',
           provinceId: 'oldWorld|cap',
           turnNumber: 1,
@@ -107,7 +110,7 @@ void main() {
         const AppWorkOrderCompletedEvent(
           playerId: 'gp1',
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: CtEventFeedText.prospectWorkTarget,
           targetTileKey: 'ow|1|2',
           provinceId: 'oldWorld|cap',
           turnNumber: 1,
@@ -123,7 +126,7 @@ void main() {
         const AppWorkOrderCompletedEvent(
           playerId: 'gp1',
           unitId: 'u1',
-          workTarget: 'explore',
+          workTarget: _exploreWorkTarget,
           targetTileKey: 'ow|1|2',
           provinceId: 'oldWorld|cap',
           turnNumber: 1,
