@@ -158,7 +158,6 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
           displayId: displayId,
           mapData: mapData,
         );
-  final townProductionBonus = provinceReadModel.townProductionBonus;
   final extractionSnapshot = provinceReadModel.extractionSnapshot;
   final availableByCommodity = provinceReadModel.availableByCommodity;
   final connectivityForHuman = readModelCache == null
@@ -219,7 +218,8 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     humanPlayerId: humanPlayerId,
     playerView: playerView,
     draftOrders: draftOrders,
-    townProductionBonus: townProductionBonus,
+    townProductionBonus: provinceReadModel.townProductionBonus,
+    nextTownProductionBonus: provinceReadModel.nextTownProductionBonus,
     extractionSnapshot: extractionSnapshot,
     availableByCommodity: availableByCommodity,
     tileConnectivity: tileConnectivity,

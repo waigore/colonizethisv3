@@ -28,6 +28,21 @@ List<WidgetbookUseCase> get provinceOverlayUpgradeTownUseCases => [
       upgradeTownHasBuilderUnits: false,
     ),
   ),
+  WidgetbookUseCase(
+    name: 'Standalone — Upgrade town payoff start',
+    builder: (context) => _provinceOverlayUpgradeTownPayoffStory(townLevel: 1),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Upgrade town payoff pause until 4',
+    builder: (context) => _provinceOverlayUpgradeTownPayoffStory(townLevel: 2),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Upgrade town payoff 320 dp',
+    builder: (context) => SizedBox(
+      width: 320,
+      child: _provinceOverlayUpgradeTownPayoffStory(townLevel: 2),
+    ),
+  ),
 ];
 
 /// MAP20001 Political **Upgrade town** shortcut variants. Refs #4316.
@@ -35,18 +50,19 @@ Widget _provinceOverlayUpgradeTownStory({
   required bool showUpgradeTownControl,
   required bool upgradeTownEnabled,
   required bool upgradeTownHasBuilderUnits,
+  Game? game,
 }) {
-  final game = demoGameForOverlay;
+  final overlayGame = game ?? demoGameForOverlay;
   final region = demoRegionForOverlay;
   return SizedBox(
     width: 640,
     height: 520,
     child: ProvinceSeaZoneDetailOverlay(
-      game: game,
+      game: overlayGame,
       region: region,
       displayId: sampleProvinceIdForOverlay,
       selectedTileKey: sampleTileKeyForProvinceOverlay,
-      humanPlayerId: game.players.first.id,
+      humanPlayerId: overlayGame.players.first.id,
       playerView: demoHumanPlayerViewForOverlay,
       showUpgradeTownControl: showUpgradeTownControl,
       upgradeTownEnabled: upgradeTownEnabled,
@@ -57,5 +73,27 @@ Widget _provinceOverlayUpgradeTownStory({
       onUpgradeTownTap: () {},
       onClose: () {},
     ),
+  );
+}
+
+Widget _provinceOverlayUpgradeTownPayoffStory({required int townLevel}) {
+  final base = demoGameForOverlay;
+  final oldWorld = base.worldState.oldWorld;
+  final provinces = [
+    for (final p in oldWorld.provinces)
+      p.id == sampleProvinceIdForOverlay
+          ? p.copyWith(townDevelopmentLevel: townLevel)
+          : p,
+  ];
+  final game = base.copyWith(
+    worldState: base.worldState.copyWith(
+      oldWorld: RegionData(provinces: provinces, units: oldWorld.units),
+    ),
+  );
+  return _provinceOverlayUpgradeTownStory(
+    showUpgradeTownControl: true,
+    upgradeTownEnabled: true,
+    upgradeTownHasBuilderUnits: true,
+    game: game,
   );
 }

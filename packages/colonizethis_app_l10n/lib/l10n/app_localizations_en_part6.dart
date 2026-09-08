@@ -743,6 +743,24 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_upgradeTownPayoffGistStart(String goods, int turns) {
+    final duration = turns == 1 ? '1 turn' : '$turns turns';
+    return 'After this work: town workshops start$goods · Takes $duration';
+  }
+
+  @override
+  String provinceOverlay_upgradeTownPayoffGistPause(String goods, int turns) {
+    final duration = turns == 1 ? '1 turn' : '$turns turns';
+    return 'After this work: town workshops pause until level 4$goods · Takes $duration';
+  }
+
+  @override
+  String provinceOverlay_upgradeTownPayoffGistResume(String goods, int turns) {
+    final duration = turns == 1 ? '1 turn' : '$turns turns';
+    return 'After this work: town workshops resume at double the level-2 rate$goods · Takes $duration';
+  }
+
+  @override
   String provinceOverlay_tileRoadCaption(String caption) {
     return 'Road / railroad: $caption';
   }

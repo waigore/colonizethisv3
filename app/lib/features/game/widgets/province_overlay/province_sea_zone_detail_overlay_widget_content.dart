@@ -9,8 +9,7 @@ import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_widget.dart';
 
-extension ProvinceSeaZoneDetailOverlayContent
-    on ProvinceSeaZoneDetailOverlay {
+extension ProvinceSeaZoneDetailOverlayContent on ProvinceSeaZoneDetailOverlay {
   OverlayContent resolveOverlayContent(
     BuildContext context, {
     required bool isNarrow,
@@ -90,6 +89,7 @@ extension ProvinceSeaZoneDetailOverlayContent
       isNarrow: isNarrow,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
+      nextTownProductionBonusByCommodity: nextTownProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
       tileConnectivity: tileConnectivity,

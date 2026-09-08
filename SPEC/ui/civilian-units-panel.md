@@ -308,6 +308,7 @@ For each civilian unit, the panel shows:
 - **Given** an enabled Explorer shortcut or pending `explore` row, **when** the panel renders outside observe/`readOnly`, **then** the UI layer shows the same Explore province-reveal + duration gist as `MAP20001` (`app/test/explore_payoff_copy_test.dart`).
 
 - **Given** an enabled Explorer shortcut or pending `prospect` row, **when** the panel renders outside observe/`readOnly`, **then** the UI layer shows the same mineral-known + duration gist as `MAP20001` (`app/test/prospect_payoff_copy_test.dart`).
+- **Given** an enabled Builder `upgradeTownShortcutTargetTileKey` or pending `upgrade_town` row, **when** the panel renders outside observe/`readOnly`, **then** the UI layer shows the same town-workshop start / pause-until-4 / resume gist as `MAP20001` (`app/test/upgrade_town_payoff_copy_test.dart`).
 
 - **Given** a unit row has a **pending** civilian work order (full-list or tile-scoped), **when** the panel renders, **then** the first **Assigned to** line shows localized inline turns using assign-time `totalTurns` for that order, and the row does not show a literal ` (pending)` suffix.
 

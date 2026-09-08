@@ -26,7 +26,7 @@ If the civilian is not already on the work tile, the game moves them first after
 
 Shortcut hints use the same cost preview when the control is enabled, or a materials/treasury shortfall when it is disabled because you cannot pay.
 
-**Upgrade town** on `MAP20001` is for **your** provinces only (**Town development** **N of 4**, and a short gist of manufacturing thresholds at levels 2 and 4). From **Assign** on a Builder you can still name a foreign Minor Nation or Tribe town when you are at peace and have an embassy there — that path is the menu, not a button on `MAP20001`. Ownership does not change.
+**Upgrade town** on `MAP20001` is for **your** provinces only (**Town development** **N of 4**, and a short line that town workshops start at 2, pause at 3, and resume at full rate at 4). From **Assign** on a Builder you can still name a foreign Minor Nation or Tribe town when you are at peace and have an embassy there — that path is the menu, not a button on `MAP20001`. Ownership does not change.
 
 ### Assign from the tile ring
 
@@ -74,7 +74,7 @@ Those **Extraction** and **Available** rows **project** what this province would
 | Work | Unit | Cost and notes |
 |------|------|----------------|
 | **Build improvement** | Builder | Raises the site by 1 (cap 4) on a tile **with a resource**. Next step costs lumber + cast iron **1 / 4 / 8 / 16**. Next level must respect your gathering-tech limit and terrain hard caps (scrub-forest timber stays at **1**). Minerals must already be prospected. The first improve on some timber or iron tiles can cost less (or nothing) until you already hold lumber and cast iron; the usual pair returns once you can pay it. Before you assign, enabled **Build improvement** on **Province sea-zone overlay**, **Tile context radial** / **More tile actions**, the map banner, the Builder row, and Development **Assign** tells you what this tile will send after the work: current goods versus the next level if it stays linked; or that the road or town development already limits what arrives; or that an unlinked tile will still send nothing. The warehouse does not fill on the tap, or on this Next turn if the Builder still has remaining work. |
-| **Upgrade town** | Builder | Raises **town development** by 1 (cap 4) on the town tile. Overlay **Upgrade town** is owned land only. See Counsel for the National Bureaucracy gate. |
+| **Upgrade town** | Builder | Raises **town development** by 1 (cap 4) on the town tile. Overlay **Upgrade town** is owned land only. Town workshops start at level 2, pause at 3 until 4, then resume at double the level-2 rate. Before you assign, enabled **Upgrade town** on `MAP20001` Political, `MAP30001` / `MAP30002`, the map banner, the Builder row, and pending **Upgrade town** rows names that next step and **Takes 1 turn**. See Counsel for the National Bureaucracy gate. |
 | **Build road** | Engineer | **1 lumber + 1 cast iron**. Level 2 needs **Road Construction**. Enabled shortcuts show a payoff gist beside the cost. |
 | **Build port** | Engineer | **5 lumber + 5 cast iron**. One port per seaboard (each coast that faces one sea). Shortcut only on a seaboard tile that can still take a port. Enabled shortcuts show a payoff gist. |
 | **Build fort** | Engineer | Town tile only; levels 1–3. **3 lumber + 3 bronze**; then **4 lumber + 4 bronze** plus **Mine Engineering**; then **5 steel + 5 lumber** plus **Modern Forts**. Higher levels take extra turns. Overlay **Build fort** only when the town tile is selected. Before you assign, enabled **Build fort** on **Province sea-zone overlay** Military, **Tile context radial** / **More tile actions**, the map banner, the Engineer row, and pending **Build fort** rows tells you how the province’s fight will change (Open field → Wood fort siege, and so on) and how many turns the work takes. The fort does not finish on the tap, or on this Next turn if the Engineer still has remaining work. |
@@ -122,6 +122,7 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 
 - [ ] Documents assign flows via `UNIT10001` **Civilian units panel**, `MAP20001` **Province sea-zone overlay** / `MAP10001` **Empire overview / map area**, `MAP30001` **Tile context radial** / `MAP30002` **More tile actions**, and `GAME80001` **Development screen**, including that Development **Assign** names the next tile, improvement step, and cost before commit, and that **Show** marks the same tile.
 - [ ] Covers printed work names: **Build improvement**, **Upgrade town**, **Build road**, **Build port**, **Build fort**, **Build railroad**, **Purchase land** (explore/prospect cross-ref Ch. 4).
+- [ ] States that enabled **Upgrade town** names the next town-workshop step (start / pause until 4 / resume) and that the work takes one turn.
 - [ ] States assign-time **Insufficient treasury** / **Insufficient materials** checks and one-work-per-civilian and per-tile exclusivity.
 - [ ] Documents **Cancel** without material refund; purchase debit when work finishes.
 - [ ] Explains extraction caps and capital link at player level, and points to Chapter 3 for the on-map hatch of land not bound to the capital and for `{n} of {cap}` improvement marks when **Show improvements** is on.
@@ -142,6 +143,7 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 - `SPEC/program/development-resolution.md`
 - `SPEC/program/turn-resolution-phases.md`
 - `SPEC/program/province-extraction-snapshot.md`
+- `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/province-economic-extraction-available.md`

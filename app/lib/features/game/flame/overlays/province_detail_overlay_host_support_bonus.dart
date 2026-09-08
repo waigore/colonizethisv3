@@ -1,30 +1,49 @@
-
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
-import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount, projectProvinceExtraction, provinceImprovableResourceTileCounts;
-import 'package:colonizethis_turn/colonizethis_turn.dart' show previewTownManufacturingBonusByProvince;
-import 'package:colonizethis_world/colonizethis_world.dart' show WorldStateProvinceLookup;
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show
+        ProvinceImprovableCommodityCount,
+        previewTownManufacturingBonusCurrentAndNextByProvince,
+        projectProvinceExtraction,
+        provinceImprovableResourceTileCounts;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show WorldStateProvinceLookup;
 
-/// Town manufacturing bonus preview for the province overlay Economic section.
-///
-/// Returns an empty map when map data is unavailable or tile maps are empty.
-Map<String, int> provinceTownProductionBonusPreview({
+/// Current and next-level town-workshop bonus for one overlay rebuild.
+({Map<String, int> current, Map<String, int> next})
+provinceTownProductionBonusCurrentAndNext({
   required ct_models.Game game,
   required String provinceId,
   required GameMapData? mapData,
 }) {
   final tileMapByRegion = mapData?.tileMapByRegion;
   if (tileMapByRegion == null || tileMapByRegion.isEmpty) {
-    return const {};
+    return (current: const <String, int>{}, next: const <String, int>{});
   }
-  final byProvince = previewTownManufacturingBonusByProvince(
+  final pair = previewTownManufacturingBonusCurrentAndNextByProvince(
     game: game,
     topology: mapData!.combinedTopology,
     tileMapByRegion: tileMapByRegion,
   );
-  return byProvince[provinceId] ?? const {};
+  return (
+    current: pair.currentByProvinceId[provinceId] ?? const {},
+    next: pair.nextByProvinceId[provinceId] ?? const {},
+  );
+}
+
+/// Town manufacturing bonus preview for the province overlay Economic section.
+Map<String, int> provinceTownProductionBonusPreview({
+  required ct_models.Game game,
+  required String provinceId,
+  required GameMapData? mapData,
+}) {
+  return provinceTownProductionBonusCurrentAndNext(
+    game: game,
+    provinceId: provinceId,
+    mapData: mapData,
+  ).current;
 }
 
 /// Post-resolution Extraction projection for [provinceId] (Refs #4064).

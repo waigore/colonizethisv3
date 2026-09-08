@@ -110,6 +110,21 @@ void runTownManufacturingBonusGameScenario(TownManufacturingBonusGameScenario sc
 // dart format on
 
 void main() {
+  group(
+    'previewTownManufacturingBonusCurrentAndNextByProvince (Refs #4747)',
+    () {
+      test('empty maps yield empty current and next', () {
+        final game = TestFixtures.minimalGame();
+        final pair = previewTownManufacturingBonusCurrentAndNextByProvince(
+          game: game,
+          topology: const MapTopology(),
+        );
+        expect(pair.currentByProvinceId, isEmpty);
+        expect(pair.nextByProvinceId, isEmpty);
+      });
+    },
+  );
+
   group('townManufacturingBonusMultiplier (Refs #3872)', () {
     test('level 2 → 1, level 4 → 2, others → 0', () {
       expect(townManufacturingBonusMultiplier(2), 1);

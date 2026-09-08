@@ -4013,6 +4013,42 @@
       }
     }
   },
+  "provinceOverlay_upgradeTownPayoffGistStart": "After this work: town workshops start{goods} · Takes {turns, plural, one {1 turn} other {{turns} turns}}",
+  "@provinceOverlay_upgradeTownPayoffGistStart": {
+    "description": "Enabled Upgrade town gist for 1→2: workshops start plus duration (Refs #4747).",
+    "placeholders": {
+      "goods": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_upgradeTownPayoffGistPause": "After this work: town workshops pause until level 4{goods} · Takes {turns, plural, one {1 turn} other {{turns} turns}}",
+  "@provinceOverlay_upgradeTownPayoffGistPause": {
+    "description": "Enabled Upgrade town gist for 2→3: workshops pause until 4 plus duration (Refs #4747).",
+    "placeholders": {
+      "goods": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_upgradeTownPayoffGistResume": "After this work: town workshops resume at double the level-2 rate{goods} · Takes {turns, plural, one {1 turn} other {{turns} turns}}",
+  "@provinceOverlay_upgradeTownPayoffGistResume": {
+    "description": "Enabled Upgrade town gist for 3→4: workshops resume at double rate plus duration (Refs #4747).",
+    "placeholders": {
+      "goods": {
+        "type": "String"
+      },
+      "turns": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_tileConsulateRequiredForExploreTooltip": "Establish a consulate before exploring or prospecting",
   "@provinceOverlay_tileConsulateRequiredForExploreTooltip": {
     "description": "Tooltip shown on the disabled province tile Explore/Prospect inline actions when the issuing Great Power holds no Consulate (or higher) with the owning Minor/Tribe (Refs #3753 R4b)."

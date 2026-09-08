@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/core/utils/faction_display_name.dart';
 
+import 'package:colonizethis_app/features/game/widgets/units/civilian/upgrade_town_payoff_gist_line.dart';
+
 import 'province_sea_zone_detail_overlay_sections_political_controls.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
@@ -64,6 +66,7 @@ Widget buildPoliticalSection({
   required bool showUpgradeTownControl,
   required bool upgradeTownEnabled,
   required String upgradeTownTooltip,
+  String? upgradeTownPayoffGist,
   VoidCallback? onUpgradeTownTap,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
@@ -166,6 +169,10 @@ Widget buildPoliticalSection({
               onPressed: upgradeTownEnabled ? onUpgradeTownTap : null,
             ),
           ),
+        if (upgradeTownEnabled &&
+            upgradeTownPayoffGist != null &&
+            upgradeTownPayoffGist.isNotEmpty)
+          UpgradeTownPayoffGistLine(text: upgradeTownPayoffGist),
       ],
     ),
   );
