@@ -913,6 +913,7 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
           );
         },
       ),
+      ...civilianUnitsPanelUpgradeTownPayoffUseCases,
     ],
   ),
 ];

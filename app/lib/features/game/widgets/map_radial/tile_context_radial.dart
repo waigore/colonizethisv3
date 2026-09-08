@@ -15,6 +15,7 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/build_impr
 import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_payoff_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_gist_line.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/upgrade_town_payoff_gist_line.dart';
 
 /// Map-attached contextual radial for overlay Tile shortcuts.
 class TileContextRadial extends StatelessWidget {
@@ -43,7 +44,7 @@ class TileContextRadial extends StatelessWidget {
     final viewport = MediaQuery.sizeOf(context);
     final needed = tileRadialNeededSize(actionWedgeCount: wedges.length);
     final captionWidget = _defaultVisibleCaptionWidget(wedges);
-    final boxHeight = needed.height + (captionWidget == null ? 0 : 56);
+    final boxHeight = needed.height + (captionWidget == null ? 0 : 88);
     final topLeft = clampTileRadialTopLeft(
       viewport: viewport,
       anchor: anchor,
@@ -97,9 +98,7 @@ class TileContextRadial extends StatelessWidget {
 
 Widget? _defaultVisibleCaptionWidget(List<TileRadialSpokeView> wedges) {
   for (final wedge in wedges) {
-    if (!wedge.enabled ||
-        wedge.caption == null ||
-        wedge.caption!.isEmpty) {
+    if (!wedge.enabled || wedge.caption == null || wedge.caption!.isEmpty) {
       continue;
     }
     final text = wedge.caption!;
@@ -112,9 +111,14 @@ Widget? _defaultVisibleCaptionWidget(List<TileRadialSpokeView> wedges) {
       ),
       TileRadialCatalogAction.buildRoad ||
       TileRadialCatalogAction.buildPort ||
-      TileRadialCatalogAction.buildRail => TransportStepYieldGistLine(text: text),
+      TileRadialCatalogAction.buildRail => TransportStepYieldGistLine(
+        text: text,
+      ),
       TileRadialCatalogAction.buildFort => BuildFortPayoffGistLine(text: text),
       TileRadialCatalogAction.explore => ExplorePayoffGistLine(text: text),
+      TileRadialCatalogAction.upgradeTown => UpgradeTownPayoffGistLine(
+        text: text,
+      ),
       _ => TransportStepYieldGistLine(text: text),
     };
   }

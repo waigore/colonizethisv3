@@ -168,6 +168,18 @@ List<WidgetbookNode> get workOrderAffordPreviewDirectories => [
           );
         },
       ),
+      WidgetbookUseCase(
+        name: 'Selection prompt — Upgrade town payoff pause',
+        builder: (context) => _workOrderAffordSelectionPromptStory(
+          affordPreview: const WorkOrderAffordPreview(
+            materialCosts: {'lumber': 1, 'castIron': 1},
+            canAfford: true,
+          ),
+          // ignore: avoid_hardcoded_strings_in_widgets
+          upgradeTownGist:
+              'After this work: town workshops pause until level 4 · Takes 1 turn',
+        ),
+      ),
     ],
   ),
 ];
@@ -177,6 +189,7 @@ Widget _workOrderAffordSelectionPromptStory({
   String? nextYieldGist,
   String? payoffGist,
   String? transportGist,
+  String? upgradeTownGist,
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -195,6 +208,7 @@ Widget _workOrderAffordSelectionPromptStory({
             nextYieldGist: nextYieldGist,
             payoffGist: payoffGist,
             transportGist: transportGist,
+            upgradeTownGist: upgradeTownGist,
           ),
         ],
       ),

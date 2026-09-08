@@ -974,19 +974,19 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get provinceOverlay_townDevelopmentGistMax =>
-      'Fully developed; manufacturing bonus at maximum.';
+      'Town workshops are at full rate.';
 
   @override
   String get provinceOverlay_townDevelopmentGistBonusActiveNextAt4 =>
-      'Town manufacturing bonus active; next bonus at level 4.';
+      'Town workshops are active and will pause at level 3.';
 
   @override
   String get provinceOverlay_townDevelopmentGistNextAt4 =>
-      'Next manufacturing bonus at level 4.';
+      'Town workshops are paused until level 4.';
 
   @override
   String get provinceOverlay_townDevelopmentGistNextAt2 =>
-      'Next manufacturing bonus at level 2.';
+      'Town workshops start at level 2.';
 
   @override
   String get provinceOverlay_upgradeTownAction => 'Upgrade town';

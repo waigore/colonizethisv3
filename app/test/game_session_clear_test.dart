@@ -116,6 +116,7 @@ void main() {
         displayId: 'oldWorld|p0',
         readModel: const ProvinceOverlayProvinceReadModel(
           townProductionBonus: {},
+          nextTownProductionBonus: {},
           extractionSnapshot: null,
           availableByCommodity: {},
         ),

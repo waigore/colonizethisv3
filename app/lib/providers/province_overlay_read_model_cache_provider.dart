@@ -15,11 +15,13 @@ import 'panel_session_revision.dart'
 class ProvinceOverlayProvinceReadModel {
   const ProvinceOverlayProvinceReadModel({
     required this.townProductionBonus,
+    required this.nextTownProductionBonus,
     required this.extractionSnapshot,
     required this.availableByCommodity,
   });
 
   final Map<String, int> townProductionBonus;
+  final Map<String, int> nextTownProductionBonus;
   final ProvinceExtractionSnapshot? extractionSnapshot;
   final Map<String, ProvinceImprovableCommodityCount> availableByCommodity;
 }
@@ -35,12 +37,14 @@ class ProvinceOverlaySessionCacheState {
 
   final ProvinceOverlayStaticSessionRevision? staticRevision;
   final ConnectivityResult? humanConnectivity;
-  final Map<String, ProvinceOverlayProvinceReadModel> provinceReadModelsByDisplayId;
+  final Map<String, ProvinceOverlayProvinceReadModel>
+  provinceReadModelsByDisplayId;
 }
 
 /// Session cache for MAP20001 province-wide projections (survives overlay close).
 class ProvinceOverlaySessionCache {
-  ProvinceOverlaySessionCacheState state = const ProvinceOverlaySessionCacheState();
+  ProvinceOverlaySessionCacheState state =
+      const ProvinceOverlaySessionCacheState();
 
   void reset() {
     state = const ProvinceOverlaySessionCacheState();
@@ -82,26 +86,28 @@ class ProvinceOverlaySessionCache {
   }
 }
 
-final provinceOverlayReadModelCacheProvider = Provider<ProvinceOverlaySessionCache>(
-  (ref) => ProvinceOverlaySessionCache(),
-);
+final provinceOverlayReadModelCacheProvider =
+    Provider<ProvinceOverlaySessionCache>(
+      (ref) => ProvinceOverlaySessionCache(),
+    );
 
 ProvinceOverlayStaticSessionRevision provinceOverlayStaticSessionRevision({
   required Game game,
-}) =>
-    panelStaticSessionRevision(game);
+}) => panelStaticSessionRevision(game);
 
 ProvinceOverlayProvinceReadModel buildProvinceOverlayProvinceReadModel({
   required Game game,
   required String displayId,
   required GameMapData? mapData,
 }) {
+  final bonus = provinceTownProductionBonusCurrentAndNext(
+    game: game,
+    provinceId: displayId,
+    mapData: mapData,
+  );
   return ProvinceOverlayProvinceReadModel(
-    townProductionBonus: provinceTownProductionBonusPreview(
-      game: game,
-      provinceId: displayId,
-      mapData: mapData,
-    ),
+    townProductionBonus: bonus.current,
+    nextTownProductionBonus: bonus.next,
     extractionSnapshot: provinceExtractionSnapshotPreview(
       game: game,
       provinceId: displayId,

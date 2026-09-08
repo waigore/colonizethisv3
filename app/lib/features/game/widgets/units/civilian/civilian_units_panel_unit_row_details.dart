@@ -128,6 +128,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
   String? buildFortShortcutTargetTileKey,
   String? exploreShortcutTargetTileKey,
   String? prospectShortcutTargetTileKey,
+  String? upgradeTownShortcutTargetTileKey,
   String? relocateShortcutTargetTileKey,
   bool readOnly = false,
 }) {
@@ -242,6 +243,7 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
     buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
     exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
     prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+    upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
     relocateShortcutTargetTileKey: relocateShortcutTargetTileKey,
   );
 }

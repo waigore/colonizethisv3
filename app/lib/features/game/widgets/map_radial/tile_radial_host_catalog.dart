@@ -10,6 +10,7 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_pa
 import 'package:colonizethis_app/features/game/widgets/units/civilian/prospect_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/upgrade_town_payoff_copy.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -195,6 +196,14 @@ List<TileRadialSpokeView> tileRadialHostSpokeViews({
             humanPlayerId: humanPlayerId,
             tileKey: tileKey,
             enabled: spoke.enabled,
+          ),
+          TileRadialCatalogAction.upgradeTown => upgradeTownPayoffGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: tileKey,
+            enabled: spoke.enabled,
+            mapData: mapData,
           ),
           _ => null,
         },

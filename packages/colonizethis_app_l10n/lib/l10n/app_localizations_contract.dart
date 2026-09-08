@@ -2794,17 +2794,26 @@ abstract class AppLocalizations {
   /// Political section town development summary (`N of max`). Refs #4316.
   String provinceOverlay_townDevelopmentOfMax(int level, int max);
 
-  /// Political gist when town development is at maximum. Refs #4316.
+  /// Political gist when town workshops are at full rate (level 4). Refs #4747.
   String get provinceOverlay_townDevelopmentGistMax;
 
-  /// Political gist when manufacturing bonus is active (level 2). Refs #4316.
+  /// Political gist when town workshops are active (level 2) and will pause at 3.
   String get provinceOverlay_townDevelopmentGistBonusActiveNextAt4;
 
-  /// Political gist when next manufacturing bonus is at level 4. Refs #4316.
+  /// Political gist when town workshops are paused until level 4 (level 3).
   String get provinceOverlay_townDevelopmentGistNextAt4;
 
-  /// Political gist when next manufacturing bonus is at level 2. Refs #4316.
+  /// Political gist when town workshops start at level 2 (level 1).
   String get provinceOverlay_townDevelopmentGistNextAt2;
+
+  /// Enabled Upgrade town gist: workshops start after this work (Refs #4747).
+  String provinceOverlay_upgradeTownPayoffGistStart(String goods, int turns);
+
+  /// Enabled Upgrade town gist: workshops pause until level 4 (Refs #4747).
+  String provinceOverlay_upgradeTownPayoffGistPause(String goods, int turns);
+
+  /// Enabled Upgrade town gist: workshops resume at double the level-2 rate.
+  String provinceOverlay_upgradeTownPayoffGistResume(String goods, int turns);
 
   /// Political Upgrade town shortcut label. Refs #4316.
   String get provinceOverlay_upgradeTownAction;

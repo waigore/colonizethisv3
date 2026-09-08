@@ -32,5 +32,22 @@ void main() {
         l10n.provinceOverlay_townDevelopmentGistNextAt2,
       );
     });
+
+    test('status gist uses town workshops, never manufacturing bonus', () {
+      final l10n = AppLocalizationsEn();
+      for (final level in const [1, 2, 3, 4]) {
+        final gist = provinceOverlayTownDevelopmentGist(l10n, level);
+        expect(gist.toLowerCase(), contains('town workshops'));
+        expect(gist.toLowerCase(), isNot(contains('manufacturing bonus')));
+      }
+      expect(
+        provinceOverlayTownDevelopmentGist(l10n, 2),
+        'Town workshops are active and will pause at level 3.',
+      );
+      expect(
+        provinceOverlayTownDevelopmentGist(l10n, 3),
+        'Town workshops are paused until level 4.',
+      );
+    });
   });
 }

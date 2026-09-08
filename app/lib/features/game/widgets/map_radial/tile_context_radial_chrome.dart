@@ -47,15 +47,17 @@ Widget tileRadialSpokeAt({
   required int spokeCount,
   required Size size,
   required Widget child,
+  bool hasCaption = false,
 }) {
   final angle = -math.pi / 2 + (2 * math.pi * index / spokeCount);
   final cx = size.width / 2 + kTileRadialSpokeRadius * math.cos(angle);
   final cy = size.height / 2 + kTileRadialSpokeRadius * math.sin(angle);
+  final height = kTileRadialWedgeMinSize * (hasCaption ? 2 : 1);
   return Positioned(
     left: cx - kTileRadialWedgeMinSize / 2,
-    top: cy - kTileRadialWedgeMinSize / 2,
+    top: cy - height / 2,
     width: kTileRadialWedgeMinSize * 2.2,
-    height: kTileRadialWedgeMinSize,
+    height: height,
     child: child,
   );
 }
@@ -98,36 +100,36 @@ class TileRadialWedgeButton extends StatelessWidget {
           key: resolvedKey,
           onTap: isEnabled ? onPressed : null,
           child: SizedBox(
-            height: view?.caption == null
-                ? kTileRadialWedgeMinSize
-                : kTileRadialWedgeMinSize * 1.7,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    resolvedLabel,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: isEnabled
-                          ? EditorialMonoclePalette.fg
-                          : EditorialMonoclePalette.muted,
-                    ),
-                  ),
-                  if (view?.caption != null && view!.caption!.isNotEmpty)
+            height: kTileRadialWedgeMinSize * (view?.caption == null ? 1 : 2),
+            child: ClipRect(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      view!.caption!,
+                      resolvedLabel,
                       textAlign: TextAlign.center,
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: EditorialMonoclePalette.muted,
-                        fontSize: 10,
+                        color: isEnabled
+                            ? EditorialMonoclePalette.fg
+                            : EditorialMonoclePalette.muted,
                       ),
                     ),
-                ],
+                    if (view?.caption != null && view!.caption!.isNotEmpty)
+                      Text(
+                        view!.caption!,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: EditorialMonoclePalette.muted,
+                          fontSize: 10,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -168,6 +170,7 @@ class TileRadialMenu extends StatelessWidget {
               index: i,
               spokeCount: spokeCount,
               size: size,
+              hasCaption: wedges[i].caption?.isNotEmpty == true,
               child: TileRadialWedgeButton(
                 view: wedges[i],
                 onPressed: wedges[i].enabled

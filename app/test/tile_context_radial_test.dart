@@ -4,6 +4,7 @@ import 'package:colonizethis_app/features/game/widgets/map_radial/tile_context_r
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_catalog.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_keys.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_spoke_view.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/upgrade_town_payoff_gist_line.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -131,6 +132,53 @@ void main() {
     await tester.pump();
     expect(dismissed, 2);
   });
+
+  testWidgets(
+    'enabled Upgrade town caption is the default-visible payoff gist (Refs #4747)',
+    (tester) async {
+      const gist =
+          'After this work: town workshops pause until level 4 · Takes 1 turn';
+      await _pumpRadial(
+        tester,
+        wedges: const [
+          TileRadialSpokeView(
+            action: TileRadialCatalogAction.upgradeTown,
+            enabled: true,
+            label: 'Upgrade town',
+            tooltip: 'Upgrade town',
+            caption: gist,
+          ),
+        ],
+        onWedge: (_) {},
+        onMore: () {},
+        onDismiss: () {},
+      );
+      expect(find.byKey(kUpgradeTownPayoffGistKey), findsOneWidget);
+      expect(find.textContaining('pause until level 4'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'disabled Upgrade town hides the assign payoff gist (Refs #4747)',
+    (tester) async {
+      await _pumpRadial(
+        tester,
+        wedges: const [
+          TileRadialSpokeView(
+            action: TileRadialCatalogAction.upgradeTown,
+            enabled: false,
+            label: 'Upgrade town',
+            tooltip: 'Need a Builder in this province.',
+          ),
+        ],
+        onWedge: (_) {},
+        onMore: () {},
+        onDismiss: () {},
+      );
+      expect(find.byKey(kUpgradeTownPayoffGistKey), findsNothing);
+      expect(find.textContaining('pause until level 4'), findsNothing);
+    },
+  );
 
   testWidgets('More spoke is always present even with an empty catalog', (
     tester,

@@ -89,6 +89,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onOfferPeaceTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
+    this.nextTownProductionBonusByCommodity = const {},
     this.extractionSnapshot,
     this.availableByCommodity = const {},
     this.tileConnectivity,
@@ -152,6 +153,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final VoidCallback? onOfferPeaceTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
+  final Map<String, int> nextTownProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
   final Map<String, ProvinceImprovableCommodityCount> availableByCommodity;
   final ProvinceTileConnectivityDisplay? tileConnectivity;

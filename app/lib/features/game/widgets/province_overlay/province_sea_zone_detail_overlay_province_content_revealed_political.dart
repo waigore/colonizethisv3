@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/controls/map_tile_sight.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/upgrade_town_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -22,6 +23,8 @@ Widget buildRevealedProvincePoliticalSection({
   required bool upgradeTownEnabled,
   required bool upgradeTownHasBuilderUnits,
   required String? upgradeTownTargetTileKey,
+  Map<String, int> townProductionBonusByCommodity = const {},
+  Map<String, int> nextTownProductionBonusByCommodity = const {},
   VoidCallback? onUpgradeTownTap,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
@@ -68,6 +71,17 @@ Widget buildRevealedProvincePoliticalSection({
             townTileKey: upgradeTownTargetTileKey,
             enabled: upgradeTownEnabled,
             hasBuilderUnits: upgradeTownHasBuilderUnits,
+          ),
+    upgradeTownPayoffGist: upgradeTownTargetTileKey == null
+        ? null
+        : upgradeTownPayoffGistForTile(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            tileKey: upgradeTownTargetTileKey,
+            enabled: upgradeTownEnabled,
+            currentBonus: townProductionBonusByCommodity,
+            nextBonus: nextTownProductionBonusByCommodity,
           ),
     onUpgradeTownTap: onUpgradeTownTap,
     showEstablishConsulateControl: showEstablishConsulateControl,

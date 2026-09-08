@@ -9,12 +9,7 @@ import 'game_map_canvas_stack_selection_prompt_tokens.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
 import '../../widgets/units/civilian/work_order_afford_preview_ui.dart';
-import '../../widgets/units/civilian/build_fort_payoff_gist_line.dart';
-import '../../widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
-import '../../widgets/units/civilian/explore_payoff_gist_line.dart';
-import '../../widgets/units/civilian/prospect_payoff_gist_line.dart';
-import '../../widgets/units/civilian/purchase_land_payoff_gist_line.dart';
-import '../../widgets/units/civilian/transport_step_yield_gist_line.dart';
+import 'game_map_canvas_stack_selection_prompt_gists.dart';
 
 /// Work-target selection prompt banner overlaying the in-game map canvas.
 ///
@@ -32,6 +27,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     this.buildFortGist,
     this.exploreGist,
     this.prospectGist,
+    this.upgradeTownGist,
     super.key,
   });
 
@@ -46,6 +42,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
   final String? buildFortGist;
   final String? exploreGist;
   final String? prospectGist;
+  final String? upgradeTownGist;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +62,7 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
           buildFortGist: buildFortGist,
           exploreGist: exploreGist,
           prospectGist: prospectGist,
+          upgradeTownGist: upgradeTownGist,
         ),
       ),
     );
@@ -83,6 +81,7 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
     this.buildFortGist,
     this.exploreGist,
     this.prospectGist,
+    this.upgradeTownGist,
   });
 
   final AppLocalizations l10n;
@@ -95,16 +94,11 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
   final String? buildFortGist;
   final String? exploreGist;
   final String? prospectGist;
+  final String? upgradeTownGist;
 
   @override
   Widget build(BuildContext context) {
     final preview = affordPreview;
-    final yieldGist = nextYieldGist;
-    final landGist = payoffGist;
-    final roadGist = transportGist;
-    final fortGist = buildFortGist;
-    final explorePayoff = exploreGist;
-    final prospectPayoff = prospectGist;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: EditorialMonoclePalette.bgDeep.withValues(
@@ -132,22 +126,16 @@ class _GameMapSelectionPromptCard extends StatelessWidget {
                 l10n: l10n,
                 preview: preview,
               ),
-            if (yieldGist != null && yieldGist.isNotEmpty && !usesRelocateCopy)
-              BuildImprovementYieldGistLine(text: yieldGist),
-            if (landGist != null && landGist.isNotEmpty && !usesRelocateCopy)
-              PurchaseLandPayoffGistLine(text: landGist),
-            if (roadGist != null && roadGist.isNotEmpty && !usesRelocateCopy)
-              TransportStepYieldGistLine(text: roadGist),
-            if (fortGist != null && fortGist.isNotEmpty && !usesRelocateCopy)
-              BuildFortPayoffGistLine(text: fortGist),
-            if (explorePayoff != null &&
-                explorePayoff.isNotEmpty &&
-                !usesRelocateCopy)
-              ExplorePayoffGistLine(text: explorePayoff),
-            if (prospectPayoff != null &&
-                prospectPayoff.isNotEmpty &&
-                !usesRelocateCopy)
-              ProspectPayoffGistLine(text: prospectPayoff),
+            if (!usesRelocateCopy)
+              GameMapSelectionPromptPayoffGists(
+                nextYieldGist: nextYieldGist,
+                payoffGist: payoffGist,
+                transportGist: transportGist,
+                buildFortGist: buildFortGist,
+                exploreGist: exploreGist,
+                prospectGist: prospectGist,
+                upgradeTownGist: upgradeTownGist,
+              ),
           ],
         ),
       ),
