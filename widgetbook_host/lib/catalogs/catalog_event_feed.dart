@@ -19,6 +19,29 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
     name: 'Player Turn Event Feed Card',
     children: [
       WidgetbookUseCase(
+        name: 'Prospect complete — found / none',
+        builder: (context) => _playerTurnEventFeedCardStoryFrame(
+          child: PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Lisbon work completed! Prospect found Iron',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Lisbon work completed! Prospect found no mineral',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Research complete — tappable link to Technology',
         builder: (context) => _playerTurnEventFeedCardStoryFrame(
           child: PlayerTurnEventFeedCard(
@@ -306,10 +329,7 @@ Widget _playerTurnEventFeedCardStoryFrame({required Widget child}) {
     scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
     child: Align(
       alignment: Alignment.topRight,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: child,
-      ),
+      child: Padding(padding: const EdgeInsets.all(24), child: child),
     ),
   );
 }
@@ -335,10 +355,7 @@ Widget _playerTurnEventFeedCardNarrowStoryFrame({
         height: 640,
         child: Align(
           alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(8), child: child),
         ),
       ),
     ),

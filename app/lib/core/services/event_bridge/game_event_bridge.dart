@@ -109,6 +109,7 @@ class GameEventBridge {
             targetTileKey: event.targetTileKey,
             provinceId: event.provinceId,
             turnNumber: event.turnNumber,
+            revealedResourceId: event.revealedResourceId,
           ),
         );
       case PlayerProvinceDiscoveredEvent():

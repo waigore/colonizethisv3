@@ -52,7 +52,7 @@ After `DLG50001` closes (or `OVL20001` **View final state** when that overlay mo
 - Row tap:
   - Province-scoped lines (land combat, province capture) attempt map focus to that province and open `MAP20001` province/sea-zone overlay for the province.
 - Naval combat lines attempt map focus to a sea-zone anchor tile and open the sea-zone overlay when the anchor resolves; otherwise the row is non-tappable.
-- Work-order completion lines tap-focus the target tile and open `UNIT10001` **Civilian units** focused on the completing unit.
+- Work-order completion lines tap-focus the target tile and open `UNIT10001` **Civilian units** focused on the completing unit. Prospect completions (Refs #4746) use the survey-result clause `{province} work completed! Prospect found {displayName}` or `{province} work completed! Prospect found no mineral` (display names from `commodityDisplayName`; never raw commodity ids). Explore and other work targets keep `{province} work completed! {workTarget} finished!`. Copy is formatted from the event payload (`revealedResourceId`); do not live-query PlayerView on feed rebuild.
 - Province-discovery lines tap-focus the discovered province.
 - Sea-discovery lines tap-focus a sea-zone anchor tile.
 - Research-complete lines for catalog-known techs show the tech display name plus up to two plain-language effect clauses from `buildTechEffectSummaryLines` (same Choose-tech default cap; including the category-fallback line when that is all the helper returns), joined with ` · ` after the title sentence, a trailing chevron link affordance, and open `GAME40001` **Technology** on the Slots tab via `NavigateToRouteEvent(Routes.technology, …)` (same args as the empire left-rail Technology button). Never print raw tech ids, enum names, or RP formulas on the default row. Format via app-side `formatResearchCompleteFeedLine` / `researchCompleteLine` so the chrome mapper stays a thin `text` pass-through (Refs #4724).
@@ -100,6 +100,7 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 | Use case | Proves |
 |----------|--------|
 | Research complete — tappable link to Technology | Chevron + tappable research row with name + up to two effect clauses (Crop Rotation; 320 dp wrap) |
+| Prospect complete — found / none | Work-complete row naming Iron or **no mineral** (320 dp wrap) |
 | Diplomacy declare war — tappable link to detail | Chevron + tappable diplomacy row |
 | Land combat — outcome variants (Refs #4548) | Attacker victory, defender holds, stalemate, both armies destroyed copy with regiment-loss counts |
 | Naval combat — outcome variants (Refs #4558) | Attacker victory, defender holds, stalemate, both fleets destroyed copy with ship-loss counts and retreat clause |
@@ -132,6 +133,11 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given an overture-advanced feed line, when the feed renders, then the stage label is human-readable (never raw `STAGE!` shouting); when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` with the other party's faction id.
 - Given a spy-caught or spy-defected feed line whose counterpart faction resolves, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` with the non-human faction id; given the counterpart cannot be resolved, then the row is non-tappable and stable.
 - Given a work-order-completed feed line whose unit still exists, when the feed renders, then the work target uses the localized civilian-panel label (never raw `WORKTARGET!` shouting); when the user taps it, then the app emits `LocateMapTileEvent` and `OpenCivilianUnitsPanelEvent` with `initialSelectedUnitId` set to the completing unit.
+- Given a human `AppWorkOrderCompletedEvent` with `workTarget` `prospect` and `revealedResourceId` a prospect-required mineral, when the feed renders, then the row is `{province} work completed! Prospect found {displayName}` using `commodityDisplayName` (never the raw commodity id) (Refs #4746).
+- Given a human `AppWorkOrderCompletedEvent` with `workTarget` `prospect` and null `revealedResourceId`, when the feed renders, then the row is `{province} work completed! Prospect found no mineral` (Refs #4746).
+- Given Explore or other non-Prospect work-complete events, when the feed renders, then those lines stay `{province} work completed! {workTarget} finished!` with no mineral clause (Refs #4746).
+- Given an `AppWorkOrderCompletedEvent` whose `playerId` is not the human map player, when the feed commits, then that survey is omitted (player isolation; Refs #4746).
+- Given `OVL70001` Prospect-found and Prospect-none rows under `AppThemes.editorialMonocle` (including a 320 dp wrap), when `app/test/player_turn_event_feed_prospect_goldens_test.dart` captures each keyed `RepaintBoundary`, then each `matchesGoldenFile` baseline under `app/test/goldens/player_turn_event_feed_prospect_*.png` matches the committed PNG (Refs #4746).
 - Given an order-rejected feed line, when the feed renders, then the reason is phrased in plain language.
 - Given an order-rejected feed line whose `orderKind` maps to a known owning surface, when the user taps it, then the app emits the same bus event or `NavigateToRouteEvent` as the empire left-rail button for that order family (civilian, military, naval, production, trade, technology, or diplomacy list).
 - Given an order-rejected diplomacy line when combined topology cannot be resolved, when the feed renders, then the row is non-tappable and stable.

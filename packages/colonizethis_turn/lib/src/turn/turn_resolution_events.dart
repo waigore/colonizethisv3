@@ -2,8 +2,7 @@
 /// Keeps turn_resolver switch thin by moving event emission here.
 library;
 
-export 'turn_resolution_events_common.dart'
-    show sortedPlayerIdsForTurnEvents;
+export 'turn_resolution_events_common.dart' show sortedPlayerIdsForTurnEvents;
 export 'turn_resolution_events_diplomacy.dart'
     show
         emitDiplomacyChangeEvents,
@@ -11,6 +10,9 @@ export 'turn_resolution_events_diplomacy.dart'
         emitProvinceCapturedEvents,
         emitVictorySetEvent;
 export 'turn_resolution_events_discovery.dart'
-    show emitPlayerDiscoveryEvents, emitWorkOrderCompletedEvents;
+    show
+        emitPlayerDiscoveryEvents,
+        emitSamePhaseProspectCompletedEvents,
+        emitWorkOrderCompletedEvents;
 export 'turn_resolution_events_research.dart' show emitResearchCompleteEvents;
 export 'turn_resolution_events_spy.dart' show emitSpyResolutionEvents;

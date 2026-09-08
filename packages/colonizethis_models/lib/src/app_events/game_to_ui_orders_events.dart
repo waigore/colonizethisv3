@@ -27,6 +27,7 @@ class AppWorkOrderCompletedEvent extends GameToUIEvent {
     required this.targetTileKey,
     required this.provinceId,
     required this.turnNumber,
+    this.revealedResourceId,
   });
   final String playerId;
   final String unitId;
@@ -34,4 +35,8 @@ class AppWorkOrderCompletedEvent extends GameToUIEvent {
   final String targetTileKey;
   final String provinceId;
   final int turnNumber;
+
+  /// Prospect-required mineral id when [workTarget] is prospect and the tile
+  /// holds one; null for no deposit and for non-Prospect work.
+  final String? revealedResourceId;
 }
