@@ -143,7 +143,6 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 - `SPEC/program/development-resolution.md`
 - `SPEC/program/turn-resolution-phases.md`
 - `SPEC/program/province-extraction-snapshot.md`
-- `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/province-economic-extraction-available.md`

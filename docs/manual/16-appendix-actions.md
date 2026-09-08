@@ -111,7 +111,6 @@ Other Great Powers submit comparable decrees under the same validation and turn 
 - `SPEC/ui/diplomacy-detail-screen.md`
 - `SPEC/ui/grant-or-subsidy-dialog.md`
 - `SPEC/ui/civilian-units-panel.md`
-- `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/military-units-panel.md`
 - `SPEC/ui/military-units-army-management.md`
 - `SPEC/ui/naval-units-panel.md`
