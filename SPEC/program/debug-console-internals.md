@@ -19,8 +19,9 @@ Authorizes shared parse/execute abstractions inside `packages/colonizethis_debug
 | ID | `String? canonicalIdForInput(String input, Iterable<String> candidates)` | Case-insensitive match against `candidates`; returns canonical casing from the iterable. |
 | Spawn-by-id | `parseSpawnBySupportedId({tokens, usage, unknownIdMessage, supportedIds})` | Shared `/spawn_regiment` and `/spawn_ship` path: usage when the type token is missing, unknown-id message when membership fails, then `parseOptionalCount`. |
 | Credit-by-id | `parseCreditByCanonicalId({tokens, usage, unknownIdMessage, candidates})` | Shared `/add_worker` and `/add_resource` path: usage when tokens are short, `canonicalIdForInput` on the type token, then `parseAmountWithClamp`. |
+| No-arg | `parseNoArgCommand({tokens, usage, invocation})` | Shared `/get_tile_basic_info` and `/list_players` path: usage error when `tokens.length != 1`, otherwise success with the supplied zero-arg invocation. |
 
-Spawn parsers (`_parseSpawnCivilian`, `_parseSpawnRegiment`, `_parseSpawnShip`) MUST call `parseOptionalCount` (civilian directly; regiment/ship via `parseSpawnBySupportedId`). Credit parsers (`_parseAddMoney`, `_parseAddWorker`, `_parseAddResource`) MUST call `parseAmountWithClamp` (money directly; worker/resource via `parseCreditByCanonicalId`). `_parseSpawnCivilian` stays on the alias table and MUST NOT use `parseSpawnBySupportedId`.
+Spawn parsers (`_parseSpawnCivilian`, `_parseSpawnRegiment`, `_parseSpawnShip`) MUST call `parseOptionalCount` (civilian directly; regiment/ship via `parseSpawnBySupportedId`). Credit parsers (`_parseAddMoney`, `_parseAddWorker`, `_parseAddResource`) MUST call `parseAmountWithClamp` (money directly; worker/resource via `parseCreditByCanonicalId`). `_parseSpawnCivilian` stays on the alias table and MUST NOT use `parseSpawnBySupportedId`. `_parseGetTileBasicInfo` and `_parseListPlayers` MUST call `parseNoArgCommand` rather than inlining a third `tokens.length != 1` usage check.
 
 ## Executor helpers (`debug_console_executor_helpers.dart`)
 
@@ -58,16 +59,19 @@ Each handler expresses only the guards and label it needs; the combinators prese
 
 ## File organization
 
-- `debug_console_command_parser.dart` — verb dispatch and spawn/credit arg extraction (≤ 240 physical lines; ≥30 under the 270 package lib ceiling).
+- `debug_console_command_parser.dart` — verb dispatch and spawn/credit arg extraction (≤ 220 physical lines; ≥30 under the 250 package lib ceiling).
 - `debug_console_parser_help.dart` — `/help` text (`buildDebugConsoleHelpMessage`); interpolates the same sorted id lists as before the extract.
-- `debug_console_parser_helpers.dart` — shared parse helpers and credit/spawn caps (package-private top-level), including `parseSpawnBySupportedId` and `parseCreditByCanonicalId`.
+- `debug_console_parser_helpers.dart` — shared parse helpers and credit/spawn caps (package-private top-level), including `parseSpawnBySupportedId`, `parseCreditByCanonicalId`, and `parseNoArgCommand`.
 - `debug_console_parser_province_commands.dart` — flip, reveal, and observe parse functions.
 - `debug_console_parser_diplomacy_commands.dart` — `/set_diplomacy` parse function (`parseSetDiplomacyCommand`) with quote-aware tokenization for multi-word faction display names.
 - `debug_console_parse_result.dart` — `DebugConsoleParseResult` type.
-- `debug_console_command_executor.dart` — parse → execute orchestration and read-only commands (≤ 220 lines).
+- `debug_console_execution_types.dart` — `DebugConsolePlayerSnapshot`, `DebugConsoleReadOnlyContext`, and `DebugConsoleExecutionResult`. Re-exported from the package barrel.
+- `debug_console_command_executor.dart` — parse → execute orchestration and read-only commands (≤ 220 lines). Does not declare the three execution types.
 - `debug_console_executor_helpers.dart` — event dispatch and credit message formatting.
-- Package lib ratchet: every non-generated `packages/colonizethis_debug_console/lib/**/*.dart` file is ≤ **270** physical lines (`repo.debug_console_lib_file_size`; empty grandfather).
-- Package test ratchet: every `packages/colonizethis_debug_console/test/**/*.dart` file is ≤ **400** physical lines (`repo.debug_console_test_file_size`; empty grandfather).
+- `debug_console_parsed_invocation.dart` — sealed invocation types in one library (no `part` / `part of`).
+- Package tests live under `test/src/` mirroring `lib/src/` (parser, executor, history, gp-target-resolver plus sibling `*_cases.dart`).
+- Package lib ratchet: every non-generated `packages/colonizethis_debug_console/lib/**/*.dart` file is ≤ **250** physical lines (`repo.debug_console_lib_file_size`; empty grandfather).
+- Package test ratchet: every `packages/colonizethis_debug_console/test/**/*.dart` file is ≤ **250** physical lines (`repo.debug_console_test_file_size`; empty grandfather).
 
 ## Acceptance criteria
 
@@ -75,12 +79,14 @@ Each handler expresses only the guards and label it needs; the combinators prese
 - Given `debug_console_parser_helpers.dart` defines `parseSpawnBySupportedId`, when repo lint runs `repo.debug_console_shared_helpers`, then `_parseSpawnRegiment` and `_parseSpawnShip` invoke `parseSpawnBySupportedId`.
 - Given `debug_console_parser_helpers.dart` defines `parseAmountWithClamp`, when repo lint runs `repo.debug_console_shared_helpers`, then `_parseAddMoney` invokes `parseAmountWithClamp` and `parseCreditByCanonicalId` invokes `parseAmountWithClamp`.
 - Given `debug_console_parser_helpers.dart` defines `parseCreditByCanonicalId`, when repo lint runs `repo.debug_console_shared_helpers`, then `_parseAddWorker` and `_parseAddResource` invoke `parseCreditByCanonicalId`.
+- Given `debug_console_parser_helpers.dart` defines `parseNoArgCommand`, when repo lint runs `repo.debug_console_shared_helpers`, then `_parseGetTileBasicInfo` and `_parseListPlayers` invoke `parseNoArgCommand` (Refs #4751).
 - Given `debug_console_executor_helpers.dart` defines `creditExecutorMessage`, when repo lint runs `repo.debug_console_shared_helpers`, then `debug_console_command_executor.dart` contains no `_treasuryCreditExecutorMessage`, `_workerPoolCreditExecutorMessage`, or `_stockpileCreditExecutorMessage` functions.
 - Given a spawn or credit `DebugConsoleParsedInvocation`, when `dispatchDebugConsoleSessionEvents` runs, then it returns the same `SessionCommandEvent` list and success message semantics as before extraction (behavior-preserving).
-- Given every non-generated `packages/colonizethis_debug_console/lib/**/*.dart` file is at or below 270 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_lib_file_size`, then the rule passes and exits `0` (Refs #4433).
-- Given a `packages/colonizethis_debug_console/lib/**` Dart file with more than 270 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_lib_file_size`, then the run fails naming that file and exits `1` (Refs #4433).
-- Given every `packages/colonizethis_debug_console/test/**/*.dart` file is at or below 400 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_test_file_size`, then the rule passes and exits `0` (Refs #4433).
-- Given a `packages/colonizethis_debug_console/test/**` Dart file with more than 400 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_test_file_size`, then the run fails naming that file and exits `1` (Refs #4433).
+- Given every non-generated `packages/colonizethis_debug_console/lib/**/*.dart` file is at or below 250 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_lib_file_size`, then the rule passes and exits `0` (Refs #4433, #4751).
+- Given a `packages/colonizethis_debug_console/lib/**` Dart file with more than 250 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_lib_file_size`, then the run fails naming that file and exits `1` (Refs #4433, #4751).
+- Given every `packages/colonizethis_debug_console/test/**/*.dart` file is at or below 250 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_test_file_size`, then the rule passes and exits `0` (Refs #4433, #4751).
+- Given a `packages/colonizethis_debug_console/test/**` Dart file with more than 250 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_test_file_size`, then the run fails naming that file and exits `1` (Refs #4433, #4751).
+- Given `debug_console_command_executor.dart` after the type extract, when searching that file, then it does not declare `DebugConsolePlayerSnapshot`, `DebugConsoleReadOnlyContext`, or `DebugConsoleExecutionResult`; those types live in `debug_console_execution_types.dart` and remain exportable from `package:colonizethis_debug_console/colonizethis_debug_console.dart` (Refs #4751).
 - Given all `packages/colonizethis_app_debug/lib/src/app_event_handler_debug_*.dart` handlers source guard messages from `debug_command_helpers.dart`, when repo lint runs `repo.app_debug_handler_guard_helpers`, then the rule passes with no violations.
 - Given any `app_event_handler_debug_*.dart` handler inlines a canonical guard string literal (for example `'Debug spawn ignored: no active game.'`) instead of calling the shared helper, when repo lint runs `repo.app_debug_handler_guard_helpers`, then the run fails and names the offending file and the inlined guard fragment.
 - Given a debug treasury credit with `creditedAmount == 0` and an unknown `humanPlayerId` while the game is in `TurnPhase.movement`, when `applyDebugTreasuryCredit` runs, then it returns `game == null` with message `Debug add_money rejected: command is allowed only during human Orders phase.` (Orders-phase gate short-circuits first, preserving the prior label and ordering).

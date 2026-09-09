@@ -1,3 +1,6 @@
+import 'debug_console_parse_result.dart';
+import 'debug_console_parsed_invocation.dart';
+
 /// Upper bound for spawn commands (`/spawn_civilian`, `/spawn_regiment`, `/spawn_ship`).
 const int kDebugConsoleMaxSpawnCount = 25;
 
@@ -116,4 +119,16 @@ parseCreditByCanonicalId({
     credited: amountResult.credited,
     error: null,
   );
+}
+
+/// Shared no-arg path for `/get_tile_basic_info` and `/list_players`.
+DebugConsoleParseResult parseNoArgCommand({
+  required List<String> tokens,
+  required String usage,
+  required DebugConsoleParsedInvocation invocation,
+}) {
+  if (tokens.length != 1) {
+    return DebugConsoleParseResult.error(usage);
+  }
+  return DebugConsoleParseResult.success(invocation);
 }
