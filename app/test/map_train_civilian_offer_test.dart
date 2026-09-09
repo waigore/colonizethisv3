@@ -96,5 +96,16 @@ void main() {
       mapTrainCivilianKindForRadialAction(TileRadialCatalogAction.buildRail),
       MapTrainCivilianKind.railBuilder,
     );
+    expect(
+      mapTrainCivilianKindForRadialAction(TileRadialCatalogAction.buildPort),
+      MapTrainCivilianKind.engineer,
+    );
+    expect(
+      mapTrainCivilianKindForRadialAction(TileRadialCatalogAction.buildFort),
+      MapTrainCivilianKind.engineer,
+    );
+    for (final action in TileRadialCatalogAction.values) {
+      expect(mapTrainCivilianKindForRadialAction(action), isNotNull);
+    }
   });
 }

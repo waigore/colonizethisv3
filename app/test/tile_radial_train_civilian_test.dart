@@ -23,20 +23,28 @@ void main() {
   setUpAll(preloadNinePatchImage);
 
   test('applyTileRadialTrainCivilianView relabels and sets the hire gist', () {
-    final kind = MapTrainCivilianKind.explorer;
-    final view = applyTileRadialTrainCivilianView(
-      view: const TileRadialSpokeView(
-        action: TileRadialCatalogAction.explore,
-        enabled: false,
-        label: 'Explore',
-        tooltip: 'Explore',
-      ),
-      l10n: l10n,
-      offerTrain: true,
-    );
-    expect(view.enabled, isTrue);
-    expect(view.label, mapTrainCivilianLabel(l10n, kind));
-    expect(view.caption, mapTrainCivilianGist(l10n, kind));
+    final cases = <(TileRadialCatalogAction, MapTrainCivilianKind)>[
+      (TileRadialCatalogAction.explore, MapTrainCivilianKind.explorer),
+      (TileRadialCatalogAction.buildImprovement, MapTrainCivilianKind.builder),
+      (TileRadialCatalogAction.buildPort, MapTrainCivilianKind.engineer),
+      (TileRadialCatalogAction.purchaseLand, MapTrainCivilianKind.merchant),
+      (TileRadialCatalogAction.buildRail, MapTrainCivilianKind.railBuilder),
+    ];
+    for (final (action, kind) in cases) {
+      final view = applyTileRadialTrainCivilianView(
+        view: TileRadialSpokeView(
+          action: action,
+          enabled: false,
+          label: 'Work',
+          tooltip: 'Work',
+        ),
+        l10n: l10n,
+        offerTrain: true,
+      );
+      expect(view.enabled, isTrue);
+      expect(view.label, mapTrainCivilianLabel(l10n, kind));
+      expect(view.caption, mapTrainCivilianGist(l10n, kind));
+    }
   });
 
   testWidgets('radial Train Explorer wedge shows the hire label and gist', (

@@ -743,6 +743,8 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - Given that **Train Explorer** control, when the player taps it, then the UI layer emits `OpenDialogEvent(train_civilians)` with no params, does not emit `OpenCivilianUnitsPanelEvent`, and does not append a `WorkOrder` or `BuildUnitOrder` (`app/test/province_detail_overlay_host_support_callbacks_test.dart`).
 - Given matching units exist, or a Consulate / materials / terrain / other non-unit gate also applies, or no train tap is wired, when those surfaces render, then **Train {type}** is omitted (`app/test/province_overlay_train_civilian_test.dart`).
 - Given `MAP20001` Train Explorer enabled / units-exist / Consulate-omit / 320 dp variants under `AppThemes.editorialMonocle`, when the host golden suite captures each keyed `RepaintBoundary`, then baselines match (`app/test/province_overlay_train_civilian_goldens_test.dart`).
+- Given a visible disabled **Build improvement** / **Build road** / **Purchase land** shortcut whose disablement is solely `hasMatchingUnits == false`, when `MAP20001` Tile renders with a train tap wired, then the UI layer shows enabled **Train Builder** / **Train Engineer** / **Train Merchant**; **Train Rail Builder** uses the same hire chrome (`app/test/province_overlay_train_civilian_kinds_test.dart`).
+- Given Civilian **Station spy** is visible with no idle Spy, when `MAP20001` Civilian renders, then the UI layer does not show **Train Spy** or any Train {type} control (`app/test/province_overlay_train_civilian_kinds_test.dart`).
 
 ### Prospect payoff gist (Refs #4741)
 
