@@ -1,4 +1,4 @@
-import 'debug_console_command_executor.dart';
+import 'debug_console_execution_types.dart';
 
 /// Resolves a Great Power target for `/observe <target>`.
 ///

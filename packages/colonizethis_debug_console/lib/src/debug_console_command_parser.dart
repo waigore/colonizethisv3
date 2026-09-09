@@ -169,20 +169,18 @@ class DebugConsoleCommandParser {
   }
 
   DebugConsoleParseResult _parseGetTileBasicInfo(List<String> tokens) {
-    if (tokens.length != 1) {
-      return const DebugConsoleParseResult.error('Usage: /get_tile_basic_info');
-    }
-    return const DebugConsoleParseResult.success(
-      DebugConsoleParsedInvocation.getTileBasicInfo(),
+    return parseNoArgCommand(
+      tokens: tokens,
+      usage: 'Usage: /get_tile_basic_info',
+      invocation: const DebugConsoleParsedInvocation.getTileBasicInfo(),
     );
   }
 
   DebugConsoleParseResult _parseListPlayers(List<String> tokens) {
-    if (tokens.length != 1) {
-      return const DebugConsoleParseResult.error('Usage: /list_players');
-    }
-    return const DebugConsoleParseResult.success(
-      DebugConsoleParsedInvocation.listPlayers(),
+    return parseNoArgCommand(
+      tokens: tokens,
+      usage: 'Usage: /list_players',
+      invocation: const DebugConsoleParsedInvocation.listPlayers(),
     );
   }
 }
