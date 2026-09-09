@@ -1,10 +1,15 @@
 // Pixel goldens for MAP20001 Train {type} variants (Refs #4752).
 
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
+        demoHumanPlayerViewForOverlay,
+        demoRegionForOverlay,
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show kTechIdNationalBureaucracy;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -125,6 +130,49 @@ void main() {
           showExploreActionIcon: true,
           onTrainCivilianTap: () {},
           viewport: const Size(320, 560),
+        ),
+      ),
+    );
+  });
+
+  testWidgets('Train Builder Upgrade town missing-unit golden', (tester) async {
+    final base = demoGameForOverlay;
+    final human = base.players.first;
+    final game = base.copyWith(
+      players: [
+        human.copyWith(
+          techUnlocked: {
+            ...?human.techUnlocked,
+            kTechIdNationalBureaucracy: true,
+          },
+        ),
+        ...base.players.skip(1),
+      ],
+    );
+    await capture(
+      tester: tester,
+      slug: 'builder_upgrade_town',
+      size: const Size(400, 520),
+      child: ProvinceSeaZoneDetailOverlay(
+        game: game,
+        region: demoRegionForOverlay,
+        displayId: sampleProvinceIdForOverlay,
+        selectedTileKey: sampleTileKeyForProvinceOverlay,
+        humanPlayerId: game.players.first.id,
+        playerView: demoHumanPlayerViewForOverlay,
+        showUpgradeTownControl: true,
+        upgradeTownHasBuilderUnits: false,
+        upgradeTownTargetTileKey: sampleTileKeyForProvinceOverlay,
+        inlineActionCallbacks: (
+          onExploreWithExplorerTap: null,
+          onProspectWithExplorerTap: null,
+          onBuildImprovementTap: null,
+          onBuildRoadTap: null,
+          onBuildFortTap: null,
+          onBuildPortTap: null,
+          onBuildRailroadTap: null,
+          onPurchaseLandTap: null,
+          onTrainCivilianTap: () {},
         ),
       ),
     );

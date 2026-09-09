@@ -1,4 +1,4 @@
-// MAP20001 Train Builder/Engineer/Merchant/Rail Builder + Spy omit (Refs #4752).
+// MAP20001 Train kinds + Spy / Counter-espionage omit (Refs #4752).
 
 import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart'
     show ProvinceActionStates;
@@ -28,6 +28,8 @@ Widget _overlay({
   required ProvinceActionStates actions,
   VoidCallback? onTrain,
   ProvinceOverlayStationSpyProps stationSpy = kProvinceOverlayStationSpyHidden,
+  ProvinceOverlayCounterEspionageProps counterEspionage =
+      kProvinceOverlayCounterEspionageHidden,
 }) {
   final game = demoGameForOverlay;
   return buildAppShell(
@@ -56,6 +58,7 @@ Widget _overlay({
           onTrainCivilianTap: onTrain,
         ),
         stationSpy: stationSpy,
+        counterEspionage: counterEspionage,
       ),
     ),
   );
@@ -114,6 +117,19 @@ void main() {
     expect(find.text(l10n.provinceOverlay_trainMerchant), findsOneWidget);
   });
 
+  testWidgets('Train Explorer is enabled beside disabled Prospect', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _overlay(
+        actions: provinceOverlayInlineActions(prospect: _missing),
+        onTrain: () {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(kProvinceOverlayTrainExplorerKey), findsOneWidget);
+  });
+
   testWidgets('Train Rail Builder control is enabled hire chrome', (
     tester,
   ) async {
@@ -154,7 +170,43 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.text(l10n.provinceOverlay_sectionCivilian.toUpperCase()),
+    );
+    await tester.pump();
     expect(find.text(l10n.provinceOverlay_stationSpyAction), findsOneWidget);
+    expect(find.text('Train Spy'), findsNothing);
+    for (final kind in MapTrainCivilianKind.values) {
+      expect(find.byKey(mapTrainCivilianKey(kind)), findsNothing);
+    }
+  });
+
+  testWidgets('Counter-espionage does not add Train Spy (UXD-002)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _overlay(
+        actions: provinceOverlayInlineActions(),
+        onTrain: () {},
+        counterEspionage: (
+          showControl: true,
+          enabled: false,
+          tooltip:
+              l10n.provinceOverlay_counterEspionageDisabledNoIdleSpyTooltip,
+          gist: l10n.provinceOverlay_counterEspionageGist,
+          onTap: null,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.text(l10n.provinceOverlay_sectionCivilian.toUpperCase()),
+    );
+    await tester.pump();
+    expect(
+      find.text(l10n.provinceOverlay_counterEspionageAction),
+      findsOneWidget,
+    );
     expect(find.text('Train Spy'), findsNothing);
     for (final kind in MapTrainCivilianKind.values) {
       expect(find.byKey(mapTrainCivilianKey(kind)), findsNothing);

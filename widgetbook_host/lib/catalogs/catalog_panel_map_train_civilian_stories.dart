@@ -43,6 +43,10 @@ List<WidgetbookUseCase> get provinceOverlayTrainCivilianUseCases => [
       ),
     ),
   ),
+  WidgetbookUseCase(
+    name: 'Standalone — Train Builder Upgrade town missing-unit',
+    builder: (context) => _provinceOverlayTrainBuilderUpgradeTownStory(),
+  ),
 ];
 
 Widget _provinceOverlayTrainExplorerStory({
@@ -80,6 +84,53 @@ Widget _provinceOverlayTrainExplorerStory({
         onBuildRailroadTap: null,
         onPurchaseLandTap: null,
         onTrainCivilianTap: offerTrain ? () {} : null,
+      ),
+      onClose: () {},
+    ),
+  );
+}
+
+Game _trainBuilderBureaucracyGame() {
+  final base = demoGameForOverlay;
+  final human = base.players.first;
+  return base.copyWith(
+    players: [
+      human.copyWith(
+        techUnlocked: {
+          ...?human.techUnlocked,
+          kTechIdNationalBureaucracy: true,
+        },
+      ),
+      ...base.players.skip(1),
+    ],
+  );
+}
+
+Widget _provinceOverlayTrainBuilderUpgradeTownStory() {
+  final game = _trainBuilderBureaucracyGame();
+  return SizedBox(
+    width: 400,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: demoRegionForOverlay,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showUpgradeTownControl: true,
+      upgradeTownHasBuilderUnits: false,
+      upgradeTownTargetTileKey: sampleTileKeyForProvinceOverlay,
+      inlineActionCallbacks: (
+        onExploreWithExplorerTap: null,
+        onProspectWithExplorerTap: null,
+        onBuildImprovementTap: null,
+        onBuildRoadTap: null,
+        onBuildFortTap: null,
+        onBuildPortTap: null,
+        onBuildRailroadTap: null,
+        onPurchaseLandTap: null,
+        onTrainCivilianTap: () {},
       ),
       onClose: () {},
     ),

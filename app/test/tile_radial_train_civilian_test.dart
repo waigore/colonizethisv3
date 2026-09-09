@@ -25,8 +25,12 @@ void main() {
   test('applyTileRadialTrainCivilianView relabels and sets the hire gist', () {
     final cases = <(TileRadialCatalogAction, MapTrainCivilianKind)>[
       (TileRadialCatalogAction.explore, MapTrainCivilianKind.explorer),
+      (TileRadialCatalogAction.prospect, MapTrainCivilianKind.explorer),
       (TileRadialCatalogAction.buildImprovement, MapTrainCivilianKind.builder),
+      (TileRadialCatalogAction.upgradeTown, MapTrainCivilianKind.builder),
+      (TileRadialCatalogAction.buildRoad, MapTrainCivilianKind.engineer),
       (TileRadialCatalogAction.buildPort, MapTrainCivilianKind.engineer),
+      (TileRadialCatalogAction.buildFort, MapTrainCivilianKind.engineer),
       (TileRadialCatalogAction.purchaseLand, MapTrainCivilianKind.merchant),
       (TileRadialCatalogAction.buildRail, MapTrainCivilianKind.railBuilder),
     ];
@@ -45,6 +49,10 @@ void main() {
       expect(view.label, mapTrainCivilianLabel(l10n, kind));
       expect(view.caption, mapTrainCivilianGist(l10n, kind));
     }
+    expect(
+      cases.map((c) => c.$1).toSet(),
+      TileRadialCatalogAction.values.toSet(),
+    );
   });
 
   testWidgets('radial Train Explorer wedge shows the hire label and gist', (

@@ -17,6 +17,7 @@ void main() {
       'Standalone — Train Explorer units exist',
       'Standalone — Train Explorer Consulate omit',
       'Standalone — Train Explorer 320 dp',
+      'Standalone — Train Builder Upgrade town missing-unit',
     ]) {
       testWidgets('$useCaseName is wired into provinceOverlayDirectories', (
         tester,
