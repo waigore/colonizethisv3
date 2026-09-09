@@ -145,6 +145,7 @@ Widget _provinceOverlayExplorePayoffStory({
         onBuildPortTap: null,
         onBuildRailroadTap: null,
         onPurchaseLandTap: null,
+        onTrainCivilianTap: null,
       ),
       onClose: () {},
     ),

@@ -51,7 +51,7 @@ Reject reasons you may see: **Insufficient workers**, **Insufficient materials**
 Civilians are people you place on the map. They explore, improve land, and post Spies. Workers decide how much you can make this turn; civilians are how you work the map.
 
 1. On `GAME10001` **Game screen**, tap the **Civilian Units** icon on the left of the map to open `UNIT10001` **Civilian units panel**.
-2. Tap **Train** to open `UNIT40001` **Train civilians dialog**. Each row shows a short role line under the type name:
+2. Tap **Train** to open `UNIT40001` **Train civilians dialog**. You can also open that same dialog from the map: when a work shortcut is greyed out only because you own none of that civilian, **Train Explorer**, **Train Builder**, **Train Engineer**, **Train Merchant**, or **Train Rail Builder** appears on `MAP20001` **Province sea-zone overlay**, `MAP30001` **Tile context radial**, or `MAP30002` **More tile actions**. A short line says the new civilian appears at your capital after **Next turn** and that the tap does not assign work on the selected tile. Spies have no Train shortcut on the map. Each row shows a short role line under the type name:
 
 | Unit | Role line | Train cost | Unlock |
 |------|-----------|------------|--------|
@@ -118,6 +118,8 @@ Rival courts assign factory labour as you do, and they follow the same peasant-s
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/intelligence-council.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/tile-context-radial.md`
+- `SPEC/ui/tile-more-actions-dialog.md`
 - `SPEC/ui/train-civilians-dialog.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ui/empire-buttons.md`

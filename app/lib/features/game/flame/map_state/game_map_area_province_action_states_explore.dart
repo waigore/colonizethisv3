@@ -118,6 +118,12 @@ abstract final class GameMapAreaProvinceActionStatesExplore {
           hasMatchingUnits: hasMatchingUnits,
         );
       }
+      // Partly-revealed province with no Explorers: keep the icon visible so
+      // MAP20001 / MAP30001 can offer Train Explorer (Refs #4752). Cache
+      // membership still gates enablement when units exist.
+      if (!hasMatchingUnits) {
+        return (showIcon: true, enabled: false, hasMatchingUnits: false);
+      }
       return GameMapAreaProvinceActionStatesAssignable.kHidden;
     }
 

@@ -775,4 +775,39 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String provinceOverlay_establishEmbassyDisabledSemantics(String reason) {
     return 'Establish Embassy unavailable: $reason';
   }
+
+  @override
+  String get provinceOverlay_trainExplorer => 'Train Explorer';
+
+  @override
+  String get provinceOverlay_trainBuilder => 'Train Builder';
+
+  @override
+  String get provinceOverlay_trainEngineer => 'Train Engineer';
+
+  @override
+  String get provinceOverlay_trainMerchant => 'Train Merchant';
+
+  @override
+  String get provinceOverlay_trainRailBuilder => 'Train Rail Builder';
+
+  @override
+  String get provinceOverlay_trainCivilianGistExplorer =>
+      'A new Explorer appears at your capital after Next turn. This does not assign Explore or Prospect on this tile.';
+
+  @override
+  String get provinceOverlay_trainCivilianGistBuilder =>
+      'A new Builder appears at your capital after Next turn. This does not assign Build on this tile.';
+
+  @override
+  String get provinceOverlay_trainCivilianGistEngineer =>
+      'A new Engineer appears at your capital after Next turn. This does not assign Build on this tile.';
+
+  @override
+  String get provinceOverlay_trainCivilianGistMerchant =>
+      'A new Merchant appears at your capital after Next turn. This does not assign Purchase land on this tile.';
+
+  @override
+  String get provinceOverlay_trainCivilianGistRailBuilder =>
+      'A new Rail Builder appears at your capital after Next turn. This does not assign Build railroad on this tile.';
 }

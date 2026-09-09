@@ -39,6 +39,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   bool buildImprovementActionEnabled = false,
   bool buildImprovementActionHasMatchingUnits = false,
   VoidCallback? onBuildImprovementTap,
+  VoidCallback? onTrainCivilianTap,
   bool showEstablishConsulateControl = false,
   bool establishConsulateEnabled = false,
   bool establishConsulatePending = false,
@@ -90,6 +91,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       buildImprovementActionHasMatchingUnits:
           buildImprovementActionHasMatchingUnits,
       onBuildImprovementTap: onBuildImprovementTap,
+      onTrainCivilianTap: onTrainCivilianTap,
       showEstablishConsulateControl: showEstablishConsulateControl,
       establishConsulateEnabled: establishConsulateEnabled,
       establishConsulatePending: establishConsulatePending,

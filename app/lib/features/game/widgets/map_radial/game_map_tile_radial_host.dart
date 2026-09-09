@@ -21,6 +21,9 @@ import 'tile_radial_emit.dart';
 import 'tile_radial_host_catalog.dart';
 import 'tile_radial_layout.dart';
 import 'tile_radial_spoke_view.dart';
+import 'tile_radial_train_civilian.dart';
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
+    show trainCiviliansDialogId;
 
 /// Overlay host: secondary map gesture → radial or More dialog.
 class GameMapTileRadialHost extends ConsumerStatefulWidget {
@@ -99,10 +102,16 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
     );
   }
 
-  TileRadialCatalogLayout _layoutFor(TileRadialHostCatalogContext catalogContext, String tileKey) {
+  TileRadialCatalogLayout _layoutFor(
+    TileRadialHostCatalogContext catalogContext,
+    String tileKey,
+  ) {
     return tileRadialHostCatalogLayout(
       catalogContext: catalogContext,
       tileKey: tileKey,
+      game: widget.game,
+      humanPlayerId: widget.humanPlayerId,
+      draftOrders: ref.read(currentOrdersProvider),
     );
   }
 
@@ -128,6 +137,20 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
     final tileKey = _tileKey;
     final bus = widget.bus;
     if (tileKey == null || bus == null) return;
+    final catalogContext = _catalogContextFor(tileKey);
+    final draftOrders = ref.read(currentOrdersProvider);
+    if (tileRadialOffersTrainCivilian(
+      action: action,
+      catalogContext: catalogContext,
+      game: widget.game,
+      humanPlayerId: widget.humanPlayerId,
+      tileKey: tileKey,
+      draftOrders: draftOrders,
+    )) {
+      bus.emit(const ct_models.OpenDialogEvent(trainCiviliansDialogId));
+      _dismiss();
+      return;
+    }
     emitTileRadialCatalogAction(
       action: action,
       tileKey: tileKey,
@@ -164,7 +187,12 @@ class GameMapTileRadialHostState extends ConsumerState<GameMapTileRadialHost> {
       builder: (dialogContext) {
         return TileMoreActionsDialog(
           placeLine: place,
-          remainder: _viewsFor(dialogContext, catalogContext, tileKey, remainder),
+          remainder: _viewsFor(
+            dialogContext,
+            catalogContext,
+            tileKey,
+            remainder,
+          ),
           onAction: (action) {
             Navigator.of(dialogContext).pop();
             _commit(action);

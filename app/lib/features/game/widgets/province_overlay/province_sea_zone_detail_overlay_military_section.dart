@@ -28,6 +28,7 @@ Widget buildMilitarySectionByOwner({
   required String buildFortTooltip,
   String? buildFortPayoffGist,
   VoidCallback? onBuildFortTap,
+  Widget? buildFortTrainControl,
   bool showMoveArmyControl = false,
   bool moveArmyEnabled = false,
   String moveArmyTooltip = '',
@@ -77,6 +78,7 @@ Widget buildMilitarySectionByOwner({
       fortStatusRow,
       if (buildFortPayoffGist != null && buildFortPayoffGist.isNotEmpty)
         BuildFortPayoffGistLine(text: buildFortPayoffGist),
+      ?buildFortTrainControl,
     ],
   );
   final moveInvadeActions = <Widget>[

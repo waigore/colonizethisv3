@@ -153,7 +153,9 @@ const _packageName = 'colonizethis_app';
 // raised for Upgrade town workshop payoff gist (Refs #4747; measured 97_782).
 // raised for MAP20001 sea-zone Patrol/Defend stay-mission gists
 // (Refs #4750; measured 97_809).
-const _maxMainLines = 97809;
+// raised for MAP20001 / MAP30001 / MAP30002 Train {type} when no matching
+// civilian (Refs #4752; measured 98_517).
+const _maxMainLines = 98517;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

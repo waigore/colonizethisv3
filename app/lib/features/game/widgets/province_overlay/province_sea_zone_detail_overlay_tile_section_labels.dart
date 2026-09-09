@@ -3,9 +3,12 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_control.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_offer.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/purchase_land_payoff_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -46,6 +49,7 @@ Widget buildTileResourceLabelRow({
   required String resourceLabel,
   required ProvinceInlineActionState purchaseLandAction,
   VoidCallback? onPurchaseLandTap,
+  VoidCallback? onTrainCivilianTap,
 }) {
   final bodyStyle = overlayFgBodyStyle();
   final purchaseLandTooltip = provinceOverlayPurchaseLandTooltip(
@@ -85,13 +89,36 @@ Widget buildTileResourceLabelRow({
         ),
     ],
   );
-  if (payoff == null) return resourceRow;
+  final trainMerchant = buildMapTrainCivilianControl(
+    l10n: l10n,
+    kind: MapTrainCivilianKind.merchant,
+    show: offerMapTrainCivilianForState(
+      state: purchaseLandAction,
+      otherNonUnitGateApplies:
+          mapTrainPurchaseLandEmbassyGateApplies(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            provinceId: provinceId,
+          ) ||
+          mapTrainWorkAffordGateApplies(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: currentOrders,
+            tileKey: selectedTileKey,
+            workTarget: kWorkTargetPurchaseLand,
+          ),
+      trainTapAvailable: onTrainCivilianTap != null,
+    ),
+    onTap: onTrainCivilianTap,
+  );
+  if (payoff == null && trainMerchant == null) return resourceRow;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
       resourceRow,
-      PurchaseLandPayoffGistLine(text: payoff.gist),
+      if (payoff != null) PurchaseLandPayoffGistLine(text: payoff.gist),
+      ?trainMerchant,
     ],
   );
 }

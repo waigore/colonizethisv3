@@ -195,6 +195,7 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 
 - Given `GameSideMenu` is mounted with a valid `currentGameProvider`, When the user chooses Civilian Units, Then the system emits `OpenCivilianUnitsPanelEvent` (not `showModalBottomSheet` from `GameSideMenu`).
 - Given `CivilianUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainCiviliansDialogId)` (panel does not call `showDialog` or `Navigator.maybePop` on the handler-owned sheet for that action).
+- Given `MAP20001` / `MAP30001` / `MAP30002` shows **Train {type}**, When the player taps it, Then the system emits `OpenDialogEvent(trainCiviliansDialogId)` with no params (overlay stays mounted; radial/More dismiss first) and does not emit `OpenCivilianUnitsPanelEvent` (Refs #4752).
 - Given `MilitaryUnitsPanel` is mounted with a bus, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainMilitaryDialogId)` under the same rules.
 - Given `NavalUnitsPanel` is mounted with a bus and not in observe mode, When the user taps Train, Then the system emits `ClosePanelEvent` and then `OpenDialogEvent(trainNavalDialogId)` under the same rules.
 - Given `CT_DEBUG_CONSOLE=true` and an active game map, When the user taps Debug Console in `GameMapEmpireLeftRail`, Then the system emits `ToggleDebugConsolePanelEvent` and `GameMapArea` toggles a non-modal in-map overlay without using `OpenPanelEvent` or `showModalBottomSheet`.

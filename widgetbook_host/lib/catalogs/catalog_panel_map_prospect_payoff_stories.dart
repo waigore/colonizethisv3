@@ -111,6 +111,7 @@ Widget _provinceOverlayProspectPayoffStory({required double width}) {
         onBuildPortTap: null,
         onBuildRailroadTap: null,
         onPurchaseLandTap: null,
+        onTrainCivilianTap: null,
       ),
       onClose: () {},
     ),

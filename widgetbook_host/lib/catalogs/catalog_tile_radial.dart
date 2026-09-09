@@ -328,6 +328,7 @@ List<WidgetbookNode> get tileRadialDirectories => [
           ),
         ),
       ),
+      ...tileRadialTrainCivilianUseCases,
     ],
   ),
   WidgetbookFolder(
@@ -400,6 +401,7 @@ List<WidgetbookNode> get tileRadialDirectories => [
           ),
         ),
       ),
+      ...tileMoreActionsTrainCivilianUseCases,
     ],
   ),
 ];

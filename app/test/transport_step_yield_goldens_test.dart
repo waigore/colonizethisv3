@@ -147,6 +147,7 @@ void main() {
               onBuildPortTap: c.useBuildPort ? () {} : null,
               onBuildRailroadTap: null,
               onPurchaseLandTap: null,
+              onTrainCivilianTap: null,
             ),
             onClose: () {},
           ),

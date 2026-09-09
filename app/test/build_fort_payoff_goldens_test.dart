@@ -125,6 +125,7 @@ void main() {
               onBuildPortTap: null,
               onBuildRailroadTap: null,
               onPurchaseLandTap: null,
+              onTrainCivilianTap: null,
             ),
             onClose: () {},
           ),

@@ -101,6 +101,7 @@ Widget _provinceOverlayTransportStepYieldStory({
         onBuildPortTap: useBuildPort ? () {} : null,
         onBuildRailroadTap: null,
         onPurchaseLandTap: null,
+        onTrainCivilianTap: null,
       ),
       onClose: () {},
     ),

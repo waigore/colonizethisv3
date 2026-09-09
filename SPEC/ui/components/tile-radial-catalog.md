@@ -23,7 +23,7 @@ Do **not** include Station spy, Counter-espionage, Blockade, Beachhead, Move, In
 ## Ranking
 
 1. Filter to conceivable actions.
-2. Sort **enabled** before **disabled-but-visible**, then by the catalog order above.
+2. Sort **enabled** before **disabled-but-visible**, then by the catalog order above. A visible slot disabled solely for `hasMatchingUnits == false` is ranked as **enabled** once relabeled **Train {type}** (Refs #4752); it is still the same catalog action, not a tenth slot.
 3. Take at most **five** wedges for `MAP30001`. Remainder goes to `MAP30002` with **Province details**. Core three are not guaranteed a `MAP30001` wedge when displaced by enabled later catalog actions under the five-wedge cap.
 
 ## Layout size

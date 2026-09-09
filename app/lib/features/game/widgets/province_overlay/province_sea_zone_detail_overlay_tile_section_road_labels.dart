@@ -10,8 +10,11 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_control.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_offer.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/transport_step_yield_gist_line.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
@@ -36,6 +39,7 @@ List<Widget> buildTileRoadLabelWidgets({
   VoidCallback? onBuildPortTap,
   required ProvinceInlineActionState buildRailAction,
   VoidCallback? onBuildRailroadTap,
+  VoidCallback? onTrainCivilianTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
 }) {
@@ -156,16 +160,60 @@ List<Widget> buildTileRoadLabelWidgets({
       onPressed: openDetails,
     ),
   );
-  if (transportGist == null) {
-    return [transportRow, detailsAction];
-  }
+  final trainEngineer = buildMapTrainCivilianControl(
+    l10n: l10n,
+    kind: MapTrainCivilianKind.engineer,
+    show:
+        offerMapTrainCivilianForState(
+          state: buildRoadAction,
+          otherNonUnitGateApplies: mapTrainWorkAffordGateApplies(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: currentOrders,
+            tileKey: selectedTileKey,
+            workTarget: kWorkTargetBuildRoad,
+          ),
+          trainTapAvailable: onTrainCivilianTap != null,
+        ) ||
+        offerMapTrainCivilianForState(
+          state: buildPortAction,
+          otherNonUnitGateApplies: mapTrainWorkAffordGateApplies(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: currentOrders,
+            tileKey: selectedTileKey,
+            workTarget: kWorkTargetBuildPort,
+          ),
+          trainTapAvailable: onTrainCivilianTap != null,
+        ),
+    onTap: onTrainCivilianTap,
+  );
+  final trainRailBuilder = buildMapTrainCivilianControl(
+    l10n: l10n,
+    kind: MapTrainCivilianKind.railBuilder,
+    show: offerMapTrainCivilianForState(
+      state: buildRailAction,
+      otherNonUnitGateApplies: mapTrainWorkAffordGateApplies(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        tileKey: selectedTileKey,
+        workTarget: kWorkTargetBuildRail,
+      ),
+      trainTapAvailable: onTrainCivilianTap != null,
+    ),
+    onTap: onTrainCivilianTap,
+  );
   return [
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         transportRow,
-        TransportStepYieldGistLine(text: transportGist),
+        if (transportGist != null)
+          TransportStepYieldGistLine(text: transportGist),
+        ?trainEngineer,
+        ?trainRailBuilder,
       ],
     ),
     detailsAction,

@@ -36,7 +36,8 @@ No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish 
 |---------|--------------|---------------|
 | Province details | Always | `reportMapTileTapped` / overlay open; close radial + dialog |
 | Remainder row | Overlay enabled | Matching `OpenCivilianUnitsPanelEvent` shortcut fields |
-| Disabled remainder | Visible | Tooltip only; no commit |
+| Remainder row relabeled **Train {type}** | Visible work shortcut disabled solely for `hasMatchingUnits == false` (Refs #4752) | `OpenDialogEvent(train_civilians)` with no params; gist default-visible |
+| Disabled remainder | Visible (Consulate / materials / terrain / other non-unit) | Tooltip only; no commit; no Train relabel |
 | Barrier | — | Dismiss |
 
 ## States and variants
@@ -49,7 +50,7 @@ No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish 
 
 ## Widgetbook
 
-Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; remainder Build road overflow; 320 dp.
+Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; remainder Build road overflow; 320 dp; **Train Explorer missing-unit** (Refs #4752).
 
 ## Acceptance criteria
 
@@ -60,3 +61,4 @@ Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; re
 - Given an enabled Build fort remainder row, when the dialog renders, then the build-fort payoff gist is default-visible (not tooltip-only). (`app/test/build_fort_payoff_copy_test.dart`)
 - Given an enabled Explore remainder row, when the dialog renders, then the Explore province-reveal + duration gist is default-visible (not tooltip-only). (`app/test/explore_payoff_copy_test.dart`)
 - Given an enabled Prospect remainder row, when the dialog renders, then the mineral-known + duration gist is default-visible (not tooltip-only). (`app/test/prospect_payoff_copy_test.dart`)
+- Given a remainder row disabled solely because `hasMatchingUnits == false`, when the dialog renders, then that slot is an enabled **Train {type}** row with a default-visible capital-after-Next-turn gist (`app/test/tile_radial_train_civilian_test.dart`, `app/test/tile_radial_train_civilian_goldens_test.dart`).

@@ -88,6 +88,7 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
       onBuildPortTap: shortcuts.onBuildPortTap,
       onBuildRailroadTap: shortcuts.onBuildRailroadTap,
       onPurchaseLandTap: shortcuts.onPurchaseLandTap,
+      onTrainCivilianTap: canMutateViaUi ? shortcuts.onTrainCivilianTap : null,
     ),
     omniscientDetail: omniscientDetail,
     showUpgradeTownControl: canMutateViaUi && upgradeTownState.showControl,

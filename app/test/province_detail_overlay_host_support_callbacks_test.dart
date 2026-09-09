@@ -1,7 +1,10 @@
 // Shortcut callback gating pins for province-detail overlay host support.
 
+import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
+    show trainCiviliansDialogId;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' show AppEventBus;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show AppEventBus, OpenCivilianUnitsPanelEvent, OpenDialogEvent;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,6 +43,7 @@ void main() {
       expect(callbacks.onBuildImprovementTap, isNull);
       expect(callbacks.onBuildRoadTap, isNull);
       expect(callbacks.onPurchaseLandTap, isNull);
+      expect(callbacks.onTrainCivilianTap, isNotNull);
     });
 
     test('returns all-null callbacks when every action is disabled', () {
@@ -153,6 +157,31 @@ void main() {
       expect(purchaseLandOnly.onBuildImprovementTap, isNull);
       expect(purchaseLandOnly.onBuildRoadTap, isNull);
       expect(purchaseLandOnly.onPurchaseLandTap, isNotNull);
+    });
+
+    test('train civilian tap emits OpenDialogEvent without params', () async {
+      OpenDialogEvent? opened;
+      final panelOpened = <OpenCivilianUnitsPanelEvent>[];
+      bus.on<OpenDialogEvent>().listen((e) => opened = e);
+      bus.on<OpenCivilianUnitsPanelEvent>().listen(panelOpened.add);
+      final callbacks = provinceDetailCallbacks(
+        game: provinceDetailMinimalGame(),
+        selectedTileKey: provinceDetailSupportTileKey,
+        exploreEnabled: false,
+        prospectEnabled: false,
+        buildImprovementEnabled: false,
+        buildRoadEnabled: false,
+        buildFortEnabled: false,
+        buildPortEnabled: false,
+        purchaseLandEnabled: false,
+        bus: bus,
+      );
+      callbacks.onTrainCivilianTap!();
+      await Future<void>.delayed(Duration.zero);
+      expect(opened, isNotNull);
+      expect(opened!.dialogId, trainCiviliansDialogId);
+      expect(opened!.params, isNull);
+      expect(panelOpened, isEmpty);
     });
   });
 }

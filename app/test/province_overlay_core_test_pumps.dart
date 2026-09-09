@@ -81,6 +81,7 @@ Future<void> pumpProvinceOverlay(
             onBuildPortTap: null,
             onBuildRailroadTap: null,
             onPurchaseLandTap: null,
+            onTrainCivilianTap: null,
           ),
         ),
       ),

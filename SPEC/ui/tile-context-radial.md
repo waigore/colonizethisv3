@@ -46,7 +46,8 @@ Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog ch
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
 | Catalog wedge (nine actions) | Overlay `enabled` | Same `OpenCivilianUnitsPanelEvent` shortcut fields as `MAP20001` | Dismiss radial |
-| Disabled wedge | Visible teachable gate | None | Tooltip / semantics only (overlay refusal copy) |
+| Catalog wedge relabeled **Train {type}** | Visible work shortcut disabled solely for `hasMatchingUnits == false` (Refs #4752) | `OpenDialogEvent(train_civilians)` with no params | Dismiss radial; gist default-visible; not an extra wedge beyond five + More |
+| Disabled wedge | Visible teachable gate (Consulate / materials / terrain / other non-unit) | None | Tooltip / semantics only (overlay refusal copy); no Train relabel |
 | More | Always | Open `MAP30002` | Dismiss radial |
 | Outside / Esc / pan | — | Dismiss | No order |
 
@@ -62,7 +63,7 @@ Editorial-monocle tokens only (`EditorialMonoclePalette`). No Material dialog ch
 
 ## Widgetbook
 
-Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enabled Explore disabled; empty catalog More-only; sea-zone few shortcuts; five wedges with remainder; 320 dp clamp; **Upgrade town payoff pause** (Refs #4747).
+Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enabled Explore disabled; empty catalog More-only; sea-zone few shortcuts; five wedges with remainder; 320 dp clamp; **Upgrade town payoff pause** (Refs #4747); **Train Explorer missing-unit** (Refs #4752).
 
 ## Acceptance criteria
 
@@ -76,3 +77,6 @@ Folder **Tile Context Radial**. Use cases: enabled three wedges; Prospect enable
 - Given an enabled Explore wedge, when the radial renders, then the Explore province-reveal + duration gist is default-visible (not tooltip-only). (`app/test/explore_payoff_copy_test.dart`)
 - Given an enabled Prospect wedge, when the radial renders, then the mineral-known + duration gist is default-visible (not tooltip-only). (`app/test/prospect_payoff_copy_test.dart`)
 - Given an enabled Upgrade town wedge, when the radial renders, then the town-workshop start / pause-until-4 / resume gist is default-visible (not tooltip-only). (`app/test/upgrade_town_payoff_copy_test.dart`)
+- Given a catalog wedge disabled solely because `hasMatchingUnits == false`, when the radial or More list renders, then that slot is an enabled **Train {type}** row/wedge (not an extra action) with a default-visible capital-after-Next-turn gist (`app/test/tile_radial_train_civilian_test.dart`, `app/test/tile_radial_train_civilian_goldens_test.dart`, `app/test/widgetbook_tile_radial_train_civilian_variants_test.dart`).
+- Given that **Train Explorer** wedge, when the player activates it, then the UI layer emits `OpenDialogEvent(train_civilians)` with no params, dismisses the radial, and does not emit `OpenCivilianUnitsPanelEvent` or append a `WorkOrder` / `BuildUnitOrder` (`app/test/tile_radial_train_civilian_host_emit_event_test.dart`).
+- Given each of the nine catalog actions (Explore through Build fort), when the slot is relabeled Train {type}, then the hire kind is Explorer (Explore/Prospect), Builder (Build improvement/Upgrade town), Engineer (Build road/port/fort), Merchant (Purchase land), or Rail Builder (Build railroad) (`app/test/map_train_civilian_offer_test.dart`, `app/test/tile_radial_train_civilian_test.dart`).

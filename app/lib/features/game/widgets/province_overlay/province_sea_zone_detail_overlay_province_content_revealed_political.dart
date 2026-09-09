@@ -1,6 +1,9 @@
 import 'package:colonizethis_app/features/game/flame/controls/map_tile_sight.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_control.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_offer.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/upgrade_town_payoff_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_overlay_tooltips.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -26,6 +29,7 @@ Widget buildRevealedProvincePoliticalSection({
   Map<String, int> townProductionBonusByCommodity = const {},
   Map<String, int> nextTownProductionBonusByCommodity = const {},
   VoidCallback? onUpgradeTownTap,
+  VoidCallback? onTrainCivilianTap,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
   required bool establishConsulatePending,
@@ -84,6 +88,30 @@ Widget buildRevealedProvincePoliticalSection({
             nextBonus: nextTownProductionBonusByCommodity,
           ),
     onUpgradeTownTap: onUpgradeTownTap,
+    upgradeTownTrainControl: upgradeTownTargetTileKey == null
+        ? null
+        : buildMapTrainCivilianControl(
+            l10n: l10n,
+            kind: MapTrainCivilianKind.builder,
+            show: offerMapTrainCivilian(
+              showIcon: showUpgradeTownControl,
+              hasMatchingUnits: upgradeTownHasBuilderUnits,
+              otherNonUnitGateApplies:
+                  mapTrainUpgradeTownTechGateApplies(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                  ) ||
+                  mapTrainWorkAffordGateApplies(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    currentOrders: draftOrders,
+                    tileKey: upgradeTownTargetTileKey,
+                    workTarget: kWorkTargetUpgradeTown,
+                  ),
+              trainTapAvailable: onTrainCivilianTap != null,
+            ),
+            onTap: onTrainCivilianTap,
+          ),
     showEstablishConsulateControl: showEstablishConsulateControl,
     establishConsulateEnabled: establishConsulateEnabled,
     establishConsulatePending: establishConsulatePending,
