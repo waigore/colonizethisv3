@@ -251,6 +251,7 @@ part 'catalog_intelligence_council.dart';
 part 'catalog_screens_combat.dart';
 part 'catalog_screens_combat_mode_choice.dart';
 part 'catalog_tile_radial.dart';
+part 'catalog_tile_radial_train_civilian_stories.dart';
 part 'catalog_dialogs.dart';
 part 'catalog_dialogs_grant_or_subsidy.dart';
 part 'catalog_dialogs_move_army_invasion_intel.dart';

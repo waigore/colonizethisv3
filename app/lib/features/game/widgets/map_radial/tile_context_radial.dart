@@ -69,7 +69,6 @@ class TileContextRadial extends StatelessWidget {
               left: topLeft.dx,
               top: topLeft.dy,
               width: needed.width,
-              height: boxHeight,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -85,7 +84,8 @@ class TileContextRadial extends StatelessWidget {
                       onMore: onMore,
                     ),
                   ),
-                  if (captionWidget != null) captionWidget,
+                  if (captionWidget != null)
+                    SizedBox(width: needed.width, child: captionWidget),
                 ],
               ),
             ),

@@ -4,6 +4,7 @@ import 'package:colonizethis_app/features/game/widgets/map_radial/tile_context_r
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_more_actions_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_catalog.dart';
 import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_spoke_view.dart';
+import 'package:colonizethis_app/features/game/widgets/map_radial/tile_radial_train_civilian.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_offer.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
@@ -21,10 +22,28 @@ void main() {
 
   setUpAll(preloadNinePatchImage);
 
-  testWidgets('radial Train Explorer wedge shows the hire label', (
+  test('applyTileRadialTrainCivilianView relabels and sets the hire gist', () {
+    final kind = MapTrainCivilianKind.explorer;
+    final view = applyTileRadialTrainCivilianView(
+      view: const TileRadialSpokeView(
+        action: TileRadialCatalogAction.explore,
+        enabled: false,
+        label: 'Explore',
+        tooltip: 'Explore',
+      ),
+      l10n: l10n,
+      offerTrain: true,
+    );
+    expect(view.enabled, isTrue);
+    expect(view.label, mapTrainCivilianLabel(l10n, kind));
+    expect(view.caption, mapTrainCivilianGist(l10n, kind));
+  });
+
+  testWidgets('radial Train Explorer wedge shows the hire label and gist', (
     tester,
   ) async {
     final kind = MapTrainCivilianKind.explorer;
+    final gist = mapTrainCivilianGist(l10n, kind);
     await tester.pumpWidget(
       buildAppShell(
         viewport: const Size(800, 800),
@@ -36,6 +55,7 @@ void main() {
               enabled: true,
               label: mapTrainCivilianLabel(l10n, kind),
               tooltip: mapTrainCivilianLabel(l10n, kind),
+              caption: gist,
             ),
           ],
           onWedge: (_) {},
@@ -46,11 +66,15 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Train Explorer'), findsOneWidget);
+    expect(find.text(gist), findsWidgets);
   });
 
-  testWidgets('More dialog Train Explorer row is enabled', (tester) async {
+  testWidgets('More dialog Train Explorer row is enabled with gist', (
+    tester,
+  ) async {
     TileRadialCatalogAction? tapped;
     final kind = MapTrainCivilianKind.explorer;
+    final gist = mapTrainCivilianGist(l10n, kind);
     await tester.pumpWidget(
       buildAppShell(
         child: TileMoreActionsDialog(
@@ -61,7 +85,7 @@ void main() {
               enabled: true,
               label: mapTrainCivilianLabel(l10n, kind),
               tooltip: mapTrainCivilianLabel(l10n, kind),
-              caption: mapTrainCivilianGist(l10n, kind),
+              caption: gist,
             ),
           ],
           onAction: (action) => tapped = action,
@@ -71,6 +95,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Train Explorer'), findsOneWidget);
+    expect(find.text(gist), findsOneWidget);
     await tester.tap(find.text('Train Explorer'));
     await tester.pump();
     expect(tapped, TileRadialCatalogAction.explore);

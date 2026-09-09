@@ -50,7 +50,7 @@ No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish 
 
 ## Widgetbook
 
-Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; remainder Build road overflow; 320 dp.
+Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; remainder Build road overflow; 320 dp; **Train Explorer missing-unit** (Refs #4752).
 
 ## Acceptance criteria
 
@@ -61,3 +61,4 @@ Folder **More Tile Actions**. Use cases: empty remainder; remainder Prospect; re
 - Given an enabled Build fort remainder row, when the dialog renders, then the build-fort payoff gist is default-visible (not tooltip-only). (`app/test/build_fort_payoff_copy_test.dart`)
 - Given an enabled Explore remainder row, when the dialog renders, then the Explore province-reveal + duration gist is default-visible (not tooltip-only). (`app/test/explore_payoff_copy_test.dart`)
 - Given an enabled Prospect remainder row, when the dialog renders, then the mineral-known + duration gist is default-visible (not tooltip-only). (`app/test/prospect_payoff_copy_test.dart`)
+- Given a remainder row disabled solely because `hasMatchingUnits == false`, when the dialog renders, then that slot is an enabled **Train {type}** row with a default-visible capital-after-Next-turn gist (`app/test/tile_radial_train_civilian_test.dart`, `app/test/tile_radial_train_civilian_goldens_test.dart`).
