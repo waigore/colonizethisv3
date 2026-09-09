@@ -579,7 +579,8 @@ jobs:
         needs.app_tests_cache.result == 'success'
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Full-list coverage plus shard-0 e2e_support can exceed 30m (Refs #4752).
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
