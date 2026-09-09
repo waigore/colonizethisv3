@@ -43,6 +43,7 @@ You explore and prospect **your** land, **unclaimed** land, and (with a Consulat
 1. On `MAP20001` **Province sea-zone overlay**, open **Tile**.
 2. Tap **Explore with explorer** or **Prospect with explorer**. Those shortcuts open the same civilian panel already filtered to Explorers.
 3. Tap **Assign** to commit that work to the selected tile (no second menu).
+4. If you own **no Explorers**, those shortcuts stay visible but greyed out. **Train Explorer** appears beside them. A short line says the new Explorer appears at your capital after **Next turn**, and that this tap does not assign Explore or Prospect on this tile. Tap it to open `UNIT40001` **Train civilians**. Hire counts still wait for you to set them there. If a Consulate is also missing on Minor Nation or Tribe land, **Train Explorer** is hidden and the greyed shortcut still points you to **Establish Consulate**. The same **Train Explorer** wording appears on `MAP30001` **Tile context radial** (right-click or press-and-hold) and on `MAP30002` **More tile actions**.
 
 **Explore**
 
@@ -126,6 +127,9 @@ Rival courts send Explorers into the same fog. When they need ore for workshops 
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
+- `SPEC/ui/tile-context-radial.md`
+- `SPEC/ui/tile-more-actions-dialog.md`
+- `SPEC/ui/train-civilians-dialog.md`
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/move-fleet-dialog.md`
 - `SPEC/ui/naval-units-panel.md`

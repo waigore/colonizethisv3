@@ -53,10 +53,16 @@ void main() {
       final onTown = tileRadialHostCatalogLayout(
         catalogContext: onTownContext,
         tileKey: kUpgradeTownCatalogTownTileKey,
+        game: game,
+        humanPlayerId: kUpgradeTownCatalogHumanPlayerId,
+        draftOrders: const Orders(),
       );
       final onOther = tileRadialHostCatalogLayout(
         catalogContext: onOtherContext,
         tileKey: kUpgradeTownCatalogOtherTileKey,
+        game: game,
+        humanPlayerId: kUpgradeTownCatalogHumanPlayerId,
+        draftOrders: const Orders(),
       );
 
       expect(
@@ -104,6 +110,9 @@ void main() {
       final layout = tileRadialHostCatalogLayout(
         catalogContext: catalogContext,
         tileKey: kUpgradeTownCatalogTownTileKey,
+        game: game,
+        humanPlayerId: kUpgradeTownCatalogHumanPlayerId,
+        draftOrders: const Orders(),
       );
       final views = tileRadialHostSpokeViews(
         context: context,

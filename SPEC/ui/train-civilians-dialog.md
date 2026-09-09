@@ -15,7 +15,7 @@ The Train Civilians dialog lets the player queue training orders for civilian un
 
 ## Opening the Dialog
 
-- **Trigger:** A **Train** button in the header of the [CivilianUnitsPanel](civilian-units-panel.md).
+- **Trigger:** A **Train** button in the header of the [CivilianUnitsPanel](civilian-units-panel.md), or map **Train {type}** from `MAP20001` / `MAP30001` / `MAP30002` when a civilian work shortcut is visible and disablement is solely no matching units (Refs #4752). Map opens do **not** pass highlight / row-emphasis params.
 - **Presentation:** `CtDialogShell` (modal, pixel-art nine-patch frame) centered on screen with transparent backdrop.
 - **Replacement:** Opening the dialog does NOT close the CivilianUnitsPanel; the panel remains open beneath.
 

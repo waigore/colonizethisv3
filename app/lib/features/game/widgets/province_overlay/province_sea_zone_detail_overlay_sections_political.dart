@@ -68,6 +68,7 @@ Widget buildPoliticalSection({
   required String upgradeTownTooltip,
   String? upgradeTownPayoffGist,
   VoidCallback? onUpgradeTownTap,
+  Widget? upgradeTownTrainControl,
   required bool showEstablishConsulateControl,
   required bool establishConsulateEnabled,
   required bool establishConsulatePending,
@@ -173,6 +174,7 @@ Widget buildPoliticalSection({
             upgradeTownPayoffGist != null &&
             upgradeTownPayoffGist.isNotEmpty)
           UpgradeTownPayoffGistLine(text: upgradeTownPayoffGist),
+        ?upgradeTownTrainControl,
       ],
     ),
   );

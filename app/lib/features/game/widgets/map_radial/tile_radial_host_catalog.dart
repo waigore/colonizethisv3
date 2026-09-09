@@ -21,6 +21,7 @@ import 'tile_radial_catalog.dart';
 import 'tile_radial_keys.dart';
 import 'tile_radial_spoke_view.dart';
 import 'tile_radial_tooltips.dart';
+import 'tile_radial_train_civilian.dart';
 
 export 'tile_radial_host_catalog_context.dart'
     show
@@ -32,50 +33,18 @@ export 'tile_radial_host_catalog_context.dart'
 TileRadialCatalogLayout tileRadialHostCatalogLayout({
   required TileRadialHostCatalogContext catalogContext,
   required String tileKey,
+  required ct_models.Game game,
+  required String humanPlayerId,
+  required ct_models.Orders draftOrders,
 }) {
-  final states = catalogContext.states;
-  final upgradeTown = catalogContext.upgradeTown;
-  final upgradeTownOnSelectedTile =
-      upgradeTown.showControl && upgradeTown.townTileKey == tileKey;
   return rankTileRadialCatalog(
-    visibility: {
-      TileRadialCatalogAction.explore: (
-        showIcon: states.explore.showIcon,
-        enabled: states.explore.enabled,
-      ),
-      TileRadialCatalogAction.prospect: (
-        showIcon: states.prospect.showIcon,
-        enabled: states.prospect.enabled,
-      ),
-      TileRadialCatalogAction.buildImprovement: (
-        showIcon: states.buildImprovement.showIcon,
-        enabled: states.buildImprovement.enabled,
-      ),
-      TileRadialCatalogAction.buildRoad: (
-        showIcon: states.buildRoad.showIcon,
-        enabled: states.buildRoad.enabled,
-      ),
-      TileRadialCatalogAction.purchaseLand: (
-        showIcon: states.purchaseLand.showIcon,
-        enabled: states.purchaseLand.enabled,
-      ),
-      TileRadialCatalogAction.upgradeTown: (
-        showIcon: upgradeTownOnSelectedTile,
-        enabled: upgradeTownOnSelectedTile && upgradeTown.enabled,
-      ),
-      TileRadialCatalogAction.buildPort: (
-        showIcon: states.buildPort.showIcon,
-        enabled: states.buildPort.enabled,
-      ),
-      TileRadialCatalogAction.buildRail: (
-        showIcon: states.buildRail.showIcon,
-        enabled: states.buildRail.enabled,
-      ),
-      TileRadialCatalogAction.buildFort: (
-        showIcon: states.buildFort.showIcon,
-        enabled: states.buildFort.enabled,
-      ),
-    },
+    visibility: tileRadialTrainAwareVisibility(
+      catalogContext: catalogContext,
+      tileKey: tileKey,
+      game: game,
+      humanPlayerId: humanPlayerId,
+      draftOrders: draftOrders,
+    ),
   );
 }
 
@@ -119,37 +88,96 @@ List<TileRadialSpokeView> tileRadialHostSpokeViews({
 
   return [
     for (final spoke in spokes)
-      TileRadialSpokeView(
-        action: spoke.action,
-        enabled: spoke.enabled,
-        label: tileRadialActionLabel(l10n, spoke.action),
-        tooltip: tileRadialActionTooltip(
-          context: context,
-          l10n: l10n,
+      applyTileRadialTrainCivilianView(
+        l10n: l10n,
+        offerTrain: tileRadialOffersTrainCivilian(
           action: spoke.action,
+          catalogContext: catalogContext,
           game: game,
           humanPlayerId: humanPlayerId,
           tileKey: tileKey,
-          provinceId: provinceId,
-          currentOrders: draftOrders,
-          enabled: spoke.enabled,
-          hasMatchingUnits: hasMatchingUnits(spoke.action),
+          draftOrders: draftOrders,
         ),
-        caption: switch (spoke.action) {
-          TileRadialCatalogAction.explore => explorePayoffGistForTile(
+        view: TileRadialSpokeView(
+          action: spoke.action,
+          enabled: spoke.enabled,
+          label: tileRadialActionLabel(l10n, spoke.action),
+          tooltip: tileRadialActionTooltip(
+            context: context,
             l10n: l10n,
+            action: spoke.action,
             game: game,
+            humanPlayerId: humanPlayerId,
             tileKey: tileKey,
+            provinceId: provinceId,
+            currentOrders: draftOrders,
             enabled: spoke.enabled,
+            hasMatchingUnits: hasMatchingUnits(spoke.action),
           ),
-          TileRadialCatalogAction.prospect => prospectPayoffGistForTile(
-            l10n: l10n,
-            game: game,
-            tileKey: tileKey,
-            enabled: spoke.enabled,
-          ),
-          TileRadialCatalogAction.buildImprovement =>
-            buildImprovementNextYieldGistForTile(
+          caption: switch (spoke.action) {
+            TileRadialCatalogAction.explore => explorePayoffGistForTile(
+              l10n: l10n,
+              game: game,
+              tileKey: tileKey,
+              enabled: spoke.enabled,
+            ),
+            TileRadialCatalogAction.prospect => prospectPayoffGistForTile(
+              l10n: l10n,
+              game: game,
+              tileKey: tileKey,
+              enabled: spoke.enabled,
+            ),
+            TileRadialCatalogAction.buildImprovement =>
+              buildImprovementNextYieldGistForTile(
+                l10n: l10n,
+                game: game,
+                humanPlayerId: humanPlayerId,
+                tileKey: tileKey,
+                enabled: spoke.enabled,
+                mapData: mapData,
+              ),
+            TileRadialCatalogAction.purchaseLand =>
+              purchaseLandPayoffCopyForTile(
+                l10n: l10n,
+                game: game,
+                tileKey: tileKey,
+                enabled: spoke.enabled,
+              )?.gist,
+            TileRadialCatalogAction.buildRoad => transportStepYieldGistForTile(
+              l10n: l10n,
+              game: game,
+              humanPlayerId: humanPlayerId,
+              tileKey: tileKey,
+              workTarget: kWorkTargetBuildRoad,
+              enabled: spoke.enabled,
+              mapData: mapData,
+            ),
+            TileRadialCatalogAction.buildPort => transportStepYieldGistForTile(
+              l10n: l10n,
+              game: game,
+              humanPlayerId: humanPlayerId,
+              tileKey: tileKey,
+              workTarget: kWorkTargetBuildPort,
+              enabled: spoke.enabled,
+              mapData: mapData,
+            ),
+            TileRadialCatalogAction.buildRail => transportStepYieldGistForTile(
+              l10n: l10n,
+              game: game,
+              humanPlayerId: humanPlayerId,
+              tileKey: tileKey,
+              workTarget: kWorkTargetBuildRail,
+              enabled: spoke.enabled,
+              mapData: mapData,
+            ),
+            TileRadialCatalogAction.buildFort => buildFortPayoffGistForTile(
+              l10n: l10n,
+              game: game,
+              humanPlayerId: humanPlayerId,
+              tileKey: tileKey,
+              enabled: spoke.enabled,
+            ),
+            TileRadialCatalogAction.upgradeTown => upgradeTownPayoffGistForTile(
               l10n: l10n,
               game: game,
               humanPlayerId: humanPlayerId,
@@ -157,56 +185,8 @@ List<TileRadialSpokeView> tileRadialHostSpokeViews({
               enabled: spoke.enabled,
               mapData: mapData,
             ),
-          TileRadialCatalogAction.purchaseLand => purchaseLandPayoffCopyForTile(
-            l10n: l10n,
-            game: game,
-            tileKey: tileKey,
-            enabled: spoke.enabled,
-          )?.gist,
-          TileRadialCatalogAction.buildRoad => transportStepYieldGistForTile(
-            l10n: l10n,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            tileKey: tileKey,
-            workTarget: kWorkTargetBuildRoad,
-            enabled: spoke.enabled,
-            mapData: mapData,
-          ),
-          TileRadialCatalogAction.buildPort => transportStepYieldGistForTile(
-            l10n: l10n,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            tileKey: tileKey,
-            workTarget: kWorkTargetBuildPort,
-            enabled: spoke.enabled,
-            mapData: mapData,
-          ),
-          TileRadialCatalogAction.buildRail => transportStepYieldGistForTile(
-            l10n: l10n,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            tileKey: tileKey,
-            workTarget: kWorkTargetBuildRail,
-            enabled: spoke.enabled,
-            mapData: mapData,
-          ),
-          TileRadialCatalogAction.buildFort => buildFortPayoffGistForTile(
-            l10n: l10n,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            tileKey: tileKey,
-            enabled: spoke.enabled,
-          ),
-          TileRadialCatalogAction.upgradeTown => upgradeTownPayoffGistForTile(
-            l10n: l10n,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            tileKey: tileKey,
-            enabled: spoke.enabled,
-            mapData: mapData,
-          ),
-          _ => null,
-        },
+          },
+        ),
       ),
   ];
 }

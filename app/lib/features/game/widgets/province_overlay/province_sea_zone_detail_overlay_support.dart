@@ -23,6 +23,7 @@ typedef ProvinceInlineActionCallbacks = ({
   VoidCallback? onBuildPortTap,
   VoidCallback? onBuildRailroadTap,
   VoidCallback? onPurchaseLandTap,
+  VoidCallback? onTrainCivilianTap,
 });
 
 const ProvinceInlineActionCallbacks kEmptyProvinceInlineActionCallbacks = (
@@ -34,6 +35,7 @@ const ProvinceInlineActionCallbacks kEmptyProvinceInlineActionCallbacks = (
   onBuildPortTap: null,
   onBuildRailroadTap: null,
   onPurchaseLandTap: null,
+  onTrainCivilianTap: null,
 );
 
 /// Builds [ProvinceActionStates] with optional slot overrides (Widgetbook/tests).
@@ -73,9 +75,7 @@ class OverlayContent {
   final int lazyWideDeferredFromIndex;
 
   List<Widget> get tabViews => sectionSpecs
-      .map(
-        (spec) => OverlayDeferredSectionBody(builder: spec.builder),
-      )
+      .map((spec) => OverlayDeferredSectionBody(builder: spec.builder))
       .toList();
 }
 

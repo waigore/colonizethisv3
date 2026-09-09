@@ -43,6 +43,7 @@ You explore and prospect **your** land, **unclaimed** land, and (with a Consulat
 1. On **Province sea-zone overlay**, open **Tile**.
 2. Tap **Explore with explorer** or **Prospect with explorer**. Those shortcuts open the same civilian panel already filtered to Explorers.
 3. Tap **Assign** to commit that work to the selected tile (no second menu).
+4. If you own **no Explorers**, those shortcuts stay visible but greyed out. **Train Explorer** appears beside them. A short line says the new Explorer appears at your capital after **Next turn**, and that this tap does not assign Explore or Prospect on this tile. Tap it to open **Train civilians dialog**. Hire counts still wait for you to set them there. If a Consulate is also missing on Minor Nation or Tribe land, **Train Explorer** is hidden and the greyed shortcut still points you to **Establish Consulate**. The same **Train Explorer** wording appears on **Tile context radial** (right-click or press-and-hold) and on **More tile actions**.
 
 **Explore**
 

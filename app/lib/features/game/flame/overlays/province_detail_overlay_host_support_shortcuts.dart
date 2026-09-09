@@ -11,6 +11,7 @@ import 'province_detail_overlay_host_support_shortcuts_consulate.dart';
 import 'province_detail_overlay_host_support_shortcuts_embassy.dart';
 import 'province_detail_overlay_host_support_shortcuts_offer_peace.dart';
 import 'province_detail_overlay_host_support_shortcuts_work.dart';
+import 'province_detail_overlay_host_support_train_civilian.dart';
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`
 /// when its action is disabled or no tile is selected, matching the previous
@@ -24,6 +25,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onBuildPortTap,
   VoidCallback? onBuildRailroadTap,
   VoidCallback? onPurchaseLandTap,
+  VoidCallback? onTrainCivilianTap,
   VoidCallback? onUpgradeTownTap,
   VoidCallback? onEstablishConsulateTap,
   VoidCallback? onEstablishEmbassyTap,
@@ -150,6 +152,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     targetName: offerPeaceTargetName,
     bus: bus,
   );
+  final trainTap = buildTrainCivilianDialogTap(bus);
   if (tileKey == null) {
     return (
       onExploreWithExplorerTap: null,
@@ -160,6 +163,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onBuildPortTap: null,
       onBuildRailroadTap: null,
       onPurchaseLandTap: null,
+      onTrainCivilianTap: trainTap,
       onUpgradeTownTap: upgradeTownTap,
       onEstablishConsulateTap: establishConsulateTap,
       onEstablishEmbassyTap: establishEmbassyTap,
@@ -196,6 +200,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     onBuildPortTap: workTaps.onBuildPortTap,
     onBuildRailroadTap: workTaps.onBuildRailroadTap,
     onPurchaseLandTap: workTaps.onPurchaseLandTap,
+    onTrainCivilianTap: trainTap,
     onUpgradeTownTap: upgradeTownTap,
     onEstablishConsulateTap: establishConsulateTap,
     onEstablishEmbassyTap: establishEmbassyTap,

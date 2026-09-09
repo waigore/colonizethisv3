@@ -12,8 +12,6 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_icon_action.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/constants.dart' show kNarrowBreakpoint;
@@ -23,8 +21,8 @@ import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 import 'province_sea_zone_detail_overlay_tile_section_revealed_improvement.dart';
+import 'province_sea_zone_detail_overlay_tile_section_revealed_prospect.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_payoff_copy.dart';
-import 'package:colonizethis_app/features/game/widgets/units/civilian/explore_payoff_gist_line.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/prospect_payoff_copy.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show
@@ -110,54 +108,24 @@ Widget buildRevealedTileSection({
     tileKey: selectedTileKey,
     enabled: prospect.enabled,
   );
-  final prospectedIconRow = Row(
-    children: [
-      Expanded(
-        child: Text(
-          l10n.provinceOverlay_tileProspected(prospectedLabel),
-          style: overlayFgBodyStyle(),
-        ),
-      ),
-      if (explore.showIcon)
-        CtIconAction(
-          tooltip: exploreTooltip,
-          onPressed: explore.enabled
-              ? inlineActionCallbacks.onExploreWithExplorerTap
-              : null,
-          icon: Icons.explore,
-          enabled: explore.enabled,
-          disabledIconColor: EditorialMonoclePalette.muted.withValues(
-            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
-          ),
-        ),
-      if (prospect.showIcon)
-        CtIconAction(
-          tooltip: prospectTooltip,
-          onPressed: prospect.enabled
-              ? inlineActionCallbacks.onProspectWithExplorerTap
-              : null,
-          icon: Icons.travel_explore,
-          enabled: prospect.enabled,
-          disabledIconColor: EditorialMonoclePalette.muted.withValues(
-            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
-          ),
-        ),
-    ],
+  final prospectedRow = buildRevealedTileProspectedRow(
+    l10n: l10n,
+    prospectedIconRow: buildRevealedTileProspectedIconRow(
+      l10n: l10n,
+      prospectedLabel: prospectedLabel,
+      explore: explore,
+      prospect: prospect,
+      exploreTooltip: exploreTooltip,
+      prospectTooltip: prospectTooltip,
+      inlineActionCallbacks: inlineActionCallbacks,
+    ),
+    explorePayoffGist: explorePayoffGist,
+    prospectPayoffGist: prospectPayoffGist,
+    explore: explore,
+    prospect: prospect,
+    consulateGated: consulateGated,
+    onTrainCivilianTap: inlineActionCallbacks.onTrainCivilianTap,
   );
-  final prospectedRow =
-      (explorePayoffGist == null && prospectPayoffGist == null)
-      ? prospectedIconRow
-      : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            prospectedIconRow,
-            if (explorePayoffGist != null)
-              ExplorePayoffGistLine(text: explorePayoffGist),
-            if (prospectPayoffGist != null)
-              ProspectPayoffGistLine(text: prospectPayoffGist),
-          ],
-        );
   final improvementRow = buildRevealedTileImprovementRow(
     l10n: l10n,
     game: game,
@@ -201,6 +169,7 @@ Widget buildRevealedTileSection({
           resourceLabel: resourceLabel,
           purchaseLandAction: purchaseLand,
           onPurchaseLandTap: inlineActionCallbacks.onPurchaseLandTap,
+          onTrainCivilianTap: inlineActionCallbacks.onTrainCivilianTap,
         ),
         prospectedRow,
         improvementRow,
@@ -219,6 +188,7 @@ Widget buildRevealedTileSection({
           onBuildPortTap: inlineActionCallbacks.onBuildPortTap,
           buildRailAction: civilianInlineActions.buildRail,
           onBuildRailroadTap: inlineActionCallbacks.onBuildRailroadTap,
+          onTrainCivilianTap: inlineActionCallbacks.onTrainCivilianTap,
           tileConnectivity: tileConnectivity,
           blockadeStatus: blockadeStatus,
         ),

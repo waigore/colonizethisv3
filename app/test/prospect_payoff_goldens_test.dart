@@ -111,6 +111,7 @@ Widget _overlay(Game game) {
       onBuildPortTap: null,
       onBuildRailroadTap: null,
       onPurchaseLandTap: null,
+      onTrainCivilianTap: null,
     ),
     onClose: () {},
   );

@@ -64,6 +64,7 @@ Widget _provinceOverlayBuildRailroadStory({
         onBuildPortTap: null,
         onBuildRailroadTap: () {},
         onPurchaseLandTap: null,
+        onTrainCivilianTap: null,
       ),
       onClose: () {},
     ),

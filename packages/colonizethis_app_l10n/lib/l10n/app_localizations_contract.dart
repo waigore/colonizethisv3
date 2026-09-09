@@ -2446,6 +2446,36 @@ abstract class AppLocalizations {
   /// Tooltip and semantics label for province tile explore shortcut action.
   String get provinceOverlay_tileExploreWithExplorerTooltip;
 
+  /// MAP20001 / MAP30001 / MAP30002 Train Explorer (Refs #4752).
+  String get provinceOverlay_trainExplorer;
+
+  /// MAP20001 / MAP30001 / MAP30002 Train Builder (Refs #4752).
+  String get provinceOverlay_trainBuilder;
+
+  /// MAP20001 / MAP30001 / MAP30002 Train Engineer (Refs #4752).
+  String get provinceOverlay_trainEngineer;
+
+  /// MAP20001 / MAP30001 / MAP30002 Train Merchant (Refs #4752).
+  String get provinceOverlay_trainMerchant;
+
+  /// MAP20001 / MAP30001 / MAP30002 Train Rail Builder (Refs #4752).
+  String get provinceOverlay_trainRailBuilder;
+
+  /// Default-visible gist under Train Explorer (Refs #4752).
+  String get provinceOverlay_trainCivilianGistExplorer;
+
+  /// Default-visible gist under Train Builder (Refs #4752).
+  String get provinceOverlay_trainCivilianGistBuilder;
+
+  /// Default-visible gist under Train Engineer (Refs #4752).
+  String get provinceOverlay_trainCivilianGistEngineer;
+
+  /// Default-visible gist under Train Merchant (Refs #4752).
+  String get provinceOverlay_trainCivilianGistMerchant;
+
+  /// Default-visible gist under Train Rail Builder (Refs #4752).
+  String get provinceOverlay_trainCivilianGistRailBuilder;
+
   /// Explore payoff gist: whole-province reveal and duration (Refs #4733).
   String provinceOverlay_tileExplorePayoffGist(int turns);
 

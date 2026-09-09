@@ -9,12 +9,16 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_section_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_copy.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_improvement_next_yield_gist_line.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_control.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_offer.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show VisibilityLevel;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show VisibilityLevel;
 import 'package:flutter/material.dart';
 
 Widget buildRevealedTileImprovementRow({
@@ -42,10 +46,7 @@ Widget buildRevealedTileImprovementRow({
   );
   final nextYieldPreview = tileConnectivity?.nextImproveYield;
   final nextYieldGist = buildImprovement.enabled && nextYieldPreview != null
-      ? buildImprovementNextYieldGistLine(
-          l10n: l10n,
-          preview: nextYieldPreview,
-        )
+      ? buildImprovementNextYieldGistLine(l10n: l10n, preview: nextYieldPreview)
       : null;
   final iconRow = Row(
     children: [
@@ -72,7 +73,23 @@ Widget buildRevealedTileImprovementRow({
         ),
     ],
   );
-  if (nextYieldGist == null) {
+  final trainBuilder = buildMapTrainCivilianControl(
+    l10n: l10n,
+    kind: MapTrainCivilianKind.builder,
+    show: offerMapTrainCivilianForState(
+      state: buildImprovement,
+      otherNonUnitGateApplies: mapTrainWorkAffordGateApplies(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        currentOrders: currentOrders,
+        tileKey: selectedTileKey,
+        workTarget: kWorkTargetBuildImprovement,
+      ),
+      trainTapAvailable: inlineActionCallbacks.onTrainCivilianTap != null,
+    ),
+    onTap: inlineActionCallbacks.onTrainCivilianTap,
+  );
+  if (nextYieldGist == null && trainBuilder == null) {
     return iconRow;
   }
   return Column(
@@ -80,7 +97,9 @@ Widget buildRevealedTileImprovementRow({
     mainAxisSize: MainAxisSize.min,
     children: [
       iconRow,
-      BuildImprovementYieldGistLine(text: nextYieldGist),
+      if (nextYieldGist != null)
+        BuildImprovementYieldGistLine(text: nextYieldGist),
+      ?trainBuilder,
     ],
   );
 }

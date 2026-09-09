@@ -38,6 +38,7 @@ OverlayContent assembleRevealedProvinceUnitTabContent({
   required int fortLevel,
   required ProvinceInlineActionState buildFortAction,
   VoidCallback? onBuildFortTap,
+  VoidCallback? onTrainCivilianTap,
   required bool showMoveArmyControl,
   required bool moveArmyEnabled,
   required String moveArmyTooltip,
@@ -73,19 +74,11 @@ OverlayContent assembleRevealedProvinceUnitTabContent({
   required Widget Function() political,
   required Widget Function() tileSection,
 }) {
-  ({
-    Widget economic,
-    Widget military,
-    Widget civilian,
-    Widget naval,
-  })? cachedUnitSections;
+  ({Widget economic, Widget military, Widget civilian, Widget naval})?
+  cachedUnitSections;
 
-  ({
-    Widget economic,
-    Widget military,
-    Widget civilian,
-    Widget naval,
-  }) unitSections() {
+  ({Widget economic, Widget military, Widget civilian, Widget naval})
+  unitSections() {
     return cachedUnitSections ??= buildProvinceIntelGatedUnitSections(
       l10n: l10n,
       game: game,
@@ -100,6 +93,7 @@ OverlayContent assembleRevealedProvinceUnitTabContent({
       fortLevel: fortLevel,
       buildFortAction: buildFortAction,
       onBuildFortTap: onBuildFortTap,
+      onTrainCivilianTap: onTrainCivilianTap,
       showMoveArmyControl: showMoveArmyControl,
       moveArmyEnabled: moveArmyEnabled,
       moveArmyTooltip: moveArmyTooltip,

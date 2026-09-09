@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show VisibilityLevel;
@@ -140,6 +141,31 @@ void main() {
         expect(state.showIcon, isTrue);
         expect(state.enabled, isFalse);
       });
+
+      test(
+        'shows disabled Explore without cache when no explorers exist (Refs #4752)',
+        () {
+          final game = prospectExploreExploreGame.copyWith(
+            worldState: prospectExploreExploreGame.worldState.copyWith(
+              oldWorld: ct_models.RegionData(
+                provinces:
+                    prospectExploreExploreGame.worldState.oldWorld.provinces,
+                units: const [],
+              ),
+            ),
+          );
+          final state =
+              GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
+                game: game,
+                humanPlayerId: kProspectExploreHumanPlayerId,
+                selectedTileKey: kProspectExploreSelectedTileKey,
+                selectedRegion: prospectExplorePartialRegion,
+              );
+          expect(state.showIcon, isTrue);
+          expect(state.enabled, isFalse);
+          expect(state.hasMatchingUnits, isFalse);
+        },
+      );
     });
   });
 }

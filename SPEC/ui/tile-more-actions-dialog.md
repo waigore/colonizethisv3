@@ -36,7 +36,8 @@ No Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish 
 |---------|--------------|---------------|
 | Province details | Always | `reportMapTileTapped` / overlay open; close radial + dialog |
 | Remainder row | Overlay enabled | Matching `OpenCivilianUnitsPanelEvent` shortcut fields |
-| Disabled remainder | Visible | Tooltip only; no commit |
+| Remainder row relabeled **Train {type}** | Visible work shortcut disabled solely for `hasMatchingUnits == false` (Refs #4752) | `OpenDialogEvent(train_civilians)` with no params; gist default-visible |
+| Disabled remainder | Visible (Consulate / materials / terrain / other non-unit) | Tooltip only; no commit; no Train relabel |
 | Barrier | — | Dismiss |
 
 ## States and variants

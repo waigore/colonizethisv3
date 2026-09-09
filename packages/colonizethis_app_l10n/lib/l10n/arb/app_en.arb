@@ -7724,5 +7724,45 @@
   "tileRadial_provinceDetails": "Province details",
   "@tileRadial_provinceDetails": {
     "description": "MAP30002 first row; opens MAP20001 (Refs #4440)."
+  },
+  "provinceOverlay_trainExplorer": "Train Explorer",
+  "@provinceOverlay_trainExplorer": {
+    "description": "MAP20001 / MAP30001 / MAP30002 Train Explorer when no Explorer units (Refs #4752)."
+  },
+  "provinceOverlay_trainBuilder": "Train Builder",
+  "@provinceOverlay_trainBuilder": {
+    "description": "MAP20001 / MAP30001 / MAP30002 Train Builder when no Builder units (Refs #4752)."
+  },
+  "provinceOverlay_trainEngineer": "Train Engineer",
+  "@provinceOverlay_trainEngineer": {
+    "description": "MAP20001 / MAP30001 / MAP30002 Train Engineer when no Engineer units (Refs #4752)."
+  },
+  "provinceOverlay_trainMerchant": "Train Merchant",
+  "@provinceOverlay_trainMerchant": {
+    "description": "MAP20001 / MAP30001 / MAP30002 Train Merchant when no Merchant units (Refs #4752)."
+  },
+  "provinceOverlay_trainRailBuilder": "Train Rail Builder",
+  "@provinceOverlay_trainRailBuilder": {
+    "description": "MAP20001 / MAP30001 / MAP30002 Train Rail Builder when no Rail Builder units (Refs #4752)."
+  },
+  "provinceOverlay_trainCivilianGistExplorer": "A new Explorer appears at your capital after Next turn. This does not assign Explore or Prospect on this tile.",
+  "@provinceOverlay_trainCivilianGistExplorer": {
+    "description": "Default-visible gist under Train Explorer (Refs #4752)."
+  },
+  "provinceOverlay_trainCivilianGistBuilder": "A new Builder appears at your capital after Next turn. This does not assign Build on this tile.",
+  "@provinceOverlay_trainCivilianGistBuilder": {
+    "description": "Default-visible gist under Train Builder (Refs #4752)."
+  },
+  "provinceOverlay_trainCivilianGistEngineer": "A new Engineer appears at your capital after Next turn. This does not assign Build on this tile.",
+  "@provinceOverlay_trainCivilianGistEngineer": {
+    "description": "Default-visible gist under Train Engineer (Refs #4752)."
+  },
+  "provinceOverlay_trainCivilianGistMerchant": "A new Merchant appears at your capital after Next turn. This does not assign Purchase land on this tile.",
+  "@provinceOverlay_trainCivilianGistMerchant": {
+    "description": "Default-visible gist under Train Merchant (Refs #4752)."
+  },
+  "provinceOverlay_trainCivilianGistRailBuilder": "A new Rail Builder appears at your capital after Next turn. This does not assign Build railroad on this tile.",
+  "@provinceOverlay_trainCivilianGistRailBuilder": {
+    "description": "Default-visible gist under Train Rail Builder (Refs #4752)."
   }
 }

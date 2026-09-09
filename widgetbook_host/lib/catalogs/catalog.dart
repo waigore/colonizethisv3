@@ -230,6 +230,7 @@ part 'catalog_panel_map_sail_move_stories.dart';
 part 'catalog_panel_map_transfer_home_stories.dart';
 part 'catalog_panel_map_station_spy_stories.dart';
 part 'catalog_panel_map_counter_espionage_stories.dart';
+part 'catalog_panel_map_train_civilian_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
 part 'catalog_panel_map_establish_embassy_stories.dart';
 part 'catalog_panel_map_owner_standing_stories.dart';

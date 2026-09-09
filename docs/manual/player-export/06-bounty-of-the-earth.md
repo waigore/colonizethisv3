@@ -23,6 +23,7 @@ If the civilian is not already on the work tile, the game moves them first after
 1. Tap a province to open **Province sea-zone overlay**.
 2. Use a printed shortcut when it is shown: **Build improvement**, **Build road**, **Build port**, **Build railroad**, **Purchase land** on the Tile rows; **Build fort** on the Military row when the town tile is selected; **Upgrade town** on the Political row when your province can still rise.
 3. That opens **Civilian units panel** filtered to the matching unit type. Tap **Assign** on an idle unit. The work is staged on the **exact tile you already selected**. Do not pick a tile on the map after this shortcut.
+4. If you own **none** of that civilian, the shortcut stays visible but greyed out and **Train Builder**, **Train Engineer**, **Train Merchant**, or **Train Rail Builder** appears beside it (same capital-after-Next-turn line as Chapter 5). Tap it to open **Train civilians dialog**. It does not assign the work. If materials, embassy, or another gate besides “no matching civilian” also blocks the work, Train stays hidden.
 
 Shortcut hints use the same cost preview when the control is enabled, or a materials/treasury shortfall when it is disabled because you cannot pay.
 
@@ -32,7 +33,7 @@ Shortcut hints use the same cost preview when the control is enabled, or a mater
 
 1. Right-click a tile on **Empire overview / map area** (or press and hold on a touch screen) to open **Tile context radial**.
 2. On a small screen, or after **More**, **More tile actions** opens instead.
-3. Enabled civilian work on the ring (**Explore**, **Prospect**, **Build improvement**, **Build road**, **Purchase land**, **Upgrade town**, **Build port**, **Build railroad**, **Build fort**) uses the same civilian-panel shortcut as **Province sea-zone overlay**: you still tap **Assign** on a unit; you do not pick the tile again. **Upgrade town** appears only when you open the ring on the town tile itself.
+3. Enabled civilian work on the ring (**Explore**, **Prospect**, **Build improvement**, **Build road**, **Purchase land**, **Upgrade town**, **Build port**, **Build railroad**, **Build fort**) uses the same civilian-panel shortcut as **Province sea-zone overlay**: you still tap **Assign** on a unit; you do not pick the tile again. **Upgrade town** appears only when you open the ring on the town tile itself. If you own none of that civilian, that slot reads **Train {type}** instead and opens **Train civilians dialog** without assigning work.
 
 ### Assign from Development (one tap, no map pick)
 

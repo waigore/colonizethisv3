@@ -27,6 +27,9 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_
 import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/build_fort_payoff_copy.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_control.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_offer.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 ({Widget economic, Widget military, Widget civilian, Widget naval})
 buildProvinceIntelGatedUnitSections({
@@ -44,6 +47,7 @@ buildProvinceIntelGatedUnitSections({
   required ProvinceInlineActionState buildFortAction,
   required String? selectedTileKey,
   VoidCallback? onBuildFortTap,
+  VoidCallback? onTrainCivilianTap,
   bool showMoveArmyControl = false,
   bool moveArmyEnabled = false,
   String moveArmyTooltip = '',
@@ -131,6 +135,24 @@ buildProvinceIntelGatedUnitSections({
                   hasMatchingUnits: buildFortAction.hasMatchingUnits,
                 ),
           onBuildFortTap: onBuildFortTap,
+          buildFortTrainControl: selectedTileKey == null
+              ? null
+              : buildMapTrainCivilianControl(
+                  l10n: l10n,
+                  kind: MapTrainCivilianKind.engineer,
+                  show: offerMapTrainCivilianForState(
+                    state: buildFortAction,
+                    otherNonUnitGateApplies: mapTrainWorkAffordGateApplies(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      currentOrders: draftOrders,
+                      tileKey: selectedTileKey,
+                      workTarget: kWorkTargetBuildFort,
+                    ),
+                    trainTapAvailable: onTrainCivilianTap != null,
+                  ),
+                  onTap: onTrainCivilianTap,
+                ),
           showMoveArmyControl: showMoveArmyControl,
           moveArmyEnabled: moveArmyEnabled,
           moveArmyTooltip: moveArmyTooltip,

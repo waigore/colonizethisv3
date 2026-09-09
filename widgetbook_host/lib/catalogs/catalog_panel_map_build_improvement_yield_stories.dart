@@ -74,6 +74,7 @@ Widget _provinceOverlayBuildImprovementYieldStory({
         onBuildPortTap: null,
         onBuildRailroadTap: null,
         onPurchaseLandTap: null,
+        onTrainCivilianTap: null,
       ),
       onClose: () {},
     ),
