@@ -1,4 +1,5 @@
-// Visual goldens for MAP20001 sea-zone Patrol / Defend variants (Refs #4605).
+// Visual goldens for MAP20001 sea-zone Patrol / Defend variants
+// (Refs #4605, #4750).
 
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';

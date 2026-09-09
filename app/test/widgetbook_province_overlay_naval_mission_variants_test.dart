@@ -172,6 +172,30 @@ void main() {
       );
       expect(action.enabled, isTrue);
       expect(action.onPressed, isNotNull);
+      expect(find.text(l10n.naval_mission_effect_patrol), findsOneWidget);
+      expect(find.text(l10n.naval_mission_effect_defend), findsOneWidget);
+    });
+
+    testWidgets('disabled sea-zone Patrol story keeps stay-mission gists', (
+      tester,
+    ) async {
+      final useCase = findWidgetbookUseCase(
+        provinceOverlayDirectories,
+        folderName: folderName,
+        useCaseName: 'Standalone — Naval sea-zone Patrol/Defend disabled',
+      );
+      await pumpWidgetbookUseCaseAtSize(
+        tester,
+        useCase,
+        size: const Size(800, 640),
+      );
+      await tester.pumpAndSettle();
+      await revealProvinceOverlayWideSection(
+        tester,
+        sectionTitle: l10n.provinceOverlay_sectionNaval,
+      );
+      expect(find.text(l10n.naval_mission_effect_patrol), findsOneWidget);
+      expect(find.text(l10n.naval_mission_effect_defend), findsOneWidget);
     });
   });
 }
