@@ -131,6 +131,8 @@ Map-marker and panel **Mission** still open **Naval mission menu dialog** as usu
 
 **Sea-zone shortcut:** On a revealed sea you already occupy with at least one sea-going fleet of yours (not the Home Fleet), **Province sea-zone overlay** **Naval** offers **Patrol**, **Defend**, and **Sail / Move**.
 
+When **Patrol** and **Defend** are on that list — even if they cannot be tapped — a short muted line under each button names the difference before you tap: **Patrol** stays in this sea and tries to intercept hostile fleets moving through it; **Defend** stays without seeking combat, and the fleet can still be attacked or pulled into a fight. Those lines do not print intercept chance numbers. The lines are absent when the buttons are hidden.
+
 1. Tap **Patrol** or **Defend**.
 2. One eligible fleet in this sea assigns that mission at once — you do not see **Naval mission menu dialog** or **Naval mission target dialog**.
 3. Several eligible fleets open **Naval mission fleet picker dialog** first so you pick which fleet stays.
