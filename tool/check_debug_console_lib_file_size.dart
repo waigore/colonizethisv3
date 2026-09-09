@@ -1,5 +1,5 @@
 // Physical line ratchet for colonizethis_debug_console lib
-// (`repo.debug_console_lib_file_size`). Refs #4433.
+// (`repo.debug_console_lib_file_size`). Refs #4433, #4751.
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,13 +7,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int debugConsoleLibFileSizeCeiling = 270;
+const int debugConsoleLibFileSizeCeiling = 250;
 
 const String _debugConsoleLibRelDir = 'packages/colonizethis_debug_console/lib';
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
-/// Empty allowlist: every debug-console lib file must stay ≤270 physical lines.
+/// Empty allowlist: every debug-console lib file must stay ≤250 physical lines.
 const List<String> debugConsoleLibFileSizeGrandfatheredForTests = <String>[];
 
 int runCheckDebugConsoleLibFileSize(
@@ -78,7 +78,7 @@ int runCheckDebugConsoleLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_debug_console_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4433).',
+      '(ceiling $ceiling; Refs #4433, #4751).',
     );
     return 0;
   }
@@ -87,7 +87,7 @@ int runCheckDebugConsoleLibFileSize(
   logE(
     'check_debug_console_lib_file_size: found ${violations.length} '
     'violation(s) under $_debugConsoleLibRelDir (ceiling $ceiling; '
-    'Refs #4433):',
+    'Refs #4433, #4751):',
   );
   for (final violation in violations) {
     logE(' - $violation');
