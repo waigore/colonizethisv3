@@ -189,7 +189,7 @@ Widget _provinceOverlayNavalMissionStory({
   );
 }
 
-/// MAP20001 sea-zone Patrol/Defend variants. Refs #4605.
+/// MAP20001 sea-zone Patrol/Defend variants. Refs #4605, #4750.
 Widget _provinceOverlaySeaZoneStayMissionStory({
   bool showPatrol = false,
   bool patrolEnabled = false,

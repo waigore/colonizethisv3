@@ -10,6 +10,7 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_overlay_
     show ProvinceOverlaySailMoveOverlayControls;
 import 'package:colonizethis_app/features/game/flame/map_state/province_transfer_to_home_fleet_overlay_controls.dart'
     show ProvinceTransferToHomeFleetOverlayControls;
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
 List<Widget> navalMissionActionWidgets(
@@ -96,25 +97,51 @@ List<Widget> navalMissionActionWidgets(
                   : null,
             ),
           if (navalMission.showPatrol)
-            CtActionTextButton(
+            _stayMissionControl(
               label: l10n.provinceOverlay_patrolAction,
               tooltip: navalMission.patrolTooltip,
               enabled: navalMission.patrolEnabled,
-              onPressed: navalMission.patrolEnabled
-                  ? navalMission.onPatrolTap
-                  : null,
+              onPressed: navalMission.onPatrolTap,
+              gist: l10n.naval_mission_effect_patrol,
             ),
           if (navalMission.showDefend)
-            CtActionTextButton(
+            _stayMissionControl(
               label: l10n.provinceOverlay_defendAction,
               tooltip: navalMission.defendTooltip,
               enabled: navalMission.defendEnabled,
-              onPressed: navalMission.defendEnabled
-                  ? navalMission.onDefendTap
-                  : null,
+              onPressed: navalMission.onDefendTap,
+              gist: l10n.naval_mission_effect_defend,
             ),
         ],
       ),
     ),
   ];
+}
+
+Widget _stayMissionControl({
+  required String label,
+  required String tooltip,
+  required bool enabled,
+  required VoidCallback? onPressed,
+  required String gist,
+}) {
+  return ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 240),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CtActionTextButton(
+          label: label,
+          tooltip: tooltip,
+          enabled: enabled,
+          onPressed: enabled ? onPressed : null,
+        ),
+        Text(
+          gist,
+          style: TextStyle(color: EditorialMonoclePalette.muted, fontSize: 11),
+        ),
+      ],
+    ),
+  );
 }

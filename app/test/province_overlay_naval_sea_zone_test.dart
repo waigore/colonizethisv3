@@ -1,5 +1,5 @@
 // Concern split under repo.app_test_file_size (Refs #4013, #4352, #4605):
-// MAP20001 sea-zone Patrol/Defend overlay controls.
+// MAP20001 sea-zone Patrol/Defend overlay controls. Gists: stay_gist_test.
 
 import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mission_action_state.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_naval_mission.dart';
