@@ -81,6 +81,11 @@ int runCheckDebugConsoleSharedHelpers(
       '${p.relative(parserHelpersPath, from: repoRoot)} must define parseCreditByCanonicalId',
     );
   }
+  if (!_definesTopLevelFunction(parserHelpersUnit, 'parseNoArgCommand')) {
+    violations.add(
+      '${p.relative(parserHelpersPath, from: repoRoot)} must define parseNoArgCommand',
+    );
+  }
 
   if (!_functionInvokesFunction(
     parserHelpersUnit,
@@ -139,6 +144,17 @@ int runCheckDebugConsoleSharedHelpers(
     )) {
       violations.add(
         'debug_console_command_parser.dart:$methodName must call parseCreditByCanonicalId',
+      );
+    }
+  }
+  for (final methodName in ['_parseGetTileBasicInfo', '_parseListPlayers']) {
+    if (!_methodInvokesFunction(
+      parserUnit,
+      methodName: methodName,
+      invokedName: 'parseNoArgCommand',
+    )) {
+      violations.add(
+        'debug_console_command_parser.dart:$methodName must call parseNoArgCommand',
       );
     }
   }

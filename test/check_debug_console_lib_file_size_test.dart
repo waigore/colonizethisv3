@@ -13,16 +13,16 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckDebugConsoleLibFileSize', () {
-    test('passes on current repo tree under 270 physical-line ceiling', () {
+    test('passes on current repo tree under 250 physical-line ceiling', () {
       expect(runCheckDebugConsoleLibFileSize('.'), 0);
     });
 
-    test('grandfather allowlist is empty after #4433', () {
+    test('grandfather allowlist is empty after #4751', () {
       expect(debugConsoleLibFileSizeGrandfatheredForTests, isEmpty);
     });
 
-    test('pins the 270 ceiling', () {
-      expect(maxDebugConsoleLibFilePhysicalLinesForTests(), 270);
+    test('pins the 250 ceiling', () {
+      expect(maxDebugConsoleLibFilePhysicalLinesForTests(), 250);
     });
 
     test('fails when a debug-console lib file exceeds the ceiling', () {
