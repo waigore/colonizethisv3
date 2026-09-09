@@ -4,7 +4,7 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
     show trainCiviliansDialogId;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show AppEventBus, OpenDialogEvent;
+    show AppEventBus, OpenCivilianUnitsPanelEvent, OpenDialogEvent;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -161,7 +161,9 @@ void main() {
 
     test('train civilian tap emits OpenDialogEvent without params', () async {
       OpenDialogEvent? opened;
+      final panelOpened = <OpenCivilianUnitsPanelEvent>[];
       bus.on<OpenDialogEvent>().listen((e) => opened = e);
+      bus.on<OpenCivilianUnitsPanelEvent>().listen(panelOpened.add);
       final callbacks = provinceDetailCallbacks(
         game: provinceDetailMinimalGame(),
         selectedTileKey: provinceDetailSupportTileKey,
@@ -179,6 +181,7 @@ void main() {
       expect(opened, isNotNull);
       expect(opened!.dialogId, trainCiviliansDialogId);
       expect(opened!.params, isNull);
+      expect(panelOpened, isEmpty);
     });
   });
 }

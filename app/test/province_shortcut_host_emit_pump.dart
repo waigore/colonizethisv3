@@ -23,7 +23,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
-import 'province_shortcut_host_emit_test_support.dart' show ProvinceShortcutHostCase;
+import 'province_shortcut_host_emit_test_support.dart'
+    show ProvinceShortcutHostCase;
 
 PerPlayerWorkTargetSelectionCache refreshedProvinceShortcutWorkTargetCache({
   required Game game,
@@ -59,6 +60,8 @@ Future<List<OpenCivilianUnitsPanelEvent>> pumpProvinceShortcutHostAndSelect(
   required MapTopology combinedTopology,
   required PerPlayerWorkTargetSelectionCache workTargetSelectionCache,
   required String selectedTileKey,
+  List<OpenDialogEvent>? dialogOpened,
+  bool canMutateViaUi = true,
 }) async {
   final playerView = buildPlayerView(game, combinedTopology, humanPlayerId);
   final Widget body = host.wide
@@ -71,6 +74,7 @@ Future<List<OpenCivilianUnitsPanelEvent>> pumpProvinceShortcutHostAndSelect(
               humanPlayerId: humanPlayerId,
               playerView: playerView,
               workTargetSelectionCache: workTargetSelectionCache,
+              canMutateViaUi: canMutateViaUi,
             ),
           ),
         )
@@ -82,6 +86,7 @@ Future<List<OpenCivilianUnitsPanelEvent>> pumpProvinceShortcutHostAndSelect(
             humanPlayerId: humanPlayerId,
             playerView: playerView,
             workTargetSelectionCache: workTargetSelectionCache,
+            canMutateViaUi: canMutateViaUi,
           ),
         );
 
@@ -90,6 +95,10 @@ Future<List<OpenCivilianUnitsPanelEvent>> pumpProvinceShortcutHostAndSelect(
   final opened = <OpenCivilianUnitsPanelEvent>[];
   final sub = bus.on<OpenCivilianUnitsPanelEvent>().listen(opened.add);
   addTearDown(sub.cancel);
+  if (dialogOpened != null) {
+    final dialogSub = bus.on<OpenDialogEvent>().listen(dialogOpened.add);
+    addTearDown(dialogSub.cancel);
+  }
 
   await pumpAppShell(
     tester,
@@ -162,11 +171,7 @@ Future<void> expectProvinceShortcutHostIconNegative(
   required bool wide,
   String? wideDisabledReason,
 }) async {
-  expect(
-    enabledAction,
-    findsNothing,
-    reason: wide ? wideDisabledReason : null,
-  );
+  expect(enabledAction, findsNothing, reason: wide ? wideDisabledReason : null);
   if (wide) {
     if (anyAction.evaluate().isNotEmpty) {
       await tester.tap(anyAction.first, warnIfMissed: false);

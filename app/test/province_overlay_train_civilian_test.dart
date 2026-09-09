@@ -1,5 +1,6 @@
 // MAP20001 Train {type} overlay pins (Refs #4752).
 
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/map_train_civilian_control.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
@@ -66,6 +67,8 @@ void main() {
       await tester.tap(find.text('Train Explorer'));
       await tester.pump();
       expect(opened, 1);
+      expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
+      expect(find.byKey(kProvinceOverlayTrainExplorerKey), findsOneWidget);
     },
   );
 
