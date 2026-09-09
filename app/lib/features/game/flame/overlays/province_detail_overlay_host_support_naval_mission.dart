@@ -48,9 +48,6 @@ ProvinceNavalMissionOverlayControls buildProvinceNavalMissionOverlayControls({
         blockadeStatus: blockadeStatus,
       );
     }
-    // Stay-mission effect gists are copy-only in the overlay widget from
-    // already-resolved `showPatrol` / `showDefend` (Refs #4750). Do not probe
-    // `navalMissionAvailabilityForFleet` again on paint.
     final l10n = appL10n(context);
     final disabledTooltip = l10n.naval_mission_noMissionsAvailable;
     VoidCallback? tapFor(ct_models.FleetMission mission) {

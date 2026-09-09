@@ -118,7 +118,6 @@ List<Widget> navalMissionActionWidgets(
   ];
 }
 
-/// Patrol/Defend button plus default-visible muted effect gist (Refs #4750).
 Widget _stayMissionControl({
   required String label,
   required String tooltip,
