@@ -31,9 +31,7 @@ List<String> combatModeChoiceDefaultForceLines(
       fortLevel,
       defenderRole: intel.role == CombatModeChoiceRole.defender,
     );
-    if (gist != null) {
-      lines.add(gist);
-    }
+    if (gist != null) lines.add(gist);
   }
   return lines;
 }

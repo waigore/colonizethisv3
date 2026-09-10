@@ -162,15 +162,13 @@ mixin MoveArmyDialogDestinations
             destinationProvinceId: entry.fullProvinceId,
           )
         : null;
-    final invasionIntelLines = invasionIntelSummary == null
-        ? const <String>[]
-        : moveArmyInvasionIntelSummaryLines(l10n, invasionIntelSummary);
-    final siegeGist =
-        isSelected &&
-            invasionIntelSummary != null &&
-            invasionIntelSummary.intelLevel == MoveArmyInvasionIntelLevel.full
-        ? moveArmyFortSiegeGistForLevel(l10n, invasionIntelSummary.fortLevel)
-        : null;
+    final invasionIntelLines = [
+      if (invasionIntelSummary != null)
+        ...moveArmyInvasionIntelSummaryLines(l10n, invasionIntelSummary),
+      if (isSelected &&
+          invasionIntelSummary?.intelLevel == MoveArmyInvasionIntelLevel.full)
+        ?moveArmyFortSiegeGistForLevel(l10n, invasionIntelSummary?.fortLevel),
+    ];
     final invasionDetailLines =
         showInvasionIntel && isSelected && invasionIntelSummary != null
         ? moveArmyInvasionIntelDetailTypeLines(
@@ -196,7 +194,6 @@ mixin MoveArmyDialogDestinations
           Text(entry.provinceLabel, style: labelStyle),
           for (final line in invasionIntelLines)
             Text(line, style: intelMutedStyle),
-          if (siegeGist != null) Text(siegeGist, style: intelMutedStyle),
           for (final line in invasionDetailLines)
             Text(line, style: intelMutedStyle),
           if (triggerLabel != null && triggerStyle != null)

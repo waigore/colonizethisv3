@@ -135,8 +135,7 @@ class _NavalMissionTargetDialogState
     final labelStyle = moveDialogRowLabelStyle(theme, selected: selected);
     final intelMutedStyle = (theme.textTheme.bodySmall ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.muted);
-    final intelLines = _intelSummaryLines(l10n, provinceId);
-    final siegeGist = selected ? _beachheadSiegeGist(l10n, provinceId) : null;
+    final intelLines = _intelSummaryLines(l10n, provinceId, selected: selected);
     final detailLines = selected
         ? _intelDetailLines(l10n, provinceId)
         : const <String>[];
@@ -151,14 +150,17 @@ class _NavalMissionTargetDialogState
         children: [
           Text(label, style: labelStyle),
           for (final line in intelLines) Text(line, style: intelMutedStyle),
-          if (siegeGist != null) Text(siegeGist, style: intelMutedStyle),
           for (final line in detailLines) Text(line, style: intelMutedStyle),
         ],
       ),
     );
   }
 
-  List<String> _intelSummaryLines(AppLocalizations l10n, String provinceId) {
+  List<String> _intelSummaryLines(
+    AppLocalizations l10n,
+    String provinceId, {
+    required bool selected,
+  }) {
     if (widget.mission == FleetMission.beachhead) {
       final summary = computeMoveArmyInvasionIntelSummary(
         game: widget.game,
@@ -166,7 +168,11 @@ class _NavalMissionTargetDialogState
         humanPlayerId: widget.humanPlayerId,
         destinationProvinceId: provinceId,
       );
-      return moveArmyInvasionIntelSummaryLines(l10n, summary);
+      return [
+        ...moveArmyInvasionIntelSummaryLines(l10n, summary),
+        if (selected && summary.intelLevel == MoveArmyInvasionIntelLevel.full)
+          ?moveArmyFortSiegeGistForLevel(l10n, summary.fortLevel),
+      ];
     }
     if (widget.mission == FleetMission.blockade) {
       final summary = computeNavalMissionHarborIntelSummary(
@@ -178,22 +184,6 @@ class _NavalMissionTargetDialogState
       return navalMissionHarborIntelSummaryLines(l10n, summary);
     }
     return const [];
-  }
-
-  String? _beachheadSiegeGist(AppLocalizations l10n, String provinceId) {
-    if (widget.mission != FleetMission.beachhead) {
-      return null;
-    }
-    final summary = computeMoveArmyInvasionIntelSummary(
-      game: widget.game,
-      playerView: widget.playerView,
-      humanPlayerId: widget.humanPlayerId,
-      destinationProvinceId: provinceId,
-    );
-    if (summary.intelLevel != MoveArmyInvasionIntelLevel.full) {
-      return null;
-    }
-    return moveArmyFortSiegeGistForLevel(l10n, summary.fortLevel);
   }
 
   List<String> _intelDetailLines(AppLocalizations l10n, String provinceId) {
