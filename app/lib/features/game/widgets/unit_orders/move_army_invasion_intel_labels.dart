@@ -14,6 +14,27 @@ String moveArmyFortLabelForLevel(AppLocalizations l10n, int fortLevel) {
   };
 }
 
+/// Siege gist for Wood/Stone/Modern forts. Null for open field / missing intel.
+String? moveArmyFortSiegeGistForLevel(
+  AppLocalizations l10n,
+  int? fortLevel, {
+  bool defenderRole = false,
+}) {
+  if (fortLevel == null || fortLevel <= 0) return null;
+  if (defenderRole) {
+    return switch (fortLevel) {
+      1 => l10n.moveArmy_fortSiegeGistWoodDefender,
+      2 => l10n.moveArmy_fortSiegeGistStoneDefender,
+      _ => l10n.moveArmy_fortSiegeGistModernDefender,
+    };
+  }
+  return switch (fortLevel) {
+    1 => l10n.moveArmy_fortSiegeGistWood,
+    2 => l10n.moveArmy_fortSiegeGistStone,
+    _ => l10n.moveArmy_fortSiegeGistModern,
+  };
+}
+
 List<String> moveArmyInvasionIntelSummaryLines(
   AppLocalizations l10n,
   MoveArmyInvasionIntelSummary summary,

@@ -2145,6 +2145,30 @@
   "@moveArmy_fortModernSiege": {
     "description": "Fort level 3 siege label on invasion row (#4216)."
   },
+  "moveArmy_fortSiegeGistWood": "Light walls soak some of the attack; the defender has 1 extra gun.",
+  "@moveArmy_fortSiegeGistWood": {
+    "description": "Default-visible Wood fort siege gist on selected invasion, Beachhead, CMPT attacker, and MAP20001 Military (Refs #4764)."
+  },
+  "moveArmy_fortSiegeGistStone": "Medium walls soak more of the attack; the defender has 2 extra guns.",
+  "@moveArmy_fortSiegeGistStone": {
+    "description": "Default-visible Stone fort siege gist on selected invasion, Beachhead, CMPT attacker, and MAP20001 Military (Refs #4764)."
+  },
+  "moveArmy_fortSiegeGistModern": "Heavy walls soak much of the attack; the defender has 3 extra guns.",
+  "@moveArmy_fortSiegeGistModern": {
+    "description": "Default-visible Modern fort siege gist on selected invasion, Beachhead, CMPT attacker, and MAP20001 Military (Refs #4764)."
+  },
+  "moveArmy_fortSiegeGistWoodDefender": "Light walls soak some of the attack; your fort has 1 extra gun.",
+  "@moveArmy_fortSiegeGistWoodDefender": {
+    "description": "CMPT10001 defender-role Wood fort siege gist (Refs #4764)."
+  },
+  "moveArmy_fortSiegeGistStoneDefender": "Medium walls soak more of the attack; your fort has 2 extra guns.",
+  "@moveArmy_fortSiegeGistStoneDefender": {
+    "description": "CMPT10001 defender-role Stone fort siege gist (Refs #4764)."
+  },
+  "moveArmy_fortSiegeGistModernDefender": "Heavy walls soak much of the attack; your fort has 3 extra guns.",
+  "@moveArmy_fortSiegeGistModernDefender": {
+    "description": "CMPT10001 defender-role Modern fort siege gist (Refs #4764)."
+  },
   "moveFleet_title": "Move fleet — {fleetLabel}",
   "@moveFleet_title": {
     "description": "Move fleet dialog title.",

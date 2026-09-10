@@ -29,6 +29,7 @@ Uses [`MoveUnitsDialogState`](components/move-units-dialog-base.md) scaffold (`C
 | |      <one-line target intel>                   | |
 | |  ( ) Enemy Province B (selected)               | |
 | |      <one-line target intel>                   | |
+| |      <selected-row siege gist if fortified>    | |  #4764
 | |      <selected-row type lines if Beachhead>    | |
 | |                    [ Cancel ]    [ Confirm ]   | |
 +--------------------------------------------------+
@@ -38,7 +39,7 @@ Uses [`MoveUnitsDialogState`](components/move-units-dialog-base.md) scaffold (`C
 - **Mission caption** (Refs #4295, #4516): muted line under the title from `naval_mission_targetCaption_blockade` or `naval_mission_targetCaption_beachhead`; omitted for other missions. Blockade caption states the capital-link / warehouse cut (not intercept-only). When the selected target is the owner's **capital port**, one additional default line from `naval_mission_blockade_capitalExtra` appears under the caption (sea-only / overseas cut; land roads remain).
 - Empty list: `naval_mission_noTargetsAvailable`; Confirm disabled.
 - Row title: province `displayName` fallback to id.
-- **Beachhead intel** (Refs #4340): reuse `computeMoveArmyInvasionIntelSummary` + `moveArmy_*` labels (`Defenders: N regiments` / `Unopposed capture` + fort/siege labels; or `Defenders unknown`). Selected row may append regiment-type breakdown (roster display names) when intel is full.
+- **Beachhead intel** (Refs #4340): reuse `computeMoveArmyInvasionIntelSummary` + `moveArmy_*` labels (`Defenders: N regiments` / `Unopposed capture` + fort/siege labels; or `Defenders unknown`). Selected row may append regiment-type breakdown (roster display names) when intel is full. **Selected** Beachhead rows with full intel and `fortLevel >= 1` additionally append the same third-person siege gist as `DLG20001` (`moveArmyFortSiegeGistForLevel`). Unselected Beachhead rows keep the short summary only (Refs #4764).
 - **Blockade intel** (Refs #4340): one harbor line — full intel shows port/no-port plus in-port hostile fleet count or empty harbor; without full intel shows harbor-unknown. Never fabricates counts when fogged.
 - Copy must not imply Beachhead **captures** the province this turn (landing site is next-turn).
 
@@ -68,7 +69,7 @@ Uses [`MoveUnitsDialogState`](components/move-units-dialog-base.md) scaffold (`C
 | State | Condition | UI |
 |-------|-----------|-----|
 | Blockade | `mission == blockade` | Title uses Blockade label; harbor intel line per row. |
-| Beachhead | `mission == beachhead` | Title uses Beachhead label; military intel lines per row; type breakdown on selected full-intel row. |
+| Beachhead | `mission == beachhead` | Title uses Beachhead label; military intel lines per row; type breakdown on selected full-intel row; selected fortified row also shows the siege gist (Refs #4764). |
 | Empty | `targetProvinceIds.isEmpty` | Empty-state text; Confirm disabled. |
 | No view | `playerView == null` | Name + unknown intel lines; app stable; no hidden-world leak. |
 
@@ -102,5 +103,6 @@ Folder `Naval Mission Target Dialog`:
 - **Given** full intel and a Blockade target with a port and two hostile fleets in port, **when** the row renders, **then** the UI layer shows a short in-port summary (not a ship-type dump) (Refs #4340).
 - **Given** full intel and a Blockade target with a port and no fleets in port, **when** the row renders, **then** the UI layer shows empty-harbor (or equivalent) copy (Refs #4340).
 - **Given** full military intel and mixed regiment types, **when** the player selects a Beachhead row, **then** type breakdown uses roster display names; **when** intel is not full, **then** no fabricated type breakdown (Refs #4340).
+- **Given** `DLG31002` Beachhead with full intel and a **selected** fortified target, **when** the selected-row call site appends `moveArmyFortSiegeGistForLevel`, **then** that selected row shows the same third-person gist as `DLG20001`; unselected Beachhead rows do not (Refs #4764).
 - **Given** `PlayerView` is omitted, **when** the dialog builds, **then** rows stay name + unknown and the app remains stable with no hidden-world leak (Refs #4340).
 - **Given** the default target surface, **when** the dialog renders, **then** the UI layer does not show intercept formulas, combat odds, or an end-turn “no mission assigned” shell nag, and the `DLG31003` / `DLG31001` / `DLG31002` flow is not collapsed (Refs #4340).

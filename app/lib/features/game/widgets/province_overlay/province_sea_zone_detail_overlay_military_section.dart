@@ -51,6 +51,7 @@ Widget buildMilitarySectionByOwner({
     l10n: l10n,
   );
   final fortLine = moveArmyFortLabelForLevel(l10n, fortLevel);
+  final siegeGist = moveArmyFortSiegeGistForLevel(l10n, fortLevel);
   final fortStatusRow = Row(
     children: [
       Expanded(
@@ -76,6 +77,14 @@ Widget buildMilitarySectionByOwner({
     mainAxisSize: MainAxisSize.min,
     children: [
       fortStatusRow,
+      if (siegeGist != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            siegeGist,
+            style: TextStyle(color: EditorialMonoclePalette.muted),
+          ),
+        ),
       if (buildFortPayoffGist != null && buildFortPayoffGist.isNotEmpty)
         BuildFortPayoffGistLine(text: buildFortPayoffGist),
       ?buildFortTrainControl,

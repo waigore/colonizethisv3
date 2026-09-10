@@ -50,6 +50,12 @@ void main() {
       expect(find.text('Your army: 3 regiments'), findsOneWidget);
       expect(find.text('Defenders: 2 regiments'), findsOneWidget);
       expect(find.text('Wood fort siege'), findsOneWidget);
+      expect(
+        find.text(
+          'Light walls soak some of the attack; the defender has 1 extra gun.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Decides the battle at once.'), findsOneWidget);
       expect(find.text('You give orders in the fight.'), findsOneWidget);
       expect(find.text('Unopposed capture'), findsNothing);
@@ -72,6 +78,7 @@ void main() {
     expect(find.text('Defenders unknown'), findsOneWidget);
     expect(find.textContaining('fort'), findsNothing);
     expect(find.textContaining('Open field'), findsNothing);
+    expect(find.textContaining('walls soak'), findsNothing);
   });
 
   testWidgets('defender full intel uses Attackers label not Defenders', (
@@ -90,6 +97,13 @@ void main() {
     expect(find.text('Attackers: 4 regiments'), findsOneWidget);
     expect(find.textContaining('Defenders:'), findsNothing);
     expect(find.text('Stone fort siege'), findsOneWidget);
+    expect(
+      find.text(
+        'Medium walls soak more of the attack; your fort has 2 extra guns.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('the defender has'), findsNothing);
   });
 
   testWidgets('Details toggle reveals own and enemy type lines', (
@@ -118,6 +132,7 @@ void main() {
     expect(find.textContaining('Musketeers'), findsOneWidget);
     expect(find.textContaining('Defenders:'), findsNothing);
     expect(find.text('Open field'), findsOneWidget);
+    expect(find.textContaining('walls soak'), findsNothing);
   });
 
   testWidgets('fail-closed intel omits force lines and still shows meanings', (
@@ -138,6 +153,12 @@ void main() {
     expect(find.text('Decides the battle at once.'), findsNothing);
     expect(find.text('You give orders in the fight.'), findsOneWidget);
     expect(find.text('Wood fort siege'), findsOneWidget);
+    expect(
+      find.text(
+        'Light walls soak some of the attack; the defender has 1 extra gun.',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('Quick Battle'), findsWidgets);
   });
 

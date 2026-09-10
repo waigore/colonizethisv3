@@ -33,6 +33,12 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       expect(find.text('Your army: 3 regiments'), findsOneWidget);
+      expect(
+        find.text(
+          'Light walls soak some of the attack; the defender has 1 extra gun.',
+        ),
+        findsOneWidget,
+      );
       expect(find.textContaining('Auto-Resolve'), findsOneWidget);
       expect(find.textContaining('Quick Battle'), findsOneWidget);
     },

@@ -38,8 +38,11 @@ void main() {
             ),
           ],
         );
-        final view =
-            buildPlayerView(game, const MapTopology(), navalIntelHumanId);
+        final view = buildPlayerView(
+          game,
+          const MapTopology(),
+          navalIntelHumanId,
+        );
 
         await tester.pumpWidget(
           buildAppShell(
@@ -47,7 +50,10 @@ void main() {
               game: game,
               mission: FleetMission.beachhead,
               fleet: navalIntelFleet,
-              targetProvinceIds: const [navalIntelUnopposed, navalIntelDefended],
+              targetProvinceIds: const [
+                navalIntelUnopposed,
+                navalIntelDefended,
+              ],
               humanPlayerId: navalIntelHumanId,
               playerView: view,
             ),
@@ -61,11 +67,23 @@ void main() {
         expect(find.text('Defenders: 2 regiments'), findsOneWidget);
         expect(find.text('Stone fort siege'), findsOneWidget);
         expect(find.textContaining('musketeers'), findsNothing);
+        expect(
+          find.text(
+            'Medium walls soak more of the attack; the defender has 2 extra guns.',
+          ),
+          findsNothing,
+        );
 
         await tester.tap(find.text('Stone Harbor'));
         await tester.pumpAndSettle();
         expect(find.textContaining('Musketeers'), findsOneWidget);
         expect(find.textContaining('Pikemen'), findsOneWidget);
+        expect(
+          find.text(
+            'Medium walls soak more of the attack; the defender has 2 extra guns.',
+          ),
+          findsOneWidget,
+        );
       },
     );
 
@@ -73,9 +91,7 @@ void main() {
       'blockade fogged target shows harbor unknown without fleet counts',
       (tester) async {
         final game = buildNavalMissionIntelGame(
-          visibilityByTile: {
-            'oldWorld|p_port|0|0': 'fogged',
-          },
+          visibilityByTile: {'oldWorld|p_port|0|0': 'fogged'},
           portsByProvinceSeaboard: const {
             'oldWorld|p_port|sea1': 'oldWorld|p_port|0|0',
           },
@@ -89,8 +105,11 @@ void main() {
             ),
           ],
         );
-        final view =
-            buildPlayerView(game, const MapTopology(), navalIntelHumanId);
+        final view = buildPlayerView(
+          game,
+          const MapTopology(),
+          navalIntelHumanId,
+        );
 
         await tester.pumpWidget(
           buildAppShell(
@@ -112,75 +131,79 @@ void main() {
       },
     );
 
-    testWidgets('omitted playerView degrades to unknown without leaking world', (
+    testWidgets(
+      'omitted playerView degrades to unknown without leaking world',
+      (tester) async {
+        final game = buildNavalMissionIntelGame(
+          visibilityByTile: {
+            'oldWorld|p_empty|0|0': 'fullyVisible',
+            'oldWorld|p_port|0|0': 'fullyVisible',
+          },
+          portsByProvinceSeaboard: const {
+            'oldWorld|p_port|sea1': 'oldWorld|p_port|0|0',
+          },
+          units: [
+            Unit(
+              id: 'd1',
+              type: 'musketeers',
+              ownerId: navalIntelRivalId,
+              locationProvinceId: navalIntelUnopposed,
+            ),
+          ],
+          fleets: [
+            Fleet(
+              id: 'enemy_a',
+              ownerId: navalIntelRivalId,
+              regionId: 'oldWorld',
+              inPortAtProvinceId: navalIntelPortProvince,
+              ships: const [ShipInstance(id: 'ea', typeId: 'carrack')],
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildAppShell(
+            child: NavalMissionTargetDialog(
+              game: game,
+              mission: FleetMission.beachhead,
+              fleet: navalIntelFleet,
+              targetProvinceIds: const [navalIntelUnopposed],
+              humanPlayerId: navalIntelHumanId,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Defenders unknown'), findsOneWidget);
+        expect(find.text('Unopposed capture'), findsNothing);
+
+        await tester.pumpWidget(
+          buildAppShell(
+            child: NavalMissionTargetDialog(
+              game: game,
+              mission: FleetMission.blockade,
+              fleet: navalIntelFleet,
+              targetProvinceIds: const [navalIntelPortProvince],
+              humanPlayerId: navalIntelHumanId,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Harbor status unknown'), findsOneWidget);
+        expect(find.text('1 fleets in port'), findsNothing);
+      },
+    );
+
+    testWidgets('confirm still returns selected targetProvinceId', (
       tester,
     ) async {
       final game = buildNavalMissionIntelGame(
-        visibilityByTile: {
-          'oldWorld|p_empty|0|0': 'fullyVisible',
-          'oldWorld|p_port|0|0': 'fullyVisible',
-        },
-        portsByProvinceSeaboard: const {
-          'oldWorld|p_port|sea1': 'oldWorld|p_port|0|0',
-        },
-        units: [
-          Unit(
-            id: 'd1',
-            type: 'musketeers',
-            ownerId: navalIntelRivalId,
-            locationProvinceId: navalIntelUnopposed,
-          ),
-        ],
-        fleets: [
-          Fleet(
-            id: 'enemy_a',
-            ownerId: navalIntelRivalId,
-            regionId: 'oldWorld',
-            inPortAtProvinceId: navalIntelPortProvince,
-            ships: const [ShipInstance(id: 'ea', typeId: 'carrack')],
-          ),
-        ],
+        visibilityByTile: {'oldWorld|p_empty|0|0': 'fullyVisible'},
       );
-
-      await tester.pumpWidget(
-        buildAppShell(
-          child: NavalMissionTargetDialog(
-            game: game,
-            mission: FleetMission.beachhead,
-            fleet: navalIntelFleet,
-            targetProvinceIds: const [navalIntelUnopposed],
-            humanPlayerId: navalIntelHumanId,
-          ),
-        ),
+      final view = buildPlayerView(
+        game,
+        const MapTopology(),
+        navalIntelHumanId,
       );
-      await tester.pumpAndSettle();
-      expect(find.text('Defenders unknown'), findsOneWidget);
-      expect(find.text('Unopposed capture'), findsNothing);
-
-      await tester.pumpWidget(
-        buildAppShell(
-          child: NavalMissionTargetDialog(
-            game: game,
-            mission: FleetMission.blockade,
-            fleet: navalIntelFleet,
-            targetProvinceIds: const [navalIntelPortProvince],
-            humanPlayerId: navalIntelHumanId,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Harbor status unknown'), findsOneWidget);
-      expect(find.text('1 fleets in port'), findsNothing);
-    });
-
-    testWidgets('confirm still returns selected targetProvinceId', (tester) async {
-      final game = buildNavalMissionIntelGame(
-        visibilityByTile: {
-          'oldWorld|p_empty|0|0': 'fullyVisible',
-        },
-      );
-      final view =
-          buildPlayerView(game, const MapTopology(), navalIntelHumanId);
       String? popped;
 
       await tester.pumpWidget(

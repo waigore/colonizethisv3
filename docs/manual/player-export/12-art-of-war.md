@@ -16,7 +16,7 @@ This chapter covers how a field army attacks, how you choose between **Auto-Reso
 2. Choose **Move** on an owned province that already holds a field army, or **Invade** on a foreign province.
 3. If more than one field army can act, **Overlay army move picker** opens (title **Select army**). Pick the army and tap **Confirm**. Each row shows that army’s regiment mix.
 4. If only the non-empty Home Army can start the campaign, the **Detach a field army** dialog opens first (confirm **Detach and choose destination**). That creates a new field army before the move continues.
-5. **Move army dialog** opens (title **Move army — Army &lt;id&gt;**). Invasion rows show **Defenders: N regiments**, **Unopposed capture**, or **Defenders unknown**, plus **Open field**, **Wood fort siege**, **Stone fort siege**, or **Modern fort siege** when you can see them. When **Invade** started the flow, that province is preselected.
+5. **Move army dialog** opens (title **Move army — Army &lt;id&gt;**). Invasion rows show **Defenders: N regiments**, **Unopposed capture**, or **Defenders unknown**, plus **Open field**, **Wood fort siege**, **Stone fort siege**, or **Modern fort siege** when you can see them. When the invasion destination is selected and you can see the garrison, a muted line under a fort name explains that the walls soak some of the attack and that the defender has extra guns. Rows you have not selected keep the short fort name only. When **Invade** started the flow, that province is preselected.
 6. Select a legal destination. Your own provinces appear separately from invasion targets. An invasion destination may show **Invasions this turn: N · Generals: G** (a muted warning if you have more invasions than generals — **Confirm** stays enabled) and a muted rations warning if your land forces are short on food this turn. Owned-province destinations show neither line.
 7. Tap **Confirm**. If the row requires war, confirm **Declare war?** with **Declare war and move**. That confirm shows the same Effect lines as declaring war from Diplomacy, naming other courts that may be called to defend or asked to intervene.
 8. Tap **Next turn**. After you confirm **Next turn**, the game carries out the march. You see the fight or the unopposed capture when that finishes — not when you tap **Confirm**.
@@ -33,7 +33,7 @@ If several attacking armies reach the same province, they fight one after anothe
 
 ### Choosing the combat mode
 
-1. When a coming battle needs a choice, **Combat mode choice dialog** names the province (**Combat at &lt;province&gt;**). It also shows how many of your regiments are already there, **Defenders: N regiments** or **Attackers: N** (or **Defenders unknown** if you cannot see the garrison), and whether the ground is **Open field** or a **Wood fort siege**, **Stone fort siege**, or **Modern fort siege**. If you are defending, the enemy line is labeled **Attackers**. Tap **Details** for regiment types. If your armies are short on rations this turn, a muted italic warning says they will fight weaker; **Auto-Resolve** and **Quick Battle** stay available.
+1. When a coming battle needs a choice, **Combat mode choice dialog** names the province (**Combat at &lt;province&gt;**). It also shows how many of your regiments are already there, **Defenders: N regiments** or **Attackers: N** (or **Defenders unknown** if you cannot see the garrison), and whether the ground is **Open field** or a **Wood fort siege**, **Stone fort siege**, or **Modern fort siege**. Under a fort name, a muted line explains that the walls soak some of the attack and that the fort has extra guns. If you own the province, that line says **your fort** instead of **the defender**. If you are defending, the enemy line is labeled **Attackers**. Tap **Details** for regiment types. If your armies are short on rations this turn, a muted italic warning says they will fight weaker; **Auto-Resolve** and **Quick Battle** stay available.
 2. **Auto-Resolve** decides the battle at once. **Quick Battle** lets you give orders in the fight. The dialog does not tell you who will win.
 3. A capital siege permits only Quick Battle. Auto-Resolve is not offered then. (The game SPECs do not yet state this restriction; the screen behaviour above is what you see.)
 4. A province without a fort is a field battle. A province with a fort level of 1 or more is a siege, whether you choose Auto-Resolve or Quick Battle.
@@ -62,6 +62,8 @@ Four outcomes are possible: **attacker victory** (defender eliminated, province 
 ### Sieges and forts
 
 When you raise a fort from the town tile (Chapter 6), enabled **Build fort** on **Province sea-zone overlay**, the tile radial, or the Engineer row names the next fight posture — **Open field** to **Wood fort siege**, and so on — and how many turns the work takes before you assign.
+
+On **Province sea-zone overlay** Military, the same muted siege line appears under the fort name when you can see the garrison, even if you cannot give orders there.
 
 A fort makes the battle a siege:
 

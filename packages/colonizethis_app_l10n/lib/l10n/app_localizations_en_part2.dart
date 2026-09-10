@@ -389,6 +389,30 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get moveArmy_fortModernSiege => 'Modern fort siege';
 
   @override
+  String get moveArmy_fortSiegeGistWood =>
+      'Light walls soak some of the attack; the defender has 1 extra gun.';
+
+  @override
+  String get moveArmy_fortSiegeGistStone =>
+      'Medium walls soak more of the attack; the defender has 2 extra guns.';
+
+  @override
+  String get moveArmy_fortSiegeGistModern =>
+      'Heavy walls soak much of the attack; the defender has 3 extra guns.';
+
+  @override
+  String get moveArmy_fortSiegeGistWoodDefender =>
+      'Light walls soak some of the attack; your fort has 1 extra gun.';
+
+  @override
+  String get moveArmy_fortSiegeGistStoneDefender =>
+      'Medium walls soak more of the attack; your fort has 2 extra guns.';
+
+  @override
+  String get moveArmy_fortSiegeGistModernDefender =>
+      'Heavy walls soak much of the attack; your fort has 3 extra guns.';
+
+  @override
   String moveFleet_title(String fleetLabel) {
     return 'Move fleet — $fleetLabel';
   }
@@ -956,7 +980,9 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
-  String civilian_units_spyStatus_holdingIntelMaySpeedResearch(String province) {
+  String civilian_units_spyStatus_holdingIntelMaySpeedResearch(
+    String province,
+  ) {
     return 'Holding intel: $province — may speed research';
   }
 

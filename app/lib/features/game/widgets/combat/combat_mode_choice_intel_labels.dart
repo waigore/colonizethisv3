@@ -26,6 +26,12 @@ List<String> combatModeChoiceDefaultForceLines(
   final fortLevel = intel.fortLevel;
   if (fortLevel != null) {
     lines.add(moveArmyFortLabelForLevel(l10n, fortLevel));
+    final gist = moveArmyFortSiegeGistForLevel(
+      l10n,
+      fortLevel,
+      defenderRole: intel.role == CombatModeChoiceRole.defender,
+    );
+    if (gist != null) lines.add(gist);
   }
   return lines;
 }

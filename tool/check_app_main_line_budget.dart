@@ -159,7 +159,9 @@ const _packageName = 'colonizethis_app';
 // (Refs #4761; measured 99_010).
 // raised after remaining Grant/Subsidy Political AC pins including
 // observe-mode overlay bind (Refs #4761; measured 99_026).
-const _maxMainLines = 99026;
+// raised for DLG20001/CMPT10001/MAP20001/DLG31002 fort siege gist
+// (Refs #4764; measured 99_074).
+const _maxMainLines = 99074;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

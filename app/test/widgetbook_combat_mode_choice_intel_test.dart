@@ -53,6 +53,12 @@ void main() {
       expect(find.text('Your army: 3 regiments'), findsOneWidget);
       expect(find.text('Defenders: 2 regiments'), findsOneWidget);
       expect(find.text('Unopposed capture'), findsNothing);
+      expect(
+        find.text(
+          'Light walls soak some of the attack; the defender has 1 extra gun.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Details open pumps regiment type mix', (

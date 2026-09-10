@@ -33,7 +33,9 @@ Game _fortOverlayGame({required int fortLevel}) {
       ),
       newWorld: const RegionData(provinces: [], units: []),
       tileKeysByRegionAndProvince: {
-        'oldWorld': {provinceId: [tileKey]},
+        'oldWorld': {
+          provinceId: [tileKey],
+        },
       },
       tileState: TileMapState(),
       playerVisibilityByTile: {
@@ -127,6 +129,12 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.textContaining('Stone fort siege'), findsOneWidget);
+      expect(
+        find.text(
+          'Medium walls soak more of the attack; the defender has 2 extra guns.',
+        ),
+        findsOneWidget,
+      );
 
       await expectLater(
         find.byKey(boundaryKey),
