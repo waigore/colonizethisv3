@@ -90,6 +90,12 @@ void main() {
       expect(find.text('Your army: 3 regiments'), findsOneWidget);
       expect(find.text('Defenders: 2 regiments'), findsOneWidget);
       expect(find.text('Wood fort siege'), findsOneWidget);
+      expect(
+        find.text(
+          'Light walls soak some of the attack; the defender has 1 extra gun.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Unopposed capture'), findsNothing);
       await expectLater(
         find.byKey(boundaryKey),
@@ -114,6 +120,7 @@ void main() {
       expect(find.text('Your army: 3 regiments'), findsOneWidget);
       expect(find.text('Defenders unknown'), findsOneWidget);
       expect(find.textContaining('fort'), findsNothing);
+      expect(find.textContaining('walls soak'), findsNothing);
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/combat_mode_choice_attacker_unknown.png'),
@@ -138,6 +145,12 @@ void main() {
       expect(find.text('Attackers: 4 regiments'), findsOneWidget);
       expect(find.textContaining('Defenders:'), findsNothing);
       expect(find.text('Stone fort siege'), findsOneWidget);
+      expect(
+        find.text(
+          'Medium walls soak more of the attack; your fort has 2 extra guns.',
+        ),
+        findsOneWidget,
+      );
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/combat_mode_choice_defender_full.png'),
@@ -183,6 +196,12 @@ void main() {
       expect(find.textContaining('Auto-Resolve'), findsNothing);
       expect(find.text('Decides the battle at once.'), findsNothing);
       expect(find.text('Wood fort siege'), findsOneWidget);
+      expect(
+        find.text(
+          'Light walls soak some of the attack; the defender has 1 extra gun.',
+        ),
+        findsOneWidget,
+      );
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/combat_mode_choice_capital_siege.png'),
@@ -205,9 +224,41 @@ void main() {
     expect(tester.takeException(), isNull);
     expectEditorialMonocleDarkChrome(tester);
     expect(find.text('Your army: 3 regiments'), findsOneWidget);
+    expect(
+      find.text(
+        'Light walls soak some of the attack; the defender has 1 extra gun.',
+      ),
+      findsOneWidget,
+    );
     await expectLater(
       find.byKey(boundaryKey),
       matchesGoldenFile('goldens/combat_mode_choice_attacker_full_320.png'),
+    );
+  });
+
+  testWidgets('golden: defender full intel wraps at 320 dp (Refs #4764)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'combatModeChoiceDefenderFull320Golden',
+    );
+    await pumpIntelGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      intel: _defenderFull,
+      physicalSize: const Size(kMinViewportWidth, 640),
+    );
+    expect(tester.takeException(), isNull);
+    expectEditorialMonocleDarkChrome(tester);
+    expect(
+      find.text(
+        'Medium walls soak more of the attack; your fort has 2 extra guns.',
+      ),
+      findsOneWidget,
+    );
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/combat_mode_choice_defender_full_320.png'),
     );
   });
 }

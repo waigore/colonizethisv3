@@ -25,7 +25,7 @@ Enemy:
 | Attacker | full, owner empty or `ownerId` empty | omit enemy line and enemy types (no `Defenders: 0`) |
 | Defender | owned province | `combatMode_attackersRegiments(N)` for all non-human combat-capable units, including co-attackers and non-moving third parties |
 
-Fort: attacker uses `computeMoveArmyInvasionIntelSummary` **intelLevel and fortLevel only** (never `unopposed`, never that helper’s defender totals). Defender uses `province.fortLevel`. Labels: `moveArmyFortLabelForLevel`.
+Fort: attacker uses `computeMoveArmyInvasionIntelSummary` **intelLevel and fortLevel only** (never `unopposed`, never that helper’s defender totals). Defender uses `province.fortLevel`. Labels: `moveArmyFortLabelForLevel`. When `fortLevel >= 1`, `CMPT10001` appends `moveArmyFortSiegeGistForLevel` under that label (`defenderRole: true` when `role == defender`). Details stay type counts only — do not extend Details with wall/mode prose (Refs #4764).
 
 Details types: `unit.type` counts over the same sets as own/enemy `N`, labeled with `regimentTypeDisplayLabel` + `provinceOverlay_indentedCount`. When the enemy line is omitted, Details shows own types only.
 

@@ -55,6 +55,77 @@ void main() {
       expect(find.text('Defenders: 1 regiments'), findsOneWidget);
       expect(find.text('Wood fort siege'), findsOneWidget);
       expect(find.text('Defenders unknown'), findsNothing);
+      expect(
+        find.text(
+          'Light walls soak some of the attack; the defender has 1 extra gun.',
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+      'selected invasion row shows wood siege gist; unselected omits it',
+      (tester) async {
+        final topology = buildMoveArmyInvasionIntelUiTopology();
+        final game = buildMoveArmyInvasionIntelUiGame(
+          visibilityByTile: {
+            'oldWorld|p_from|0|0': 'fullyVisible',
+            'oldWorld|p_owned|0|0': 'fullyVisible',
+            'oldWorld|p_invade|0|0': 'fullyVisible',
+          },
+          fortLevel: 1,
+          extraUnits: [
+            Unit(
+              id: 'd1',
+              type: 'pikemen',
+              ownerId: kMoveArmyIntelUiRivalId,
+              locationProvinceId: kMoveArmyIntelUiInvasionDest,
+            ),
+          ],
+        );
+        await pumpMoveArmyInvasionIntelDialog(
+          tester,
+          game: game,
+          topology: topology,
+        );
+        expect(
+          find.text(
+            'Light walls soak some of the attack; the defender has 1 extra gun.',
+          ),
+          findsNothing,
+        );
+        await tester.tap(find.text('Invade Dest'));
+        await tester.pump();
+        expect(find.text('Wood fort siege'), findsOneWidget);
+        expect(
+          find.text(
+            'Light walls soak some of the attack; the defender has 1 extra gun.',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('selected open-field invasion row omits siege gist', (
+      tester,
+    ) async {
+      final topology = buildMoveArmyInvasionIntelUiTopology();
+      final game = buildMoveArmyInvasionIntelUiGame(
+        visibilityByTile: {
+          'oldWorld|p_from|0|0': 'fullyVisible',
+          'oldWorld|p_owned|0|0': 'fullyVisible',
+          'oldWorld|p_invade|0|0': 'fullyVisible',
+        },
+      );
+      await pumpMoveArmyInvasionIntelDialog(
+        tester,
+        game: game,
+        topology: topology,
+      );
+      await tester.tap(find.text('Invade Dest'));
+      await tester.pump();
+      expect(find.text('Open field'), findsOneWidget);
+      expect(find.textContaining('walls soak'), findsNothing);
     });
 
     testWidgets('unknown intel invasion row shows defenders unknown', (

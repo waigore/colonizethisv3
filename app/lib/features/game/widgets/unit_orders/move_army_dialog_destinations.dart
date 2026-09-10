@@ -48,8 +48,7 @@ mixin MoveArmyDialogDestinations
     final intelMutedStyle = (theme.textTheme.bodySmall ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.muted);
     final selected = selectedEntry(entries);
-    final showInvasionCapacity =
-        selected != null && !selected.isPlayerOwned;
+    final showInvasionCapacity = selected != null && !selected.isPlayerOwned;
     final invasionCount = showInvasionCapacity
         ? stagedInvasionCountForTurn(
             game: widget.game,
@@ -80,7 +79,9 @@ mixin MoveArmyDialogDestinations
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          l10n.moveArmy_yourArmyRegiments(moveArmyOwnRegimentCount(widget.army)),
+          l10n.moveArmy_yourArmyRegiments(
+            moveArmyOwnRegimentCount(widget.army),
+          ),
           style: intelMutedStyle,
         ),
         if (showInvasionCapacity) ...[
@@ -94,9 +95,7 @@ mixin MoveArmyDialogDestinations
               padding: const EdgeInsets.only(top: CtSpacing.xs),
               child: Text(
                 l10n.moveArmy_invasionOverGeneralCapacityWarning,
-                style: intelMutedStyle.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
+                style: intelMutedStyle.copyWith(fontStyle: FontStyle.italic),
               ),
             ),
           if (landUnderfedWarning != null)
@@ -104,9 +103,7 @@ mixin MoveArmyDialogDestinations
               padding: const EdgeInsets.only(top: CtSpacing.xs),
               child: Text(
                 landUnderfedWarning,
-                style: intelMutedStyle.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
+                style: intelMutedStyle.copyWith(fontStyle: FontStyle.italic),
               ),
             ),
         ],
@@ -168,6 +165,12 @@ mixin MoveArmyDialogDestinations
     final invasionIntelLines = invasionIntelSummary == null
         ? const <String>[]
         : moveArmyInvasionIntelSummaryLines(l10n, invasionIntelSummary);
+    final siegeGist =
+        isSelected &&
+            invasionIntelSummary != null &&
+            invasionIntelSummary.intelLevel == MoveArmyInvasionIntelLevel.full
+        ? moveArmyFortSiegeGistForLevel(l10n, invasionIntelSummary.fortLevel)
+        : null;
     final invasionDetailLines =
         showInvasionIntel && isSelected && invasionIntelSummary != null
         ? moveArmyInvasionIntelDetailTypeLines(
@@ -184,7 +187,8 @@ mixin MoveArmyDialogDestinations
     return MoveDialogDestinationRow(
       selected: isSelected,
       semanticsLabel: entry.provinceLabel,
-      onTap: () => setState(() => armySelectedDestination = entry.fullProvinceId),
+      onTap: () =>
+          setState(() => armySelectedDestination = entry.fullProvinceId),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -192,6 +196,7 @@ mixin MoveArmyDialogDestinations
           Text(entry.provinceLabel, style: labelStyle),
           for (final line in invasionIntelLines)
             Text(line, style: intelMutedStyle),
+          if (siegeGist != null) Text(siegeGist, style: intelMutedStyle),
           for (final line in invasionDetailLines)
             Text(line, style: intelMutedStyle),
           if (triggerLabel != null && triggerStyle != null)

@@ -1128,6 +1128,24 @@ abstract class AppLocalizations {
   /// Fort level 3 siege label on invasion row (#4216).
   String get moveArmy_fortModernSiege;
 
+  /// Default-visible Wood fort siege gist (attacker / third-person) (Refs #4764).
+  String get moveArmy_fortSiegeGistWood;
+
+  /// Default-visible Stone fort siege gist (attacker / third-person) (Refs #4764).
+  String get moveArmy_fortSiegeGistStone;
+
+  /// Default-visible Modern fort siege gist (attacker / third-person) (Refs #4764).
+  String get moveArmy_fortSiegeGistModern;
+
+  /// CMPT10001 defender-role Wood fort siege gist (Refs #4764).
+  String get moveArmy_fortSiegeGistWoodDefender;
+
+  /// CMPT10001 defender-role Stone fort siege gist (Refs #4764).
+  String get moveArmy_fortSiegeGistStoneDefender;
+
+  /// CMPT10001 defender-role Modern fort siege gist (Refs #4764).
+  String get moveArmy_fortSiegeGistModernDefender;
+
   /// Move fleet dialog title.
   String moveFleet_title(String fleetLabel);
 

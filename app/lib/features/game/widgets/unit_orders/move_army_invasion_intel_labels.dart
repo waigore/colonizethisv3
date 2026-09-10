@@ -14,6 +14,33 @@ String moveArmyFortLabelForLevel(AppLocalizations l10n, int fortLevel) {
   };
 }
 
+/// Default-visible siege-effect gist for Wood/Stone/Modern forts.
+///
+/// Returns `null` when [fortLevel] is missing or 0 (Open field). Does **not**
+/// belong in [moveArmyInvasionIntelSummaryLines] — that helper is shared by
+/// unselected DLG20001/DLG31002 rows and Military Counsel (Refs #4764).
+String? moveArmyFortSiegeGistForLevel(
+  AppLocalizations l10n,
+  int? fortLevel, {
+  bool defenderRole = false,
+}) {
+  if (fortLevel == null || fortLevel <= 0) {
+    return null;
+  }
+  if (defenderRole) {
+    return switch (fortLevel) {
+      1 => l10n.moveArmy_fortSiegeGistWoodDefender,
+      2 => l10n.moveArmy_fortSiegeGistStoneDefender,
+      _ => l10n.moveArmy_fortSiegeGistModernDefender,
+    };
+  }
+  return switch (fortLevel) {
+    1 => l10n.moveArmy_fortSiegeGistWood,
+    2 => l10n.moveArmy_fortSiegeGistStone,
+    _ => l10n.moveArmy_fortSiegeGistModern,
+  };
+}
+
 List<String> moveArmyInvasionIntelSummaryLines(
   AppLocalizations l10n,
   MoveArmyInvasionIntelSummary summary,

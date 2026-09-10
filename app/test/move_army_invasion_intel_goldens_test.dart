@@ -4,6 +4,7 @@
 //
 // SPEC: SPEC/ui/move-army-dialog.md § Invasion intel.
 
+import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -100,8 +101,9 @@ void main() {
   testWidgets(
     'golden: full intel with zero defenders shows unopposed capture (Refs #4216)',
     (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('moveArmyInvasionIntelUnopposedGolden');
+      const boundaryKey = ValueKey<String>(
+        'moveArmyInvasionIntelUnopposedGolden',
+      );
       final topology = buildMoveArmyInvasionIntelGoldenTopology();
       final game = buildMoveArmyInvasionIntelGoldenGame(
         visibilityByTile: moveArmyInvasionIntelFullVisibilityTiles(),
@@ -135,8 +137,9 @@ void main() {
   testWidgets(
     'golden: fogged invasion row shows defenders unknown (Refs #4216)',
     (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('moveArmyInvasionIntelUnknownGolden');
+      const boundaryKey = ValueKey<String>(
+        'moveArmyInvasionIntelUnknownGolden',
+      );
       final topology = buildMoveArmyInvasionIntelGoldenTopology();
       final game = buildMoveArmyInvasionIntelGoldenGame(
         visibilityByTile: {
@@ -182,8 +185,9 @@ void main() {
   testWidgets(
     'golden: selected invasion row shows regiment type breakdown (Refs #4216)',
     (WidgetTester tester) async {
-      const boundaryKey =
-          ValueKey<String>('moveArmyInvasionIntelSelectedGolden');
+      const boundaryKey = ValueKey<String>(
+        'moveArmyInvasionIntelSelectedGolden',
+      );
       final topology = buildMoveArmyInvasionIntelGoldenTopology();
       final game = buildMoveArmyInvasionIntelGoldenGame(
         visibilityByTile: moveArmyInvasionIntelFullVisibilityTiles(),
@@ -222,4 +226,116 @@ void main() {
       );
     },
   );
+
+  testWidgets('golden: selected wood siege gist on invasion row (Refs #4764)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'moveArmyInvasionIntelSelectedSiegeGolden',
+    );
+    final topology = buildMoveArmyInvasionIntelGoldenTopology();
+    final game = buildMoveArmyInvasionIntelGoldenGame(
+      visibilityByTile: moveArmyInvasionIntelFullVisibilityTiles(),
+      fortLevel: 1,
+      invasionUnits: [
+        Unit(
+          id: 'd1',
+          type: 'pikemen',
+          ownerId: moveArmyInvasionIntelGoldenRivalId,
+          locationProvinceId: moveArmyInvasionIntelGoldenInvasionDest,
+        ),
+      ],
+    );
+    final view = buildPlayerView(
+      game,
+      topology,
+      moveArmyInvasionIntelGoldenPlayerId,
+    );
+
+    await pumpMoveArmyInvasionIntelGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      game: game,
+      topology: topology,
+      playerView: view,
+    );
+    await tester.tap(find.text('Invade Dest'));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Wood fort siege'), findsOneWidget);
+    expect(
+      find.text(
+        'Light walls soak some of the attack; the defender has 1 extra gun.',
+      ),
+      findsOneWidget,
+    );
+
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/move_army_invasion_intel_selected_siege.png'),
+    );
+  });
+
+  testWidgets('golden: selected wood siege gist wraps at 320 dp (Refs #4764)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>(
+      'moveArmyInvasionIntelSelectedSiege320Golden',
+    );
+    final topology = buildMoveArmyInvasionIntelGoldenTopology();
+    final game = buildMoveArmyInvasionIntelGoldenGame(
+      visibilityByTile: moveArmyInvasionIntelFullVisibilityTiles(),
+      fortLevel: 1,
+      invasionUnits: [
+        Unit(
+          id: 'd1',
+          type: 'pikemen',
+          ownerId: moveArmyInvasionIntelGoldenRivalId,
+          locationProvinceId: moveArmyInvasionIntelGoldenInvasionDest,
+        ),
+      ],
+    );
+    final view = buildPlayerView(
+      game,
+      topology,
+      moveArmyInvasionIntelGoldenPlayerId,
+    );
+
+    await pumpGoldenHost(
+      tester,
+      boundaryKey: boundaryKey,
+      physicalSize: const Size(kMinViewportWidth, 640),
+      settle: false,
+      includeLocalizations: true,
+      scaffoldBackgroundColor:
+          AppThemes.editorialMonocle.scaffoldBackgroundColor,
+      child: MoveArmyDialog(
+        army: game.worldState.armies.first,
+        game: game,
+        humanPlayerId: moveArmyInvasionIntelGoldenPlayerId,
+        bus: AppEventBus.create(),
+        topology: topology,
+        draftOrders: const Orders(),
+        playerView: view,
+      ),
+    );
+    await tester.tap(find.text('Invade Dest'));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.text(
+        'Light walls soak some of the attack; the defender has 1 extra gun.',
+      ),
+      findsOneWidget,
+    );
+
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile(
+        'goldens/move_army_invasion_intel_selected_siege_320.png',
+      ),
+    );
+  });
 }
