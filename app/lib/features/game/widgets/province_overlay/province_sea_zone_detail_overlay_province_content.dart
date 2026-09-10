@@ -25,6 +25,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart'
     show ProvinceImprovableCommodityCount;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
+import 'province_sea_zone_detail_overlay_grant_subsidy_props.dart';
 import 'province_sea_zone_detail_overlay_province_content_revealed.dart';
 import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
@@ -91,6 +92,8 @@ OverlayContent provinceContent({
   bool offerPeacePending = false,
   String? offerPeaceRejectionReason,
   VoidCallback? onOfferPeaceTap,
+  ProvinceOverlayGrantSubsidyProps grantSubsidy =
+      kProvinceOverlayGrantSubsidyHidden,
   required bool isNarrow,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
@@ -163,6 +166,7 @@ OverlayContent provinceContent({
     offerPeacePending: offerPeacePending,
     offerPeaceRejectionReason: offerPeaceRejectionReason,
     onOfferPeaceTap: onOfferPeaceTap,
+    grantSubsidy: grantSubsidy,
     isNarrow: isNarrow,
     omniscientDetail: omniscientDetail,
     townProductionBonusByCommodity: townProductionBonusByCommodity,

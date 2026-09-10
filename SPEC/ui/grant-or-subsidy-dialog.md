@@ -1,7 +1,7 @@
 # Grant or Subsidy Dialog
 
 **Screen ID:** `DIPL20001` — stable; do not reassign.
-**SPEC/ui** — Modal that lets the human player set the parameter for a one-time **grant** (a £ amount) or a recurring **subsidy** (a whole **percentage**, 5–20 in 5-point steps; Refs #3753 R3) toward a target faction, opened from [diplomacy-panel.md](diplomacy-panel.md). Game model: [diplomacy.md](../game/diplomacy.md). Orders contract: [orders.md](../program/orders.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**SPEC/ui** — Modal that lets the human player set the parameter for a one-time **grant** (a £ amount) or a recurring **subsidy** (a whole **percentage**, 5–20 in 5-point steps; Refs #3753 R3) toward a target faction, opened from [diplomacy-panel.md](diplomacy-panel.md) or `MAP20001` Political Grant Aid / Set Subsidy (Refs #4761). Game model: [diplomacy.md](../game/diplomacy.md). Orders contract: [orders.md](../program/orders.md). App wiring and events: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md). Overlay: [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md).
 
 **Mockup:** [mockups/DIPL20001-grant-or-subsidy-dialog.html](mockups/DIPL20001-grant-or-subsidy-dialog.html)
 ---
@@ -10,7 +10,7 @@
 
 | Widget | Type | Parameters | Description |
 |--------|------|------------|-------------|
-| `GrantOrSubsidyDialog` | `StatelessWidget` | `game` (`Game`), `humanPlayerId` (`String`), `targetFactionId` (`String`), `isSubsidy` (`bool`), `bus` (`AppEventBus`) | Bus-registered modal (id `grant_or_subsidy`) opened by `DiplomacyPanel` via `OpenDialogEvent('grant_or_subsidy', {targetFactionId, isSubsidy})`. Emits exactly one `GrantOrSubsidySubmittedEvent` on submit. Does **not** emit `AppendDiplomaticOrderRequestedEvent`, `NegotiationMoodUpdateEvent`, or `ConfirmDialogEvent`. |
+| `GrantOrSubsidyDialog` | `StatelessWidget` | `game` (`Game`), `humanPlayerId` (`String`), `targetFactionId` (`String`), `isSubsidy` (`bool`), `bus` (`AppEventBus`) | Bus-registered modal (id `grant_or_subsidy`) opened by `DiplomacyPanel` or `MAP20001` Political via `OpenDialogEvent('grant_or_subsidy', {targetFactionId, isSubsidy})`. Emits exactly one `GrantOrSubsidySubmittedEvent` on submit. Does **not** emit `AppendDiplomaticOrderRequestedEvent`, `NegotiationMoodUpdateEvent`, or `ConfirmDialogEvent`. |
 
 Implementation: `app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart` (private `_GrantSubsidyAmountBody` holds the stepper state). Wrapped in `CtDialogShell`. The mode (`isSubsidy: true` vs `false`) drives the **title**, the **unit** (£ amount for grant; `%` for subsidy), and the **step / range constants**: grant uses `grantAidAmountStep` / `grantAidDefaultAmount` (treasury-bounded); subsidy uses `kSubsidyPercentStep` (5), `kSubsidyPercentMin` (5), `kSubsidyPercentMax` (20), and `kSubsidyPercentDefault` (5) from `colonizethis_logic` and is **treasury-independent** (Refs #3753 R3). Dialog id constant: `grantOrSubsidyDialogId`.
 
@@ -69,7 +69,7 @@ All colors resolve from `EditorialMonoclePalette` tokens; no hard-coded hex lite
 
 ## Trigger conditions
 
-- Opened from `DiplomacyPanel` Grant Aid / Set Subsidy actions via `bus.emit(OpenDialogEvent(grantOrSubsidyDialogId, {targetFactionId, isSubsidy}))`. The panel itself must not call `showDialog` for this dialog (per [app-ui-wiring.md](../program/app-ui-wiring.md) § Banned: `Ref` / `BuildContext` / `Navigator` chains).
+- Opened from `DiplomacyPanel` Grant Aid / Set Subsidy actions, or from `MAP20001` Political **Grant Aid** / **Set Subsidy** (Refs #4761), via `bus.emit(OpenDialogEvent(grantOrSubsidyDialogId, {targetFactionId, isSubsidy}))`. The panel and overlay hosts must not call `showDialog` for this dialog (per [app-ui-wiring.md](../program/app-ui-wiring.md) § Banned: `Ref` / `BuildContext` / `Navigator` chains). Overlay hosts do not emit `AppendDiplomaticOrderRequestedEvent` until this dialog’s Submit path.
 - Dialog builder `_buildGrantOrSubsidyDialog` (in `app_event_handler_scope_dialog_builders.dart`) resolves `humanPlayerId` via `resolveShellPanelPlayerId(shellPlayerContextProvider, game)`. Missing `currentGameProvider` yields `SizedBox.shrink()`.
 - Initial amount (grant mode): capped to `_maxAffordable()` (largest multiple of `grantAidAmountStep` not exceeding treasury) and snapped down to `grantAidDefaultAmount`. When the snapped default is below one step, falls back to `_maxAffordable()`.
 - Initial amount (subsidy mode): `kSubsidyPercentDefault` (5%); not treasury-bounded (Refs #3753 R3).
@@ -114,6 +114,8 @@ The `GrantOrSubsidySubmittedEvent` listener (`app/lib/features/game/widgets/dipl
 ---
 
 ## Acceptance Criteria (Given–When–Then)
+
+- Given `MAP20001` Political emits `OpenDialogEvent(grantOrSubsidyDialogId, { targetFactionId, isSubsidy })`, when the dialog builder runs, then the UI layer mounts `DIPL20001` for that owner and mode with the same Cost / Effect copy as the `GAME30001` path (Refs #4761).
 
 - Given `isSubsidy == false`, when `GrantOrSubsidyDialog` builds, then the UI layer renders the localized title for `diplomacy_grantAid` and uses `grantAidAmountStep` for stepper increments.
 

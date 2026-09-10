@@ -86,6 +86,7 @@ extension ProvinceSeaZoneDetailOverlayContent on ProvinceSeaZoneDetailOverlay {
       offerPeacePending: offerPeacePending,
       offerPeaceRejectionReason: offerPeaceRejectionReason,
       onOfferPeaceTap: onOfferPeaceTap,
+      grantSubsidy: grantSubsidy,
       isNarrow: isNarrow,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,

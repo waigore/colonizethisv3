@@ -11,6 +11,7 @@ import 'package:colonizethis_app/core/utils/faction_display_name.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/civilian/upgrade_town_payoff_gist_line.dart';
 
+import 'province_sea_zone_detail_overlay_grant_subsidy_props.dart';
 import 'province_sea_zone_detail_overlay_sections_political_controls.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
@@ -87,6 +88,8 @@ Widget buildPoliticalSection({
   bool offerPeacePending = false,
   String? offerPeaceRejectionReason,
   VoidCallback? onOfferPeaceTap,
+  ProvinceOverlayGrantSubsidyProps grantSubsidy =
+      kProvinceOverlayGrantSubsidyHidden,
   required bool isNarrow,
 }) {
   final bodyStyle = overlayFgBodyStyle();
@@ -139,6 +142,26 @@ Widget buildPoliticalSection({
             pending: establishEmbassyPending,
             rejectionReason: establishEmbassyRejectionReason,
             onTap: onEstablishEmbassyTap,
+            isNarrow: isNarrow,
+            bodyStyle: gistStyle,
+          ),
+        if (grantSubsidy.showGrantAid)
+          ...buildGrantAidControl(
+            l10n: l10n,
+            enabled: grantSubsidy.grantAidEnabled,
+            pending: grantSubsidy.grantAidPending,
+            rejectionReason: grantSubsidy.grantAidRejectionReason,
+            onTap: grantSubsidy.onGrantAidTap,
+            isNarrow: isNarrow,
+            bodyStyle: gistStyle,
+          ),
+        if (grantSubsidy.showSetSubsidy)
+          ...buildSetSubsidyControl(
+            l10n: l10n,
+            enabled: grantSubsidy.setSubsidyEnabled,
+            pending: grantSubsidy.setSubsidyPending,
+            rejectionReason: grantSubsidy.setSubsidyRejectionReason,
+            onTap: grantSubsidy.onSetSubsidyTap,
             isNarrow: isNarrow,
             bodyStyle: gistStyle,
           ),

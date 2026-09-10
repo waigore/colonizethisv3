@@ -17,6 +17,7 @@ import 'package:colonizethis_app/features/game/flame/map_state/province_naval_mi
     show ProvinceNavalMissionOverlayControls;
 import 'package:colonizethis_app/features/game/flame/overlays/province_blockade_status_support.dart'
     show ProvinceBlockadeStatus;
+import 'province_sea_zone_detail_overlay_grant_subsidy_props.dart';
 import 'province_sea_zone_detail_overlay_province_content_revealed_context.dart';
 import 'province_sea_zone_detail_overlay_province_content_revealed_political.dart';
 import 'province_sea_zone_detail_overlay_province_content_revealed_tabs.dart';
@@ -82,6 +83,8 @@ OverlayContent provinceContentRevealed({
   required bool offerPeacePending,
   String? offerPeaceRejectionReason,
   VoidCallback? onOfferPeaceTap,
+  ProvinceOverlayGrantSubsidyProps grantSubsidy =
+      kProvinceOverlayGrantSubsidyHidden,
   required bool isNarrow,
   required bool omniscientDetail,
   required Map<String, int> townProductionBonusByCommodity,
@@ -152,6 +155,7 @@ OverlayContent provinceContentRevealed({
     offerPeacePending: offerPeacePending,
     offerPeaceRejectionReason: offerPeaceRejectionReason,
     onOfferPeaceTap: onOfferPeaceTap,
+    grantSubsidy: grantSubsidy,
     isNarrow: isNarrow,
   );
   return assembleRevealedProvinceUnitTabContent(

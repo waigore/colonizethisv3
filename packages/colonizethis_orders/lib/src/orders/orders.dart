@@ -11,6 +11,7 @@ export 'diplomatic_access_helpers.dart'
     show
         embassyShortcutAppliesToMinorTribeProvince,
         explorerConsulateGateBlocksMinorTribeProvince,
+        grantSubsidyShortcutAppliesToMinorTribeProvince,
         kReasonConsulateRequiredForExplore;
 export 'development_panel_assign.dart';
 export 'development_panel_road_first.dart';
