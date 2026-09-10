@@ -85,6 +85,24 @@ void main() {
       ),
       findsOneWidget,
     );
+    final subsidyPending = findWidgetbookUseCase(
+      provinceOverlayDirectories,
+      folderName: 'Province Overlay',
+      useCaseName: 'Standalone — Political Set Subsidy pending',
+    );
+    await pumpWidgetbookUseCaseAtSize(
+      tester,
+      subsidyPending,
+      size: const Size(800, 640),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(
+        CtActionTextButton,
+        l10n.provinceOverlay_cancelSetSubsidyAction,
+      ),
+      findsOneWidget,
+    );
     final hidden = findWidgetbookUseCase(
       provinceOverlayDirectories,
       folderName: 'Province Overlay',

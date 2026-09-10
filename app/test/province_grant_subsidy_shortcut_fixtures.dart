@@ -8,6 +8,7 @@ const String kGrantSubsidyHumanPlayerId = kEstablishEmbassyHumanPlayerId;
 const String kGrantSubsidyMinorId = kEstablishEmbassyMinorId;
 const String kGrantSubsidyGpOwnerId = kEstablishEmbassyGpOwnerId;
 const String kGrantSubsidyProvinceId = kEstablishEmbassyProvinceId;
+const String kGrantSubsidySeaZoneId = 'oldWorld|s1';
 const String kGrantSubsidyTileKey = kEstablishEmbassyTileKey;
 final kGrantSubsidyTopology = kEstablishEmbassyTopology;
 

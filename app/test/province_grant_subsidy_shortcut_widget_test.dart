@@ -73,6 +73,34 @@ void main() {
       expect(find.text(l10n.provinceOverlay_setSubsidyAction), findsOneWidget);
     });
 
+    testWidgets('pending Set Subsidy shows Cancel', (tester) async {
+      final game = buildGrantSubsidyShortcutGame(ownerId: kGrantSubsidyMinorId);
+      await tester.pumpWidget(
+        buildProvinceOverlayDarkThemeShell(
+          game: game,
+          displayId: kGrantSubsidyProvinceId,
+          selectedTileKey: kGrantSubsidyTileKey,
+          grantSubsidy: (
+            showGrantAid: true,
+            grantAidEnabled: true,
+            grantAidPending: false,
+            grantAidRejectionReason: null,
+            onGrantAidTap: () {},
+            showSetSubsidy: true,
+            setSubsidyEnabled: true,
+            setSubsidyPending: true,
+            setSubsidyRejectionReason: null,
+            onSetSubsidyTap: () {},
+          ),
+        ),
+      );
+      expect(find.text(l10n.provinceOverlay_grantAidAction), findsOneWidget);
+      expect(
+        find.text(l10n.provinceOverlay_cancelSetSubsidyAction),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('hidden when control flags are false', (tester) async {
       final game = buildGrantSubsidyShortcutGame(
         ownerId: kGrantSubsidyHumanPlayerId,

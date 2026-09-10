@@ -46,28 +46,45 @@ void main() {
       }
     });
 
-    test('hides when Embassy is missing, own, GP-owned, or at war', () {
-      for (final game in [
-        buildGrantSubsidyShortcutGame(
-          ownerId: kGrantSubsidyMinorId,
-          overtureStage: OvertureStage.tradeConsulate,
-        ),
-        buildGrantSubsidyShortcutGame(
-          ownerId: kGrantSubsidyHumanPlayerId,
-          asMinor: false,
-        ),
-        buildGrantSubsidyShortcutGame(
-          ownerId: kGrantSubsidyGpOwnerId,
-          asMinor: false,
-        ),
-        buildGrantSubsidyShortcutGame(
-          ownerId: kGrantSubsidyMinorId,
-          atWar: true,
-        ),
-      ]) {
-        expect(grant(game: game).showControl, isFalse);
-        expect(subsidy(game: game).showControl, isFalse);
-      }
+    test(
+      'hides when Embassy is missing, own, GP-owned, at war, or unclaimed',
+      () {
+        for (final game in [
+          buildGrantSubsidyShortcutGame(
+            ownerId: kGrantSubsidyMinorId,
+            overtureStage: OvertureStage.tradeConsulate,
+          ),
+          buildGrantSubsidyShortcutGame(
+            ownerId: kGrantSubsidyHumanPlayerId,
+            asMinor: false,
+          ),
+          buildGrantSubsidyShortcutGame(
+            ownerId: kGrantSubsidyGpOwnerId,
+            asMinor: false,
+          ),
+          buildGrantSubsidyShortcutGame(
+            ownerId: kGrantSubsidyMinorId,
+            atWar: true,
+          ),
+          buildGrantSubsidyShortcutGame(ownerId: null, asMinor: false),
+        ]) {
+          expect(grant(game: game).showControl, isFalse);
+          expect(subsidy(game: game).showControl, isFalse);
+        }
+      },
+    );
+
+    test('hides for a sea-zone display id', () {
+      final game = buildGrantSubsidyShortcutGame(ownerId: kGrantSubsidyMinorId);
+      final state =
+          GameMapAreaStateLogicProvinceActions.provinceGrantAidActionState(
+            game: game,
+            humanPlayerId: kGrantSubsidyHumanPlayerId,
+            provinceId: kGrantSubsidySeaZoneId,
+            topology: kGrantSubsidyTopology,
+            currentOrders: const Orders(),
+          );
+      expect(state.showControl, isFalse);
     });
 
     test('pending grant or subsidy enables Cancel for that type only', () {

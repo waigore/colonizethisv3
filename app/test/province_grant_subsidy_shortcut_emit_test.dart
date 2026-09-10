@@ -90,4 +90,19 @@ void main() {
     expect(remove.targetFactionId, kGrantSubsidyMinorId);
     expect(remove.type, DiplomaticOrderType.grantAid);
   });
+
+  test('pending Set Subsidy tap removes only that order', () async {
+    final game = buildGrantSubsidyShortcutGame(ownerId: kGrantSubsidyMinorId);
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+    final removeFuture = bus
+        .on<RemoveDiplomaticOrderRequestedEvent>()
+        .first
+        .timeout(const Duration(seconds: 2));
+    final callbacks = callbacksFor(game: game, bus: bus, subsidyPending: true);
+    callbacks.onSetSubsidyTap!();
+    final remove = await removeFuture;
+    expect(remove.targetFactionId, kGrantSubsidyMinorId);
+    expect(remove.type, DiplomaticOrderType.setSubsidy);
+  });
 }

@@ -38,6 +38,16 @@ List<WidgetbookUseCase> get provinceOverlayGrantSubsidyUseCases => [
     ),
   ),
   WidgetbookUseCase(
+    name: 'Standalone — Political Set Subsidy pending',
+    builder: (context) => _provinceOverlayGrantSubsidyStory(
+      showGrant: true,
+      grantEnabled: true,
+      showSubsidy: true,
+      subsidyEnabled: true,
+      subsidyPending: true,
+    ),
+  ),
+  WidgetbookUseCase(
     name: 'Standalone — Political Grant Aid Set Subsidy hidden',
     builder: (context) => _provinceOverlayGrantSubsidyStory(
       showGrant: false,
@@ -55,6 +65,7 @@ Widget _provinceOverlayGrantSubsidyStory({
   String? grantReason,
   required bool showSubsidy,
   required bool subsidyEnabled,
+  bool subsidyPending = false,
 }) {
   final game = demoGameForOverlay;
   return SizedBox(
@@ -75,7 +86,7 @@ Widget _provinceOverlayGrantSubsidyStory({
         onGrantAidTap: () {},
         showSetSubsidy: showSubsidy,
         setSubsidyEnabled: subsidyEnabled,
-        setSubsidyPending: false,
+        setSubsidyPending: subsidyPending,
         setSubsidyRejectionReason: null,
         onSetSubsidyTap: () {},
       ),
