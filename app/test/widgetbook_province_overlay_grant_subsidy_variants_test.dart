@@ -117,4 +117,33 @@ void main() {
     expect(find.text(l10n.provinceOverlay_grantAidAction), findsNothing);
     expect(find.text(l10n.provinceOverlay_setSubsidyAction), findsNothing);
   });
+
+  testWidgets('Widgetbook registers Grant Aid Set Subsidy 320 dp', (
+    tester,
+  ) async {
+    final useCase = findWidgetbookUseCase(
+      provinceOverlayDirectories,
+      folderName: 'Province Overlay',
+      useCaseName: 'Standalone — Political Grant Aid Set Subsidy 320 dp',
+    );
+    await pumpWidgetbookUseCaseAtSize(
+      tester,
+      useCase,
+      size: const Size(320, 640),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(
+      tester
+          .widget<CtActionTextButton>(
+            find.widgetWithText(
+              CtActionTextButton,
+              l10n.provinceOverlay_grantAidAction,
+            ),
+          )
+          .enabled,
+      isFalse,
+    );
+    expect(find.text(l10n.provinceOverlay_setSubsidyAction), findsOneWidget);
+  });
 }

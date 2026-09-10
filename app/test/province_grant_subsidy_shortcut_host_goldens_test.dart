@@ -72,4 +72,27 @@ void main() {
     expect(find.text(provinceGrantSubsidyGoldenTreasuryReason), findsOneWidget);
     await expectLater(find.byKey(boundaryKey), matchesGoldenFile(c.goldenFile));
   });
+
+  for (final c in [
+    provinceGrantSubsidyWideCases[0],
+    provinceGrantSubsidyWideCases[2],
+    provinceGrantSubsidyWideCases[3],
+  ]) {
+    testWidgets('320 dp ${c.name} does not overflow (Refs #4761)', (
+      WidgetTester tester,
+    ) async {
+      final boundaryKey = ValueKey<String>(
+        'province_grant_subsidy_320_${c.name}',
+      );
+      await pumpProvinceGrantSubsidyGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        surface: const Size(400, 640),
+        overlaySize: const Size(320, 640),
+        c: c,
+      );
+      expect(tester.takeException(), isNull);
+      assertProvinceGrantSubsidyControl(tester, c, l10n);
+    });
+  }
 }

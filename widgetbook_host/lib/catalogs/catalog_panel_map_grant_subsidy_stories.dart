@@ -56,6 +56,19 @@ List<WidgetbookUseCase> get provinceOverlayGrantSubsidyUseCases => [
       subsidyEnabled: false,
     ),
   ),
+  WidgetbookUseCase(
+    name: 'Standalone — Political Grant Aid Set Subsidy 320 dp',
+    builder: (context) => _provinceOverlayGrantSubsidyStory(
+      showGrant: true,
+      grantEnabled: false,
+      grantReason: _grantSubsidyTreasuryReason,
+      showSubsidy: true,
+      subsidyEnabled: true,
+      showStanding: true,
+      width: 320,
+      height: 640,
+    ),
+  ),
 ];
 
 Widget _provinceOverlayGrantSubsidyStory({
@@ -66,11 +79,14 @@ Widget _provinceOverlayGrantSubsidyStory({
   required bool showSubsidy,
   required bool subsidyEnabled,
   bool subsidyPending = false,
+  bool showStanding = false,
+  double width = 640,
+  double height = 520,
 }) {
   final game = demoGameForOverlay;
   return SizedBox(
-    width: 640,
-    height: 520,
+    width: width,
+    height: height,
     child: ProvinceSeaZoneDetailOverlay(
       game: game,
       region: demoRegionForOverlay,
@@ -78,6 +94,7 @@ Widget _provinceOverlayGrantSubsidyStory({
       selectedTileKey: sampleTileKeyForProvinceOverlay,
       humanPlayerId: game.players.first.id,
       playerView: demoHumanPlayerViewForOverlay,
+      showOwnerStanding: showStanding,
       grantSubsidy: (
         showGrantAid: showGrant,
         grantAidEnabled: grantEnabled,

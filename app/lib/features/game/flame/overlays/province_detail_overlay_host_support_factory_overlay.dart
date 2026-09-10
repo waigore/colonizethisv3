@@ -142,17 +142,33 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
     offerPeacePending: offerPeaceState.offerPeacePending,
     offerPeaceRejectionReason: offerPeaceState.rejectionReason,
     onOfferPeaceTap: shortcuts.onOfferPeaceTap,
-    grantSubsidy: (
-      showGrantAid: canMutateViaUi && grantAidState.showControl,
-      grantAidEnabled: canMutateViaUi && grantAidState.enabled,
-      grantAidPending: grantAidState.pending,
-      grantAidRejectionReason: grantAidState.rejectionReason,
+    grantSubsidy: bindProvinceOverlayGrantSubsidyProps(
+      canMutateViaUi: canMutateViaUi,
+      grantAidState: grantAidState,
+      setSubsidyState: setSubsidyState,
       onGrantAidTap: shortcuts.onGrantAidTap,
-      showSetSubsidy: canMutateViaUi && setSubsidyState.showControl,
-      setSubsidyEnabled: canMutateViaUi && setSubsidyState.enabled,
-      setSubsidyPending: setSubsidyState.pending,
-      setSubsidyRejectionReason: setSubsidyState.rejectionReason,
       onSetSubsidyTap: shortcuts.onSetSubsidyTap,
     ),
   );
 }
+
+/// Observe / `canMutateViaUi == false` hides both Grant Aid and Set Subsidy
+/// even when the Embassy-held probe would otherwise show them (Refs #4761).
+ProvinceOverlayGrantSubsidyProps bindProvinceOverlayGrantSubsidyProps({
+  required bool canMutateViaUi,
+  required ProvinceGrantSubsidyActionState grantAidState,
+  required ProvinceGrantSubsidyActionState setSubsidyState,
+  VoidCallback? onGrantAidTap,
+  VoidCallback? onSetSubsidyTap,
+}) => (
+  showGrantAid: canMutateViaUi && grantAidState.showControl,
+  grantAidEnabled: canMutateViaUi && grantAidState.enabled,
+  grantAidPending: grantAidState.pending,
+  grantAidRejectionReason: grantAidState.rejectionReason,
+  onGrantAidTap: onGrantAidTap,
+  showSetSubsidy: canMutateViaUi && setSubsidyState.showControl,
+  setSubsidyEnabled: canMutateViaUi && setSubsidyState.enabled,
+  setSubsidyPending: setSubsidyState.pending,
+  setSubsidyRejectionReason: setSubsidyState.rejectionReason,
+  onSetSubsidyTap: onSetSubsidyTap,
+);
