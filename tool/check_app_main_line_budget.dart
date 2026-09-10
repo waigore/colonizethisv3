@@ -155,7 +155,9 @@ const _packageName = 'colonizethis_app';
 // (Refs #4750; measured 97_809).
 // raised for MAP20001 / MAP30001 / MAP30002 Train {type} when no matching
 // civilian (Refs #4752; measured 98_517).
-const _maxMainLines = 98517;
+// raised for MAP20001 Political Grant Aid / Set Subsidy after Embassy
+// (Refs #4761; measured 99_010).
+const _maxMainLines = 99010;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
