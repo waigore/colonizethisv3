@@ -2,42 +2,13 @@
 // SPEC/ui/combat-mode-choice-dialog.md § States and variants CMPT10001c–f / a.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_intel.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'combat_mode_choice_intel_goldens_test_support.dart';
 import 'editorial_monocle_dark_token_assertions.dart';
-import 'golden_capture_harness.dart';
 import 'widget_test_assets.dart';
-
-const _attackerFull = CombatModeChoiceIntel(
-  role: CombatModeChoiceRole.attacker,
-  ownRegimentCount: 3,
-  ownTypesByRegimentId: {'musketeers': 2, 'pikemen': 1},
-  enemyRegimentCount: 2,
-  enemyTypesByRegimentId: {'musketeers': 2},
-  fortLevel: 1,
-);
-
-const _attackerUnknown = CombatModeChoiceIntel(
-  role: CombatModeChoiceRole.attacker,
-  ownRegimentCount: 3,
-  ownTypesByRegimentId: {'musketeers': 3},
-  defendersUnknown: true,
-);
-
-const _defenderFull = CombatModeChoiceIntel(
-  role: CombatModeChoiceRole.defender,
-  ownRegimentCount: 5,
-  ownTypesByRegimentId: {'musketeers': 3, 'pikemen': 2},
-  enemyRegimentCount: 4,
-  enemyTypesByRegimentId: {'musketeers': 4},
-  fortLevel: 2,
-);
 
 void main() {
   suppressLogsForTests();
@@ -46,44 +17,16 @@ void main() {
     await setUpNinePatchAssets();
   });
 
-  Future<void> pumpIntelGolden(
-    WidgetTester tester, {
-    required Key boundaryKey,
-    required CombatModeChoiceIntel intel,
-    bool isCapitalSiege = false,
-    bool detailsInitiallyOpen = false,
-    Size physicalSize = const Size(360, 640),
-  }) async {
-    await pumpGoldenHost(
-      tester,
-      boundaryKey: boundaryKey,
-      physicalSize: physicalSize,
-      settle: false,
-      includeLocalizations: true,
-      scaffoldBackgroundColor:
-          AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      child: CombatModeChoiceDialog(
-        bus: AppEventBus.create(),
-        provinceName: 'Lisbon',
-        isCapitalSiege: isCapitalSiege,
-        intel: intel,
-        detailsInitiallyOpen: detailsInitiallyOpen,
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-  }
-
   testWidgets(
     'golden: attacker full intel shows own, defenders, wood siege (Refs #4438)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>(
         'combatModeChoiceAttackerFullGolden',
       );
-      await pumpIntelGolden(
+      await pumpCombatModeChoiceIntelGolden(
         tester,
         boundaryKey: boundaryKey,
-        intel: _attackerFull,
+        intel: combatModeChoiceIntelGoldensAttackerFull,
       );
       expect(tester.takeException(), isNull);
       expectEditorialMonocleDarkChrome(tester);
@@ -110,10 +53,10 @@ void main() {
       const boundaryKey = ValueKey<String>(
         'combatModeChoiceAttackerUnknownGolden',
       );
-      await pumpIntelGolden(
+      await pumpCombatModeChoiceIntelGolden(
         tester,
         boundaryKey: boundaryKey,
-        intel: _attackerUnknown,
+        intel: combatModeChoiceIntelGoldensAttackerUnknown,
       );
       expect(tester.takeException(), isNull);
       expectEditorialMonocleDarkChrome(tester);
@@ -134,10 +77,10 @@ void main() {
       const boundaryKey = ValueKey<String>(
         'combatModeChoiceDefenderFullGolden',
       );
-      await pumpIntelGolden(
+      await pumpCombatModeChoiceIntelGolden(
         tester,
         boundaryKey: boundaryKey,
-        intel: _defenderFull,
+        intel: combatModeChoiceIntelGoldensDefenderFull,
       );
       expect(tester.takeException(), isNull);
       expectEditorialMonocleDarkChrome(tester);
@@ -162,10 +105,10 @@ void main() {
     'golden: Details open shows own and enemy type lines (Refs #4438)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('combatModeChoiceDetailsOpenGolden');
-      await pumpIntelGolden(
+      await pumpCombatModeChoiceIntelGolden(
         tester,
         boundaryKey: boundaryKey,
-        intel: _attackerFull,
+        intel: combatModeChoiceIntelGoldensAttackerFull,
         detailsInitiallyOpen: true,
       );
       expect(tester.takeException(), isNull);
@@ -185,10 +128,10 @@ void main() {
       const boundaryKey = ValueKey<String>(
         'combatModeChoiceCapitalSiegeGolden',
       );
-      await pumpIntelGolden(
+      await pumpCombatModeChoiceIntelGolden(
         tester,
         boundaryKey: boundaryKey,
-        intel: _attackerFull,
+        intel: combatModeChoiceIntelGoldensAttackerFull,
         isCapitalSiege: true,
       );
       expect(tester.takeException(), isNull);
@@ -215,10 +158,10 @@ void main() {
     const boundaryKey = ValueKey<String>(
       'combatModeChoiceAttackerFull320Golden',
     );
-    await pumpIntelGolden(
+    await pumpCombatModeChoiceIntelGolden(
       tester,
       boundaryKey: boundaryKey,
-      intel: _attackerFull,
+      intel: combatModeChoiceIntelGoldensAttackerFull,
       physicalSize: const Size(kMinViewportWidth, 640),
     );
     expect(tester.takeException(), isNull);
@@ -242,10 +185,10 @@ void main() {
     const boundaryKey = ValueKey<String>(
       'combatModeChoiceDefenderFull320Golden',
     );
-    await pumpIntelGolden(
+    await pumpCombatModeChoiceIntelGolden(
       tester,
       boundaryKey: boundaryKey,
-      intel: _defenderFull,
+      intel: combatModeChoiceIntelGoldensDefenderFull,
       physicalSize: const Size(kMinViewportWidth, 640),
     );
     expect(tester.takeException(), isNull);

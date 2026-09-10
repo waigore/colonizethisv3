@@ -159,7 +159,7 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 
 - Given several invasion targets with forts, when none of those rows is selected, then unselected rows keep the existing short summary from `moveArmyInvasionIntelSummaryLines` (label + defender count) and do **not** each show the siege gist; Military Counsel reuse of that helper also omits the gist (Refs #4764).
 
-- Given width `kMinViewportWidth` (320 dp) on `DLG20001` with a selected Wood fort siege destination under `AppThemes.editorialMonocle`, when `app/test/move_army_invasion_intel_goldens_test.dart` captures the keyed `RepaintBoundary`, then the gist wraps without horizontal overflow and the `matchesGoldenFile` baseline matches the committed PNG (Refs #4764).
+- Given width `kMinViewportWidth` (320 dp) on `DLG20001` with a selected Wood fort siege destination under `AppThemes.editorialMonocle`, when `app/test/move_army_invasion_intel_siege_goldens_test.dart` captures the keyed `RepaintBoundary`, then the gist wraps without horizontal overflow and the `matchesGoldenFile` baseline matches the committed PNG (Refs #4764).
 
 - Given an invasion destination without full military intel, when the row renders, then it shows `moveArmy_defendersUnknown` and does not show unopposed, empty, or defender-count claims (#4216).
 

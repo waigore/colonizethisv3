@@ -1,8 +1,15 @@
-// Fixtures for move army invasion intel widget goldens (Refs #4216).
+// Fixtures and pump helper for move army invasion intel goldens (Refs #4216).
+// Concern split under repo.app_test_file_size.
 
+import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'golden_capture_harness.dart';
 
 const moveArmyInvasionIntelGoldenPlayerId = 'gp_intel_golden';
 const moveArmyInvasionIntelGoldenRivalId = 'gp_rival_golden';
@@ -106,7 +113,9 @@ Game buildMoveArmyInvasionIntelGoldenGame({
           moveArmyInvasionIntelGoldenInvasionDest: ['oldWorld|p_invade|0|0'],
         },
       },
-      playerVisibilityByTile: {moveArmyInvasionIntelGoldenPlayerId: visibilityByTile},
+      playerVisibilityByTile: {
+        moveArmyInvasionIntelGoldenPlayerId: visibilityByTile,
+      },
     ),
     players: [
       Player(
@@ -116,7 +125,9 @@ Game buildMoveArmyInvasionIntelGoldenGame({
         capitalProvinceId: moveArmyInvasionIntelGoldenFrom,
         // Fully fed land forces so invasion-intel goldens stay scoped to #4216
         // (not underfed soft-warn from #4242).
-        stockpile: const Stockpile().applyDelta('grain', 20).applyDelta('meat', 20),
+        stockpile: const Stockpile()
+            .applyDelta('grain', 20)
+            .applyDelta('meat', 20),
       ),
       Player(
         id: moveArmyInvasionIntelGoldenRivalId,
@@ -136,4 +147,32 @@ Map<String, String> moveArmyInvasionIntelFullVisibilityTiles({
     if (includeOwnedDestination) 'oldWorld|p_owned|0|0': 'fullyVisible',
     'oldWorld|p_invade|0|0': 'fullyVisible',
   };
+}
+
+Future<void> pumpMoveArmyInvasionIntelGolden(
+  WidgetTester tester, {
+  required Key boundaryKey,
+  required Game game,
+  required MapTopology topology,
+  PlayerView? playerView,
+  Size physicalSize = kMoveArmyInvasionIntelGoldenViewport,
+}) async {
+  final army = game.worldState.armies.first;
+  await pumpGoldenHost(
+    tester,
+    boundaryKey: boundaryKey,
+    physicalSize: physicalSize,
+    settle: false,
+    includeLocalizations: true,
+    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
+    child: MoveArmyDialog(
+      army: army,
+      game: game,
+      humanPlayerId: moveArmyInvasionIntelGoldenPlayerId,
+      bus: AppEventBus.create(),
+      topology: topology,
+      draftOrders: const Orders(),
+      playerView: playerView,
+    ),
+  );
 }
