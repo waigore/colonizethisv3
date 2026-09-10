@@ -4100,6 +4100,40 @@
       }
     }
   },
+  "provinceOverlay_grantAidAction": "Grant Aid",
+  "@provinceOverlay_grantAidAction": {
+    "description": "Political shortcut label matching GAME30001 Grant Aid (Refs #4761)."
+  },
+  "provinceOverlay_cancelGrantAidAction": "Cancel",
+  "@provinceOverlay_cancelGrantAidAction": {
+    "description": "Political shortcut label when grantAid toward the owner is pending (Refs #4761)."
+  },
+  "provinceOverlay_grantAidDisabledSemantics": "Grant Aid unavailable: {reason}",
+  "@provinceOverlay_grantAidDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Grant Aid shortcut (Refs #4761).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_setSubsidyAction": "Set Subsidy",
+  "@provinceOverlay_setSubsidyAction": {
+    "description": "Political shortcut label matching GAME30001 Set Subsidy (Refs #4761)."
+  },
+  "provinceOverlay_cancelSetSubsidyAction": "Cancel",
+  "@provinceOverlay_cancelSetSubsidyAction": {
+    "description": "Political shortcut label when setSubsidy toward the owner is pending (Refs #4761)."
+  },
+  "provinceOverlay_setSubsidyDisabledSemantics": "Set Subsidy unavailable: {reason}",
+  "@provinceOverlay_setSubsidyDisabledSemantics": {
+    "description": "Accessible label for a disabled Political Set Subsidy shortcut (Refs #4761).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_ownerStandingAtWar": "At war",
   "@provinceOverlay_ownerStandingAtWar": {
     "description": "MAP20001 Political standing line when human is at war with the province owner (Refs #4479)."

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../map_state/game_map_area_province_action_states_establish_consulate.dart';
 import '../map_state/game_map_area_province_action_states_establish_embassy.dart';
+import '../map_state/game_map_area_province_action_states_grant_subsidy.dart';
 import '../map_state/game_map_area_province_action_states_offer_peace.dart';
 import '../map_state/province_action_state_calculator.dart';
 import '../map_state/province_detach_and_sail_overlay_controls.dart';
@@ -15,6 +16,7 @@ import '../map_state/province_overlay_sail_move_overlay_controls.dart';
 import '../map_state/province_transfer_to_home_fleet_overlay_controls.dart';
 import '../map_state/province_naval_combine_overlay_controls.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import '../../widgets/province_overlay/province_sea_zone_detail_overlay_grant_subsidy_props.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'province_detail_overlay_host_support_army_combine.dart';
 import 'province_detail_overlay_host_support_army_move.dart';
@@ -60,6 +62,8 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
   required ProvinceEstablishConsulateActionState establishConsulateState,
   required ProvinceEstablishEmbassyActionState establishEmbassyState,
   required ProvinceOwnerStandingOfferPeaceState offerPeaceState,
+  required ProvinceGrantSubsidyActionState grantAidState,
+  required ProvinceGrantSubsidyActionState setSubsidyState,
 }) {
   return ProvinceSeaZoneDetailOverlay(
     key: ValueKey<String>(displayId),
@@ -138,5 +142,17 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
     offerPeacePending: offerPeaceState.offerPeacePending,
     offerPeaceRejectionReason: offerPeaceState.rejectionReason,
     onOfferPeaceTap: shortcuts.onOfferPeaceTap,
+    grantSubsidy: (
+      showGrantAid: canMutateViaUi && grantAidState.showControl,
+      grantAidEnabled: canMutateViaUi && grantAidState.enabled,
+      grantAidPending: grantAidState.pending,
+      grantAidRejectionReason: grantAidState.rejectionReason,
+      onGrantAidTap: shortcuts.onGrantAidTap,
+      showSetSubsidy: canMutateViaUi && setSubsidyState.showControl,
+      setSubsidyEnabled: canMutateViaUi && setSubsidyState.enabled,
+      setSubsidyPending: setSubsidyState.pending,
+      setSubsidyRejectionReason: setSubsidyState.rejectionReason,
+      onSetSubsidyTap: shortcuts.onSetSubsidyTap,
+    ),
   );
 }

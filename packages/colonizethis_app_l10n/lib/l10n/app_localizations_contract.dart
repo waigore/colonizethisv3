@@ -2869,6 +2869,24 @@ abstract class AppLocalizations {
   /// Accessible disabled label including the canonical validator reason.
   String provinceOverlay_establishEmbassyDisabledSemantics(String reason);
 
+  /// Political Grant Aid shortcut. Same GAME30001 label. Refs #4761.
+  String get provinceOverlay_grantAidAction;
+
+  /// Political Cancel when grantAid is pending. Refs #4761.
+  String get provinceOverlay_cancelGrantAidAction;
+
+  /// Accessible disabled Grant Aid label. Refs #4761.
+  String provinceOverlay_grantAidDisabledSemantics(String reason);
+
+  /// Political Set Subsidy shortcut. Same GAME30001 label. Refs #4761.
+  String get provinceOverlay_setSubsidyAction;
+
+  /// Political Cancel when setSubsidy is pending. Refs #4761.
+  String get provinceOverlay_cancelSetSubsidyAction;
+
+  /// Accessible disabled Set Subsidy label. Refs #4761.
+  String provinceOverlay_setSubsidyDisabledSemantics(String reason);
+
   /// Political standing when at war with the province owner. Refs #4479.
   String get provinceOverlay_ownerStandingAtWar;
 

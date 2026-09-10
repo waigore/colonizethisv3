@@ -9,6 +9,7 @@ import '../map_state/game_map_area_state_logic.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'province_detail_overlay_host_support_shortcuts_consulate.dart';
 import 'province_detail_overlay_host_support_shortcuts_embassy.dart';
+import 'province_detail_overlay_host_support_shortcuts_grant_subsidy.dart';
 import 'province_detail_overlay_host_support_shortcuts_offer_peace.dart';
 import 'province_detail_overlay_host_support_shortcuts_work.dart';
 import 'province_detail_overlay_host_support_train_civilian.dart';
@@ -30,6 +31,8 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onEstablishConsulateTap,
   VoidCallback? onEstablishEmbassyTap,
   VoidCallback? onOfferPeaceTap,
+  VoidCallback? onGrantAidTap,
+  VoidCallback? onSetSubsidyTap,
 });
 
 VoidCallback? _provinceDetailShortcutTap({
@@ -89,6 +92,12 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool offerPeacePending,
   required ct_models.DiplomaticOrder? offerPeaceOrder,
   required String offerPeaceTargetName,
+  required bool grantAidEnabled,
+  required bool grantAidPending,
+  required String? grantAidOwnerId,
+  required bool setSubsidyEnabled,
+  required bool setSubsidyPending,
+  required String? setSubsidyOwnerId,
   required ct_models.AppEventBus bus,
 }) {
   final topology = mapData?.combinedTopology;
@@ -153,6 +162,20 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     bus: bus,
   );
   final trainTap = buildTrainCivilianDialogTap(bus);
+  final grantSubsidyTaps = buildGrantSubsidyShortcutTaps(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    draftOrders: draftOrders,
+    topology: topology,
+    grantAidEnabled: grantAidEnabled,
+    grantAidPending: grantAidPending,
+    grantAidOwnerId: grantAidOwnerId,
+    setSubsidyEnabled: setSubsidyEnabled,
+    setSubsidyPending: setSubsidyPending,
+    setSubsidyOwnerId: setSubsidyOwnerId,
+    bus: bus,
+  );
   if (tileKey == null) {
     return (
       onExploreWithExplorerTap: null,
@@ -168,6 +191,8 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onEstablishConsulateTap: establishConsulateTap,
       onEstablishEmbassyTap: establishEmbassyTap,
       onOfferPeaceTap: offerPeaceTap,
+      onGrantAidTap: grantSubsidyTaps.onGrantAidTap,
+      onSetSubsidyTap: grantSubsidyTaps.onSetSubsidyTap,
     );
   }
 
@@ -205,5 +230,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     onEstablishConsulateTap: establishConsulateTap,
     onEstablishEmbassyTap: establishEmbassyTap,
     onOfferPeaceTap: offerPeaceTap,
+    onGrantAidTap: grantSubsidyTaps.onGrantAidTap,
+    onSetSubsidyTap: grantSubsidyTaps.onSetSubsidyTap,
   );
 }

@@ -1,0 +1,85 @@
+// coverage:ignore-file
+// Dev-only Widgetbook catalog part; MAP20001 Grant Aid / Set Subsidy
+// overlay stories (Refs #4761).
+part of 'catalog.dart';
+
+const String _grantSubsidyTreasuryReason =
+    'Insufficient treasury for GrantAid (need 1000)';
+
+/// MAP20001 Political **Grant Aid** / **Set Subsidy** use cases. Refs #4761.
+List<WidgetbookUseCase> get provinceOverlayGrantSubsidyUseCases => [
+  WidgetbookUseCase(
+    name: 'Standalone — Political Grant Aid Set Subsidy enabled',
+    builder: (context) => _provinceOverlayGrantSubsidyStory(
+      showGrant: true,
+      grantEnabled: true,
+      showSubsidy: true,
+      subsidyEnabled: true,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Political Grant Aid disabled',
+    builder: (context) => _provinceOverlayGrantSubsidyStory(
+      showGrant: true,
+      grantEnabled: false,
+      grantReason: _grantSubsidyTreasuryReason,
+      showSubsidy: true,
+      subsidyEnabled: true,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Political Grant Aid pending',
+    builder: (context) => _provinceOverlayGrantSubsidyStory(
+      showGrant: true,
+      grantEnabled: true,
+      grantPending: true,
+      showSubsidy: true,
+      subsidyEnabled: true,
+    ),
+  ),
+  WidgetbookUseCase(
+    name: 'Standalone — Political Grant Aid Set Subsidy hidden',
+    builder: (context) => _provinceOverlayGrantSubsidyStory(
+      showGrant: false,
+      grantEnabled: false,
+      showSubsidy: false,
+      subsidyEnabled: false,
+    ),
+  ),
+];
+
+Widget _provinceOverlayGrantSubsidyStory({
+  required bool showGrant,
+  required bool grantEnabled,
+  bool grantPending = false,
+  String? grantReason,
+  required bool showSubsidy,
+  required bool subsidyEnabled,
+}) {
+  final game = demoGameForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: demoRegionForOverlay,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      grantSubsidy: (
+        showGrantAid: showGrant,
+        grantAidEnabled: grantEnabled,
+        grantAidPending: grantPending,
+        grantAidRejectionReason: grantReason,
+        onGrantAidTap: () {},
+        showSetSubsidy: showSubsidy,
+        setSubsidyEnabled: subsidyEnabled,
+        setSubsidyPending: false,
+        setSubsidyRejectionReason: null,
+        onSetSubsidyTap: () {},
+      ),
+      onClose: () {},
+    ),
+  );
+}

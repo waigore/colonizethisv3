@@ -777,6 +777,28 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_grantAidAction => 'Grant Aid';
+
+  @override
+  String get provinceOverlay_cancelGrantAidAction => 'Cancel';
+
+  @override
+  String provinceOverlay_grantAidDisabledSemantics(String reason) {
+    return 'Grant Aid unavailable: $reason';
+  }
+
+  @override
+  String get provinceOverlay_setSubsidyAction => 'Set Subsidy';
+
+  @override
+  String get provinceOverlay_cancelSetSubsidyAction => 'Cancel';
+
+  @override
+  String provinceOverlay_setSubsidyDisabledSemantics(String reason) {
+    return 'Set Subsidy unavailable: $reason';
+  }
+
+  @override
   String get provinceOverlay_trainExplorer => 'Train Explorer';
 
   @override

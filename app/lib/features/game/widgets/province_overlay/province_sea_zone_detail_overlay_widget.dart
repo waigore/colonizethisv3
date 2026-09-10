@@ -20,6 +20,7 @@ import '../../flame/map_state/province_naval_mission_action_state.dart'
 import '../../flame/map_state/province_overlay_sail_move_overlay_controls.dart'
     show ProvinceOverlaySailMoveOverlayControls;
 import 'province_sea_zone_detail_overlay_chrome.dart';
+import 'province_sea_zone_detail_overlay_grant_subsidy_props.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_widget_content.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
@@ -87,6 +88,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.offerPeacePending = false,
     this.offerPeaceRejectionReason,
     this.onOfferPeaceTap,
+    this.grantSubsidy = kProvinceOverlayGrantSubsidyHidden,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
     this.nextTownProductionBonusByCommodity = const {},
@@ -151,6 +153,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool offerPeacePending;
   final String? offerPeaceRejectionReason;
   final VoidCallback? onOfferPeaceTap;
+  final ProvinceOverlayGrantSubsidyProps grantSubsidy;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
   final Map<String, int> nextTownProductionBonusByCommodity;

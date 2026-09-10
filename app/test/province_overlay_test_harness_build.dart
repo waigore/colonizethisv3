@@ -13,6 +13,7 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_detail_ov
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_grant_subsidy_props.dart';
 
 import 'app_shell_harness.dart';
 
@@ -59,6 +60,8 @@ Widget buildProvinceOverlayDarkThemeShell({
   bool offerPeacePending = false,
   String? offerPeaceRejectionReason,
   VoidCallback? onOfferPeaceTap,
+  ProvinceOverlayGrantSubsidyProps grantSubsidy =
+      kProvinceOverlayGrantSubsidyHidden,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
@@ -126,6 +129,7 @@ Widget buildProvinceOverlayDarkThemeShell({
     offerPeacePending: offerPeacePending,
     offerPeaceRejectionReason: offerPeaceRejectionReason,
     onOfferPeaceTap: onOfferPeaceTap,
+    grantSubsidy: grantSubsidy,
     omniscientDetail: omniscientDetail,
     townProductionBonusByCommodity: townProductionBonusByCommodity,
     extractionSnapshot: extractionSnapshot,

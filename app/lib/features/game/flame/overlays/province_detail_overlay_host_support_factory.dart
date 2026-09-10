@@ -13,12 +13,11 @@ import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/province_action_state_calculator.dart';
 import '../map_state/game_map_area_state_logic.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
-import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
-    show isProvinceSeaZoneOverlaySeaZone;
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_factory_missions.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
+import 'province_detail_overlay_host_support_factory_diplomacy.dart';
 import 'province_detail_overlay_host_support_factory_overlay.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
 
@@ -72,44 +71,18 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         currentOrders: draftOrders,
         tileMapByRegion: mapData?.tileMapByRegion,
       );
-  final establishConsulateState =
-      GameMapAreaStateLogicProvinceActions.provinceEstablishConsulateActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        provinceId: displayId,
-        topology: mapData?.combinedTopology,
-        currentOrders: draftOrders,
-      );
-  final establishConsulateTargetName = resolveProvinceDetailFactionDisplayName(
-    game,
-    establishConsulateState.ownerId,
+  final diplo = resolveProvinceDetailDiplomacyShortcuts(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    displayId: displayId,
+    region: region,
+    mapData: mapData,
+    draftOrders: draftOrders,
   );
-  final establishEmbassyState =
-      GameMapAreaStateLogicProvinceActions.provinceEstablishEmbassyActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        provinceId: displayId,
-        topology: mapData?.combinedTopology,
-        currentOrders: draftOrders,
-      );
-  final establishEmbassyTargetName = resolveProvinceDetailFactionDisplayName(
-    game,
-    establishEmbassyState.ownerId,
-  );
-  final isSeaZone = isProvinceSeaZoneOverlaySeaZone(region, displayId);
-  final offerPeaceState =
-      GameMapAreaStateLogicProvinceActions.provinceOfferPeaceActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        provinceId: displayId,
-        topology: mapData?.combinedTopology,
-        currentOrders: draftOrders,
-        isSeaZone: isSeaZone,
-      );
-  final offerPeaceTargetName = resolveProvinceDetailFactionDisplayName(
-    game,
-    offerPeaceState.ownerId,
-  );
+  final establishConsulateState = diplo.establishConsulateState;
+  final establishEmbassyState = diplo.establishEmbassyState;
+  final offerPeaceState = diplo.offerPeaceState;
+  final isSeaZone = diplo.isSeaZone;
 
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
@@ -134,16 +107,22 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     establishConsulateEnabled: establishConsulateState.enabled,
     establishConsulatePending: establishConsulateState.pending,
     establishConsulateOrder: establishConsulateState.order,
-    establishConsulateTargetName: establishConsulateTargetName,
+    establishConsulateTargetName: diplo.establishConsulateTargetName,
     establishEmbassyEnabled: establishEmbassyState.enabled,
     establishEmbassyPending: establishEmbassyState.pending,
     establishEmbassyOrder: establishEmbassyState.order,
-    establishEmbassyTargetName: establishEmbassyTargetName,
+    establishEmbassyTargetName: diplo.establishEmbassyTargetName,
     isSeaZone: isSeaZone,
     offerPeaceEnabled: offerPeaceState.offerPeaceEnabled,
     offerPeacePending: offerPeaceState.offerPeacePending,
     offerPeaceOrder: offerPeaceState.order,
-    offerPeaceTargetName: offerPeaceTargetName,
+    offerPeaceTargetName: diplo.offerPeaceTargetName,
+    grantAidEnabled: diplo.grantAidState.enabled,
+    grantAidPending: diplo.grantAidState.pending,
+    grantAidOwnerId: diplo.grantAidState.ownerId,
+    setSubsidyEnabled: diplo.setSubsidyState.enabled,
+    setSubsidyPending: diplo.setSubsidyState.pending,
+    setSubsidyOwnerId: diplo.setSubsidyState.ownerId,
     bus: bus,
   );
   final provinceReadModel = readModelCache == null
@@ -243,5 +222,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     establishConsulateState: establishConsulateState,
     establishEmbassyState: establishEmbassyState,
     offerPeaceState: offerPeaceState,
+    grantAidState: diplo.grantAidState,
+    setSubsidyState: diplo.setSubsidyState,
   );
 }

@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_designation.dart';
+import 'province_sea_zone_detail_overlay_grant_subsidy_props.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 
 Widget buildRevealedProvincePoliticalSection({
@@ -48,6 +49,8 @@ Widget buildRevealedProvincePoliticalSection({
   required bool offerPeacePending,
   String? offerPeaceRejectionReason,
   VoidCallback? onOfferPeaceTap,
+  ProvinceOverlayGrantSubsidyProps grantSubsidy =
+      kProvinceOverlayGrantSubsidyHidden,
   required bool isNarrow,
 }) {
   return buildPoliticalSection(
@@ -130,6 +133,7 @@ Widget buildRevealedProvincePoliticalSection({
     offerPeacePending: offerPeacePending,
     offerPeaceRejectionReason: offerPeaceRejectionReason,
     onOfferPeaceTap: onOfferPeaceTap,
+    grantSubsidy: grantSubsidy,
     isNarrow: isNarrow,
   );
 }

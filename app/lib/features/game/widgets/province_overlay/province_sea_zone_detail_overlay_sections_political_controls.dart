@@ -111,6 +111,91 @@ List<Widget> buildEstablishConsulateControl({
   ];
 }
 
+List<Widget> buildPoliticalDiplomaticShortcutControl({
+  required String label,
+  required bool enabled,
+  required String? rejectionReason,
+  required VoidCallback? onTap,
+  required bool isNarrow,
+  required TextStyle bodyStyle,
+  required String disabledSemantics,
+}) {
+  final tooltip = enabled || rejectionReason == null ? label : rejectionReason;
+  return [
+    Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          CtActionTextButton(
+            label: label,
+            tooltip: tooltip,
+            semanticLabel: !enabled && rejectionReason != null
+                ? disabledSemantics
+                : label,
+            enabled: enabled,
+            onPressed: enabled ? onTap : null,
+          ),
+          if (isNarrow && !enabled && rejectionReason != null)
+            Text(rejectionReason, style: bodyStyle),
+        ],
+      ),
+    ),
+  ];
+}
+
+List<Widget> buildGrantAidControl({
+  required AppLocalizations l10n,
+  required bool enabled,
+  required bool pending,
+  required String? rejectionReason,
+  required VoidCallback? onTap,
+  required bool isNarrow,
+  required TextStyle bodyStyle,
+}) {
+  final label = pending
+      ? l10n.provinceOverlay_cancelGrantAidAction
+      : l10n.provinceOverlay_grantAidAction;
+  return buildPoliticalDiplomaticShortcutControl(
+    label: label,
+    enabled: enabled,
+    rejectionReason: rejectionReason,
+    onTap: onTap,
+    isNarrow: isNarrow,
+    bodyStyle: bodyStyle,
+    disabledSemantics: rejectionReason == null
+        ? label
+        : l10n.provinceOverlay_grantAidDisabledSemantics(rejectionReason),
+  );
+}
+
+List<Widget> buildSetSubsidyControl({
+  required AppLocalizations l10n,
+  required bool enabled,
+  required bool pending,
+  required String? rejectionReason,
+  required VoidCallback? onTap,
+  required bool isNarrow,
+  required TextStyle bodyStyle,
+}) {
+  final label = pending
+      ? l10n.provinceOverlay_cancelSetSubsidyAction
+      : l10n.provinceOverlay_setSubsidyAction;
+  return buildPoliticalDiplomaticShortcutControl(
+    label: label,
+    enabled: enabled,
+    rejectionReason: rejectionReason,
+    onTap: onTap,
+    isNarrow: isNarrow,
+    bodyStyle: bodyStyle,
+    disabledSemantics: rejectionReason == null
+        ? label
+        : l10n.provinceOverlay_setSubsidyDisabledSemantics(rejectionReason),
+  );
+}
+
 List<Widget> buildEstablishEmbassyControl({
   required AppLocalizations l10n,
   required bool enabled,

@@ -130,6 +130,30 @@ bool embassyShortcutAppliesToMinorTribeProvince({
   return !overture.hasEmbassy;
 }
 
+/// True when MAP20001 Political should offer **Grant Aid** and **Set Subsidy**
+/// toward [provinceOwnerId]: the owner is a Minor/Tribe, [playerId] holds
+/// Embassy (or higher), and the pair is not at war (Refs #4761).
+bool grantSubsidyShortcutAppliesToMinorTribeProvince({
+  required Game game,
+  required String playerId,
+  required String? provinceOwnerId,
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  if (provinceOwnerId == null ||
+      provinceOwnerId.isEmpty ||
+      provinceOwnerId == playerId) {
+    return false;
+  }
+  if (!isMinorOrTribe(
+    game,
+    provinceOwnerId,
+    factionMembership: factionMembership,
+  )) {
+    return false;
+  }
+  return hasPeaceTimeEmbassy(game, playerId, provinceOwnerId);
+}
+
 /// Refs #3753 R4/S4a: an Explorer `explore`/`prospect` work order inside a
 /// province owned by a Minor or Tribe requires the issuing GP to hold at least
 /// a Consulate (an Embassy supersedes Consulate) with that Minor/Tribe.
