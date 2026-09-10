@@ -74,7 +74,7 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 
 **Tab order (labels):** Political, Tile, Economic, Military, Civilian, Naval (Political before Tile). Sea zones: Political, Naval only where applicable.
 
-Political hierarchy: `Name` → `Owner` → optional standing (**At war** / **At peace** + optional `ALLIANCE`) → optional wartime **Offer Peace** / **Cancel** → **Sight** → optional `No consulate with {owner}` + wrapping `CtActionTextButton` → optional **Establish Embassy** wrapping `CtActionTextButton` → `Region` → `Capital` → Town development/gist → optional Upgrade town. Standing and Consulate/Embassy/Offer Peace controls wrap at 320–360 dp and never create another tab. **Sight** uses the selected tile’s `CellViewData.visibility` and the same three phrases as the MAP10001 hover readout (Fully visible / Fogged — terrain only / Unknown — no intel yet).
+Political hierarchy: `Name` → `Owner` → optional standing (**At war** / **At peace** + optional `ALLIANCE`) → optional wartime **Offer Peace** / **Cancel** → **Sight** → optional `No consulate with {owner}` + wrapping `CtActionTextButton` → optional **Establish Embassy** wrapping `CtActionTextButton` → optional **Grant Aid** / **Set Subsidy** wrapping `CtActionTextButton` → `Region` → `Capital` → Town development/gist → optional Upgrade town. Standing and Consulate/Embassy/Offer Peace/Grant Aid/Set Subsidy controls wrap at 320–360 dp and never create another tab. **Sight** uses the selected tile’s `CellViewData.visibility` and the same three phrases as the MAP10001 hover readout (Fully visible / Fogged — terrain only / Unknown — no intel yet).
 
 ---
 
