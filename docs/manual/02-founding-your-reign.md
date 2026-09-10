@@ -2,22 +2,22 @@
 
 ## Purpose
 
-Before you choose your first actions on the map, you choose your court: which **Great Power** (playable nation) you are, who leads it, which rival courts sit beside you, and whether the campaign begins at turn 0 or later. Setup builds the world, chooses capitals for you, and may show a short intro — then the map is yours. This screen sets combat bonuses, how bold or cautious rival courts are, and how much is already built when you take the throne.
+Before you choose your first actions on the map, you choose your **court** — a **court** is that nation’s government. You pick which **Great Power** (playable nation) you are, who leads it, which rival courts sit beside you, and whether the campaign begins at turn 0 or later. There are two maps: the **Old World** and the **New World**. Setup builds the world, chooses capitals for you, and may show a short intro — then the map is yours. This screen sets combat bonuses, how bold or cautious rival courts are, and how much is already built when you take the throne.
 
 ## How it is done
 
 ### Main menu → Quick Start
 
-1. From `SHEL10001` **Shell screen** you see `SHEL10002` **Main menu**.
-2. Tap **Quick Start** (the button above **New Game**; the small line under it says **Play as England, turn 0, random map, five AI courts.**). You do not open leader selection.
-3. You may see `SHEL30001` **Game initializing** — the same wait screen as after **New Game** **Start**, with no form to fill. It shows one step at a time: Generating Old World map, Generating New World map, Linking Old World and New World, Building the world, Saving game.
-4. When it finishes you arrive on `GAME10001` **Game screen**. The first time this campaign opens in the session, `OVL10001` **Game start intro** may appear; tap **I shall.** to continue.
+1. You begin on `SHEL10002` **Main menu** (first screen of `SHEL10001` **Shell screen**). Tap **Quick Start** (the button above **New Game**; the small line under it says **Play as England, turn 0, random map, five AI courts.**). You do not open leader selection.
+2. You may see `SHEL30001` **Game initializing**, titled **Creating game** — the same wait screen as after **New Game** **Start**, with no form to fill. It shows one step at a time: Generating Old World map, Generating New World map, Linking Old World and New World, Building the world, Saving game.
+3. When it finishes you arrive on `GAME10001` **Game screen**. The first time this campaign opens in the session, `OVL10001` **Game start intro** may appear; tap **I shall.** to continue.
+4. If setup fails, you see the same error dialog as after **New Game** (**Retry** and **Close**), with the same seed-0 vs non-zero **Retry** rule.
 
 ### Main menu → New Game
 
 1. On `SHEL10002` **Main menu**, tap **New Game**.
-2. The menu opens `DLG10001` **New game leader selection**. Nothing is created until you tap **Start**. **Cancel** returns you to the menu with no new campaign.
-3. After **Start**, `SHEL30001` **Game initializing** shows one step at a time (Generating Old World map, Generating New World map, Linking Old World and New World, Building the world, Saving game). You cannot fill a form or cancel while it runs.
+2. The menu opens `DLG10001` **New game leader selection**, titled **Choose nations and leaders**. Nothing is created until you tap **Start**. **Cancel** returns you to the menu with no new campaign.
+3. After **Start**, `SHEL30001` **Game initializing**, titled **Creating game**, shows one step at a time (Generating Old World map, Generating New World map, Linking Old World and New World, Building the world, Saving game). You cannot fill a form or cancel while it runs.
 4. When it finishes you arrive on `GAME10001` **Game screen**. The first time this campaign opens in the session, `OVL10001` **Game start intro** may appear; tap **I shall.**
 5. If setup fails, an error dialog offers **Retry** and **Close**. **Retry** with seed **0** still rolls a new random world. **Retry** with a non-zero seed tries that seed plus one for each failed try. **Close** returns you to the menu with no campaign.
 
@@ -29,41 +29,43 @@ On **Slots 2–6** only, an **AI Profile** menu sits under the nation and leader
 
 Global options on the same dialog:
 
-- **Infinite mode** — the helper says **Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.** (Chapters 1 and 15).
-- **Terrain variation** — printed as a percent; helper **0% flat — 100% extreme** (default 50%).
-- **Game seed** — helper **Enter 0 for a random seed**; the field opens already filled. **0** means a random world. A non-zero seed builds that same world again.
-- **Advanced start** — printed choices **None (Turn 0)**, **50 Turns In (1598)**, **100 Turns In (1698)**. When the control is greyed out, the helper reads **Advanced start requires the standard six-power campaign profile.** A greyed-out control still begins at turn 0.
+- **Infinite mode** — the small on-screen sentence says **Skips the year-1800 calendar stop. Owning 31 or more Old World provinces still ends the campaign. You cannot change this after Start.** (Chapters 1 and 15).
+- **Terrain variation** — printed as a percent; the small on-screen sentence says **0% flat — 100% extreme** (default 50%).
+- **Game seed** — the small on-screen sentence says **Enter 0 for a random seed**; the field opens already filled. **0** means a random world. A non-zero seed builds that same world again.
+- **Advanced start** — printed choices **None (Turn 0)**, **50 Turns In (1598)**, **100 Turns In (1698)**. When that menu is greyed out, the small on-screen sentence says **Advanced start requires the standard six-power campaign profile.** A greyed-out menu still begins at turn 0.
 
 **Start** stays off while any slot is empty, two slots share a nation, or a slot has no valid leader.
 
 ### Leader bonuses (what you are choosing)
 
-A leader whose name includes **Napoleon** adds +25% melee strength in land battles. **Frederick** adds +15%. Other leaders add none. The bonus applies in land fighting (including Quick Battle). It does not help fleets, workshops, or research.
+A leader whose name includes **Napoleon** makes that court’s soldiers a quarter stronger in land fighting. **Frederick** makes them 15% stronger. Other leaders add none. The bonus applies in land fighting, including the fast land fight you can choose later (**Quick Battle**, Chapter 12). It does not help fleets, workshops, or research.
 
 ### Capital auto-choice (what the game does for you)
 
 After provinces are assigned, each Great Power receives an auto-chosen capital: a province that touches the sea, plus a capital town tile, with ports and the first roads placed for you. There is **no** in-game screen to confirm or change that choice after setup. **Minor Nations** (smaller Old World countries) and **Tribes** (New World peoples) also get capitals at setup without your choice.
 
-Setup prefers **plains** for each capital tile. If the chosen tile is not plains, setup turns that tile into plains and clears any resource or improvement that was on it. The same plains preference applies to every province town tile (including unowned provinces): towns sit on farmland so grain and roads can start there.
+Setup prefers **plains** for each capital tile. If the chosen tile is not plains, setup turns that tile into plains and clears any resource or improvement that was on it. The same plains preference applies to every province town tile (including unowned provinces): towns sit on **plains** so grain can start there.
 
 Places you will see on the map are named during setup. Chapter 3 explains how `MAP20001` **Province sea-zone overlay** shows those names.
 
 ### Advanced start (what you receive)
 
-Choosing **50 Turns In (1598)** or **100 Turns In (1698)** starts you later, with more treasury, workers, known technology, civilians, and (at 100 turns) New World land already held. Some owned minerals are already known, so you did not send an Explorer for them. Seeing New World coasts is not the same as knowing minerals. Chapter 4 covers explore and prospect during play.
+Choosing **50 Turns In (1598)** or **100 Turns In (1698)** starts you later, with more treasury, workers, known technology, civilians, and (at 100 turns) New World land already held. Some owned minerals are already known, so you did not send an **Explorer** (a civilian who identifies hidden minerals; Chapter 4) for them. Seeing New World coasts is not the same as knowing minerals. Chapter 4 covers explore and prospect during play.
+
+**Peasants** are basic labourers; **apprentices** are the next worker rank (Chapter 5). **Civilians** are people you place on the map (Chapter 5): Explorers, plus **Builders** (improve land and upgrade towns), **Engineers** (build roads, ports, and forts), **Spies** (post in a foreign court or at home), **Merchants** (buy land in other courts), and at 100 turns a **Rail Builder** (upgrades roads to railroad). A **regiment** is one land fighting unit (Chapter 11). A **Galleon** is a cargo ship (Chapter 13).
 
 What you start with on the usual six-nation campaign:
 
-- **50 Turns In (1598):** turn 50; about **20,000** treasury; **16** peasant workers; **23** known technologies; a consulate (first diplomatic office) with each Old World minor nation; no New World land owned yet. At least **half** of the minerals in land you already own (Old World) that would need an Explorer to identify are already known. About **a quarter** of owned land that can take farms, mines, and workshops is already improved with roads.
-- **100 Turns In (1698):** turn 100; about **40,000** treasury; **16** peasants and **4** apprentices; **45** known technologies; an embassy (a stronger diplomatic office) with each Old World minor nation and with tribes you have met; **six** New World provinces per Great Power. At least **three-quarters** of those same minerals in land you own (Old World and New World) are already known. About **half** of owned land that can take farms, mines, and workshops is already improved with roads.
+- **50 Turns In (1598):** turn 50; **20,000** treasury; **16** peasant workers; **23** known technologies; a consulate (first diplomatic office) with each Old World minor nation and with tribes you have already met; no New World land owned yet; about half to three-quarters of New World land shown. Civilians: three Explorers, three Builders, two Engineers, one Spy, and one Merchant. Six land regiments. At least one Galleon in the home fleet. At least **half** of the minerals in land you already own (Old World) that would need an Explorer to identify are already known. About **a quarter** of owned land that can take farms, mines, and workshops already has those improvements and roads.
+- **100 Turns In (1698):** turn 100; **40,000** treasury; **16** peasants and **4** apprentices; **45** known technologies; an embassy (a stronger diplomatic office) with each Old World minor nation and with tribes you have met; **six** New World provinces per Great Power; all New World land shown. Civilians: four Explorers, four Builders, three Engineers, two Spies, two Merchants, and one Rail Builder. Twelve land regiments. At least six Galleons in the home fleet. At least **three-quarters** of those same minerals in land you own (Old World and New World) are already known. About **half** of owned land that can take farms, mines, and workshops already has those improvements and roads.
 
-Minor nations already know a share of minerals in their **own** Old World provinces (the same half / three-quarters rule). Separately, Great Powers may already have bought and improved some minor-nation land, taking turns around the table. Those two facts are not the same thing.
+Minor nations already know a share of minerals in their **own** Old World provinces (the same half / three-quarters rule). Separately, Great Powers may already have bought and improved some minor-nation land: about a quarter (50-turn) or half (100-turn) of the land in each Old World minor province that can take farms, mines, and workshops, taking turns around the table. Those two facts are not the same thing.
 
 ## Counsel
 
 **Counsel.** Hark, my liege: pick a leader for the wars you expect, not for vanity — the bonus never fills your storehouses.
 
-**Counsel.** Hark, my liege: capitals and towns sit on **plains** so grain and roads can start there.
+**Counsel.** Hark, my liege: capitals and towns sit on **plains** so grain can start there.
 
 **Tip.** If you want a longer campaign past 1800, turn on **Infinite mode** here; you cannot flip it mid-reign. Owning 31 Old World provinces still ends play.
 
@@ -77,7 +79,7 @@ Rival Great Powers receive a leader from the same dialog, and you may give them 
 
 ## Consequences
 
-- A strong combat leader shortens some land wars and does nothing for fleets or factories.
+- A strong combat leader shortens some land wars and does nothing for fleets or workshops.
 - Starting later skips some early exploring and research; rival courts also begin further along.
 - On an advanced start, some owned minerals are already known when you take the throne — that knowledge came from setup, not from Explorer work you ordered.
 - Auto-chosen capitals fix your first ports and roads — later road-and-port links start from that place, not from a blank map.
@@ -85,15 +87,15 @@ Rival Great Powers receive a leader from the same dialog, and you may give them 
 
 ## Acceptance criteria for this chapter
 
-- [ ] Documents `SHEL10001` **Shell screen** → `SHEL10002` **Main menu** → **Quick Start** (default campaign) or **New Game** → `DLG10001` **New game leader selection** → setup → `GAME10001` **Game screen** / `OVL10001` **Game start intro** (**I shall.**).
+- [ ] Documents `SHEL10001` **Shell screen** → `SHEL10002` **Main menu** → **Quick Start** (default campaign) or **New Game** → `DLG10001` **New game leader selection**, titled **Choose nations and leaders** → setup → `GAME10001` **Game screen** / `OVL10001` **Game start intro** (**I shall.**).
 - [ ] Explains printed **Slot 1** **YOU** vs **Slots 2–6**, nation uniqueness, leader pick, **AI Profile** on rival slots only.
-- [ ] Covers leader combat bonuses (Napoleon / Frederick / none) in land fighting, including Quick Battle.
-- [ ] Covers advanced start printed choices **None (Turn 0)**, **50 Turns In (1598)**, **100 Turns In (1698)** and the greyed-out helper.
-- [ ] Explains advanced-start player-visible posture (treasury, workers, techs, consulates vs embassies, New World land at 100 turns, half / three-quarters of owned minerals already known) and distinguishes that knowledge from seeing New World coasts and from Explorer prospect work (cross-ref Ch. 4).
-- [ ] Separates minor-nation own-province mineral knowledge from Great Powers buying and improving some minor tiles.
+- [ ] Covers leader combat bonuses (Napoleon / Frederick / none) in land fighting, including the fast land fight (**Quick Battle**, Chapter 12).
+- [ ] Covers advanced start printed choices **None (Turn 0)**, **50 Turns In (1598)**, **100 Turns In (1698)** and the greyed-out on-screen sentence.
+- [ ] Explains advanced-start player-visible posture (exact treasury, workers with peasant/apprentice teaching, techs, civilians, land regiments, cargo ships at the player-visible floor, consulates vs embassies including tribes met at 50 turns, New World reveal and land at 100 turns, half / three-quarters of owned minerals already known, quarter / half owned-land and minor-nation development with improvements and roads) and distinguishes that knowledge from seeing New World coasts and from Explorer prospect work (cross-ref Ch. 4).
+- [ ] Separates minor-nation own-province mineral knowledge from Great Powers buying and improving a quarter / half of developable minor tiles.
 - [ ] States capital is auto-chosen (sea-bound) with no post-setup override UI.
-- [ ] Explains capital and province town plains placement (prefer plains; convert selected tile and clear resource if needed).
-- [ ] Documents `SHEL30001` Game initializing as a real initializing wait screen (no draft marker), including the five steps and the error dialog (**Retry** / **Close**).
+- [ ] Explains capital and province town plains placement (prefer plains; convert selected tile and clear resource if needed) so grain can start there — not as the reason roads can start.
+- [ ] Documents `SHEL30001` **Game initializing**, titled **Creating game**, as a real initializing wait screen (no draft marker), including the five steps and the error dialog (**Retry** / **Close**) after **New Game** or **Quick Start**.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources
