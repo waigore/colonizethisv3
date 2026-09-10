@@ -1,9 +1,11 @@
 // Pins moveArmyFortSiegeGistForLevel copy (Refs #4764).
 // SPEC/ui/move-army-dialog.md § Invasion intel.
 
+import 'package:colonizethis_app/features/game/screens/counsel/military_counsel_l10n.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_invasion_intel.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_invasion_intel_labels.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
+import 'package:colonizethis_logic/industry_counsel_api.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
@@ -74,6 +76,22 @@ void main() {
       l10n,
       const MoveArmyInvasionIntelSummary(
         intelLevel: MoveArmyInvasionIntelLevel.full,
+        defenderCombatCapableCount: 2,
+        fortLevel: 1,
+      ),
+    );
+    expect(lines, [
+      l10n.moveArmy_defendersRegiments(2),
+      l10n.moveArmy_fortWoodSiege,
+    ]);
+    expect(lines, isNot(contains(moveArmyFortSiegeGistForLevel(l10n, 1))));
+  });
+
+  test('military counsel invasion intel lines omit the siege gist', () {
+    final lines = militaryCounselInvasionIntelLines(
+      l10n,
+      const MilitaryCounselInvasionIntelSummary(
+        intelLevel: MilitaryCounselInvasionIntelLevel.full,
         defenderCombatCapableCount: 2,
         fortLevel: 1,
       ),

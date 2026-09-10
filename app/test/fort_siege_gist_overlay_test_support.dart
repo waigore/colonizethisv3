@@ -5,10 +5,15 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 const kFortSiegeOverlayHumanId = 'gp_fort_overlay';
+const kFortSiegeOverlayRivalId = 'gp_fort_rival';
 const kFortSiegeOverlayProvinceId = 'oldWorld|pFort';
 const kFortSiegeOverlayTileKey = 'oldWorld|pFort|0|0';
 
-Game fortSiegeOverlayGame({required int fortLevel}) {
+Game fortSiegeOverlayGame({
+  required int fortLevel,
+  String ownerId = kFortSiegeOverlayHumanId,
+  String tileVisibility = 'fullyVisible',
+}) {
   return Game(
     id: 'g_fort_overlay',
     worldState: WorldState(
@@ -18,7 +23,7 @@ Game fortSiegeOverlayGame({required int fortLevel}) {
           Province(
             id: kFortSiegeOverlayProvinceId,
             regionId: 'oldWorld',
-            ownerId: kFortSiegeOverlayHumanId,
+            ownerId: ownerId,
             townTileKey: kFortSiegeOverlayTileKey,
             fortLevel: fortLevel,
           ),
@@ -33,7 +38,7 @@ Game fortSiegeOverlayGame({required int fortLevel}) {
       },
       tileState: TileMapState(),
       playerVisibilityByTile: {
-        kFortSiegeOverlayHumanId: {kFortSiegeOverlayTileKey: 'fullyVisible'},
+        kFortSiegeOverlayHumanId: {kFortSiegeOverlayTileKey: tileVisibility},
       },
     ),
     players: [
@@ -41,21 +46,32 @@ Game fortSiegeOverlayGame({required int fortLevel}) {
         id: kFortSiegeOverlayHumanId,
         displayName: 'Human',
         isHuman: true,
-        capitalProvinceId: kFortSiegeOverlayProvinceId,
+        capitalProvinceId: ownerId == kFortSiegeOverlayHumanId
+            ? kFortSiegeOverlayProvinceId
+            : 'oldWorld|pHome',
       ),
+      if (ownerId != kFortSiegeOverlayHumanId)
+        Player(
+          id: ownerId,
+          displayName: 'Rival',
+          isHuman: false,
+          capitalProvinceId: kFortSiegeOverlayProvinceId,
+        ),
     ],
     minorNations: const [],
     tribes: const [],
   );
 }
 
-RegionMapViewData fortSiegeOverlayRegion() {
+RegionMapViewData fortSiegeOverlayRegion({
+  String ownerFactionId = kFortSiegeOverlayHumanId,
+}) {
   return RegionMapViewData(
     regionId: 'oldWorld',
     width: 1,
     height: 1,
     cellSize: 16,
-    cells: const [
+    cells: [
       CellViewData(
         x: 0,
         y: 0,
@@ -63,7 +79,7 @@ RegionMapViewData fortSiegeOverlayRegion() {
         isSea: false,
         terrainType: TerrainType.plains,
         resourceId: 'grain',
-        ownerFactionId: kFortSiegeOverlayHumanId,
+        ownerFactionId: ownerFactionId,
         provinceDisplayName: 'Fort Province',
         visibility: TileVisibility.visible,
       ),
@@ -71,10 +87,10 @@ RegionMapViewData fortSiegeOverlayRegion() {
     capitalMarkers: const [],
     portMarkers: const [],
     factionColors: const {},
-    greatPowerFactionIds: {kFortSiegeOverlayHumanId},
+    greatPowerFactionIds: {kFortSiegeOverlayHumanId, ownerFactionId},
     terrainColors: const {},
-    provincePoliticalOwnerByPrefixedProvinceId: const {
-      kFortSiegeOverlayProvinceId: kFortSiegeOverlayHumanId,
+    provincePoliticalOwnerByPrefixedProvinceId: {
+      kFortSiegeOverlayProvinceId: ownerFactionId,
     },
   );
 }

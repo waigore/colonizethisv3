@@ -147,6 +147,9 @@ void main() {
       expect(find.text('Defenders unknown'), findsOneWidget);
       expect(find.textContaining('Defenders:'), findsNothing);
       expect(find.text('Unopposed capture'), findsNothing);
+      await tester.tap(find.text('Invade Dest'));
+      await tester.pump();
+      expect(find.textContaining('walls soak'), findsNothing);
     });
 
     testWidgets('owned destination row has no invasion intel lines', (
