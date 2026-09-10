@@ -157,7 +157,9 @@ const _packageName = 'colonizethis_app';
 // civilian (Refs #4752; measured 98_517).
 // raised for MAP20001 Political Grant Aid / Set Subsidy after Embassy
 // (Refs #4761; measured 99_010).
-const _maxMainLines = 99010;
+// raised after remaining Grant/Subsidy Political AC pins including
+// observe-mode overlay bind (Refs #4761; measured 99_026).
+const _maxMainLines = 99026;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
