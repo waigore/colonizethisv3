@@ -2943,6 +2943,12 @@ abstract class AppLocalizations {
   /// MAP20001 Military Move control label. Refs #4350.
   String get provinceOverlay_moveArmyAction;
 
+  /// MAP20001 Military Train control on the human capital. Refs #4769.
+  String get provinceOverlay_trainMilitaryAction;
+
+  /// Default-visible gist under MAP20001 capital Train. Refs #4769.
+  String get provinceOverlay_trainMilitaryGist;
+
   /// MAP20001 Military Combine control label. Refs #4610.
   String get provinceOverlay_combineArmiesAction;
 

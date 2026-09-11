@@ -24,8 +24,8 @@ A regiment is trainable only after its unlocking technology is researched. Being
 
 ### Training regiments
 
-1. Open `UNIT20001` **Military units panel** from the left-side **Military Units** icon (hover to read the name).
-2. Select **Train** to open `UNIT50001` **Train military dialog** (header **Train Military**).
+1. Open `UNIT20001` **Military units panel** from the left-side **Military Units** icon (hover to read the name), **or** open `MAP20001` **Province sea-zone overlay** on your capital. An empty Home-Army marker on the map still opens `UNIT20001`.
+2. Select **Train** (header on `UNIT20001`, or Military on the capital overlay) to open `UNIT50001` **Train military dialog** (header **Train Military**). The overlay path stays on the map. A short line under overlay **Train** says new regiments join the Home Army here after **Next turn** and that the tap does not split a field army or start a march. Overlay **Train** appears only on your own capital, not on other land you own, not on a rival capital, and not when you are only watching.
 3. Choose unlocked regiments with the **−** and **+** buttons on each regiment row. Each row shows the regiment's **category and combat role** (e.g. melee line, ranged firepower, siege guns) plus **ongoing food upkeep per turn** so you can weigh battlefield role and ownership cost against treasury, goods, and peasant build costs before queuing.
 4. When the unlocking technology is missing, the row shows **Requires:** and that technology’s name; you cannot change the count.
 5. The dialog accounts for the combined treasury, peasants, and listed goods of all selected regiments — including a **Horses** chip for cavalry types that need horses. The **Peasants** chip shows how many remain free after peasants already promised to queued worker training or ship builds; when some are promised, a short line under the chips names that promise (for example **3 already promised to worker training**). Tap the **Peasants** chip for a short family breakdown. **+** will not raise a count past the free peasant total.
@@ -114,7 +114,7 @@ Rival **Great Powers** (the other playable nations) choose among **Old World** c
 ## Acceptance criteria for this chapter
 
 - [ ] Lists the land regiment roster and its technology unlocks, including starting regiments and no-upgrade exceptions, and records the Knights / Organised Regiments SPEC conflict without inventing a resolution.
-- [ ] Documents `UNIT20001` and `UNIT50001` training flow (registry titles), including locked **Requires:** rows, horses for cavalry, dismiss without a Close button, peasant consumption, and capital Home Army arrival after **Next turn**.
+- [ ] Documents `UNIT20001` and `UNIT50001` training flow (registry titles), including `MAP20001` capital **Train**, locked **Requires:** rows, horses for cavalry, dismiss without a Close button, peasant consumption, and capital Home Army arrival after **Next turn**.
 - [ ] Explains armies, **Split Army**, checkbox **Combine** (same-province and Home Army merge-target rules), Home Army purpose, and generals’ combat assignment and medal growth via `OVL70001`.
 - [ ] Documents `DLG20001` legal movement destinations (**Your provinces** / **Invasion targets**), **Moving to:** pending line, **Declare war?** / **Declare war and move**, and same-turn war declaration.
 - [ ] Documents `MAP10001` army stack-marker taps (field Move, non-empty Home Army detach-then-move, empty Home-only roster) and `MAP20001` Military **Move** / **Invade** shortcuts (including visible-disabled Invade) with optional `DLG20002` army picker (title **Select army**; regiment mix on each row).

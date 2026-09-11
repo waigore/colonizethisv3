@@ -24,8 +24,8 @@ A regiment is trainable only after its unlocking technology is researched. Being
 
 ### Training regiments
 
-1. Open **Military units panel** from the left-side **Military Units** icon (hover to read the name).
-2. Select **Train** to open **Train military dialog** (header **Train Military**).
+1. Open **Military units panel** from the left-side **Military Units** icon (hover to read the name), **or** open **Province sea-zone overlay** on your capital. An empty Home-Army marker on the map still opens **Military units panel**.
+2. Select **Train** (header on **Military units panel**, or Military on the capital overlay) to open **Train military dialog** (header **Train Military**). The overlay path stays on the map. A short line under overlay **Train** says new regiments join the Home Army here after **Next turn** and that the tap does not split a field army or start a march. Overlay **Train** appears only on your own capital, not on other land you own, not on a rival capital, and not when you are only watching.
 3. Choose unlocked regiments with the **−** and **+** buttons on each regiment row. Each row shows the regiment's **category and combat role** (e.g. melee line, ranged firepower, siege guns) plus **ongoing food upkeep per turn** so you can weigh battlefield role and ownership cost against treasury, goods, and peasant build costs before queuing.
 4. When the unlocking technology is missing, the row shows **Requires:** and that technology’s name; you cannot change the count.
 5. The dialog accounts for the combined treasury, peasants, and listed goods of all selected regiments — including a **Horses** chip for cavalry types that need horses. The **Peasants** chip shows how many remain free after peasants already promised to queued worker training or ship builds; when some are promised, a short line under the chips names that promise (for example **3 already promised to worker training**). Tap the **Peasants** chip for a short family breakdown. **+** will not raise a count past the free peasant total.

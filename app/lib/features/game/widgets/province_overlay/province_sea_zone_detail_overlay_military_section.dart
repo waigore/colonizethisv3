@@ -14,6 +14,7 @@ import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart'
     show kProvinceOverlayTileInlineActionDisabledAlpha;
+import 'province_sea_zone_detail_overlay_train_military_control.dart';
 
 Widget buildMilitarySectionByOwner({
   required AppLocalizations l10n,
@@ -41,6 +42,8 @@ Widget buildMilitarySectionByOwner({
   bool combineArmiesEnabled = false,
   String combineArmiesTooltip = '',
   VoidCallback? onCombineArmiesTap,
+  bool showTrainMilitaryControl = false,
+  VoidCallback? onTrainMilitaryTap,
   String? provinceDisplayName,
 }) {
   final pending = provincePanelPendingMilitaryLines(
@@ -123,6 +126,11 @@ Widget buildMilitarySectionByOwner({
           onPressed: combineArmiesEnabled ? onCombineArmiesTap : null,
         ),
       ),
+    ?buildProvinceOverlayTrainMilitaryControl(
+      l10n: l10n,
+      show: showTrainMilitaryControl,
+      onTap: onTrainMilitaryTap,
+    ),
   ];
   if (military.isEmpty && pending.isEmpty) {
     return buildOverlaySection(
