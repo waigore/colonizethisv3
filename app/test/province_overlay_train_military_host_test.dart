@@ -91,6 +91,17 @@ void main() {
     expect(c.show, isFalse);
   });
 
+  test('hides Train when Military intel is obfuscated', () {
+    // Empty fixture provinces are not human-owned, so intel is not full (???).
+    final c = controls(
+      displayId: 'oldWorld|p1',
+      capitalProvinceId: 'oldWorld|p1',
+      omniscientDetail: false,
+    );
+    expect(c.show, isFalse);
+    expect(c.onTap, isNull);
+  });
+
   test('tap emits OpenDialogEvent without panel close or hire', () async {
     final opened = <OpenDialogEvent>[];
     final panels = <OpenMilitaryUnitsPanelEvent>[];
