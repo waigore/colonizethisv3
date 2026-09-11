@@ -130,3 +130,20 @@ def test_live_export_has_no_forbidden_identifiers() -> None:
     for path in output.rglob("*.md"):
         violations.extend(scan_forbidden(path.read_text(encoding="utf-8")))
     assert violations == []
+
+
+def test_live_appendix_build_regiment_keeps_or_connector() -> None:
+    """Unbalanced backticks after Train Military must not swallow the overlay path."""
+    author = ROOT / "docs" / "manual" / "16-appendix-actions.md"
+    if not author.exists():
+        return
+    titles = parse_screen_registry(REGISTRY)
+    result = transform_chapter(author.read_text(encoding="utf-8"), titles)
+    row = next(
+        line for line in result.splitlines() if line.startswith("| Build regiment |")
+    )
+    assert "**Train military dialog**Province sea-zone overlay**" not in row
+    assert (
+        "**Train military dialog**, or **Province sea-zone overlay** Military **Train**"
+        in row
+    )
