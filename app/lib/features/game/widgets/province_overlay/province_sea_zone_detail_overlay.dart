@@ -24,5 +24,7 @@ export 'province_sea_zone_detail_overlay_tile_section_labels.dart'
         roadRailTransportLevelPrimaryLine,
         tileDetailProspectedDisplayLabel,
         tryParseProvinceOverlayTileCoords;
+export 'province_sea_zone_detail_overlay_military_section.dart'
+    show kProvinceOverlayTrainMilitaryKey;
 export 'province_sea_zone_detail_overlay_widget.dart'
     show ProvinceSeaZoneDetailOverlay;

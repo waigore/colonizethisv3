@@ -23,6 +23,8 @@ void main() {
       );
       expect(action.kind, ArmyStackMarkerKind.openMilitaryRoster);
       expect(action.moveArmyIds, isEmpty);
+      expect(action.kind, isNot(ArmyStackMarkerKind.overlayMove));
+      expect(action.kind, isNot(ArmyStackMarkerKind.detachThenMove));
     });
 
     test('non-empty Home-only stack starts detach-then-move', () {

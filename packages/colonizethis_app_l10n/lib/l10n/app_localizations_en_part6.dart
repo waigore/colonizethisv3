@@ -315,6 +315,13 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   String get provinceOverlay_moveArmyAction => 'Move';
 
   @override
+  String get provinceOverlay_trainMilitaryAction => 'Train';
+
+  @override
+  String get provinceOverlay_trainMilitaryGist =>
+      'New regiments join the Home Army here after Next turn. This does not detach a field army or assign a march.';
+
+  @override
   String get provinceOverlay_combineArmiesAction => 'Combine';
 
   @override

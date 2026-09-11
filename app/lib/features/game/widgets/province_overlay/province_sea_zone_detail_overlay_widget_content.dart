@@ -60,6 +60,8 @@ extension ProvinceSeaZoneDetailOverlayContent on ProvinceSeaZoneDetailOverlay {
       combineArmiesEnabled: combineArmiesEnabled,
       combineArmiesTooltip: combineArmiesTooltip,
       onCombineArmiesTap: onCombineArmiesTap,
+      showTrainMilitaryControl: showTrainMilitaryControl,
+      onTrainMilitaryTap: onTrainMilitaryTap,
       navalMission: navalMission,
       detachAndSail: detachAndSail,
       transferToHomeFleet: transferToHomeFleet,

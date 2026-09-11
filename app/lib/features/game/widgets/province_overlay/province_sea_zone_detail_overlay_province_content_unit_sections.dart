@@ -60,6 +60,8 @@ buildProvinceIntelGatedUnitSections({
   bool combineArmiesEnabled = false,
   String combineArmiesTooltip = '',
   VoidCallback? onCombineArmiesTap,
+  bool showTrainMilitaryControl = false,
+  VoidCallback? onTrainMilitaryTap,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
   ProvinceDetachAndSailOverlayControls detachAndSail =
@@ -165,6 +167,8 @@ buildProvinceIntelGatedUnitSections({
           combineArmiesEnabled: combineArmiesEnabled,
           combineArmiesTooltip: combineArmiesTooltip,
           onCombineArmiesTap: onCombineArmiesTap,
+          showTrainMilitaryControl: showTrainMilitaryControl,
+          onTrainMilitaryTap: onTrainMilitaryTap,
           provinceDisplayName: provinceDisplayName,
         )
       : buildOverlaySection(

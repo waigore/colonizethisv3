@@ -56,6 +56,16 @@ void main() {
     expect(find.byType(CtDialogShell), findsOneWidget);
   });
 
+  testWidgets('does not list untrained military capacity (Refs #4769 P1)', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(hostApp(entries: const []));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('untrained'), findsNothing);
+    expect(find.textContaining('regiment'), findsNothing);
+    expect(find.textContaining('Train Military'), findsNothing);
+  });
+
   testWidgets('go-to closes without confirming', (WidgetTester tester) async {
     CivilianMissingWorkOrderEntry? goToTarget;
     await tester.pumpWidget(

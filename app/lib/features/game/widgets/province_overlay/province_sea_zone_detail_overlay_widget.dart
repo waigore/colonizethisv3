@@ -61,6 +61,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.combineArmiesEnabled = false,
     this.combineArmiesTooltip = '',
     this.onCombineArmiesTap,
+    this.showTrainMilitaryControl = false,
+    this.onTrainMilitaryTap,
     this.navalMission = ProvinceNavalMissionOverlayControls.hidden,
     this.detachAndSail = ProvinceDetachAndSailOverlayControls.hidden,
     this.transferToHomeFleet =
@@ -127,6 +129,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool combineArmiesEnabled;
   final String combineArmiesTooltip;
   final VoidCallback? onCombineArmiesTap;
+  final bool showTrainMilitaryControl;
+  final VoidCallback? onTrainMilitaryTap;
   final ProvinceNavalMissionOverlayControls navalMission;
   final ProvinceDetachAndSailOverlayControls detachAndSail;
   final ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet;

@@ -15,8 +15,8 @@ The Train Military dialog lets the player queue military regiment build orders i
 
 ## Opening the dialog
 
-- **Trigger:** `Train` button in [military-units-panel.md](military-units-panel.md).
-- **Flow parity with civilian:** On tap, the military panel closes, then `OpenDialogEvent(trainMilitaryDialogId)` opens this modal.
+- **Trigger:** `Train` button in [military-units-panel.md](military-units-panel.md). Additional trigger: `MAP20001` Military **Train** on the human player's capital ([province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md); Refs #4769) emits `OpenDialogEvent(trainMilitaryDialogId)` with **no** extra dialog params and leaves the overlay mounted.
+- **Flow parity with civilian:** From `UNIT20001`, the military panel closes, then `OpenDialogEvent(trainMilitaryDialogId)` opens this modal. From `MAP20001` capital Train, the overlay stays mounted (same family as overlay Train civilians).
 - **Presentation:** `CtDialogShell` modal with transparent backdrop.
 
 ---
@@ -104,8 +104,8 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 
 ## Integration
 
-- **Parent:** [military-units-panel.md](military-units-panel.md)
-- **Wiring:** Dialog opens via `AppEventBus` and is registered in app handler scope with id `train_military`.
+- **Parent:** [military-units-panel.md](military-units-panel.md); additional open from [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) Military **Train** on the human capital (Refs #4769).
+- **Wiring:** Dialog opens via `AppEventBus` and is registered in app handler scope with id `train_military`. Overlay open uses the same id with no params; `UNIT50001` counts, locks, peasant gist, food upkeep, and costs are unchanged.
 - **Model:** Uses `BuildUnitOrder` (`isMilitary: true`) and existing order merge semantics in app shell state.
 - **Timing:** Unit appears after turn resolution (next turn from the player view).
 
@@ -114,6 +114,8 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 ## Acceptance criteria
 
 - **Given** the Military Units panel is open, **when** the user taps `Train`, **then** the UI layer closes the panel and opens Train Military as a modal dialog via `OpenDialogEvent(trainMilitaryDialogId)`.
+
+- **Given** `MAP20001` Military **Train** on the human capital, **when** the player taps it, **then** the UI layer emits `OpenDialogEvent(trainMilitaryDialogId)` with no params, leaves the overlay mounted, and does not emit `OpenMilitaryUnitsPanelEvent` or a `BuildUnitOrder` (Refs #4769).
 
 - **Given** the Train Military dialog is open, **when** the user views the resource bar, **then** the UI layer shows treasury, peasants, and military-input resources with existing icons inside the shared boxed inset strip.
 

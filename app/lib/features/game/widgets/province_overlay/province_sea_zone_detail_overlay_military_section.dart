@@ -15,6 +15,10 @@ import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart'
     show kProvinceOverlayTileInlineActionDisabledAlpha;
 
+const Key kProvinceOverlayTrainMilitaryKey = Key(
+  'province_overlay_train_military',
+);
+
 Widget buildMilitarySectionByOwner({
   required AppLocalizations l10n,
   required Game game,
@@ -41,6 +45,8 @@ Widget buildMilitarySectionByOwner({
   bool combineArmiesEnabled = false,
   String combineArmiesTooltip = '',
   VoidCallback? onCombineArmiesTap,
+  bool showTrainMilitaryControl = false,
+  VoidCallback? onTrainMilitaryTap,
   String? provinceDisplayName,
 }) {
   final pending = provincePanelPendingMilitaryLines(
@@ -121,6 +127,30 @@ Widget buildMilitarySectionByOwner({
           tooltip: combineArmiesTooltip,
           enabled: combineArmiesEnabled,
           onPressed: combineArmiesEnabled ? onCombineArmiesTap : null,
+        ),
+      ),
+    if (showTrainMilitaryControl)
+      Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CtActionTextButton(
+              key: kProvinceOverlayTrainMilitaryKey,
+              label: l10n.provinceOverlay_trainMilitaryAction,
+              tooltip: l10n.provinceOverlay_trainMilitaryAction,
+              enabled: true,
+              onPressed: onTrainMilitaryTap,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                l10n.provinceOverlay_trainMilitaryGist,
+                style: TextStyle(color: EditorialMonoclePalette.muted),
+              ),
+            ),
+          ],
         ),
       ),
   ];

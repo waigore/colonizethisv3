@@ -60,6 +60,8 @@ OverlayContent provinceContent({
   bool combineArmiesEnabled = false,
   String combineArmiesTooltip = '',
   VoidCallback? onCombineArmiesTap,
+  bool showTrainMilitaryControl = false,
+  VoidCallback? onTrainMilitaryTap,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
   ProvinceDetachAndSailOverlayControls detachAndSail =
@@ -140,6 +142,8 @@ OverlayContent provinceContent({
     combineArmiesEnabled: combineArmiesEnabled,
     combineArmiesTooltip: combineArmiesTooltip,
     onCombineArmiesTap: onCombineArmiesTap,
+    showTrainMilitaryControl: showTrainMilitaryControl,
+    onTrainMilitaryTap: onTrainMilitaryTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     transferToHomeFleet: transferToHomeFleet,

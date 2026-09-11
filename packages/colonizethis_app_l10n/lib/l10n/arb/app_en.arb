@@ -4350,6 +4350,14 @@
   "@provinceOverlay_moveArmyAction": {
     "description": "MAP20001 Military Move control label (Refs #4350)."
   },
+  "provinceOverlay_trainMilitaryAction": "Train",
+  "@provinceOverlay_trainMilitaryAction": {
+    "description": "MAP20001 Military Train control label on the human capital (Refs #4769). Same player word as UNIT20001 header Train."
+  },
+  "provinceOverlay_trainMilitaryGist": "New regiments join the Home Army here after Next turn. This does not detach a field army or assign a march.",
+  "@provinceOverlay_trainMilitaryGist": {
+    "description": "Default-visible gist under MAP20001 capital Train (Refs #4769)."
+  },
   "provinceOverlay_combineArmiesAction": "Combine",
   "@provinceOverlay_combineArmiesAction": {
     "description": "MAP20001 Military Combine control label (Refs #4610)."
