@@ -161,7 +161,9 @@ const _packageName = 'colonizethis_app';
 // observe-mode overlay bind (Refs #4761; measured 99_026).
 // raised for DLG20001/CMPT10001/MAP20001/DLG31002 fort siege gist
 // (Refs #4764; measured 99_074).
-const _maxMainLines = 99074;
+// raised for MAP20001 capital Train Military overlay shortcut
+// (Refs #4769; measured 99_225).
+const _maxMainLines = 99225;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

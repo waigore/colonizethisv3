@@ -8,7 +8,7 @@ import '../tool/check_app_main_line_budget.dart';
 void main() {
   final repoRoot = p.normalize(p.join(Directory.current.path));
 
-  test('colonizethis_app main role stays within 99_074 lines', () {
+  test('colonizethis_app main role stays within 99_225 lines', () {
     expect(runCheckAppMainLineBudget(repoRoot), 0);
   });
 }
