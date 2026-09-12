@@ -1,6 +1,9 @@
 ---
 description: Folder layout and component reusability for game and UI
-globs: "app/lib/**/*.dart,packages/*/lib/**/*.dart,tool/**/*.dart"
+globs:
+  - "app/lib/**/*.dart"
+  - "packages/*/lib/**/*.dart"
+  - "tool/**/*.dart"
 alwaysApply: false
 ---
 
