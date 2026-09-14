@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Tiles feed your warehouses only when people on the map improve them, bind them with roads and ports, and keep them linked to your **capital** (your home city). An **improvement** is a farm, mine, or similar site on a resource tile. **Extraction** is the goods that reach you after you confirm **Next turn**. A **decree** is an action you choose on your turn. This chapter shows how to send **civilians** (map workers such as Builders and Engineers) to raise those sites, what the work costs, and why a rich-looking tile can still send you nothing.
+Tiles feed you only when people improve them and keep them linked to your **capital** (your home city). A **warehouse** is the goods pile on Production. Each **tile** is one square of land or water. A **province** is a named group of tiles. **Old World** and **New World** are the two maps. A **Minor Nation** is a smaller Old World court you do not play. A **Tribe** is a New World people you do not play. An **embassy** is the court standing that lets Merchants buy land. An **improvement** is a farm, mine, or similar site on a resource tile. **Extraction** is the goods that reach you after you confirm **Next turn**. A **decree** is an action you choose on your turn. This chapter shows how to send **civilians** (map workers such as Builders and Engineers) to raise those sites, what the work costs, and why a rich-looking tile can still send you nothing.
 
 ## How it is done
 
@@ -13,17 +13,19 @@ These paths are not the same tap sequence. Use the one that matches the screen y
 1. On `GAME10001` **Game screen**, tap the **Civilian Units** icon on the left of the map to open `UNIT10001` **Civilian units panel**.
 2. Tap **Assign** on an idle civilian (no pending work).
 3. Choose the printed work name from the menu (**Build improvement**, **Upgrade town**, **Build road**, and the rest that unit can do). Greyed names have no legal tile this turn.
-4. The map marks legal tiles with a flashing yellow outline. The tile you rest on uses an orange outline. The banner at the top reads **Select a tile, or click cancel**. While you rest on a legal tile, that banner also shows the material or treasury cost and whether you can still pay it after other work you already staged this turn (**Can afford**, or a short shortfall). Free work (**Explore**, **Prospect**) shows no cost chips. Enabled **Prospect** also shows that any mineral on this tile becomes known when the work finishes, and how many turns that takes.
+4. The map marks legal tiles with a flashing yellow outline. The tile you point at uses an orange outline. The banner at the top reads **Select a tile, or click cancel**. When you point at a legal tile, that banner also shows the material or treasury cost and whether you can still pay it after other work you already staged this turn (**Can afford**, or a short shortfall). Free work (**Explore**, **Prospect**) shows no cost icons or amounts. Enabled **Prospect** also shows that any mineral on this tile becomes known when the work finishes, and how many turns that takes.
 5. Tap a legal tile to stage the work — you do not need a second confirm. You see the result after you confirm **Next turn**, not when you tap.
 
 If the civilian is not already on the work tile, the game moves them first after you confirm **Next turn**, then they do the work. New goods do not arrive the moment you tap. The warehouse updates on a **later** turn, after the work finishes and the land is still linked to your capital.
+
+The header **Train** on `UNIT10001` stays visible; observe only greys it. Tap it to open `UNIT40001` **Train Civilians**. That header control does not hide when a work gate blocks a map shortcut.
 
 ### Assign from a province (the tile is already chosen)
 
 1. Tap a province to open `MAP20001` **Province sea-zone overlay**.
 2. Use a printed shortcut when it is shown: **Build improvement**, **Build road**, **Build port**, **Build railroad**, **Purchase land** on the Tile rows; **Build fort** on the Military row when the town tile is selected; **Upgrade town** on the Political row when your province can still rise.
 3. That opens `UNIT10001` **Civilian units panel** filtered to the matching unit type. Tap **Assign** on an idle unit. The work is staged on the **exact tile you already selected**. Do not pick a tile on the map after this shortcut.
-4. If you own **none** of that civilian, the shortcut stays visible but greyed out and **Train Builder**, **Train Engineer**, **Train Merchant**, or **Train Rail Builder** appears beside it (same capital-after-Next-turn line as Chapter 5). Tap it to open `UNIT40001` **Train civilians**. It does not assign the work. If materials, embassy, or another gate besides “no matching civilian” also blocks the work, Train stays hidden.
+4. If you own **none** of that civilian, the shortcut stays visible but greyed out and **Train Builder**, **Train Engineer**, **Train Merchant**, or **Train Rail Builder** appears beside it (same capital-after-Next-turn line as Chapter 5). Tap it to open `UNIT40001` **Train Civilians**. It does not assign the work. If materials, embassy, or another gate besides “no matching civilian” also blocks the work, Train stays hidden.
 
 Shortcut hints use the same cost preview when the control is enabled, or a materials/treasury shortfall when it is disabled because you cannot pay.
 
@@ -33,17 +35,17 @@ Shortcut hints use the same cost preview when the control is enabled, or a mater
 
 1. Right-click a tile on `MAP10001` **Empire overview / map area** (or press and hold on a touch screen) to open `MAP30001` **Tile context radial**.
 2. On a small screen, or after **More**, `MAP30002` **More tile actions** opens instead.
-3. Enabled civilian work on the ring (**Explore**, **Prospect**, **Build improvement**, **Build road**, **Purchase land**, **Upgrade town**, **Build port**, **Build railroad**, **Build fort**) uses the same civilian-panel shortcut as `MAP20001`: you still tap **Assign** on a unit; you do not pick the tile again. **Upgrade town** appears only when you open the ring on the town tile itself. If you own none of that civilian, that slot reads **Train {type}** instead and opens `UNIT40001` **Train civilians** without assigning work.
+3. Enabled civilian work on the ring (**Explore**, **Prospect**, **Build improvement**, **Build road**, **Purchase land**, **Upgrade town**, **Build port**, **Build railroad**, **Build fort**) uses the same civilian-panel shortcut as `MAP20001`: you still tap **Assign** on a unit; you do not pick the tile again. **Upgrade town** appears only when you open the ring on the town tile itself. If you own none of that civilian, that slot reads **Train {type}** instead and opens `UNIT40001` **Train Civilians** without assigning work. If materials, embassy, or another gate besides “no matching civilian” also blocks the work, Train stays hidden.
 
 ### Assign from Development (one tap, no map pick)
 
-1. Tap the **Development** icon on the left of the map to open `GAME80001` **Development screen**. From Production, you can also tap a recipe’s missing-input line when it names a raw good, or from Counsel tap **Open Development** on a missing-input card — both land you on that good already highlighted so you do not hunt the row again.
+1. Tap the **Development** icon on the left of the map to open `GAME80001` **Development screen**. From Production, on an unlocked Allocation row that is held back by a raw good (not by labour and not by the panel’s per-turn ceiling), tap the shortage / limiting raw-good readout to open `GAME80001` already focused on that good; that tap does not stage work. Labour-limited, per-turn-ceiling, and locked rows do not open Development. From Counsel, tap **Open Development** on a card that names a missing raw good — that path also lands you on that good already highlighted so you do not hunt the row again.
 2. Use **Old World** / **New World** tabs. The overview shows extraction totals, idle Builder and Engineer counts, and assigned civilians (Builders and Engineers with pending or in-progress work in the active region, with the same remaining-turns wording as `UNIT10001`).
-3. On an improvable resource row, read the line under **Assign** before you tap. It names the next tile (province name and coordinates), the improvement step (for example **1 → 2**), and the lumber and cast iron cost after other work you already staged this turn. When that tile is not linked to your capital, the same line says it is not bound to the capital. If **Assign** is greyed (no idle Builder, no valid tile, or materials short), that cost line is hidden. Rest on **Assign** for the plain reason.
+3. On an improvable resource row, read the line under **Assign** before you tap. It names the next tile (province name and coordinates), the improvement step (for example **1 → 2**), and the lumber and cast iron cost after other work you already staged this turn. When that tile is not linked to your capital, the same line says it is not bound to the capital. If **Assign** is greyed (no idle Builder, no valid tile, or materials short), that cost line is hidden. If **Assign** will not press, hold it to read why.
 4. Tap **Show** to light those resource tiles on the Development map and mark the tile **Assign** would use.
 5. Tap **Assign** on that row. That stages improve-work itself. When the tile is still linked to your capital, one tap is enough — no extra confirm.
 6. The first idle Builder in a fixed list order is used. Among eligible tiles, the game prefers land still linked to your capital, then a lower improvement level, then a fixed tile order. The line under **Assign** names that same chosen tile.
-7. When the chosen tile is not linked to your capital, a warn dialog offers **Improve anyway** (improve only), **Road first** (one Engineer **Build road** step toward the capital — no automatic improve), or **Cancel**.
+7. When the chosen tile is not linked to your capital, a warning offers **Improve anyway** (improve only), **Road first** (one Engineer **Build road** step toward the capital — no automatic improve), or **Cancel**.
 
 Unrevealed tiles stay hidden. Fogged tiles look faded. Counts and **Assign** use only tiles you already know about.
 
@@ -51,7 +53,7 @@ The header **Counsel** opens `GAME90001` **Counsel screen** on the **Development
 
 ### Tile labels on `MAP20001`
 
-The default Tile surface shows **Road / railroad** in plain words (**none**, **primitive road**, **improved road**, or **port or railroad**) plus the shortcut icons. When **Build road**, **Build port**, or **Build railroad** is enabled, a muted line beside that row states what the step would mean for this tile (capital link, goods that would arrive, or that this coast gets a port). Tap the transport text, or **Tile details**, for the numeric transport level, `Port: None` or `Port: Present`, and whether the tile is linked to your capital.
+The default Tile view shows **Road / railroad** in plain words (**none**, **primitive road**, **improved road**, or **port or railroad**) plus the shortcut icons. When **Build road**, **Build port**, or **Build railroad** is enabled, a muted line beside that row states what the step would mean for this tile (capital link, goods that would arrive, or that this coast gets a port). Tap the transport text, or **Tile details**, for the numeric transport level, `Port: None` or `Port: Present`, and whether the tile is linked to your capital.
 
 ### Reading Extraction on `MAP20001`
 
@@ -59,9 +61,9 @@ When the Economic section on `MAP20001` **Province sea-zone overlay** shows real
 
 - **Extraction** lists projected goods in a fixed list order (icons + quantities).
 - **Available** below it counts improvable resource tiles in that province — not the same as transported yield or warehouse totals on `GAME20001` **Production screen**.
-- **Full yield** — a commodity shows a single number (for example `5 Grain`) when the goods that can reach you equal the tile’s full production under current rules.
-- **Partial yield** — when the path or link is weaker than full production, the quantity shows **`effective (full)`** brackets (for example `1 (5) Grain`). Rest on a segment to highlight its tiles on `MAP10001`.
-- **Partial-yield reason** — when **any** commodity is partial, one short reason line appears under Extraction: improved tiles are not linked to your capital, or the road/port path is too weak. This is a connectivity cue — not a gathering-tech bug. When all commodities are full-yield or Extraction is empty (`—`), no reason line appears.
+- **Full yield** — a goods amount shows a single number (for example `5 Grain`) when the goods that can reach you equal the tile’s full production under current rules.
+- **Partial yield** — when the goods that can reach you are less than the land can produce, the amount shows two numbers, for example `1 (5) Grain` (what arrives, then the full amount). Point at a goods amount to light its tiles on `MAP10001`.
+- **Partial-yield reason** — when any amount is partial, one short line appears under Extraction naming why less arrives (the link to the capital, or the road/port path). When every amount is full or Extraction is `—`, no line. Do not call it a failure of the gathering limit. Keep Chapter 3 for the hatch of land not bound to the capital.
 - **Capital grain bonus** — when configured, grain may include a separate `incl. +N capital grain bonus` note; that bonus is not tile extraction and does not trigger the partial-yield reason by itself.
 
 Those **Extraction** and **Available** rows **project** what this province would yield from the **current** world — visible immediately on a new game (including starting grain farms). Staging improve, road, or town work mid-turn does **not** change those numbers until after you confirm **Next turn**. Capital link, roads, rails, ports, and town rules that decide the link are Chapter 3; gold and brown discs and the **Highlight land not bound to the capital** hatch stay in Chapter 3.
@@ -74,25 +76,25 @@ Those **Extraction** and **Available** rows **project** what this province would
 
 | Work | Unit | Cost and notes |
 |------|------|----------------|
-| **Build improvement** | Builder | Raises the site by 1 (cap 4) on a tile **with a resource**. Next step costs lumber + cast iron **1 / 4 / 8 / 16**. Next level must respect your gathering-tech limit and terrain hard caps (scrub-forest timber stays at **1**). Minerals must already be prospected. The first improve on some timber or iron tiles can cost less (or nothing) until you already hold lumber and cast iron; the usual pair returns once you can pay it. Before you assign, enabled **Build improvement** on **Province sea-zone overlay**, **Tile context radial** / **More tile actions**, the map banner, the Builder row, and Development **Assign** tells you what this tile will send after the work: current goods versus the next level if it stays linked; or that the road or town development already limits what arrives; or that an unlinked tile will still send nothing. The warehouse does not fill on the tap, or on this Next turn if the Builder still has remaining work. |
-| **Upgrade town** | Builder | Raises **town development** by 1 (cap 4) on the town tile. Overlay **Upgrade town** is owned land only. Town workshops start at level 2, pause at 3 until 4, then resume at double the level-2 rate. Before you assign, enabled **Upgrade town** on `MAP20001` Political, `MAP30001` / `MAP30002`, the map banner, the Builder row, and pending **Upgrade town** rows names that next step and **Takes 1 turn**. See Counsel for the National Bureaucracy gate. |
+| **Build improvement** | Builder | Raises the site by 1 (cap 4) on a tile **with a resource**. Next step costs lumber + cast iron **1 / 4 / 8 / 16**. Next level must respect the gathering limit from your researched techs and the land type (scrub-forest timber stays at **1**). Minerals must already be prospected. The first improve on some timber or iron tiles can cost less (or nothing) until you already hold lumber and cast iron; the usual pair returns once you can pay it. Before you assign, enabled **Build improvement** on **Province sea-zone overlay**, **Tile context radial** / **More tile actions**, the map banner, the Builder row, and Development **Assign** tells you what this tile will send after the work: current goods versus the next level if it stays linked; or that the road or town development already limits what arrives; or that an unlinked tile will still send nothing. The warehouse does not fill on the tap, or on this Next turn if the Builder still has remaining work. |
+| **Upgrade town** | Builder | Raises **town development** by 1 (cap 4) on the town tile. On `MAP20001`, **Upgrade town** is for land you own only. Town workshops start at level 2, pause at 3 until 4, then resume at double the level-2 rate. Before you assign, enabled **Upgrade town** on `MAP20001` Political, `MAP30001` / `MAP30002`, the map banner, the Builder row, and pending **Upgrade town** rows names that next step and **Takes 1 turn**. See Counsel for the National Bureaucracy gate. |
 | **Build road** | Engineer | **1 lumber + 1 cast iron**. Level 2 needs **Road Construction**. Enabled shortcuts show a payoff gist beside the cost. |
 | **Build port** | Engineer | **5 lumber + 5 cast iron**. One port per seaboard (each coast that faces one sea). Shortcut only on a seaboard tile that can still take a port. Enabled shortcuts show a payoff gist. |
-| **Build fort** | Engineer | Town tile only; levels 1–3. **3 lumber + 3 bronze**; then **4 lumber + 4 bronze** plus **Mine Engineering**; then **5 steel + 5 lumber** plus **Modern Forts**. Higher levels take extra turns. Overlay **Build fort** only when the town tile is selected. Before you assign, enabled **Build fort** on **Province sea-zone overlay** Military, **Tile context radial** / **More tile actions**, the map banner, the Engineer row, and pending **Build fort** rows tells you how the province’s fight will change (Open field → Wood fort siege, and so on) and how many turns the work takes. The fort does not finish on the tap, or on this Next turn if the Engineer still has remaining work. |
+| **Build fort** | Engineer | Town tile only; levels 1–3. **3 lumber + 3 bronze**; then **4 lumber + 4 bronze** plus **Mine Engineering**; then **5 steel + 5 lumber** plus **Modern Forts**. Higher levels take extra turns. On `MAP20001`, **Build fort** shows only when the town tile is selected. Before you assign, enabled **Build fort** on **Province sea-zone overlay** Military, **Tile context radial** / **More tile actions**, the map banner, the Engineer row, and pending **Build fort** rows tells you how the province’s fight will change (Open field → Wood fort siege, and so on) and how many turns the work takes. The fort does not finish on the tap, or on this Next turn if the Engineer still has remaining work. |
 | **Build railroad** | Rail Builder | Needs a primitive or improved road (transport **1** or **2**), **2 lumber + 2 steel**, and rail technology. Sets railroad transport level **4**. Enabled shortcuts show a payoff gist beside the cost. |
-| **Purchase land** | Merchant | On Minor Nation or Tribe resource tiles: embassy, not at war, not already bought by any playable nation. Treasury ≥ **15 × resource base price** at assign; coins leave and the purchase is recorded when the work finishes (**1 turn**). Minerals must be prospected. A tile already bought cannot be bought again. If Embassy is missing, the disabled hint names Embassy; on a narrow screen it also points to Political **Establish Embassy**. Before you assign, enabled **Purchase land** on `MAP20001`, `MAP30001` / `MAP30002`, the map banner, and the Merchant row tells you the payoff in plain words: tradeable goods still sell as that court’s (you get first bid and gold when other courts buy after the work); riches from that tile go to **your** treasury after the work; the land stays theirs. Privileges do not start on the tap or on this Next turn if the Merchant still has remaining work. |
+| **Purchase land** | Merchant | On Minor Nation or Tribe resource tiles: embassy, not at war, not already bought by any playable nation. Treasury ≥ **15 × resource base price** at assign; coins leave and the purchase is recorded when the work finishes (**1 turn**). Minerals must be prospected. A tile already bought cannot be bought again. If Embassy is missing, the disabled hint names Embassy; on a narrow screen it also points to Political **Establish Embassy**. Before you assign, enabled **Purchase land** on `MAP20001`, `MAP30001` / `MAP30002`, the map banner, and the Merchant row (and pending **Purchase land** rows) shows a short payoff line beside the £ cost: tradeable goods still sell as that court’s (you get first bid and gold when other courts buy after the work); riches from that tile go to **your** treasury after the work; the land stays theirs. Do not confuse that line with the separate £ cost tooltip. Privileges do not start on the tap or on this Next turn if the Merchant still has remaining work. See Counsel for the ownership wording that cited rules do not agree on. |
 | **Explore** / **Prospect** | Explorer | Covered in Chapter 4 (free; completion-timed effects). Enabled **Prospect** shows that any mineral on this tile becomes known, and how many turns the work takes, before you **Assign**. |
 
-Rejected assigns surface **Insufficient treasury** or **Insufficient materials**.
+Rejected assigns show **Insufficient treasury** or **Insufficient materials**.
 
-Pending rows on `UNIT10001` show required cost chips and how many turns remain (pending: total turns; in-progress: remaining / total). Most work takes one or more turns; duration can rise with the target level and terrain. Forts take extra turns at higher levels. **Purchase land** takes **1 turn**. Finishing the last work turn still does not fill the warehouse until a **later** turn’s extraction. **Cancel** of in-progress work sends the civilian back to the tile they left.
+Pending rows on `UNIT10001` show required cost icons and amounts and how many turns remain (pending: total turns; in-progress: remaining / total). Most work takes one or more turns; duration can rise with the target level and terrain. Forts take extra turns at higher levels. **Purchase land** takes **1 turn**. Finishing the last work turn still does not fill the warehouse until a **later** turn’s extraction. **Cancel** of in-progress work sends the civilian back to the tile they left.
 
 ### Limits you must respect
 
 - Each civilian may have only **one** pending work decree this turn.
 - Two of your Builders, Engineers, or Merchants may not work the same tile at once — the refusal reads **Tile already has development or purchase work for this player**.
 - **Cancel** on the civilian panel (confirm first) clears the work; materials already spent are not returned.
-- How much a tile **produces** is the smaller of its improvement level and your gathering-tech (and terrain) limit. Those goods **reach you** only if the tile is still linked to your capital. Town development limits yield only in named cases: always in the capital province; elsewhere only when there is no road or rail path, **and** the town is a port linked to the capital. A road or rail path to the capital does **not** apply the town cap. Disconnected improved land sends nothing (Chapter 3 for the hatch). Default gathering limit is often **1** until you research a cap tech; horses stay at 1 and wool at 3.
+- How much a tile **produces** is the smaller of its improvement level and the gathering limit from your researched techs (and the land type). Those goods **reach you** only if the tile is still linked to your capital. Town development limits yield only in named cases: always in the capital province; elsewhere only when there is no road or rail path, **and** the town is a port linked to the capital. A road or rail path to the capital does **not** apply the town cap. Disconnected improved land sends nothing (Chapter 3 for the hatch). Default gathering limit is often **1** until you research a cap tech; horses stay at 1 and wool at 3.
 - On `MAP10001` **Empire overview / map area**, when **Show improvements** is on, your owned, revealed, already-improved tiles can show **1 of 1** (already at the limit) or **1 of 2** (room to raise). Unrevealed tiles show no mark. The marks are not always visible.
 
 ## Counsel
@@ -105,32 +107,35 @@ Pending rows on `UNIT10001` show required cost chips and how many turns remain (
 
 **Note — town upgrade gate.** One cited rule names **National Bureaucracy** at assign for **Upgrade town**. Another cited rule says that gate is **not** enforced in the game as it ships today (all Builders may submit and complete the work). `MAP20001` may still mention the technology on a disabled **Upgrade town**. This handbook does not pick a winner until those rules agree.
 
-**Note — pending costs on `UNIT10001`.** The civilian panel shows required cost chips on pending work. The same cited screen rule both forbids comparing those amounts to your warehouse (no extra error colour) and requires one short shortfall line when the work cannot be paid after earlier staged work. Orders are not auto-cancelled. This handbook does not pick a winner between those two claims.
+**Note — pending costs.** Pending work on `UNIT10001` shows required cost icons and amounts. The same cited screen rule both forbids comparing those amounts to your warehouse (no extra error colour) and requires one short shortfall line when the work cannot be paid after earlier staged work. Orders are not auto-cancelled. This handbook does not pick a winner between those two claims.
+
+**Note — purchase-land ownership.** The printed payoff line on `MAP20001`, `MAP30001` / `MAP30002`, the map banner, and Merchant rows, and the world-market first-bid / overseas-gold / riches privileges, say the land stays theirs. Other cited rules say the tile (and its resource) become yours when the work finishes, or that extraction and the capital link treat the tile as yours thereafter. This handbook does not pick a winner until those rules agree.
 
 ## The other courts
 
-Rival courts send the same kinds of civilians you do. They raise farms and towns, lay roads and ports, buy foreign land, and lay rail when they can pay. They try to open wool, cotton, timber, and iron sites so their factories have something to work, and they spend lumber and cast iron on improvements when demand rises. They do not get a secret work rule. When their Engineers would raise a seaboard port, the same scoring that fills Development Counsel on `GAME90001` **Counsel screen** is what they use.
+Rival courts send the same kinds of civilians you do. They raise farms and towns, lay roads and ports, buy foreign land, and lay rail when they can pay. They try to open wool, cotton, timber, iron, and coal sites so their factories have something to work, and they spend lumber and cast iron on improvements when demand rises. They do not get a secret work rule. When their Engineers would raise a seaboard port, the same scoring that fills Development Counsel on `GAME90001` **Counsel screen** is what they use.
 
 ## Consequences
 
-- Building past the gathering-tech limit wastes materials for no extra yield. If the map already shows **1 of 1** with **Show improvements** on, do not send a Builder there until a gathering tech raises the cap.
+- Building past the gathering limit wastes materials for no extra yield. If the map already shows **1 of 1** with **Show improvements** on, do not send a Builder there until a researched tech raises that limit.
 - Ignoring exclusivity and one-work-per-civilian rules floods the panel with rejected orders.
 - **Purchase land** refuses **Insufficient treasury** if you cannot pay now. The coins leave only when the purchase finishes, so spending the same purse on something else after you assign can still leave you short when the work completes.
 - Disconnecting improved tiles from the capital starves Extraction even when the map looks developed.
-- Partial Extraction brackets with a reason line under `MAP20001` mean improved tiles exist but the capital link or road/port path blocks full yield — build the link before you blame the gathering tech.
+- Partial Extraction two-number amounts with a reason line under `MAP20001` mean improved tiles exist but the capital link or road/port path is why less arrives — build the link before you raise the site further.
 
 ## Acceptance criteria for this chapter
 
-- [ ] Documents assign flows via `UNIT10001` **Civilian units panel**, `MAP20001` **Province sea-zone overlay** / `MAP10001` **Empire overview / map area**, `MAP30001` **Tile context radial** / `MAP30002` **More tile actions**, and `GAME80001` **Development screen**, including that Development **Assign** names the next tile, improvement step, and cost before commit, and that **Show** marks the same tile.
-- [ ] Covers printed work names: **Build improvement**, **Upgrade town**, **Build road**, **Build port**, **Build fort**, **Build railroad**, **Purchase land** (explore/prospect cross-ref Ch. 4).
-- [ ] States that enabled **Upgrade town** names the next town-workshop step (start / pause until 4 / resume) and that the work takes one turn.
-- [ ] States assign-time **Insufficient treasury** / **Insufficient materials** checks and one-work-per-civilian and per-tile exclusivity.
-- [ ] Documents **Cancel** without material refund; purchase debit when work finishes.
-- [ ] Explains extraction caps and capital link at player level, and points to Chapter 3 for the on-map hatch of land not bound to the capital and for `{n} of {cap}` improvement marks when **Show improvements** is on.
-- [ ] Explains `MAP20001` Extraction/Available as a projection from the current world (new-game visible; mid-turn staged work does not change the numbers until after **Next turn**).
-- [ ] Distinguishes that line from `GAME20001` **Production screen** stockpile.
-- [ ] Explains `MAP20001` Extraction `effective (full)` brackets, capital grain bonus note, and the short partial-yield reason line when connectivity or path limits apply (cross-ref Chapter 3).
-- [ ] Sources match the chapter coverage map.
+- [x] Documents assign flows via `UNIT10001` **Civilian units panel**, `MAP20001` **Province sea-zone overlay** / `MAP10001` **Empire overview / map area**, `MAP30001` **Tile context radial** / `MAP30002` **More tile actions**, and `GAME80001` **Development screen**, including that Development **Assign** names the next tile, improvement step, and cost before commit, and that **Show** marks the same tile.
+- [x] Covers printed work names: **Build improvement**, **Upgrade town**, **Build road**, **Build port**, **Build fort**, **Build railroad**, **Purchase land** (explore/prospect cross-ref Ch. 4).
+- [x] States that enabled **Upgrade town** names the next town-workshop step (start / pause until 4 / resume) and that the work takes one turn.
+- [x] States assign-time **Insufficient treasury** / **Insufficient materials** checks and one-work-per-civilian and per-tile exclusivity.
+- [x] Documents **Cancel** without material refund; purchase debit when work finishes.
+- [x] Explains extraction caps and capital link at player level, and points to Chapter 3 for the on-map hatch of land not bound to the capital.
+- [x] Documents `{n} of {cap}` improvement marks on `MAP10001` when **Show improvements** is on: owned, revealed, already-improved tiles show **1 of 1** at the limit or **1 of 2** with room to raise; unrevealed tiles show no mark.
+- [x] Explains `MAP20001` Extraction/Available as a projection from the current world (new-game visible; mid-turn staged work does not change the numbers until after **Next turn**).
+- [x] Distinguishes that line from `GAME20001` **Production screen** stockpile.
+- [x] Explains `MAP20001` Extraction two-number amounts such as `1 (5) Grain` (what arrives, then the full amount), the capital grain bonus note, and the short partial-yield reason line when the capital link or road/port path limits what arrives (cross-ref Chapter 3).
+- [x] Sources match the chapter coverage map.
 
 ## Sources
 
@@ -140,6 +145,7 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 - `SPEC/game/capital-and-connectivity.md`
 - `SPEC/game/fog-and-exploration.md`
 - `SPEC/game/siege-mechanics.md`
+- `SPEC/game/world-market.md`
 - `SPEC/program/orders.md`
 - `SPEC/program/development-resolution.md`
 - `SPEC/program/turn-resolution-phases.md`
@@ -158,8 +164,6 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ui/empire-buttons.md`
-- `SPEC/ui/tile-context-radial.md`
-- `SPEC/ui/tile-more-actions-dialog.md`
 - `SPEC/ui/components/tile-radial-catalog.md`
 - `SPEC/ai/civilian-work-planner.md`
 - `SPEC/ai/growth-stage-planner.md`
