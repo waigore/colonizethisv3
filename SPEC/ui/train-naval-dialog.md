@@ -15,8 +15,8 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 
 ## Opening the dialog
 
-- **Trigger:** `Train` primary pill in [naval-units-panel.md](naval-units-panel.md) header.
-- **Flow:** On tap, the naval panel closes (`ClosePanelEvent`), then `OpenDialogEvent(trainNavalDialogId)` opens this modal.
+- **Trigger:** `Train` primary pill in [naval-units-panel.md](naval-units-panel.md) header. Additional trigger: `MAP20001` Naval **Train** on the human player's capital ([province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md); Refs #4776) emits `OpenDialogEvent(trainNavalDialogId)` with **no** extra dialog params and leaves the overlay mounted.
+- **Flow:** From `UNIT30001`, the naval panel closes (`ClosePanelEvent`), then `OpenDialogEvent(trainNavalDialogId)` opens this modal. From `MAP20001` capital Train, the overlay stays mounted (same family as overlay Train Military).
 - **Presentation:** `CtDialogShell` modal with transparent backdrop.
 
 ---
@@ -107,6 +107,8 @@ The dialog uses the shared `app/lib/features/game/widgets/train/train_unit_dialo
 ## Acceptance criteria
 
 - **Given** the Naval Units panel is open, **when** the user taps `Train`, **then** the UI layer closes the panel and opens Train Naval as a modal dialog via `OpenDialogEvent(trainNavalDialogId)` listing all 12 ship types.
+
+- **Given** `MAP20001` Naval **Train** on the human capital, **when** the player taps it, **then** the UI layer emits `OpenDialogEvent(trainNavalDialogId)` with no params, leaves the overlay mounted, and does not emit `OpenNavalUnitsPanelEvent` or a `BuildUnitOrder` (Refs #4776).
 
 - **Given** the Train Naval dialog is open, **when** the user views the resource bar, **then** the UI layer shows treasury, peasants, and naval-input commodities (`lumber`, `fabric`, `castIron`, `coal`) with existing icons inside the shared boxed inset strip.
 

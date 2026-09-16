@@ -62,6 +62,8 @@ OverlayContent provinceContent({
   VoidCallback? onCombineArmiesTap,
   bool showTrainMilitaryControl = false,
   VoidCallback? onTrainMilitaryTap,
+  bool showTrainNavalControl = false,
+  VoidCallback? onTrainNavalTap,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
   ProvinceDetachAndSailOverlayControls detachAndSail =
@@ -144,6 +146,8 @@ OverlayContent provinceContent({
     onCombineArmiesTap: onCombineArmiesTap,
     showTrainMilitaryControl: showTrainMilitaryControl,
     onTrainMilitaryTap: onTrainMilitaryTap,
+    showTrainNavalControl: showTrainNavalControl,
+    onTrainNavalTap: onTrainNavalTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     transferToHomeFleet: transferToHomeFleet,

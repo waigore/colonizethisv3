@@ -163,7 +163,9 @@ const _packageName = 'colonizethis_app';
 // (Refs #4764; measured 99_074).
 // raised for MAP20001 capital Train Military overlay shortcut
 // (Refs #4769; measured 99_225).
-const _maxMainLines = 99225;
+// raised for MAP20001 capital Train Naval overlay shortcut
+// (Refs #4776; measured 99_374).
+const _maxMainLines = 99374;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

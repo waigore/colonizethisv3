@@ -4358,6 +4358,14 @@
   "@provinceOverlay_trainMilitaryGist": {
     "description": "Default-visible gist under MAP20001 capital Train (Refs #4769)."
   },
+  "provinceOverlay_trainNavalAction": "Train",
+  "@provinceOverlay_trainNavalAction": {
+    "description": "MAP20001 Naval Train control label on the human capital (Refs #4776). Same player word as UNIT30001 header Train."
+  },
+  "provinceOverlay_trainNavalGist": "New ships join the Home Fleet here after Next turn. This does not detach a squadron or assign a sail or mission.",
+  "@provinceOverlay_trainNavalGist": {
+    "description": "Default-visible gist under MAP20001 capital Naval Train (Refs #4776)."
+  },
   "provinceOverlay_combineArmiesAction": "Combine",
   "@provinceOverlay_combineArmiesAction": {
     "description": "MAP20001 Military Combine control label (Refs #4610)."

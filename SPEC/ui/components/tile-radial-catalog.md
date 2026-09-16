@@ -18,7 +18,7 @@ Nine actions, in this priority after enablement (canonical `kTileRadialCatalogOr
 
 Conceivable means overlay `showIcon == true` for that slot (`ProvinceActionStateCalculator` for the eight inline actions). **Upgrade town:** conceivable only when the selected tile **is** the province town tile **and** overlay `provinceUpgradeTownActionState.showControl` is true (same source as `MAP20001`: `GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState`). Hidden overlay icons never appear.
 
-Do **not** include Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish Consulate, or Offer Peace.
+Do **not** include Station spy, Counter-espionage, Blockade, Beachhead, Move, Invade, Establish Consulate, Offer Peace, Train Military, or Train Naval.
 
 ## Ranking
 

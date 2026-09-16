@@ -23,6 +23,7 @@ import 'province_detail_overlay_host_support_army_move.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
 import 'province_detail_overlay_host_support_train_military.dart';
+import 'province_detail_overlay_host_support_train_naval.dart';
 
 ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
   required ct_models.Game game,
@@ -54,6 +55,7 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
   required ProvinceArmyMoveOverlayControls armyMove,
   required ProvinceArmyCombineOverlayControls armyCombine,
   required ProvinceTrainMilitaryOverlayControls trainMilitary,
+  required ProvinceTrainNavalOverlayControls trainNaval,
   required ProvinceNavalMissionOverlayControls navalMission,
   required ProvinceDetachAndSailOverlayControls detachAndSail,
   required ProvinceTransferToHomeFleetOverlayControls transferToHomeFleet,
@@ -116,6 +118,8 @@ ProvinceSeaZoneDetailOverlay assembleProvinceSeaZoneDetailOverlay({
     onCombineArmiesTap: armyCombine.onTap,
     showTrainMilitaryControl: trainMilitary.show,
     onTrainMilitaryTap: trainMilitary.onTap,
+    showTrainNavalControl: trainNaval.show,
+    onTrainNavalTap: trainNaval.onTap,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     transferToHomeFleet: transferToHomeFleet,
