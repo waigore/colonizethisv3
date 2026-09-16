@@ -21,6 +21,7 @@ import 'province_sea_zone_detail_overlay_naval_mission_actions.dart';
 import 'province_sea_zone_detail_overlay_naval_pending_lines.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_train_naval_control.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show homeFleetIdFor;
 
 export 'province_sea_zone_detail_overlay_naval_pending_lines.dart';
@@ -45,6 +46,8 @@ Widget buildNavalSection({
   ProvinceOverlaySailMoveOverlayControls sailMove =
       ProvinceOverlaySailMoveOverlayControls.hidden,
   ProvinceBlockadeStatus blockadeStatus = ProvinceBlockadeStatus.none,
+  bool showTrainNavalControl = false,
+  VoidCallback? onTrainNavalTap,
 }) {
   final pending = pendingNavalLines(
     l10n: l10n,
@@ -126,6 +129,12 @@ Widget buildNavalSection({
           ),
         ],
         ...missionActions,
+        if (!rosterObfuscated)
+          ?buildProvinceOverlayTrainNavalControl(
+            l10n: l10n,
+            show: showTrainNavalControl,
+            onTap: onTrainNavalTap,
+          ),
       ],
     ),
   );

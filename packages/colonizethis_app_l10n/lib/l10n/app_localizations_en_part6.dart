@@ -322,6 +322,13 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
       'New regiments join the Home Army here after Next turn. This does not detach a field army or assign a march.';
 
   @override
+  String get provinceOverlay_trainNavalAction => 'Train';
+
+  @override
+  String get provinceOverlay_trainNavalGist =>
+      'New ships join the Home Fleet here after Next turn. This does not detach a squadron or assign a sail or mission.';
+
+  @override
   String get provinceOverlay_combineArmiesAction => 'Combine';
 
   @override

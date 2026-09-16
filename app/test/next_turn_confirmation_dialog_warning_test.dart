@@ -66,6 +66,16 @@ void main() {
     expect(find.textContaining('Train Military'), findsNothing);
   });
 
+  testWidgets('does not list untrained naval capacity (Refs #4776 P1)', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(hostApp(entries: const []));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('untrained'), findsNothing);
+    expect(find.textContaining('ship'), findsNothing);
+    expect(find.textContaining('Train Naval'), findsNothing);
+  });
+
   testWidgets('go-to closes without confirming', (WidgetTester tester) async {
     CivilianMissingWorkOrderEntry? goToTarget;
     await tester.pumpWidget(

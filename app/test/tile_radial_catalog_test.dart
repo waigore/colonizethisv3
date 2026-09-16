@@ -70,20 +70,23 @@ Map<TileRadialCatalogAction, TileRadialActionVisibility> _vis({
 void main() {
   suppressLogsForTests();
 
-  test('catalog stays the nine civilian work actions (no Train Military)', () {
-    expect(kTileRadialCatalogOrder, hasLength(9));
-    expect(kTileRadialCatalogOrder, [
-      TileRadialCatalogAction.explore,
-      TileRadialCatalogAction.prospect,
-      TileRadialCatalogAction.buildImprovement,
-      TileRadialCatalogAction.buildRoad,
-      TileRadialCatalogAction.purchaseLand,
-      TileRadialCatalogAction.upgradeTown,
-      TileRadialCatalogAction.buildPort,
-      TileRadialCatalogAction.buildRail,
-      TileRadialCatalogAction.buildFort,
-    ]);
-  });
+  test(
+    'catalog stays the nine civilian work actions (no Train Military or Train Naval)',
+    () {
+      expect(kTileRadialCatalogOrder, hasLength(9));
+      expect(kTileRadialCatalogOrder, [
+        TileRadialCatalogAction.explore,
+        TileRadialCatalogAction.prospect,
+        TileRadialCatalogAction.buildImprovement,
+        TileRadialCatalogAction.buildRoad,
+        TileRadialCatalogAction.purchaseLand,
+        TileRadialCatalogAction.upgradeTown,
+        TileRadialCatalogAction.buildPort,
+        TileRadialCatalogAction.buildRail,
+        TileRadialCatalogAction.buildFort,
+      ]);
+    },
+  );
 
   test('ranks only conceivable actions and prefers enabled', () {
     final layout = rankTileRadialCatalog(

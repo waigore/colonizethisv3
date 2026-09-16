@@ -177,6 +177,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final armyMove = missions.armyMove;
   final armyCombine = missions.armyCombine;
   final trainMilitary = missions.trainMilitary;
+  final trainNaval = missions.trainNaval;
   final navalMission = missions.navalMission;
   final detachAndSail = missions.detachAndSail;
   final transferToHomeFleet = missions.transferToHomeFleet;
@@ -214,6 +215,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     armyMove: armyMove,
     armyCombine: armyCombine,
     trainMilitary: trainMilitary,
+    trainNaval: trainNaval,
     navalMission: navalMission,
     detachAndSail: detachAndSail,
     transferToHomeFleet: transferToHomeFleet,

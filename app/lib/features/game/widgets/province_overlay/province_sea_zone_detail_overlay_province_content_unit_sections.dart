@@ -62,6 +62,8 @@ buildProvinceIntelGatedUnitSections({
   VoidCallback? onCombineArmiesTap,
   bool showTrainMilitaryControl = false,
   VoidCallback? onTrainMilitaryTap,
+  bool showTrainNavalControl = false,
+  VoidCallback? onTrainNavalTap,
   ProvinceNavalMissionOverlayControls navalMission =
       ProvinceNavalMissionOverlayControls.hidden,
   ProvinceDetachAndSailOverlayControls detachAndSail =
@@ -204,6 +206,8 @@ buildProvinceIntelGatedUnitSections({
     navalCombine: navalCombine,
     sailMove: sailMove,
     blockadeStatus: blockadeStatus,
+    showTrainNavalControl: showTrainNavalControl,
+    onTrainNavalTap: onTrainNavalTap,
   );
   return (
     economic: economic,

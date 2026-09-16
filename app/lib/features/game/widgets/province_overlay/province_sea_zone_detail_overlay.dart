@@ -26,5 +26,7 @@ export 'province_sea_zone_detail_overlay_tile_section_labels.dart'
         tryParseProvinceOverlayTileCoords;
 export 'province_sea_zone_detail_overlay_train_military_control.dart'
     show kProvinceOverlayTrainMilitaryKey;
+export 'province_sea_zone_detail_overlay_train_naval_control.dart'
+    show kProvinceOverlayTrainNavalKey;
 export 'province_sea_zone_detail_overlay_widget.dart'
     show ProvinceSeaZoneDetailOverlay;

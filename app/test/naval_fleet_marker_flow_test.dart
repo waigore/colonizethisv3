@@ -59,9 +59,11 @@ void main() {
       final game = homeOnlyGame();
       final bus = AppEventBus();
       OpenNavalUnitsPanelEvent? opened;
+      final dialogs = <OpenDialogEvent>[];
       addTearDown(
         bus.on<OpenNavalUnitsPanelEvent>().listen((e) => opened = e).cancel,
       );
+      addTearDown(bus.on<OpenDialogEvent>().listen(dialogs.add).cancel);
 
       await pumpOpenButton(
         tester,
@@ -81,6 +83,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(opened, isNull);
+      expect(dialogs, isEmpty);
       expect(find.byType(SplitFleetDialog), findsOneWidget);
       expect(find.byType(MoveFleetDialog), findsNothing);
       expect(find.byType(NavalMissionMenuDialog), findsNothing);
@@ -98,9 +101,11 @@ void main() {
       );
       final bus = AppEventBus();
       OpenNavalUnitsPanelEvent? opened;
+      final dialogs = <OpenDialogEvent>[];
       addTearDown(
         bus.on<OpenNavalUnitsPanelEvent>().listen((e) => opened = e).cancel,
       );
+      addTearDown(bus.on<OpenDialogEvent>().listen(dialogs.add).cancel);
 
       await pumpOpenButton(
         tester,
@@ -123,6 +128,7 @@ void main() {
       expect(opened!.locationScopeKey, locationScope);
       expect(opened!.tileScopeTileKey, tileKey);
       expect(opened!.initialSelectedFleetId, homeFleetIdFor(humanId));
+      expect(dialogs, isEmpty);
       expect(find.byType(MoveFleetDialog), findsNothing);
       expect(find.byType(NavalMissionMenuDialog), findsNothing);
       expect(find.byType(SplitFleetDialog), findsNothing);

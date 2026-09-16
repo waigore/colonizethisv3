@@ -2949,6 +2949,12 @@ abstract class AppLocalizations {
   /// Default-visible gist under MAP20001 capital Train. Refs #4769.
   String get provinceOverlay_trainMilitaryGist;
 
+  /// MAP20001 Naval Train control on the human capital. Refs #4776.
+  String get provinceOverlay_trainNavalAction;
+
+  /// Default-visible gist under MAP20001 capital Naval Train. Refs #4776.
+  String get provinceOverlay_trainNavalGist;
+
   /// MAP20001 Military Combine control label. Refs #4610.
   String get provinceOverlay_combineArmiesAction;
 
