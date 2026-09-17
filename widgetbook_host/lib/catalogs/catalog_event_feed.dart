@@ -42,6 +42,59 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Work complete — payoff variants',
+        builder: (context) => _playerTurnEventFeedCardStoryFrame(
+          child: PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon work completed! This province is now fully visible.',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon work completed! This tile now sends Grain '
+                    'if still linked.',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon work completed! Town workshops pause until level 4.',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Lisbon work completed! This coast now has a port.',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Lisbon work completed! Siege posture is now wood.',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Lisbon work completed! Grain still sells as that court’s. '
+                    'First bid and gold now start. The land stays the court’s.',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Research complete — tappable link to Technology',
         builder: (context) => _playerTurnEventFeedCardStoryFrame(
           child: PlayerTurnEventFeedCard(

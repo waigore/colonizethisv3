@@ -48,7 +48,9 @@ class GameEventLogger {
       WorkOrderCompletedEvent e =>
         'turn=${e.turnNumber} playerId=${e.playerId} unitId=${e.unitId} '
             'workTarget=${e.workTarget} targetTileKey=${e.targetTileKey} '
-            'provinceId=${e.provinceId} revealedResourceId=${e.revealedResourceId}',
+            'provinceId=${e.provinceId} revealedResourceId=${e.revealedResourceId} '
+            'payoffKind=${e.payoffKind} payoffCommodityId=${e.payoffCommodityId} '
+            'payoffLevel=${e.payoffLevel}',
       PlayerProvinceDiscoveredEvent e =>
         'turn=${e.turnNumber} playerId=${e.playerId} provinceId=${e.provinceId}',
       PlayerSeaZoneDiscoveredEvent e =>

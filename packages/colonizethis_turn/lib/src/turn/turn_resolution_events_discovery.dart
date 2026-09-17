@@ -5,6 +5,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'turn_event_sink.dart';
 import 'turn_resolution_events_common.dart';
+import 'turn_resolution_events_work_payoff.dart';
 import 'turn_resolution_helpers.dart';
 
 Set<String> _seaZonesAtSeaForPlayer(Game game, String playerId) {
@@ -61,17 +62,26 @@ void emitWorkOrderCompletedEvents(
     final provinceId =
         Unit.provinceIdFromTileKey(beforeWork.tileKey) ??
         beforeUnit.locationProvinceId;
-    final event = WorkOrderCompletedEvent(
-      playerId: beforeUnit.ownerId,
-      unitId: beforeUnit.id,
-      workTarget: beforeWork.workTarget,
-      targetTileKey: beforeWork.tileKey,
-      provinceId: provinceId,
-      turnNumber: turn,
+    sink.emit(
+      buildWorkOrderCompletedEvent(
+        stateAfter: stateAfter,
+        playerId: beforeUnit.ownerId,
+        unitId: beforeUnit.id,
+        workTarget: beforeWork.workTarget,
+        targetTileKey: beforeWork.tileKey,
+        provinceId: provinceId,
+        turnNumber: turn,
+      ),
     );
-    sink.emit(event);
   }
   emitSamePhaseProspectCompletedEvents(
+    stateBefore,
+    stateAfter,
+    turn,
+    sink,
+    orders,
+  );
+  emitSamePhasePurchaseLandCompletedEvents(
     stateBefore,
     stateAfter,
     turn,
@@ -122,7 +132,8 @@ void emitSamePhaseProspectCompletedEvents(
           ? resourceId
           : null;
       sink.emit(
-        WorkOrderCompletedEvent(
+        buildWorkOrderCompletedEvent(
+          stateAfter: stateAfter,
           playerId: playerId,
           unitId: unitId,
           workTarget: kWorkTargetProspect,

@@ -28,6 +28,9 @@ class AppWorkOrderCompletedEvent extends GameToUIEvent {
     required this.provinceId,
     required this.turnNumber,
     this.revealedResourceId,
+    this.payoffKind,
+    this.payoffCommodityId,
+    this.payoffLevel,
   });
   final String playerId;
   final String unitId;
@@ -39,4 +42,13 @@ class AppWorkOrderCompletedEvent extends GameToUIEvent {
   /// Prospect-required mineral id when [workTarget] is prospect and the tile
   /// holds one; null for no deposit and for non-Prospect work.
   final String? revealedResourceId;
+
+  /// Ids-only payoff token from stateAfter (Refs #4778).
+  final String? payoffKind;
+
+  /// Commodity id for improve / purchase / yield clauses.
+  final String? payoffCommodityId;
+
+  /// Post-work town development or fort level.
+  final int? payoffLevel;
 }

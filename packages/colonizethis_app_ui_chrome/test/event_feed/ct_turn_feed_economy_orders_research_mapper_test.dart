@@ -121,7 +121,7 @@ void main() {
       expect(entry.text, 'Capital work completed! Prospect found no mineral');
     });
 
-    test('AppWorkOrderCompletedEvent explore line unchanged', () {
+    test('AppWorkOrderCompletedEvent explore line is fully visible', () {
       final entry = singleTurnFeedEntry(
         const AppWorkOrderCompletedEvent(
           playerId: 'gp1',
@@ -130,11 +130,16 @@ void main() {
           targetTileKey: 'ow|1|2',
           provinceId: 'oldWorld|cap',
           turnNumber: 1,
+          payoffKind: WorkOrderPayoffKind.fullyVisible,
         ),
         TurnFeedTestContext(workTargetLabel: (_) => 'Explore'),
       );
 
-      expect(entry.text, 'Capital work completed! Explore finished!');
+      expect(
+        entry.text,
+        'Capital work completed! This province is now fully visible.',
+      );
+      expect(entry.text, isNot(contains('Explore finished!')));
       expect(entry.text, isNot(contains('Prospect found')));
     });
 

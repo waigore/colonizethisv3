@@ -31,6 +31,9 @@ CtEventFeedEntry? mapCtTurnFeedEconomyOrdersResearchEvent({
       :final provinceId,
       :final unitId,
       :final revealedResourceId,
+      :final payoffKind,
+      :final payoffCommodityId,
+      :final payoffLevel,
     ) =>
       _workOrderFeedEntry(
         context: context,
@@ -43,6 +46,11 @@ CtEventFeedEntry? mapCtTurnFeedEconomyOrdersResearchEvent({
           prospectFoundDisplayName: revealedResourceId == null
               ? null
               : context.commodityDisplayName(revealedResourceId),
+          payoffKind: payoffKind,
+          payoffCommodityDisplayName: payoffCommodityId == null
+              ? null
+              : context.commodityDisplayName(payoffCommodityId),
+          payoffLevel: payoffLevel,
         ),
       ),
     ct_models.AppOverseasProfitCreditedEvent(

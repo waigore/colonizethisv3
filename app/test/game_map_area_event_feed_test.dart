@@ -153,11 +153,13 @@ void main() {
           targetTileKey: 'oldWorld|1|0|0',
           provinceId: 'oldWorld|1',
           turnNumber: 1,
+          payoffKind: WorkOrderPayoffKind.bindsCapital,
         ),
       ], turnNumber: 2);
 
-      final line = find.textContaining('Build road finished!');
+      final line = find.textContaining('This tile is now bound to the capital');
       expect(line, findsOneWidget);
+      expect(find.textContaining('Build road finished!'), findsNothing);
       expect(find.textContaining('BUILD_ROAD'), findsNothing);
       expect(find.byIcon(Icons.chevron_right), findsOneWidget);
       await tester.tap(line);

@@ -110,6 +110,9 @@ class GameEventBridge {
             provinceId: event.provinceId,
             turnNumber: event.turnNumber,
             revealedResourceId: event.revealedResourceId,
+            payoffKind: event.payoffKind,
+            payoffCommodityId: event.payoffCommodityId,
+            payoffLevel: event.payoffLevel,
           ),
         );
       case PlayerProvinceDiscoveredEvent():

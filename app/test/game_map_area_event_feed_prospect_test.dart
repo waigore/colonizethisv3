@@ -93,24 +93,30 @@ void main() {
     expect(find.textContaining('Prospect found'), findsNothing);
   });
 
-  testWidgets('Player turn event feed Explore line unchanged (Refs #4746)', (
-    WidgetTester tester,
-  ) async {
-    final harness = newEventFeedHarness(disposeBus: false);
+  testWidgets(
+    'Player turn event feed Explore line is fully visible (Refs #4778)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
 
-    await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
-    await commitEventFeedTurnEvents(tester, harness, [
-      AppWorkOrderCompletedEvent(
-        playerId: harness.humanId,
-        unitId: 'civ_explorer',
-        workTarget: kWorkTargetExplore,
-        targetTileKey: 'oldWorld|1|0|0',
-        provinceId: 'oldWorld|1',
-        turnNumber: 1,
-      ),
-    ], turnNumber: 2);
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppWorkOrderCompletedEvent(
+          playerId: harness.humanId,
+          unitId: 'civ_explorer',
+          workTarget: kWorkTargetExplore,
+          targetTileKey: 'oldWorld|1|0|0',
+          provinceId: 'oldWorld|1',
+          turnNumber: 1,
+          payoffKind: WorkOrderPayoffKind.fullyVisible,
+        ),
+      ], turnNumber: 2);
 
-    expect(find.textContaining('Explore finished!'), findsOneWidget);
-    expect(find.textContaining('Prospect found'), findsNothing);
-  });
+      expect(
+        find.textContaining('This province is now fully visible'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Explore finished!'), findsNothing);
+      expect(find.textContaining('Prospect found'), findsNothing);
+    },
+  );
 }

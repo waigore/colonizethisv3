@@ -14,5 +14,11 @@ export 'turn_resolution_events_discovery.dart'
         emitPlayerDiscoveryEvents,
         emitSamePhaseProspectCompletedEvents,
         emitWorkOrderCompletedEvents;
+export 'turn_resolution_events_work_payoff.dart'
+    show
+        WorkOrderPayoffSnapshot,
+        buildWorkOrderCompletedEvent,
+        emitSamePhasePurchaseLandCompletedEvents,
+        workOrderPayoffSnapshot;
 export 'turn_resolution_events_research.dart' show emitResearchCompleteEvents;
 export 'turn_resolution_events_spy.dart' show emitSpyResolutionEvents;

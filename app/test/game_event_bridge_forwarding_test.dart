@@ -196,6 +196,9 @@ void main() {
       expect(evt.provinceId, 'oldWorld|p1');
       expect(evt.turnNumber, 2);
       expect(evt.revealedResourceId, isNull);
+      expect(evt.payoffKind, isNull);
+      expect(evt.payoffCommodityId, isNull);
+      expect(evt.payoffLevel, isNull);
     });
 
     test('forwards WorkOrderCompletedEvent prospect resource', () async {
@@ -212,6 +215,9 @@ void main() {
           provinceId: 'oldWorld|p1',
           turnNumber: 2,
           revealedResourceId: 'iron',
+          payoffKind: WorkOrderPayoffKind.fullyVisible,
+          payoffCommodityId: 'grain',
+          payoffLevel: 2,
         ),
       );
       await pumpEventQueue();
@@ -219,6 +225,9 @@ void main() {
       expect(received, hasLength(1));
       expect(received.first.revealedResourceId, 'iron');
       expect(received.first.workTarget, kWorkTargetProspect);
+      expect(received.first.payoffKind, WorkOrderPayoffKind.fullyVisible);
+      expect(received.first.payoffCommodityId, 'grain');
+      expect(received.first.payoffLevel, 2);
     });
   });
 }

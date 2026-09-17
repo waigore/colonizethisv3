@@ -1,3 +1,5 @@
+import 'ct_event_feed_work_order_payoff.dart';
+
 /// Plain-language copy for turn-event feed rows (Refs #4145).
 class CtEventFeedText {
   CtEventFeedText._();
@@ -191,21 +193,26 @@ class CtEventFeedText {
       : 'Spy defected in $provinceLabel! Agent joined $newOwnerLabel!';
 
   static const String prospectWorkTarget = 'prospect';
+  static const String exploreWorkTarget = 'explore';
 
   static String workOrderCompletedLine({
     required String provinceLabel,
     required String workTargetLabel,
     String? workTarget,
     String? prospectFoundDisplayName,
+    String? payoffKind,
+    String? payoffCommodityDisplayName,
+    int? payoffLevel,
   }) {
-    if (workTarget == prospectWorkTarget) {
-      final found =
-          prospectFoundDisplayName == null || prospectFoundDisplayName.isEmpty
-          ? 'no mineral'
-          : prospectFoundDisplayName;
-      return '$provinceLabel work completed! Prospect found $found';
-    }
-    return '$provinceLabel work completed! $workTargetLabel finished!';
+    final clause = workOrderCompletedPayoffClause(
+      workTargetLabel: workTargetLabel,
+      workTarget: workTarget,
+      prospectFoundDisplayName: prospectFoundDisplayName,
+      payoffKind: payoffKind,
+      payoffCommodityDisplayName: payoffCommodityDisplayName,
+      payoffLevel: payoffLevel,
+    );
+    return '$provinceLabel work completed! $clause';
   }
 
   static const String eventResolvedFallback = 'Event resolved!';
