@@ -20,5 +20,7 @@ export 'turn_resolution_events_work_payoff.dart'
         buildWorkOrderCompletedEvent,
         emitSamePhasePurchaseLandCompletedEvents,
         workOrderPayoffSnapshot;
+export 'turn_resolution_events_work_payoff_improve.dart'
+    show buildImprovementPayoffKind;
 export 'turn_resolution_events_research.dart' show emitResearchCompleteEvents;
 export 'turn_resolution_events_spy.dart' show emitSpyResolutionEvents;

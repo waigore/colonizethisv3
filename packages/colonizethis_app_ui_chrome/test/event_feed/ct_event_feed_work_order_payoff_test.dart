@@ -44,6 +44,33 @@ void main() {
       expect(line, isNot(contains('warehouse')));
     });
 
+    test('Build improvement town limit names goods without warehouse fill', () {
+      final line = CtEventFeedText.workOrderCompletedLine(
+        provinceLabel: 'Lisbon',
+        workTargetLabel: 'Build improvement',
+        workTarget: 'build_improvement',
+        payoffKind: WorkOrderPayoffKind.townLimit,
+        payoffCommodityDisplayName: 'Grain',
+      );
+      expect(
+        line,
+        contains('Town development still limits what Grain arrives.'),
+      );
+      expect(line, isNot(contains('warehouse')));
+      expect(line, isNot(contains('finished!')));
+    });
+
+    test('Build improvement unbound does not name a job finished', () {
+      final line = CtEventFeedText.workOrderCompletedLine(
+        provinceLabel: 'Lisbon',
+        workTargetLabel: 'Build improvement',
+        workTarget: 'build_improvement',
+        payoffKind: WorkOrderPayoffKind.unbound,
+      );
+      expect(line, contains('This tile is still unbound.'));
+      expect(line, isNot(contains('finished!')));
+    });
+
     test('Upgrade town pause gist uses post-work level', () {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',

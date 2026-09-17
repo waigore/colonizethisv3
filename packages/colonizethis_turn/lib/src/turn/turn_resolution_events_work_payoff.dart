@@ -4,6 +4,7 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'turn_resolution_events_common.dart';
+import 'turn_resolution_events_work_payoff_improve.dart';
 import 'turn_event_sink.dart';
 
 /// Ids-only payoff snapshot captured from [stateAfter] (Refs #4778).
@@ -23,6 +24,8 @@ WorkOrderPayoffSnapshot workOrderPayoffSnapshot({
   required Game stateAfter,
   required String workTarget,
   required String tileKey,
+  String? playerId,
+  ConnectivityResult? connectivity,
 }) {
   final resourceId = stateAfter.worldState.resourceAtTile(tileKey);
   final provinceId = Unit.provinceIdFromTileKey(tileKey);
@@ -34,7 +37,13 @@ WorkOrderPayoffSnapshot workOrderPayoffSnapshot({
       payoffKind: WorkOrderPayoffKind.fullyVisible,
     ),
     kWorkTargetBuildImprovement => WorkOrderPayoffSnapshot(
-      payoffKind: WorkOrderPayoffKind.yieldRaise,
+      payoffKind: buildImprovementPayoffKind(
+        stateAfter: stateAfter,
+        tileKey: tileKey,
+        resourceId: resourceId,
+        playerId: playerId,
+        connectivity: connectivity,
+      ),
       payoffCommodityId: resourceId,
     ),
     kWorkTargetUpgradeTown => _townSnapshot(province?.townDevelopmentLevel),
@@ -62,6 +71,7 @@ WorkOrderCompletedEvent buildWorkOrderCompletedEvent({
   required String provinceId,
   required int turnNumber,
   String? revealedResourceId,
+  ConnectivityResult? connectivity,
 }) {
   final snap = workTarget == kWorkTargetProspect
       ? const WorkOrderPayoffSnapshot()
@@ -69,6 +79,8 @@ WorkOrderCompletedEvent buildWorkOrderCompletedEvent({
           stateAfter: stateAfter,
           workTarget: workTarget,
           tileKey: targetTileKey,
+          playerId: playerId,
+          connectivity: connectivity,
         );
   return WorkOrderCompletedEvent(
     playerId: playerId,

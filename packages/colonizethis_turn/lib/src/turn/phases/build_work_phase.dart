@@ -47,6 +47,8 @@ TurnPhaseStepOutcome buildWorkTurnPhaseHandler(
     turn,
     config.eventSink,
     orders: config.orders,
+    topology: config.topology,
+    tileMapByRegion: config.tileMapByRegion,
   );
   return TurnPhaseStepContinue(acc.copyWith(game: afterBuildWork));
 }

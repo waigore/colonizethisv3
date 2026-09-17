@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -35,6 +36,8 @@ void emitWorkOrderCompletedEvents(
   int turn,
   TurnEventSink sink, {
   Orders orders = const Orders(),
+  MapTopology? topology,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final beforeById = stateBefore.worldState.allUnitsById;
   final afterById = stateAfter.worldState.allUnitsById;
@@ -47,6 +50,25 @@ void emitWorkOrderCompletedEvents(
     kWorkTargetBuildRail,
     kWorkTargetExplore,
   };
+  Map<String, ConnectivityResult>? connectivityByPlayer;
+  ConnectivityResult? connectivityFor(String playerId) {
+    if (topology == null ||
+        tileMapByRegion == null ||
+        tileMapByRegion.isEmpty) {
+      return null;
+    }
+    final cached = connectivityByPlayer?[playerId];
+    if (cached != null) return cached;
+    final resolved = resolveConnectivity(
+      game: stateAfter,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+      onlyPlayerIds: {playerId},
+    );
+    connectivityByPlayer = {...?connectivityByPlayer, ...resolved};
+    return connectivityByPlayer![playerId];
+  }
+
   for (final entry in beforeById.entries) {
     final beforeUnit = entry.value;
     final beforeWork = beforeUnit.currentWork;
@@ -71,6 +93,9 @@ void emitWorkOrderCompletedEvents(
         targetTileKey: beforeWork.tileKey,
         provinceId: provinceId,
         turnNumber: turn,
+        connectivity: beforeWork.workTarget == kWorkTargetBuildImprovement
+            ? connectivityFor(beforeUnit.ownerId)
+            : null,
       ),
     );
   }
