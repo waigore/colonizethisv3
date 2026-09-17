@@ -1,4 +1,5 @@
 import 'package:colonizethis_app_ui_chrome/event_feed/ct_event_feed_text.dart';
+import 'package:colonizethis_app_ui_chrome/event_feed/ct_event_feed_work_order_payoff.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -22,7 +23,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Build improvement',
-        workTarget: 'build_improvement',
+        workTarget: EventFeedWorkTargets.buildImprovement,
         payoffKind: WorkOrderPayoffKind.yieldRaise,
         payoffCommodityDisplayName: 'Grain',
       );
@@ -36,7 +37,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Build improvement',
-        workTarget: 'build_improvement',
+        workTarget: EventFeedWorkTargets.buildImprovement,
         payoffKind: WorkOrderPayoffKind.roadLimit,
         payoffCommodityDisplayName: 'Grain',
       );
@@ -48,7 +49,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Build improvement',
-        workTarget: 'build_improvement',
+        workTarget: EventFeedWorkTargets.buildImprovement,
         payoffKind: WorkOrderPayoffKind.townLimit,
         payoffCommodityDisplayName: 'Grain',
       );
@@ -64,7 +65,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Build improvement',
-        workTarget: 'build_improvement',
+        workTarget: EventFeedWorkTargets.buildImprovement,
         payoffKind: WorkOrderPayoffKind.unbound,
       );
       expect(line, contains('This tile is still unbound.'));
@@ -75,7 +76,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Upgrade town',
-        workTarget: 'upgrade_town',
+        workTarget: EventFeedWorkTargets.upgradeTown,
         payoffKind: WorkOrderPayoffKind.workshopsPause,
         payoffLevel: 2,
       );
@@ -87,7 +88,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Build port',
-        workTarget: 'build_port',
+        workTarget: EventFeedWorkTargets.buildPort,
         payoffKind: WorkOrderPayoffKind.portPresent,
       );
       expect(line, 'Lisbon work completed! This coast now has a port.');
@@ -97,7 +98,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Build fort',
-        workTarget: 'build_fort',
+        workTarget: EventFeedWorkTargets.buildFort,
         payoffKind: WorkOrderPayoffKind.fortWood,
         payoffLevel: 1,
       );
@@ -110,7 +111,7 @@ void main() {
       final line = CtEventFeedText.workOrderCompletedLine(
         provinceLabel: 'Lisbon',
         workTargetLabel: 'Purchase land',
-        workTarget: 'purchase_land',
+        workTarget: EventFeedWorkTargets.purchaseLand,
         payoffKind: WorkOrderPayoffKind.purchaseTradeable,
         payoffCommodityDisplayName: 'Grain',
       );

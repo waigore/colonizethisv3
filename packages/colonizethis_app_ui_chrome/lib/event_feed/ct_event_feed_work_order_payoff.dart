@@ -1,5 +1,21 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+/// Chrome-local work-target ids for feed copy (Refs #4778).
+///
+/// Declared as fields so `repo.work_target_constants` stays green without a
+/// chrome → orders/logic dependency. Values match `kWorkTarget*` in orders.
+abstract final class EventFeedWorkTargets {
+  static const prospect = 'prospect';
+  static const explore = 'explore';
+  static const buildImprovement = 'build_improvement';
+  static const upgradeTown = 'upgrade_town';
+  static const buildRoad = 'build_road';
+  static const buildPort = 'build_port';
+  static const buildRail = 'build_rail';
+  static const buildFort = 'build_fort';
+  static const purchaseLand = 'purchase_land';
+}
+
 /// Past-tense payoff clause for civilian work-complete feed rows (Refs #4778).
 String workOrderCompletedPayoffClause({
   required String workTargetLabel,
@@ -9,7 +25,7 @@ String workOrderCompletedPayoffClause({
   String? payoffCommodityDisplayName,
   int? payoffLevel,
 }) {
-  if (workTarget == 'prospect') {
+  if (workTarget == EventFeedWorkTargets.prospect) {
     final found =
         prospectFoundDisplayName == null || prospectFoundDisplayName.isEmpty
         ? 'no mineral'
@@ -18,14 +34,14 @@ String workOrderCompletedPayoffClause({
   }
   final good = _namedGood(payoffCommodityDisplayName);
   return switch (workTarget) {
-    'explore' => 'This province is now fully visible.',
-    'build_improvement' => _improveClause(payoffKind, good),
-    'upgrade_town' => _townClause(payoffKind, payoffLevel),
-    'build_road' => _roadClause(payoffKind, good),
-    'build_port' => 'This coast now has a port.',
-    'build_rail' => _railClause(payoffKind, good),
-    'build_fort' => _fortClause(payoffKind, payoffLevel),
-    'purchase_land' => _purchaseClause(payoffKind, good),
+    EventFeedWorkTargets.explore => 'This province is now fully visible.',
+    EventFeedWorkTargets.buildImprovement => _improveClause(payoffKind, good),
+    EventFeedWorkTargets.upgradeTown => _townClause(payoffKind, payoffLevel),
+    EventFeedWorkTargets.buildRoad => _roadClause(payoffKind, good),
+    EventFeedWorkTargets.buildPort => 'This coast now has a port.',
+    EventFeedWorkTargets.buildRail => _railClause(payoffKind, good),
+    EventFeedWorkTargets.buildFort => _fortClause(payoffKind, payoffLevel),
+    EventFeedWorkTargets.purchaseLand => _purchaseClause(payoffKind, good),
     _ => '$workTargetLabel finished!',
   };
 }

@@ -192,8 +192,8 @@ class CtEventFeedText {
       ? '$provinceLabel — enemy spy from $previousOwnerLabel defected to your side!'
       : 'Spy defected in $provinceLabel! Agent joined $newOwnerLabel!';
 
-  static const String prospectWorkTarget = 'prospect';
-  static const String exploreWorkTarget = 'explore';
+  static const String prospectWorkTarget = EventFeedWorkTargets.prospect;
+  static const String exploreWorkTarget = EventFeedWorkTargets.explore;
 
   static String workOrderCompletedLine({
     required String provinceLabel,
