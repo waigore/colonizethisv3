@@ -126,6 +126,9 @@ mixin GameMapAreaLastTurnPlaybackAnchors
         :final provinceId,
         :final workTarget,
         :final revealedResourceId,
+        :final payoffKind,
+        :final payoffCommodityId,
+        :final payoffLevel,
       ) =>
         CtEventFeedText.workOrderCompletedLine(
           provinceLabel: provinceLabel(provinceId),
@@ -134,6 +137,11 @@ mixin GameMapAreaLastTurnPlaybackAnchors
           prospectFoundDisplayName: revealedResourceId == null
               ? null
               : commodityDisplayName(appL10n(context), revealedResourceId),
+          payoffKind: payoffKind,
+          payoffCommodityDisplayName: payoffCommodityId == null
+              ? null
+              : commodityDisplayName(appL10n(context), payoffCommodityId),
+          payoffLevel: payoffLevel,
         ),
       ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
         '${provinceLabel(provinceId)} discovered!',

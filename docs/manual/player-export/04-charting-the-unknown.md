@@ -49,7 +49,7 @@ You explore and prospect **your** land, **unclaimed** land, and (with a **Consul
 
 1. Pick a land tile in a province that is **partly seen**: at least one land tile Fogged or Fully visible **and** at least one land tile still Unknown. The work is **free**. Before you **Assign**, enabled **Explore** shows `After this work: this whole province becomes fully visible · Takes N turn(s)` (or **Takes 1 turn**). Cost stays absent (free).
 2. Larger provinces take longer, up to **three** turns. Time is compared to the biggest province on the same map, so a small province finishes sooner than a large one.
-3. When that work **finishes**, after you confirm **Next turn**, every tile in that province becomes **Fully visible** for you.
+3. When that work **finishes**, after you confirm **Next turn**, every tile in that province becomes **Fully visible** for you. **Player turn event feed** says `{province} work completed! This province is now fully visible.` Last-turn highlight captions on **Empire overview / map area** use the same line.
 
 **Prospect**
 

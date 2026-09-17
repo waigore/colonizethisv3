@@ -405,7 +405,7 @@ After a resolved turn, the empire map host may play human-scoped **spatial** out
 | `kLastTurnPulseAngularFrequency` | same as `RegionMapPalette.hoveredProvinceGlowAngularFrequency` (`2π`) | Pulse opacity sine period (shared with hover / valid-target family) |
 
 - **Pulse colour:** Distinct from selection orange (`mapSelectedHighlightOrange`) and locate cyan (`mapSecondarySelectionCyan`); opacity uses the valid-target sine family at `kLastTurnPulseAngularFrequency`.
-- **Spatial types (resolvable anchors only):** land combat (`provinceId`), naval combat (`seaZoneId`), province capture (`provinceId`), work-order completed (`targetTileKey` / province), province discovery (`provinceId`), sea discovery (`seaZoneId`). Unresolved anchors omit the beat. Work-complete captions match the `OVL70001` feed line, including Prospect survey-result copy (`Prospect found {displayName}` / `Prospect found no mineral`; Refs #4746).
+- **Spatial types (resolvable anchors only):** land combat (`provinceId`), naval combat (`seaZoneId`), province capture (`provinceId`), work-order completed (`targetTileKey` / province), province discovery (`provinceId`), sea discovery (`seaZoneId`). Unresolved anchors omit the beat. Work-complete captions match the `OVL70001` feed line, including Prospect survey-result copy (`Prospect found {displayName}` / `Prospect found no mineral`; Refs #4746) and per-target past-tense payoff clauses (Explore fully visible, improve/town/transport/fort/purchase-land; Refs #4778).
 - **Start gates:** When `OVL20001` will mount (`Game.victory != null`, or `Game.calendarCampaignHalted` with `Game.victory == null`), playback starts only after **View final state** (`VictoryOverlayViewFinalStateEvent`) — never under the overlay scrim (military or calendar-complete). Else when `DLG50001` was shown, playback starts only after that dialog closes (`TurnNewsDialogClosedEvent`). When neither modal applies, playback may start after `TurnResolutionCompleteEvent`. Do not start under in-resolution diplomacy overlays. Closing news while `OVL20001` is still visible does not start playback.
 - **Behavior:** One beat at a time; center camera + switch Old/New World tab as locate does; show feed-style caption; **Skip** or map tap ends the sequence (camera stays; no `MAP20001` / unit panel opens). Hover bounce, province glow, and work-target yellow pulse remain unchanged when playback is idle.
 
@@ -417,6 +417,7 @@ After a resolved turn, the empire map host may play human-scoped **spatial** out
 - Given playback is running, when the player taps the map or **Skip**, then the sequence ends immediately without opening overlays.
 - Given only non-spatial human events (or an empty resolvable spatial set), when the start gate fires, then the map does not auto-pan or pulse.
 - Given a human Prospect `AppWorkOrderCompletedEvent` whose tile anchor resolves, when last-turn playback runs after `DLG50001` closes, then the beat caption matches the feed survey-result line (subject to `kLastTurnPlaybackCap`; Refs #4746).
+- Given a human Explore, Build-improvement, Upgrade-town, Build-port, Build-fort, or Purchase-land `AppWorkOrderCompletedEvent` whose tile anchor resolves, when last-turn playback runs after `DLG50001` closes, then the beat caption matches the `OVL70001` payoff line for that event (subject to `kLastTurnPlaybackCap`; Refs #4778).
 
 ---
 

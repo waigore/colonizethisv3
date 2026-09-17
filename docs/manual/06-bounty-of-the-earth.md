@@ -87,7 +87,7 @@ Those **Extraction** and **Available** rows **project** what this province would
 
 Rejected assigns show **Insufficient treasury** or **Insufficient materials**.
 
-Pending rows on `UNIT10001` show required cost icons and amounts and how many turns remain (pending: total turns; in-progress: remaining / total). Most work takes one or more turns; duration can rise with the target level and terrain. Forts take extra turns at higher levels. **Purchase land** takes **1 turn**. Finishing the last work turn still does not fill the warehouse until a **later** turn’s extraction. **Cancel** of in-progress work sends the civilian back to the tile they left.
+Pending rows on `UNIT10001` show required cost icons and amounts and how many turns remain (pending: total turns; in-progress: remaining / total). Most work takes one or more turns; duration can rise with the target level and terrain. Forts take extra turns at higher levels. **Purchase land** takes **1 turn**. Finishing the last work turn still does not fill the warehouse until a **later** turn’s extraction. After **Next turn**, `OVL70001` **Player turn event feed** (and the matching last-turn caption on `MAP10001`) names what that finished work changed: the tile now sends the next goods if still linked, or that the road or town still limits what arrives, or that it is still unbound; town workshops start, pause until level 4, or resume; a port or railroad is present, or the tile is bound to the capital; siege posture in ordinary words (open field, wood, stone, or modern); **Purchase land** privileges start (first bid and gold on sales, or riches into your treasury) and the land stays theirs. **Cancel** of in-progress work sends the civilian back to the tile they left.
 
 ### Limits you must respect
 
@@ -135,6 +135,7 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 - [x] Explains `MAP20001` Extraction/Available as a projection from the current world (new-game visible; mid-turn staged work does not change the numbers until after **Next turn**).
 - [x] Distinguishes that line from `GAME20001` **Production screen** stockpile.
 - [x] Explains `MAP20001` Extraction two-number amounts such as `1 (5) Grain` (what arrives, then the full amount), the capital grain bonus note, and the short partial-yield reason line when the capital link or road/port path limits what arrives (cross-ref Chapter 3).
+- [x] After Next turn, `OVL70001` names what finished **Build improvement**, **Upgrade town**, **Build road**, **Build port**, **Build railroad**, **Build fort**, and **Purchase land** changed, in the same family as the assign-time payoff lines.
 - [x] Sources match the chapter coverage map.
 
 ## Sources
@@ -157,6 +158,7 @@ Rival courts send the same kinds of civilians you do. They raise farms and towns
 - `SPEC/ui/train-civilians-dialog.md`
 - `SPEC/ui/province-economic-extraction-available.md`
 - `SPEC/ui/map-widget.md`
+- `SPEC/ui/player-turn-event-feed.md`
 - `SPEC/ui/development-panel.md`
 - `SPEC/ui/components/development-assign-row.md`
 - `SPEC/ui/counsel-panel.md`
