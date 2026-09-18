@@ -846,4 +846,8 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
   String get provinceOverlay_trainCivilianGistRailBuilder =>
       'A new Rail Builder appears at your capital after Next turn. This does not assign Build railroad on this tile.';
+
+  @override
+  String get production_affordanceFocusLabourControlsSemantic =>
+      'Show Labour Controls';
 }

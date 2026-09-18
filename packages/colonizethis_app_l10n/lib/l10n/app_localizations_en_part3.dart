@@ -271,10 +271,6 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Open Development for $name';
 
   @override
-  String get production_affordanceFocusLabourControlsSemantic =>
-      'Show Labour Controls';
-
-  @override
   String get production_food => 'Food';
 
   @override
