@@ -37,6 +37,25 @@ Stockpile get _fullStockpile => Stockpile(
 WorkerPool get _fullWorkerPool =>
     const WorkerPool(peasants: 10, apprentices: 5, journeymen: 2, masters: 1);
 
+/// Plenty of recipe inputs, too little labour — Allocation affordance is
+/// labour-limited (`Up to N, limited by labour this turn`).
+/// SPEC/ui/production-panel.md § Affordance → Labour Controls (Refs #4780).
+Player labourLimitedAllocationProductionPlayer() {
+  final game = demoGameForOverlay;
+  final base = game.players.isNotEmpty ? game.players.first : null;
+  const pool = WorkerPool(peasants: 2);
+  if (base == null) {
+    return Player(
+      id: 'demo',
+      displayName: 'Demo',
+      isHuman: true,
+      stockpile: _fullStockpile,
+      workerPool: pool,
+    );
+  }
+  return base.copyWith(stockpile: _fullStockpile, workerPool: pool);
+}
+
 /// Player with abundant resources and workers for "full availability" story.
 Player fullAvailabilityProductionPlayer() {
   final game = demoGameForOverlay;

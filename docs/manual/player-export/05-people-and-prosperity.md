@@ -30,7 +30,7 @@ Neither the Production line nor the map panel buys food, changes **Allocation**,
 
 ### Recruit, train, and disband
 
-On **Production screen**, use **Labour Controls** under that labour line. Each row shows the printed cost (peasant **Fabric ×2**; trained rows **£… + Paper ×N + 1 peasant**), how much labour that worker gives, and what food or luxury they eat. If **+** will not press, hold it to read why. The reason is one of the printed reject lines listed later in this section. New workers add labour on a **later** turn, not the turn you queue them.
+On **Production screen**, use **Labour Controls** under that labour line. If an Allocation recipe says it is limited by labour this turn, tap that line to bring **Labour Controls** into view — it does not queue a hire. Rest on that line to read that new workers staff next Production. Each row shows the printed cost (peasant **Fabric ×2**; trained rows **£… + Paper ×N + 1 peasant**), how much labour that worker gives, and what food or luxury they eat. If **+** will not press, hold it to read why. The reason is one of the printed reject lines listed later in this section. New workers add labour on a **later** turn, not the turn you queue them.
 
 1. Open **Labour Controls** under the worker grid. Tap **+** on **Peasant** to queue **Recruit**, or **+** on **Apprentice**, **Journeyman**, or **Master** to queue **Train**. Training always consumes **one peasant**; there is no direct promotion from apprentice to journeyman or journeyman to master. After you confirm **Next turn**, the game carries it out. Tap **−** to take back the last queued hire of that rank. When a rank has queued hires, the row shows **Queued: N**. Peasants cannot be disbanded.
 2. Printed costs:

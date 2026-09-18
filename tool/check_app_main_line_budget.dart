@@ -167,7 +167,9 @@ const _packageName = 'colonizethis_app';
 // (Refs #4776; measured 99_374).
 // raised for OVL70001/MAP10001 civilian work-complete payoff
 // (Refs #4778; measured 99_385).
-const _maxMainLines = 99385;
+// raised for GAME20001 labour-limited Allocation affordance focusing
+// Labour Controls (Refs #4780; measured 99_506).
+const _maxMainLines = 99506;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

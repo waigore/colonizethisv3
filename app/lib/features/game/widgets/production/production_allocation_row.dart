@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'production_affordance_development_cell.dart';
+import 'production_affordance_focus_cell.dart';
 import 'production_recipe_affordance.dart';
 import 'production_recipe_affordance_copy.dart';
 import 'production_allocation_row_controls.dart';
@@ -33,6 +33,7 @@ class ProductionAllocationRow extends StatelessWidget {
     this.canEditLabour = true,
     this.counselStar,
     this.onOpenDevelopment,
+    this.onFocusLabourControls,
   });
 
   final ProductionRecipe recipe;
@@ -55,6 +56,9 @@ class ProductionAllocationRow extends StatelessWidget {
 
   /// When set, commodity-navigable affordance lines open Development (Refs #4725).
   final void Function(String commodityId)? onOpenDevelopment;
+
+  /// When set, labour-limited affordance lines focus Labour Controls (Refs #4780).
+  final VoidCallback? onFocusLabourControls;
 
   int get desiredOutput => desiredOutputByRecipe[recipe.id] ?? 0;
 
@@ -117,18 +121,29 @@ class ProductionAllocationRow extends StatelessWidget {
       final openSemantic = l10n.production_affordanceOpenDevelopmentSemantic(
         rowAffordance.limitingLabel,
       );
-      return ProductionAffordanceDevelopmentCell(
+      return ProductionAffordanceFocusCell(
         key: ValueKey<String>('production_affordance_${recipe.id}'),
-        onOpenDevelopment: () => openDevelopment(commodityId),
+        onTap: () => openDevelopment(commodityId),
         tooltip: '${copy.tooltipMessage} $openSemantic',
         semanticLabel: '${copy.semanticsLabel} $openSemantic',
         child: text,
       );
     }
-    return Tooltip(
-      message: copy.tooltipMessage,
-      child: text,
-    );
+    final focusLabour = onFocusLabourControls;
+    if (focusLabour != null &&
+        recipeAffordanceFocusesLabourControls(rowAffordance)) {
+      final focusSemantic =
+          l10n.production_affordanceFocusLabourControlsSemantic;
+      final staffsNext = l10n.production_labourStaffsNextProduction;
+      return ProductionAffordanceFocusCell(
+        key: ValueKey<String>('production_affordance_${recipe.id}'),
+        onTap: focusLabour,
+        tooltip: '${copy.tooltipMessage} $focusSemantic $staffsNext',
+        semanticLabel: '${copy.semanticsLabel} $focusSemantic $staffsNext',
+        child: text,
+      );
+    }
+    return Tooltip(message: copy.tooltipMessage, child: text);
   }
 
   @override

@@ -25,6 +25,10 @@ bool recipeAffordanceOpensDevelopment(RecipeAffordance affordance) =>
     !recipeAffordanceIsLabourLimited(affordance) &&
     affordance.limitingCommodityId != null;
 
+/// Focus-iff for Allocation → Labour Controls (Refs #4780).
+bool recipeAffordanceFocusesLabourControls(RecipeAffordance affordance) =>
+    !affordance.capLimited && recipeAffordanceIsLabourLimited(affordance);
+
 ProductionRecipeAffordanceCopy formatProductionRecipeAffordanceCopy({
   required AppLocalizations l10n,
   required RecipeAffordance affordance,

@@ -8,6 +8,7 @@ import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/resource_icon.dart';
 import 'production_available_grid.dart';
 import 'production_forces_food_readiness_summary.dart';
+import 'production_labour_controls_highlight.dart';
 import 'production_labour_readiness_summary.dart';
 import 'production_labour_section.dart';
 import 'production_panel_constants.dart';
@@ -110,13 +111,22 @@ extension ProductionPanelAvailableSections on ProductionPanelAvailableSubpanel {
     if (currentOrders != null && labourCallbacks != null) {
       children.addAll(<Widget>[
         CtGap.ml,
-        CtSectionLabel(l10n.production_labourControlsSectionLabel),
-        const SizedBox(height: 6),
-        ProductionLabourSection(
-          player: player,
-          currentOrders: currentOrders!,
-          canEdit: canEditLabour,
-          callbacks: labourCallbacks!,
+        ProductionLabourControlsHighlight(
+          focusToken: labourControlsFocusToken,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CtSectionLabel(l10n.production_labourControlsSectionLabel),
+              const SizedBox(height: 6),
+              ProductionLabourSection(
+                player: player,
+                currentOrders: currentOrders!,
+                canEdit: canEditLabour,
+                callbacks: labourCallbacks!,
+              ),
+            ],
+          ),
         ),
       ]);
     }
