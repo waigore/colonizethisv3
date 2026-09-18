@@ -34,6 +34,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
     this.labourCallbacks,
     this.canEditLabour = false,
     this.onOpenTradeMarket,
+    this.labourControlsFocusToken = 0,
     super.key,
   });
 
@@ -50,6 +51,9 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
   final ProductionLabourCallbacks? labourCallbacks;
   final bool canEditLabour;
   final void Function(String commodityId)? onOpenTradeMarket;
+
+  /// Increments when a labour-limited Allocation affordance is tapped (Refs #4780).
+  final int labourControlsFocusToken;
 
   /// Quantity shown in Available commodity cells for tradeable stock.
   ///

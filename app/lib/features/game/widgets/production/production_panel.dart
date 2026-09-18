@@ -16,7 +16,7 @@ export 'production_panel_constants.dart';
 
 /// Production screen panel: Available stockpile + Allocation recipe rows.
 /// SPEC/ui/production-panel.md.
-class ProductionPanel extends StatelessWidget {
+class ProductionPanel extends StatefulWidget {
   const ProductionPanel({
     super.key,
     required this.game,
@@ -83,38 +83,51 @@ class ProductionPanel extends StatelessWidget {
   }
 
   @override
+  State<ProductionPanel> createState() => _ProductionPanelState();
+}
+
+class _ProductionPanelState extends State<ProductionPanel> {
+  int _labourControlsFocusToken = 0;
+
+  void _focusLabourControls() {
+    setState(() => _labourControlsFocusToken++);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final effectiveLabour = labourReadiness.effectiveLabour;
-    final inputCommodityIds = _inputCommodityIds;
-    final outputCommodityIds = _outputCommodityIds;
+    final effectiveLabour = widget.labourReadiness.effectiveLabour;
+    final inputCommodityIds = ProductionPanel._inputCommodityIds;
+    final outputCommodityIds = ProductionPanel._outputCommodityIds;
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final availableSubpanel = ProductionPanelAvailableSubpanel(
-      game: game,
-      player: player,
-      labourReadiness: labourReadiness,
-      forcesFeeding: forcesFeeding,
+      game: widget.game,
+      player: widget.player,
+      labourReadiness: widget.labourReadiness,
+      forcesFeeding: widget.forcesFeeding,
       inputCommodityIds: inputCommodityIds,
       outputCommodityIds: outputCommodityIds,
-      netDeltasByCommodity: netDeltasByCommodity,
+      netDeltasByCommodity: widget.netDeltasByCommodity,
       l10n: l10n,
-      onOpenCommodityBreakdown: onOpenCommodityBreakdown,
-      currentOrders: currentOrders,
-      labourCallbacks: labourCallbacks,
-      canEditLabour: canEditLabour,
-      onOpenTradeMarket: onOpenTradeMarket,
+      onOpenCommodityBreakdown: widget.onOpenCommodityBreakdown,
+      currentOrders: widget.currentOrders,
+      labourCallbacks: widget.labourCallbacks,
+      canEditLabour: widget.canEditLabour,
+      onOpenTradeMarket: widget.onOpenTradeMarket,
+      labourControlsFocusToken: _labourControlsFocusToken,
     );
     final allocationSubpanel = ProductionPanelAllocationSubpanel(
-      player: player,
+      player: widget.player,
       effectiveLabour: effectiveLabour,
-      desiredOutputByRecipe: desiredOutputByRecipe,
-      onDesiredOutputChanged: onDesiredOutputChanged,
+      desiredOutputByRecipe: widget.desiredOutputByRecipe,
+      onDesiredOutputChanged: widget.onDesiredOutputChanged,
       l10n: l10n,
-      canEditLabour: canEditLabour,
+      canEditLabour: widget.canEditLabour,
       starredProduceRecommendationsByRecipeId:
-          starredProduceRecommendationsByRecipeId,
-      onOpenCounsel: onOpenCounsel,
-      onOpenDevelopment: onOpenDevelopment,
+          widget.starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: widget.onOpenCounsel,
+      onOpenDevelopment: widget.onOpenDevelopment,
+      onFocusLabourControls: _focusLabourControls,
     );
 
     if (isNarrow) {

@@ -78,6 +78,7 @@ List<Widget> productionAllocationRows({
   required ProductionOpenCounselCallback? onOpenCounsel,
   required ThemeData theme,
   void Function(String commodityId)? onOpenDevelopment,
+  VoidCallback? onFocusLabourControls,
 }) {
   final recipes = ProductionRecipesCatalog.all;
   if (recipes.isEmpty) {
@@ -138,6 +139,7 @@ List<Widget> productionAllocationRows({
           canEditLabour: canEditLabour,
           counselStar: counselStar,
           onOpenDevelopment: onOpenDevelopment,
+          onFocusLabourControls: onFocusLabourControls,
         ),
       ),
     );

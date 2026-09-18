@@ -15,9 +15,7 @@ void main() {
 
   group('recipeAllocationComfortHeadroomActive', () {
     test('false when desired >= max', () {
-      final stock = Stockpile(
-        quantities: {CommodityCatalog.timber.id: 100},
-      );
+      final stock = Stockpile(quantities: {CommodityCatalog.timber.id: 100});
       expect(
         recipeAllocationComfortHeadroomActive(
           recipe: lumberRecipe,
@@ -46,28 +44,26 @@ void main() {
       );
     });
 
-    test('true at desired zero when max > 0 and strict slack on inputs/labour',
-        () {
-      final stock = Stockpile(
-        quantities: {CommodityCatalog.timber.id: 10},
-      );
-      expect(
-        recipeAllocationComfortHeadroomActive(
-          recipe: lumberRecipe,
-          desiredOutput: 0,
-          maxDesiredOutput: 5,
-          stockpile: stock,
-          desiredOutputByRecipe: const {},
-          effectiveLabour: 100,
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'true at desired zero when max > 0 and strict slack on inputs/labour',
+      () {
+        final stock = Stockpile(quantities: {CommodityCatalog.timber.id: 10});
+        expect(
+          recipeAllocationComfortHeadroomActive(
+            recipe: lumberRecipe,
+            desiredOutput: 0,
+            maxDesiredOutput: 5,
+            stockpile: stock,
+            desiredOutputByRecipe: const {},
+            effectiveLabour: 100,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('false when input stock does not strictly exceed current need', () {
-      final stock = Stockpile(
-        quantities: {CommodityCatalog.timber.id: 4},
-      );
+      final stock = Stockpile(quantities: {CommodityCatalog.timber.id: 4});
       expect(
         recipeAllocationComfortHeadroomActive(
           recipe: lumberRecipe,
@@ -82,9 +78,7 @@ void main() {
     });
 
     test('true when desired < max and inputs/labour strictly exceed need', () {
-      final stock = Stockpile(
-        quantities: {CommodityCatalog.timber.id: 10},
-      );
+      final stock = Stockpile(quantities: {CommodityCatalog.timber.id: 10});
       expect(
         recipeAllocationComfortHeadroomActive(
           recipe: lumberRecipe,
@@ -99,9 +93,7 @@ void main() {
     });
 
     test('false when labour does not strictly exceed current need', () {
-      final stock = Stockpile(
-        quantities: {CommodityCatalog.timber.id: 100},
-      );
+      final stock = Stockpile(quantities: {CommodityCatalog.timber.id: 100});
       expect(
         recipeAllocationComfortHeadroomActive(
           recipe: lumberRecipe,
@@ -133,20 +125,23 @@ void main() {
       expect(affordance.limitingCommodityId, 'timber');
     });
 
-    test('does not set capLimited when unconstrained batches equal slider cap', () {
-      final recipe = ProductionRecipesCatalog.byId['lumber_from_timber']!;
-      final stockpile = const Stockpile().applyDelta('timber', 100);
-      final affordance = computeRecipeAffordance(
-        recipe: recipe,
-        stockpile: stockpile,
-        desiredOutputByRecipe: const {},
-        effectiveLabour: 200,
-      );
+    test(
+      'does not set capLimited when unconstrained batches equal slider cap',
+      () {
+        final recipe = ProductionRecipesCatalog.byId['lumber_from_timber']!;
+        final stockpile = const Stockpile().applyDelta('timber', 100);
+        final affordance = computeRecipeAffordance(
+          recipe: recipe,
+          stockpile: stockpile,
+          desiredOutputByRecipe: const {},
+          effectiveLabour: 200,
+        );
 
-      expect(affordance.maxDesiredOutput, 50);
-      expect(affordance.capLimited, isFalse);
-      expect(affordance.limitingCommodityId, 'timber');
-    });
+        expect(affordance.maxDesiredOutput, 50);
+        expect(affordance.capLimited, isFalse);
+        expect(affordance.limitingCommodityId, 'timber');
+      },
+    );
   });
 
   group('limitingCommodityId and opensDevelopment (Refs #4725)', () {
@@ -161,6 +156,7 @@ void main() {
       );
       expect(affordance.limitingCommodityId, 'timber');
       expect(recipeAffordanceOpensDevelopment(affordance), isTrue);
+      expect(recipeAffordanceFocusesLabourControls(affordance), isFalse);
     });
 
     test('null limitingCommodityId when labour-limited', () {
@@ -174,6 +170,7 @@ void main() {
       );
       expect(affordance.limitingCommodityId, isNull);
       expect(recipeAffordanceOpensDevelopment(affordance), isFalse);
+      expect(recipeAffordanceFocusesLabourControls(affordance), isTrue);
     });
 
     test('capLimited does not open Development', () {
@@ -188,6 +185,7 @@ void main() {
       expect(affordance.capLimited, isTrue);
       expect(affordance.limitingCommodityId, 'timber');
       expect(recipeAffordanceOpensDevelopment(affordance), isFalse);
+      expect(recipeAffordanceFocusesLabourControls(affordance), isFalse);
     });
 
     test('multi-input tie uses first-tied commodity id', () {

@@ -160,6 +160,21 @@ List<WidgetbookNode> get productionPanelDirectories => [
         name: 'Tap affordance opens Development',
         builder: (context) => ProductionPanelStory(onOpenDevelopment: (_) {}),
       ),
+      WidgetbookUseCase(
+        name: 'Tap affordance focuses Labour Controls',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: labourLimitedAllocationProductionPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Tap affordance focuses Labour Controls (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          ProductionPanelStory(
+            playerOverride: labourLimitedAllocationProductionPlayer(),
+          ),
+        ),
+      ),
     ],
   ),
 ];

@@ -3291,6 +3291,10 @@
       }
     }
   },
+  "production_affordanceFocusLabourControlsSemantic": "Show Labour Controls",
+  "@production_affordanceFocusLabourControlsSemantic": {
+    "description": "Semantics label for tapping a labour-limited Allocation affordance to focus Labour Controls (Refs #4780)."
+  },
   "production_food": "Food",
   "@production_food": {
     "description": "Production panel category heading."

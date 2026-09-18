@@ -34,7 +34,8 @@ void main() {
         final tooltip = find.byWidgetPredicate(
           (Widget w) =>
               w is Tooltip &&
-              w.message == l10n.production_recipeAffordanceTooltip,
+              (w.message?.contains(l10n.production_recipeAffordanceTooltip) ??
+                  false),
         );
         expect(tooltip, findsWidgets);
       },

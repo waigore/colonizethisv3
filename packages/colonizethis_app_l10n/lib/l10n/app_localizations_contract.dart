@@ -2079,6 +2079,10 @@ abstract class AppLocalizations {
   String production_availableOpenTradeSemantic(String name);
   String production_affordanceOpenDevelopmentSemantic(String name);
 
+  /// Semantics label for tapping a labour-limited Allocation affordance to
+  /// focus Labour Controls (Refs #4780).
+  String get production_affordanceFocusLabourControlsSemantic;
+
   /// Production panel category heading.
   String get production_food;
 

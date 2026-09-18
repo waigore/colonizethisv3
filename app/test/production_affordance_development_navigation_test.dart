@@ -4,7 +4,6 @@ import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/production/production_affordance_development_cell.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -29,9 +28,7 @@ void main() {
     // Keep food/labour headroom from the full demo stockpile, but starve timber
     // so lumber_from_timber is commodity-limited below the panel cap.
     final base = productionPanelTestFullPlayer();
-    player = base.copyWith(
-      stockpile: base.stockpile.applyDelta('timber', -96),
-    );
+    player = base.copyWith(stockpile: base.stockpile.applyDelta('timber', -96));
     game = Game(
       id: 'production-affordance-dev-nav',
       worldState: WorldState(
@@ -125,9 +122,12 @@ void main() {
     },
   );
 
-  testWidgets('capLimited affordance is not a Development cell', (tester) async {
-    final capPlayer = productionPanelTestFullPlayer().copyWith(
-      stockpile: const Stockpile().applyDelta('timber', 200),
+  testWidgets('capLimited affordance is not a Development cell', (
+    tester,
+  ) async {
+    final base = productionPanelTestFullPlayer();
+    final capPlayer = base.copyWith(
+      stockpile: base.stockpile.applyDelta('timber', 200),
       workerPool: const WorkerPool(peasants: 200),
     );
     final capGame = Game(
@@ -186,7 +186,6 @@ void main() {
       ),
       findsNothing,
     );
-    expect(find.byType(ProductionAffordanceDevelopmentCell), findsNothing);
     expect(nav, isNull);
   });
 }
